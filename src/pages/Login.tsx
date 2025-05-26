@@ -22,21 +22,28 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
   const { login, currentUser, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Redirect if already authenticated
+  // Check auth state only once when component mounts
   useEffect(() => {
-    if (currentUser && !isLoading) {
-      console.log("User already authenticated, redirecting...", currentUser);
-      if (currentUser.role === "host") {
-        navigate("/host", { replace: true });
-      } else {
-        navigate("/attendee", { replace: true });
+    console.log("Login component - Auth state:", { currentUser, isLoading, hasCheckedAuth });
+    
+    if (!isLoading && !hasCheckedAuth) {
+      setHasCheckedAuth(true);
+      
+      if (currentUser) {
+        console.log("User already authenticated, redirecting...", currentUser);
+        if (currentUser.role === "host") {
+          navigate("/host", { replace: true });
+        } else {
+          navigate("/attendee", { replace: true });
+        }
       }
     }
-  }, [currentUser, navigate, isLoading]);
+  }, [currentUser, isLoading, navigate, hasCheckedAuth]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +54,7 @@ const Login = () => {
       return;
     }
 
-    if (isSubmitting) return; // Prevent double submission
+    if (isSubmitting) return;
 
     try {
       setIsSubmitting(true);
@@ -78,13 +85,25 @@ const Login = () => {
     }
   };
 
-  // Show loading state while checking authentication
-  if (isLoading) {
+  // Show loading only during initial auth check
+  if (isLoading && !hasCheckedAuth) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-connect-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
+          <p className="text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render login form if user is already authenticated
+  if (currentUser && hasCheckedAuth) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-connect-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting...</p>
         </div>
       </div>
     );

@@ -1,0 +1,165 @@
+import React, { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+const Login = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { login, currentUser } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMessage(null);
+
+    if (!email || !password) {
+      setErrorMessage("Please fill in all fields");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const { error } = await login(email, password);
+
+      if (error) {
+        setErrorMessage(
+          error.message || "Failed to login. Please check your credentials."
+        );
+        return;
+      }
+
+      // Success - redirect based on user role will be handled by the AuthContext
+      // as it sets the currentUser which can be checked in a protected route
+
+      toast({
+        title: "Success",
+        description: "You've successfully logged in",
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      setErrorMessage("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Add this useEffect to handle redirection when currentUser changes
+  useEffect(() => {
+    if (currentUser) {
+      // Redirect based on user role
+      if (currentUser.role === "host") {
+        navigate("/host");
+      } else {
+        navigate("/attendee");
+      }
+    }
+  }, [currentUser, navigate]);
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="flex justify-center mb-8">
+        <Link to="/" className="flex items-center">
+          <img
+            src="/logo-placeholder.svg"
+            alt="Connect Logo"
+            className="h-10 w-auto"
+          />
+          <span className="ml-2 font-semibold text-2xl text-connect-800">
+            Connect
+          </span>
+        </Link>
+      </div>
+
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <Card className="shadow-lg">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold text-center">
+              Sign in to your account
+            </CardTitle>
+            <CardDescription className="text-center">
+              Enter your credentials to access your Connect account
+            </CardDescription>
+          </CardHeader>
+          <form onSubmit={handleSubmit}>
+            <CardContent className="space-y-4">
+              {errorMessage && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{errorMessage}</AlertDescription>
+                </Alert>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  <Link
+                    to="/forgot-password"
+                    className="text-sm font-medium text-connect-600 hover:text-connect-500"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col space-y-4">
+              <Button
+                type="submit"
+                className="w-full bg-connect-600 hover:bg-connect-700"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Signing in..." : "Sign in"}
+              </Button>
+              <div className="text-center text-sm">
+                Don't have an account?{" "}
+                <Link
+                  to="/register"
+                  className="font-medium text-connect-600 hover:text-connect-500"
+                >
+                  Create one
+                </Link>
+              </div>
+            </CardFooter>
+          </form>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default Login;

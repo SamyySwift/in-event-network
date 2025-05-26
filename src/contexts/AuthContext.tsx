@@ -57,6 +57,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth event:", event, session);
+      
       if (session?.user) {
         await getUserProfile(session.user);
       } else {
@@ -108,8 +109,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const login = async (email: string, password: string) => {
-    setIsLoading(true);
     try {
+      // Clear any existing auth state first
+      await supabase.auth.signOut();
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -125,8 +128,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (error) {
       console.error("Error logging in:", error);
       return { error: error as Error };
-    } finally {
-      setIsLoading(false);
     }
   };
 

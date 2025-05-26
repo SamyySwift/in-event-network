@@ -95,7 +95,16 @@ export const useNetworking = () => {
 
       if (error) throw error;
 
-      setConnections(data || []);
+      // Type assertion to ensure proper typing
+      const typedConnections: ConnectionRequest[] = (data || []).map(conn => ({
+        id: conn.id,
+        requester_id: conn.requester_id || '',
+        recipient_id: conn.recipient_id || '',
+        status: (conn.status as 'pending' | 'accepted' | 'rejected') || 'pending',
+        created_at: conn.created_at
+      }));
+
+      setConnections(typedConnections);
     } catch (error) {
       console.error('Error fetching connections:', error);
     }

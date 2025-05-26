@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -21,9 +22,21 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { login, currentUser } = useAuth();
+  const { login, currentUser, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (currentUser && !isLoading) {
+      console.log("User already authenticated, redirecting...", currentUser);
+      if (currentUser.role === "host") {
+        navigate("/host", { replace: true });
+      } else {
+        navigate("/attendee", { replace: true });
+      }
+    }
+  }, [currentUser, navigate, isLoading]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,24 +47,29 @@ const Login = () => {
       return;
     }
 
+    if (isSubmitting) return; // Prevent double submission
+
     try {
       setIsSubmitting(true);
+      console.log("Attempting login for:", email);
+      
       const { error } = await login(email, password);
 
       if (error) {
+        console.error("Login error:", error);
         setErrorMessage(
           error.message || "Failed to login. Please check your credentials."
         );
         return;
       }
 
-      // Success - redirect based on user role will be handled by the AuthContext
-      // as it sets the currentUser which can be checked in a protected route
-
+      console.log("Login successful");
       toast({
         title: "Success",
         description: "You've successfully logged in",
       });
+
+      // Navigation will be handled by the useEffect when currentUser changes
     } catch (error) {
       console.error("Login error:", error);
       setErrorMessage("An unexpected error occurred. Please try again.");
@@ -60,17 +78,17 @@ const Login = () => {
     }
   };
 
-  // Add this useEffect to handle redirection when currentUser changes
-  useEffect(() => {
-    if (currentUser) {
-      // Redirect based on user role
-      if (currentUser.role === "host") {
-        navigate("/host");
-      } else {
-        navigate("/attendee");
-      }
-    }
-  }, [currentUser, navigate]);
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-connect-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -114,6 +132,7 @@ const Login = () => {
                   placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={isSubmitting}
                   required
                 />
               </div>
@@ -133,6 +152,7 @@ const Login = () => {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={isSubmitting}
                   required
                 />
               </div>

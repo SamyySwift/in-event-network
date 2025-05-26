@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/layouts/AppLayout';
 import { 
@@ -77,6 +78,15 @@ const AttendeePolls = () => {
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
+  // Helper functions - moved before useEffect
+  const hasUserVotedForPoll = (pollId: string) => {
+    return userVotes.some(vote => vote.pollId === pollId);
+  };
+
+  const getUserVoteForPoll = (pollId: string) => {
+    return userVotes.find(vote => vote.pollId === pollId)?.optionId;
+  };
+
   // Find polls to display as floating banners
   useEffect(() => {
     const now = new Date();
@@ -108,14 +118,6 @@ const AttendeePolls = () => {
     
     return true; // 'all' tab
   });
-
-  const hasUserVotedForPoll = (pollId: string) => {
-    return userVotes.some(vote => vote.pollId === pollId);
-  };
-
-  const getUserVoteForPoll = (pollId: string) => {
-    return userVotes.find(vote => vote.pollId === pollId)?.optionId;
-  };
 
   const handleVote = (pollId: string, optionId: string) => {
     if (hasUserVotedForPoll(pollId)) return;
@@ -160,6 +162,91 @@ const AttendeePolls = () => {
     if (totalVotes === 0) return 0;
     return Math.round((votes / totalVotes) * 100);
   };
+
+  function renderPollCard(poll: Poll) {
+    const userVoted = hasUserVotedForPoll(poll.id);
+    const userVoteId = getUserVoteForPoll(poll.id);
+    const isPollActive = new Date(poll.startTime) <= new Date() && new Date(poll.endTime) >= new Date();
+    const showResults = poll.showResults || userVoted;
+    
+    return (
+      <Card key={poll.id} className="overflow-hidden">
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-lg">{poll.question}</CardTitle>
+              <CardDescription className="mt-1">
+                {isPollActive 
+                  ? `Ends ${format(new Date(poll.endTime), 'MMM d, h:mm a')}` 
+                  : `Ended ${format(new Date(poll.endTime), 'MMM d, yyyy')}`
+                }
+              </CardDescription>
+            </div>
+            {userVoted && (
+              <Badge 
+                className="bg-green-100 text-green-800 hover:bg-green-200"
+              >
+                You voted
+              </Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent>
+          {showResults ? (
+            <div className="space-y-3">
+              {poll.options.map((option) => (
+                <div key={option.id} className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span className="flex items-center">
+                      {option.text}
+                      {option.id === userVoteId && (
+                        <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                          Your vote
+                        </span>
+                      )}
+                    </span>
+                    <span className="font-medium">{calculatePercentage(option.votes, poll)}%</span>
+                  </div>
+                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full ${option.id === userVoteId ? 'bg-primary' : 'bg-primary/70'}`}
+                      style={{ width: `${calculatePercentage(option.votes, poll)}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+              <p className="text-xs text-muted-foreground mt-2">
+                Total votes: {poll.options.reduce((acc, option) => acc + option.votes, 0)}
+              </p>
+            </div>
+          ) : (
+            <RadioGroup 
+              value={selectedOptions[poll.id] || ''} 
+              onValueChange={(value) => handleSelectOption(poll.id, value)}
+              className="space-y-3"
+            >
+              {poll.options.map((option) => (
+                <div key={option.id} className="flex items-center space-x-2">
+                  <RadioGroupItem value={option.id} id={`${poll.id}-${option.id}`} />
+                  <Label htmlFor={`${poll.id}-${option.id}`}>{option.text}</Label>
+                </div>
+              ))}
+            </RadioGroup>
+          )}
+        </CardContent>
+        {!showResults && isPollActive && (
+          <CardFooter className="flex justify-end border-t pt-3">
+            <Button 
+              onClick={() => handleVote(poll.id, selectedOptions[poll.id] || '')}
+              disabled={!selectedOptions[poll.id]}
+            >
+              Submit Vote
+            </Button>
+          </CardFooter>
+        )}
+      </Card>
+    );
+  }
 
   return (
     <AppLayout>
@@ -246,91 +333,6 @@ const AttendeePolls = () => {
       )}
     </AppLayout>
   );
-  
-  function renderPollCard(poll: Poll) {
-    const userVoted = hasUserVotedForPoll(poll.id);
-    const userVoteId = getUserVoteForPoll(poll.id);
-    const isPollActive = new Date(poll.startTime) <= new Date() && new Date(poll.endTime) >= new Date();
-    const showResults = poll.showResults || userVoted;
-    
-    return (
-      <Card key={poll.id} className="overflow-hidden">
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle className="text-lg">{poll.question}</CardTitle>
-              <CardDescription className="mt-1">
-                {isPollActive 
-                  ? `Ends ${format(new Date(poll.endTime), 'MMM d, h:mm a')}` 
-                  : `Ended ${format(new Date(poll.endTime), 'MMM d, yyyy')}`
-                }
-              </CardDescription>
-            </div>
-            {userVoted && (
-              <Badge 
-                className="bg-green-100 text-green-800 hover:bg-green-200"
-              >
-                You voted
-              </Badge>
-            )}
-          </div>
-        </CardHeader>
-        <CardContent>
-          {showResults ? (
-            <div className="space-y-3">
-              {poll.options.map((option) => (
-                <div key={option.id} className="space-y-1">
-                  <div className="flex justify-between text-sm">
-                    <span className="flex items-center">
-                      {option.text}
-                      {option.id === userVoteId && (
-                        <span className="ml-2 text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                          Your vote
-                        </span>
-                      )}
-                    </span>
-                    <span className="font-medium">{calculatePercentage(option.votes, poll)}%</span>
-                  </div>
-                  <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className={`h-full ${option.id === userVoteId ? 'bg-primary' : 'bg-primary/70'}`}
-                      style={{ width: `${calculatePercentage(option.votes, poll)}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-              <p className="text-xs text-muted-foreground mt-2">
-                Total votes: {poll.options.reduce((acc, option) => acc + option.votes, 0)}
-              </p>
-            </div>
-          ) : (
-            <RadioGroup 
-              value={selectedOptions[poll.id] || ''} 
-              onValueChange={(value) => handleSelectOption(poll.id, value)}
-              className="space-y-3"
-            >
-              {poll.options.map((option) => (
-                <div key={option.id} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option.id} id={`${poll.id}-${option.id}`} />
-                  <Label htmlFor={`${poll.id}-${option.id}`}>{option.text}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-          )}
-        </CardContent>
-        {!showResults && isPollActive && (
-          <CardFooter className="flex justify-end border-t pt-3">
-            <Button 
-              onClick={() => handleVote(poll.id, selectedOptions[poll.id] || '')}
-              disabled={!selectedOptions[poll.id]}
-            >
-              Submit Vote
-            </Button>
-          </CardFooter>
-        )}
-      </Card>
-    );
-  }
 };
 
 export default AttendeePolls;

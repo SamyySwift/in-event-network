@@ -9,9 +9,122 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      connections: {
+        Row: {
+          created_at: string | null
+          id: string
+          recipient_id: string | null
+          requester_id: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          recipient_id?: string | null
+          requester_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          recipient_id?: string | null
+          requester_id?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connections_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "connections_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "connections_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "connections_requester_id_fkey"
+            columns: ["requester_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          read_at: string | null
+          recipient_id: string | null
+          sender_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          read_at?: string | null
+          recipient_id?: string | null
+          sender_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          read_at?: string | null
+          recipient_id?: string | null
+          sender_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_recipient_id_fkey"
+            columns: ["recipient_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           bio: string | null
+          company: string | null
           created_at: string
           email: string | null
           facebook_link: string | null
@@ -20,10 +133,12 @@ export type Database = {
           instagram_link: string | null
           linkedin_link: string | null
           name: string | null
+          networking_preferences: string[] | null
           niche: string | null
           photo_url: string | null
           role: string | null
           snapchat_link: string | null
+          tags: string[] | null
           tiktok_link: string | null
           twitter_link: string | null
           updated_at: string
@@ -31,6 +146,7 @@ export type Database = {
         }
         Insert: {
           bio?: string | null
+          company?: string | null
           created_at?: string
           email?: string | null
           facebook_link?: string | null
@@ -39,10 +155,12 @@ export type Database = {
           instagram_link?: string | null
           linkedin_link?: string | null
           name?: string | null
+          networking_preferences?: string[] | null
           niche?: string | null
           photo_url?: string | null
           role?: string | null
           snapchat_link?: string | null
+          tags?: string[] | null
           tiktok_link?: string | null
           twitter_link?: string | null
           updated_at?: string
@@ -50,6 +168,7 @@ export type Database = {
         }
         Update: {
           bio?: string | null
+          company?: string | null
           created_at?: string
           email?: string | null
           facebook_link?: string | null
@@ -58,10 +177,12 @@ export type Database = {
           instagram_link?: string | null
           linkedin_link?: string | null
           name?: string | null
+          networking_preferences?: string[] | null
           niche?: string | null
           photo_url?: string | null
           role?: string | null
           snapchat_link?: string | null
+          tags?: string[] | null
           tiktok_link?: string | null
           twitter_link?: string | null
           updated_at?: string
@@ -71,7 +192,60 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_profiles: {
+        Row: {
+          bio: string | null
+          company: string | null
+          created_at: string | null
+          github_link: string | null
+          id: string | null
+          instagram_link: string | null
+          linkedin_link: string | null
+          name: string | null
+          networking_preferences: string[] | null
+          niche: string | null
+          photo_url: string | null
+          role: string | null
+          tags: string[] | null
+          twitter_link: string | null
+          website_link: string | null
+        }
+        Insert: {
+          bio?: string | null
+          company?: string | null
+          created_at?: string | null
+          github_link?: string | null
+          id?: string | null
+          instagram_link?: string | null
+          linkedin_link?: string | null
+          name?: string | null
+          networking_preferences?: string[] | null
+          niche?: string | null
+          photo_url?: string | null
+          role?: string | null
+          tags?: string[] | null
+          twitter_link?: string | null
+          website_link?: string | null
+        }
+        Update: {
+          bio?: string | null
+          company?: string | null
+          created_at?: string | null
+          github_link?: string | null
+          id?: string | null
+          instagram_link?: string | null
+          linkedin_link?: string | null
+          name?: string | null
+          networking_preferences?: string[] | null
+          niche?: string | null
+          photo_url?: string | null
+          role?: string | null
+          tags?: string[] | null
+          twitter_link?: string | null
+          website_link?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never

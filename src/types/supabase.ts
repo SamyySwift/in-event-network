@@ -1,3 +1,4 @@
+
 export type Json =
   | string
   | number
@@ -18,6 +19,9 @@ export interface Database {
           photo_url: string | null;
           bio: string | null;
           niche: string | null;
+          company: string | null;
+          networking_preferences: string[] | null;
+          tags: string[] | null;
           twitter_link: string | null;
           facebook_link: string | null;
           linkedin_link: string | null;
@@ -37,6 +41,9 @@ export interface Database {
           photo_url?: string | null;
           bio?: string | null;
           niche?: string | null;
+          company?: string | null;
+          networking_preferences?: string[] | null;
+          tags?: string[] | null;
           twitter_link?: string | null;
           facebook_link?: string | null;
           linkedin_link?: string | null;
@@ -56,6 +63,9 @@ export interface Database {
           photo_url?: string | null;
           bio?: string | null;
           niche?: string | null;
+          company?: string | null;
+          networking_preferences?: string[] | null;
+          tags?: string[] | null;
           twitter_link?: string | null;
           facebook_link?: string | null;
           linkedin_link?: string | null;
@@ -68,10 +78,79 @@ export interface Database {
           updated_at?: string;
         };
       };
-      // Add other tables as needed
+      connections: {
+        Row: {
+          id: string;
+          requester_id: string | null;
+          recipient_id: string | null;
+          status: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          requester_id?: string | null;
+          recipient_id?: string | null;
+          status?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          requester_id?: string | null;
+          recipient_id?: string | null;
+          status?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      messages: {
+        Row: {
+          id: string;
+          sender_id: string | null;
+          recipient_id: string | null;
+          content: string;
+          created_at: string;
+          read_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          sender_id?: string | null;
+          recipient_id?: string | null;
+          content: string;
+          created_at?: string;
+          read_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          sender_id?: string | null;
+          recipient_id?: string | null;
+          content?: string;
+          created_at?: string;
+          read_at?: string | null;
+        };
+      };
     };
     Views: {
-      [_ in never]: never;
+      public_profiles: {
+        Row: {
+          id: string;
+          name: string | null;
+          role: string | null;
+          company: string | null;
+          bio: string | null;
+          niche: string | null;
+          photo_url: string | null;
+          networking_preferences: string[] | null;
+          tags: string[] | null;
+          twitter_link: string | null;
+          linkedin_link: string | null;
+          github_link: string | null;
+          instagram_link: string | null;
+          website_link: string | null;
+          created_at: string;
+        };
+      };
     };
     Functions: {
       [_ in never]: never;
@@ -80,4 +159,4 @@ export interface Database {
       [_ in never]: never;
     };
   };
-};
+}

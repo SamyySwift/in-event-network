@@ -192,7 +192,7 @@ const AttendeeSchedule = () => {
                     Events for {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'Today'}
                   </CardTitle>
                   <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-                    <TabsList className="mb-2 bg-gray-100 dark:bg-gray-700 p-1 rounded-md px-[3px]">
+                    <TabsList className="mb-2 bg-gray-100 dark:bg-gray-700 p-1 rounded-md px-0">
                       <TabsTrigger value="all" className="text-xs sm:text-sm">All</TabsTrigger>
                       <TabsTrigger value="keynote" className="text-xs sm:text-sm">Keynotes</TabsTrigger>
                       <TabsTrigger value="panel" className="text-xs sm:text-sm">Panels</TabsTrigger>

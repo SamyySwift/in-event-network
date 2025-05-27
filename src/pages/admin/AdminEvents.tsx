@@ -1,97 +1,55 @@
+
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import AdminDataTable from '@/components/admin/AdminDataTable';
-import { TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { format } from 'date-fns';
-import { Event } from '@/types';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Event } from '@/types';
+import { format } from 'date-fns';
 
 // Mock data for events
 const mockEvents: Event[] = [
   {
     id: '1',
-    name: 'Annual Tech Conference 2025',
-    description: 'The largest tech conference in the region',
+    name: 'TechConnect 2024',
+    description: 'The premier networking event for tech professionals',
     startDate: '2025-06-15T09:00:00Z',
-    endDate: '2025-06-17T18:00:00Z',
-    bannerUrl: 'https://example.com/banner1.jpg',
-    logoUrl: 'https://example.com/logo1.png',
-    website: 'https://techconf2025.com',
+    endDate: '2025-06-15T18:00:00Z',
+    bannerUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87',
+    logoUrl: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43',
+    website: 'https://techconnect2024.com',
     location: 'San Francisco Convention Center',
-    hostId: 'host1'
-  },
-  {
-    id: '2',
-    name: 'Developer Meetup',
-    description: 'Monthly developer networking event',
-    startDate: '2025-05-25T18:00:00Z',
-    endDate: '2025-05-25T21:00:00Z',
-    location: 'Downtown Coworking Space',
-    hostId: 'host1'
-  },
-  {
-    id: '3',
-    name: 'Product Design Summit',
-    description: 'Summit for product designers and UX professionals',
-    startDate: '2025-07-10T09:00:00Z',
-    endDate: '2025-07-11T17:00:00Z',
-    bannerUrl: 'https://example.com/banner3.jpg',
-    location: 'Design Hub',
-    hostId: 'host2'
+    hostId: 'host1',
+    socialLinks: {
+      twitter: '@techconnect2024',
+      linkedin: 'techconnect-2024'
+    },
+    qrCode: 'QR_CODE_STRING',
+    isEnded: false
   }
 ];
 
 const EventForm = ({ onSubmit, initialData = null }) => {
-  const [startDate, setStartDate] = useState<Date | undefined>(
-    initialData?.startDate ? new Date(initialData.startDate) : undefined
-  );
-  const [endDate, setEndDate] = useState<Date | undefined>(
-    initialData?.endDate ? new Date(initialData.endDate) : undefined
-  );
-
   const { register, handleSubmit, formState: { errors }, reset } = useForm({
     defaultValues: initialData || {
       name: '',
       description: '',
+      startDate: '',
+      endDate: '',
       location: '',
-      website: '',
-      bannerUrl: '',
-      logoUrl: ''
+      website: ''
     }
   });
 
   const onFormSubmit = (data) => {
-    if (!startDate) {
-      toast.error("Start date is required");
-      return;
-    }
-    if (!endDate) {
-      toast.error("End date is required");
-      return;
-    }
-
-    const eventData = {
-      ...data,
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-      hostId: 'host1' // Default host ID
-    };
-    
-    onSubmit(eventData);
+    onSubmit(data);
     reset();
-    setStartDate(undefined);
-    setEndDate(undefined);
   };
 
   return (
@@ -101,7 +59,7 @@ const EventForm = ({ onSubmit, initialData = null }) => {
         <Input 
           id="name" 
           placeholder="Enter event name" 
-          {...register("name", { required: "Name is required" })}
+          {...register("name", { required: "Event name is required" })}
         />
         {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
       </div>
@@ -116,57 +74,25 @@ const EventForm = ({ onSubmit, initialData = null }) => {
         />
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label>Start Date</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !startDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {startDate ? format(startDate, "PPP") : <span>Pick a date</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={startDate}
-                onSelect={setStartDate}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+          <Label htmlFor="startDate">Start Date & Time</Label>
+          <Input 
+            id="startDate" 
+            type="datetime-local"
+            {...register("startDate", { required: "Start date is required" })}
+          />
+          {errors.startDate && <p className="text-sm text-destructive">{errors.startDate.message}</p>}
         </div>
         
         <div className="space-y-2">
-          <Label>End Date</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !endDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {endDate ? format(endDate, "PPP") : <span>Pick a date</span>}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
-              <Calendar
-                mode="single"
-                selected={endDate}
-                onSelect={setEndDate}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+          <Label htmlFor="endDate">End Date & Time</Label>
+          <Input 
+            id="endDate" 
+            type="datetime-local"
+            {...register("endDate", { required: "End date is required" })}
+          />
+          {errors.endDate && <p className="text-sm text-destructive">{errors.endDate.message}</p>}
         </div>
       </div>
       
@@ -175,42 +101,22 @@ const EventForm = ({ onSubmit, initialData = null }) => {
         <Input 
           id="location" 
           placeholder="Enter event location" 
-          {...register("location", { required: "Location is required" })}
+          {...register("location")}
         />
-        {errors.location && <p className="text-sm text-destructive">{errors.location.message}</p>}
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="website">Website (optional)</Label>
+        <Label htmlFor="website">Website</Label>
         <Input 
           id="website" 
+          type="url"
           placeholder="https://example.com" 
           {...register("website")}
         />
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="bannerUrl">Banner URL (optional)</Label>
-          <Input 
-            id="bannerUrl" 
-            placeholder="Enter banner image URL" 
-            {...register("bannerUrl")}
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="logoUrl">Logo URL (optional)</Label>
-          <Input 
-            id="logoUrl" 
-            placeholder="Enter logo image URL" 
-            {...register("logoUrl")}
-          />
-        </div>
-      </div>
-      
       <div className="flex justify-end pt-2">
-        <Button type="submit">Save Event</Button>
+        <Button type="submit">Create Event</Button>
       </div>
     </form>
   );
@@ -218,71 +124,45 @@ const EventForm = ({ onSubmit, initialData = null }) => {
 
 const AdminEvents = () => {
   const [events, setEvents] = useState(mockEvents);
-  const [activeTab, setActiveTab] = useState<string>('upcoming');
-
-  // Event status helper function
-  const getEventStatus = (event: Event) => {
-    const now = new Date();
-    const startDate = new Date(event.startDate);
-    const endDate = new Date(event.endDate);
-    
-    if (now < startDate) return 'upcoming';
-    if (now > endDate) return 'past';
-    return 'ongoing';
-  };
-
-  // Filter events based on tab
-  const filteredEvents = events.filter(event => {
-    if (activeTab === 'all') return true;
-    return getEventStatus(event) === activeTab;
-  });
 
   const columns = [
     {
-      header: 'Name',
+      header: 'Event Name',
       accessorKey: 'name',
       cell: (value: string, row: Event) => (
-        <div className="font-medium">{value}</div>
-      ),
-    },
-    {
-      header: 'Date',
-      accessorKey: 'startDate',
-      cell: (value: string, row: Event) => (
-        <div>
-          {format(new Date(row.startDate), 'MMM d, yyyy')}
-          {row.startDate !== row.endDate && (
-            <> – {format(new Date(row.endDate), 'MMM d, yyyy')}</>
-          )}
+        <div className="flex flex-col">
+          <span className="font-medium">{value}</span>
+          <span className="text-sm text-muted-foreground">{row.location}</span>
         </div>
       ),
     },
     {
-      header: 'Location',
-      accessorKey: 'location',
+      header: 'Status',
+      accessorKey: 'isEnded',
+      cell: (value: boolean) => (
+        <Badge variant={value ? 'secondary' : 'default'}>
+          {value ? 'Ended' : 'Active'}
+        </Badge>
+      ),
     },
     {
-      header: 'Status',
-      accessorKey: 'status',
-      cell: (_: any, row: Event) => {
-        const status = getEventStatus(row);
-        return (
-          <Badge className={
-            status === 'upcoming' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
-            status === 'ongoing' ? 'bg-green-100 text-green-800 hover:bg-green-200' :
-            'bg-gray-100 text-gray-800 hover:bg-gray-200'
-          }>
-            {status.charAt(0).toUpperCase() + status.slice(1)}
-          </Badge>
-        );
-      },
+      header: 'Start Date',
+      accessorKey: 'startDate',
+      cell: (value: string) => format(new Date(value), 'MMM d, yyyy h:mm a'),
     },
+    {
+      header: 'End Date',
+      accessorKey: 'endDate',
+      cell: (value: string) => format(new Date(value), 'MMM d, yyyy h:mm a'),
+    }
   ];
 
   const handleCreateEvent = (eventData) => {
     const newEvent = {
       id: `${events.length + 1}`,
-      ...eventData
+      ...eventData,
+      hostId: 'current-host',
+      isEnded: false
     };
     
     setEvents([...events, newEvent]);
@@ -303,53 +183,16 @@ const AdminEvents = () => {
     <AdminLayout>
       <AdminPageHeader
         title="Events"
-        description="Create and manage your events"
+        description="Manage and organize your events"
         actionLabel="Create Event"
         actionForm={<EventForm onSubmit={handleCreateEvent} />}
-        tabs={[
-          { id: 'all', label: 'All Events' },
-          { id: 'upcoming', label: 'Upcoming' },
-          { id: 'ongoing', label: 'Ongoing' },
-          { id: 'past', label: 'Past' },
-        ]}
-        defaultTab="upcoming"
-        onTabChange={setActiveTab}
       >
-        <TabsContent value="all" className="space-y-4">
-          <AdminDataTable
-            columns={columns}
-            data={events}
-            onEdit={handleEditEvent}
-            onDelete={handleDeleteEvent}
-          />
-        </TabsContent>
-        
-        <TabsContent value="upcoming" className="space-y-4">
-          <AdminDataTable
-            columns={columns}
-            data={filteredEvents}
-            onEdit={handleEditEvent}
-            onDelete={handleDeleteEvent}
-          />
-        </TabsContent>
-        
-        <TabsContent value="ongoing" className="space-y-4">
-          <AdminDataTable
-            columns={columns}
-            data={filteredEvents}
-            onEdit={handleEditEvent}
-            onDelete={handleDeleteEvent}
-          />
-        </TabsContent>
-        
-        <TabsContent value="past" className="space-y-4">
-          <AdminDataTable
-            columns={columns}
-            data={filteredEvents}
-            onEdit={handleEditEvent}
-            onDelete={handleDeleteEvent}
-          />
-        </TabsContent>
+        <AdminDataTable
+          columns={columns}
+          data={events}
+          onEdit={handleEditEvent}
+          onDelete={handleDeleteEvent}
+        />
       </AdminPageHeader>
     </AdminLayout>
   );

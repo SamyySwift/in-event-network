@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -7,10 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { format } from 'date-fns';
-import { Announcement } from '@/types';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
 import { 
   Select, 
   SelectContent, 
@@ -18,57 +15,52 @@ import {
   SelectTrigger, 
   SelectValue 
 } from '@/components/ui/select';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import { Announcement } from '@/types';
+import { format } from 'date-fns';
 
 // Mock data for announcements
 const mockAnnouncements: Announcement[] = [
   {
     id: '1',
-    title: 'Welcome to the Annual Tech Conference!',
-    content: 'We\'re excited to welcome you to our annual tech conference. Check-in begins at 8 AM tomorrow.',
-    createdAt: '2025-06-14T16:00:00Z',
-    notificationType: 'in-app',
-    duration: 48,
+    title: 'Welcome to TechConnect 2024!',
+    content: 'We are excited to have you join us for this amazing networking event. Please check your schedule and don\'t miss the keynote at 9 AM.',
+    createdAt: '2025-06-15T08:00:00Z',
+    imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87',
+    duration: 300,
+    notificationType: 'push'
   },
   {
     id: '2',
-    title: 'Schedule Change: Keynote Session',
-    content: 'Please note that the keynote session has been moved to Hall B at 10 AM instead of Hall A.',
-    createdAt: '2025-06-15T08:30:00Z',
-    notificationType: 'push',
-    duration: 3,
-    imageUrl: 'https://example.com/schedule-change.jpg'
+    title: 'Lunch Break Extended',
+    content: 'Due to popular demand, we have extended the lunch break by 30 minutes. Please be back for the afternoon sessions at 2:30 PM.',
+    createdAt: '2025-06-15T12:00:00Z',
+    duration: 60,
+    notificationType: 'in-app'
   },
   {
     id: '3',
-    title: 'Networking Reception Tonight',
-    content: 'Join us for the networking reception tonight at 6 PM in the Grand Ballroom.',
-    createdAt: '2025-06-15T12:00:00Z',
-    notificationType: 'email',
-    duration: 6,
+    title: 'Networking Session Moved',
+    content: 'The evening networking session has been moved to the rooftop garden. Enjoy the sunset while connecting with fellow attendees!',
+    createdAt: '2025-06-15T16:30:00Z',
+    duration: 120,
+    notificationType: 'email'
   }
 ];
 
 const AnnouncementForm = ({ onSubmit, initialData = null }) => {
-  const { register, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm({
+  const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm({
     defaultValues: initialData || {
       title: '',
       content: '',
-      notificationType: 'in-app',
-      duration: 24,
-      imageUrl: ''
+      duration: 60,
+      notificationType: 'push'
     }
   });
 
-  const notificationType = watch('notificationType');
-
   const onFormSubmit = (data) => {
-    const announcementData = {
-      ...data,
-      createdAt: new Date().toISOString(),
-      duration: parseInt(data.duration) || 0
-    };
-    
-    onSubmit(announcementData);
+    onSubmit(data);
     reset();
   };
 
@@ -95,44 +87,37 @@ const AnnouncementForm = ({ onSubmit, initialData = null }) => {
         {errors.content && <p className="text-sm text-destructive">{errors.content.message}</p>}
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="duration">Duration (minutes)</Label>
+          <Input 
+            id="duration" 
+            type="number"
+            min="5"
+            max="1440"
+            {...register("duration", { 
+              required: "Duration is required",
+              min: { value: 5, message: "Duration must be at least 5 minutes" },
+              max: { value: 1440, message: "Duration cannot exceed 24 hours" }
+            })}
+          />
+          {errors.duration && <p className="text-sm text-destructive">{errors.duration.message}</p>}
+        </div>
+        
         <div className="space-y-2">
           <Label htmlFor="notificationType">Notification Type</Label>
-          <Select 
-            defaultValue="in-app" 
-            onValueChange={(value) => setValue('notificationType', value)}
-          >
+          <Select defaultValue="push" onValueChange={(value) => setValue('notificationType', value)}>
             <SelectTrigger>
               <SelectValue placeholder="Select notification type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="in-app">In-App</SelectItem>
               <SelectItem value="push">Push Notification</SelectItem>
               <SelectItem value="email">Email</SelectItem>
+              <SelectItem value="in-app">In-App Only</SelectItem>
             </SelectContent>
           </Select>
           <input type="hidden" {...register('notificationType')} />
         </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="duration">Duration (hours, 0 for permanent)</Label>
-          <Input 
-            id="duration" 
-            type="number" 
-            min="0"
-            defaultValue="24"
-            {...register("duration", { valueAsNumber: true })}
-          />
-        </div>
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="imageUrl">Image URL (optional)</Label>
-        <Input 
-          id="imageUrl" 
-          placeholder="Enter image URL" 
-          {...register("imageUrl")}
-        />
       </div>
       
       <div className="flex justify-end pt-2">
@@ -149,61 +134,46 @@ const AdminAnnouncements = () => {
     {
       header: 'Title',
       accessorKey: 'title',
-      cell: (value: string, row: Announcement) => (
-        <div className="font-medium">{value}</div>
-      ),
     },
     {
-      header: 'Created',
-      accessorKey: 'createdAt',
-      cell: (value: string) => format(new Date(value), 'MMM d, yyyy h:mm a'),
+      header: 'Content',
+      accessorKey: 'content',
+      cell: (value: string) => (
+        <div className="max-w-xs truncate">
+          {value}
+        </div>
+      ),
     },
     {
       header: 'Type',
       accessorKey: 'notificationType',
       cell: (value: string) => (
-        <Badge className={
-          value === 'push' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' :
-          value === 'email' ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' :
-          'bg-green-100 text-green-800 hover:bg-green-200'
+        <Badge variant={
+          value === 'push' ? 'default' : 
+          value === 'email' ? 'secondary' : 
+          'outline'
         }>
-          {value?.toUpperCase() || 'IN-APP'}
+          {value?.charAt(0).toUpperCase() + value?.slice(1)}
         </Badge>
       ),
     },
     {
       header: 'Duration',
       accessorKey: 'duration',
-      cell: (value: number) => value ? `${value} hours` : 'Permanent',
+      cell: (value: number) => `${value} min`,
     },
     {
-      header: 'Status',
-      accessorKey: 'status',
-      cell: (_: any, row: Announcement) => {
-        const created = new Date(row.createdAt);
-        const expires = row.duration 
-          ? new Date(created.getTime() + row.duration * 60 * 60 * 1000) 
-          : null;
-        const now = new Date();
-        
-        const isActive = !expires || now < expires;
-        
-        return (
-          <Badge className={isActive 
-            ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-            : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-          }>
-            {isActive ? 'Active' : 'Expired'}
-          </Badge>
-        );
-      },
-    },
+      header: 'Created',
+      accessorKey: 'createdAt',
+      cell: (value: string) => format(new Date(value), 'MMM d, yyyy h:mm a'),
+    }
   ];
 
   const handleCreateAnnouncement = (announcementData) => {
     const newAnnouncement = {
       id: `${announcements.length + 1}`,
-      ...announcementData
+      ...announcementData,
+      createdAt: new Date().toISOString()
     };
     
     setAnnouncements([...announcements, newAnnouncement]);
@@ -225,7 +195,7 @@ const AdminAnnouncements = () => {
       <AdminPageHeader
         title="Announcements"
         description="Create and manage event announcements"
-        actionLabel="Create Announcement"
+        actionLabel="Add Announcement"
         actionForm={<AnnouncementForm onSubmit={handleCreateAnnouncement} />}
       >
         <AdminDataTable

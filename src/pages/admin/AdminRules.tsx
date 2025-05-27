@@ -1,78 +1,59 @@
+
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
+import AdminDataTable from '@/components/admin/AdminDataTable';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { PlusCircle, Edit, Trash2, BookText } from 'lucide-react';
-import { useIsMobile } from '@/hooks/use-mobile';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { useForm } from "react-hook-form";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "sonner";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
 
 // Mock data for rules
 const mockRules = [
   {
     id: '1',
-    title: 'Code of Conduct',
-    content: 'We expect all attendees to follow our code of conduct. This includes treating all participants with respect, refraining from harassment or discrimination, and following the guidelines set by the event organizers.',
-    category: 'General',
-    order: 1,
+    title: 'Professional Conduct',
+    content: 'All attendees must maintain professional behavior throughout the event. Harassment of any kind will not be tolerated.',
+    category: 'behavior',
+    isActive: true,
+    createdAt: '2025-06-01T10:00:00Z'
   },
   {
     id: '2',
-    title: 'Photography & Recording Policy',
-    content: 'Photography and recording are allowed in public spaces. However, please refrain from recording or taking photos during sessions without explicit permission from the speakers. Some sessions may have specific no-recording policies.',
-    category: 'Sessions',
-    order: 1,
+    title: 'Photography Policy',
+    content: 'Photography is allowed during networking sessions but prohibited during presentations without prior consent.',
+    category: 'media',
+    isActive: true,
+    createdAt: '2025-06-01T10:15:00Z'
   },
   {
     id: '3',
-    title: 'Session Attendance',
-    content: 'Please arrive 5 minutes before sessions begin. Late entries may be restricted for certain high-demand sessions. If a session is full, please respect the room capacity limits and find an alternative session.',
-    category: 'Sessions',
-    order: 2,
-  },
-  {
-    id: '4',
-    title: 'Food & Beverage Rules',
-    content: 'Food and drinks are not allowed in the main auditorium and certain session rooms. Designated eating areas are available throughout the venue. Please dispose of all waste in appropriate bins.',
-    category: 'Venue',
-    order: 1,
-  },
-  {
-    id: '5',
-    title: 'Wi-Fi Usage Guidelines',
-    content: 'Free Wi-Fi is provided for all attendees. Please refrain from high-bandwidth activities like video streaming which may impact service for others. The network details will be provided at registration.',
-    category: 'Technical',
-    order: 1,
+    title: 'Networking Guidelines',
+    content: 'Please exchange contact information respectfully and follow up within 48 hours of meeting.',
+    category: 'networking',
+    isActive: true,
+    createdAt: '2025-06-01T10:30:00Z'
   }
 ];
 
-// Create new rule form component
 const RuleForm = ({ onSubmit, initialData = null }) => {
-  const { register, handleSubmit, formState: { errors }, reset } = useForm({
+  const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm({
     defaultValues: initialData || {
       title: '',
       content: '',
-      category: 'General',
-      order: 1
+      category: 'general',
+      isActive: true
     }
   });
 
@@ -94,26 +75,10 @@ const RuleForm = ({ onSubmit, initialData = null }) => {
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="category">Category</Label>
-        <Select defaultValue="General" {...register("category")}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="General">General</SelectItem>
-            <SelectItem value="Sessions">Sessions</SelectItem>
-            <SelectItem value="Venue">Venue</SelectItem>
-            <SelectItem value="Technical">Technical</SelectItem>
-            <SelectItem value="Other">Other</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="content">Content</Label>
+        <Label htmlFor="content">Rule Content</Label>
         <Textarea 
           id="content" 
-          placeholder="Enter rule content" 
+          placeholder="Enter rule content and guidelines" 
           rows={4}
           {...register("content", { required: "Content is required" })}
         />
@@ -121,13 +86,25 @@ const RuleForm = ({ onSubmit, initialData = null }) => {
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="order">Display Order</Label>
-        <Input 
-          id="order" 
-          type="number" 
-          min="1"
-          {...register("order", { valueAsNumber: true })}
-        />
+        <Label htmlFor="category">Category</Label>
+        <Select defaultValue="general" onValueChange={(value) => setValue('category', value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="general">General</SelectItem>
+            <SelectItem value="behavior">Behavior</SelectItem>
+            <SelectItem value="networking">Networking</SelectItem>
+            <SelectItem value="media">Media</SelectItem>
+            <SelectItem value="safety">Safety</SelectItem>
+          </SelectContent>
+        </Select>
+        <input type="hidden" {...register('category')} />
+      </div>
+      
+      <div className="flex items-center space-x-2">
+        <Switch id="isActive" {...register("isActive")} />
+        <Label htmlFor="isActive">Active</Label>
       </div>
       
       <div className="flex justify-end pt-2">
@@ -138,31 +115,53 @@ const RuleForm = ({ onSubmit, initialData = null }) => {
 };
 
 const AdminRules = () => {
-  const [expandedCategories, setExpandedCategories] = useState<string[]>(['General']);
-  const isMobile = useIsMobile();
   const [rules, setRules] = useState(mockRules);
-  
-  // Group rules by category
-  const rulesByCategory = rules.reduce((acc, rule) => {
-    if (!acc[rule.category]) {
-      acc[rule.category] = [];
+
+  const columns = [
+    {
+      header: 'Title',
+      accessorKey: 'title',
+    },
+    {
+      header: 'Category',
+      accessorKey: 'category',
+      cell: (value: string) => (
+        <Badge variant={
+          value === 'behavior' ? 'default' : 
+          value === 'networking' ? 'secondary' : 
+          value === 'media' ? 'outline' : 
+          value === 'safety' ? 'destructive' : 
+          'secondary'
+        }>
+          {value?.charAt(0).toUpperCase() + value?.slice(1)}
+        </Badge>
+      ),
+    },
+    {
+      header: 'Status',
+      accessorKey: 'isActive',
+      cell: (value: boolean) => (
+        <Badge variant={value ? 'default' : 'secondary'}>
+          {value ? 'Active' : 'Inactive'}
+        </Badge>
+      ),
+    },
+    {
+      header: 'Content',
+      accessorKey: 'content',
+      cell: (value: string) => (
+        <div className="max-w-xs truncate">
+          {value}
+        </div>
+      ),
     }
-    acc[rule.category].push(rule);
-    return acc;
-  }, {} as Record<string, typeof rules>);
-  
-  // Sort each category's rules by order
-  Object.keys(rulesByCategory).forEach(category => {
-    rulesByCategory[category].sort((a, b) => a.order - b.order);
-  });
+  ];
 
   const handleCreateRule = (ruleData) => {
     const newRule = {
       id: `${rules.length + 1}`,
-      title: ruleData.title,
-      content: ruleData.content,
-      category: ruleData.category,
-      order: ruleData.order,
+      ...ruleData,
+      createdAt: new Date().toISOString()
     };
     
     setRules([...rules, newRule]);
@@ -179,105 +178,20 @@ const AdminRules = () => {
     toast.success("Rule deleted successfully!");
   };
 
-  const toggleCategory = (category: string) => {
-    setExpandedCategories(prev => 
-      prev.includes(category)
-        ? prev.filter(c => c !== category)
-        : [...prev, category]
-    );
-  };
-
   return (
     <AdminLayout>
       <AdminPageHeader
         title="Event Rules"
-        description="Create and manage rules and guidelines for attendees"
-        actionLabel="Create Rule"
+        description="Define and manage event rules and guidelines"
+        actionLabel="Add Rule"
         actionForm={<RuleForm onSubmit={handleCreateRule} />}
       >
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <BookText size={20} className="text-primary" />
-                <CardTitle>Rules and Guidelines</CardTitle>
-              </div>
-            </div>
-            <CardDescription>
-              Rules are organized by category and displayed to attendees in the event app
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Accordion type="multiple" value={expandedCategories} className="w-full">
-              {Object.entries(rulesByCategory).map(([category, rules]) => (
-                <AccordionItem key={category} value={category}>
-                  <AccordionTrigger
-                    onClick={() => toggleCategory(category)}
-                    className="text-lg font-semibold hover:no-underline"
-                  >
-                    {category}
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="space-y-4 pt-2">
-                      {rules.map(rule => (
-                        <Card key={rule.id}>
-                          <CardHeader className="py-3">
-                            <div className="flex items-center justify-between">
-                              <CardTitle className="text-base">{rule.title}</CardTitle>
-                              <div className="flex gap-1">
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-8 w-8 p-0"
-                                        onClick={() => handleEditRule(rule)}
-                                      >
-                                        <Edit size={15} />
-                                        <span className="sr-only">Edit</span>
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Edit</TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                                
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                        onClick={() => handleDeleteRule(rule)}
-                                      >
-                                        <Trash2 size={15} />
-                                        <span className="sr-only">Delete</span>
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Delete</TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="pt-0">
-                            <p className="text-sm text-muted-foreground">{rule.content}</p>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </CardContent>
-          <CardFooter className="border-t pt-4">
-            <p className="text-sm text-muted-foreground">
-              Total: {rules.length} rules across {Object.keys(rulesByCategory).length} categories
-            </p>
-          </CardFooter>
-        </Card>
+        <AdminDataTable
+          columns={columns}
+          data={rules}
+          onEdit={handleEditRule}
+          onDelete={handleDeleteRule}
+        />
       </AdminPageHeader>
     </AdminLayout>
   );

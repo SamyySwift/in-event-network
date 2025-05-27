@@ -1,210 +1,141 @@
-
-import React, { useState } from 'react';
+import React from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import AdminDataTable from '@/components/admin/AdminDataTable';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Send } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import { Announcement } from '@/types';
-import { format } from 'date-fns';
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 
-// Mock data for announcements
-const mockAnnouncements: Announcement[] = [
-  {
-    id: '1',
-    title: 'Welcome to TechConnect 2024!',
-    content: 'We are excited to have you join us for this amazing networking event. Please check your schedule and don\'t miss the keynote at 9 AM.',
-    createdAt: '2025-06-15T08:00:00Z',
-    imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87',
-    duration: 300,
-    notificationType: 'push'
-  },
-  {
-    id: '2',
-    title: 'Lunch Break Extended',
-    content: 'Due to popular demand, we have extended the lunch break by 30 minutes. Please be back for the afternoon sessions at 2:30 PM.',
-    createdAt: '2025-06-15T12:00:00Z',
-    duration: 60,
-    notificationType: 'in-app'
-  },
-  {
-    id: '3',
-    title: 'Networking Session Moved',
-    content: 'The evening networking session has been moved to the rooftop garden. Enjoy the sunset while connecting with fellow attendees!',
-    createdAt: '2025-06-15T16:30:00Z',
-    duration: 120,
-    notificationType: 'email'
-  }
-];
-
-const AnnouncementForm = ({ onSubmit, initialData = null }) => {
-  const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm({
-    defaultValues: initialData || {
-      title: '',
-      content: '',
-      duration: 60,
-      notificationType: 'push'
-    }
-  });
-
-  const onFormSubmit = (data) => {
-    onSubmit(data);
-    reset();
-  };
-
-  return (
-    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 pt-4">
-      <div className="space-y-2">
-        <Label htmlFor="title">Announcement Title</Label>
-        <Input 
-          id="title" 
-          placeholder="Enter announcement title" 
-          {...register("title", { required: "Title is required" })}
-        />
-        {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="content">Content</Label>
-        <Textarea 
-          id="content" 
-          placeholder="Enter announcement content" 
-          rows={4}
-          {...register("content", { required: "Content is required" })}
-        />
-        {errors.content && <p className="text-sm text-destructive">{errors.content.message}</p>}
-      </div>
-      
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="duration">Duration (minutes)</Label>
-          <Input 
-            id="duration" 
-            type="number"
-            min="5"
-            max="1440"
-            {...register("duration", { 
-              required: "Duration is required",
-              min: { value: 5, message: "Duration must be at least 5 minutes" },
-              max: { value: 1440, message: "Duration cannot exceed 24 hours" }
-            })}
-          />
-          {errors.duration && <p className="text-sm text-destructive">{errors.duration.message}</p>}
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="notificationType">Notification Type</Label>
-          <Select defaultValue="push" onValueChange={(value) => setValue('notificationType', value)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select notification type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="push">Push Notification</SelectItem>
-              <SelectItem value="email">Email</SelectItem>
-              <SelectItem value="in-app">In-App Only</SelectItem>
-            </SelectContent>
-          </Select>
-          <input type="hidden" {...register('notificationType')} />
-        </div>
-      </div>
-      
-      <div className="flex justify-end pt-2">
-        <Button type="submit">Create Announcement</Button>
-      </div>
-    </form>
-  );
-};
+const formSchema = z.object({
+  title: z.string().min(2, {
+    message: "Title must be at least 2 characters.",
+  }),
+  content: z.string().min(10, {
+    message: "Content must be at least 10 characters.",
+  }),
+  priority: z.enum(['high', 'normal', 'low']).default('normal'),
+  sendImmediately: z.boolean().default(false),
+});
 
 const AdminAnnouncements = () => {
-  const [announcements, setAnnouncements] = useState(mockAnnouncements);
-
-  const columns = [
-    {
-      header: 'Title',
-      accessorKey: 'title',
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: "",
+      content: "",
+      priority: "normal",
+      sendImmediately: false,
     },
-    {
-      header: 'Content',
-      accessorKey: 'content',
-      cell: (value: string) => (
-        <div className="max-w-xs truncate">
-          {value}
-        </div>
-      ),
-    },
-    {
-      header: 'Type',
-      accessorKey: 'notificationType',
-      cell: (value: string) => (
-        <Badge variant={
-          value === 'push' ? 'default' : 
-          value === 'email' ? 'secondary' : 
-          'outline'
-        }>
-          {value?.charAt(0).toUpperCase() + value?.slice(1)}
-        </Badge>
-      ),
-    },
-    {
-      header: 'Duration',
-      accessorKey: 'duration',
-      cell: (value: number) => `${value} min`,
-    },
-    {
-      header: 'Created',
-      accessorKey: 'createdAt',
-      cell: (value: string) => format(new Date(value), 'MMM d, yyyy h:mm a'),
-    }
-  ];
+  });
 
-  const handleCreateAnnouncement = (announcementData) => {
-    const newAnnouncement = {
-      id: `${announcements.length + 1}`,
-      ...announcementData,
-      createdAt: new Date().toISOString()
-    };
-    
-    setAnnouncements([...announcements, newAnnouncement]);
-    toast.success("Announcement created successfully!");
-  };
-
-  const handleEditAnnouncement = (announcement: Announcement) => {
-    console.log('Edit announcement', announcement);
-    toast.info("Edit announcement dialog would open here");
-  };
-
-  const handleDeleteAnnouncement = (announcement: Announcement) => {
-    setAnnouncements(announcements.filter(a => a.id !== announcement.id));
-    toast.success("Announcement deleted successfully!");
+  const onSubmit = (data: z.infer<typeof formSchema>) => {
+    console.log(data);
   };
 
   return (
     <AdminLayout>
-      <AdminPageHeader
-        title="Announcements"
-        description="Create and manage event announcements"
-        actionLabel="Add Announcement"
-        actionForm={<AnnouncementForm onSubmit={handleCreateAnnouncement} />}
-      >
-        <AdminDataTable
-          columns={columns}
-          data={announcements}
-          onEdit={handleEditAnnouncement}
-          onDelete={handleDeleteAnnouncement}
-        />
-      </AdminPageHeader>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Announcements</h1>
+        <p className="text-muted-foreground">
+          Create and manage event announcements.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Create Announcement</CardTitle>
+            <CardDescription>
+              Send important updates to all attendees
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  {...register("title", { required: "Title is required" })}
+                  placeholder="Enter announcement title"
+                />
+                {errors.title?.message && (
+                  <p className="text-sm text-destructive">{errors.title.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="content">Content</Label>
+                <Textarea
+                  id="content"
+                  {...register("content", { required: "Content is required" })}
+                  placeholder="Enter announcement content"
+                  rows={4}
+                />
+                {errors.content?.message && (
+                  <p className="text-sm text-destructive">{errors.content.message}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="priority">Priority</Label>
+                  <Select onValueChange={(value) => setValue("priority", value as "high" | "normal" | "low")}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="normal">Normal</SelectItem>
+                      <SelectItem value="low">Low</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {errors.priority?.message && (
+                    <p className="text-sm text-destructive">{errors.priority.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Send Immediately</Label>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      checked={watch("sendImmediately")}
+                      onCheckedChange={(checked) => setValue("sendImmediately", checked)}
+                    />
+                    <span className="text-sm text-muted-foreground">
+                      Send notification now
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full">
+                <Send className="h-4 w-4 mr-2" />
+                Create Announcement
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Current Announcements</CardTitle>
+              <CardDescription>
+                Manage existing announcements
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p>List of announcements will be displayed here.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </AdminLayout>
   );
 };

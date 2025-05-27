@@ -1,198 +1,134 @@
-
-import React, { useState } from 'react';
+import React from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import AdminDataTable from '@/components/admin/AdminDataTable';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Switch } from '@/components/ui/switch';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-// Mock data for rules
-const mockRules = [
-  {
-    id: '1',
-    title: 'Professional Conduct',
-    content: 'All attendees must maintain professional behavior throughout the event. Harassment of any kind will not be tolerated.',
-    category: 'behavior',
-    isActive: true,
-    createdAt: '2025-06-01T10:00:00Z'
-  },
-  {
-    id: '2',
-    title: 'Photography Policy',
-    content: 'Photography is allowed during networking sessions but prohibited during presentations without prior consent.',
-    category: 'media',
-    isActive: true,
-    createdAt: '2025-06-01T10:15:00Z'
-  },
-  {
-    id: '3',
-    title: 'Networking Guidelines',
-    content: 'Please exchange contact information respectfully and follow up within 48 hours of meeting.',
-    category: 'networking',
-    isActive: true,
-    createdAt: '2025-06-01T10:30:00Z'
-  }
-];
+// Define the schema for form validation
+const ruleSchema = z.object({
+  title: z.string().min(2, { message: "Title must be at least 2 characters." }),
+  content: z.string().min(10, { message: "Content must be at least 10 characters." }),
+  category: z.string().optional(),
+  priority: z.enum(["high", "medium", "low"]).optional(),
+});
 
-const RuleForm = ({ onSubmit, initialData = null }) => {
-  const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm({
-    defaultValues: initialData || {
-      title: '',
-      content: '',
-      category: 'general',
-      isActive: true
-    }
-  });
-
-  const onFormSubmit = (data) => {
-    onSubmit(data);
-    reset();
-  };
-
-  return (
-    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 pt-4">
-      <div className="space-y-2">
-        <Label htmlFor="title">Rule Title</Label>
-        <Input 
-          id="title" 
-          placeholder="Enter rule title" 
-          {...register("title", { required: "Title is required" })}
-        />
-        {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="content">Rule Content</Label>
-        <Textarea 
-          id="content" 
-          placeholder="Enter rule content and guidelines" 
-          rows={4}
-          {...register("content", { required: "Content is required" })}
-        />
-        {errors.content && <p className="text-sm text-destructive">{errors.content.message}</p>}
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="category">Category</Label>
-        <Select defaultValue="general" onValueChange={(value) => setValue('category', value)}>
-          <SelectTrigger>
-            <SelectValue placeholder="Select category" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="general">General</SelectItem>
-            <SelectItem value="behavior">Behavior</SelectItem>
-            <SelectItem value="networking">Networking</SelectItem>
-            <SelectItem value="media">Media</SelectItem>
-            <SelectItem value="safety">Safety</SelectItem>
-          </SelectContent>
-        </Select>
-        <input type="hidden" {...register('category')} />
-      </div>
-      
-      <div className="flex items-center space-x-2">
-        <Switch id="isActive" {...register("isActive")} />
-        <Label htmlFor="isActive">Active</Label>
-      </div>
-      
-      <div className="flex justify-end pt-2">
-        <Button type="submit">Save Rule</Button>
-      </div>
-    </form>
-  );
-};
+type RuleSchemaType = z.infer<typeof ruleSchema>;
 
 const AdminRules = () => {
-  const [rules, setRules] = useState(mockRules);
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<RuleSchemaType>({
+    resolver: zodResolver(ruleSchema)
+  });
 
-  const columns = [
-    {
-      header: 'Title',
-      accessorKey: 'title',
-    },
-    {
-      header: 'Category',
-      accessorKey: 'category',
-      cell: (value: string) => (
-        <Badge variant={
-          value === 'behavior' ? 'default' : 
-          value === 'networking' ? 'secondary' : 
-          value === 'media' ? 'outline' : 
-          value === 'safety' ? 'destructive' : 
-          'secondary'
-        }>
-          {value?.charAt(0).toUpperCase() + value?.slice(1)}
-        </Badge>
-      ),
-    },
-    {
-      header: 'Status',
-      accessorKey: 'isActive',
-      cell: (value: boolean) => (
-        <Badge variant={value ? 'default' : 'secondary'}>
-          {value ? 'Active' : 'Inactive'}
-        </Badge>
-      ),
-    },
-    {
-      header: 'Content',
-      accessorKey: 'content',
-      cell: (value: string) => (
-        <div className="max-w-xs truncate">
-          {value}
-        </div>
-      ),
-    }
-  ];
-
-  const handleCreateRule = (ruleData) => {
-    const newRule = {
-      id: `${rules.length + 1}`,
-      ...ruleData,
-      createdAt: new Date().toISOString()
-    };
-    
-    setRules([...rules, newRule]);
-    toast.success("Rule created successfully!");
-  };
-
-  const handleEditRule = (rule) => {
-    console.log('Edit rule', rule);
-    toast.info("Edit rule dialog would open here");
-  };
-
-  const handleDeleteRule = (rule) => {
-    setRules(rules.filter(r => r.id !== rule.id));
-    toast.success("Rule deleted successfully!");
+  const onSubmit = (data: RuleSchemaType) => {
+    console.log("Form submitted with data:", data);
+    // Handle form submission logic here
   };
 
   return (
     <AdminLayout>
-      <AdminPageHeader
-        title="Event Rules"
-        description="Define and manage event rules and guidelines"
-        actionLabel="Add Rule"
-        actionForm={<RuleForm onSubmit={handleCreateRule} />}
-      >
-        <AdminDataTable
-          columns={columns}
-          data={rules}
-          onEdit={handleEditRule}
-          onDelete={handleDeleteRule}
-        />
-      </AdminPageHeader>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Event Rules</h1>
+        <p className="text-muted-foreground">
+          Manage rules and guidelines for event attendees.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Add New Rule</CardTitle>
+            <CardDescription>
+              Create rules and guidelines for event attendees
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">Rule Title</Label>
+                <Input
+                  id="title"
+                  {...register("title", { required: "Rule title is required" })}
+                  placeholder="Enter rule title"
+                />
+                {errors.title?.message && (
+                  <p className="text-sm text-destructive">{errors.title.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="content">Rule Content</Label>
+                <Textarea
+                  id="content"
+                  {...register("content", { required: "Rule content is required" })}
+                  placeholder="Enter detailed rule description"
+                  rows={4}
+                />
+                {errors.content?.message && (
+                  <p className="text-sm text-destructive">{errors.content.message}</p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Category</Label>
+                  <Select onValueChange={(value) => setValue("category", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">General</SelectItem>
+                      <SelectItem value="conduct">Conduct</SelectItem>
+                      <SelectItem value="safety">Safety</SelectItem>
+                      <SelectItem value="networking">Networking</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Priority</Label>
+                  <Select onValueChange={(value) => setValue("priority", value as "high" | "medium" | "low")}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="low">Low</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <Button type="submit" className="w-full">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Rule
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Current Rules</CardTitle>
+              <CardDescription>
+                List of all event rules and guidelines
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Placeholder for rules list */}
+              <p>No rules added yet.</p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </AdminLayout>
   );
 };

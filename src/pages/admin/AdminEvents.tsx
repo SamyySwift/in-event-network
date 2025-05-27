@@ -1,199 +1,183 @@
-
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import AdminDataTable from '@/components/admin/AdminDataTable';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import { Event } from '@/types';
-import { format } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
 
-// Mock data for events
-const mockEvents: Event[] = [
-  {
-    id: '1',
-    name: 'TechConnect 2024',
-    description: 'The premier networking event for tech professionals',
-    startDate: '2025-06-15T09:00:00Z',
-    endDate: '2025-06-15T18:00:00Z',
-    bannerUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87',
-    logoUrl: 'https://images.unsplash.com/photo-1560472354-b33ff0c44a43',
-    website: 'https://techconnect2024.com',
-    location: 'San Francisco Convention Center',
-    hostId: 'host1',
-    socialLinks: {
-      twitter: '@techconnect2024',
-      linkedin: 'techconnect-2024'
-    },
-    qrCode: 'QR_CODE_STRING',
-    isEnded: false
-  }
-];
+// Define the schema for event validation
+const eventSchema = z.object({
+  name: z.string().min(3, { message: "Event name must be at least 3 characters." }),
+  description: z.string().optional(),
+  startTime: z.string().refine((date) => {
+    try {
+      new Date(date);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }, {
+    message: "Invalid start time"
+  }),
+  endTime: z.string().refine((date) => {
+    try {
+      new Date(date);
+      return true;
+    } catch (error) {
+      return false;
+    }
+  }, {
+    message: "Invalid end time"
+  }),
+  location: z.string().min(3, { message: "Location must be at least 3 characters." }),
+});
 
-const EventForm = ({ onSubmit, initialData = null }) => {
-  const { register, handleSubmit, formState: { errors }, reset } = useForm({
-    defaultValues: initialData || {
+type EventSchemaType = z.infer<typeof eventSchema>;
+
+const AdminEvents = () => {
+  const [events, setEvents] = useState([]);
+
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<EventSchemaType>({
+    resolver: zodResolver(eventSchema),
+    defaultValues: {
       name: '',
       description: '',
-      startDate: '',
-      endDate: '',
-      location: '',
-      website: ''
+      startTime: '',
+      endTime: '',
+      location: ''
     }
   });
 
-  const onFormSubmit = (data) => {
-    onSubmit(data);
-    reset();
-  };
-
-  return (
-    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 pt-4">
-      <div className="space-y-2">
-        <Label htmlFor="name">Event Name</Label>
-        <Input 
-          id="name" 
-          placeholder="Enter event name" 
-          {...register("name", { required: "Event name is required" })}
-        />
-        {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
-        <Textarea 
-          id="description" 
-          placeholder="Enter event description" 
-          rows={3}
-          {...register("description")}
-        />
-      </div>
-      
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="startDate">Start Date & Time</Label>
-          <Input 
-            id="startDate" 
-            type="datetime-local"
-            {...register("startDate", { required: "Start date is required" })}
-          />
-          {errors.startDate && <p className="text-sm text-destructive">{errors.startDate.message}</p>}
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="endDate">End Date & Time</Label>
-          <Input 
-            id="endDate" 
-            type="datetime-local"
-            {...register("endDate", { required: "End date is required" })}
-          />
-          {errors.endDate && <p className="text-sm text-destructive">{errors.endDate.message}</p>}
-        </div>
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="location">Location</Label>
-        <Input 
-          id="location" 
-          placeholder="Enter event location" 
-          {...register("location")}
-        />
-      </div>
-      
-      <div className="space-y-2">
-        <Label htmlFor="website">Website</Label>
-        <Input 
-          id="website" 
-          type="url"
-          placeholder="https://example.com" 
-          {...register("website")}
-        />
-      </div>
-      
-      <div className="flex justify-end pt-2">
-        <Button type="submit">Create Event</Button>
-      </div>
-    </form>
-  );
-};
-
-const AdminEvents = () => {
-  const [events, setEvents] = useState(mockEvents);
-
-  const columns = [
-    {
-      header: 'Event Name',
-      accessorKey: 'name',
-      cell: (value: string, row: Event) => (
-        <div className="flex flex-col">
-          <span className="font-medium">{value}</span>
-          <span className="text-sm text-muted-foreground">{row.location}</span>
-        </div>
-      ),
-    },
-    {
-      header: 'Status',
-      accessorKey: 'isEnded',
-      cell: (value: boolean) => (
-        <Badge variant={value ? 'secondary' : 'default'}>
-          {value ? 'Ended' : 'Active'}
-        </Badge>
-      ),
-    },
-    {
-      header: 'Start Date',
-      accessorKey: 'startDate',
-      cell: (value: string) => format(new Date(value), 'MMM d, yyyy h:mm a'),
-    },
-    {
-      header: 'End Date',
-      accessorKey: 'endDate',
-      cell: (value: string) => format(new Date(value), 'MMM d, yyyy h:mm a'),
-    }
-  ];
-
-  const handleCreateEvent = (eventData) => {
-    const newEvent = {
-      id: `${events.length + 1}`,
-      ...eventData,
-      hostId: 'current-host',
-      isEnded: false
-    };
-    
-    setEvents([...events, newEvent]);
-    toast.success("Event created successfully!");
-  };
-
-  const handleEditEvent = (event: Event) => {
-    console.log('Edit event', event);
-    toast.info("Edit event dialog would open here");
-  };
-
-  const handleDeleteEvent = (event: Event) => {
-    setEvents(events.filter(e => e.id !== event.id));
-    toast.success("Event deleted successfully!");
+  const onSubmit = (data: EventSchemaType) => {
+    console.log("Form Data:", data);
+    setEvents([...events, data]);
   };
 
   return (
     <AdminLayout>
-      <AdminPageHeader
-        title="Events"
-        description="Manage and organize your events"
-        actionLabel="Create Event"
-        actionForm={<EventForm onSubmit={handleCreateEvent} />}
-      >
-        <AdminDataTable
-          columns={columns}
-          data={events}
-          onEdit={handleEditEvent}
-          onDelete={handleDeleteEvent}
-        />
-      </AdminPageHeader>
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Events</h1>
+        <p className="text-muted-foreground">
+          Manage and schedule events for your attendees.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Create New Event</CardTitle>
+            <CardDescription>
+              Add a new event to the schedule
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Event Name</Label>
+                <Input
+                  id="name"
+                  {...register("name", { required: "Event name is required" })}
+                  placeholder="Enter event name"
+                />
+                {errors.name?.message && (
+                  <p className="text-sm text-destructive">{errors.name.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  {...register("description")}
+                  placeholder="Enter event description"
+                  rows={3}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="startTime">Start Time</Label>
+                  <Input
+                    id="startTime"
+                    type="datetime-local"
+                    {...register("startTime", { required: "Start time is required" })}
+                  />
+                  {errors.startTime?.message && (
+                    <p className="text-sm text-destructive">{errors.startTime.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="endTime">End Time</Label>
+                  <Input
+                    id="endTime"
+                    type="datetime-local"
+                    {...register("endTime", { required: "End time is required" })}
+                  />
+                  {errors.endTime?.message && (
+                    <p className="text-sm text-destructive">{errors.endTime.message}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  {...register("location", { required: "Location is required" })}
+                  placeholder="Enter event location"
+                />
+                {errors.location?.message && (
+                  <p className="text-sm text-destructive">{errors.location.message}</p>
+                )}
+              </div>
+
+              <Button type="submit" className="w-full">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Event
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Events List */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Upcoming Events</CardTitle>
+            <CardDescription>
+              List of scheduled events
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {events.length === 0 ? (
+              <p>No events scheduled yet.</p>
+            ) : (
+              <div className="grid gap-4">
+                {events.map((event, index) => (
+                  <div key={index} className="border rounded-md p-4">
+                    <h3 className="font-semibold">{event.name}</h3>
+                    <p className="text-sm text-muted-foreground">{event.description}</p>
+                    <div className="text-xs text-muted-foreground">
+                      Start Time: {new Date(event.startTime).toLocaleString()}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      End Time: {new Date(event.endTime).toLocaleString()}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      Location: {event.location}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </AdminLayout>
   );
 };

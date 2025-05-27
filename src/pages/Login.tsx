@@ -22,28 +22,20 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
   const { login, currentUser, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Check auth state only once when component mounts
+  // Handle redirect when user becomes authenticated
   useEffect(() => {
-    console.log("Login component - Auth state:", { currentUser, isLoading, hasCheckedAuth });
+    console.log("Login component - Auth state:", { currentUser, isLoading });
     
-    if (!isLoading && !hasCheckedAuth) {
-      setHasCheckedAuth(true);
-      
-      if (currentUser) {
-        console.log("User already authenticated, redirecting...", currentUser);
-        if (currentUser.role === "host") {
-          navigate("/host", { replace: true });
-        } else {
-          navigate("/attendee", { replace: true });
-        }
-      }
+    if (currentUser && !isLoading) {
+      console.log("User authenticated, redirecting...", currentUser);
+      const redirectPath = currentUser.role === "host" ? "/admin" : "/attendee";
+      navigate(redirectPath, { replace: true });
     }
-  }, [currentUser, isLoading, navigate, hasCheckedAuth]);
+  }, [currentUser, isLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,7 +68,7 @@ const Login = () => {
         description: "You've successfully logged in",
       });
 
-      // Navigation will be handled by the useEffect when currentUser changes
+      // The redirect will be handled by the useEffect when currentUser updates
     } catch (error) {
       console.error("Login error:", error);
       setErrorMessage("An unexpected error occurred. Please try again.");
@@ -85,25 +77,27 @@ const Login = () => {
     }
   };
 
-  // Show loading only during initial auth check
-  if (isLoading && !hasCheckedAuth) {
+  // Show loading only during initial auth check or login process
+  if ((isLoading && !currentUser) || isSubmitting) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-connect-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Checking authentication...</p>
+          <p className="text-gray-600">
+            {isSubmitting ? "Signing you in..." : "Loading..."}
+          </p>
         </div>
       </div>
     );
   }
 
   // Don't render login form if user is already authenticated
-  if (currentUser && hasCheckedAuth) {
+  if (currentUser) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-connect-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Redirecting...</p>
+          <p className="text-gray-600">Redirecting to dashboard...</p>
         </div>
       </div>
     );

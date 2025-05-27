@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Calendar as CalendarIcon, Clock, MapPin, Users, ChevronRight, Calendar as CalendarFull } from 'lucide-react';
 import { format } from 'date-fns';
@@ -13,94 +12,117 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { useIsMobile } from '@/hooks/use-mobile';
 
 // Mock data for events
-const events = [
-  {
+const events = [{
+  id: 1,
+  title: 'Opening Keynote',
+  description: 'Welcome address by our CEO and introduction to the event',
+  date: '2025-05-20',
+  time: '09:00 AM - 10:00 AM',
+  location: 'Main Hall',
+  category: 'keynote',
+  speakers: [{
     id: 1,
-    title: 'Opening Keynote',
-    description: 'Welcome address by our CEO and introduction to the event',
-    date: '2025-05-20',
-    time: '09:00 AM - 10:00 AM',
-    location: 'Main Hall',
-    category: 'keynote',
-    speakers: [
-      { id: 1, name: 'Alex Johnson', role: 'CEO', photoUrl: null },
-    ],
-    attendees: 120,
-  },
-  {
+    name: 'Alex Johnson',
+    role: 'CEO',
+    photoUrl: null
+  }],
+  attendees: 120
+}, {
+  id: 2,
+  title: 'Future of Tech Panel',
+  description: 'Expert panel discussing upcoming trends in technology',
+  date: '2025-05-20',
+  time: '11:00 AM - 12:30 PM',
+  location: 'Panel Room A',
+  category: 'panel',
+  speakers: [{
     id: 2,
-    title: 'Future of Tech Panel',
-    description: 'Expert panel discussing upcoming trends in technology',
-    date: '2025-05-20',
-    time: '11:00 AM - 12:30 PM',
-    location: 'Panel Room A',
-    category: 'panel',
-    speakers: [
-      { id: 2, name: 'Maria Garcia', role: 'CTO', photoUrl: null },
-      { id: 3, name: 'John Smith', role: 'Research Director', photoUrl: null },
-    ],
-    attendees: 85,
-  },
-  {
+    name: 'Maria Garcia',
+    role: 'CTO',
+    photoUrl: null
+  }, {
     id: 3,
-    title: 'Networking Lunch',
-    description: 'Connect with other attendees over lunch',
-    date: '2025-05-20',
-    time: '12:30 PM - 02:00 PM',
-    location: 'Dining Hall',
-    category: 'networking',
-    speakers: [],
-    attendees: 200,
-  },
-  {
+    name: 'John Smith',
+    role: 'Research Director',
+    photoUrl: null
+  }],
+  attendees: 85
+}, {
+  id: 3,
+  title: 'Networking Lunch',
+  description: 'Connect with other attendees over lunch',
+  date: '2025-05-20',
+  time: '12:30 PM - 02:00 PM',
+  location: 'Dining Hall',
+  category: 'networking',
+  speakers: [],
+  attendees: 200
+}, {
+  id: 4,
+  title: 'Workshop: AI Integration',
+  description: 'Hands-on workshop about implementing AI in your products',
+  date: '2025-05-20',
+  time: '02:30 PM - 04:00 PM',
+  location: 'Workshop Room B',
+  category: 'workshop',
+  speakers: [{
     id: 4,
-    title: 'Workshop: AI Integration',
-    description: 'Hands-on workshop about implementing AI in your products',
-    date: '2025-05-20',
-    time: '02:30 PM - 04:00 PM',
-    location: 'Workshop Room B',
-    category: 'workshop',
-    speakers: [
-      { id: 4, name: 'David Lee', role: 'AI Specialist', photoUrl: null },
-    ],
-    attendees: 40,
-  },
-  {
+    name: 'David Lee',
+    role: 'AI Specialist',
+    photoUrl: null
+  }],
+  attendees: 40
+}, {
+  id: 5,
+  title: 'Closing Remarks',
+  description: 'Summary of the day and what to expect tomorrow',
+  date: '2025-05-20',
+  time: '04:30 PM - 05:00 PM',
+  location: 'Main Hall',
+  category: 'keynote',
+  speakers: [{
+    id: 1,
+    name: 'Alex Johnson',
+    role: 'CEO',
+    photoUrl: null
+  }],
+  attendees: 110
+}, {
+  id: 6,
+  title: 'Day 2 Keynote',
+  description: 'Opening address for day 2 of the conference',
+  date: '2025-05-21',
+  time: '09:30 AM - 10:30 AM',
+  location: 'Main Hall',
+  category: 'keynote',
+  speakers: [{
     id: 5,
-    title: 'Closing Remarks',
-    description: 'Summary of the day and what to expect tomorrow',
-    date: '2025-05-20',
-    time: '04:30 PM - 05:00 PM',
-    location: 'Main Hall',
-    category: 'keynote',
-    speakers: [
-      { id: 1, name: 'Alex Johnson', role: 'CEO', photoUrl: null },
-    ],
-    attendees: 110,
-  },
-  {
-    id: 6,
-    title: 'Day 2 Keynote',
-    description: 'Opening address for day 2 of the conference',
-    date: '2025-05-21',
-    time: '09:30 AM - 10:30 AM',
-    location: 'Main Hall',
-    category: 'keynote',
-    speakers: [
-      { id: 5, name: 'Sarah Williams', role: 'Product Director', photoUrl: null },
-    ],
-    attendees: 105,
-  },
-];
+    name: 'Sarah Williams',
+    role: 'Product Director',
+    photoUrl: null
+  }],
+  attendees: 105
+}];
 
 // Category badge colors and variants
 const categoryColors = {
-  keynote: { variant: 'default', className: 'bg-connect-500 text-white' },
-  panel: { variant: 'secondary', className: 'bg-blue-500 text-white' },
-  workshop: { variant: 'outline', className: 'border-amber-500 text-amber-700 dark:text-amber-400' },
-  networking: { variant: 'secondary', className: 'bg-green-500 text-white' },
+  keynote: {
+    variant: 'default',
+    className: 'bg-connect-500 text-white'
+  },
+  panel: {
+    variant: 'secondary',
+    className: 'bg-blue-500 text-white'
+  },
+  workshop: {
+    variant: 'outline',
+    className: 'border-amber-500 text-amber-700 dark:text-amber-400'
+  },
+  networking: {
+    variant: 'secondary',
+    className: 'bg-green-500 text-white'
+  }
 } as const;
-
 const AttendeeSchedule = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTab, setSelectedTab] = useState('all');
@@ -120,9 +142,7 @@ const AttendeeSchedule = () => {
   const eventDates = [...new Set(events.map(event => event.date))];
   // Convert string dates to Date objects for the calendar
   const highlightedDates = eventDates.map(date => new Date(date));
-
-  return (
-    <AppLayout>
+  return <AppLayout>
       <div className="animate-fade-in">
         <div className="flex flex-col space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
@@ -147,23 +167,16 @@ const AttendeeSchedule = () => {
                 <CardDescription>Select a date to see the schedule</CardDescription>
               </CardHeader>
               <CardContent>
-                <Calendar
-                  mode="single"
-                  selected={selectedDate}
-                  onSelect={setSelectedDate}
-                  className="border rounded-md bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-2"
-                  modifiers={{
-                    highlighted: highlightedDates
-                  }}
-                  modifiersStyles={{
-                    highlighted: { 
-                      fontWeight: 'bold',
-                      backgroundColor: 'rgba(139, 92, 246, 0.15)',
-                      color: '#8b5cf6',
-                      borderRadius: '4px',
-                    }
-                  }}
-                />
+                <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} className="border rounded-md bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-2" modifiers={{
+                highlighted: highlightedDates
+              }} modifiersStyles={{
+                highlighted: {
+                  fontWeight: 'bold',
+                  backgroundColor: 'rgba(139, 92, 246, 0.15)',
+                  color: '#8b5cf6',
+                  borderRadius: '4px'
+                }
+              }} />
               </CardContent>
               <CardFooter className="flex justify-between text-sm text-gray-500">
                 <span>{events.length} total events</span>
@@ -179,7 +192,7 @@ const AttendeeSchedule = () => {
                     Events for {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'Today'}
                   </CardTitle>
                   <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-                    <TabsList className="mb-2 bg-gray-100 dark:bg-gray-700 p-1 rounded-lg">
+                    <TabsList className="mb-2 bg-gray-100 dark:bg-gray-700 p-1 rounded-md px-[3px]">
                       <TabsTrigger value="all" className="text-xs sm:text-sm">All</TabsTrigger>
                       <TabsTrigger value="keynote" className="text-xs sm:text-sm">Keynotes</TabsTrigger>
                       <TabsTrigger value="panel" className="text-xs sm:text-sm">Panels</TabsTrigger>
@@ -189,20 +202,12 @@ const AttendeeSchedule = () => {
                   </Tabs>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {filteredEvents.length > 0 ? (
-                    filteredEvents.map((event) => (
-                      <div 
-                        key={event.id} 
-                        className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-300 bg-white dark:bg-gray-800"
-                      >
+                  {filteredEvents.length > 0 ? filteredEvents.map(event => <div key={event.id} className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-300 bg-white dark:bg-gray-800">
                         <div className="flex justify-between items-start gap-2 flex-wrap sm:flex-nowrap">
                           <div className="flex-1 min-w-0">
                             <div className="flex flex-wrap gap-2 justify-between items-start">
                               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{event.title}</h3>
-                              <Badge 
-                                className={categoryColors[event.category as keyof typeof categoryColors]?.className} 
-                                variant={categoryColors[event.category as keyof typeof categoryColors]?.variant || 'default'}
-                              >
+                              <Badge className={categoryColors[event.category as keyof typeof categoryColors]?.className} variant={categoryColors[event.category as keyof typeof categoryColors]?.variant || 'default'}>
                                 {event.category.charAt(0).toUpperCase() + event.category.slice(1)}
                               </Badge>
                             </div>
@@ -222,12 +227,10 @@ const AttendeeSchedule = () => {
                               </div>
                             </div>
 
-                            {event.speakers.length > 0 && (
-                              <div className="mt-4">
+                            {event.speakers.length > 0 && <div className="mt-4">
                                 <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Speakers:</div>
                                 <div className="flex flex-wrap gap-2 mt-1">
-                                  {event.speakers.map((speaker) => (
-                                    <HoverCard key={speaker.id}>
+                                  {event.speakers.map(speaker => <HoverCard key={speaker.id}>
                                       <HoverCardTrigger asChild>
                                         <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 px-2 py-1 rounded-full cursor-pointer border border-gray-200 dark:border-gray-600">
                                           <Avatar className="h-6 w-6">
@@ -256,11 +259,9 @@ const AttendeeSchedule = () => {
                                           </div>
                                         </div>
                                       </HoverCardContent>
-                                    </HoverCard>
-                                  ))}
+                                    </HoverCard>)}
                                 </div>
-                              </div>
-                            )}
+                              </div>}
                           </div>
                         </div>
 
@@ -273,25 +274,19 @@ const AttendeeSchedule = () => {
                             <ChevronRight className="ml-1 h-4 w-4" />
                           </Button>
                         </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="text-center py-10">
+                      </div>) : <div className="text-center py-10">
                       <CalendarIcon className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600" />
                       <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">No events found</h3>
                       <p className="mt-2 text-gray-500 dark:text-gray-400">
                         There are no events scheduled for this date or category.
                       </p>
-                    </div>
-                  )}
+                    </div>}
                 </CardContent>
               </Card>
             </div>
           </div>
         </div>
       </div>
-    </AppLayout>
-  );
+    </AppLayout>;
 };
-
 export default AttendeeSchedule;

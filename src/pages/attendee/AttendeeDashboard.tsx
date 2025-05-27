@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Users, MapPin, MessageSquare, Clock, Star } from 'lucide-react';
@@ -13,38 +12,43 @@ const upcomingEvent = {
   id: '123',
   name: 'Tech Networking Summit 2025',
   time: '9:00 AM - 5:00 PM',
-  location: 'Convention Center, Downtown',
+  location: 'Convention Center, Downtown'
 };
-
 const upcomingSession = {
   id: '456',
   title: 'AI-Powered Networking Strategies',
   time: '11:00 AM - 12:00 PM',
-  speaker: 'Dr. Jane Smith',
+  speaker: 'Dr. Jane Smith'
 };
-
-const suggestedConnections = [
-  { id: '1', name: 'Alex Johnson', role: 'Frontend Developer', photoUrl: '' },
-  { id: '2', name: 'Maria Garcia', role: 'Product Manager', photoUrl: '' },
-  { id: '3', name: 'Raj Patel', role: 'UX Designer', photoUrl: '' },
-];
-
+const suggestedConnections = [{
+  id: '1',
+  name: 'Alex Johnson',
+  role: 'Frontend Developer',
+  photoUrl: ''
+}, {
+  id: '2',
+  name: 'Maria Garcia',
+  role: 'Product Manager',
+  photoUrl: ''
+}, {
+  id: '3',
+  name: 'Raj Patel',
+  role: 'UX Designer',
+  photoUrl: ''
+}];
 const AttendeeDashboard = () => {
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
-
-  return (
-    <AppLayout>
+  const {
+    currentUser
+  } = useAuth();
+  return <AppLayout>
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold">
             Welcome back, {currentUser?.name?.split(' ')[0]}
           </h1>
           
-          <Button
-            onClick={() => navigate('/scan')}
-            className="bg-connect-600 hover:bg-connect-700"
-          >
+          <Button onClick={() => navigate('/scan')} className="bg-connect-600 hover:bg-connect-700">
             Scan QR Code
           </Button>
         </div>
@@ -71,15 +75,10 @@ const AttendeeDashboard = () => {
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between">
-                <Button 
-                  variant="outline"
-                  onClick={() => navigate('/attendee/map')}
-                >
+                <Button variant="outline" onClick={() => navigate('/attendee/map')}>
                   Find Your Way
                 </Button>
-                <Button 
-                  onClick={() => navigate('/attendee/schedule')}
-                >
+                <Button onClick={() => navigate('/attendee/schedule')}>
                   View Schedule
                 </Button>
               </CardFooter>
@@ -107,11 +106,7 @@ const AttendeeDashboard = () => {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => navigate('/attendee/questions')}
-                >
+                <Button variant="outline" className="w-full" onClick={() => navigate('/attendee/questions')}>
                   Ask a Question
                 </Button>
               </CardFooter>
@@ -120,85 +115,34 @@ const AttendeeDashboard = () => {
         </div>
         
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 my-6">
-          <Button
-            onClick={() => navigate('/attendee/search')}
-            variant="outline"
-            className="h-auto py-6 flex flex-col items-center justify-center space-y-2 bg-white hover:bg-gray-50"
-          >
-            <Users className="h-6 w-6 text-connect-600" />
-            <span>Network</span>
-          </Button>
-          
-          <Button
-            onClick={() => navigate('/attendee/schedule')}
-            variant="outline"
-            className="h-auto py-6 flex flex-col items-center justify-center space-y-2 bg-white hover:bg-gray-50"
-          >
-            <Calendar className="h-6 w-6 text-connect-600" />
-            <span>Schedule</span>
-          </Button>
-          
-          <Button
-            onClick={() => navigate('/attendee/map')}
-            variant="outline"
-            className="h-auto py-6 flex flex-col items-center justify-center space-y-2 bg-white hover:bg-gray-50"
-          >
-            <MapPin className="h-6 w-6 text-connect-600" />
-            <span>Find Way</span>
-          </Button>
-          
-          <Button
-            onClick={() => navigate('/attendee/questions')}
-            variant="outline"
-            className="h-auto py-6 flex flex-col items-center justify-center space-y-2 bg-white hover:bg-gray-50"
-          >
-            <MessageSquare className="h-6 w-6 text-connect-600" />
-            <span>Q&A</span>
-          </Button>
-        </div>
+        
         
         {/* Suggested Connections */}
         <div className="mt-8">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">People You Might Want to Meet</h2>
-            <Button
-              variant="link"
-              className="text-connect-600 p-0"
-              onClick={() => navigate('/attendee/search')}
-            >
+            <Button variant="link" className="text-connect-600 p-0" onClick={() => navigate('/attendee/search')}>
               View All
             </Button>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {suggestedConnections.map((connection) => (
-              <Card key={connection.id} className="overflow-hidden">
+            {suggestedConnections.map(connection => <Card key={connection.id} className="overflow-hidden">
                 <div className="p-4 flex space-x-4">
                   <Avatar className="h-12 w-12">
-                    {connection.photoUrl ? (
-                      <AvatarImage src={connection.photoUrl} alt={connection.name} />
-                    ) : (
-                      <AvatarFallback className="bg-connect-100 text-connect-600">
+                    {connection.photoUrl ? <AvatarImage src={connection.photoUrl} alt={connection.name} /> : <AvatarFallback className="bg-connect-100 text-connect-600">
                         {connection.name.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    )}
+                      </AvatarFallback>}
                   </Avatar>
                   <div className="flex-1">
                     <h3 className="font-medium">{connection.name}</h3>
                     <p className="text-sm text-muted-foreground">{connection.role}</p>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="mt-2 text-xs h-8"
-                      onClick={() => navigate(`/attendee/profile/${connection.id}`)}
-                    >
+                    <Button size="sm" variant="outline" className="mt-2 text-xs h-8" onClick={() => navigate(`/attendee/profile/${connection.id}`)}>
                       View Profile
                     </Button>
                   </div>
                 </div>
-              </Card>
-            ))}
+              </Card>)}
           </div>
         </div>
         
@@ -208,18 +152,12 @@ const AttendeeDashboard = () => {
             <h3 className="font-semibold text-lg">How's your event experience?</h3>
             <p className="text-muted-foreground text-sm">Help improve future events by sharing your feedback</p>
           </div>
-          <Button
-            className="mt-4 sm:mt-0 flex items-center"
-            variant="outline"
-            onClick={() => navigate('/attendee/rate')}
-          >
+          <Button className="mt-4 sm:mt-0 flex items-center" variant="outline" onClick={() => navigate('/attendee/rate')}>
             <Star className="h-4 w-4 mr-2" />
             Rate this Event
           </Button>
         </div>
       </div>
-    </AppLayout>
-  );
+    </AppLayout>;
 };
-
 export default AttendeeDashboard;

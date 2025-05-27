@@ -39,6 +39,7 @@ import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminPolls from "./pages/admin/AdminPolls";
 import AttendeeOnboarding from "./pages/attendee/AttendeeOnboarding";
+import AdminAdvertisements from "./pages/admin/AdminAdvertisements";
 
 const queryClient = new QueryClient();
 
@@ -73,58 +74,37 @@ const App = () => {
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              
               {/* Attendee Routes */}
               <Route path="/attendee" element={<AttendeeDashboard />} />
               <Route path="/attendee/profile" element={<AttendeeProfile />} />
-              <Route
-                path="/attendee/networking"
-                element={<AttendeeNetworking />}
-              />
-              <Route
-                path="/attendee/onboarding"
-                element={<AttendeeOnboarding />}
-              />
+              <Route path="/attendee/networking" element={<AttendeeNetworking />} />
+              <Route path="/attendee/onboarding" element={<AttendeeOnboarding />} />
               <Route path="/attendee/schedule" element={<AttendeeSchedule />} />
-              <Route
-                path="/attendee/questions"
-                element={<AttendeeQuestions />}
-              />
+              <Route path="/attendee/questions" element={<AttendeeQuestions />} />
               <Route path="/attendee/map" element={<AttendeeMap />} />
-              <Route
-                path="/attendee/notifications"
-                element={<AttendeeNotifications />}
-              />
-              <Route
-                path="/attendee/announcements"
-                element={<AttendeeAnnouncements />}
-              />
+              <Route path="/attendee/notifications" element={<AttendeeNotifications />} />
+              <Route path="/attendee/announcements" element={<AttendeeAnnouncements />} />
               <Route path="/attendee/rules" element={<AttendeeRules />} />
-              <Route
-                path="/attendee/rate"
-                element={<AttendeeDashboard />}
-              />{" "}
-              {/* Placeholder for rate page */}
+              <Route path="/attendee/rate" element={<AttendeeDashboard />} />
               <Route path="/attendee/polls" element={<AttendeePolls />} />
+              
               {/* Admin Routes */}
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/events" element={<AdminEvents />} />
               <Route path="/admin/attendees" element={<AdminAttendees />} />
               <Route path="/admin/speakers" element={<AdminSpeakers />} />
-              <Route
-                path="/admin/announcements"
-                element={<AdminAnnouncements />}
-              />
+              <Route path="/admin/announcements" element={<AdminAnnouncements />} />
+              <Route path="/admin/advertisements" element={<AdminAdvertisements />} />
               <Route path="/admin/facilities" element={<AdminFacilities />} />
               <Route path="/admin/rules" element={<AdminRules />} />
               <Route path="/admin/polls" element={<AdminPolls />} />
               <Route path="/admin/questions" element={<AdminQuestions />} />
               <Route path="/admin/suggestions" element={<AdminSuggestions />} />
               <Route path="/admin/team" element={<AdminTeam />} />
-              <Route
-                path="/admin/notifications"
-                element={<AdminNotifications />}
-              />
+              <Route path="/admin/notifications" element={<AdminNotifications />} />
               <Route path="/admin/settings" element={<AdminSettings />} />
+              
               {/* Catch all */}
               <Route path="*" element={<NotFound />} />
             </Routes>

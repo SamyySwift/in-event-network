@@ -1,5 +1,3 @@
-
-
 export interface User {
   id: string;
   name: string;
@@ -162,3 +160,90 @@ export interface PollVote {
   timestamp: string;
 }
 
+export interface Advertisement {
+  id: string;
+  title: string;
+  description?: string;
+  imageUrl?: string;
+  sponsorName: string;
+  sponsorLogo?: string;
+  linkUrl?: string;
+  displayOrder: number;
+  isActive: boolean;
+  startDate?: string;
+  endDate?: string;
+  createdAt: string;
+  createdBy: string;
+}
+
+export interface Survey {
+  id: string;
+  title: string;
+  description?: string;
+  questions: SurveyQuestion[];
+  startTime: string;
+  endTime: string;
+  createdAt: string;
+  createdBy: string;
+  isActive: boolean;
+  isAnonymous: boolean;
+  displayAsBanner: boolean;
+}
+
+export interface SurveyQuestion {
+  id: string;
+  type: 'multiple_choice' | 'text' | 'rating' | 'checkbox';
+  question: string;
+  options?: string[];
+  required: boolean;
+  order: number;
+}
+
+export interface SurveyResponse {
+  id: string;
+  surveyId: string;
+  userId?: string;
+  responses: { [questionId: string]: any };
+  submittedAt: string;
+}
+
+// Update the Facility interface to include new fields
+export interface Facility {
+  id: string;
+  name: string;
+  type: "restroom" | "emergency" | "food" | "accessibility" | "parking" | "entry" | "exit" | "other";
+  location: string;
+  description?: string;
+  icon?: string;
+  imageUrl?: string;
+  rules?: string;
+  contactType?: 'call' | 'text' | 'whatsapp' | null;
+  contactNumber?: string;
+}
+
+// Update the Question interface
+export interface Question {
+  id: string;
+  question: string;
+  sessionId: string;
+  userId: string;
+  speakerId?: string;
+  upvotes: number;
+  answered: boolean;
+  createdAt: string;
+  isAnonymous?: boolean;
+  answer?: string;
+  answerSatisfactionRating?: number;
+  userNotified?: boolean;
+}
+
+// Update the Suggestion interface
+export interface Suggestion {
+  id: string;
+  content: string;
+  userId: string;
+  eventId: string;
+  createdAt: string;
+  type: 'suggestion' | 'rating';
+  rating?: number;
+}

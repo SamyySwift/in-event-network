@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { TabsContent } from '@/components/ui/tabs';
@@ -14,116 +14,151 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CheckCircle, XCircle, ArrowUpCircle } from 'lucide-react';
+import { CheckCircle, XCircle, ArrowUpCircle, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
-import { Question } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
-// Mock sessions data for reference
-const mockSessions = [
-  { id: 'session1', title: 'Keynote: Future of Tech', speakerId: 'speaker1' },
-  { id: 'session2', title: 'Hands-on Workshop: AI Development', speakerId: 'speaker2' },
-  { id: 'session3', title: 'Panel: Cybersecurity Trends', speakerId: 'speaker3' }
-];
-
-// Mock speakers data for reference
-const mockSpeakers = [
-  { id: 'speaker1', name: 'Dr. Eliza Martinez' },
-  { id: 'speaker2', name: 'James Wilson' },
-  { id: 'speaker3', name: 'Sophia Chen' }
-];
-
-// Mock users data for reference
-const mockUsers = [
-  { id: 'user1', name: 'Alex Johnson', photoUrl: 'https://i.pravatar.cc/150?img=1' },
-  { id: 'user2', name: 'Morgan Smith', photoUrl: 'https://i.pravatar.cc/150?img=2' },
-  { id: 'user3', name: 'Jamie Wilson', photoUrl: 'https://i.pravatar.cc/150?img=3' }
-];
-
-// Mock data for questions
-const mockQuestions: Question[] = [
-  {
-    id: '1',
-    question: 'How do you see artificial intelligence impacting the job market in the next 5 years?',
-    sessionId: 'session1',
-    userId: 'user1',
-    speakerId: 'speaker1',
-    upvotes: 15,
-    answered: false,
-    createdAt: '2025-06-15T10:15:00Z'
-  },
-  {
-    id: '2',
-    question: 'What security measures should startups prioritize when building their first product?',
-    sessionId: 'session2',
-    userId: 'user2',
-    speakerId: 'speaker2',
-    upvotes: 8,
-    answered: true,
-    createdAt: '2025-06-15T11:30:00Z'
-  },
-  {
-    id: '3',
-    question: 'Could you elaborate on the design thinking process you mentioned earlier?',
-    sessionId: 'session3',
-    userId: 'user3',
-    speakerId: 'speaker3',
-    upvotes: 12,
-    answered: false,
-    createdAt: '2025-06-15T14:45:00Z'
-  },
-  {
-    id: '4',
-    question: 'What programming languages do you recommend for beginners interested in AI?',
-    sessionId: 'session1',
-    userId: 'user2',
-    speakerId: 'speaker1',
-    upvotes: 7,
-    answered: false,
-    createdAt: '2025-06-15T10:25:00Z'
-  }
-];
+interface QuestionWithProfile {
+  id: string;
+  content: string;
+  created_at: string;
+  upvotes: number;
+  is_answered: boolean;
+  user_id: string;
+  session_id: string | null;
+  event_id: string | null;
+  is_anonymous: boolean;
+  profiles: {
+    name: string;
+    photo_url: string | null;
+  } | null;
+}
 
 const AdminQuestions = () => {
   const [activeTab, setActiveTab] = useState<string>('all');
-  
+  const [questions, setQuestions] = useState<QuestionWithProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    fetchQuestions();
+  }, []);
+
+  const fetchQuestions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('questions')
+        .select(`
+          id,
+          content,
+          created_at,
+          upvotes,
+          is_answered,
+          user_id,
+          session_id,
+          event_id,
+          is_anonymous,
+          profiles!inner(name, photo_url)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setQuestions(data || []);
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch questions",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Filter questions based on active tab
   const getFilteredQuestions = () => {
     switch(activeTab) {
       case 'answered':
-        return mockQuestions.filter(q => q.answered);
+        return questions.filter(q => q.is_answered);
       case 'unanswered':
-        return mockQuestions.filter(q => !q.answered);
+        return questions.filter(q => !q.is_answered);
       case 'trending':
-        return [...mockQuestions].sort((a, b) => b.upvotes - a.upvotes);
+        return [...questions].sort((a, b) => b.upvotes - a.upvotes);
       default:
-        return mockQuestions;
+        return questions;
     }
   };
 
-  // Helper functions to get related data
-  const getSessionTitle = (sessionId: string) => {
-    const session = mockSessions.find(s => s.id === sessionId);
-    return session ? session.title : 'Unknown Session';
+  const handleMarkAsAnswered = async (question: QuestionWithProfile) => {
+    try {
+      const { error } = await supabase
+        .from('questions')
+        .update({ 
+          is_answered: true,
+          answered_at: new Date().toISOString(),
+          answered_by: (await supabase.auth.getUser()).data.user?.id
+        })
+        .eq('id', question.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Question marked as answered",
+      });
+
+      fetchQuestions();
+    } catch (error) {
+      console.error('Error updating question:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update question",
+        variant: "destructive",
+      });
+    }
   };
 
-  const getSpeakerName = (speakerId: string) => {
-    const speaker = mockSpeakers.find(s => s.id === speakerId);
-    return speaker ? speaker.name : 'Unknown Speaker';
-  };
+  const handleDeleteQuestion = async (question: QuestionWithProfile) => {
+    try {
+      const { error } = await supabase
+        .from('questions')
+        .delete()
+        .eq('id', question.id);
 
-  const getUserData = (userId: string) => {
-    return mockUsers.find(u => u.id === userId) || { name: 'Unknown User', photoUrl: '' };
-  };
+      if (error) throw error;
 
-  const handleMarkAsAnswered = (question: Question) => {
-    console.log('Mark as answered', question);
-  };
+      toast({
+        title: "Success",
+        description: "Question deleted successfully",
+      });
 
-  const handleDeleteQuestion = (question: Question) => {
-    console.log('Delete question', question);
+      fetchQuestions();
+    } catch (error) {
+      console.error('Error deleting question:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete question",
+        variant: "destructive",
+      });
+    }
   };
 
   const filteredQuestions = getFilteredQuestions();
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-muted-foreground">Loading questions...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -144,41 +179,45 @@ const AdminQuestions = () => {
             {filteredQuestions.length === 0 ? (
               <Card>
                 <CardContent className="py-10 text-center text-muted-foreground">
-                  No questions found in this category.
+                  <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No questions found in this category.</p>
                 </CardContent>
               </Card>
             ) : (
               filteredQuestions.map(question => {
-                const user = getUserData(question.userId);
+                const userName = question.profiles?.name || 'Anonymous User';
+                const userPhoto = question.profiles?.photo_url;
+                
                 return (
-                  <Card key={question.id} className={question.answered ? 'border-green-100' : ''}>
+                  <Card key={question.id} className={question.is_answered ? 'border-green-100' : ''}>
                     <CardHeader className="pb-2">
                       <div className="flex justify-between items-start">
                         <div className="flex items-center gap-3">
                           <Avatar>
-                            <AvatarImage src={user.photoUrl} />
-                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                            <AvatarImage src={userPhoto || ''} />
+                            <AvatarFallback>{userName.charAt(0)}</AvatarFallback>
                           </Avatar>
                           <div>
-                            <CardTitle className="text-base">{user.name}</CardTitle>
+                            <CardTitle className="text-base">{userName}</CardTitle>
                             <CardDescription>
-                              {format(new Date(question.createdAt), 'MMM d, yyyy h:mm a')}
+                              {format(new Date(question.created_at), 'MMM d, yyyy h:mm a')}
                             </CardDescription>
                           </div>
                         </div>
-                        <Badge variant={question.answered ? 'outline' : 'default'}>
-                          {question.answered ? 'Answered' : 'Pending'}
+                        <Badge variant={question.is_answered ? 'outline' : 'default'}>
+                          {question.is_answered ? 'Answered' : 'Pending'}
                         </Badge>
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-base mb-3">{question.question}</p>
+                      <p className="text-base mb-3">{question.content}</p>
                       <div className="flex flex-wrap gap-2 text-sm">
-                        <Badge variant="secondary">Session: {getSessionTitle(question.sessionId)}</Badge>
-                        <Badge variant="secondary">Speaker: {getSpeakerName(question.speakerId || '')}</Badge>
                         <Badge variant="outline" className="flex items-center gap-1">
                           <ArrowUpCircle size={14} /> {question.upvotes} upvotes
                         </Badge>
+                        {question.is_anonymous && (
+                          <Badge variant="secondary">Anonymous</Badge>
+                        )}
                       </div>
                     </CardContent>
                     <CardFooter className="border-t pt-3 flex justify-between">
@@ -186,7 +225,7 @@ const AdminQuestions = () => {
                         Question ID: {question.id}
                       </div>
                       <div className="flex gap-2">
-                        {!question.answered && (
+                        {!question.is_answered && (
                           <Button 
                             size="sm" 
                             variant="outline"

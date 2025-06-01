@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Calendar, Users, User, Bell, Settings, MessageSquare, Star, MapPin, Search, Menu, X, LogOut, ChevronRight, UserPlus, Megaphone, BookOpen, BarChart } from 'lucide-react';
+import { Calendar, Users, User, Bell, Settings, MessageSquare, Star, MapPin, Search, Menu, X, LogOut, ChevronRight, UserPlus, Megaphone, BookOpen, BarChart, Lightbulb } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -55,9 +56,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({
     href: '/attendee/polls',
     icon: <BarChart size={20} />
   }, {
-    name: 'Notifications',
-    href: '/attendee/notifications',
-    icon: <Bell size={20} />
+    name: 'Suggestions',
+    href: '/attendee/suggestions',
+    icon: <Lightbulb size={20} />
   }, {
     name: 'Announcements',
     href: '/attendee/announcements',
@@ -66,10 +67,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({
     name: 'Event Rules',
     href: '/attendee/rules',
     icon: <BookOpen size={20} />
-  }, {
-    name: 'Rate Event',
-    href: '/attendee/rate',
-    icon: <Star size={20} />
   }];
   const hostNavigation = [{
     name: 'Dashboard',

@@ -1,413 +1,418 @@
 
-import React, { useState } from 'react';
-import {
-  MessageSquare,
-  Search,
-  Filter,
-  ChevronUp,
-  MessageCircle,
-  User,
-  Check,
-  Clock,
-  Send
-} from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Plus, ArrowUp, MessageSquare, Send, User } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { 
   Card, 
   CardContent, 
   CardDescription, 
-  CardFooter, 
   CardHeader, 
   CardTitle 
 } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { Separator } from '@/components/ui/separator';
+import FeedbackModal from '@/components/FeedbackModal';
 
-// Mock data for sessions
-const sessions = [
-  { id: '1', title: 'Opening Keynote', speaker: 'Alex Johnson' },
-  { id: '2', title: 'Future of Tech Panel', speaker: 'Maria Garcia & Team' },
-  { id: '3', title: 'Workshop: AI Integration', speaker: 'David Lee' },
-  { id: '4', title: 'Closing Remarks', speaker: 'Alex Johnson' },
-];
-
-// Mock data for questions
-const initialQuestions = [
-  {
-    id: '1',
-    userId: 'user1',
-    userName: 'Sarah Thompson',
-    userPhotoUrl: '',
-    sessionId: '1',
-    sessionTitle: 'Opening Keynote',
-    question: 'Could you elaborate on your vision for the company in the next 5 years?',
-    createdAt: '2025-05-20T09:15:00',
-    upvotes: 24,
-    answered: true,
-    answer: 'We\'re focused on expanding our AI capabilities while maintaining our commitment to sustainability. Our 5-year plan includes...',
-    answeredBy: 'Alex Johnson',
-    answeredAt: '2025-05-20T09:20:00'
-  },
-  {
-    id: '2',
-    userId: 'user2',
-    userName: 'Michael Chen',
-    userPhotoUrl: '',
-    sessionId: '2',
-    sessionTitle: 'Future of Tech Panel',
-    question: 'What do you think will be the biggest challenge for companies adopting AI in the next year?',
-    createdAt: '2025-05-20T11:05:00',
-    upvotes: 18,
-    answered: false
-  },
-  {
-    id: '3',
-    userId: 'user3',
-    userName: 'Priya Patel',
-    userPhotoUrl: '',
-    sessionId: '3',
-    sessionTitle: 'Workshop: AI Integration',
-    question: 'Can you recommend resources for learning more about implementing AI in legacy systems?',
-    createdAt: '2025-05-20T14:10:00',
-    upvotes: 12,
-    answered: true,
-    answer: 'Absolutely! I recommend starting with these resources: 1) "Modern AI Integration" by Smith et al. 2) The AILegacy.dev website 3) Our company blog has several case studies...',
-    answeredBy: 'David Lee',
-    answeredAt: '2025-05-20T14:30:00'
-  },
-  {
-    id: '4',
-    userId: 'user1',
-    userName: 'Sarah Thompson',
-    userPhotoUrl: '',
-    sessionId: '2',
-    sessionTitle: 'Future of Tech Panel',
-    question: 'How do you see the role of quantum computing evolving in the next decade?',
-    createdAt: '2025-05-20T11:30:00',
-    upvotes: 15,
-    answered: false
-  }
-];
+interface QuestionWithProfile {
+  id: string;
+  content: string;
+  created_at: string;
+  upvotes: number;
+  is_answered: boolean;
+  user_id: string;
+  session_id: string | null;
+  event_id: string | null;
+  is_anonymous: boolean;
+  profiles: {
+    name: string;
+    photo_url: string | null;
+  } | null;
+}
 
 const AttendeeQuestions = () => {
+  const { currentUser } = useAuth();
   const { toast } = useToast();
-  const [questions, setQuestions] = useState(initialQuestions);
-  const [activeTab, setActiveTab] = useState('browse');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedSession, setSelectedSession] = useState<string | undefined>('all');
-  const [questionText, setQuestionText] = useState('');
-  const [questionSession, setQuestionSession] = useState<string>('');
-  
-  // Filter questions based on search term and selected session
-  const filteredQuestions = questions.filter(question => {
-    const matchesSearch = 
-      question.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      question.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      question.sessionTitle.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesSession = !selectedSession || selectedSession === 'all' || question.sessionId === selectedSession;
-    
-    return matchesSearch && matchesSession;
-  });
-  
-  // Sort questions by upvotes (most upvoted first)
-  const sortedQuestions = [...filteredQuestions].sort((a, b) => b.upvotes - a.upvotes);
-  
-  // Function to handle upvoting a question
-  const handleUpvote = (questionId: string) => {
-    setQuestions(questions.map(q => 
-      q.id === questionId 
-        ? { ...q, upvotes: q.upvotes + 1 } 
-        : q
-    ));
-  };
-  
-  // Function to handle submitting a new question
-  const handleSubmitQuestion = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!questionText.trim() || !questionSession) {
+  const [questions, setQuestions] = useState<QuestionWithProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [newQuestion, setNewQuestion] = useState('');
+  const [sessionTitle, setSessionTitle] = useState('');
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchQuestions();
+  }, []);
+
+  const fetchQuestions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('questions')
+        .select(`
+          id,
+          content,
+          created_at,
+          upvotes,
+          is_answered,
+          user_id,
+          session_id,
+          event_id,
+          is_anonymous,
+          profiles!inner(name, photo_url)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setQuestions(data || []);
+    } catch (error) {
+      console.error('Error fetching questions:', error);
       toast({
         title: "Error",
-        description: "Please fill in all fields",
+        description: "Failed to fetch questions",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-    
-    // Find the selected session
-    const session = sessions.find(s => s.id === questionSession);
-    if (!session) return;
-    
-    // Create new question
-    const newQuestion = {
-      id: `new-${Date.now()}`,
-      userId: 'currentUser', // In a real app, get from auth context
-      userName: 'You', // In a real app, get from auth context
-      userPhotoUrl: '',
-      sessionId: session.id,
-      sessionTitle: session.title,
-      question: questionText,
-      createdAt: new Date().toISOString(),
-      upvotes: 0,
-      answered: false
-    };
-    
-    // Add the new question to the list
-    setQuestions([newQuestion, ...questions]);
-    
-    // Reset form
-    setQuestionText('');
-    
-    toast({
-      title: "Question Submitted",
-      description: "Your question has been submitted successfully.",
-    });
-    
-    // Switch to browse tab
-    setActiveTab('browse');
   };
-  
-  // Format date for display
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  const handleSubmitQuestion = async () => {
+    if (!currentUser || !newQuestion.trim()) return;
+
+    setSubmitting(true);
+    try {
+      const user = await supabase.auth.getUser();
+      if (!user.data.user) throw new Error('User not authenticated');
+
+      const { error } = await supabase
+        .from('questions')
+        .insert([{
+          content: newQuestion.trim(),
+          user_id: user.data.user.id,
+          is_anonymous: isAnonymous,
+          session_id: sessionTitle ? sessionTitle : null,
+          event_id: null, // You might want to get this from context
+          upvotes: 0,
+          is_answered: false
+        }]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Your question has been submitted!",
+      });
+
+      setNewQuestion('');
+      setSessionTitle('');
+      setIsAnonymous(false);
+      fetchQuestions();
+    } catch (error) {
+      console.error('Error submitting question:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit question",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
+
+  const handleUpvote = async (questionId: string) => {
+    if (!currentUser) return;
+
+    try {
+      // Get current upvotes
+      const { data: question, error: fetchError } = await supabase
+        .from('questions')
+        .select('upvotes')
+        .eq('id', questionId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Update upvotes
+      const { error } = await supabase
+        .from('questions')
+        .update({ upvotes: question.upvotes + 1 })
+        .eq('id', questionId);
+
+      if (error) throw error;
+
+      // Update local state
+      setQuestions(prev => prev.map(q => 
+        q.id === questionId ? { ...q, upvotes: q.upvotes + 1 } : q
+      ));
+
+      toast({
+        title: "Success",
+        description: "Question upvoted!",
+      });
+    } catch (error) {
+      console.error('Error upvoting question:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upvote question",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleFeedback = (questionId: string) => {
+    setSelectedQuestionId(questionId);
+    setShowFeedbackModal(true);
+  };
+
+  const myQuestions = questions.filter(q => q.user_id === currentUser?.id);
+  const otherQuestions = questions.filter(q => q.user_id !== currentUser?.id);
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-muted-foreground">Loading questions...</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
-      <div className="animate-fade-in max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Questions & Answers</h1>
-            <p className="text-gray-600 dark:text-gray-400">Ask questions to speakers and see answers in real-time</p>
-          </div>
-          <Button
-            onClick={() => setActiveTab('ask')}
-            className="bg-connect-600 hover:bg-connect-700"
-          >
-            <MessageSquare className="mr-2 h-4 w-4" />
-            Ask a Question
-          </Button>
+      <div className="animate-fade-in max-w-4xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Q&A Session</h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Ask questions to speakers and interact with other attendees
+          </p>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-2 mb-6">
-            <TabsTrigger value="browse" className="flex items-center gap-2">
-              <MessageCircle size={18} />
-              <span>Browse Questions</span>
-            </TabsTrigger>
-            <TabsTrigger value="ask" className="flex items-center gap-2">
-              <MessageSquare size={18} />
-              <span>Ask a Question</span>
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="browse" className="space-y-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search questions..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Select value={selectedSession} onValueChange={setSelectedSession}>
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="All Sessions" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Sessions</SelectItem>
-                  {sessions.map((session) => (
-                    <SelectItem key={session.id} value={session.id}>
-                      {session.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button variant="outline" className="flex items-center gap-2">
-                <Filter size={16} />
-                <span>Filters</span>
-              </Button>
+        {/* Submit Question Form */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="h-5 w-5 text-connect-600" />
+              Ask a Question
+            </CardTitle>
+            <CardDescription>
+              Submit your question for speakers or the community
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="session">Session Title (Optional)</Label>
+              <Input
+                id="session"
+                placeholder="e.g., Keynote: Future of Tech"
+                value={sessionTitle}
+                onChange={(e) => setSessionTitle(e.target.value)}
+              />
             </div>
             
-            {sortedQuestions.length > 0 ? (
-              <div className="space-y-4">
-                {sortedQuestions.map((question) => (
-                  <Card key={question.id} className={`overflow-hidden ${question.answered ? 'border-green-200 dark:border-green-800' : ''}`}>
-                    <div className="flex">
-                      <div className="p-4 bg-gray-50 dark:bg-gray-800 flex flex-col items-center justify-start">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleUpvote(question.id)}
-                          className="px-3 h-auto flex flex-col items-center"
-                        >
-                          <ChevronUp size={18} />
-                          <span className="text-lg font-semibold">{question.upvotes}</span>
-                        </Button>
-                        {question.answered && (
-                          <Badge className="mt-2 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
-                            <Check size={12} className="mr-1" />
-                            Answered
-                          </Badge>
-                        )}
-                      </div>
-                      
-                      <CardContent className="p-4 flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center space-x-2">
-                            <Avatar className="h-6 w-6">
-                              {question.userPhotoUrl ? (
-                                <AvatarImage src={question.userPhotoUrl} alt={question.userName} />
-                              ) : (
-                                <AvatarFallback className="bg-connect-100 text-connect-600 text-xs">
-                                  {question.userName.split(' ').map(n => n[0]).join('')}
-                                </AvatarFallback>
-                              )}
-                            </Avatar>
-                            <span className="text-sm font-medium">{question.userName}</span>
+            <div>
+              <Label htmlFor="question">Your Question</Label>
+              <Textarea
+                id="question"
+                placeholder="What would you like to ask?"
+                value={newQuestion}
+                onChange={(e) => setNewQuestion(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="anonymous"
+                checked={isAnonymous}
+                onCheckedChange={setIsAnonymous}
+              />
+              <Label htmlFor="anonymous">Submit anonymously</Label>
+            </div>
+
+            <Button 
+              onClick={handleSubmitQuestion} 
+              disabled={!newQuestion.trim() || submitting}
+              className="w-full sm:w-auto"
+            >
+              <Send className="h-4 w-4 mr-2" />
+              {submitting ? 'Submitting...' : 'Submit Question'}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* My Questions */}
+        {myQuestions.length > 0 && (
+          <>
+            <div className="mb-4">
+              <h2 className="text-xl font-semibold">My Questions</h2>
+            </div>
+            <div className="space-y-4 mb-6">
+              {myQuestions.map(question => {
+                const userName = question.profiles?.name || 'Anonymous';
+                const userPhoto = question.profiles?.photo_url;
+                
+                return (
+                  <Card key={question.id} className={question.is_answered ? 'border-green-200 bg-green-50/50' : ''}>
+                    <CardContent className="pt-6">
+                      <div className="flex items-start gap-4">
+                        <Avatar className="flex-shrink-0">
+                          {!question.is_anonymous && userPhoto ? (
+                            <AvatarImage src={userPhoto} />
+                          ) : (
+                            <AvatarFallback>
+                              {question.is_anonymous ? <User className="h-4 w-4" /> : userName.charAt(0)}
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                        
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-medium text-sm">
+                              {question.is_anonymous ? 'Anonymous' : userName}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(question.created_at).toLocaleDateString()}
+                            </span>
+                            {question.is_answered && (
+                              <Badge className="bg-green-100 text-green-800">
+                                Answered
+                              </Badge>
+                            )}
                           </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                            <Clock size={12} />
-                            <span>{formatDate(question.createdAt)}</span>
+                          
+                          <p className="text-gray-800 dark:text-gray-200 mb-3">
+                            {question.content}
+                          </p>
+                          
+                          <div className="flex items-center gap-4">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleUpvote(question.id)}
+                              className="text-gray-600 hover:text-connect-600"
+                            >
+                              <ArrowUp className="h-4 w-4 mr-1" />
+                              {question.upvotes}
+                            </Button>
+                            
+                            {question.is_answered && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleFeedback(question.id)}
+                              >
+                                Rate Answer
+                              </Button>
+                            )}
                           </div>
                         </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+            <Separator className="my-6" />
+          </>
+        )}
+
+        {/* All Questions */}
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold">Community Questions</h2>
+        </div>
+        
+        <div className="space-y-4">
+          {otherQuestions.length > 0 ? (
+            otherQuestions.map(question => {
+              const userName = question.profiles?.name || 'Anonymous';
+              const userPhoto = question.profiles?.photo_url;
+              
+              return (
+                <Card key={question.id} className={question.is_answered ? 'border-green-200 bg-green-50/50' : ''}>
+                  <CardContent className="pt-6">
+                    <div className="flex items-start gap-4">
+                      <Avatar className="flex-shrink-0">
+                        {!question.is_anonymous && userPhoto ? (
+                          <AvatarImage src={userPhoto} />
+                        ) : (
+                          <AvatarFallback>
+                            {question.is_anonymous ? <User className="h-4 w-4" /> : userName.charAt(0)}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="font-medium text-sm">
+                            {question.is_anonymous ? 'Anonymous' : userName}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(question.created_at).toLocaleDateString()}
+                          </span>
+                          {question.is_answered && (
+                            <Badge className="bg-green-100 text-green-800">
+                              Answered
+                            </Badge>
+                          )}
+                        </div>
                         
-                        <Badge variant="outline" className="mb-2">
-                          {question.sessionTitle}
-                        </Badge>
-                        
-                        <p className="text-gray-800 dark:text-gray-200 mb-3 text-base">
-                          {question.question}
+                        <p className="text-gray-800 dark:text-gray-200 mb-3">
+                          {question.content}
                         </p>
                         
-                        {question.answered && (
-                          <div className="mt-4 pl-3 border-l-2 border-green-400 dark:border-green-600">
-                            <div className="flex items-center space-x-2 mb-2">
-                              <Avatar className="h-5 w-5">
-                                <AvatarFallback className="bg-green-100 text-green-800 text-xs">
-                                  {question.answeredBy.split(' ').map(n => n[0]).join('')}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="text-sm font-medium">{question.answeredBy}</span>
-                              <span className="text-xs text-gray-500">
-                                {formatDate(question.answeredAt!)}
-                              </span>
-                            </div>
-                            <p className="text-gray-700 dark:text-gray-300 text-sm">
-                              {question.answer}
-                            </p>
-                          </div>
-                        )}
-                      </CardContent>
+                        <div className="flex items-center gap-4">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleUpvote(question.id)}
+                            className="text-gray-600 hover:text-connect-600"
+                          >
+                            <ArrowUp className="h-4 w-4 mr-1" />
+                            {question.upvotes}
+                          </Button>
+                        </div>
+                      </div>
                     </div>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <MessageSquare className="h-12 w-12 mx-auto text-gray-400" />
-                <h3 className="mt-4 text-lg font-medium">No questions found</h3>
-                <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-                  {searchTerm || selectedSession ? 
-                    "Try adjusting your search or filters" : 
-                    "Be the first to ask a question to the speakers"
-                  }
-                </p>
-              </div>
-            )}
-          </TabsContent>
-          
-          <TabsContent value="ask">
+                  </CardContent>
+                </Card>
+              );
+            })
+          ) : (
             <Card>
-              <CardHeader>
-                <CardTitle>Ask Your Question</CardTitle>
-                <CardDescription>
-                  Your question will be visible to speakers and other attendees
-                </CardDescription>
-              </CardHeader>
-              <form onSubmit={handleSubmitQuestion}>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <label htmlFor="session" className="text-sm font-medium">
-                      Select Session or Speaker
-                    </label>
-                    <Select 
-                      value={questionSession} 
-                      onValueChange={setQuestionSession}
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choose a session" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {sessions.map((session) => (
-                          <SelectItem key={session.id} value={session.id}>
-                            {session.title} - {session.speaker}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <label htmlFor="question" className="text-sm font-medium">
-                      Your Question
-                    </label>
-                    <Textarea
-                      id="question"
-                      placeholder="Type your question here..."
-                      value={questionText}
-                      onChange={(e) => setQuestionText(e.target.value)}
-                      rows={4}
-                      required
-                      className="resize-none"
-                    />
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    <p>Tips for good questions:</p>
-                    <ul className="list-disc list-inside ml-2 mt-1 space-y-1">
-                      <li>Be specific and concise</li>
-                      <li>Ask about topics relevant to the session</li>
-                      <li>Avoid yes/no questions</li>
-                    </ul>
-                  </div>
-                </CardContent>
-                <CardFooter className="flex justify-end space-x-2 border-t pt-6">
-                  <Button 
-                    type="button"
-                    variant="outline" 
-                    onClick={() => setActiveTab('browse')}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="submit"
-                    className="bg-connect-600 hover:bg-connect-700"
-                  >
-                    <Send size={16} className="mr-2" />
-                    Submit Question
-                  </Button>
-                </CardFooter>
-              </form>
+              <CardContent className="py-10 text-center text-muted-foreground">
+                <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No questions from other attendees yet.</p>
+                <p className="text-sm">Be the first to ask a question!</p>
+              </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </div>
+
+      {/* Feedback Modal */}
+      {showFeedbackModal && selectedQuestionId && (
+        <FeedbackModal
+          questionId={selectedQuestionId}
+          isOpen={showFeedbackModal}
+          onClose={() => {
+            setShowFeedbackModal(false);
+            setSelectedQuestionId(null);
+          }}
+        />
+      )}
     </AppLayout>
   );
 };

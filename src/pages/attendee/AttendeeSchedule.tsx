@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Calendar as CalendarIcon, Clock, MapPin, Users, ChevronRight, Calendar as CalendarFull } from 'lucide-react';
 import { format } from 'date-fns';
@@ -123,6 +124,7 @@ const categoryColors = {
     className: 'bg-green-500 text-white'
   }
 } as const;
+
 const AttendeeSchedule = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedTab, setSelectedTab] = useState('all');
@@ -142,10 +144,12 @@ const AttendeeSchedule = () => {
   const eventDates = [...new Set(events.map(event => event.date))];
   // Convert string dates to Date objects for the calendar
   const highlightedDates = eventDates.map(date => new Date(date));
-  return <AppLayout>
-      <div className="animate-fade-in">
-        <div className="flex flex-col space-y-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+
+  return (
+    <AppLayout>
+      <div className="container mx-auto px-4 py-6 max-w-7xl animate-fade-in">
+        <div className="flex flex-col space-y-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Event Schedule</h1>
               <p className="text-gray-600 dark:text-gray-400">Browse and manage your event schedule</p>
@@ -158,31 +162,40 @@ const AttendeeSchedule = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Calendar Section */}
-            <Card className="lg:col-span-1 bg-white dark:bg-gray-800 backdrop-blur-sm border border-gray-200 dark:border-gray-700 shadow-md">
-              <CardHeader>
-                <CardTitle className="flex items-center text-gray-900 dark:text-white">
-                  <CalendarFull className="h-5 w-5 mr-2 text-connect-600 dark:text-connect-400" />
-                  Event Days
-                </CardTitle>
-                <CardDescription>Select a date to see the schedule</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} className="border rounded-md bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-2" modifiers={{
-                highlighted: highlightedDates
-              }} modifiersStyles={{
-                highlighted: {
-                  fontWeight: 'bold',
-                  backgroundColor: 'rgba(139, 92, 246, 0.15)',
-                  color: '#8b5cf6',
-                  borderRadius: '4px'
-                }
-              }} />
-              </CardContent>
-              <CardFooter className="flex justify-between text-sm text-gray-500">
-                <span>{events.length} total events</span>
-                <span>{formattedSelectedDate ? filteredEvents.length : 0} events today</span>
-              </CardFooter>
-            </Card>
+            <div className="lg:col-span-1">
+              <Card className="bg-white dark:bg-gray-800 backdrop-blur-sm border border-gray-200 dark:border-gray-700 shadow-md">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-gray-900 dark:text-white">
+                    <CalendarFull className="h-5 w-5 mr-2 text-connect-600 dark:text-connect-400" />
+                    Event Days
+                  </CardTitle>
+                  <CardDescription>Select a date to see the schedule</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Calendar 
+                    mode="single" 
+                    selected={selectedDate} 
+                    onSelect={setSelectedDate} 
+                    className="border rounded-md bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 p-2 w-full" 
+                    modifiers={{
+                      highlighted: highlightedDates
+                    }} 
+                    modifiersStyles={{
+                      highlighted: {
+                        fontWeight: 'bold',
+                        backgroundColor: 'rgba(139, 92, 246, 0.15)',
+                        color: '#8b5cf6',
+                        borderRadius: '4px'
+                      }
+                    }} 
+                  />
+                </CardContent>
+                <CardFooter className="flex justify-between text-sm text-gray-500">
+                  <span>{events.length} total events</span>
+                  <span>{formattedSelectedDate ? filteredEvents.length : 0} events today</span>
+                </CardFooter>
+              </Card>
+            </div>
 
             {/* Events Section */}
             <div className="lg:col-span-2">
@@ -192,26 +205,31 @@ const AttendeeSchedule = () => {
                     Events for {selectedDate ? format(selectedDate, 'MMMM d, yyyy') : 'Today'}
                   </CardTitle>
                   <Tabs value={selectedTab} onValueChange={setSelectedTab} className="w-full">
-                    <TabsList className="mb-2 bg-gray-100 dark:bg-gray-700 p-1 rounded-md px-0">
+                    <TabsList className="mb-2 bg-gray-100 dark:bg-gray-700 p-1 rounded-md grid grid-cols-5 w-full">
                       <TabsTrigger value="all" className="text-xs sm:text-sm">All</TabsTrigger>
                       <TabsTrigger value="keynote" className="text-xs sm:text-sm">Keynotes</TabsTrigger>
                       <TabsTrigger value="panel" className="text-xs sm:text-sm">Panels</TabsTrigger>
                       <TabsTrigger value="workshop" className="text-xs sm:text-sm">Workshops</TabsTrigger>
-                      <TabsTrigger value="networking" className="text-xs sm:text-sm">Networking</TabsTrigger>
+                      <TabsTrigger value="networking" className="text-xs sm:text-sm">Network</TabsTrigger>
                     </TabsList>
                   </Tabs>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  {filteredEvents.length > 0 ? filteredEvents.map(event => <div key={event.id} className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-300 bg-white dark:bg-gray-800">
+                <CardContent className="space-y-4 max-h-[600px] overflow-y-auto">
+                  {filteredEvents.length > 0 ? (
+                    filteredEvents.map(event => (
+                      <div key={event.id} className="p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-300 bg-white dark:bg-gray-800">
                         <div className="flex justify-between items-start gap-2 flex-wrap sm:flex-nowrap">
                           <div className="flex-1 min-w-0">
-                            <div className="flex flex-wrap gap-2 justify-between items-start">
-                              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{event.title}</h3>
-                              <Badge className={categoryColors[event.category as keyof typeof categoryColors]?.className} variant={categoryColors[event.category as keyof typeof categoryColors]?.variant || 'default'}>
+                            <div className="flex flex-wrap gap-2 justify-between items-start mb-2">
+                              <h3 className="text-lg font-semibold text-gray-900 dark:text-white line-clamp-2">{event.title}</h3>
+                              <Badge 
+                                className={categoryColors[event.category as keyof typeof categoryColors]?.className} 
+                                variant={categoryColors[event.category as keyof typeof categoryColors]?.variant || 'default'}
+                              >
                                 {event.category.charAt(0).toUpperCase() + event.category.slice(1)}
                               </Badge>
                             </div>
-                            <p className="text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">{event.description}</p>
+                            <p className="text-gray-600 dark:text-gray-400 mt-1 line-clamp-2 text-sm">{event.description}</p>
                             <div className="flex flex-wrap gap-x-4 gap-y-2 mt-3">
                               <div className="flex items-center text-gray-500 dark:text-gray-400 text-sm">
                                 <Clock className="h-4 w-4 mr-1 text-connect-500 dark:text-connect-400" />
@@ -227,10 +245,12 @@ const AttendeeSchedule = () => {
                               </div>
                             </div>
 
-                            {event.speakers.length > 0 && <div className="mt-4">
+                            {event.speakers.length > 0 && (
+                              <div className="mt-4">
                                 <div className="text-sm font-medium text-gray-700 dark:text-gray-300">Speakers:</div>
                                 <div className="flex flex-wrap gap-2 mt-1">
-                                  {event.speakers.map(speaker => <HoverCard key={speaker.id}>
+                                  {event.speakers.map(speaker => (
+                                    <HoverCard key={speaker.id}>
                                       <HoverCardTrigger asChild>
                                         <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-700 px-2 py-1 rounded-full cursor-pointer border border-gray-200 dark:border-gray-600">
                                           <Avatar className="h-6 w-6">
@@ -259,9 +279,11 @@ const AttendeeSchedule = () => {
                                           </div>
                                         </div>
                                       </HoverCardContent>
-                                    </HoverCard>)}
+                                    </HoverCard>
+                                  ))}
                                 </div>
-                              </div>}
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -274,19 +296,25 @@ const AttendeeSchedule = () => {
                             <ChevronRight className="ml-1 h-4 w-4" />
                           </Button>
                         </div>
-                      </div>) : <div className="text-center py-10">
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-10">
                       <CalendarIcon className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600" />
                       <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">No events found</h3>
                       <p className="mt-2 text-gray-500 dark:text-gray-400">
                         There are no events scheduled for this date or category.
                       </p>
-                    </div>}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
           </div>
         </div>
       </div>
-    </AppLayout>;
+    </AppLayout>
+  );
 };
+
 export default AttendeeSchedule;

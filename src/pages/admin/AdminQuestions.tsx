@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { TabsContent } from '@/components/ui/tabs';
@@ -14,207 +14,340 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CheckCircle, XCircle, ArrowUpCircle } from 'lucide-react';
+import { CheckCircle, XCircle, ArrowUpCircle, Clock, Star } from 'lucide-react';
 import { format } from 'date-fns';
-import { Question } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
-// Mock sessions data for reference
-const mockSessions = [
-  { id: 'session1', title: 'Keynote: Future of Tech', speakerId: 'speaker1' },
-  { id: 'session2', title: 'Hands-on Workshop: AI Development', speakerId: 'speaker2' },
-  { id: 'session3', title: 'Panel: Cybersecurity Trends', speakerId: 'speaker3' }
-];
+interface Question {
+  id: string;
+  content: string;
+  user_id: string | null;
+  is_anonymous: boolean;
+  is_answered: boolean;
+  answered_at: string | null;
+  upvotes: number;
+  created_at: string;
+  profiles?: {
+    name: string;
+    photo_url: string;
+  } | null;
+}
 
-// Mock speakers data for reference
-const mockSpeakers = [
-  { id: 'speaker1', name: 'Dr. Eliza Martinez' },
-  { id: 'speaker2', name: 'James Wilson' },
-  { id: 'speaker3', name: 'Sophia Chen' }
-];
-
-// Mock users data for reference
-const mockUsers = [
-  { id: 'user1', name: 'Alex Johnson', photoUrl: 'https://i.pravatar.cc/150?img=1' },
-  { id: 'user2', name: 'Morgan Smith', photoUrl: 'https://i.pravatar.cc/150?img=2' },
-  { id: 'user3', name: 'Jamie Wilson', photoUrl: 'https://i.pravatar.cc/150?img=3' }
-];
-
-// Mock data for questions
-const mockQuestions: Question[] = [
-  {
-    id: '1',
-    question: 'How do you see artificial intelligence impacting the job market in the next 5 years?',
-    sessionId: 'session1',
-    userId: 'user1',
-    speakerId: 'speaker1',
-    upvotes: 15,
-    answered: false,
-    createdAt: '2025-06-15T10:15:00Z'
-  },
-  {
-    id: '2',
-    question: 'What security measures should startups prioritize when building their first product?',
-    sessionId: 'session2',
-    userId: 'user2',
-    speakerId: 'speaker2',
-    upvotes: 8,
-    answered: true,
-    createdAt: '2025-06-15T11:30:00Z'
-  },
-  {
-    id: '3',
-    question: 'Could you elaborate on the design thinking process you mentioned earlier?',
-    sessionId: 'session3',
-    userId: 'user3',
-    speakerId: 'speaker3',
-    upvotes: 12,
-    answered: false,
-    createdAt: '2025-06-15T14:45:00Z'
-  },
-  {
-    id: '4',
-    question: 'What programming languages do you recommend for beginners interested in AI?',
-    sessionId: 'session1',
-    userId: 'user2',
-    speakerId: 'speaker1',
-    upvotes: 7,
-    answered: false,
-    createdAt: '2025-06-15T10:25:00Z'
-  }
-];
+interface QuestionFeedback {
+  id: string;
+  question_id: string;
+  satisfaction_level: number;
+  feedback_text: string | null;
+  created_at: string;
+}
 
 const AdminQuestions = () => {
   const [activeTab, setActiveTab] = useState<string>('all');
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [feedback, setFeedback] = useState<QuestionFeedback[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
   
+  useEffect(() => {
+    fetchQuestions();
+    fetchFeedback();
+  }, []);
+
+  const fetchQuestions = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('questions')
+        .select(`
+          *,
+          profiles:user_id (name, photo_url)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      // Handle the case where profiles might be null or an error
+      const processedData = (data || []).map(question => ({
+        ...question,
+        profiles: question.profiles && typeof question.profiles === 'object' && 'name' in question.profiles 
+          ? question.profiles as { name: string; photo_url: string }
+          : null
+      }));
+      
+      setQuestions(processedData);
+    } catch (error) {
+      console.error('Error fetching questions:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load questions",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchFeedback = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('question_feedback')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setFeedback(data || []);
+    } catch (error) {
+      console.error('Error fetching feedback:', error);
+    }
+  };
+
   // Filter questions based on active tab
   const getFilteredQuestions = () => {
     switch(activeTab) {
       case 'answered':
-        return mockQuestions.filter(q => q.answered);
+        return questions.filter(q => q.is_answered);
       case 'unanswered':
-        return mockQuestions.filter(q => !q.answered);
+        return questions.filter(q => !q.is_answered);
       case 'trending':
-        return [...mockQuestions].sort((a, b) => b.upvotes - a.upvotes);
+        return [...questions].sort((a, b) => b.upvotes - a.upvotes);
       default:
-        return mockQuestions;
+        return questions;
     }
   };
 
-  // Helper functions to get related data
-  const getSessionTitle = (sessionId: string) => {
-    const session = mockSessions.find(s => s.id === sessionId);
-    return session ? session.title : 'Unknown Session';
+  const handleMarkAsAnswered = async (question: Question) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('questions')
+        .update({
+          is_answered: true,
+          answered_at: new Date().toISOString(),
+          answered_by: user.id
+        })
+        .eq('id', question.id);
+
+      if (error) throw error;
+
+      // Create notification for the user
+      if (question.user_id) {
+        await supabase
+          .from('notifications')
+          .insert({
+            user_id: question.user_id,
+            title: 'Question Answered',
+            message: 'Your question has been answered! Please provide feedback.',
+            type: 'question_answered',
+            related_id: question.id
+          });
+      }
+
+      toast({
+        title: "Success",
+        description: "Question marked as answered and notification sent"
+      });
+
+      fetchQuestions();
+    } catch (error) {
+      console.error('Error marking question as answered:', error);
+      toast({
+        title: "Error",
+        description: "Failed to mark question as answered",
+        variant: "destructive"
+      });
+    }
   };
 
-  const getSpeakerName = (speakerId: string) => {
-    const speaker = mockSpeakers.find(s => s.id === speakerId);
-    return speaker ? speaker.name : 'Unknown Speaker';
+  const handleDeleteQuestion = async (question: Question) => {
+    try {
+      const { error } = await supabase
+        .from('questions')
+        .delete()
+        .eq('id', question.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Question deleted successfully"
+      });
+
+      fetchQuestions();
+    } catch (error) {
+      console.error('Error deleting question:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete question",
+        variant: "destructive"
+      });
+    }
   };
 
-  const getUserData = (userId: string) => {
-    return mockUsers.find(u => u.id === userId) || { name: 'Unknown User', photoUrl: '' };
+  const getQuestionFeedback = (questionId: string) => {
+    return feedback.filter(f => f.question_id === questionId);
   };
 
-  const handleMarkAsAnswered = (question: Question) => {
-    console.log('Mark as answered', question);
-  };
-
-  const handleDeleteQuestion = (question: Question) => {
-    console.log('Delete question', question);
+  const getAverageSatisfaction = (questionId: string) => {
+    const questionFeedback = getQuestionFeedback(questionId);
+    if (questionFeedback.length === 0) return 0;
+    
+    const total = questionFeedback.reduce((sum, f) => sum + f.satisfaction_level, 0);
+    return Math.round(total / questionFeedback.length);
   };
 
   const filteredQuestions = getFilteredQuestions();
 
   return (
     <AdminLayout>
-      <AdminPageHeader
-        title="Attendee Questions"
-        description="Review and moderate questions from attendees"
-        tabs={[
-          { id: 'all', label: 'All Questions' },
-          { id: 'unanswered', label: 'Unanswered' },
-          { id: 'answered', label: 'Answered' },
-          { id: 'trending', label: 'Trending' }
-        ]}
-        defaultTab="all"
-        onTabChange={setActiveTab}
-      >
-        {['all', 'unanswered', 'answered', 'trending'].map(tabId => (
-          <TabsContent key={tabId} value={tabId} className="space-y-4">
-            {filteredQuestions.length === 0 ? (
-              <Card>
-                <CardContent className="py-10 text-center text-muted-foreground">
-                  No questions found in this category.
-                </CardContent>
-              </Card>
-            ) : (
-              filteredQuestions.map(question => {
-                const user = getUserData(question.userId);
-                return (
-                  <Card key={question.id} className={question.answered ? 'border-green-100' : ''}>
-                    <CardHeader className="pb-2">
-                      <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-3">
-                          <Avatar>
-                            <AvatarImage src={user.photoUrl} />
-                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <CardTitle className="text-base">{user.name}</CardTitle>
-                            <CardDescription>
-                              {format(new Date(question.createdAt), 'MMM d, yyyy h:mm a')}
-                            </CardDescription>
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        <AdminPageHeader
+          title="Attendee Questions"
+          description="Review and moderate questions from attendees"
+          tabs={[
+            { id: 'all', label: 'All Questions' },
+            { id: 'unanswered', label: 'Unanswered' },
+            { id: 'answered', label: 'Answered' },
+            { id: 'trending', label: 'Trending' }
+          ]}
+          defaultTab="all"
+          onTabChange={setActiveTab}
+        >
+          {['all', 'unanswered', 'answered', 'trending'].map(tabId => (
+            <TabsContent key={tabId} value={tabId} className="space-y-4">
+              {isLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                  <p className="mt-2 text-muted-foreground">Loading questions...</p>
+                </div>
+              ) : filteredQuestions.length === 0 ? (
+                <Card>
+                  <CardContent className="py-10 text-center text-muted-foreground">
+                    No questions found in this category.
+                  </CardContent>
+                </Card>
+              ) : (
+                filteredQuestions.map(question => {
+                  const questionFeedback = getQuestionFeedback(question.id);
+                  const avgSatisfaction = getAverageSatisfaction(question.id);
+                  
+                  return (
+                    <Card key={question.id} className={question.is_answered ? 'border-green-100' : ''}>
+                      <CardHeader className="pb-2">
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center gap-3">
+                            <Avatar>
+                              <AvatarImage src={question.profiles?.photo_url || ''} />
+                              <AvatarFallback>
+                                {question.is_anonymous ? 'A' : (question.profiles?.name?.charAt(0) || 'U')}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <CardTitle className="text-base">
+                                {question.is_anonymous ? 'Anonymous' : (question.profiles?.name || 'Unknown User')}
+                              </CardTitle>
+                              <CardDescription>
+                                {format(new Date(question.created_at), 'MMM d, yyyy h:mm a')}
+                              </CardDescription>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={question.is_answered ? 'outline' : 'default'}>
+                              {question.is_answered ? 'Answered' : 'Pending'}
+                            </Badge>
+                            {question.is_answered && questionFeedback.length > 0 && (
+                              <Badge variant="secondary" className="flex items-center gap-1">
+                                <Star className="h-3 w-3" />
+                                {avgSatisfaction}/5
+                              </Badge>
+                            )}
                           </div>
                         </div>
-                        <Badge variant={question.answered ? 'outline' : 'default'}>
-                          {question.answered ? 'Answered' : 'Pending'}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-base mb-3">{question.question}</p>
-                      <div className="flex flex-wrap gap-2 text-sm">
-                        <Badge variant="secondary">Session: {getSessionTitle(question.sessionId)}</Badge>
-                        <Badge variant="secondary">Speaker: {getSpeakerName(question.speakerId || '')}</Badge>
-                        <Badge variant="outline" className="flex items-center gap-1">
-                          <ArrowUpCircle size={14} /> {question.upvotes} upvotes
-                        </Badge>
-                      </div>
-                    </CardContent>
-                    <CardFooter className="border-t pt-3 flex justify-between">
-                      <div className="text-sm text-muted-foreground">
-                        Question ID: {question.id}
-                      </div>
-                      <div className="flex gap-2">
-                        {!question.answered && (
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-base mb-3">{question.content}</p>
+                        <div className="flex flex-wrap gap-2 text-sm">
+                          <Badge variant="outline" className="flex items-center gap-1">
+                            <ArrowUpCircle size={14} /> {question.upvotes} upvotes
+                          </Badge>
+                          {question.is_answered && question.answered_at && (
+                            <Badge variant="outline" className="flex items-center gap-1">
+                              <Clock size={14} />
+                              Answered {format(new Date(question.answered_at), 'MMM d')}
+                            </Badge>
+                          )}
+                          {questionFeedback.length > 0 && (
+                            <Badge variant="outline">
+                              {questionFeedback.length} feedback{questionFeedback.length !== 1 ? 's' : ''}
+                            </Badge>
+                          )}
+                        </div>
+                        
+                        {/* Show feedback if available */}
+                        {questionFeedback.length > 0 && (
+                          <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
+                            <h4 className="text-sm font-medium mb-2">Feedback:</h4>
+                            <div className="space-y-2">
+                              {questionFeedback.map(fb => (
+                                <div key={fb.id} className="text-sm">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <div className="flex">
+                                      {[1, 2, 3, 4, 5].map(star => (
+                                        <Star 
+                                          key={star}
+                                          className={`h-3 w-3 ${star <= fb.satisfaction_level ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+                                        />
+                                      ))}
+                                    </div>
+                                    <span className="text-xs text-muted-foreground">
+                                      {format(new Date(fb.created_at), 'MMM d')}
+                                    </span>
+                                  </div>
+                                  {fb.feedback_text && (
+                                    <p className="text-muted-foreground italic">"{fb.feedback_text}"</p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                      <CardFooter className="border-t pt-3 flex justify-between">
+                        <div className="text-sm text-muted-foreground">
+                          Question ID: {question.id}
+                        </div>
+                        <div className="flex gap-2">
+                          {!question.is_answered && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="text-green-600 border-green-200 hover:bg-green-50"
+                              onClick={() => handleMarkAsAnswered(question)}
+                            >
+                              <CheckCircle size={16} className="mr-1" />
+                              Mark Answered
+                            </Button>
+                          )}
                           <Button 
                             size="sm" 
-                            variant="outline"
-                            className="text-green-600 border-green-200 hover:bg-green-50"
-                            onClick={() => handleMarkAsAnswered(question)}
+                            variant="outline" 
+                            className="text-destructive border-destructive/20 hover:bg-destructive/10"
+                            onClick={() => handleDeleteQuestion(question)}
                           >
-                            <CheckCircle size={16} className="mr-1" />
-                            Mark Answered
+                            <XCircle size={16} className="mr-1" />
+                            Remove
                           </Button>
-                        )}
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="text-destructive border-destructive/20 hover:bg-destructive/10"
-                          onClick={() => handleDeleteQuestion(question)}
-                        >
-                          <XCircle size={16} className="mr-1" />
-                          Remove
-                        </Button>
-                      </div>
-                    </CardFooter>
-                  </Card>
-                );
-              })
-            )}
-          </TabsContent>
-        ))}
-      </AdminPageHeader>
+                        </div>
+                      </CardFooter>
+                    </Card>
+                  );
+                })
+              )}
+            </TabsContent>
+          ))}
+        </AdminPageHeader>
+      </div>
     </AdminLayout>
   );
 };

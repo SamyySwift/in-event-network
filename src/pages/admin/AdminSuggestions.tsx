@@ -25,50 +25,54 @@ const mockUsers = [
   { id: 'user3', name: 'Jamie Wilson', photoUrl: 'https://i.pravatar.cc/150?img=3' }
 ];
 
-// Mock data for suggestions with proper type field
+// Mock data for suggestions with proper field names
 const mockSuggestions: (Suggestion & { status?: 'new' | 'reviewed' | 'implemented' })[] = [
   {
     id: '1',
     content: 'It would be great to have more networking breaks between sessions.',
-    userId: 'user1',
-    eventId: 'event1',
-    createdAt: '2025-06-15T10:15:00Z',
+    user_id: 'user1',
+    event_id: 'event1',
+    created_at: '2025-06-15T10:15:00Z',
     type: 'suggestion',
+    rating: null,
     status: 'new'
   },
   {
     id: '2',
     content: 'The WiFi connection could be improved in the main hall.',
-    userId: 'user2',
-    eventId: 'event1',
-    createdAt: '2025-06-15T11:30:00Z',
+    user_id: 'user2',
+    event_id: 'event1',
+    created_at: '2025-06-15T11:30:00Z',
     type: 'suggestion',
+    rating: null,
     status: 'reviewed'
   },
   {
     id: '3',
     content: 'Add more vegetarian options to the catering menu.',
-    userId: 'user3',
-    eventId: 'event1',
-    createdAt: '2025-06-15T14:45:00Z',
+    user_id: 'user3',
+    event_id: 'event1',
+    created_at: '2025-06-15T14:45:00Z',
     type: 'suggestion',
+    rating: null,
     status: 'implemented'
   },
   {
     id: '4',
     content: 'Provide charging stations in all meeting rooms.',
-    userId: 'user1',
-    eventId: 'event1',
-    createdAt: '2025-06-15T16:20:00Z',
+    user_id: 'user1',
+    event_id: 'event1',
+    created_at: '2025-06-15T16:20:00Z',
     type: 'suggestion',
+    rating: null,
     status: 'new'
   },
   {
     id: '5',
     content: 'Overall event rating: Excellent organization and content!',
-    userId: 'user2',
-    eventId: 'event1',
-    createdAt: '2025-06-15T18:00:00Z',
+    user_id: 'user2',
+    event_id: 'event1',
+    created_at: '2025-06-15T18:00:00Z',
     type: 'rating',
     rating: 5,
     status: 'new'
@@ -95,8 +99,8 @@ const AdminSuggestions = () => {
   };
 
   // Helper function to get user data
-  const getUserData = (userId: string) => {
-    return mockUsers.find(u => u.id === userId) || { name: 'Unknown User', photoUrl: '' };
+  const getUserData = (user_id: string) => {
+    return mockUsers.find(u => u.id === user_id) || { name: 'Unknown User', photoUrl: '' };
   };
 
   const handleMarkAsReviewed = (suggestion: Suggestion) => {
@@ -138,7 +142,7 @@ const AdminSuggestions = () => {
               </Card>
             ) : (
               filteredSuggestions.map(suggestion => {
-                const user = getUserData(suggestion.userId);
+                const user = getUserData(suggestion.user_id || '');
                 return (
                   <Card key={suggestion.id} className={
                     suggestion.status === 'implemented' ? 'border-green-100' : 
@@ -154,7 +158,7 @@ const AdminSuggestions = () => {
                           <div>
                             <CardTitle className="text-base">{user.name}</CardTitle>
                             <CardDescription>
-                              {format(new Date(suggestion.createdAt), 'MMM d, yyyy h:mm a')}
+                              {format(new Date(suggestion.created_at), 'MMM d, yyyy h:mm a')}
                             </CardDescription>
                           </div>
                         </div>

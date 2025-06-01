@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ArrowUp, MessageSquare, Send, User } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
@@ -68,7 +67,7 @@ const AttendeeQuestions = () => {
           session_id,
           event_id,
           is_anonymous,
-          profiles!inner(name, photo_url)
+          profiles:user_id(name, photo_url)
         `)
         .order('created_at', { ascending: false });
 

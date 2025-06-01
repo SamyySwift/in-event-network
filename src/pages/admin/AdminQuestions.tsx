@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -59,12 +58,21 @@ const AdminQuestions = () => {
           session_id,
           event_id,
           is_anonymous,
-          profiles!inner(name, photo_url)
+          profiles(name, photo_url)
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setQuestions(data || []);
+      
+      // Transform the data to match our interface
+      const transformedData: QuestionWithProfile[] = (data || []).map(item => ({
+        ...item,
+        profiles: Array.isArray(item.profiles) && item.profiles.length > 0 
+          ? item.profiles[0] 
+          : null
+      }));
+      
+      setQuestions(transformedData);
     } catch (error) {
       console.error('Error fetching questions:', error);
       toast({

@@ -57,12 +57,23 @@ const AdminSuggestions = () => {
           created_at,
           user_id,
           event_id,
-          profiles!inner(name, photo_url)
+          profiles(name, photo_url)
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setSuggestions(data || []);
+      
+      // Transform the data to match our interface
+      const transformedData: SuggestionWithProfile[] = (data || []).map(item => ({
+        ...item,
+        type: item.type as 'suggestion' | 'rating',
+        status: item.status as 'new' | 'reviewed' | 'implemented',
+        profiles: Array.isArray(item.profiles) && item.profiles.length > 0 
+          ? item.profiles[0] 
+          : null
+      }));
+      
+      setSuggestions(transformedData);
     } catch (error) {
       console.error('Error fetching suggestions:', error);
       toast({

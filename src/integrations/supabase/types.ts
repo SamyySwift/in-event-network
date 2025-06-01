@@ -65,6 +65,87 @@ export type Database = {
           },
         ]
       }
+      facilities: {
+        Row: {
+          contact_number: string | null
+          created_at: string | null
+          description: string | null
+          icon_type: string | null
+          id: string
+          image_url: string | null
+          location: string | null
+          name: string
+          rules: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          contact_number?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon_type?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          name: string
+          rules?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          contact_number?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon_type?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          name?: string
+          rules?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      media_files: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          file_size: number | null
+          file_type: string
+          filename: string
+          id: string
+          original_name: string
+          tags: string[] | null
+          updated_at: string | null
+          uploaded_by: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          file_size?: number | null
+          file_type: string
+          filename: string
+          id?: string
+          original_name: string
+          tags?: string[] | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          file_size?: number | null
+          file_type?: string
+          filename?: string
+          id?: string
+          original_name?: string
+          tags?: string[] | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+          url?: string
+        }
+        Relationships: []
+      }
       messages: {
         Row: {
           content: string
@@ -120,6 +201,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_read: boolean | null
+          message: string
+          related_id: string | null
+          title: string
+          type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          related_id?: string | null
+          title: string
+          type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          related_id?: string | null
+          title?: string
+          type?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -187,6 +301,122 @@ export type Database = {
           twitter_link?: string | null
           updated_at?: string
           website_link?: string | null
+        }
+        Relationships: []
+      }
+      question_feedback: {
+        Row: {
+          created_at: string | null
+          feedback_text: string | null
+          id: string
+          question_id: string | null
+          satisfaction_level: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          feedback_text?: string | null
+          id?: string
+          question_id?: string | null
+          satisfaction_level?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          feedback_text?: string | null
+          id?: string
+          question_id?: string | null
+          satisfaction_level?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_feedback_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      questions: {
+        Row: {
+          answered_at: string | null
+          answered_by: string | null
+          content: string
+          created_at: string | null
+          event_id: string | null
+          id: string
+          is_anonymous: boolean | null
+          is_answered: boolean | null
+          session_id: string | null
+          updated_at: string | null
+          upvotes: number | null
+          user_id: string | null
+        }
+        Insert: {
+          answered_at?: string | null
+          answered_by?: string | null
+          content: string
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          is_answered?: boolean | null
+          session_id?: string | null
+          updated_at?: string | null
+          upvotes?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          answered_at?: string | null
+          answered_by?: string | null
+          content?: string
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          is_answered?: boolean | null
+          session_id?: string | null
+          updated_at?: string | null
+          upvotes?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      suggestions: {
+        Row: {
+          content: string
+          created_at: string | null
+          event_id: string | null
+          id: string
+          rating: number | null
+          status: string | null
+          type: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          rating?: number | null
+          status?: string | null
+          type?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          rating?: number | null
+          status?: string | null
+          type?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }

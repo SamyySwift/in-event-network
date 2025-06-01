@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Lightbulb, Star, Send, MessageSquare } from 'lucide-react';
+import { Lightbulb, Star, Send, MessageSquare, TrendingUp, Clock, CheckCircle } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
 import { 
   Card, 
@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 
 interface Suggestion {
   id: string;
@@ -28,10 +29,25 @@ interface Suggestion {
   user_id: string;
 }
 
+interface SuggestionStats {
+  total: number;
+  new: number;
+  reviewed: number;
+  implemented: number;
+  averageRating: number;
+}
+
 const AttendeeSuggestions = () => {
   const { currentUser } = useAuth();
   const { toast } = useToast();
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [stats, setStats] = useState<SuggestionStats>({
+    total: 0,
+    new: 0,
+    reviewed: 0,
+    implemented: 0,
+    averageRating: 0
+  });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [newSuggestion, setNewSuggestion] = useState('');
@@ -41,6 +57,7 @@ const AttendeeSuggestions = () => {
   useEffect(() => {
     if (currentUser) {
       fetchMySuggestions();
+      fetchStats();
     }
   }, [currentUser]);
 
@@ -83,6 +100,43 @@ const AttendeeSuggestions = () => {
     }
   };
 
+  const fetchStats = async () => {
+    if (!currentUser) return;
+
+    try {
+      const user = await supabase.auth.getUser();
+      if (!user.data.user) return;
+
+      // Fetch all suggestions for stats
+      const { data: allSuggestions, error } = await supabase
+        .from('suggestions')
+        .select('*')
+        .eq('user_id', user.data.user.id);
+
+      if (error) throw error;
+
+      const total = allSuggestions?.length || 0;
+      const newCount = allSuggestions?.filter(s => s.status === 'new').length || 0;
+      const reviewed = allSuggestions?.filter(s => s.status === 'reviewed').length || 0;
+      const implemented = allSuggestions?.filter(s => s.status === 'implemented').length || 0;
+      
+      const ratings = allSuggestions?.filter(s => s.type === 'rating' && s.rating) || [];
+      const averageRating = ratings.length > 0 
+        ? ratings.reduce((sum, s) => sum + (s.rating || 0), 0) / ratings.length 
+        : 0;
+
+      setStats({
+        total,
+        new: newCount,
+        reviewed,
+        implemented,
+        averageRating: Math.round(averageRating * 10) / 10
+      });
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+    }
+  };
+
   const handleSubmitSuggestion = async () => {
     if (!currentUser || !newSuggestion.trim()) return;
 
@@ -110,6 +164,7 @@ const AttendeeSuggestions = () => {
 
       setNewSuggestion('');
       fetchMySuggestions();
+      fetchStats();
     } catch (error) {
       console.error('Error submitting suggestion:', error);
       toast({
@@ -150,6 +205,7 @@ const AttendeeSuggestions = () => {
       setRating(0);
       setRatingFeedback('');
       fetchMySuggestions();
+      fetchStats();
     } catch (error) {
       console.error('Error submitting rating:', error);
       toast({
@@ -165,14 +221,19 @@ const AttendeeSuggestions = () => {
   const getStatusBadge = (status: string) => {
     switch(status) {
       case 'new':
-        return <Badge className="bg-blue-100 text-blue-800">New</Badge>;
+        return <Badge className="bg-blue-100 text-blue-800"><Clock className="h-3 w-3 mr-1" />New</Badge>;
       case 'reviewed':
-        return <Badge className="bg-yellow-100 text-yellow-800">Under Review</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800"><TrendingUp className="h-3 w-3 mr-1" />Under Review</Badge>;
       case 'implemented':
-        return <Badge className="bg-green-100 text-green-800">Implemented</Badge>;
+        return <Badge className="bg-green-100 text-green-800"><CheckCircle className="h-3 w-3 mr-1" />Implemented</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
+  };
+
+  const getStatusProgress = () => {
+    if (stats.total === 0) return 0;
+    return ((stats.reviewed + stats.implemented) / stats.total) * 100;
   };
 
   if (loading) {
@@ -198,11 +259,63 @@ const AttendeeSuggestions = () => {
           </p>
         </div>
 
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total</p>
+                  <p className="text-2xl font-bold">{stats.total}</p>
+                </div>
+                <MessageSquare className="h-8 w-8 text-blue-500" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Progress</p>
+                  <p className="text-2xl font-bold">{Math.round(getStatusProgress())}%</p>
+                </div>
+                <TrendingUp className="h-8 w-8 text-green-500" />
+              </div>
+              <Progress value={getStatusProgress()} className="mt-2" />
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Implemented</p>
+                  <p className="text-2xl font-bold">{stats.implemented}</p>
+                </div>
+                <CheckCircle className="h-8 w-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Avg Rating</p>
+                  <p className="text-2xl font-bold">{stats.averageRating}</p>
+                </div>
+                <Star className="h-8 w-8 text-yellow-500" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         <Tabs defaultValue="suggest" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="suggest">Make Suggestion</TabsTrigger>
             <TabsTrigger value="rate">Rate Event</TabsTrigger>
-            <TabsTrigger value="history">My Submissions</TabsTrigger>
+            <TabsTrigger value="history">My Submissions ({stats.total})</TabsTrigger>
           </TabsList>
           
           <TabsContent value="suggest" className="space-y-4">
@@ -226,6 +339,15 @@ const AttendeeSuggestions = () => {
                     onChange={(e) => setNewSuggestion(e.target.value)}
                     rows={4}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <p className="text-sm text-muted-foreground font-medium">Suggestion tips:</p>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Be specific and actionable</li>
+                    <li>• Explain the benefit of your suggestion</li>
+                    <li>• Consider feasibility and impact</li>
+                  </ul>
                 </div>
 
                 <Button 
@@ -259,7 +381,7 @@ const AttendeeSuggestions = () => {
                       <button
                         key={star}
                         onClick={() => setRating(star)}
-                        className="focus:outline-none"
+                        className="focus:outline-none transition-colors"
                       >
                         <Star 
                           size={32} 
@@ -300,42 +422,54 @@ const AttendeeSuggestions = () => {
 
           <TabsContent value="history" className="space-y-4">
             {suggestions.length > 0 ? (
-              suggestions.map((suggestion) => (
-                <Card key={suggestion.id}>
-                  <CardContent className="pt-6">
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="flex gap-2">
-                        <Badge variant={suggestion.type === 'rating' ? 'default' : 'outline'}>
-                          {suggestion.type === 'rating' ? 'Rating' : 'Suggestion'}
-                        </Badge>
-                        {getStatusBadge(suggestion.status)}
-                      </div>
-                      <span className="text-sm text-muted-foreground">
-                        {new Date(suggestion.created_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                    
-                    <p className="text-gray-800 dark:text-gray-200 mb-3">
-                      {suggestion.content}
-                    </p>
-                    
-                    {suggestion.type === 'rating' && suggestion.rating && (
-                      <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star 
-                            key={i} 
-                            size={16} 
-                            className={i < suggestion.rating! ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'} 
-                          />
-                        ))}
-                        <span className="ml-2 text-sm text-muted-foreground">
-                          {suggestion.rating}/5 stars
+              <div className="space-y-4">
+                {suggestions.map((suggestion) => (
+                  <Card key={suggestion.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="pt-6">
+                      <div className="flex justify-between items-start mb-3">
+                        <div className="flex gap-2">
+                          <Badge variant={suggestion.type === 'rating' ? 'default' : 'outline'}>
+                            {suggestion.type === 'rating' ? (
+                              <>
+                                <Star className="h-3 w-3 mr-1" />
+                                Rating
+                              </>
+                            ) : (
+                              <>
+                                <Lightbulb className="h-3 w-3 mr-1" />
+                                Suggestion
+                              </>
+                            )}
+                          </Badge>
+                          {getStatusBadge(suggestion.status)}
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          {new Date(suggestion.created_at).toLocaleDateString()}
                         </span>
                       </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))
+                      
+                      <p className="text-gray-800 dark:text-gray-200 mb-3">
+                        {suggestion.content}
+                      </p>
+                      
+                      {suggestion.type === 'rating' && suggestion.rating && (
+                        <div className="flex items-center gap-1">
+                          {[...Array(5)].map((_, i) => (
+                            <Star 
+                              key={i} 
+                              size={16} 
+                              className={i < suggestion.rating! ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'} 
+                            />
+                          ))}
+                          <span className="ml-2 text-sm text-muted-foreground">
+                            {suggestion.rating}/5 stars
+                          </span>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             ) : (
               <Card>
                 <CardContent className="py-10 text-center text-muted-foreground">

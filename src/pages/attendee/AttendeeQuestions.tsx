@@ -55,24 +55,38 @@ const AttendeeQuestions = () => {
 
   const fetchQuestions = async () => {
     try {
-      const { data, error } = await supabase
+      // First fetch questions
+      const { data: questionsData, error: questionsError } = await supabase
         .from('questions')
-        .select(`
-          id,
-          content,
-          created_at,
-          upvotes,
-          is_answered,
-          user_id,
-          session_id,
-          event_id,
-          is_anonymous,
-          profiles:user_id(name, photo_url)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      setQuestions(data || []);
+      if (questionsError) throw questionsError;
+
+      // Then fetch profiles for each question
+      const questionsWithProfiles = await Promise.all(
+        (questionsData || []).map(async (question) => {
+          if (question.is_anonymous) {
+            return {
+              ...question,
+              profiles: null
+            };
+          }
+
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('name, photo_url')
+            .eq('id', question.user_id)
+            .single();
+
+          return {
+            ...question,
+            profiles: profile
+          };
+        })
+      );
+
+      setQuestions(questionsWithProfiles);
     } catch (error) {
       console.error('Error fetching questions:', error);
       toast({

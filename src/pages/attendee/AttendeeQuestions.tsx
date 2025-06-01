@@ -68,21 +68,12 @@ const AttendeeQuestions = () => {
           session_id,
           event_id,
           is_anonymous,
-          profiles(name, photo_url)
+          profiles!inner(name, photo_url)
         `)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
-      // Transform the data to match our interface
-      const transformedData: QuestionWithProfile[] = (data || []).map(item => ({
-        ...item,
-        profiles: Array.isArray(item.profiles) && item.profiles.length > 0 
-          ? item.profiles[0] 
-          : null
-      }));
-      
-      setQuestions(transformedData);
+      setQuestions(data || []);
     } catch (error) {
       console.error('Error fetching questions:', error);
       toast({
@@ -100,14 +91,14 @@ const AttendeeQuestions = () => {
 
     setSubmitting(true);
     try {
-      const { data: user, error: userError } = await supabase.auth.getUser();
-      if (userError || !user.user) throw new Error('User not authenticated');
+      const user = await supabase.auth.getUser();
+      if (!user.data.user) throw new Error('User not authenticated');
 
       const { error } = await supabase
         .from('questions')
         .insert([{
           content: newQuestion.trim(),
-          user_id: user.user.id,
+          user_id: user.data.user.id,
           is_anonymous: isAnonymous,
           session_id: sessionTitle ? sessionTitle : null,
           event_id: null,
@@ -214,18 +205,18 @@ const AttendeeQuestions = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <MessageSquare className="h-5 w-5 text-connect-600" />
-              Ask a Question
+              Ask Your Question
             </CardTitle>
             <CardDescription>
-              Submit your question for speakers or the community
+              Your question will be visible to speakers and other attendees
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="session">Session Title (Optional)</Label>
+              <Label htmlFor="session">Select Session or Speaker</Label>
               <Input
                 id="session"
-                placeholder="e.g., Keynote: Future of Tech"
+                placeholder="Choose a session"
                 value={sessionTitle}
                 onChange={(e) => setSessionTitle(e.target.value)}
               />
@@ -235,10 +226,10 @@ const AttendeeQuestions = () => {
               <Label htmlFor="question">Your Question</Label>
               <Textarea
                 id="question"
-                placeholder="What would you like to ask?"
+                placeholder="Type your question here..."
                 value={newQuestion}
                 onChange={(e) => setNewQuestion(e.target.value)}
-                rows={3}
+                rows={4}
               />
             </div>
 
@@ -248,17 +239,31 @@ const AttendeeQuestions = () => {
                 checked={isAnonymous}
                 onCheckedChange={setIsAnonymous}
               />
-              <Label htmlFor="anonymous">Submit anonymously</Label>
+              <Label htmlFor="anonymous">Ask anonymously</Label>
             </div>
 
-            <Button 
-              onClick={handleSubmitQuestion} 
-              disabled={!newQuestion.trim() || submitting}
-              className="w-full sm:w-auto"
-            >
-              <Send className="h-4 w-4 mr-2" />
-              {submitting ? 'Submitting...' : 'Submit Question'}
-            </Button>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground font-medium">Tips for good questions:</p>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• Be specific and concise</li>
+                <li>• Ask about topics relevant to the session</li>
+                <li>• Avoid yes/no questions</li>
+              </ul>
+            </div>
+
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1">
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSubmitQuestion} 
+                disabled={!newQuestion.trim() || submitting}
+                className="flex-1"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                {submitting ? 'Submitting...' : 'Submit Question'}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 

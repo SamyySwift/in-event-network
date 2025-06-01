@@ -58,7 +58,19 @@ const AttendeeSuggestions = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setSuggestions(data || []);
+      
+      // Transform the data to match our interface
+      const transformedData: Suggestion[] = (data || []).map(item => ({
+        id: item.id,
+        content: item.content,
+        type: item.type as 'suggestion' | 'rating',
+        rating: item.rating,
+        status: item.status as 'new' | 'reviewed' | 'implemented',
+        created_at: item.created_at,
+        user_id: item.user_id
+      }));
+      
+      setSuggestions(transformedData);
     } catch (error) {
       console.error('Error fetching suggestions:', error);
       toast({

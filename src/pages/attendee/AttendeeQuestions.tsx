@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { MessageSquare, ThumbsUp, Send, User, UserX, Clock, CheckCircle } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
@@ -12,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
+import FeedbackModal from '@/components/FeedbackModal';
 
 interface Question {
   id: string;
@@ -25,7 +25,7 @@ interface Question {
   profiles?: {
     name: string;
     photo_url: string;
-  };
+  } | null;
 }
 
 const AttendeeQuestions = () => {
@@ -34,10 +34,54 @@ const AttendeeQuestions = () => {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [feedbackModal, setFeedbackModal] = useState<{
+    isOpen: boolean;
+    questionId: string;
+    questionContent: string;
+  }>({
+    isOpen: false,
+    questionId: '',
+    questionContent: ''
+  });
   const { toast } = useToast();
 
   useEffect(() => {
     fetchQuestions();
+    
+    // Listen for real-time notifications
+    const channel = supabase
+      .channel('question-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'questions',
+          filter: 'is_answered=eq.true'
+        },
+        (payload) => {
+          const updatedQuestion = payload.new as Question;
+          if (updatedQuestion.user_id) {
+            // Show feedback modal for answered question
+            const { data: { user } } = supabase.auth.getUser();
+            user.then((userData) => {
+              if (userData.user?.id === updatedQuestion.user_id) {
+                setFeedbackModal({
+                  isOpen: true,
+                  questionId: updatedQuestion.id,
+                  questionContent: updatedQuestion.content
+                });
+              }
+            });
+          }
+          fetchQuestions(); // Refresh the list
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchQuestions = async () => {
@@ -51,7 +95,16 @@ const AttendeeQuestions = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setQuestions(data || []);
+      
+      // Handle the case where profiles might be null or an error
+      const processedData = (data || []).map(question => ({
+        ...question,
+        profiles: question.profiles && typeof question.profiles === 'object' && 'name' in question.profiles 
+          ? question.profiles as { name: string; photo_url: string }
+          : null
+      }));
+      
+      setQuestions(processedData);
     } catch (error) {
       console.error('Error fetching questions:', error);
       toast({
@@ -216,7 +269,7 @@ const AttendeeQuestions = () => {
                           </Avatar>
                         ) : (
                           <Avatar>
-                            <AvatarImage src={question.profiles?.photo_url} />
+                            <AvatarImage src={question.profiles?.photo_url || ''} />
                             <AvatarFallback>
                               {question.profiles?.name?.charAt(0) || 'U'}
                             </AvatarFallback>
@@ -269,6 +322,13 @@ const AttendeeQuestions = () => {
           </div>
         </div>
       </div>
+
+      <FeedbackModal
+        isOpen={feedbackModal.isOpen}
+        onClose={() => setFeedbackModal({ isOpen: false, questionId: '', questionContent: '' })}
+        questionId={feedbackModal.questionId}
+        questionContent={feedbackModal.questionContent}
+      />
     </AppLayout>
   );
 };

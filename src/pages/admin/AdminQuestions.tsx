@@ -31,7 +31,7 @@ interface Question {
   profiles?: {
     name: string;
     photo_url: string;
-  };
+  } | null;
 }
 
 interface QuestionFeedback {
@@ -65,7 +65,16 @@ const AdminQuestions = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setQuestions(data || []);
+      
+      // Handle the case where profiles might be null or an error
+      const processedData = (data || []).map(question => ({
+        ...question,
+        profiles: question.profiles && typeof question.profiles === 'object' && 'name' in question.profiles 
+          ? question.profiles as { name: string; photo_url: string }
+          : null
+      }));
+      
+      setQuestions(processedData);
     } catch (error) {
       console.error('Error fetching questions:', error);
       toast({
@@ -229,7 +238,7 @@ const AdminQuestions = () => {
                         <div className="flex justify-between items-start">
                           <div className="flex items-center gap-3">
                             <Avatar>
-                              <AvatarImage src={question.profiles?.photo_url} />
+                              <AvatarImage src={question.profiles?.photo_url || ''} />
                               <AvatarFallback>
                                 {question.is_anonymous ? 'A' : question.profiles?.name?.charAt(0) || 'U'}
                               </AvatarFallback>

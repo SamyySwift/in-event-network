@@ -42,7 +42,15 @@ const AttendeeRating = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setSuggestions(data || []);
+      
+      // Type cast the data to ensure proper types
+      const processedData = (data || []).map(suggestion => ({
+        ...suggestion,
+        type: suggestion.type as 'suggestion' | 'rating',
+        status: suggestion.status as 'new' | 'reviewed' | 'implemented'
+      }));
+      
+      setSuggestions(processedData);
     } catch (error) {
       console.error('Error fetching suggestions:', error);
       toast({

@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   name: string;
@@ -78,26 +77,24 @@ export interface Announcement {
 
 export interface Question {
   id: string;
-  content: string;
-  user_id: string | null;
-  is_anonymous: boolean;
-  is_answered: boolean;
-  answered_at: string | null;
+  question: string;
+  sessionId: string;
+  userId: string;
+  speakerId?: string;
   upvotes: number;
-  created_at: string;
-  profiles?: {
-    name: string;
-    photo_url: string;
-  } | null;
+  answered: boolean;
+  createdAt: string;
+  isAnonymous?: boolean;
+  answer?: string;
+  answerSatisfactionRating?: number;
 }
 
 export interface Suggestion {
   id: string;
   content: string;
-  type: 'suggestion' | 'rating';
-  rating: number | null;
-  status: 'new' | 'reviewed' | 'implemented';
-  created_at: string;
+  userId: string;
+  eventId: string;
+  createdAt: string;
 }
 
 export interface Rating {
@@ -116,10 +113,6 @@ export interface Facility {
   location: string;
   description?: string;
   icon?: string;
-  imageUrl?: string;
-  rules?: string;
-  contactType?: 'call' | 'text' | 'whatsapp' | null;
-  contactNumber?: string;
 }
 
 export interface Connection {
@@ -212,4 +205,45 @@ export interface SurveyResponse {
   userId?: string;
   responses: { [questionId: string]: any };
   submittedAt: string;
+}
+
+// Update the Facility interface to include new fields
+export interface Facility {
+  id: string;
+  name: string;
+  type: "restroom" | "emergency" | "food" | "accessibility" | "parking" | "entry" | "exit" | "other";
+  location: string;
+  description?: string;
+  icon?: string;
+  imageUrl?: string;
+  rules?: string;
+  contactType?: 'call' | 'text' | 'whatsapp' | null;
+  contactNumber?: string;
+}
+
+// Update the Question interface
+export interface Question {
+  id: string;
+  question: string;
+  sessionId: string;
+  userId: string;
+  speakerId?: string;
+  upvotes: number;
+  answered: boolean;
+  createdAt: string;
+  isAnonymous?: boolean;
+  answer?: string;
+  answerSatisfactionRating?: number;
+  userNotified?: boolean;
+}
+
+// Update the Suggestion interface
+export interface Suggestion {
+  id: string;
+  content: string;
+  userId: string;
+  eventId: string;
+  createdAt: string;
+  type: 'suggestion' | 'rating';
+  rating?: number;
 }

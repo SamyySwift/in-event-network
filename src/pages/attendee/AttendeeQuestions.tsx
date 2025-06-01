@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { MessageSquare, ThumbsUp, Send, User, UserX, Clock, CheckCircle } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
@@ -63,9 +64,8 @@ const AttendeeQuestions = () => {
           const updatedQuestion = payload.new as Question;
           if (updatedQuestion.user_id) {
             // Show feedback modal for answered question
-            const { data: { user } } = supabase.auth.getUser();
-            user.then((userData) => {
-              if (userData.user?.id === updatedQuestion.user_id) {
+            supabase.auth.getUser().then(({ data: { user } }) => {
+              if (user?.id === updatedQuestion.user_id) {
                 setFeedbackModal({
                   isOpen: true,
                   questionId: updatedQuestion.id,
@@ -277,7 +277,7 @@ const AttendeeQuestions = () => {
                         )}
                         <div>
                           <p className="font-medium">
-                            {question.is_anonymous ? 'Anonymous' : question.profiles?.name || 'Unknown User'}
+                            {question.is_anonymous ? 'Anonymous' : (question.profiles?.name || 'Unknown User')}
                           </p>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Clock className="h-3 w-3" />

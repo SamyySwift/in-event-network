@@ -240,12 +240,12 @@ const AdminQuestions = () => {
                             <Avatar>
                               <AvatarImage src={question.profiles?.photo_url || ''} />
                               <AvatarFallback>
-                                {question.is_anonymous ? 'A' : question.profiles?.name?.charAt(0) || 'U'}
+                                {question.is_anonymous ? 'A' : (question.profiles?.name?.charAt(0) || 'U')}
                               </AvatarFallback>
                             </Avatar>
                             <div>
                               <CardTitle className="text-base">
-                                {question.is_anonymous ? 'Anonymous' : question.profiles?.name || 'Unknown User'}
+                                {question.is_anonymous ? 'Anonymous' : (question.profiles?.name || 'Unknown User')}
                               </CardTitle>
                               <CardDescription>
                                 {format(new Date(question.created_at), 'MMM d, yyyy h:mm a')}

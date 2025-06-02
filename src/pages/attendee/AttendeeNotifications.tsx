@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Bell, Check, MessageSquare, UserPlus, Calendar, Clock, Megaphone, Info, X } from 'lucide-react';
+import { Bell, Check, MessageSquare, UserPlus, Calendar, Clock, Megaphone, Info, X, CheckCircle, XCircle } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
 import { 
   Card, 
@@ -16,82 +16,29 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-
-// Mock notification data
-const initialNotifications = [
-  {
-    id: '1',
-    content: 'Alex Johnson accepted your connection request',
-    createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5 minutes ago
-    read: false,
-    type: 'connection',
-    linkTo: '/attendee/networking',
-    imageUrl: ''
-  },
-  {
-    id: '2',
-    content: 'Your question has been answered by Maria Garcia',
-    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-    read: false,
-    type: 'question',
-    linkTo: '/attendee/questions',
-    imageUrl: ''
-  },
-  {
-    id: '3',
-    content: 'Reminder: "Future of Tech Panel" starts in 15 minutes',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60).toISOString(), // 1 hour ago
-    read: true,
-    type: 'schedule',
-    linkTo: '/attendee/schedule',
-    imageUrl: ''
-  },
-  {
-    id: '4',
-    content: 'New announcement: "Wi-Fi Access Code Updated"',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString(), // 3 hours ago
-    read: true,
-    type: 'announcement',
-    linkTo: '/attendee/announcements',
-    imageUrl: ''
-  },
-  {
-    id: '5',
-    content: 'Welcome to the Tech Connect 2025 Conference!',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-    read: true,
-    type: 'other',
-    linkTo: '/attendee',
-    imageUrl: ''
-  },
-];
+import { useConnectionRequests } from '@/hooks/useConnectionRequests';
 
 const AttendeeNotifications = () => {
   const { toast } = useToast();
-  const [notifications, setNotifications] = useState(initialNotifications);
+  const { 
+    notifications, 
+    loading, 
+    acceptConnectionRequest, 
+    declineConnectionRequest, 
+    markAsRead 
+  } = useConnectionRequests();
+  
   const [selectMode, setSelectMode] = useState(false);
   const [selectedNotifications, setSelectedNotifications] = useState<string[]>([]);
   
-  const unreadCount = notifications.filter(n => !n.read).length;
-  
-  // Handle marking a notification as read
-  const markAsRead = (id: string) => {
-    setNotifications(prev => 
-      prev.map(notification => 
-        notification.id === id ? { ...notification, read: true } : notification
-      )
-    );
-  };
+  const unreadCount = notifications.filter(n => !n.is_read).length;
   
   // Handle clicking a notification
-  const handleNotificationClick = (notification: typeof initialNotifications[0]) => {
+  const handleNotificationClick = (notification: typeof notifications[0]) => {
     if (selectMode) {
       toggleSelectNotification(notification.id);
-    } else {
-      // Mark as read and navigate
+    } else if (!notification.is_read) {
       markAsRead(notification.id);
-      // In a real app, we would navigate to the linkTo route
-      console.log(`Navigate to: ${notification.linkTo}`);
     }
   };
   
@@ -107,50 +54,25 @@ const AttendeeNotifications = () => {
   };
   
   // Mark all as read
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(notification => ({ ...notification, read: true })));
-    toast({
-      title: "Success",
-      description: "All notifications marked as read",
-    });
-  };
-  
-  // Mark selected as read
-  const markSelectedAsRead = () => {
-    if (selectedNotifications.length === 0) return;
-    
-    setNotifications(prev => 
-      prev.map(notification => 
-        selectedNotifications.includes(notification.id) 
-          ? { ...notification, read: true } 
-          : notification
-      )
-    );
-    
-    toast({
-      title: "Success",
-      description: `${selectedNotifications.length} notification(s) marked as read`,
-    });
-    
-    setSelectedNotifications([]);
-    setSelectMode(false);
-  };
-  
-  // Delete selected notifications
-  const deleteSelectedNotifications = () => {
-    if (selectedNotifications.length === 0) return;
-    
-    setNotifications(prev => 
-      prev.filter(notification => !selectedNotifications.includes(notification.id))
-    );
-    
-    toast({
-      title: "Success",
-      description: `${selectedNotifications.length} notification(s) deleted`,
-    });
-    
-    setSelectedNotifications([]);
-    setSelectMode(false);
+  const markAllAsRead = async () => {
+    try {
+      await Promise.all(
+        notifications
+          .filter(n => !n.is_read)
+          .map(n => markAsRead(n.id))
+      );
+      
+      toast({
+        title: "Success",
+        description: "All notifications marked as read",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to mark all as read",
+        variant: "destructive",
+      });
+    }
   };
   
   // Format the time
@@ -187,6 +109,109 @@ const AttendeeNotifications = () => {
     }
   };
 
+  const renderConnectionRequest = (notification: typeof notifications[0]) => {
+    const connection = notification.connection;
+    const requesterProfile = connection?.requester_profile;
+    
+    if (!connection || !requesterProfile) return null;
+    
+    const isPending = connection.status === 'pending';
+    const isAccepted = connection.status === 'accepted';
+    const isRejected = connection.status === 'rejected';
+
+    return (
+      <div className="py-3 flex items-start gap-3">
+        <Avatar className="h-10 w-10">
+          {requesterProfile.photo_url ? (
+            <AvatarImage src={requesterProfile.photo_url} alt={requesterProfile.name} />
+          ) : (
+            <AvatarFallback className="bg-connect-100 text-connect-600">
+              {requesterProfile.name.split(' ').map(n => n[0]).join('')}
+            </AvatarFallback>
+          )}
+        </Avatar>
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between">
+            <div>
+              <p className={`text-sm ${!notification.is_read ? 'font-medium' : ''}`}>
+                <span className="font-semibold">{requesterProfile.name}</span> wants to connect with you
+              </p>
+              {requesterProfile.role && (
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {requesterProfile.role}{requesterProfile.company && ` at ${requesterProfile.company}`}
+                </p>
+              )}
+              <div className="flex items-center mt-1 space-x-2">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  {formatTime(notification.created_at)}
+                </span>
+                {!notification.is_read && (
+                  <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-connect-50 text-connect-600 dark:bg-connect-900/30 dark:text-connect-400">
+                    New
+                  </Badge>
+                )}
+                {isAccepted && (
+                  <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400">
+                    Accepted
+                  </Badge>
+                )}
+                {isRejected && (
+                  <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                    Declined
+                  </Badge>
+                )}
+              </div>
+            </div>
+            
+            {isPending && (
+              <div className="flex gap-2 ml-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    declineConnectionRequest(connection.id, notification.id);
+                  }}
+                  className="h-7 px-2 text-xs"
+                >
+                  <XCircle className="h-3 w-3 mr-1" />
+                  Decline
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    acceptConnectionRequest(connection.id, notification.id);
+                  }}
+                  className="h-7 px-2 text-xs bg-connect-600 hover:bg-connect-700"
+                >
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Accept
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="animate-fade-in max-w-6xl mx-auto">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-connect-600 mx-auto"></div>
+              <p className="mt-2 text-gray-600 dark:text-gray-400">Loading notifications...</p>
+            </div>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="animate-fade-in max-w-6xl mx-auto">
@@ -210,24 +235,6 @@ const AttendeeNotifications = () => {
                   className="text-sm"
                 >
                   Cancel
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={markSelectedAsRead}
-                  className="text-sm"
-                  disabled={selectedNotifications.length === 0}
-                >
-                  <Check className="h-4 w-4 mr-1" />
-                  Mark Read
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={deleteSelectedNotifications}
-                  className="text-sm"
-                  disabled={selectedNotifications.length === 0}
-                >
-                  <X className="h-4 w-4 mr-1" />
-                  Delete
                 </Button>
               </>
             ) : (
@@ -272,7 +279,7 @@ const AttendeeNotifications = () => {
               <TabsList className="grid grid-cols-3 mb-4">
                 <TabsTrigger value="all">All</TabsTrigger>
                 <TabsTrigger value="unread">Unread</TabsTrigger>
-                <TabsTrigger value="read">Read</TabsTrigger>
+                <TabsTrigger value="connections">Connections</TabsTrigger>
               </TabsList>
               
               <TabsContent value="all" className="space-y-0 divide-y">
@@ -280,62 +287,29 @@ const AttendeeNotifications = () => {
                   notifications.map((notification) => (
                     <div 
                       key={notification.id}
-                      className={`py-3 flex items-start gap-3 cursor-pointer ${
-                        !notification.read ? 'bg-gray-50 dark:bg-gray-800/50' : ''
+                      className={`cursor-pointer ${
+                        !notification.is_read ? 'bg-gray-50 dark:bg-gray-800/50' : ''
                       }`}
                       onClick={() => handleNotificationClick(notification)}
                     >
-                      {selectMode ? (
-                        <Checkbox
-                          checked={selectedNotifications.includes(notification.id)}
-                          onCheckedChange={() => toggleSelectNotification(notification.id)}
-                          className="mt-1"
-                        />
-                      ) : (
-                        <div className="mt-1 p-2 rounded-full bg-gray-100 dark:bg-gray-800">
-                          {getNotificationIcon(notification.type)}
-                        </div>
-                      )}
-                      
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm ${!notification.read ? 'font-medium' : ''}`}>
-                          {notification.content}
-                        </p>
-                        <div className="flex items-center mt-1 space-x-2">
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {formatTime(notification.createdAt)}
-                          </span>
-                          {!notification.read && (
-                            <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-connect-50 text-connect-600 dark:bg-connect-900/30 dark:text-connect-400">
-                              New
-                            </Badge>
-                          )}
-                          {notification.type === 'connection' && (
-                            <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-connect-50 text-connect-600 dark:bg-connect-900/30 dark:text-connect-400">
-                              Connection
-                            </Badge>
-                          )}
-                          {notification.type === 'announcement' && (
-                            <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-                              Announcement
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      
-                      {!selectMode && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="opacity-0 group-hover:opacity-100 hover:bg-gray-100 dark:hover:bg-gray-800"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            markAsRead(notification.id);
-                          }}
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                      )}
+                      {notification.type === 'connection' ? 
+                        renderConnectionRequest(notification) : 
+                        (
+                          <div className="py-3 flex items-start gap-3">
+                            <div className="mt-1 p-2 rounded-full bg-gray-100 dark:bg-gray-800">
+                              {getNotificationIcon(notification.type)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className={`text-sm ${!notification.is_read ? 'font-medium' : ''}`}>
+                                {notification.message}
+                              </p>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                {formatTime(notification.created_at)}
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      }
                     </div>
                   ))
                 ) : (
@@ -350,38 +324,31 @@ const AttendeeNotifications = () => {
               </TabsContent>
               
               <TabsContent value="unread" className="space-y-0 divide-y">
-                {notifications.filter(n => !n.read).length > 0 ? (
-                  notifications.filter(n => !n.read).map((notification) => (
+                {notifications.filter(n => !n.is_read).length > 0 ? (
+                  notifications.filter(n => !n.is_read).map((notification) => (
                     <div 
                       key={notification.id}
-                      className="py-3 flex items-start gap-3 cursor-pointer bg-gray-50 dark:bg-gray-800/50"
+                      className="cursor-pointer bg-gray-50 dark:bg-gray-800/50"
                       onClick={() => handleNotificationClick(notification)}
                     >
-                      {selectMode ? (
-                        <Checkbox
-                          checked={selectedNotifications.includes(notification.id)}
-                          onCheckedChange={() => toggleSelectNotification(notification.id)}
-                          className="mt-1"
-                        />
-                      ) : (
-                        <div className="mt-1 p-2 rounded-full bg-gray-100 dark:bg-gray-800">
-                          {getNotificationIcon(notification.type)}
-                        </div>
-                      )}
-                      
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">
-                          {notification.content}
-                        </p>
-                        <div className="flex items-center mt-1 space-x-2">
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            {formatTime(notification.createdAt)}
-                          </span>
-                          <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-connect-50 text-connect-600 dark:bg-connect-900/30 dark:text-connect-400">
-                            New
-                          </Badge>
-                        </div>
-                      </div>
+                      {notification.type === 'connection' ? 
+                        renderConnectionRequest(notification) : 
+                        (
+                          <div className="py-3 flex items-start gap-3">
+                            <div className="mt-1 p-2 rounded-full bg-gray-100 dark:bg-gray-800">
+                              {getNotificationIcon(notification.type)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium">
+                                {notification.message}
+                              </p>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
+                                {formatTime(notification.created_at)}
+                              </span>
+                            </div>
+                          </div>
+                        )
+                      }
                     </div>
                   ))
                 ) : (
@@ -395,42 +362,25 @@ const AttendeeNotifications = () => {
                 )}
               </TabsContent>
               
-              <TabsContent value="read" className="space-y-0 divide-y">
-                {notifications.filter(n => n.read).length > 0 ? (
-                  notifications.filter(n => n.read).map((notification) => (
+              <TabsContent value="connections" className="space-y-0 divide-y">
+                {notifications.filter(n => n.type === 'connection').length > 0 ? (
+                  notifications.filter(n => n.type === 'connection').map((notification) => (
                     <div 
                       key={notification.id}
-                      className="py-3 flex items-start gap-3 cursor-pointer"
+                      className={`cursor-pointer ${
+                        !notification.is_read ? 'bg-gray-50 dark:bg-gray-800/50' : ''
+                      }`}
                       onClick={() => handleNotificationClick(notification)}
                     >
-                      {selectMode ? (
-                        <Checkbox
-                          checked={selectedNotifications.includes(notification.id)}
-                          onCheckedChange={() => toggleSelectNotification(notification.id)}
-                          className="mt-1"
-                        />
-                      ) : (
-                        <div className="mt-1 p-2 rounded-full bg-gray-100 dark:bg-gray-800">
-                          {getNotificationIcon(notification.type)}
-                        </div>
-                      )}
-                      
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm">
-                          {notification.content}
-                        </p>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {formatTime(notification.createdAt)}
-                        </span>
-                      </div>
+                      {renderConnectionRequest(notification)}
                     </div>
                   ))
                 ) : (
                   <div className="py-10 text-center">
-                    <Bell className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600" />
-                    <h3 className="mt-4 text-lg font-medium">No read notifications</h3>
+                    <UserPlus className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600" />
+                    <h3 className="mt-4 text-lg font-medium">No connection requests</h3>
                     <p className="mt-2 text-gray-500 dark:text-gray-400">
-                      You haven't read any notifications yet
+                      You haven't received any connection requests yet
                     </p>
                   </div>
                 )}

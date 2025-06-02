@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -6,7 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Calendar, Users, User, Bell, Settings, MessageSquare, Star, MapPin, Search, Menu, X, LogOut, ChevronRight, UserPlus, Megaphone, BookOpen, BarChart, Lightbulb } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useNotificationCount } from '@/hooks/useNotificationCount';
+
 interface AppLayoutProps {
   children: React.ReactNode;
 }
@@ -21,6 +23,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   const location = useLocation();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { unreadCount } = useNotificationCount();
+
   const isActive = (path: string) => {
     if (path === '/') {
       return location.pathname === '/';
@@ -160,9 +164,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({
         </div>
         
         {currentUser && <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/notifications')} className="relative">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/attendee/notifications')} className="relative">
               <Bell size={20} className="text-gray-600 dark:text-gray-300" />
-              <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
+              {unreadCount > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs bg-red-500 text-white flex items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </Badge>
+              )}
             </Button>
             
             <Avatar className="h-8 w-8 cursor-pointer" onClick={() => navigate('/attendee/profile')}>
@@ -195,6 +203,14 @@ const AppLayout: React.FC<AppLayoutProps> = ({
                   {currentUser.role}
                 </p>
               </div>
+              <Button variant="ghost" size="icon" onClick={() => navigate('/attendee/notifications')} className="relative">
+                <Bell size={16} className="text-gray-600 dark:text-gray-300" />
+                {unreadCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs bg-red-500 text-white flex items-center justify-center">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </Badge>
+                )}
+              </Button>
             </div>}
         </div>
         
@@ -224,10 +240,19 @@ const AppLayout: React.FC<AppLayoutProps> = ({
       
       {/* Bottom Navigation Bar for Mobile */}
       {currentUser && <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t dark:border-gray-700 flex items-center justify-around p-2 z-10 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
-          {navigation.slice(0, 5).map(item => <button key={item.name} className={`flex flex-col items-center py-1 px-2 rounded-md ${isActive(item.href) ? 'text-connect-600 dark:text-connect-400 bg-connect-50 dark:bg-connect-900/50' : 'text-gray-500 dark:text-gray-400'}`} onClick={() => navigate(item.href)}>
+          {navigation.slice(0, 4).map(item => <button key={item.name} className={`flex flex-col items-center py-1 px-2 rounded-md ${isActive(item.href) ? 'text-connect-600 dark:text-connect-400 bg-connect-50 dark:bg-connect-900/50' : 'text-gray-500 dark:text-gray-400'}`} onClick={() => navigate(item.href)}>
               {item.icon}
               <span className="text-xs mt-1">{item.name}</span>
             </button>)}
+          <button className={`flex flex-col items-center py-1 px-2 rounded-md relative ${isActive('/attendee/notifications') ? 'text-connect-600 dark:text-connect-400 bg-connect-50 dark:bg-connect-900/50' : 'text-gray-500 dark:text-gray-400'}`} onClick={() => navigate('/attendee/notifications')}>
+            <Bell size={20} />
+            <span className="text-xs mt-1">Notifications</span>
+            {unreadCount > 0 && (
+              <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs bg-red-500 text-white flex items-center justify-center">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </Badge>
+            )}
+          </button>
         </nav>}
     </div>;
 };

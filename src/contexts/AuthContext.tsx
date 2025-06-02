@@ -60,15 +60,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             setCurrentUser(null);
           }
           setIsInitialized(true);
+          setIsLoading(false);
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
         if (mounted) {
           setCurrentUser(null);
           setIsInitialized(true);
-        }
-      } finally {
-        if (mounted) {
           setIsLoading(false);
         }
       }
@@ -86,6 +84,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       try {
         if (session?.user) {
+          // Set loading to true only if we don't have the user profile yet
+          if (!currentUser || currentUser.id !== session.user.id) {
+            setIsLoading(true);
+          }
+          
           // Defer profile fetching to avoid potential deadlocks
           setTimeout(async () => {
             if (mounted) {
@@ -94,14 +97,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           }, 0);
         } else {
           setCurrentUser(null);
+          setIsLoading(false);
         }
       } catch (error) {
         console.error("Error in auth state change:", error);
         setCurrentUser(null);
-      } finally {
-        if (mounted && isInitialized) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     });
 
@@ -148,9 +149,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         };
         console.log("Profile loaded successfully:", userProfile);
         setCurrentUser(userProfile);
+        setIsLoading(false);
       }
     } catch (error) {
       console.error("Error fetching user profile:", error);
+      setIsLoading(false);
       // Don't throw here, just log the error and continue
     }
   };
@@ -167,6 +170,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (error) {
         console.error("Login error:", error);
+        setIsLoading(false);
         return { error };
       }
 
@@ -174,9 +178,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       return { error: null };
     } catch (error) {
       console.error("Error logging in:", error);
+      setIsLoading(false);
       return { error: error as Error };
-    } finally {
-      // Don't set loading to false here, let the auth state change handle it
     }
   };
 

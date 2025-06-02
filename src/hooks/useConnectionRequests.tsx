@@ -40,30 +40,67 @@ export const useConnectionRequests = () => {
 
   const fetchConnectionRequests = async () => {
     try {
-      const { data, error } = await supabase
+      console.log('Fetching connection requests for user:', currentUser?.id);
+      
+      // First get notifications
+      const { data: notificationsData, error: notificationsError } = await supabase
         .from('notifications')
-        .select(`
-          *,
-          connection:connections!notifications_related_id_fkey (
-            id,
-            requester_id,
-            recipient_id,
-            status,
-            requester_profile:profiles!connections_requester_id_fkey (
-              name,
-              photo_url,
-              role,
-              company
-            )
-          )
-        `)
+        .select('*')
         .eq('user_id', currentUser?.id)
         .eq('type', 'connection')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (notificationsError) {
+        console.error('Error fetching notifications:', notificationsError);
+        throw notificationsError;
+      }
 
-      setNotifications(data || []);
+      console.log('Notifications data:', notificationsData);
+
+      // Then get connection details for each notification
+      const notificationsWithConnections = await Promise.all(
+        (notificationsData || []).map(async (notification) => {
+          if (notification.related_id) {
+            const { data: connectionData, error: connectionError } = await supabase
+              .from('connections')
+              .select(`
+                id,
+                requester_id,
+                recipient_id,
+                status,
+                requester_profile:profiles!connections_requester_id_fkey (
+                  name,
+                  photo_url,
+                  role,
+                  company
+                )
+              `)
+              .eq('id', notification.related_id)
+              .single();
+
+            if (connectionError) {
+              console.error('Error fetching connection:', connectionError);
+              return {
+                ...notification,
+                connection: undefined
+              };
+            }
+
+            return {
+              ...notification,
+              connection: connectionData
+            };
+          }
+          
+          return {
+            ...notification,
+            connection: undefined
+          };
+        })
+      );
+
+      console.log('Final notifications with connections:', notificationsWithConnections);
+      setNotifications(notificationsWithConnections);
     } catch (error) {
       console.error('Error fetching connection requests:', error);
       toast({

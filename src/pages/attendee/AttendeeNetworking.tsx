@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Send, Filter, UserPlus, MessageSquare, Twitter, Linkedin, Github, Instagram, Globe } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
@@ -18,23 +18,81 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useNetworking } from '@/hooks/useNetworking';
+import { NetworkingFilter } from '@/components/networking/NetworkingFilter';
 
 const AttendeeNetworking = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('people');
+  const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
+  const [selectedNetworkingPrefs, setSelectedNetworkingPrefs] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const { profiles, loading, sendConnectionRequest, getConnectionStatus } = useNetworking();
   
-  // Filter profiles based on search term
-  const filteredProfiles = profiles.filter(profile => 
-    profile.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    profile.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    profile.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    profile.bio.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    profile.niche.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (profile.tags && profile.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))) ||
-    (profile.networking_preferences && profile.networking_preferences.some(pref => pref.toLowerCase().includes(searchTerm.toLowerCase())))
-  );
+  // Get unique filter options from all profiles
+  const { availableNiches, availableNetworkingPrefs, availableTags } = useMemo(() => {
+    const niches = new Set<string>();
+    const networkingPrefs = new Set<string>();
+    const tags = new Set<string>();
+
+    profiles.forEach(profile => {
+      if (profile.niche) niches.add(profile.niche);
+      if (profile.networking_preferences) {
+        profile.networking_preferences.forEach(pref => networkingPrefs.add(pref));
+      }
+      if (profile.tags) {
+        profile.tags.forEach(tag => tags.add(tag));
+      }
+    });
+
+    return {
+      availableNiches: Array.from(niches).sort(),
+      availableNetworkingPrefs: Array.from(networkingPrefs).sort(),
+      availableTags: Array.from(tags).sort(),
+    };
+  }, [profiles]);
+
+  // Filter profiles based on search term and selected filters
+  const filteredProfiles = useMemo(() => {
+    return profiles.filter(profile => {
+      // Text search
+      const matchesSearch = !searchTerm || (
+        profile.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        profile.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        profile.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        profile.bio.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        profile.niche.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (profile.tags && profile.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))) ||
+        (profile.networking_preferences && profile.networking_preferences.some(pref => pref.toLowerCase().includes(searchTerm.toLowerCase())))
+      );
+
+      // Niche filter
+      const matchesNiche = selectedNiches.length === 0 || (
+        profile.niche && selectedNiches.includes(profile.niche)
+      );
+
+      // Networking preferences filter
+      const matchesNetworkingPref = selectedNetworkingPrefs.length === 0 || (
+        profile.networking_preferences && 
+        profile.networking_preferences.some(pref => selectedNetworkingPrefs.includes(pref))
+      );
+
+      // Tags filter
+      const matchesTags = selectedTags.length === 0 || (
+        profile.tags && 
+        profile.tags.some(tag => selectedTags.includes(tag))
+      );
+
+      return matchesSearch && matchesNiche && matchesNetworkingPref && matchesTags;
+    });
+  }, [profiles, searchTerm, selectedNiches, selectedNetworkingPrefs, selectedTags]);
+
+  const handleClearFilters = () => {
+    setSelectedNiches([]);
+    setSelectedNetworkingPrefs([]);
+    setSelectedTags([]);
+    setSearchTerm('');
+  };
 
   // Function to handle connection request
   const handleConnect = (profileId: string) => {
@@ -120,21 +178,20 @@ const AttendeeNetworking = () => {
           </TabsList>
           
           <TabsContent value="people" className="space-y-6">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search by name, role, company, or skills..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Button variant="outline" className="flex items-center gap-2">
-                <Filter size={16} />
-                <span>Filters</span>
-              </Button>
-            </div>
+            <NetworkingFilter
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              selectedNiches={selectedNiches}
+              onNicheChange={setSelectedNiches}
+              selectedNetworkingPrefs={selectedNetworkingPrefs}
+              onNetworkingPrefChange={setSelectedNetworkingPrefs}
+              selectedTags={selectedTags}
+              onTagChange={setSelectedTags}
+              availableNiches={availableNiches}
+              availableNetworkingPrefs={availableNetworkingPrefs}
+              availableTags={availableTags}
+              onClearFilters={handleClearFilters}
+            />
             
             {filteredProfiles.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -264,9 +321,18 @@ const AttendeeNetworking = () => {
                 <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
                   {profiles.length === 0 
                     ? "No other users have registered yet. Check back soon!"
-                    : "Try adjusting your search to find more people"
+                    : "Try adjusting your search or filters to find more people"
                   }
                 </p>
+                {(selectedNiches.length > 0 || selectedNetworkingPrefs.length > 0 || selectedTags.length > 0) && (
+                  <Button 
+                    variant="outline" 
+                    onClick={handleClearFilters}
+                    className="mt-4"
+                  >
+                    Clear All Filters
+                  </Button>
+                )}
               </div>
             )}
           </TabsContent>

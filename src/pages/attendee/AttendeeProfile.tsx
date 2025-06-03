@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/layouts/AppLayout';
 import { Github, Instagram, Linkedin, Twitter, Facebook, Globe } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 
 // Mock data for niche options
 const nicheOptions = [
@@ -102,6 +103,30 @@ const AttendeeProfile = () => {
     setIsSubmitting(true);
     
     try {
+      // Update the profile in Supabase directly
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: profileData.name,
+          photo_url: profileData.photoUrl,
+          bio: profileData.bio,
+          niche: selectedNiche,
+          tags: profileData.customTags,
+          networking_preferences: selectedNetworking,
+          twitter_link: profileData.links.twitter,
+          linkedin_link: profileData.links.linkedin,
+          github_link: profileData.links.github,
+          website_link: profileData.links.website,
+          facebook_link: profileData.links.facebook,
+          instagram_link: profileData.links.instagram,
+        })
+        .eq('id', currentUser?.id);
+
+      if (error) {
+        throw error;
+      }
+
+      // Also update the auth context
       await updateUser({
         name: profileData.name,
         photoUrl: profileData.photoUrl,
@@ -180,14 +205,14 @@ const AttendeeProfile = () => {
         
         <Card>
           {/* Profile Header */}
-          <CardHeader className="bg-connect-50 border-b">
+          <CardHeader className="bg-connect-50 dark:bg-connect-900/20 border-b dark:border-gray-700">
             <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
               <div className="relative">
                 <Avatar className="h-24 w-24 border-4 border-white shadow-md">
                   {profileData.photoUrl ? (
                     <AvatarImage src={profileData.photoUrl} alt={profileData.name} />
                   ) : (
-                    <AvatarFallback className="text-2xl bg-connect-100 text-connect-600">
+                    <AvatarFallback className="text-2xl bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300">
                       {profileData.name.split(' ').map(n => n[0]).join('')}
                     </AvatarFallback>
                   )}
@@ -208,7 +233,7 @@ const AttendeeProfile = () => {
               <div className="flex-1">
                 {isEditing ? (
                   <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
+                    <Label htmlFor="name" className="text-gray-900 dark:text-white">Full Name</Label>
                     <Input
                       id="name"
                       value={profileData.name}
@@ -217,9 +242,9 @@ const AttendeeProfile = () => {
                   </div>
                 ) : (
                   <div>
-                    <h2 className="text-2xl font-bold">{profileData.name}</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{profileData.name}</h2>
                     {profileData.niche && (
-                      <Badge variant="secondary" className="mt-1 bg-connect-100 text-connect-800 hover:bg-connect-200">
+                      <Badge variant="secondary" className="mt-1 bg-connect-100 text-connect-800 hover:bg-connect-200 dark:bg-connect-900/50 dark:text-connect-300">
                         {profileData.niche}
                       </Badge>
                     )}
@@ -232,7 +257,7 @@ const AttendeeProfile = () => {
           <CardContent className="pt-6 space-y-8">
             {/* Bio Section */}
             <div>
-              <h3 className="font-semibold mb-2">About</h3>
+              <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">About</h3>
               {isEditing ? (
                 <Textarea
                   placeholder="Tell others about yourself..."
@@ -241,7 +266,7 @@ const AttendeeProfile = () => {
                   className="min-h-[120px]"
                 />
               ) : (
-                <p className="text-gray-700">
+                <p className="text-gray-700 dark:text-gray-300">
                   {profileData.bio || "No bio added yet."}
                 </p>
               )}
@@ -251,7 +276,7 @@ const AttendeeProfile = () => {
             
             {/* Professional Niche */}
             <div>
-              <h3 className="font-semibold mb-2">Professional Niche</h3>
+              <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">Professional Niche</h3>
               
               {isEditing ? (
                 <div className="space-y-4">
@@ -270,9 +295,9 @@ const AttendeeProfile = () => {
                           htmlFor={`niche-${niche}`}
                           className={`flex w-full cursor-pointer rounded-lg border ${
                             selectedNiche === niche
-                              ? 'bg-connect-50 border-connect-500'
-                              : 'bg-white hover:bg-gray-50'
-                          } p-2 text-sm font-medium`}
+                              ? 'bg-connect-50 border-connect-500 dark:bg-connect-900/50 dark:border-connect-400'
+                              : 'bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-600'
+                          } p-2 text-sm font-medium text-gray-900 dark:text-white`}
                         >
                           {niche}
                         </label>
@@ -281,7 +306,7 @@ const AttendeeProfile = () => {
                   </div>
                   
                   <div>
-                    <Label htmlFor="custom-niche">Other (specify)</Label>
+                    <Label htmlFor="custom-niche" className="text-gray-900 dark:text-white">Other (specify)</Label>
                     <div className="mt-1 flex">
                       <Input
                         type="text"
@@ -305,11 +330,11 @@ const AttendeeProfile = () => {
               ) : (
                 <div>
                   {selectedNiche ? (
-                    <Badge variant="outline" className="bg-connect-50 border-connect-200 text-connect-800">
+                    <Badge variant="outline" className="bg-connect-50 border-connect-200 text-connect-800 dark:bg-connect-900/50 dark:border-connect-400 dark:text-connect-300">
                       {selectedNiche}
                     </Badge>
                   ) : (
-                    <p className="text-gray-500 text-sm italic">No niche selected</p>
+                    <p className="text-gray-500 text-sm italic dark:text-gray-400">No niche selected</p>
                   )}
                 </div>
               )}
@@ -319,8 +344,8 @@ const AttendeeProfile = () => {
             
             {/* Networking Preferences */}
             <div>
-              <h3 className="font-semibold mb-2">Networking Preferences</h3>
-              <p className="text-sm text-gray-500 mb-4">Who are you interested in meeting?</p>
+              <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">Networking Preferences</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Who are you interested in meeting?</p>
               
               {isEditing ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -337,9 +362,9 @@ const AttendeeProfile = () => {
                         htmlFor={`pref-${pref}`}
                         className={`flex w-full cursor-pointer rounded-lg border ${
                           selectedNetworking.includes(pref)
-                            ? 'bg-connect-50 border-connect-300'
-                            : 'bg-white hover:bg-gray-50'
-                        } p-2 text-sm font-medium`}
+                            ? 'bg-connect-50 border-connect-300 dark:bg-connect-900/50 dark:border-connect-400'
+                            : 'bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-600'
+                        } p-2 text-sm font-medium text-gray-900 dark:text-white`}
                       >
                         {pref}
                       </label>
@@ -350,12 +375,12 @@ const AttendeeProfile = () => {
                 <div className="flex flex-wrap gap-2">
                   {selectedNetworking.length > 0 ? (
                     selectedNetworking.map((pref) => (
-                      <Badge key={pref} variant="outline" className="bg-gray-50">
+                      <Badge key={pref} variant="outline" className="bg-gray-50 dark:bg-gray-800 dark:text-gray-300">
                         {pref}
                       </Badge>
                     ))
                   ) : (
-                    <p className="text-gray-500 text-sm italic">No preferences selected</p>
+                    <p className="text-gray-500 text-sm italic dark:text-gray-400">No preferences selected</p>
                   )}
                 </div>
               )}
@@ -365,8 +390,8 @@ const AttendeeProfile = () => {
             
             {/* Custom Tags */}
             <div>
-              <h3 className="font-semibold mb-2">Custom Tags</h3>
-              <p className="text-sm text-gray-500 mb-4">Add tags that represent your interests</p>
+              <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">Custom Tags</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Add tags that represent your interests</p>
               
               {isEditing ? (
                 <div>
@@ -397,11 +422,11 @@ const AttendeeProfile = () => {
                       <Badge 
                         key={tag}
                         variant="secondary"
-                        className="flex items-center space-x-1 bg-connect-50 text-connect-700"
+                        className="flex items-center space-x-1 bg-connect-50 text-connect-700 dark:bg-connect-900/50 dark:text-connect-300"
                       >
                         <span>{tag}</span>
                         <button 
-                          className="ml-1 h-4 w-4 rounded-full inline-flex items-center justify-center text-connect-700 hover:text-connect-900 hover:bg-connect-200"
+                          className="ml-1 h-4 w-4 rounded-full inline-flex items-center justify-center text-connect-700 hover:text-connect-900 hover:bg-connect-200 dark:text-connect-300 dark:hover:text-connect-100 dark:hover:bg-connect-700"
                           onClick={() => handleRemoveTag(tag)}
                         >
                           <span className="sr-only">Remove tag</span>
@@ -418,12 +443,12 @@ const AttendeeProfile = () => {
                 <div className="flex flex-wrap gap-2">
                   {profileData.customTags.length > 0 ? (
                     profileData.customTags.map((tag) => (
-                      <Badge key={tag} variant="secondary" className="bg-connect-50 text-connect-700">
+                      <Badge key={tag} variant="secondary" className="bg-connect-50 text-connect-700 dark:bg-connect-900/50 dark:text-connect-300">
                         {tag}
                       </Badge>
                     ))
                   ) : (
-                    <p className="text-gray-500 text-sm italic">No tags added</p>
+                    <p className="text-gray-500 text-sm italic dark:text-gray-400">No tags added</p>
                   )}
                 </div>
               )}
@@ -433,12 +458,12 @@ const AttendeeProfile = () => {
             
             {/* Social Media Links */}
             <div>
-              <h3 className="font-semibold mb-4">Connect With Me</h3>
+              <h3 className="font-semibold mb-4 text-gray-900 dark:text-white">Connect With Me</h3>
               
               {isEditing ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="twitter" className="flex items-center">
+                    <Label htmlFor="twitter" className="flex items-center text-gray-900 dark:text-white">
                       <Twitter size={16} className="mr-2" />
                       Twitter
                     </Label>
@@ -454,7 +479,7 @@ const AttendeeProfile = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="linkedin" className="flex items-center">
+                    <Label htmlFor="linkedin" className="flex items-center text-gray-900 dark:text-white">
                       <Linkedin size={16} className="mr-2" />
                       LinkedIn
                     </Label>
@@ -470,7 +495,7 @@ const AttendeeProfile = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="github" className="flex items-center">
+                    <Label htmlFor="github" className="flex items-center text-gray-900 dark:text-white">
                       <Github size={16} className="mr-2" />
                       GitHub
                     </Label>
@@ -486,7 +511,7 @@ const AttendeeProfile = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="website" className="flex items-center">
+                    <Label htmlFor="website" className="flex items-center text-gray-900 dark:text-white">
                       <Globe size={16} className="mr-2" />
                       Website
                     </Label>
@@ -502,7 +527,7 @@ const AttendeeProfile = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="facebook" className="flex items-center">
+                    <Label htmlFor="facebook" className="flex items-center text-gray-900 dark:text-white">
                       <Facebook size={16} className="mr-2" />
                       Facebook
                     </Label>
@@ -518,7 +543,7 @@ const AttendeeProfile = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="instagram" className="flex items-center">
+                    <Label htmlFor="instagram" className="flex items-center text-gray-900 dark:text-white">
                       <Instagram size={16} className="mr-2" />
                       Instagram
                     </Label>
@@ -540,10 +565,10 @@ const AttendeeProfile = () => {
                       href={profileData.links.twitter} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
                     >
                       <Twitter size={24} className="text-[#1DA1F2] mb-2" />
-                      <span className="text-xs">Twitter</span>
+                      <span className="text-xs text-gray-900 dark:text-white">Twitter</span>
                     </a>
                   )}
                   
@@ -552,10 +577,10 @@ const AttendeeProfile = () => {
                       href={profileData.links.linkedin} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
                     >
                       <Linkedin size={24} className="text-[#0A66C2] mb-2" />
-                      <span className="text-xs">LinkedIn</span>
+                      <span className="text-xs text-gray-900 dark:text-white">LinkedIn</span>
                     </a>
                   )}
                   
@@ -564,10 +589,10 @@ const AttendeeProfile = () => {
                       href={profileData.links.github} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
                     >
-                      <Github size={24} className="text-[#333] mb-2" />
-                      <span className="text-xs">GitHub</span>
+                      <Github size={24} className="text-[#333] dark:text-white mb-2" />
+                      <span className="text-xs text-gray-900 dark:text-white">GitHub</span>
                     </a>
                   )}
                   
@@ -576,10 +601,10 @@ const AttendeeProfile = () => {
                       href={profileData.links.website} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
                     >
-                      <Globe size={24} className="text-gray-700 mb-2" />
-                      <span className="text-xs">Website</span>
+                      <Globe size={24} className="text-gray-700 dark:text-gray-300 mb-2" />
+                      <span className="text-xs text-gray-900 dark:text-white">Website</span>
                     </a>
                   )}
                   
@@ -588,10 +613,10 @@ const AttendeeProfile = () => {
                       href={profileData.links.facebook} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
                     >
                       <Facebook size={24} className="text-[#1877F2] mb-2" />
-                      <span className="text-xs">Facebook</span>
+                      <span className="text-xs text-gray-900 dark:text-white">Facebook</span>
                     </a>
                   )}
                   
@@ -600,15 +625,15 @@ const AttendeeProfile = () => {
                       href={profileData.links.instagram} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
+                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
                     >
                       <Instagram size={24} className="text-[#E4405F] mb-2" />
-                      <span className="text-xs">Instagram</span>
+                      <span className="text-xs text-gray-900 dark:text-white">Instagram</span>
                     </a>
                   )}
                   
                   {!Object.values(profileData.links).some(link => link) && (
-                    <p className="text-gray-500 text-sm italic col-span-full">No social media links added</p>
+                    <p className="text-gray-500 text-sm italic col-span-full dark:text-gray-400">No social media links added</p>
                   )}
                 </div>
               )}
@@ -616,7 +641,7 @@ const AttendeeProfile = () => {
           </CardContent>
           
           {isEditing && (
-            <CardFooter className="bg-gray-50 border-t flex justify-end">
+            <CardFooter className="bg-gray-50 dark:bg-gray-800 border-t dark:border-gray-700 flex justify-end">
               <div className="flex space-x-2">
                 <Button 
                   variant="outline" 

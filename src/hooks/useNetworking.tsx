@@ -111,18 +111,34 @@ export const useNetworking = () => {
   };
 
   const sendConnectionRequest = async (recipientId: string) => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to send connection requests",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
-      const { error } = await supabase
+      console.log('Sending connection request from', currentUser.id, 'to', recipientId);
+      
+      const { data, error } = await supabase
         .from('connections')
         .insert({
           requester_id: currentUser.id,
           recipient_id: recipientId,
           status: 'pending'
-        });
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      console.log('Connection request created:', data);
 
       toast({
         title: "Connection Request Sent",
@@ -134,7 +150,7 @@ export const useNetworking = () => {
       console.error('Error sending connection request:', error);
       toast({
         title: "Error",
-        description: "Failed to send connection request",
+        description: `Failed to send connection request: ${error.message || 'Unknown error'}`,
         variant: "destructive",
       });
     }

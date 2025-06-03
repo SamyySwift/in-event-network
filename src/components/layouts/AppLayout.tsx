@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/co
 import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useNotificationCount } from '@/hooks/useNotificationCount';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -163,7 +164,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({
           <span className="ml-2 font-semibold text-connect-800 dark:text-white">Kconect</span>
         </div>
         
-        {currentUser && <div className="flex items-center space-x-2">
+        {currentUser && (
+          <div className="flex items-center space-x-2">
+            <ThemeToggle />
             <Button variant="ghost" size="icon" onClick={() => navigate('/attendee/notifications')} className="relative">
               <Bell size={20} className="text-gray-600 dark:text-gray-300" />
               {unreadCount > 0 && (
@@ -174,19 +177,27 @@ const AppLayout: React.FC<AppLayoutProps> = ({
             </Button>
             
             <Avatar className="h-8 w-8 cursor-pointer" onClick={() => navigate('/attendee/profile')}>
-              {currentUser.photoUrl ? <AvatarImage src={currentUser.photoUrl} alt={currentUser.name} /> : <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300">
+              {currentUser.photoUrl ? (
+                <AvatarImage src={currentUser.photoUrl} alt={currentUser.name} />
+              ) : (
+                <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300">
                   {currentUser.name.charAt(0).toUpperCase()}
-                </AvatarFallback>}
+                </AvatarFallback>
+              )}
             </Avatar>
-          </div>}
+          </div>
+        )}
       </header>
       
       {/* Sidebar Navigation for Desktop */}
       <aside className="hidden md:flex flex-col w-64 bg-white dark:bg-gray-800 border-r dark:border-gray-700 shadow-sm fixed h-full">
         <div className="p-4 border-b dark:border-gray-700">
-          <div className="flex items-center mb-6">
-            <img src="/logo-placeholder.svg" alt="Connect Logo" className="h-8 w-auto" />
-            <span className="ml-2 font-semibold text-xl text-connect-800 dark:text-white">Connect</span>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center">
+              <img src="/logo-placeholder.svg" alt="Connect Logo" className="h-8 w-auto" />
+              <span className="ml-2 font-semibold text-xl text-connect-800 dark:text-white">Connect</span>
+            </div>
+            <ThemeToggle />
           </div>
           
           {currentUser && <div className="flex items-center space-x-3 mb-2">

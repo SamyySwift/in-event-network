@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Send, Filter, UserPlus, MessageSquare } from 'lucide-react';
+import { Search, Send, Filter, UserPlus, MessageSquare, Twitter, Linkedin, Github, Instagram, Globe } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,9 @@ const AttendeeNetworking = () => {
     profile.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
     profile.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
     profile.bio.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (profile.tags && profile.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase())))
+    profile.niche.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (profile.tags && profile.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))) ||
+    (profile.networking_preferences && profile.networking_preferences.some(pref => pref.toLowerCase().includes(searchTerm.toLowerCase())))
   );
 
   // Function to handle connection request
@@ -49,15 +51,17 @@ const AttendeeNetworking = () => {
   const getSocialIcon = (platform: string) => {
     switch (platform) {
       case 'twitter':
-        return '𝕏';
+        return <Twitter size={16} />;
       case 'linkedin':
-        return 'in';
+        return <Linkedin size={16} />;
       case 'github':
-        return '󰊤';
+        return <Github size={16} />;
       case 'instagram':
-        return '󰋾';
+        return <Instagram size={16} />;
+      case 'website':
+        return <Globe size={16} />;
       default:
-        return '🌐';
+        return <Globe size={16} />;
     }
   };
 
@@ -140,14 +144,14 @@ const AttendeeNetworking = () => {
                   const isPending = connectionStatus?.status === 'pending';
                   
                   return (
-                    <Card key={profile.id} className="hover-lift bg-white dark:bg-gray-800">
+                    <Card key={profile.id} className="hover-lift bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
                       <CardHeader className="pb-2">
                         <div className="flex justify-between">
                           <Avatar className="h-12 w-12">
                             {profile.photo_url ? (
                               <AvatarImage src={profile.photo_url} alt={profile.name} />
                             ) : (
-                              <AvatarFallback className="bg-connect-100 text-connect-600">
+                              <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300">
                                 {profile.name.split(' ').map(n => n[0]).join('')}
                               </AvatarFallback>
                             )}
@@ -174,9 +178,9 @@ const AttendeeNetworking = () => {
                             </Button>
                           </div>
                         </div>
-                        <CardTitle className="mt-3 text-xl">{profile.name}</CardTitle>
+                        <CardTitle className="mt-3 text-xl text-gray-900 dark:text-white">{profile.name}</CardTitle>
                         <CardDescription className="text-sm flex flex-col">
-                          <span>{profile.role}</span>
+                          <span className="text-gray-700 dark:text-gray-300">{profile.role}</span>
                           {profile.company && (
                             <span className="text-gray-500 dark:text-gray-400">{profile.company}</span>
                           )}
@@ -186,21 +190,50 @@ const AttendeeNetworking = () => {
                         {profile.bio && (
                           <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">{profile.bio}</p>
                         )}
-                        
-                        {profile.tags && profile.tags.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mb-4">
-                            {profile.tags.map((tag, index) => (
-                              <Badge key={index} variant="secondary" className="bg-connect-50 text-connect-600 dark:bg-connect-900 dark:text-connect-300">
-                                {tag}
-                              </Badge>
-                            ))}
+
+                        {/* Professional Niche */}
+                        {profile.niche && (
+                          <div className="mb-4">
+                            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Professional Niche</h4>
+                            <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-700">
+                              {profile.niche}
+                            </Badge>
+                          </div>
+                        )}
+
+                        {/* Networking Preferences */}
+                        {profile.networking_preferences && profile.networking_preferences.length > 0 && (
+                          <div className="mb-4">
+                            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Looking to connect with</h4>
+                            <div className="flex flex-wrap gap-1">
+                              {profile.networking_preferences.map((pref, index) => (
+                                <Badge key={index} variant="secondary" className="bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-xs">
+                                  {pref}
+                                </Badge>
+                              ))}
+                            </div>
                           </div>
                         )}
                         
+                        {/* Custom Tags */}
+                        {profile.tags && profile.tags.length > 0 && (
+                          <div className="mb-4">
+                            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Skills & Interests</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {profile.tags.map((tag, index) => (
+                                <Badge key={index} variant="secondary" className="bg-connect-50 text-connect-600 dark:bg-connect-900/30 dark:text-connect-300">
+                                  {tag}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Social Links with Icons */}
                         {profile.links && Object.keys(profile.links).length > 0 && (
                           <div className="mt-4">
-                            <div className="text-sm font-medium mb-2">Connect on:</div>
-                            <div className="flex flex-wrap gap-3">
+                            <div className="text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Connect on:</div>
+                            <div className="flex flex-wrap gap-2">
                               {Object.entries(profile.links).map(([platform, handle]) => {
                                 if (!handle) return null;
                                 return (
@@ -211,8 +244,8 @@ const AttendeeNetworking = () => {
                                     rel="noopener noreferrer"
                                     className="inline-flex items-center text-sm bg-gray-100 dark:bg-gray-700 rounded-full py-1 px-3 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                                   >
-                                    <span className="font-semibold mr-1">{getSocialIcon(platform)}</span>
-                                    <span>{platform === 'website' ? 'Website' : handle}</span>
+                                    {getSocialIcon(platform)}
+                                    <span className="ml-1 capitalize">{platform === 'website' ? 'Website' : platform}</span>
                                   </a>
                                 );
                               })}
@@ -227,7 +260,7 @@ const AttendeeNetworking = () => {
             ) : (
               <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <Search className="h-12 w-12 mx-auto text-gray-400" />
-                <h3 className="mt-4 text-lg font-medium">No matches found</h3>
+                <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">No matches found</h3>
                 <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
                   {profiles.length === 0 
                     ? "No other users have registered yet. Check back soon!"
@@ -241,7 +274,7 @@ const AttendeeNetworking = () => {
           <TabsContent value="chats" className="space-y-4">
             <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <MessageSquare className="h-12 w-12 mx-auto text-gray-400" />
-              <h3 className="mt-4 text-lg font-medium">Chat Feature Coming Soon</h3>
+              <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">Chat Feature Coming Soon</h3>
               <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
                 Real-time messaging will be available once you connect with other attendees.
               </p>

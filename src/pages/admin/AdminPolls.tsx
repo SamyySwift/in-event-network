@@ -11,12 +11,6 @@ import {
   CardTitle, 
   CardFooter 
 } from '@/components/ui/card';
-import { 
-  Tabs, 
-  TabsList, 
-  TabsTrigger, 
-  TabsContent 
-} from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -69,10 +63,6 @@ const AdminPolls = () => {
     return matchesTab && matchesSearch;
   });
 
-  const handleCreatePoll = () => {
-    // This will be handled by the CreatePollDialog component
-  };
-
   const handleEditPoll = (poll: Poll) => {
     console.log('Edit poll', poll);
     toast({
@@ -122,87 +112,6 @@ const AdminPolls = () => {
            new Date(poll.start_time) <= now && 
            new Date(poll.end_time) >= now;
   };
-
-  if (isLoading) {
-    return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <BarChart4 className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
-            <p className="mt-2 text-muted-foreground">Loading polls...</p>
-          </div>
-        </div>
-      </AdminLayout>
-    );
-  }
-
-  return (
-    <AdminLayout>
-      <AdminPageHeader
-        title="Polls"
-        description="Create and manage polls for attendees"
-        actionLabel="Create Poll"
-        onAction={handleCreatePoll}
-        ActionComponent={() => (
-          <CreatePollDialog>
-            <Button>
-              <Plus size={16} className="mr-1" />
-              Create Poll
-            </Button>
-          </CreatePollDialog>
-        )}
-        tabs={[
-          { id: 'all', label: 'All Polls' },
-          { id: 'active', label: 'Active' },
-          { id: 'inactive', label: 'Inactive' },
-        ]}
-        defaultTab="active"
-        onTabChange={setActiveTab}
-      >
-        <TabsContent value="all" className="space-y-4">
-          <div className="flex justify-between mb-4">
-            <Input 
-              placeholder="Search polls..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="max-w-sm"
-            />
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            {renderPollsList(filteredPolls)}
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="active" className="space-y-4">
-          <div className="flex justify-between mb-4">
-            <Input 
-              placeholder="Search active polls..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="max-w-sm"
-            />
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            {renderPollsList(filteredPolls)}
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="inactive" className="space-y-4">
-          <div className="flex justify-between mb-4">
-            <Input 
-              placeholder="Search inactive polls..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="max-w-sm"
-            />
-          </div>
-          <div className="grid gap-4 md:grid-cols-2">
-            {renderPollsList(filteredPolls)}
-          </div>
-        </TabsContent>
-      </AdminPageHeader>
-    </AdminLayout>
-  );
 
   function renderPollsList(polls: Poll[]) {
     return polls.length > 0 ? (
@@ -347,6 +256,64 @@ const AdminPolls = () => {
       </div>
     );
   }
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <BarChart4 className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
+            <p className="mt-2 text-muted-foreground">Loading polls...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  return (
+    <AdminLayout>
+      <div className="flex flex-col gap-5">
+        <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row items-center justify-between'}`}>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Polls</h1>
+            <p className="text-muted-foreground mt-1">Create and manage polls for attendees</p>
+          </div>
+          
+          <CreatePollDialog>
+            <Button>
+              <Plus size={16} className="mr-1" />
+              Create Poll
+            </Button>
+          </CreatePollDialog>
+        </div>
+
+        <AdminPageHeader
+          title=""
+          tabs={[
+            { id: 'all', label: 'All Polls' },
+            { id: 'active', label: 'Active' },
+            { id: 'inactive', label: 'Inactive' },
+          ]}
+          defaultTab="active"
+          onTabChange={setActiveTab}
+        >
+          <div className="space-y-4">
+            <div className="flex justify-between mb-4">
+              <Input 
+                placeholder="Search polls..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="max-w-sm"
+              />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {renderPollsList(filteredPolls)}
+            </div>
+          </div>
+        </AdminPageHeader>
+      </div>
+    </AdminLayout>
+  );
 };
 
 export default AdminPolls;

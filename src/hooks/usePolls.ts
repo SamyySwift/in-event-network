@@ -56,7 +56,9 @@ export const usePolls = () => {
             voteCounts[vote.option_id] = (voteCounts[vote.option_id] || 0) + 1;
           });
 
-          const optionsWithVotes = poll.options.map((option: any) => ({
+          // Type assertion for the options array
+          const options = poll.options as Array<{ id: string; text: string }>;
+          const optionsWithVotes = options.map((option) => ({
             ...option,
             votes: voteCounts[option.id] || 0
           }));

@@ -9,7 +9,6 @@ import { Badge } from '@/components/ui/badge';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useNotificationCount } from '@/hooks/useNotificationCount';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-
 interface AppLayoutProps {
   children: React.ReactNode;
 }
@@ -24,8 +23,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({
   const location = useLocation();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
-  const { unreadCount } = useNotificationCount();
-
+  const {
+    unreadCount
+  } = useNotificationCount();
   const isActive = (path: string) => {
     if (path === '/') {
       return location.pathname === '/';
@@ -121,7 +121,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({
               <SheetHeader>
                 <SheetTitle className="flex items-center">
                   <img src="/logo-placeholder.svg" alt="Connect Logo" className="h-8 w-auto mr-2" />
-                  <span className="font-semibold text-connect-800 dark:text-connect-300">Connect</span>
+                  <span className="font-semibold text-connect-800 dark:text-connect-300">kconect</span>
                 </SheetTitle>
               </SheetHeader>
               {currentUser && <div className="py-4 border-b dark:border-gray-700">
@@ -164,29 +164,21 @@ const AppLayout: React.FC<AppLayoutProps> = ({
           <span className="ml-2 font-semibold text-connect-800 dark:text-white">Kconect</span>
         </div>
         
-        {currentUser && (
-          <div className="flex items-center space-x-2">
+        {currentUser && <div className="flex items-center space-x-2">
             <ThemeToggle />
             <Button variant="ghost" size="icon" onClick={() => navigate('/attendee/notifications')} className="relative">
               <Bell size={20} className="text-gray-600 dark:text-gray-300" />
-              {unreadCount > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs bg-red-500 text-white flex items-center justify-center">
+              {unreadCount > 0 && <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs bg-red-500 text-white flex items-center justify-center">
                   {unreadCount > 9 ? '9+' : unreadCount}
-                </Badge>
-              )}
+                </Badge>}
             </Button>
             
             <Avatar className="h-8 w-8 cursor-pointer" onClick={() => navigate('/attendee/profile')}>
-              {currentUser.photoUrl ? (
-                <AvatarImage src={currentUser.photoUrl} alt={currentUser.name} />
-              ) : (
-                <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300">
+              {currentUser.photoUrl ? <AvatarImage src={currentUser.photoUrl} alt={currentUser.name} /> : <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300">
                   {currentUser.name.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              )}
+                </AvatarFallback>}
             </Avatar>
-          </div>
-        )}
+          </div>}
       </header>
       
       {/* Sidebar Navigation for Desktop */}
@@ -216,11 +208,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({
               </div>
               <Button variant="ghost" size="icon" onClick={() => navigate('/attendee/notifications')} className="relative">
                 <Bell size={16} className="text-gray-600 dark:text-gray-300" />
-                {unreadCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs bg-red-500 text-white flex items-center justify-center">
+                {unreadCount > 0 && <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs bg-red-500 text-white flex items-center justify-center">
                     {unreadCount > 9 ? '9+' : unreadCount}
-                  </Badge>
-                )}
+                  </Badge>}
               </Button>
             </div>}
         </div>
@@ -258,11 +248,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({
           <button className={`flex flex-col items-center py-1 px-2 rounded-md relative ${isActive('/attendee/notifications') ? 'text-connect-600 dark:text-connect-400 bg-connect-50 dark:bg-connect-900/50' : 'text-gray-500 dark:text-gray-400'}`} onClick={() => navigate('/attendee/notifications')}>
             <Bell size={20} />
             <span className="text-xs mt-1">Notifications</span>
-            {unreadCount > 0 && (
-              <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs bg-red-500 text-white flex items-center justify-center">
+            {unreadCount > 0 && <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs bg-red-500 text-white flex items-center justify-center">
                 {unreadCount > 9 ? '9+' : unreadCount}
-              </Badge>
-            )}
+              </Badge>}
           </button>
         </nav>}
     </div>;

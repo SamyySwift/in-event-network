@@ -16,104 +16,59 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { Poll, PollOption, PollVote } from '@/types';
+import { usePolls, usePollVotes, Poll } from '@/hooks/usePolls';
 import { useIsMobile } from '@/hooks/use-mobile';
 import FloatingPollBanner from '@/components/polls/FloatingPollBanner';
-import { BarChart } from 'lucide-react';
-
-// Mock data for polls
-const mockPolls: Poll[] = [
-  {
-    id: '1',
-    question: 'Which keynote session are you most looking forward to?',
-    options: [
-      { id: 'opt1', text: 'AI and Future of Tech', votes: 45 },
-      { id: 'opt2', text: 'Sustainable Technology', votes: 32 },
-      { id: 'opt3', text: 'Web3 and Blockchain', votes: 28 },
-      { id: 'opt4', text: 'UX Design Trends', votes: 37 }
-    ],
-    startTime: '2025-06-15T10:00:00Z',
-    endTime: '2025-06-15T18:00:00Z',
-    createdAt: '2025-06-01T14:23:00Z',
-    createdBy: 'admin1',
-    isActive: true,
-    showResults: false,
-    displayAsBanner: true
-  },
-  {
-    id: '2',
-    question: 'How would you rate the networking reception?',
-    options: [
-      { id: 'opt1', text: 'Excellent', votes: 28 },
-      { id: 'opt2', text: 'Good', votes: 42 },
-      { id: 'opt3', text: 'Average', votes: 15 },
-      { id: 'opt4', text: 'Poor', votes: 5 }
-    ],
-    startTime: '2025-06-16T20:00:00Z',
-    endTime: '2025-06-17T08:00:00Z',
-    createdAt: '2025-06-15T18:30:00Z',
-    createdBy: 'admin1',
-    isActive: true,
-    showResults: true,
-    displayAsBanner: false
-  }
-];
-
-// Mock user votes
-const mockUserVotes: PollVote[] = [
-  {
-    id: 'vote1',
-    pollId: '2',
-    userId: 'user1',
-    optionId: 'opt2',
-    timestamp: '2025-06-16T21:15:00Z'
-  }
-];
+import { BarChart, Loader } from 'lucide-react';
 
 const AttendeePolls = () => {
   const [activeTab, setActiveTab] = useState<string>('active');
-  const [userVotes, setUserVotes] = useState<PollVote[]>(mockUserVotes);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [floatingPoll, setFloatingPoll] = useState<Poll | null>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
-  // Helper functions - moved before useEffect
+  const { polls, isLoading } = usePolls();
+  const { userVotes, submitVote, isSubmitting } = usePollVotes();
+
+  // Helper functions
   const hasUserVotedForPoll = (pollId: string) => {
-    return userVotes.some(vote => vote.pollId === pollId);
+    return userVotes.some(vote => vote.poll_id === pollId);
   };
 
   const getUserVoteForPoll = (pollId: string) => {
-    return userVotes.find(vote => vote.pollId === pollId)?.optionId;
+    return userVotes.find(vote => vote.poll_id === pollId)?.option_id;
   };
 
   // Find polls to display as floating banners
   useEffect(() => {
     const now = new Date();
-    const activeBannerPolls = mockPolls.filter(poll => 
-      poll.isActive && 
-      poll.displayAsBanner && 
-      new Date(poll.startTime) <= now && 
-      new Date(poll.endTime) >= now &&
+    const activeBannerPolls = polls.filter(poll => 
+      poll.is_active && 
+      poll.display_as_banner && 
+      new Date(poll.start_time) <= now && 
+      new Date(poll.end_time) >= now &&
       !hasUserVotedForPoll(poll.id)
     );
     
     if (activeBannerPolls.length > 0) {
       setFloatingPoll(activeBannerPolls[0]);
+    } else {
+      setFloatingPoll(null);
     }
-  }, [userVotes]);
+  }, [polls, userVotes]);
   
   // Filter polls based on tab
-  const filteredPolls = mockPolls.filter(poll => {
+  const filteredPolls = polls.filter(poll => {
     const now = new Date();
-    const isPollActive = poll.isActive && 
-                        new Date(poll.startTime) <= now && 
-                        new Date(poll.endTime) >= now;
+    const isPollActive = poll.is_active && 
+                        new Date(poll.start_time) <= now && 
+                        new Date(poll.end_time) >= now;
     
     if (activeTab === 'active') {
       return isPollActive;
     } else if (activeTab === 'voted') {
-      return hasUserVotedForPoll(poll.id) && poll.showResults;
+      return hasUserVotedForPoll(poll.id) && poll.show_results;
     }
     
     return true; // 'all' tab
@@ -122,25 +77,7 @@ const AttendeePolls = () => {
   const handleVote = (pollId: string, optionId: string) => {
     if (hasUserVotedForPoll(pollId)) return;
     
-    // Create new vote
-    const newVote: PollVote = {
-      id: `vote-${Date.now()}`,
-      pollId,
-      userId: 'user1', // Would be current user ID in real app
-      optionId,
-      timestamp: new Date().toISOString()
-    };
-    
-    // Update mock data (in a real app, this would be an API call)
-    setUserVotes(prev => [...prev, newVote]);
-    
-    // Update poll option vote count
-    // In a real app, this would be handled by the backend
-    
-    toast({
-      title: "Vote submitted",
-      description: "Thank you for your feedback!",
-    });
+    submitVote({ pollId, optionId });
     
     if (floatingPoll?.id === pollId) {
       // Close floating poll after a delay
@@ -158,7 +95,7 @@ const AttendeePolls = () => {
   };
 
   const calculatePercentage = (votes: number, poll: Poll) => {
-    const totalVotes = poll.options.reduce((acc, option) => acc + option.votes, 0);
+    const totalVotes = poll.options.reduce((acc, option) => acc + (option.votes || 0), 0);
     if (totalVotes === 0) return 0;
     return Math.round((votes / totalVotes) * 100);
   };
@@ -166,8 +103,8 @@ const AttendeePolls = () => {
   function renderPollCard(poll: Poll) {
     const userVoted = hasUserVotedForPoll(poll.id);
     const userVoteId = getUserVoteForPoll(poll.id);
-    const isPollActive = new Date(poll.startTime) <= new Date() && new Date(poll.endTime) >= new Date();
-    const showResults = poll.showResults || userVoted;
+    const isPollActive = new Date(poll.start_time) <= new Date() && new Date(poll.end_time) >= new Date();
+    const showResults = poll.show_results || userVoted;
     
     return (
       <Card key={poll.id} className="overflow-hidden">
@@ -177,8 +114,8 @@ const AttendeePolls = () => {
               <CardTitle className="text-lg">{poll.question}</CardTitle>
               <CardDescription className="mt-1">
                 {isPollActive 
-                  ? `Ends ${format(new Date(poll.endTime), 'MMM d, h:mm a')}` 
-                  : `Ended ${format(new Date(poll.endTime), 'MMM d, yyyy')}`
+                  ? `Ends ${format(new Date(poll.end_time), 'MMM d, h:mm a')}` 
+                  : `Ended ${format(new Date(poll.end_time), 'MMM d, yyyy')}`
                 }
               </CardDescription>
             </div>
@@ -205,18 +142,18 @@ const AttendeePolls = () => {
                         </span>
                       )}
                     </span>
-                    <span className="font-medium">{calculatePercentage(option.votes, poll)}%</span>
+                    <span className="font-medium">{calculatePercentage(option.votes || 0, poll)}%</span>
                   </div>
                   <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                     <div 
                       className={`h-full ${option.id === userVoteId ? 'bg-primary' : 'bg-primary/70'}`}
-                      style={{ width: `${calculatePercentage(option.votes, poll)}%` }}
+                      style={{ width: `${calculatePercentage(option.votes || 0, poll)}%` }}
                     />
                   </div>
                 </div>
               ))}
               <p className="text-xs text-muted-foreground mt-2">
-                Total votes: {poll.options.reduce((acc, option) => acc + option.votes, 0)}
+                Total votes: {poll.options.reduce((acc, option) => acc + (option.votes || 0), 0)}
               </p>
             </div>
           ) : (
@@ -238,13 +175,28 @@ const AttendeePolls = () => {
           <CardFooter className="flex justify-end border-t pt-3">
             <Button 
               onClick={() => handleVote(poll.id, selectedOptions[poll.id] || '')}
-              disabled={!selectedOptions[poll.id]}
+              disabled={!selectedOptions[poll.id] || isSubmitting}
             >
-              Submit Vote
+              {isSubmitting ? 'Submitting...' : 'Submit Vote'}
             </Button>
           </CardFooter>
         )}
       </Card>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <Loader className="mx-auto h-12 w-12 animate-spin text-muted-foreground" />
+              <p className="mt-2 text-muted-foreground">Loading polls...</p>
+            </div>
+          </div>
+        </div>
+      </AppLayout>
     );
   }
 

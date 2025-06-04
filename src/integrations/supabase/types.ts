@@ -408,6 +408,7 @@ export type Database = {
           question: string
           show_results: boolean | null
           start_time: string
+          updated_at: string | null
         }
         Insert: {
           created_at?: string
@@ -420,6 +421,7 @@ export type Database = {
           question: string
           show_results?: boolean | null
           start_time: string
+          updated_at?: string | null
         }
         Update: {
           created_at?: string
@@ -432,6 +434,7 @@ export type Database = {
           question?: string
           show_results?: boolean | null
           start_time?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -726,7 +729,10 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      get_poll_with_results: {
+        Args: { poll_uuid: string }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

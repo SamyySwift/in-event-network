@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import CreatePollDialog from '@/components/admin/CreatePollDialog';
 import { 
   Card, 
   CardContent, 
@@ -25,13 +26,11 @@ import {
   Edit, 
   Trash2, 
   Plus, 
-  Eye, 
-  EyeOff, 
   BarChart4 
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Poll } from '@/types';
+import { usePolls, Poll } from '@/hooks/usePolls';
 import { useToast } from '@/hooks/use-toast';
 import {
   Tooltip,
@@ -39,74 +38,31 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-
-// Mock data for polls
-const mockPolls: Poll[] = [
-  {
-    id: '1',
-    question: 'Which keynote session are you most looking forward to?',
-    options: [
-      { id: 'opt1', text: 'AI and Future of Tech', votes: 45 },
-      { id: 'opt2', text: 'Sustainable Technology', votes: 32 },
-      { id: 'opt3', text: 'Web3 and Blockchain', votes: 28 },
-      { id: 'opt4', text: 'UX Design Trends', votes: 37 }
-    ],
-    startTime: '2025-06-15T10:00:00Z',
-    endTime: '2025-06-15T18:00:00Z',
-    createdAt: '2025-06-01T14:23:00Z',
-    createdBy: 'admin1',
-    isActive: true,
-    showResults: false,
-    displayAsBanner: true
-  },
-  {
-    id: '2',
-    question: 'How would you rate the networking reception?',
-    options: [
-      { id: 'opt1', text: 'Excellent', votes: 28 },
-      { id: 'opt2', text: 'Good', votes: 42 },
-      { id: 'opt3', text: 'Average', votes: 15 },
-      { id: 'opt4', text: 'Poor', votes: 5 }
-    ],
-    startTime: '2025-06-16T20:00:00Z',
-    endTime: '2025-06-17T08:00:00Z',
-    createdAt: '2025-06-15T18:30:00Z',
-    createdBy: 'admin1',
-    isActive: false,
-    showResults: true,
-    displayAsBanner: false
-  },
-  {
-    id: '3',
-    question: 'Which workshop would you like to see added next year?',
-    options: [
-      { id: 'opt1', text: 'Advanced Mobile Development', votes: 56 },
-      { id: 'opt2', text: 'Data Science Fundamentals', votes: 78 },
-      { id: 'opt3', text: 'DevOps Best Practices', votes: 43 },
-      { id: 'opt4', text: 'UI/UX Design Workshop', votes: 62 }
-    ],
-    startTime: '2025-06-17T09:00:00Z',
-    endTime: '2025-06-17T23:59:59Z',
-    createdAt: '2025-06-16T22:15:00Z',
-    createdBy: 'admin2',
-    isActive: true,
-    showResults: true,
-    displayAsBanner: true
-  }
-];
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const AdminPolls = () => {
   const [activeTab, setActiveTab] = useState<string>('active');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const isMobile = useIsMobile();
   const { toast } = useToast();
+  const { polls, isLoading, updatePoll, deletePoll, isDeleting } = usePolls();
   
   // Filter polls based on tab and search query
-  const filteredPolls = mockPolls.filter(poll => {
+  const filteredPolls = polls.filter(poll => {
     const matchesTab = 
       activeTab === 'all' || 
-      (activeTab === 'active' && poll.isActive) || 
-      (activeTab === 'inactive' && !poll.isActive);
+      (activeTab === 'active' && poll.is_active) || 
+      (activeTab === 'inactive' && !poll.is_active);
     
     const matchesSearch = poll.question.toLowerCase().includes(searchQuery.toLowerCase());
     
@@ -114,70 +70,71 @@ const AdminPolls = () => {
   });
 
   const handleCreatePoll = () => {
-    console.log('Create new poll');
-    toast({
-      title: "Creating new poll",
-      description: "Poll creation UI would open here"
-    });
+    // This will be handled by the CreatePollDialog component
   };
 
   const handleEditPoll = (poll: Poll) => {
     console.log('Edit poll', poll);
     toast({
-      title: "Editing poll",
-      description: `Editing: ${poll.question}`
+      title: "Edit functionality",
+      description: "Poll editing will be available in the next update"
     });
   };
 
   const handleDeletePoll = (poll: Poll) => {
-    console.log('Delete poll', poll);
-    toast({
-      title: "Delete poll?",
-      description: "This action cannot be undone",
-      variant: "destructive"
-    });
+    deletePoll(poll.id);
   };
 
   const handleTogglePollActive = (poll: Poll) => {
-    console.log('Toggle poll active state', poll);
-    toast({
-      title: poll.isActive ? "Poll deactivated" : "Poll activated",
-      description: poll.question
+    updatePoll({
+      id: poll.id,
+      is_active: !poll.is_active
     });
   };
 
   const handleToggleShowResults = (poll: Poll) => {
-    console.log('Toggle show results', poll);
-    toast({
-      title: poll.showResults ? "Results hidden" : "Results shown",
-      description: `Results for: ${poll.question}`
+    updatePoll({
+      id: poll.id,
+      show_results: !poll.show_results
     });
   };
 
   const handleToggleBanner = (poll: Poll) => {
-    console.log('Toggle banner display', poll);
-    toast({
-      title: poll.displayAsBanner ? "Banner disabled" : "Banner enabled",
-      description: `For poll: ${poll.question}`
+    updatePoll({
+      id: poll.id,
+      display_as_banner: !poll.display_as_banner
     });
   };
 
   const calculatePercentage = (votes: number, poll: Poll) => {
-    const totalVotes = poll.options.reduce((acc, option) => acc + option.votes, 0);
+    const totalVotes = poll.options.reduce((acc, option) => acc + (option.votes || 0), 0);
     if (totalVotes === 0) return 0;
     return Math.round((votes / totalVotes) * 100);
   };
 
   const getTotalVotes = (poll: Poll) => {
-    return poll.options.reduce((acc, option) => acc + option.votes, 0);
+    return poll.options.reduce((acc, option) => acc + (option.votes || 0), 0);
   };
 
   const isPollActive = (poll: Poll) => {
     const now = new Date();
-    return poll.isActive && 
-           new Date(poll.startTime) <= now && 
-           new Date(poll.endTime) >= now;
+    return poll.is_active && 
+           new Date(poll.start_time) <= now && 
+           new Date(poll.end_time) >= now;
   };
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <BarChart4 className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
+            <p className="mt-2 text-muted-foreground">Loading polls...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -186,6 +143,14 @@ const AdminPolls = () => {
         description="Create and manage polls for attendees"
         actionLabel="Create Poll"
         onAction={handleCreatePoll}
+        ActionComponent={() => (
+          <CreatePollDialog>
+            <Button>
+              <Plus size={16} className="mr-1" />
+              Create Poll
+            </Button>
+          </CreatePollDialog>
+        )}
         tabs={[
           { id: 'all', label: 'All Polls' },
           { id: 'active', label: 'Active' },
@@ -248,7 +213,7 @@ const AdminPolls = () => {
               <div>
                 <CardTitle className="text-lg font-medium">{poll.question}</CardTitle>
                 <CardDescription className="text-xs mt-1">
-                  Created: {format(new Date(poll.createdAt), 'MMM d, yyyy')}
+                  Created: {format(new Date(poll.created_at), 'MMM d, yyyy')}
                 </CardDescription>
               </div>
               <div className="flex space-x-1">
@@ -269,32 +234,43 @@ const AdminPolls = () => {
                   </Tooltip>
                 </TooltipProvider>
 
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10" 
-                        onClick={() => handleDeletePoll(poll)}
-                      >
-                        <Trash2 size={16} />
-                        <span className="sr-only">Delete</span>
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Delete Poll</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10" 
+                      disabled={isDeleting}
+                    >
+                      <Trash2 size={16} />
+                      <span className="sr-only">Delete</span>
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Poll</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to delete this poll? This action cannot be undone and will remove all associated votes.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDeletePoll(poll)}>
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
               {isPollActive(poll) && (
                 <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Live</Badge>
               )}
-              {poll.displayAsBanner && (
+              {poll.display_as_banner && (
                 <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Banner</Badge>
               )}
-              {poll.showResults && (
+              {poll.show_results && (
                 <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-200">Results Visible</Badge>
               )}
               <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200">
@@ -308,12 +284,12 @@ const AdminPolls = () => {
                 <div key={option.id} className="space-y-1">
                   <div className="flex justify-between text-sm">
                     <span>{option.text}</span>
-                    <span className="font-medium">{calculatePercentage(option.votes, poll)}%</span>
+                    <span className="font-medium">{calculatePercentage(option.votes || 0, poll)}%</span>
                   </div>
                   <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                     <div 
                       className="h-full bg-primary" 
-                      style={{ width: `${calculatePercentage(option.votes, poll)}%` }}
+                      style={{ width: `${calculatePercentage(option.votes || 0, poll)}%` }}
                     />
                   </div>
                 </div>
@@ -324,7 +300,7 @@ const AdminPolls = () => {
             <div className="flex items-center space-x-2">
               <Switch 
                 id={`active-${poll.id}`}
-                checked={poll.isActive}
+                checked={poll.is_active}
                 onCheckedChange={() => handleTogglePollActive(poll)}
               />
               <Label htmlFor={`active-${poll.id}`} className="text-sm">Active</Label>
@@ -333,7 +309,7 @@ const AdminPolls = () => {
             <div className="flex items-center space-x-2">
               <Switch 
                 id={`results-${poll.id}`}
-                checked={poll.showResults}
+                checked={poll.show_results}
                 onCheckedChange={() => handleToggleShowResults(poll)}
               />
               <Label htmlFor={`results-${poll.id}`} className="text-sm">Show Results</Label>
@@ -342,7 +318,7 @@ const AdminPolls = () => {
             <div className="flex items-center space-x-2">
               <Switch 
                 id={`banner-${poll.id}`}
-                checked={poll.displayAsBanner}
+                checked={poll.display_as_banner}
                 onCheckedChange={() => handleToggleBanner(poll)}
               />
               <Label htmlFor={`banner-${poll.id}`} className="text-sm">Show as Banner</Label>
@@ -362,10 +338,12 @@ const AdminPolls = () => {
             : "No polls match your search criteria."
           }
         </p>
-        <Button onClick={handleCreatePoll} className="mt-4">
-          <Plus size={16} className="mr-1" />
-          Create Poll
-        </Button>
+        <CreatePollDialog>
+          <Button className="mt-4">
+            <Plus size={16} className="mr-1" />
+            Create Poll
+          </Button>
+        </CreatePollDialog>
       </div>
     );
   }

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { X } from "lucide-react";
-import { Poll, PollOption } from "@/types";
+import { Poll } from "@/hooks/usePolls";
 import { useToast } from "@/hooks/use-toast";
 
 interface FloatingPollBannerProps {
@@ -45,7 +45,7 @@ const FloatingPollBanner: React.FC<FloatingPollBannerProps> = ({
   };
 
   const calculatePercentage = (votes: number) => {
-    const totalVotes = poll.options.reduce((acc, option) => acc + option.votes, 0);
+    const totalVotes = poll.options.reduce((acc, option) => acc + (option.votes || 0), 0);
     if (totalVotes === 0) return 0;
     return Math.round((votes / totalVotes) * 100);
   };
@@ -66,11 +66,11 @@ const FloatingPollBanner: React.FC<FloatingPollBannerProps> = ({
           </Button>
         </div>
         <CardDescription className="text-xs">
-          Poll ends at {new Date(poll.endTime).toLocaleTimeString()}
+          Poll ends at {new Date(poll.end_time).toLocaleTimeString()}
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-3">
-        {!hasVoted && !poll.showResults ? (
+        {!hasVoted && !poll.show_results ? (
           <RadioGroup value={selectedOption || ""} onValueChange={setSelectedOption} className="space-y-2">
             {poll.options.map((option) => (
               <div key={option.id} className="flex items-center space-x-2">
@@ -85,23 +85,23 @@ const FloatingPollBanner: React.FC<FloatingPollBannerProps> = ({
               <div key={option.id} className="space-y-1">
                 <div className="flex justify-between text-sm">
                   <span>{option.text}</span>
-                  <span className="font-medium">{calculatePercentage(option.votes)}%</span>
+                  <span className="font-medium">{calculatePercentage(option.votes || 0)}%</span>
                 </div>
                 <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-primary" 
-                    style={{ width: `${calculatePercentage(option.votes)}%` }}
+                    style={{ width: `${calculatePercentage(option.votes || 0)}%` }}
                   />
                 </div>
               </div>
             ))}
             <p className="text-xs text-muted-foreground mt-2">
-              Total votes: {poll.options.reduce((acc, option) => acc + option.votes, 0)}
+              Total votes: {poll.options.reduce((acc, option) => acc + (option.votes || 0), 0)}
             </p>
           </div>
         )}
       </CardContent>
-      {!hasVoted && !poll.showResults && (
+      {!hasVoted && !poll.show_results && (
         <CardFooter className="pt-0">
           <Button onClick={handleVote} className="w-full">Vote</Button>
         </CardFooter>

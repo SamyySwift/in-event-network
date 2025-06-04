@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import AppLayout from '@/components/layouts/AppLayout';
 import { 
   Card, 
@@ -18,13 +18,11 @@ import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { usePolls, usePollVotes, Poll } from '@/hooks/usePolls';
 import { useIsMobile } from '@/hooks/use-mobile';
-import FloatingPollBanner from '@/components/polls/FloatingPollBanner';
 import { BarChart, Loader } from 'lucide-react';
 
 const AttendeePolls = () => {
   const [activeTab, setActiveTab] = useState<string>('active');
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
-  const [floatingPoll, setFloatingPoll] = useState<Poll | null>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
@@ -39,34 +37,11 @@ const AttendeePolls = () => {
   const getUserVoteForPoll = (pollId: string) => {
     return userVotes.find(vote => vote.poll_id === pollId)?.option_id;
   };
-
-  // Find polls to display as floating banners
-  useEffect(() => {
-    const now = new Date();
-    const activeBannerPolls = polls.filter(poll => 
-      poll.is_active && 
-      poll.display_as_banner && 
-      new Date(poll.start_time) <= now && 
-      new Date(poll.end_time) >= now &&
-      !hasUserVotedForPoll(poll.id)
-    );
-    
-    if (activeBannerPolls.length > 0) {
-      setFloatingPoll(activeBannerPolls[0]);
-    } else {
-      setFloatingPoll(null);
-    }
-  }, [polls, userVotes]);
   
   // Filter polls based on tab
   const filteredPolls = polls.filter(poll => {
-    const now = new Date();
-    const isPollActive = poll.is_active && 
-                        new Date(poll.start_time) <= now && 
-                        new Date(poll.end_time) >= now;
-    
     if (activeTab === 'active') {
-      return isPollActive;
+      return poll.is_active;
     } else if (activeTab === 'voted') {
       return hasUserVotedForPoll(poll.id) && poll.show_results;
     }
@@ -75,16 +50,25 @@ const AttendeePolls = () => {
   });
 
   const handleVote = (pollId: string, optionId: string) => {
-    if (hasUserVotedForPoll(pollId)) return;
+    if (hasUserVotedForPoll(pollId)) {
+      toast({
+        title: "Already voted",
+        description: "You have already voted on this poll",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!optionId) {
+      toast({
+        title: "Selection required",
+        description: "Please select an option before voting",
+        variant: "destructive"
+      });
+      return;
+    }
     
     submitVote({ pollId, optionId });
-    
-    if (floatingPoll?.id === pollId) {
-      // Close floating poll after a delay
-      setTimeout(() => {
-        setFloatingPoll(null);
-      }, 2000);
-    }
   };
 
   const handleSelectOption = (pollId: string, optionId: string) => {
@@ -103,7 +87,6 @@ const AttendeePolls = () => {
   function renderPollCard(poll: Poll) {
     const userVoted = hasUserVotedForPoll(poll.id);
     const userVoteId = getUserVoteForPoll(poll.id);
-    const isPollActive = new Date(poll.start_time) <= new Date() && new Date(poll.end_time) >= new Date();
     const showResults = poll.show_results || userVoted;
     
     return (
@@ -113,10 +96,7 @@ const AttendeePolls = () => {
             <div>
               <CardTitle className="text-lg">{poll.question}</CardTitle>
               <CardDescription className="mt-1">
-                {isPollActive 
-                  ? `Ends ${format(new Date(poll.end_time), 'MMM d, h:mm a')}` 
-                  : `Ended ${format(new Date(poll.end_time), 'MMM d, yyyy')}`
-                }
+                Created {format(new Date(poll.created_at), 'MMM d, yyyy')}
               </CardDescription>
             </div>
             {userVoted && (
@@ -171,7 +151,7 @@ const AttendeePolls = () => {
             </RadioGroup>
           )}
         </CardContent>
-        {!showResults && isPollActive && (
+        {!showResults && poll.is_active && (
           <CardFooter className="flex justify-end border-t pt-3">
             <Button 
               onClick={() => handleVote(poll.id, selectedOptions[poll.id] || '')}
@@ -274,15 +254,6 @@ const AttendeePolls = () => {
           </TabsContent>
         </Tabs>
       </div>
-      
-      {/* Floating poll banner */}
-      {floatingPoll && (
-        <FloatingPollBanner 
-          poll={floatingPoll}
-          onVote={handleVote}
-          onClose={() => setFloatingPoll(null)}
-        />
-      )}
     </AppLayout>
   );
 };

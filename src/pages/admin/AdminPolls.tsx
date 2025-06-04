@@ -89,13 +89,6 @@ const AdminPolls = () => {
     });
   };
 
-  const handleToggleBanner = (poll: Poll) => {
-    updatePoll({
-      id: poll.id,
-      display_as_banner: !poll.display_as_banner
-    });
-  };
-
   const calculatePercentage = (votes: number, poll: Poll) => {
     const totalVotes = poll.options.reduce((acc, option) => acc + (option.votes || 0), 0);
     if (totalVotes === 0) return 0;
@@ -104,13 +97,6 @@ const AdminPolls = () => {
 
   const getTotalVotes = (poll: Poll) => {
     return poll.options.reduce((acc, option) => acc + (option.votes || 0), 0);
-  };
-
-  const isPollActive = (poll: Poll) => {
-    const now = new Date();
-    return poll.is_active && 
-           new Date(poll.start_time) <= now && 
-           new Date(poll.end_time) >= now;
   };
 
   function renderPollsList(polls: Poll[]) {
@@ -173,11 +159,8 @@ const AdminPolls = () => {
               </div>
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
-              {isPollActive(poll) && (
-                <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Live</Badge>
-              )}
-              {poll.display_as_banner && (
-                <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Banner</Badge>
+              {poll.is_active && (
+                <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Active</Badge>
               )}
               {poll.show_results && (
                 <Badge className="bg-purple-100 text-purple-800 hover:bg-purple-200">Results Visible</Badge>
@@ -222,15 +205,6 @@ const AdminPolls = () => {
                 onCheckedChange={() => handleToggleShowResults(poll)}
               />
               <Label htmlFor={`results-${poll.id}`} className="text-sm">Show Results</Label>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Switch 
-                id={`banner-${poll.id}`}
-                checked={poll.display_as_banner}
-                onCheckedChange={() => handleToggleBanner(poll)}
-              />
-              <Label htmlFor={`banner-${poll.id}`} className="text-sm">Show as Banner</Label>
             </div>
           </CardFooter>
         </Card>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -46,38 +47,73 @@ const AdminQuestions = () => {
 
   const fetchQuestions = async () => {
     try {
-      const { data, error } = await supabase
+      console.log('Fetching questions...');
+      
+      // First get all questions
+      const { data: questionsData, error: questionsError } = await supabase
         .from('questions')
-        .select(`
-          id,
-          content,
-          created_at,
-          upvotes,
-          is_answered,
-          user_id,
-          session_id,
-          event_id,
-          is_anonymous,
-          profiles(name, photo_url)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      
-      // Transform the data to match our interface
-      const transformedData: QuestionWithProfile[] = (data || []).map(item => ({
-        ...item,
-        profiles: Array.isArray(item.profiles) && item.profiles.length > 0 
-          ? item.profiles[0] 
-          : null
-      }));
-      
-      setQuestions(transformedData);
+      if (questionsError) {
+        console.error('Questions error:', questionsError);
+        throw questionsError;
+      }
+
+      console.log('Questions data:', questionsData);
+
+      if (!questionsData || questionsData.length === 0) {
+        setQuestions([]);
+        setLoading(false);
+        return;
+      }
+
+      // Then get profiles for non-anonymous questions
+      const questionsWithProfiles = await Promise.all(
+        questionsData.map(async (question) => {
+          if (question.is_anonymous) {
+            return {
+              ...question,
+              profiles: null
+            };
+          }
+
+          try {
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .select('name, photo_url')
+              .eq('id', question.user_id)
+              .single();
+
+            if (profileError) {
+              console.warn('Profile error for user:', question.user_id, profileError);
+              return {
+                ...question,
+                profiles: null
+              };
+            }
+
+            return {
+              ...question,
+              profiles: profileData
+            };
+          } catch (error) {
+            console.warn('Error fetching profile for user:', question.user_id, error);
+            return {
+              ...question,
+              profiles: null
+            };
+          }
+        })
+      );
+
+      console.log('Questions with profiles:', questionsWithProfiles);
+      setQuestions(questionsWithProfiles);
     } catch (error) {
       console.error('Error fetching questions:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch questions",
+        description: "Failed to fetch questions. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -101,12 +137,14 @@ const AdminQuestions = () => {
 
   const handleMarkAsAnswered = async (question: QuestionWithProfile) => {
     try {
+      const { data: user } = await supabase.auth.getUser();
+      
       const { error } = await supabase
         .from('questions')
         .update({ 
           is_answered: true,
           answered_at: new Date().toISOString(),
-          answered_by: (await supabase.auth.getUser()).data.user?.id
+          answered_by: user.data.user?.id
         })
         .eq('id', question.id);
 
@@ -189,6 +227,9 @@ const AdminQuestions = () => {
                 <CardContent className="py-10 text-center text-muted-foreground">
                   <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No questions found in this category.</p>
+                  {activeTab === 'all' && (
+                    <p className="text-sm mt-2">Questions submitted by attendees will appear here.</p>
+                  )}
                 </CardContent>
               </Card>
             ) : (

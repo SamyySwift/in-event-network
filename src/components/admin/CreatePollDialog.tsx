@@ -1,35 +1,36 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Textarea } from '@/components/ui/textarea';
-import { Plus, Trash2 } from 'lucide-react';
+import { Trash2, Plus } from 'lucide-react';
 import { usePolls } from '@/hooks/usePolls';
+import { useToast } from '@/hooks/use-toast';
 
 interface CreatePollDialogProps {
   children: React.ReactNode;
 }
 
-const CreatePollDialog = ({ children }: CreatePollDialogProps) => {
+const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
   const [open, setOpen] = useState(false);
   const [question, setQuestion] = useState('');
-  const [options, setOptions] = useState([
-    { id: '1', text: '' },
-    { id: '2', text: '' }
-  ]);
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
+  const [options, setOptions] = useState(['', '']);
+  const [isActive, setIsActive] = useState(true);
   const [showResults, setShowResults] = useState(false);
-  const [displayAsBanner, setDisplayAsBanner] = useState(false);
-
+  
   const { createPoll, isCreating } = usePolls();
+  const { toast } = useToast();
 
   const addOption = () => {
-    const newId = (options.length + 1).toString();
-    setOptions([...options, { id: newId, text: '' }]);
+    setOptions([...options, '']);
   };
 
   const removeOption = (index: number) => {
@@ -38,41 +39,49 @@ const CreatePollDialog = ({ children }: CreatePollDialogProps) => {
     }
   };
 
-  const updateOption = (index: number, text: string) => {
+  const updateOption = (index: number, value: string) => {
     const newOptions = [...options];
-    newOptions[index].text = text;
+    newOptions[index] = value;
     setOptions(newOptions);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!question.trim() || !startTime || !endTime) {
+  const handleSubmit = () => {
+    if (!question.trim()) {
+      toast({
+        title: "Question required",
+        description: "Please enter a poll question",
+        variant: "destructive"
+      });
       return;
     }
 
-    const validOptions = options.filter(opt => opt.text.trim());
-    if (validOptions.length < 2) {
+    const filteredOptions = options.filter(opt => opt.trim() !== '');
+    if (filteredOptions.length < 2) {
+      toast({
+        title: "Options required",
+        description: "Please provide at least 2 options",
+        variant: "destructive"
+      });
       return;
     }
 
-    createPoll({
+    const pollData = {
       question: question.trim(),
-      options: validOptions,
-      start_time: startTime,
-      end_time: endTime,
-      is_active: true,
-      show_results: showResults,
-      display_as_banner: displayAsBanner
-    });
+      options: filteredOptions.map((text, index) => ({
+        id: `option_${index + 1}`,
+        text: text.trim()
+      })),
+      is_active: isActive,
+      show_results: showResults
+    };
 
+    createPoll(pollData);
+    
     // Reset form
     setQuestion('');
-    setOptions([{ id: '1', text: '' }, { id: '2', text: '' }]);
-    setStartTime('');
-    setEndTime('');
+    setOptions(['', '']);
+    setIsActive(true);
     setShowResults(false);
-    setDisplayAsBanner(false);
     setOpen(false);
   };
 
@@ -81,102 +90,85 @@ const CreatePollDialog = ({ children }: CreatePollDialogProps) => {
       <DialogTrigger asChild>
         {children}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Create New Poll</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
+        
+        <div className="space-y-4">
+          <div>
             <Label htmlFor="question">Poll Question</Label>
-            <Textarea
+            <Input
               id="question"
+              placeholder="What would you like to ask?"
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
-              placeholder="Enter your poll question..."
-              required
             />
           </div>
 
-          <div className="space-y-4">
-            <Label>Poll Options</Label>
-            {options.map((option, index) => (
-              <div key={index} className="flex gap-2">
-                <Input
-                  value={option.text}
-                  onChange={(e) => updateOption(index, e.target.value)}
-                  placeholder={`Option ${index + 1}`}
-                  required
-                />
-                {options.length > 2 && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    onClick={() => removeOption(index)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            ))}
-            <Button type="button" variant="outline" onClick={addOption}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Option
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="startTime">Start Time</Label>
-              <Input
-                id="startTime"
-                type="datetime-local"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="endTime">End Time</Label>
-              <Input
-                id="endTime"
-                type="datetime-local"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                required
-              />
+          <div>
+            <Label>Options</Label>
+            <div className="space-y-2 mt-2">
+              {options.map((option, index) => (
+                <div key={index} className="flex gap-2">
+                  <Input
+                    placeholder={`Option ${index + 1}`}
+                    value={option}
+                    onChange={(e) => updateOption(index, e.target.value)}
+                  />
+                  {options.length > 2 && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => removeOption(index)}
+                    >
+                      <Trash2 size={16} />
+                    </Button>
+                  )}
+                </div>
+              ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addOption}
+                className="w-full"
+              >
+                <Plus size={16} className="mr-1" />
+                Add Option
+              </Button>
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex items-center space-x-2">
               <Switch
-                id="showResults"
+                id="active"
+                checked={isActive}
+                onCheckedChange={setIsActive}
+              />
+              <Label htmlFor="active">Make poll active</Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="results"
                 checked={showResults}
                 onCheckedChange={setShowResults}
               />
-              <Label htmlFor="showResults">Show results immediately</Label>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="displayAsBanner"
-                checked={displayAsBanner}
-                onCheckedChange={setDisplayAsBanner}
-              />
-              <Label htmlFor="displayAsBanner">Display as floating banner</Label>
+              <Label htmlFor="results">Show results immediately</Label>
             </div>
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+          <div className="flex gap-2 pt-4">
+            <Button variant="outline" onClick={() => setOpen(false)} className="flex-1">
               Cancel
             </Button>
-            <Button type="submit" disabled={isCreating}>
+            <Button onClick={handleSubmit} disabled={isCreating} className="flex-1">
               {isCreating ? 'Creating...' : 'Create Poll'}
             </Button>
           </div>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

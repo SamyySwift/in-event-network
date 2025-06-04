@@ -11,11 +11,8 @@ export interface Poll {
     text: string;
     votes?: number;
   }>;
-  start_time: string;
-  end_time: string;
   is_active: boolean;
   show_results: boolean;
-  display_as_banner: boolean;
   created_by?: string;
   created_at: string;
   updated_at?: string;
@@ -57,7 +54,7 @@ export const usePolls = () => {
           });
 
           // Type assertion for the options array
-          const options = poll.options as Array<{ id: string; text: string }>;
+          const options = (poll.options as any[]) || [];
           const optionsWithVotes = options.map((option) => ({
             ...option,
             votes: voteCounts[option.id] || 0
@@ -76,11 +73,17 @@ export const usePolls = () => {
 
   const createPollMutation = useMutation({
     mutationFn: async (pollData: Omit<Poll, 'id' | 'created_at' | 'updated_at'>) => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('User not authenticated');
+
       const { data, error } = await supabase
         .from('polls')
         .insert([{
-          ...pollData,
-          created_by: (await supabase.auth.getUser()).data.user?.id
+          question: pollData.question,
+          options: pollData.options,
+          is_active: pollData.is_active,
+          show_results: pollData.show_results,
+          created_by: user.user.id
         }])
         .select()
         .single();
@@ -199,6 +202,18 @@ export const usePollVotes = () => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('User not authenticated');
 
+      // First check if user already voted
+      const { data: existingVote } = await supabase
+        .from('poll_votes')
+        .select('id')
+        .eq('poll_id', pollId)
+        .eq('user_id', user.user.id)
+        .single();
+
+      if (existingVote) {
+        throw new Error('You have already voted on this poll');
+      }
+
       const { data, error } = await supabase
         .from('poll_votes')
         .insert([{
@@ -223,7 +238,7 @@ export const usePollVotes = () => {
     onError: (error) => {
       toast({
         title: 'Error',
-        description: 'Failed to submit vote. Please try again.',
+        description: error.message || 'Failed to submit vote. Please try again.',
         variant: 'destructive',
       });
       console.error('Error submitting vote:', error);

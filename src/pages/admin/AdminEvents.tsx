@@ -1,62 +1,110 @@
+
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Plus } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader, Calendar, MapPin } from 'lucide-react';
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Badge } from '@/components/ui/badge';
+import { useEvents } from '@/hooks/useEvents';
+import { useAuth } from '@/contexts/AuthContext';
 
-// Define the schema for event validation
-const eventSchema = z.object({
-  name: z.string().min(3, { message: "Event name must be at least 3 characters." }),
-  description: z.string().optional(),
-  startTime: z.string().refine((date) => {
-    try {
-      new Date(date);
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }, {
-    message: "Invalid start time"
-  }),
-  endTime: z.string().refine((date) => {
-    try {
-      new Date(date);
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }, {
-    message: "Invalid end time"
-  }),
-  location: z.string().min(3, { message: "Location must be at least 3 characters." }),
-});
-
-type EventSchemaType = z.infer<typeof eventSchema>;
+type EventFormData = {
+  name: string;
+  description?: string;
+  start_time: string;
+  end_time: string;
+  location?: string;
+  website?: string;
+};
 
 const AdminEvents = () => {
-  const [events, setEvents] = useState([]);
+  const [editingEvent, setEditingEvent] = useState<string | null>(null);
+  const { currentUser } = useAuth();
+  const { events, isLoading, createEvent, updateEvent, deleteEvent, isCreating, isUpdating, isDeleting } = useEvents();
 
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<EventSchemaType>({
-    resolver: zodResolver(eventSchema),
+  const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm<EventFormData>({
     defaultValues: {
       name: '',
       description: '',
-      startTime: '',
-      endTime: '',
-      location: ''
+      start_time: '',
+      end_time: '',
+      location: '',
+      website: ''
     }
   });
 
-  const onSubmit = (data: EventSchemaType) => {
-    console.log("Form Data:", data);
-    setEvents([...events, data]);
+  const onSubmit = (data: EventFormData) => {
+    const eventData = {
+      ...data,
+      host_id: currentUser?.id,
+    };
+
+    if (editingEvent) {
+      updateEvent({ id: editingEvent, ...eventData });
+      setEditingEvent(null);
+    } else {
+      createEvent(eventData);
+    }
+    reset();
   };
+
+  const handleEdit = (event: any) => {
+    setEditingEvent(event.id);
+    setValue('name', event.name);
+    setValue('description', event.description || '');
+    setValue('start_time', new Date(event.start_time).toISOString().slice(0, 16));
+    setValue('end_time', new Date(event.end_time).toISOString().slice(0, 16));
+    setValue('location', event.location || '');
+    setValue('website', event.website || '');
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this event?')) {
+      deleteEvent(id);
+    }
+  };
+
+  const handleCancel = () => {
+    setEditingEvent(null);
+    reset();
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const isEventLive = (startTime: string, endTime: string) => {
+    const now = new Date();
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    return now >= start && now <= end;
+  };
+
+  const isEventUpcoming = (startTime: string) => {
+    const now = new Date();
+    const start = new Date(startTime);
+    return now < start;
+  };
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader className="h-8 w-8 animate-spin" />
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -70,9 +118,9 @@ const AdminEvents = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Create New Event</CardTitle>
+            <CardTitle>{editingEvent ? 'Edit Event' : 'Create New Event'}</CardTitle>
             <CardDescription>
-              Add a new event to the schedule
+              {editingEvent ? 'Update event information' : 'Add a new event to the schedule'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -101,26 +149,26 @@ const AdminEvents = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="startTime">Start Time</Label>
+                  <Label htmlFor="start_time">Start Time</Label>
                   <Input
-                    id="startTime"
+                    id="start_time"
                     type="datetime-local"
-                    {...register("startTime", { required: "Start time is required" })}
+                    {...register("start_time", { required: "Start time is required" })}
                   />
-                  {errors.startTime?.message && (
-                    <p className="text-sm text-destructive">{errors.startTime.message}</p>
+                  {errors.start_time?.message && (
+                    <p className="text-sm text-destructive">{errors.start_time.message}</p>
                   )}
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="endTime">End Time</Label>
+                  <Label htmlFor="end_time">End Time</Label>
                   <Input
-                    id="endTime"
+                    id="end_time"
                     type="datetime-local"
-                    {...register("endTime", { required: "End time is required" })}
+                    {...register("end_time", { required: "End time is required" })}
                   />
-                  {errors.endTime?.message && (
-                    <p className="text-sm text-destructive">{errors.endTime.message}</p>
+                  {errors.end_time?.message && (
+                    <p className="text-sm text-destructive">{errors.end_time.message}</p>
                   )}
                 </div>
               </div>
@@ -129,47 +177,97 @@ const AdminEvents = () => {
                 <Label htmlFor="location">Location</Label>
                 <Input
                   id="location"
-                  {...register("location", { required: "Location is required" })}
+                  {...register("location")}
                   placeholder="Enter event location"
                 />
-                {errors.location?.message && (
-                  <p className="text-sm text-destructive">{errors.location.message}</p>
-                )}
               </div>
 
-              <Button type="submit" className="w-full">
-                <Plus className="h-4 w-4 mr-2" />
-                Create Event
-              </Button>
+              <div className="space-y-2">
+                <Label htmlFor="website">Website</Label>
+                <Input
+                  id="website"
+                  {...register("website")}
+                  placeholder="https://example.com"
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <Button type="submit" className="flex-1" disabled={isCreating || isUpdating}>
+                  {(isCreating || isUpdating) && <Loader className="h-4 w-4 mr-2 animate-spin" />}
+                  <Plus className="h-4 w-4 mr-2" />
+                  {editingEvent ? 'Update Event' : 'Create Event'}
+                </Button>
+                {editingEvent && (
+                  <Button type="button" variant="outline" onClick={handleCancel}>
+                    Cancel
+                  </Button>
+                )}
+              </div>
             </form>
           </CardContent>
         </Card>
 
-        {/* Events List */}
         <Card>
           <CardHeader>
-            <CardTitle>Upcoming Events</CardTitle>
+            <CardTitle>Scheduled Events</CardTitle>
             <CardDescription>
-              List of scheduled events
+              {events.length} events in your schedule
             </CardDescription>
           </CardHeader>
           <CardContent>
             {events.length === 0 ? (
-              <p>No events scheduled yet.</p>
+              <p className="text-center text-muted-foreground py-8">
+                No events scheduled yet. Create your first event using the form.
+              </p>
             ) : (
-              <div className="grid gap-4">
-                {events.map((event, index) => (
-                  <div key={index} className="border rounded-md p-4">
-                    <h3 className="font-semibold">{event.name}</h3>
-                    <p className="text-sm text-muted-foreground">{event.description}</p>
-                    <div className="text-xs text-muted-foreground">
-                      Start Time: {new Date(event.startTime).toLocaleString()}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      End Time: {new Date(event.endTime).toLocaleString()}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Location: {event.location}
+              <div className="space-y-4">
+                {events.map((event) => (
+                  <div key={event.id} className="border rounded-lg p-4">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-semibold">{event.name}</h3>
+                          {isEventLive(event.start_time, event.end_time) && (
+                            <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Live</Badge>
+                          )}
+                          {isEventUpcoming(event.start_time) && (
+                            <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Upcoming</Badge>
+                          )}
+                        </div>
+                        {event.description && (
+                          <p className="text-sm text-muted-foreground mb-2">{event.description}</p>
+                        )}
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-1">
+                            <Calendar className="h-3 w-3" />
+                            {formatDate(event.start_time)} - {formatDate(event.end_time)}
+                          </div>
+                          {event.location && (
+                            <div className="flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              {event.location}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => handleEdit(event)}
+                          disabled={isUpdating}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => handleDelete(event.id)}
+                          disabled={isDeleting}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}

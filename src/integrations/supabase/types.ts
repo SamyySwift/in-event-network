@@ -9,6 +9,90 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      advertisements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          display_order: number | null
+          end_date: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          link_url: string | null
+          sponsor_logo: string | null
+          sponsor_name: string
+          start_date: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          end_date?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          link_url?: string | null
+          sponsor_logo?: string | null
+          sponsor_name: string
+          start_date?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          display_order?: number | null
+          end_date?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          link_url?: string | null
+          sponsor_logo?: string | null
+          sponsor_name?: string
+          start_date?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      announcements: {
+        Row: {
+          content: string
+          created_at: string
+          created_by: string | null
+          id: string
+          image_url: string | null
+          priority: string | null
+          send_immediately: boolean | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          priority?: string | null
+          send_immediately?: boolean | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          image_url?: string | null
+          priority?: string | null
+          send_immediately?: boolean | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       connections: {
         Row: {
           created_at: string | null
@@ -64,6 +148,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      events: {
+        Row: {
+          banner_url: string | null
+          created_at: string
+          description: string | null
+          end_time: string
+          host_id: string | null
+          id: string
+          location: string | null
+          logo_url: string | null
+          name: string
+          start_time: string
+          updated_at: string
+          website: string | null
+        }
+        Insert: {
+          banner_url?: string | null
+          created_at?: string
+          description?: string | null
+          end_time: string
+          host_id?: string | null
+          id?: string
+          location?: string | null
+          logo_url?: string | null
+          name: string
+          start_time: string
+          updated_at?: string
+          website?: string | null
+        }
+        Update: {
+          banner_url?: string | null
+          created_at?: string
+          description?: string | null
+          end_time?: string
+          host_id?: string | null
+          id?: string
+          location?: string | null
+          logo_url?: string | null
+          name?: string
+          start_time?: string
+          updated_at?: string
+          website?: string | null
+        }
+        Relationships: []
       }
       facilities: {
         Row: {
@@ -235,6 +364,77 @@ export type Database = {
         }
         Relationships: []
       }
+      poll_votes: {
+        Row: {
+          created_at: string
+          id: string
+          option_id: string
+          poll_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          option_id: string
+          poll_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          option_id?: string
+          poll_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "poll_votes_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      polls: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          display_as_banner: boolean | null
+          end_time: string
+          id: string
+          is_active: boolean | null
+          options: Json
+          question: string
+          show_results: boolean | null
+          start_time: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          display_as_banner?: boolean | null
+          end_time: string
+          id?: string
+          is_active?: boolean | null
+          options: Json
+          question: string
+          show_results?: boolean | null
+          start_time: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          display_as_banner?: boolean | null
+          end_time?: string
+          id?: string
+          is_active?: boolean | null
+          options?: Json
+          question?: string
+          show_results?: boolean | null
+          start_time?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           bio: string | null
@@ -381,6 +581,54 @@ export type Database = {
           updated_at?: string | null
           upvotes?: number | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      speakers: {
+        Row: {
+          bio: string
+          company: string | null
+          created_at: string
+          id: string
+          linkedin_link: string | null
+          name: string
+          photo_url: string | null
+          session_time: string | null
+          session_title: string | null
+          title: string | null
+          twitter_link: string | null
+          updated_at: string
+          website_link: string | null
+        }
+        Insert: {
+          bio: string
+          company?: string | null
+          created_at?: string
+          id?: string
+          linkedin_link?: string | null
+          name: string
+          photo_url?: string | null
+          session_time?: string | null
+          session_title?: string | null
+          title?: string | null
+          twitter_link?: string | null
+          updated_at?: string
+          website_link?: string | null
+        }
+        Update: {
+          bio?: string
+          company?: string | null
+          created_at?: string
+          id?: string
+          linkedin_link?: string | null
+          name?: string
+          photo_url?: string | null
+          session_time?: string | null
+          session_title?: string | null
+          title?: string | null
+          twitter_link?: string | null
+          updated_at?: string
+          website_link?: string | null
         }
         Relationships: []
       }

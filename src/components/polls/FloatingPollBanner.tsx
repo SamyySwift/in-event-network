@@ -66,7 +66,7 @@ const FloatingPollBanner: React.FC<FloatingPollBannerProps> = ({
           </Button>
         </div>
         <CardDescription className="text-xs">
-          Poll ends at {new Date(poll.end_time).toLocaleTimeString()}
+          Active poll - Vote now!
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-3">

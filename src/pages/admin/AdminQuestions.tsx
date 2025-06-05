@@ -144,7 +144,7 @@ const AdminQuestions = () => {
         .update({ 
           is_answered: true,
           answered_at: new Date().toISOString(),
-          answered_by: user.data.user?.id
+          answered_by: user.user?.id
         })
         .eq('id', question.id);
 

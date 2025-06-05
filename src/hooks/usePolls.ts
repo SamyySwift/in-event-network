@@ -76,15 +76,22 @@ export const usePolls = () => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('User not authenticated');
 
+      // Create default start and end times since they're required by the database
+      const now = new Date();
+      const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours from now
+
       const { data, error } = await supabase
         .from('polls')
-        .insert([{
+        .insert({
           question: pollData.question,
           options: pollData.options,
           is_active: pollData.is_active,
           show_results: pollData.show_results,
-          created_by: user.user.id
-        }])
+          created_by: user.user.id,
+          start_time: now.toISOString(),
+          end_time: endTime.toISOString(),
+          display_as_banner: false
+        })
         .select()
         .single();
 

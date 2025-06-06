@@ -88,8 +88,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { name: 'Questions', href: '/admin/questions', icon: <MessageSquare size={20} /> },
     { name: 'Suggestions', href: '/admin/suggestions', icon: <MessageCircle size={20} /> },
     { name: 'Team Management', href: '/admin/team', icon: <Landmark size={20} /> },
-    { name: 'Notifications', href: '/admin/notifications', icon: <Bell size={20} /> },
-    { name: 'Settings', href: '/admin/settings', icon: <Settings size={20} /> },
   ];
 
   return (
@@ -212,16 +210,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               }}
               title={sidebarOpen ? '' : item.name}
             >
-              <span className={`${sidebarOpen ? 'mr-3' : ''} ${isActive(item.href) ? 'text-primary-700' : 'text-muted-foreground'} relative`}>
+              <span className={`${sidebarOpen ? 'mr-3' : ''} ${isActive(item.href) ? 'text-primary-700' : 'text-muted-foreground'}`}>
                 {item.icon}
-                {item.name === 'Notifications' && unreadCount > 0 && (
-                  <Badge 
-                    variant="destructive" 
-                    className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 text-[10px]"
-                  >
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </Badge>
-                )}
               </span>
               {sidebarOpen && <span className="flex-1 text-left">{item.name}</span>}
               {sidebarOpen && isActive(item.href) && <ChevronRight size={16} className="ml-auto opacity-70" />}
@@ -286,40 +276,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               className="bg-card border-primary/20 hover:bg-accent"
             >
               {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={() => navigate('/admin/notifications')} 
-              className={`relative bg-card ${
-                isActive('/admin/notifications') 
-                  ? 'border-primary/30 ring-1 ring-primary/30' 
-                  : 'border-primary/20'
-              } hover:bg-accent`}
-            >
-              <Bell size={18} className={isActive('/admin/notifications') ? 'text-primary' : ''} />
-              {unreadCount > 0 && (
-                <Badge 
-                  variant="destructive" 
-                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                >
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </Badge>
-              )}
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={() => navigate('/admin/settings')} 
-              className={`bg-card ${
-                isActive('/admin/settings') 
-                  ? 'border-primary/30 ring-1 ring-primary/30' 
-                  : 'border-primary/20'
-              } hover:bg-accent`}
-            >
-              <Settings size={18} className={isActive('/admin/settings') ? 'text-primary' : ''} />
             </Button>
             
             <Avatar 

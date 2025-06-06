@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ArrowUp, MessageSquare, Send, User } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
@@ -117,13 +118,28 @@ const AttendeeQuestions = () => {
 
   const fetchQuestions = async () => {
     try {
-      // First fetch questions
+      // Fetch questions with all fields including response and timestamps
       const { data: questionsData, error: questionsError } = await supabase
         .from('questions')
-        .select('*')
+        .select(`
+          id,
+          content,
+          created_at,
+          upvotes,
+          is_answered,
+          user_id,
+          session_id,
+          event_id,
+          is_anonymous,
+          response,
+          answered_at,
+          response_created_at
+        `)
         .order('created_at', { ascending: false });
 
       if (questionsError) throw questionsError;
+
+      console.log('Fetched questions with responses:', questionsData);
 
       // Then fetch profiles for each question
       const questionsWithProfiles = await Promise.all(
@@ -148,6 +164,7 @@ const AttendeeQuestions = () => {
         })
       );
 
+      console.log('Questions with profiles:', questionsWithProfiles);
       setQuestions(questionsWithProfiles);
     } catch (error) {
       console.error('Error fetching questions:', error);
@@ -253,6 +270,8 @@ const AttendeeQuestions = () => {
     const userName = question.profiles?.name || 'Anonymous';
     const userPhoto = question.profiles?.photo_url;
     
+    console.log('Rendering question:', question.id, 'with response:', question.response);
+    
     return (
       <Card key={question.id} className={question.is_answered ? 'border-green-200 bg-green-50/50' : ''}>
         <CardContent className="pt-6">
@@ -287,16 +306,20 @@ const AttendeeQuestions = () => {
               </p>
 
               {question.response && (
-                <div className="mt-4 p-3 bg-blue-50 border-l-4 border-blue-200 rounded-r">
+                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-200 dark:border-blue-600 rounded-r">
                   <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="secondary">Admin Response</Badge>
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">
+                      Admin Response
+                    </Badge>
                     {question.response_created_at && (
                       <span className="text-xs text-muted-foreground">
                         {format(new Date(question.response_created_at), 'MMM d, yyyy h:mm a')}
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-700">{question.response}</p>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                    {question.response}
+                  </p>
                 </div>
               )}
               
@@ -311,7 +334,7 @@ const AttendeeQuestions = () => {
                   {question.upvotes}
                 </Button>
                 
-                {question.is_answered && question.user_id === currentUser?.id && (
+                {question.response && question.user_id === currentUser?.id && (
                   <Button
                     variant="outline"
                     size="sm"

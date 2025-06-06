@@ -73,13 +73,13 @@ const App = () => {
         <TooltipProvider>
           <BrowserRouter>
             <Routes>
-              {/* Public Routes */}
+              {/* Public Routes - No ProtectedRoute wrapper needed */}
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/join" element={<JoinEvent />} />
               
-              {/* Protected Attendee Routes */}
+              {/* Protected Attendee Routes - These require event access */}
               <Route path="/attendee" element={
                 <ProtectedRoute requiredRole="attendee">
                   <AttendeeDashboard />
@@ -141,7 +141,7 @@ const App = () => {
                 </ProtectedRoute>
               } />
               
-              {/* Protected Admin Routes */}
+              {/* Protected Admin Routes - No event access check needed */}
               <Route path="/admin" element={
                 <ProtectedRoute requiredRole="host">
                   <AdminDashboard />

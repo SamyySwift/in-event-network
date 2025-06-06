@@ -28,9 +28,9 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       path: location.pathname
     });
 
-    // Check if attendee has joined an event
+    // Only check event access for attendee protected routes
     const checkEventAccess = async () => {
-      if (currentUser?.role === 'attendee') {
+      if (currentUser?.role === 'attendee' && requiredRole === 'attendee') {
         try {
           const { data, error } = await supabase
             .from('event_participants')
@@ -52,7 +52,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
           setHasEventAccess(false);
         }
       } else {
-        // Hosts don't need event access
+        // Hosts or non-attendee-specific routes don't need event access
         setHasEventAccess(true);
       }
     };
@@ -60,10 +60,10 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     if (currentUser && !isLoading) {
       checkEventAccess();
     }
-  }, [currentUser, isLoading]);
+  }, [currentUser, isLoading, requiredRole]);
 
-  // Show loading while checking authentication or event access
-  if (isLoading || (currentUser && hasEventAccess === null)) {
+  // Show loading while checking authentication or event access (only for attendee routes)
+  if (isLoading || (currentUser && requiredRole === 'attendee' && currentUser.role === 'attendee' && hasEventAccess === null)) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
         <div className="text-center">
@@ -89,7 +89,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to={redirectPath} replace />;
   }
 
-  // For attendees, check if they have joined an event
+  // For attendees accessing attendee routes, check if they have joined an event
   if (currentUser.role === 'attendee' && requiredRole === 'attendee' && !hasEventAccess) {
     console.log('Attendee has not joined an event, redirecting to join page');
     return <Navigate to="/join" replace />;

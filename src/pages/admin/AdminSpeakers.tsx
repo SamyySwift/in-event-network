@@ -157,6 +157,9 @@ const AdminSpeakers = () => {
               <ImageUpload
                 onImageSelect={setSelectedImage}
                 label="Speaker Photo (Optional)"
+                enableCropping={true}
+                cropShape="round"
+                aspectRatio={1}
               />
 
               <div className="space-y-2">

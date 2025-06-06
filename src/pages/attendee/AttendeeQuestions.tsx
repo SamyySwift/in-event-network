@@ -33,7 +33,7 @@ const AttendeeQuestions = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { session } = useAuth();
 
   useEffect(() => {
     fetchQuestions();
@@ -82,7 +82,7 @@ const AttendeeQuestions = () => {
   };
 
   const handleSubmitQuestion = async () => {
-    if (!newQuestion.trim() || !user) return;
+    if (!newQuestion.trim() || !session?.user) return;
 
     setSubmitting(true);
     try {
@@ -90,7 +90,7 @@ const AttendeeQuestions = () => {
         .from('questions')
         .insert({
           content: newQuestion,
-          user_id: user.id,
+          user_id: session.user.id,
           is_anonymous: isAnonymous,
           upvotes: 0,
           is_answered: false

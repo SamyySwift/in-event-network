@@ -32,7 +32,7 @@ interface Facility {
   description?: string;
   location?: string;
   rules?: string;
-  contact_type?: 'none' | 'phone' | 'whatsapp';
+  contact_type?: string;
   contact_info?: string;
   icon_type?: string;
   created_at: string;

@@ -288,40 +288,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </Button>
             
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={() => navigate('/admin/notifications')} 
-              className={`relative bg-card ${
-                isActive('/admin/notifications') 
-                  ? 'border-primary/30 ring-1 ring-primary/30' 
-                  : 'border-primary/20'
-              } hover:bg-accent`}
-            >
-              <Bell size={18} className={isActive('/admin/notifications') ? 'text-primary' : ''} />
-              {unreadCount > 0 && (
-                <Badge 
-                  variant="destructive" 
-                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                >
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </Badge>
-              )}
-            </Button>
-            
-            <Button 
-              variant="outline" 
-              size="icon" 
-              onClick={() => navigate('/admin/settings')} 
-              className={`bg-card ${
-                isActive('/admin/settings') 
-                  ? 'border-primary/30 ring-1 ring-primary/30' 
-                  : 'border-primary/20'
-              } hover:bg-accent`}
-            >
-              <Settings size={18} className={isActive('/admin/settings') ? 'text-primary' : ''} />
-            </Button>
-            
             <Avatar 
               className="h-9 w-9 cursor-pointer ring-2 ring-primary/20 hover:ring-primary/40 transition-all" 
               onClick={() => navigate('/admin/profile')}

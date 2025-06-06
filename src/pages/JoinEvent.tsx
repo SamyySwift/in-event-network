@@ -73,8 +73,8 @@ const JoinEvent = () => {
 
       toast.success(`Successfully joined ${event.name}!`);
       
-      // Redirect to attendee dashboard
-      navigate('/attendee');
+      // Redirect to attendee onboarding first, then dashboard
+      navigate('/attendee/onboarding');
       
     } catch (error) {
       console.error('Error joining event:', error);

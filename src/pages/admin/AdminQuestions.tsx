@@ -51,9 +51,9 @@ const AdminQuestions = () => {
   useEffect(() => {
     fetchQuestions();
     
-    // Set up real-time subscription
+    // Set up real-time subscription for questions table changes
     const channel = supabase
-      .channel('questions-changes')
+      .channel('admin-questions-changes')
       .on(
         'postgres_changes',
         {
@@ -61,8 +61,8 @@ const AdminQuestions = () => {
           schema: 'public',
           table: 'questions'
         },
-        () => {
-          console.log('Questions table changed, refetching...');
+        (payload) => {
+          console.log('Questions table changed:', payload);
           fetchQuestions();
         }
       )
@@ -75,7 +75,7 @@ const AdminQuestions = () => {
 
   const fetchQuestions = async () => {
     try {
-      console.log('Fetching questions...');
+      console.log('Fetching questions with complete data...');
       
       const { data: questionsData, error: questionsError } = await supabase
         .from('questions')
@@ -101,14 +101,13 @@ const AdminQuestions = () => {
         throw questionsError;
       }
 
-      console.log('Questions data:', questionsData);
-
       if (!questionsData || questionsData.length === 0) {
         setQuestions([]);
         setLoading(false);
         return;
       }
 
+      // Fetch profiles for non-anonymous questions
       const questionsWithProfiles = await Promise.all(
         questionsData.map(async (question) => {
           if (question.is_anonymous) {
@@ -147,7 +146,7 @@ const AdminQuestions = () => {
         })
       );
 
-      console.log('Questions with profiles:', questionsWithProfiles);
+      console.log('Questions with profiles loaded:', questionsWithProfiles);
       setQuestions(questionsWithProfiles);
     } catch (error) {
       console.error('Error fetching questions:', error);
@@ -174,58 +173,6 @@ const AdminQuestions = () => {
     }
   };
 
-  const handleMarkAsAnswered = async (question: QuestionWithProfile) => {
-    try {
-      const { data: user } = await supabase.auth.getUser();
-      
-      const { error } = await supabase
-        .from('questions')
-        .update({ 
-          is_answered: true,
-          answered_at: new Date().toISOString(),
-          answered_by: user.user?.id
-        })
-        .eq('id', question.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Question marked as answered",
-      });
-    } catch (error) {
-      console.error('Error updating question:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update question",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDeleteQuestion = async (question: QuestionWithProfile) => {
-    try {
-      const { error } = await supabase
-        .from('questions')
-        .delete()
-        .eq('id', question.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Question deleted successfully",
-      });
-    } catch (error) {
-      console.error('Error deleting question:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete question",
-        variant: "destructive",
-      });
-    }
-  };
-
   const handleResponseChange = (questionId: string, value: string) => {
     setResponses(prev => ({
       ...prev,
@@ -243,9 +190,9 @@ const AdminQuestions = () => {
       const { data: user } = await supabase.auth.getUser();
       const now = new Date().toISOString();
       
-      console.log('Submitting response for question:', questionId, 'Response:', responseText.trim());
+      console.log('Submitting response for question:', questionId);
       
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('questions')
         .update({ 
           response: responseText.trim(),
@@ -254,15 +201,14 @@ const AdminQuestions = () => {
           answered_by: user.user?.id,
           response_created_at: now
         })
-        .eq('id', questionId)
-        .select();
+        .eq('id', questionId);
 
       if (error) {
-        console.error('Supabase error:', error);
+        console.error('Error submitting response:', error);
         throw error;
       }
 
-      console.log('Response submitted successfully:', data);
+      console.log('Response submitted successfully');
 
       toast({
         title: "Success",
@@ -275,7 +221,7 @@ const AdminQuestions = () => {
         [questionId]: ''
       }));
 
-      // Immediately refresh the questions to show the update
+      // Refresh questions to show the update
       await fetchQuestions();
     } catch (error) {
       console.error('Error submitting response:', error);
@@ -286,6 +232,31 @@ const AdminQuestions = () => {
       });
     } finally {
       setSubmittingResponse(prev => ({ ...prev, [questionId]: false }));
+    }
+  };
+
+  const handleDeleteQuestion = async (question: QuestionWithProfile) => {
+    try {
+      const { error } = await supabase
+        .from('questions')
+        .delete()
+        .eq('id', question.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Question deleted successfully",
+      });
+
+      await fetchQuestions();
+    } catch (error) {
+      console.error('Error deleting question:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete question",
+        variant: "destructive",
+      });
     }
   };
 
@@ -357,41 +328,41 @@ const AdminQuestions = () => {
                             </CardDescription>
                           </div>
                         </div>
-                        <Badge variant={question.is_answered ? 'success' : 'warning'} className="text-xs">
+                        <Badge variant={question.is_answered ? 'default' : 'secondary'} className="text-xs">
                           {question.is_answered ? '✓ Answered' : '⏳ Pending'}
                         </Badge>
                       </div>
                     </CardHeader>
                     
                     <CardContent className="pt-4">
-                      <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border">
+                      <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border mb-4">
                         <p className="text-base leading-relaxed">{question.content}</p>
                       </div>
                       
                       {question.response && (
-                        <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+                        <div className="mb-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-700 rounded-lg">
                           <div className="flex items-center gap-2 mb-3">
-                            <Reply className="h-4 w-4 text-blue-600" />
-                            <Badge variant="info" className="text-xs font-medium">
+                            <Reply className="h-4 w-4 text-green-600" />
+                            <Badge variant="default" className="text-xs font-medium bg-green-600">
                               Admin Response
                             </Badge>
                             {question.response_created_at && (
-                              <span className="text-xs text-blue-600 dark:text-blue-400">
+                              <span className="text-xs text-green-600 dark:text-green-400">
                                 {format(new Date(question.response_created_at), 'MMM d, yyyy h:mm a')}
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed bg-white dark:bg-gray-800 p-3 rounded border-l-4 border-blue-400">
+                          <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed bg-white dark:bg-gray-800 p-3 rounded border-l-4 border-green-400">
                             {question.response}
                           </p>
                         </div>
                       )}
 
                       {!question.response && (
-                        <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+                        <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
                           <div className="flex items-center gap-2 mb-3">
-                            <Send className="h-4 w-4 text-yellow-600" />
-                            <label className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                            <Send className="h-4 w-4 text-blue-600" />
+                            <label className="text-sm font-medium text-blue-800 dark:text-blue-200">
                               Compose Response:
                             </label>
                           </div>
@@ -400,13 +371,13 @@ const AdminQuestions = () => {
                             value={responses[question.id] || ''}
                             onChange={(e) => handleResponseChange(question.id, e.target.value)}
                             rows={3}
-                            className="mb-3 border-yellow-300 focus:border-yellow-500"
+                            className="mb-3 border-blue-300 focus:border-blue-500"
                           />
                           <Button
                             size="sm"
                             onClick={() => handleSubmitResponse(question.id)}
                             disabled={!responses[question.id]?.trim() || submittingResponse[question.id]}
-                            className="w-full bg-yellow-600 hover:bg-yellow-700"
+                            className="w-full bg-blue-600 hover:bg-blue-700"
                           >
                             <Send size={16} className="mr-2" />
                             {submittingResponse[question.id] ? 'Submitting...' : 'Submit Response'}
@@ -428,17 +399,6 @@ const AdminQuestions = () => {
                         ID: {question.id.slice(0, 8)}...
                       </div>
                       <div className="flex gap-2">
-                        {!question.is_answered && question.response && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            className="text-green-600 border-green-200 hover:bg-green-50"
-                            onClick={() => handleMarkAsAnswered(question)}
-                          >
-                            <CheckCircle size={16} className="mr-1" />
-                            Mark Answered
-                          </Button>
-                        )}
                         <Button 
                           size="sm" 
                           variant="outline" 

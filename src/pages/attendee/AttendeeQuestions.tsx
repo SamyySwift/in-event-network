@@ -73,9 +73,9 @@ const AttendeeQuestions = () => {
     fetchQuestions();
     fetchSessions();
 
-    // Set up real-time subscription
+    // Set up real-time subscription for questions updates
     const channel = supabase
-      .channel('questions-updates')
+      .channel('attendee-questions-updates')
       .on(
         'postgres_changes',
         {
@@ -119,9 +119,8 @@ const AttendeeQuestions = () => {
 
   const fetchQuestions = async () => {
     try {
-      console.log('Fetching questions with full response data...');
+      console.log('Fetching questions with complete response data...');
       
-      // Fetch questions with all fields including response and timestamps
       const { data: questionsData, error: questionsError } = await supabase
         .from('questions')
         .select(`
@@ -143,9 +142,7 @@ const AttendeeQuestions = () => {
 
       if (questionsError) throw questionsError;
 
-      console.log('Fetched questions data:', questionsData);
-
-      // Then fetch profiles for each question
+      // Fetch profiles for each question
       const questionsWithProfiles = await Promise.all(
         (questionsData || []).map(async (question) => {
           if (question.is_anonymous) {
@@ -176,7 +173,7 @@ const AttendeeQuestions = () => {
         })
       );
 
-      console.log('Questions with profiles and responses:', questionsWithProfiles);
+      console.log('Questions loaded with complete data:', questionsWithProfiles);
       setQuestions(questionsWithProfiles);
     } catch (error) {
       console.error('Error fetching questions:', error);
@@ -220,7 +217,7 @@ const AttendeeQuestions = () => {
       setNewQuestion('');
       setSelectedSessionId('');
       setIsAnonymous(false);
-      fetchQuestions();
+      await fetchQuestions();
     } catch (error) {
       console.error('Error submitting question:', error);
       toast({
@@ -283,8 +280,6 @@ const AttendeeQuestions = () => {
     const userPhoto = question.profiles?.photo_url;
     const isMyQuestion = question.user_id === currentUser?.id;
     
-    console.log('Rendering question:', question.id, 'with response:', question.response, 'response_created_at:', question.response_created_at);
-    
     return (
       <Card key={question.id} className={`shadow-md border-l-4 ${question.is_answered ? 'border-l-green-400 bg-green-50/30' : 'border-l-primary/30'} ${isMyQuestion ? 'ring-2 ring-primary/10' : ''}`}>
         <CardContent className="p-6">
@@ -305,7 +300,7 @@ const AttendeeQuestions = () => {
                   {question.is_anonymous ? 'Anonymous' : userName}
                 </span>
                 {isMyQuestion && (
-                  <Badge variant="subtle" className="text-xs">
+                  <Badge variant="outline" className="text-xs">
                     Your Question
                   </Badge>
                 )}
@@ -313,7 +308,7 @@ const AttendeeQuestions = () => {
                   {format(new Date(question.created_at), 'MMM d, yyyy h:mm a')}
                 </span>
                 {question.is_answered && (
-                  <Badge variant="success" className="text-xs">
+                  <Badge variant="default" className="text-xs bg-green-600">
                     ✓ Answered
                   </Badge>
                 )}
@@ -326,19 +321,19 @@ const AttendeeQuestions = () => {
               </div>
 
               {question.response && (
-                <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+                <div className="mb-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-700 rounded-lg">
                   <div className="flex items-center gap-2 mb-3">
-                    <Reply className="h-4 w-4 text-blue-600" />
-                    <Badge variant="info" className="text-xs font-medium">
+                    <Reply className="h-4 w-4 text-green-600" />
+                    <Badge variant="default" className="text-xs font-medium bg-green-600">
                       Admin Response
                     </Badge>
                     {question.response_created_at && (
-                      <span className="text-xs text-blue-600 dark:text-blue-400">
+                      <span className="text-xs text-green-600 dark:text-green-400">
                         {format(new Date(question.response_created_at), 'MMM d, yyyy h:mm a')}
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed bg-white dark:bg-gray-800 p-3 rounded border-l-4 border-blue-400">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed bg-white dark:bg-gray-800 p-3 rounded border-l-4 border-green-400">
                     {question.response}
                   </p>
                 </div>

@@ -2,7 +2,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect } from 'react';
 
 export interface Facility {
   id: string;
@@ -35,29 +34,6 @@ export const useFacilities = () => {
       return data as Facility[];
     },
   });
-
-  // Set up real-time subscription for facilities
-  useEffect(() => {
-    const channel = supabase
-      .channel('facilities-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'facilities'
-        },
-        (payload) => {
-          console.log('Real-time facilities update:', payload);
-          queryClient.invalidateQueries({ queryKey: ['facilities'] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
 
   const createFacilityMutation = useMutation({
     mutationFn: async (facilityData: Omit<Facility, 'id' | 'created_at' | 'updated_at'>) => {

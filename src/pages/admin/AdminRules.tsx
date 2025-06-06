@@ -119,15 +119,15 @@ const AdminRules = () => {
 
   return (
     <AdminLayout>
-      <div className="mb-6">
+      <div>
         <h1 className="text-3xl font-bold tracking-tight">Event Rules</h1>
         <p className="text-muted-foreground">
-          Manage rules and guidelines for event attendees ({rules.length} total).
+          Manage rules and guidelines for event attendees.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <Card className="h-fit">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
           <CardHeader>
             <CardTitle>{editingRule ? 'Edit Rule' : 'Add New Rule'}</CardTitle>
             <CardDescription>
@@ -194,7 +194,7 @@ const AdminRules = () => {
 
               <div className="flex gap-2">
                 {editingRule && (
-                  <Button type="button" variant="outline" onClick={handleCancelEdit} className="flex-1">
+                  <Button type="button" variant="outline" onClick={() => { setEditingRule(null); reset(); }} className="flex-1">
                     Cancel
                   </Button>
                 )}
@@ -221,23 +221,28 @@ const AdminRules = () => {
             </CardHeader>
             <CardContent>
               {rules.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">No rules added yet.</p>
+                <p className="text-muted-foreground text-center py-4">No rules added yet.</p>
               ) : (
-                <div className="space-y-4 max-h-[600px] overflow-y-auto">
+                <div className="space-y-4 max-h-96 overflow-y-auto">
                   {rules.map((rule) => (
-                    <div key={rule.id} className="border rounded-lg p-4 space-y-2 hover:shadow-sm transition-shadow">
+                    <div key={rule.id} className="border rounded-lg p-4 space-y-2">
                       <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-medium line-clamp-1">{rule.title}</h4>
-                          <p className="text-sm text-muted-foreground mt-1 line-clamp-3">{rule.content}</p>
+                        <div className="flex-1">
+                          <h4 className="font-medium">{rule.title}</h4>
+                          <p className="text-sm text-muted-foreground mt-1">{rule.content}</p>
                         </div>
-                        <div className="flex items-center gap-1 ml-2 flex-shrink-0">
+                        <div className="flex items-center gap-2 ml-2">
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => handleEdit(rule)}
+                            onClick={() => {
+                              setEditingRule(rule);
+                              setValue("title", rule.title);
+                              setValue("content", rule.content);
+                              setValue("category", rule.category || "");
+                              setValue("priority", rule.priority || "medium");
+                            }}
                             disabled={isUpdating}
-                            className="p-2"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -246,7 +251,7 @@ const AdminRules = () => {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="text-destructive hover:text-destructive p-2"
+                                className="text-destructive hover:text-destructive"
                                 disabled={isDeleting}
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -269,16 +274,20 @@ const AdminRules = () => {
                           </AlertDialog>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 flex-wrap pt-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         {rule.category && (
-                          <Badge variant="outline" className="text-xs">{rule.category}</Badge>
+                          <Badge variant="outline">{rule.category}</Badge>
                         )}
                         {rule.priority && (
-                          <Badge className={`text-xs ${getPriorityColor(rule.priority)}`}>
-                            <div className="flex items-center gap-1">
-                              {getPriorityIcon(rule.priority)}
-                              <span className="capitalize">{rule.priority}</span>
-                            </div>
+                          <Badge className={
+                            rule.priority === 'high' ? 'bg-red-100 text-red-800 hover:bg-red-200' :
+                            rule.priority === 'medium' ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' :
+                            'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                          }>
+                            {rule.priority === 'high' && <AlertTriangle className="h-4 w-4" />}
+                            {rule.priority === 'medium' && <Zap className="h-4 w-4" />}
+                            {rule.priority === 'low' && <Info className="h-4 w-4" />}
+                            <span className="ml-1 capitalize">{rule.priority}</span>
                           </Badge>
                         )}
                         <span className="text-xs text-muted-foreground">

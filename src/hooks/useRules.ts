@@ -2,7 +2,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useEffect } from 'react';
 
 export interface Rule {
   id: string;
@@ -23,8 +22,9 @@ export const useRules = () => {
     queryKey: ['rules'],
     queryFn: async () => {
       try {
+        // Direct table access since rules table exists
         const { data, error } = await supabase
-          .from('rules')
+          .from('rules' as any)
           .select('*')
           .order('created_at', { ascending: false });
         
@@ -32,7 +32,7 @@ export const useRules = () => {
           console.error('Error fetching rules:', error);
           return [];
         }
-        return (data || []) as Rule[];
+        return (data || []) as unknown as Rule[];
       } catch (err) {
         console.error('Unexpected error fetching rules:', err);
         return [];
@@ -40,36 +40,13 @@ export const useRules = () => {
     },
   });
 
-  // Set up real-time subscription for rules
-  useEffect(() => {
-    const channel = supabase
-      .channel('rules-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'rules'
-        },
-        (payload) => {
-          console.log('Real-time rules update:', payload);
-          queryClient.invalidateQueries({ queryKey: ['rules'] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
-
   const createRuleMutation = useMutation({
     mutationFn: async (ruleData: { title: string; content: string; category?: string; priority?: 'high' | 'medium' | 'low' }) => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('User not authenticated');
 
       const { data, error } = await supabase
-        .from('rules')
+        .from('rules' as any)
         .insert({
           title: ruleData.title,
           content: ruleData.content,
@@ -103,7 +80,7 @@ export const useRules = () => {
   const updateRuleMutation = useMutation({
     mutationFn: async ({ id, ...ruleData }: Partial<Rule> & { id: string }) => {
       const { data, error } = await supabase
-        .from('rules')
+        .from('rules' as any)
         .update(ruleData)
         .eq('id', id)
         .select()
@@ -132,7 +109,7 @@ export const useRules = () => {
   const deleteRuleMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('rules')
+        .from('rules' as any)
         .delete()
         .eq('id', id);
 

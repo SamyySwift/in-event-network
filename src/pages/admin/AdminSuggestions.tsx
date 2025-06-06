@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -41,27 +42,6 @@ const AdminSuggestions = () => {
 
   useEffect(() => {
     fetchSuggestions();
-    
-    // Set up real-time subscription
-    const channel = supabase
-      .channel('suggestions-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'suggestions'
-        },
-        (payload) => {
-          console.log('Real-time suggestion update:', payload);
-          fetchSuggestions();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, []);
 
   const fetchSuggestions = async () => {
@@ -203,9 +183,9 @@ const AdminSuggestions = () => {
     <AdminLayout>
       <AdminPageHeader
         title="Suggestions & Feedback"
-        description={`Review suggestions and ratings from attendees (${suggestions.length} total)`}
+        description="Review suggestions and ratings from attendees"
         tabs={[
-          { id: 'all', label: `All (${suggestions.length})` },
+          { id: 'all', label: 'All' },
           { id: 'suggestions', label: 'Suggestions' },
           { id: 'ratings', label: 'Ratings' },
           { id: 'new', label: 'New' },

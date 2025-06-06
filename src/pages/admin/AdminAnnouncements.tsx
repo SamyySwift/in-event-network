@@ -9,20 +9,23 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Send, Pencil, Trash2, Loader, Plus } from 'lucide-react';
+import { Send, Pencil, Trash2, Loader, Plus, Upload, Call, Emergency } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useAnnouncements } from '@/hooks/useAnnouncements';
 import { useAuth } from '@/contexts/AuthContext';
+import { ImageUpload } from '@/components/ui/image-upload';
 
 type AnnouncementFormData = {
   title: string;
   content: string;
   priority: 'high' | 'normal' | 'low';
   send_immediately: boolean;
+  image?: File;
 };
 
 const AdminAnnouncements = () => {
   const [editingAnnouncement, setEditingAnnouncement] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const { currentUser } = useAuth();
   const { announcements, isLoading, createAnnouncement, updateAnnouncement, deleteAnnouncement, isCreating, isUpdating, isDeleting } = useAnnouncements();
 
@@ -39,6 +42,7 @@ const AdminAnnouncements = () => {
     const announcementData = {
       ...data,
       created_by: currentUser?.id,
+      image: selectedImage,
     };
 
     if (editingAnnouncement) {
@@ -48,6 +52,7 @@ const AdminAnnouncements = () => {
       createAnnouncement(announcementData);
     }
     reset();
+    setSelectedImage(null);
   };
 
   const handleEdit = (announcement: any) => {
@@ -56,6 +61,7 @@ const AdminAnnouncements = () => {
     setValue('content', announcement.content);
     setValue('priority', announcement.priority);
     setValue('send_immediately', announcement.send_immediately);
+    setSelectedImage(null);
   };
 
   const handleDelete = (id: string) => {
@@ -66,6 +72,7 @@ const AdminAnnouncements = () => {
 
   const handleCancel = () => {
     setEditingAnnouncement(null);
+    setSelectedImage(null);
     reset();
   };
 
@@ -131,6 +138,11 @@ const AdminAnnouncements = () => {
                   <p className="text-sm text-destructive">{errors.content.message}</p>
                 )}
               </div>
+
+              <ImageUpload
+                onImageSelect={setSelectedImage}
+                label="Announcement Image (Optional)"
+              />
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -210,6 +222,13 @@ const AdminAnnouncements = () => {
                           <p className="text-sm text-muted-foreground mb-2">
                             {announcement.content}
                           </p>
+                          {announcement.image_url && (
+                            <img 
+                              src={announcement.image_url} 
+                              alt="Announcement" 
+                              className="w-full h-32 object-cover rounded mb-2"
+                            />
+                          )}
                           <div className="text-xs text-muted-foreground">
                             Created: {new Date(announcement.created_at).toLocaleString()}
                           </div>

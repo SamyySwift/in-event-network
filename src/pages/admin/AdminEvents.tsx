@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +10,7 @@ import { useForm } from "react-hook-form";
 import { Badge } from '@/components/ui/badge';
 import { useEvents } from '@/hooks/useEvents';
 import { useAuth } from '@/contexts/AuthContext';
+import { ImageUpload } from '@/components/ui/image-upload';
 
 type EventFormData = {
   name: string;
@@ -18,11 +18,12 @@ type EventFormData = {
   start_time: string;
   end_time: string;
   location?: string;
-  website?: string;
+  image?: File;
 };
 
 const AdminEvents = () => {
   const [editingEvent, setEditingEvent] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const { currentUser } = useAuth();
   const { events, isLoading, createEvent, updateEvent, deleteEvent, isCreating, isUpdating, isDeleting } = useEvents();
 
@@ -32,8 +33,7 @@ const AdminEvents = () => {
       description: '',
       start_time: '',
       end_time: '',
-      location: '',
-      website: ''
+      location: ''
     }
   });
 
@@ -41,6 +41,7 @@ const AdminEvents = () => {
     const eventData = {
       ...data,
       host_id: currentUser?.id,
+      image: selectedImage,
     };
 
     if (editingEvent) {
@@ -50,6 +51,7 @@ const AdminEvents = () => {
       createEvent(eventData);
     }
     reset();
+    setSelectedImage(null);
   };
 
   const handleEdit = (event: any) => {
@@ -59,7 +61,7 @@ const AdminEvents = () => {
     setValue('start_time', new Date(event.start_time).toISOString().slice(0, 16));
     setValue('end_time', new Date(event.end_time).toISOString().slice(0, 16));
     setValue('location', event.location || '');
-    setValue('website', event.website || '');
+    setSelectedImage(null);
   };
 
   const handleDelete = (id: string) => {
@@ -70,6 +72,7 @@ const AdminEvents = () => {
 
   const handleCancel = () => {
     setEditingEvent(null);
+    setSelectedImage(null);
     reset();
   };
 
@@ -182,14 +185,10 @@ const AdminEvents = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="website">Website</Label>
-                <Input
-                  id="website"
-                  {...register("website")}
-                  placeholder="https://example.com"
-                />
-              </div>
+              <ImageUpload
+                onImageSelect={setSelectedImage}
+                label="Event Banner Image (Optional)"
+              />
 
               <div className="flex gap-2">
                 <Button type="submit" className="flex-1" disabled={isCreating || isUpdating}>
@@ -236,6 +235,13 @@ const AdminEvents = () => {
                         </div>
                         {event.description && (
                           <p className="text-sm text-muted-foreground mb-2">{event.description}</p>
+                        )}
+                        {event.banner_url && (
+                          <img 
+                            src={event.banner_url} 
+                            alt="Event Banner" 
+                            className="w-full h-32 object-cover rounded mb-2"
+                          />
                         )}
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
                           <div className="flex items-center gap-1">

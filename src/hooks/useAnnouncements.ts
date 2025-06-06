@@ -32,11 +32,40 @@ export const useAnnouncements = () => {
     },
   });
 
+  const uploadImage = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `announcements/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('media')
+      .upload(filePath, file);
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('media')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  };
+
   const createAnnouncementMutation = useMutation({
-    mutationFn: async (announcementData: Omit<Announcement, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (announcementData: Omit<Announcement, 'id' | 'created_at' | 'updated_at'> & { image?: File }) => {
+      let imageUrl;
+      if (announcementData.image) {
+        imageUrl = await uploadImage(announcementData.image);
+      }
+
+      const { image, ...dataWithoutImage } = announcementData;
+      const finalData = {
+        ...dataWithoutImage,
+        image_url: imageUrl || announcementData.image_url,
+      };
+
       const { data, error } = await supabase
         .from('announcements')
-        .insert([announcementData])
+        .insert([finalData])
         .select()
         .single();
 
@@ -61,10 +90,20 @@ export const useAnnouncements = () => {
   });
 
   const updateAnnouncementMutation = useMutation({
-    mutationFn: async ({ id, ...announcementData }: Partial<Announcement> & { id: string }) => {
+    mutationFn: async ({ id, image, ...announcementData }: Partial<Announcement> & { id: string; image?: File }) => {
+      let imageUrl = announcementData.image_url;
+      if (image) {
+        imageUrl = await uploadImage(image);
+      }
+
+      const finalData = {
+        ...announcementData,
+        image_url: imageUrl,
+      };
+
       const { data, error } = await supabase
         .from('announcements')
-        .update(announcementData)
+        .update(finalData)
         .eq('id', id)
         .select()
         .single();
@@ -126,5 +165,6 @@ export const useAnnouncements = () => {
     isCreating: createAnnouncementMutation.isPending,
     isUpdating: updateAnnouncementMutation.isPending,
     isDeleting: deleteAnnouncementMutation.isPending,
+    uploadImage,
   };
 };

@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Plus, Pencil, Trash2, Loader } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useSpeakers } from '@/hooks/useSpeakers';
+import { ImageUpload } from '@/components/ui/image-upload';
 
 type SpeakerFormData = {
   name: string;
@@ -22,10 +23,12 @@ type SpeakerFormData = {
   twitter_link?: string;
   linkedin_link?: string;
   website_link?: string;
+  image?: File;
 };
 
 const AdminSpeakers = () => {
   const [editingSpeaker, setEditingSpeaker] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const { speakers, isLoading, createSpeaker, updateSpeaker, deleteSpeaker, isCreating, isUpdating, isDeleting } = useSpeakers();
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<SpeakerFormData>({
@@ -46,6 +49,7 @@ const AdminSpeakers = () => {
     const speakerData = {
       ...data,
       session_time: data.session_time || undefined,
+      image: selectedImage,
     };
 
     if (editingSpeaker) {
@@ -55,6 +59,7 @@ const AdminSpeakers = () => {
       createSpeaker(speakerData);
     }
     reset();
+    setSelectedImage(null);
   };
 
   const handleEdit = (speaker: any) => {
@@ -68,6 +73,7 @@ const AdminSpeakers = () => {
     setValue('twitter_link', speaker.twitter_link || '');
     setValue('linkedin_link', speaker.linkedin_link || '');
     setValue('website_link', speaker.website_link || '');
+    setSelectedImage(null);
   };
 
   const handleDelete = (id: string) => {
@@ -78,6 +84,7 @@ const AdminSpeakers = () => {
 
   const handleCancel = () => {
     setEditingSpeaker(null);
+    setSelectedImage(null);
     reset();
   };
 
@@ -146,6 +153,11 @@ const AdminSpeakers = () => {
                   <p className="text-sm text-destructive">{errors.bio.message}</p>
                 )}
               </div>
+
+              <ImageUpload
+                onImageSelect={setSelectedImage}
+                label="Speaker Photo (Optional)"
+              />
 
               <div className="space-y-2">
                 <Label htmlFor="title">Title/Position</Label>

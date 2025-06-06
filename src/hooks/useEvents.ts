@@ -35,11 +35,40 @@ export const useEvents = () => {
     },
   });
 
+  const uploadImage = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `events/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('media')
+      .upload(filePath, file);
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('media')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  };
+
   const createEventMutation = useMutation({
-    mutationFn: async (eventData: Omit<Event, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (eventData: Omit<Event, 'id' | 'created_at' | 'updated_at'> & { image?: File }) => {
+      let bannerUrl;
+      if (eventData.image) {
+        bannerUrl = await uploadImage(eventData.image);
+      }
+
+      const { image, ...dataWithoutImage } = eventData;
+      const finalData = {
+        ...dataWithoutImage,
+        banner_url: bannerUrl || eventData.banner_url,
+      };
+
       const { data, error } = await supabase
         .from('events')
-        .insert([eventData])
+        .insert([finalData])
         .select()
         .single();
 
@@ -64,10 +93,20 @@ export const useEvents = () => {
   });
 
   const updateEventMutation = useMutation({
-    mutationFn: async ({ id, ...eventData }: Partial<Event> & { id: string }) => {
+    mutationFn: async ({ id, image, ...eventData }: Partial<Event> & { id: string; image?: File }) => {
+      let bannerUrl = eventData.banner_url;
+      if (image) {
+        bannerUrl = await uploadImage(image);
+      }
+
+      const finalData = {
+        ...eventData,
+        banner_url: bannerUrl,
+      };
+
       const { data, error } = await supabase
         .from('events')
-        .update(eventData)
+        .update(finalData)
         .eq('id', id)
         .select()
         .single();
@@ -129,5 +168,6 @@ export const useEvents = () => {
     isCreating: createEventMutation.isPending,
     isUpdating: updateEventMutation.isPending,
     isDeleting: deleteEventMutation.isPending,
+    uploadImage,
   };
 };

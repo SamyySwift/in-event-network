@@ -37,11 +37,40 @@ export const useSpeakers = () => {
     },
   });
 
+  const uploadImage = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `speakers/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('media')
+      .upload(filePath, file);
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('media')
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  };
+
   const createSpeakerMutation = useMutation({
-    mutationFn: async (speakerData: Omit<Speaker, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (speakerData: Omit<Speaker, 'id' | 'created_at' | 'updated_at'> & { image?: File }) => {
+      let photoUrl;
+      if (speakerData.image) {
+        photoUrl = await uploadImage(speakerData.image);
+      }
+
+      const { image, ...dataWithoutImage } = speakerData;
+      const finalData = {
+        ...dataWithoutImage,
+        photo_url: photoUrl || speakerData.photo_url,
+      };
+
       const { data, error } = await supabase
         .from('speakers')
-        .insert([speakerData])
+        .insert([finalData])
         .select()
         .single();
 
@@ -66,10 +95,20 @@ export const useSpeakers = () => {
   });
 
   const updateSpeakerMutation = useMutation({
-    mutationFn: async ({ id, ...speakerData }: Partial<Speaker> & { id: string }) => {
+    mutationFn: async ({ id, image, ...speakerData }: Partial<Speaker> & { id: string; image?: File }) => {
+      let photoUrl = speakerData.photo_url;
+      if (image) {
+        photoUrl = await uploadImage(image);
+      }
+
+      const finalData = {
+        ...speakerData,
+        photo_url: photoUrl,
+      };
+
       const { data, error } = await supabase
         .from('speakers')
-        .update(speakerData)
+        .update(finalData)
         .eq('id', id)
         .select()
         .single();
@@ -131,5 +170,6 @@ export const useSpeakers = () => {
     isCreating: createSpeakerMutation.isPending,
     isUpdating: updateSpeakerMutation.isPending,
     isDeleting: deleteSpeakerMutation.isPending,
+    uploadImage,
   };
 };

@@ -191,12 +191,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     password: string,
     role: "host" | "attendee"
   ) => {
-    setIsLoading(true);
     try {
+      setIsLoading(true);
+      console.log("Attempting registration for:", email, "with role:", role);
+      
       // Clear any existing session first
       await supabase.auth.signOut();
       
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -207,12 +209,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         },
       });
 
-      return { error };
+      if (error) {
+        console.error("Registration error:", error);
+        setIsLoading(false);
+        return { error };
+      }
+
+      console.log("Registration successful for:", data.user?.id);
+      
+      // For development, automatically sign in the user after registration
+      // In production, you might want to wait for email confirmation
+      if (data.user && !data.session) {
+        console.log("Attempting auto-login after registration...");
+        const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        if (loginError) {
+          console.error("Auto-login error:", loginError);
+          setIsLoading(false);
+          return { error: loginError };
+        }
+
+        console.log("Auto-login successful:", loginData.user?.id);
+      }
+
+      return { error: null };
     } catch (error) {
       console.error("Error registering:", error);
-      return { error: error as Error };
-    } finally {
       setIsLoading(false);
+      return { error: error as Error };
     }
   };
 

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,9 +32,20 @@ const Register = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const { register } = useAuth();
+  const { register, currentUser, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Handle redirect when user becomes authenticated after registration
+  useEffect(() => {
+    console.log("Register component - Auth state:", { currentUser, isLoading });
+    
+    if (currentUser && !isLoading) {
+      console.log("User authenticated after registration, redirecting...", currentUser);
+      const redirectPath = currentUser.role === "host" ? "/admin" : "/attendee";
+      navigate(redirectPath, { replace: true });
+    }
+  }, [currentUser, isLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,9 +69,12 @@ const Register = () => {
 
     try {
       setIsSubmitting(true);
+      console.log("Attempting registration for:", email, "with role:", role);
+      
       const { error } = await register(name, email, password, role);
 
       if (error) {
+        console.error("Registration error:", error);
         // Handle specific Supabase error messages
         if (error.message.includes("email already registered")) {
           setErrorMessage(
@@ -73,15 +88,13 @@ const Register = () => {
         return;
       }
 
-      // Success - redirect based on user role
-      const redirectPath = role === "host" ? "/admin" : "/attendee/onboarding";
-      // console.log("Redirecting to:", redirectPath);
-      navigate(redirectPath);
-
+      console.log("Registration successful");
       toast({
         title: "Success",
         description: "Your account has been created successfully",
       });
+
+      // The redirect will be handled by the useEffect when currentUser updates
     } catch (error) {
       console.error("Registration error:", error);
       setErrorMessage("An unexpected error occurred. Please try again.");
@@ -89,6 +102,30 @@ const Register = () => {
       setIsSubmitting(false);
     }
   };
+
+  // Show loading only during registration process
+  if (isSubmitting) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-connect-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Creating your account...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render registration form if user is already authenticated
+  if (currentUser) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-connect-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Redirecting to dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">

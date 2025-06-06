@@ -32,7 +32,7 @@ export const useRules = () => {
           console.error('Error fetching rules:', error);
           return [];
         }
-        return (data || []) as Rule[];
+        return (data || []) as unknown as Rule[];
       } catch (err) {
         console.error('Unexpected error fetching rules:', err);
         return [];

@@ -25,6 +25,7 @@ import AttendeeNotifications from "./pages/attendee/AttendeeNotifications";
 import AttendeeAnnouncements from "./pages/attendee/AttendeeAnnouncements";
 import AttendeeRules from "./pages/attendee/AttendeeRules";
 import AttendeePolls from "./pages/attendee/AttendeePolls";
+import AttendeeSuggestions from "./pages/attendee/AttendeeSuggestions";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -128,9 +129,9 @@ const App = () => {
                   <AttendeeRules />
                 </ProtectedRoute>
               } />
-              <Route path="/attendee/rate" element={
+              <Route path="/attendee/suggestions" element={
                 <ProtectedRoute requiredRole="attendee">
-                  <AttendeeDashboard />
+                  <AttendeeSuggestions />
                 </ProtectedRoute>
               } />
               <Route path="/attendee/polls" element={

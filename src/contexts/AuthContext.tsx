@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
@@ -215,24 +216,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         return { error };
       }
 
-      console.log("Registration successful for:", data.user?.id);
-      
-      // For development, automatically sign in the user after registration
-      // In production, you might want to wait for email confirmation
-      if (data.user && !data.session) {
-        console.log("Attempting auto-login after registration...");
-        const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+      if (data.user) {
+        console.log("Registration successful for:", data.user.id);
+        
+        // Create or update profile with the specified role
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .upsert({
+            id: data.user.id,
+            name,
+            email,
+            role,
+          });
 
-        if (loginError) {
-          console.error("Auto-login error:", loginError);
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
           setIsLoading(false);
-          return { error: loginError };
+          return { error: profileError };
         }
 
-        console.log("Auto-login successful:", loginData.user?.id);
+        // For development, automatically sign in the user after registration
+        if (!data.session) {
+          console.log("Attempting auto-login after registration...");
+          const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (loginError) {
+            console.error("Auto-login error:", loginError);
+            setIsLoading(false);
+            return { error: loginError };
+          }
+
+          console.log("Auto-login successful:", loginData.user?.id);
+        }
       }
 
       return { error: null };

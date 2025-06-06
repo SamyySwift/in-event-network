@@ -150,7 +150,7 @@ const AttendeeQuestions = () => {
           content: newQuestion.trim(),
           user_id: user.data.user.id,
           is_anonymous: isAnonymous,
-          session_id: selectedSessionId || null,
+          session_id: selectedSessionId === 'general' ? null : selectedSessionId || null,
           event_id: null,
           upvotes: 0,
           is_answered: false
@@ -269,7 +269,7 @@ const AttendeeQuestions = () => {
                   <SelectValue placeholder="Choose a session (optional)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">General Question</SelectItem>
+                  <SelectItem value="general">General Question</SelectItem>
                   {sessions.map((session) => (
                     <SelectItem key={session.id} value={session.id}>
                       <div className="flex flex-col">

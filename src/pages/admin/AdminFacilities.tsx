@@ -27,7 +27,8 @@ import {
   Heart,
   ShoppingBag,
   Bath,
-  Bed
+  Bed,
+  AlertCircle
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
@@ -46,6 +47,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -80,7 +82,7 @@ const facilityIcons = [
 
 const AdminFacilities = () => {
   const [editingFacility, setEditingFacility] = useState<Facility | null>(null);
-  const { facilities, isLoading, createFacility, updateFacility, deleteFacility, isCreating, isUpdating, isDeleting } = useFacilities();
+  const { facilities, isLoading, error, createFacility, updateFacility, deleteFacility, isCreating, isUpdating, isDeleting } = useFacilities();
 
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -164,6 +166,29 @@ const AdminFacilities = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
             <p className="mt-2 text-muted-foreground">Loading facilities...</p>
           </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Facilities</h1>
+            <p className="text-muted-foreground">
+              Manage facilities and their details.
+            </p>
+          </div>
+          
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Failed to load facilities. Please check your connection and try again.
+              Error: {error.message}
+            </AlertDescription>
+          </Alert>
         </div>
       </AdminLayout>
     );

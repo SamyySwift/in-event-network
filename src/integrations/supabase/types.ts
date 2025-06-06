@@ -199,6 +199,7 @@ export type Database = {
           contact_info: string | null
           contact_type: string | null
           created_at: string | null
+          created_by: string | null
           description: string | null
           icon_type: string | null
           id: string
@@ -212,6 +213,7 @@ export type Database = {
           contact_info?: string | null
           contact_type?: string | null
           created_at?: string | null
+          created_by?: string | null
           description?: string | null
           icon_type?: string | null
           id?: string
@@ -225,6 +227,7 @@ export type Database = {
           contact_info?: string | null
           contact_type?: string | null
           created_at?: string | null
+          created_by?: string | null
           description?: string | null
           icon_type?: string | null
           id?: string

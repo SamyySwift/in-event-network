@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Send, Filter, UserPlus, MessageSquare, Twitter, Linkedin, Github, Instagram, Globe } from 'lucide-react';
@@ -19,6 +18,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useNetworking } from '@/hooks/useNetworking';
 import { NetworkingFilter } from '@/components/networking/NetworkingFilter';
+import ChatRoom from '@/components/chat/ChatRoom';
 
 const AttendeeNetworking = () => {
   const navigate = useNavigate();
@@ -166,14 +166,18 @@ const AttendeeNetworking = () => {
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-2 mb-6">
+          <TabsList className="grid grid-cols-3 mb-6">
             <TabsTrigger value="people" className="flex items-center gap-2">
               <UserPlus size={18} />
               <span>Find People</span>
             </TabsTrigger>
             <TabsTrigger value="chats" className="flex items-center gap-2">
               <MessageSquare size={18} />
-              <span>Chats</span>
+              <span>Chat Room</span>
+            </TabsTrigger>
+            <TabsTrigger value="messages" className="flex items-center gap-2">
+              <Send size={18} />
+              <span>Messages</span>
             </TabsTrigger>
           </TabsList>
           
@@ -264,7 +268,7 @@ const AttendeeNetworking = () => {
                             <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Looking to connect with</h4>
                             <div className="flex flex-wrap gap-1">
                               {profile.networking_preferences.map((pref, index) => (
-                                <Badge key={index} variant="secondary" className="bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 text-xs">
+                                <Badge key={index} variant="secondary" className="bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300">
                                   {pref}
                                 </Badge>
                               ))}
@@ -338,11 +342,15 @@ const AttendeeNetworking = () => {
           </TabsContent>
           
           <TabsContent value="chats" className="space-y-4">
+            <ChatRoom />
+          </TabsContent>
+
+          <TabsContent value="messages" className="space-y-4">
             <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
               <MessageSquare className="h-12 w-12 mx-auto text-gray-400" />
-              <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">Chat Feature Coming Soon</h3>
+              <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">Private Messages Coming Soon</h3>
               <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-                Real-time messaging will be available once you connect with other attendees.
+                Direct messaging with your connections will be available soon.
               </p>
             </div>
           </TabsContent>

@@ -24,6 +24,18 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select a valid image file');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB');
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = (e) => {
         setPreview(e.target?.result as string);
@@ -69,6 +81,7 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
         >
           <Upload className="h-12 w-12 text-gray-400 mb-2" />
           <p className="text-sm text-gray-500">Click to upload an image</p>
+          <p className="text-xs text-gray-400 mt-1">PNG, JPG, GIF up to 5MB</p>
         </div>
       )}
       

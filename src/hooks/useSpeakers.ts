@@ -32,50 +32,95 @@ export const useSpeakers = () => {
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching speakers:', error);
+        throw error;
+      }
       return data as Speaker[];
     },
   });
 
   const uploadImage = async (file: File): Promise<string> => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random()}.${fileExt}`;
-    const filePath = `speakers/${fileName}`;
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
+      const filePath = `speakers/${fileName}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from('media')
-      .upload(filePath, file);
+      console.log('Uploading image to:', filePath);
 
-    if (uploadError) throw uploadError;
+      const { error: uploadError } = await supabase.storage
+        .from('media')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-    const { data: { publicUrl } } = supabase.storage
-      .from('media')
-      .getPublicUrl(filePath);
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw uploadError;
+      }
 
-    return publicUrl;
+      const { data: { publicUrl } } = supabase.storage
+        .from('media')
+        .getPublicUrl(filePath);
+
+      console.log('Image uploaded successfully:', publicUrl);
+      return publicUrl;
+    } catch (error) {
+      console.error('Error in uploadImage:', error);
+      throw error;
+    }
   };
 
   const createSpeakerMutation = useMutation({
     mutationFn: async (speakerData: Omit<Speaker, 'id' | 'created_at' | 'updated_at'> & { image?: File }) => {
-      let photoUrl;
-      if (speakerData.image) {
-        photoUrl = await uploadImage(speakerData.image);
+      try {
+        console.log('Creating speaker with data:', speakerData);
+        
+        let photoUrl = speakerData.photo_url;
+        if (speakerData.image) {
+          photoUrl = await uploadImage(speakerData.image);
+        }
+
+        const { image, ...dataWithoutImage } = speakerData;
+        
+        // Ensure required fields are not empty
+        if (!dataWithoutImage.name || !dataWithoutImage.bio) {
+          throw new Error('Name and bio are required fields');
+        }
+
+        const finalData = {
+          ...dataWithoutImage,
+          photo_url: photoUrl,
+          // Convert empty strings to null for optional fields
+          title: dataWithoutImage.title || null,
+          company: dataWithoutImage.company || null,
+          session_title: dataWithoutImage.session_title || null,
+          session_time: dataWithoutImage.session_time || null,
+          twitter_link: dataWithoutImage.twitter_link || null,
+          linkedin_link: dataWithoutImage.linkedin_link || null,
+          website_link: dataWithoutImage.website_link || null,
+        };
+
+        console.log('Final speaker data:', finalData);
+
+        const { data, error } = await supabase
+          .from('speakers')
+          .insert([finalData])
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Database error:', error);
+          throw error;
+        }
+
+        console.log('Speaker created successfully:', data);
+        return data;
+      } catch (error) {
+        console.error('Error in createSpeakerMutation:', error);
+        throw error;
       }
-
-      const { image, ...dataWithoutImage } = speakerData;
-      const finalData = {
-        ...dataWithoutImage,
-        photo_url: photoUrl || speakerData.photo_url,
-      };
-
-      const { data, error } = await supabase
-        .from('speakers')
-        .insert([finalData])
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['speakers'] });
@@ -85,36 +130,58 @@ export const useSpeakers = () => {
       });
     },
     onError: (error) => {
+      console.error('Create speaker error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to add speaker. Please try again.',
+        description: `Failed to add speaker: ${error.message}`,
         variant: 'destructive',
       });
-      console.error('Error creating speaker:', error);
     },
   });
 
   const updateSpeakerMutation = useMutation({
     mutationFn: async ({ id, image, ...speakerData }: Partial<Speaker> & { id: string; image?: File }) => {
-      let photoUrl = speakerData.photo_url;
-      if (image) {
-        photoUrl = await uploadImage(image);
+      try {
+        console.log('Updating speaker:', id, speakerData);
+        
+        let photoUrl = speakerData.photo_url;
+        if (image) {
+          photoUrl = await uploadImage(image);
+        }
+
+        const finalData = {
+          ...speakerData,
+          photo_url: photoUrl,
+          // Convert empty strings to null for optional fields
+          title: speakerData.title || null,
+          company: speakerData.company || null,
+          session_title: speakerData.session_title || null,
+          session_time: speakerData.session_time || null,
+          twitter_link: speakerData.twitter_link || null,
+          linkedin_link: speakerData.linkedin_link || null,
+          website_link: speakerData.website_link || null,
+        };
+
+        console.log('Final update data:', finalData);
+
+        const { data, error } = await supabase
+          .from('speakers')
+          .update(finalData)
+          .eq('id', id)
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Database update error:', error);
+          throw error;
+        }
+
+        console.log('Speaker updated successfully:', data);
+        return data;
+      } catch (error) {
+        console.error('Error in updateSpeakerMutation:', error);
+        throw error;
       }
-
-      const finalData = {
-        ...speakerData,
-        photo_url: photoUrl,
-      };
-
-      const { data, error } = await supabase
-        .from('speakers')
-        .update(finalData)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['speakers'] });
@@ -124,23 +191,27 @@ export const useSpeakers = () => {
       });
     },
     onError: (error) => {
+      console.error('Update speaker error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update speaker. Please try again.',
+        description: `Failed to update speaker: ${error.message}`,
         variant: 'destructive',
       });
-      console.error('Error updating speaker:', error);
     },
   });
 
   const deleteSpeakerMutation = useMutation({
     mutationFn: async (id: string) => {
+      console.log('Deleting speaker:', id);
       const { error } = await supabase
         .from('speakers')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete error:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['speakers'] });
@@ -151,12 +222,12 @@ export const useSpeakers = () => {
       });
     },
     onError: (error) => {
+      console.error('Delete speaker error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete speaker. Please try again.',
+        description: `Failed to delete speaker: ${error.message}`,
         variant: 'destructive',
       });
-      console.error('Error deleting speaker:', error);
     },
   });
 

@@ -243,12 +243,45 @@ export type Database = {
           },
         ]
       }
+      event_participants: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          joined_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          joined_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          joined_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_participants_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           banner_url: string | null
           created_at: string
           description: string | null
           end_time: string
+          event_key: string | null
           host_id: string | null
           id: string
           location: string | null
@@ -263,6 +296,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           end_time: string
+          event_key?: string | null
           host_id?: string | null
           id?: string
           location?: string | null
@@ -277,6 +311,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           end_time?: string
+          event_key?: string | null
           host_id?: string | null
           id?: string
           location?: string | null
@@ -879,9 +914,17 @@ export type Database = {
       }
     }
     Functions: {
+      generate_unique_event_key: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_poll_with_results: {
         Args: { poll_uuid: string }
         Returns: Json
+      }
+      user_has_joined_event: {
+        Args: { user_uuid: string; event_uuid: string }
+        Returns: boolean
       }
     }
     Enums: {

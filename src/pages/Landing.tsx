@@ -1,424 +1,200 @@
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import QRCodeScanner from '@/components/QRCodeScanner';
-import { useToast } from '@/hooks/use-toast';
-import { Users, Calendar, MapPin, Zap, ArrowRight, Sparkles, Network, Brain, Rocket, Globe, Shield, Star } from 'lucide-react';
-import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from '@/components/ui/navigation-menu';
-import { cn } from '@/lib/utils';
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { 
+  Users, 
+  Calendar, 
+  MessageSquare, 
+  MapPin, 
+  Star, 
+  ArrowRight,
+  Key,
+  Smartphone,
+  Globe,
+  Zap
+} from "lucide-react";
 
 const Landing = () => {
-  const [showScanner, setShowScanner] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
 
-  const handleScanSuccess = (decodedText: string) => {
-    try {
-      const url = new URL(decodedText);
-      if (url.protocol === 'connect:') {
-        const pathParts = url.pathname.split('/');
-        if (pathParts.length >= 2 && pathParts[1] === 'event') {
-          const eventId = pathParts[2];
-          if (eventId) {
-            navigate(`/join/${eventId}`);
-            return;
-          }
-        }
-      }
-      
-      toast({
-        title: "Invalid QR Code",
-        description: "This doesn't appear to be a valid Connect event code.",
-        variant: "destructive"
-      });
-    } catch (error) {
-      toast({
-        title: "Invalid QR Code",
-        description: "This doesn't appear to be a valid Connect event code.",
-        variant: "destructive"
-      });
+  const features = [
+    {
+      icon: Key,
+      title: "Easy Access",
+      description: "Join events instantly with a simple 6-digit key"
+    },
+    {
+      icon: Users,
+      title: "Smart Networking",
+      description: "Connect with like-minded professionals and expand your network"
+    },
+    {
+      icon: Calendar,
+      title: "Live Schedule",
+      description: "Stay updated with real-time event schedules and notifications"
+    },
+    {
+      icon: MessageSquare,
+      title: "Interactive Q&A",
+      description: "Ask questions and participate in live discussions"
+    },
+    {
+      icon: MapPin,
+      title: "Event Navigation",
+      description: "Find your way around with interactive maps and facility info"
+    },
+    {
+      icon: Smartphone,
+      title: "Mobile-First",
+      description: "Optimized for mobile devices for seamless on-the-go access"
     }
-  };
-
-  const handleScanError = (error: string) => {
-    console.error("QR Scanner error:", error);
-  };
+  ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-950 via-purple-950 to-blue-950 text-white overflow-hidden">
-      {/* Futuristic Header */}
-      <header className="relative z-50 bg-black/20 backdrop-blur-xl border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-lg flex items-center justify-center">
-              <Network className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-              Connect
-            </span>
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      {/* Navigation */}
+      <nav className="flex items-center justify-between p-6 max-w-7xl mx-auto">
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-connect-600 rounded-lg flex items-center justify-center">
+            <Users className="h-5 w-5 text-white" />
           </div>
-          
-          <div className="hidden md:flex items-center space-x-8">
-            <NavigationMenu>
-              <NavigationMenuList>
-                <NavigationMenuItem>
-                  <NavigationMenuTrigger className="bg-transparent text-white/80 hover:text-white hover:bg-white/10">
-                    Features
-                  </NavigationMenuTrigger>
-                  <NavigationMenuContent>
-                    <ul className="grid gap-3 p-6 w-[500px] grid-cols-2 bg-black/90 backdrop-blur-xl border border-white/10">
-                      <li className="row-span-3">
-                        <NavigationMenuLink asChild>
-                          <a className="flex h-full w-full select-none flex-col justify-end rounded-lg bg-gradient-to-b from-purple-600/20 to-cyan-600/20 p-6 no-underline outline-none focus:shadow-md border border-white/10">
-                            <Sparkles className="h-6 w-6 text-cyan-400 mb-2" />
-                            <div className="mb-2 text-lg font-medium text-white">
-                              Next-Gen Networking
-                            </div>
-                            <p className="text-sm text-white/60">
-                              AI-powered connections that transform how you network at events
-                            </p>
-                          </a>
-                        </NavigationMenuLink>
-                      </li>
-                      <ListItem title="Neural Matching" icon={<Brain className="h-4 w-4" />}>
-                        AI algorithms match you with perfect networking opportunities
-                      </ListItem>
-                      <ListItem title="Quantum Scheduling" icon={<Zap className="h-4 w-4" />}>
-                        Dynamic event scheduling that adapts in real-time
-                      </ListItem>
-                      <ListItem title="Holographic Q&A" icon={<Globe className="h-4 w-4" />}>
-                        Immersive interaction with speakers and attendees
-                      </ListItem>
-                    </ul>
-                  </NavigationMenuContent>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <Button variant="ghost" className="text-white/80 hover:text-white hover:bg-white/10">
-                    Solutions
-                  </Button>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <Button variant="ghost" className="text-white/80 hover:text-white hover:bg-white/10">
-                    Pricing
-                  </Button>
-                </NavigationMenuItem>
-              </NavigationMenuList>
-            </NavigationMenu>
-            
-            <div className="flex space-x-3">
-              <Button variant="ghost" className="text-white/80 hover:text-white border border-white/20 hover:bg-white/10" onClick={() => navigate('/login')}>
-                Access Portal
-              </Button>
-              <Button className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white shadow-lg shadow-purple-500/20" onClick={() => navigate('/register')}>
-                Launch Event
-              </Button>
-            </div>
-          </div>
-          
-          <div className="flex md:hidden space-x-2">
-            <Button variant="ghost" size="sm" className="text-white/80" onClick={() => navigate('/login')}>
-              Sign In
-            </Button>
-            <Button size="sm" className="bg-gradient-to-r from-cyan-500 to-purple-500" onClick={() => navigate('/register')}>
-              Launch
-            </Button>
-          </div>
+          <span className="text-xl font-bold text-gray-900">Connect</span>
         </div>
-      </header>
+        <div className="flex items-center space-x-4">
+          <Button variant="ghost" asChild>
+            <Link to="/login">Sign In</Link>
+          </Button>
+          <Button asChild>
+            <Link to="/register">Get Started</Link>
+          </Button>
+        </div>
+      </nav>
 
-      {/* Futuristic Hero Section */}
-      <section className="relative flex-1 flex items-center justify-center py-20 overflow-hidden">
-        {/* Animated Background Elements */}
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-1/4 -left-40 w-96 h-96 rounded-full bg-cyan-500/10 blur-3xl animate-pulse"></div>
-          <div className="absolute bottom-1/4 -right-40 w-96 h-96 rounded-full bg-purple-500/10 blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full border border-white/5 animate-spin" style={{ animationDuration: '20s' }}></div>
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-white/5 animate-spin" style={{ animationDuration: '15s', animationDirection: 'reverse' }}></div>
-        </div>
-        
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <div className="max-w-4xl mx-auto">
-            <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-6 py-2 mb-8 border border-white/20">
-              <Rocket className="h-4 w-4 text-cyan-400" />
-              <span className="text-sm text-white/80">The Future of Event Networking</span>
-            </div>
-            
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-8 leading-tight">
-              <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                Neural Network
-              </span>
-              <br />
-              <span className="text-white">Events Redefined</span>
-            </h1>
-            
-            <p className="text-xl sm:text-2xl mb-12 text-white/70 max-w-3xl mx-auto leading-relaxed">
-              Experience the next evolution of event networking. AI-powered connections, quantum-speed matching, and immersive interactions that transcend traditional boundaries.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6 mb-16">
-              <Button 
-                size="lg" 
-                className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white shadow-2xl shadow-purple-500/30 border-0 px-8 py-4 text-lg font-semibold transform hover:scale-105 transition-all duration-200"
-                onClick={() => setShowScanner(true)}
-              >
-                <Zap className="mr-2 h-5 w-5" />
-                Quantum Scan
-              </Button>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="border-2 border-white/30 text-white hover:bg-white/10 backdrop-blur-sm px-8 py-4 text-lg font-semibold"
-                onClick={() => navigate('/register?role=host')}
-              >
-                <Rocket className="mr-2 h-5 w-5" />
-                Create Nexus
-              </Button>
-            </div>
-
-            {/* Scanner Interface */}
-            {showScanner && (
-              <div className="max-w-md mx-auto">
-                <div className="bg-black/40 backdrop-blur-xl p-8 rounded-2xl border border-white/20 shadow-2xl">
-                  <h3 className="text-xl font-semibold mb-6 text-white text-center flex items-center justify-center">
-                    <Zap className="mr-2 h-5 w-5 text-cyan-400" />
-                    Neural Scanner Active
-                  </h3>
-                  <QRCodeScanner 
-                    onScanSuccess={handleScanSuccess} 
-                    onScanError={handleScanError}
-                  />
-                  <Button 
-                    variant="ghost" 
-                    className="mt-6 w-full text-white/80 hover:text-white hover:bg-white/10"
-                    onClick={() => setShowScanner(false)}
-                  >
-                    Deactivate Scanner
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Futuristic Features Section */}
-      <section className="py-20 bg-black/20 backdrop-blur-sm border-y border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-6">
-              <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-                Quantum Capabilities
-              </span>
-            </h2>
-            <p className="text-xl text-white/60 max-w-3xl mx-auto">
-              Harness the power of tomorrow's technology to create unprecedented networking experiences
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-8">
-            <FeatureCard
-              icon={<Brain className="h-8 w-8" />}
-              title="Neural Matching"
-              description="AI algorithms analyze interests, goals, and behavior patterns to create perfect networking synergies"
-              gradient="from-cyan-500/20 to-blue-500/20"
-              borderGradient="from-cyan-500/50 to-blue-500/50"
-            />
-            
-            <FeatureCard
-              icon={<Zap className="h-8 w-8" />}
-              title="Quantum Scheduling"
-              description="Real-time adaptive scheduling that morphs based on attendee preferences and engagement data"
-              gradient="from-purple-500/20 to-pink-500/20"
-              borderGradient="from-purple-500/50 to-pink-500/50"
-            />
-            
-            <FeatureCard
-              icon={<Globe className="h-8 w-8" />}
-              title="Holographic Interactions"
-              description="Immersive Q&A sessions and presentations that blur the line between physical and digital"
-              gradient="from-green-500/20 to-cyan-500/20"
-              borderGradient="from-green-500/50 to-cyan-500/50"
-            />
-            
-            <FeatureCard
-              icon={<Shield className="h-8 w-8" />}
-              title="Quantum Security"
-              description="Enterprise-grade encryption and privacy controls protect all interactions and data"
-              gradient="from-orange-500/20 to-red-500/20"
-              borderGradient="from-orange-500/50 to-red-500/50"
-            />
-            
-            <FeatureCard
-              icon={<Network className="h-8 w-8" />}
-              title="Neural Networks"
-              description="Build lasting professional relationships through intelligent connection recommendations"
-              gradient="from-indigo-500/20 to-purple-500/20"
-              borderGradient="from-indigo-500/50 to-purple-500/50"
-            />
-            
-            <FeatureCard
-              icon={<Sparkles className="h-8 w-8" />}
-              title="Reality Synthesis"
-              description="Seamlessly blend virtual and physical event experiences for maximum engagement"
-              gradient="from-pink-500/20 to-cyan-500/20"
-              borderGradient="from-pink-500/50 to-cyan-500/50"
-            />
-          </div>
-        </div>
-      </section>
-      
-      {/* Call to Action */}
-      <section className="py-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-purple-500/10"></div>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <h2 className="text-4xl font-bold mb-8">
-            <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-              Ready to Enter the Future?
-            </span>
-          </h2>
-          <p className="text-xl text-white/60 mb-12 max-w-2xl mx-auto">
-            Join the revolution and experience networking beyond imagination. The future is now.
+      {/* Hero Section */}
+      <div className="max-w-7xl mx-auto px-6 py-20">
+        <div className="text-center">
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
+            Experience Events Like
+            <span className="text-connect-600"> Never Before</span>
+          </h1>
+          <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+            Connect brings attendees together with real-time networking, interactive features, 
+            and seamless event management. Join the future of event experiences.
           </p>
-          <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
-            <Button 
-              size="lg" 
-              className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white shadow-2xl shadow-purple-500/30 px-8 py-4 text-lg font-semibold transform hover:scale-105 transition-all duration-200"
-              onClick={() => navigate('/register?role=host')}
-            >
-              <Rocket className="mr-2 h-5 w-5" />
-              Launch Your Nexus
+          
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <Button size="lg" onClick={() => navigate('/join')} className="text-lg px-8 py-3">
+              <Key className="h-5 w-5 mr-2" />
+              Join Event
             </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
-              className="border-2 border-white/30 text-white hover:bg-white/10 backdrop-blur-sm px-8 py-4 text-lg font-semibold"
-              onClick={() => setShowScanner(true)}
-            >
-              <Zap className="mr-2 h-5 w-5" />
-              Join a Nexus
+            <Button size="lg" variant="outline" onClick={() => navigate('/register')} className="text-lg px-8 py-3">
+              Create Account
+              <ArrowRight className="h-5 w-5 ml-2" />
+            </Button>
+          </div>
+
+          <p className="text-sm text-gray-500 mt-4">
+            Have a 6-digit event key? Click "Join Event" to get started instantly!
+          </p>
+        </div>
+      </div>
+
+      {/* Features Grid */}
+      <div className="max-w-7xl mx-auto px-6 py-20">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            Everything You Need for Amazing Events
+          </h2>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            From networking to navigation, Connect provides all the tools for memorable event experiences
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {features.map((feature, index) => (
+            <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <CardHeader>
+                <div className="w-12 h-12 bg-connect-100 rounded-lg flex items-center justify-center mb-4">
+                  <feature.icon className="h-6 w-6 text-connect-600" />
+                </div>
+                <CardTitle className="text-xl">{feature.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-base">
+                  {feature.description}
+                </CardDescription>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+
+      {/* CTA Section */}
+      <div className="bg-connect-600 text-white py-20">
+        <div className="max-w-4xl mx-auto text-center px-6">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">
+            Ready to Connect?
+          </h2>
+          <p className="text-xl mb-8 opacity-90">
+            Join thousands of professionals who are already networking smarter and experiencing events better.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button size="lg" variant="secondary" onClick={() => navigate('/join')} className="text-lg px-8 py-3">
+              <Key className="h-5 w-5 mr-2" />
+              Join with Event Key
+            </Button>
+            <Button size="lg" variant="outline" onClick={() => navigate('/register')} className="text-lg px-8 py-3 text-white border-white hover:bg-white hover:text-connect-600">
+              Sign Up Free
             </Button>
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* Futuristic Footer */}
-      <footer className="bg-black/40 backdrop-blur-xl border-t border-white/10 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="col-span-2 md:col-span-1">
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="w-8 h-8 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-lg flex items-center justify-center">
-                  <Network className="h-5 w-5 text-white" />
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="col-span-1 md:col-span-2">
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-8 h-8 bg-connect-600 rounded-lg flex items-center justify-center">
+                  <Users className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-                  Connect
-                </span>
+                <span className="text-xl font-bold">Connect</span>
               </div>
-              <p className="text-white/60 text-sm">
-                Transcending the boundaries of traditional networking through quantum-powered connections and neural intelligence.
+              <p className="text-gray-400 max-w-md">
+                The next generation event platform that brings people together through meaningful connections and engaging experiences.
               </p>
             </div>
             
             <div>
-              <h3 className="font-semibold text-lg mb-4 text-white">Nexus</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-white/60 hover:text-cyan-400 transition-colors">Neural Features</a></li>
-                <li><a href="#" className="text-white/60 hover:text-cyan-400 transition-colors">Quantum Pricing</a></li>
-                <li><a href="#" className="text-white/60 hover:text-cyan-400 transition-colors">Reality Studies</a></li>
-                <li><a href="#" className="text-white/60 hover:text-cyan-400 transition-colors">Neural Reviews</a></li>
+              <h3 className="font-semibold mb-4">Platform</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><Link to="/register" className="hover:text-white transition-colors">Sign Up</Link></li>
+                <li><Link to="/join" className="hover:text-white transition-colors">Join Event</Link></li>
+                <li><Link to="/login" className="hover:text-white transition-colors">Sign In</Link></li>
               </ul>
             </div>
             
             <div>
-              <h3 className="font-semibold text-lg mb-4 text-white">Corporation</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-white/60 hover:text-cyan-400 transition-colors">Mission</a></li>
-                <li><a href="#" className="text-white/60 hover:text-cyan-400 transition-colors">Neural Careers</a></li>
-                <li><a href="#" className="text-white/60 hover:text-cyan-400 transition-colors">Contact Nexus</a></li>
-                <li><a href="#" className="text-white/60 hover:text-cyan-400 transition-colors">Quantum Blog</a></li>
-              </ul>
-            </div>
-            
-            <div>
-              <h3 className="font-semibold text-lg mb-4 text-white">Protocols</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-white/60 hover:text-cyan-400 transition-colors">Data Privacy</a></li>
-                <li><a href="#" className="text-white/60 hover:text-cyan-400 transition-colors">Neural Terms</a></li>
-                <li><a href="#" className="text-white/60 hover:text-cyan-400 transition-colors">Quantum Security</a></li>
+              <h3 className="font-semibold mb-4">Features</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li>Networking</li>
+                <li>Event Schedule</li>
+                <li>Interactive Q&A</li>
+                <li>Real-time Updates</li>
               </ul>
             </div>
           </div>
           
-          <div className="border-t border-white/10 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-white/40 text-sm">© 2025 Connect Nexus. All quantum rights reserved.</p>
-            <div className="flex space-x-6 mt-4 md:mt-0">
-              <a href="#" className="text-white/40 hover:text-cyan-400 transition-colors">
-                <span className="sr-only">Neural Network</span>
-                <Network className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-white/40 hover:text-cyan-400 transition-colors">
-                <span className="sr-only">Quantum Link</span>
-                <Globe className="h-5 w-5" />
-              </a>
-            </div>
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+            <p>&copy; 2025 Connect. All rights reserved.</p>
           </div>
         </div>
       </footer>
     </div>
   );
 };
-
-// Feature Card Component
-interface FeatureCardProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  gradient: string;
-  borderGradient: string;
-}
-
-const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, gradient, borderGradient }) => (
-  <div className={`relative group p-6 rounded-xl bg-gradient-to-br ${gradient} backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-300 hover:transform hover:scale-105 hover:shadow-2xl`}>
-    <div className={`absolute inset-0 rounded-xl bg-gradient-to-r ${borderGradient} opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-xl`}></div>
-    <div className="relative z-10">
-      <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center mb-4 text-cyan-400">
-        {icon}
-      </div>
-      <h3 className="text-xl font-semibold mb-3 text-white">{title}</h3>
-      <p className="text-white/60 leading-relaxed">{description}</p>
-    </div>
-  </div>
-);
-
-// NavigationMenu component helper
-const ListItem = React.forwardRef<
-  React.ElementRef<"a">,
-  React.ComponentPropsWithoutRef<"a"> & { title: string; icon: React.ReactNode }
->(({ className, title, children, icon, ...props }, ref) => {
-  return (
-    <li>
-      <NavigationMenuLink asChild>
-        <a
-          ref={ref}
-          className={cn(
-            "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-white/10 focus:bg-white/10 text-white",
-            className
-          )}
-          {...props}
-        >
-          <div className="text-sm font-medium leading-none flex items-center">
-            <span className="mr-2 text-cyan-400">{icon}</span>
-            {title}
-          </div>
-          <p className="line-clamp-2 text-sm leading-snug text-white/60">
-            {children}
-          </p>
-        </a>
-      </NavigationMenuLink>
-    </li>
-  )
-})
-ListItem.displayName = "ListItem"
 
 export default Landing;

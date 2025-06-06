@@ -1,10 +1,11 @@
-
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
-import QRCodeGenerator from '@/components/admin/QRCodeGenerator';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { 
   Users, 
   Calendar, 
@@ -12,7 +13,9 @@ import {
   BarChart3, 
   TrendingUp, 
   Bell,
-  QrCode,
+  Key,
+  Copy,
+  RefreshCw,
   User,
   Megaphone
 } from 'lucide-react';
@@ -20,10 +23,10 @@ import { useEvents } from '@/hooks/useEvents';
 import { useSpeakers } from '@/hooks/useSpeakers';
 import { useAnnouncements } from '@/hooks/useAnnouncements';
 import { supabase } from '@/integrations/supabase/client';
-import { format } from 'date-fns';
+import { toast } from 'sonner';
 
 const AdminDashboard = () => {
-  const { events, isLoading: eventsLoading } = useEvents();
+  const { events, isLoading: eventsLoading, updateEvent } = useEvents();
   const { speakers, isLoading: speakersLoading } = useSpeakers();
   const { announcements, isLoading: announcementsLoading } = useAnnouncements();
   
@@ -32,6 +35,7 @@ const AdminDashboard = () => {
   const [pollResponsesCount, setPollResponsesCount] = useState(0);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
   // Calculate metrics from real data
   const totalEvents = events.length;
@@ -48,7 +52,13 @@ const AdminDashboard = () => {
     return new Date(event.start_time) > now;
   }).length;
 
-  // Fetch real-time data
+  // Set the first event as selected by default
+  useEffect(() => {
+    if (events.length > 0 && !selectedEvent) {
+      setSelectedEvent(events[0]);
+    }
+  }, [events, selectedEvent]);
+
   useEffect(() => {
     fetchDashboardData();
     setupRealTimeSubscriptions();
@@ -258,6 +268,25 @@ const AdminDashboard = () => {
     return now;
   };
 
+  const copyEventKey = (eventKey: string) => {
+    navigator.clipboard.writeText(eventKey);
+    toast.success('Event key copied to clipboard!');
+  };
+
+  const generateNewEventKey = async (eventId: string) => {
+    try {
+      // Generate a new random 6-digit key
+      const newKey = Math.floor(100000 + Math.random() * 900000).toString();
+      
+      await updateEvent({ id: eventId, event_key: newKey });
+      setSelectedEvent({ ...selectedEvent, event_key: newKey });
+      toast.success('New event key generated successfully!');
+    } catch (error) {
+      toast.error('Failed to generate new event key');
+      console.error('Error generating new event key:', error);
+    }
+  };
+
   const metrics = [
     {
       title: 'Total Attendees',
@@ -341,16 +370,98 @@ const AdminDashboard = () => {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          {/* QR Code Generator Section */}
+          {/* Event Key Section */}
           <div className="space-y-4">
             <h2 className="text-xl font-semibold flex items-center gap-2">
-              <QrCode className="h-5 w-5" />
-              Event QR Code
+              <Key className="h-5 w-5" />
+              Event Access Key
             </h2>
-            <QRCodeGenerator 
-              eventName="Connect 2025" 
-              eventUrl={`${window.location.origin}/register`}
-            />
+            
+            {events.length > 0 ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Event Access</CardTitle>
+                  <CardDescription>
+                    Share this 6-digit key with attendees to join your event
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {events.length > 1 && (
+                    <div className="space-y-2">
+                      <Label htmlFor="event-select">Select Event</Label>
+                      <select
+                        id="event-select"
+                        className="w-full p-2 border rounded-md"
+                        value={selectedEvent?.id || ''}
+                        onChange={(e) => {
+                          const event = events.find(ev => ev.id === e.target.value);
+                          setSelectedEvent(event);
+                        }}
+                      >
+                        {events.map((event) => (
+                          <option key={event.id} value={event.id}>
+                            {event.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                  
+                  {selectedEvent && (
+                    <>
+                      <div className="space-y-2">
+                        <Label>Event Key</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            value={selectedEvent.event_key || 'Generating...'}
+                            readOnly
+                            className="text-2xl font-mono text-center tracking-widest"
+                          />
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => copyEventKey(selectedEvent.event_key)}
+                            disabled={!selectedEvent.event_key}
+                          >
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => generateNewEventKey(selectedEvent.id)}
+                          className="flex-1"
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Generate New Key
+                        </Button>
+                      </div>
+                      
+                      <div className="text-sm text-muted-foreground">
+                        <p>Attendees can use this key to join the event at:</p>
+                        <p className="font-mono bg-gray-100 p-2 rounded mt-1">
+                          {window.location.origin}/join
+                        </p>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="text-center py-12">
+                  <Key className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                    No Events Created
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400">
+                    Create an event first to get an access key for attendees.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Recent Activity */}

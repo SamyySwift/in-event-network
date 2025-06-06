@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Send, Pencil, Trash2, Loader, Plus, Upload, Call, Emergency } from 'lucide-react';
+import { Send, Pencil, Trash2, Loader, Plus, Upload, Phone, AlertTriangle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useAnnouncements } from '@/hooks/useAnnouncements';
 import { useAuth } from '@/contexts/AuthContext';

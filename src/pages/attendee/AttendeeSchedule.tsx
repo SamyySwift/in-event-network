@@ -1,68 +1,58 @@
 import React from 'react';
+import { Calendar, Clock, MapPin, User, Loader } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Calendar, Clock, MapPin, User, Loader, ExternalLink } from 'lucide-react';
-import { useEvents } from '@/hooks/useEvents';
 import { useSpeakers } from '@/hooks/useSpeakers';
+import EventAccessGuard from '@/components/EventAccessGuard';
+import { useEventParticipation } from '@/hooks/useEventParticipation';
 
 const AttendeeSchedule = () => {
-  const { events, isLoading: eventsLoading } = useEvents();
-  const { speakers, isLoading: speakersLoading } = useSpeakers();
+  const { speakers, loading } = useSpeakers();
+  const { getJoinedEvents, loading: participationLoading } = useEventParticipation();
 
-  const isLoading = eventsLoading || speakersLoading;
-
-  const formatDate = (dateString: string) => {
+  const formatDateTime = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
     });
   };
 
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString('en-US', {
-      hour: '2-digit',
+      hour: 'numeric',
       minute: '2-digit',
     });
   };
 
-  const isEventLive = (startTime: string, endTime: string) => {
-    const now = new Date();
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-    return now >= start && now <= end;
-  };
+  // Group speakers by date
+  const groupedByDate = speakers.reduce((acc, speaker) => {
+    if (!speaker.session_time) return acc;
+    
+    const date = new Date(speaker.session_time).toDateString();
+    if (!acc[date]) {
+      acc[date] = [];
+    }
+    acc[date].push(speaker);
+    return acc;
+  }, {} as Record<string, typeof speakers>);
 
-  const isEventUpcoming = (startTime: string) => {
-    const now = new Date();
-    const start = new Date(startTime);
-    return now < start;
-  };
-
-  const groupEventsByDate = (events: any[]) => {
-    const grouped: { [key: string]: any[] } = {};
-    events.forEach(event => {
-      const date = new Date(event.start_time).toDateString();
-      if (!grouped[date]) {
-        grouped[date] = [];
-      }
-      grouped[date].push(event);
+  // Sort sessions within each date by time
+  Object.keys(groupedByDate).forEach(date => {
+    groupedByDate[date].sort((a, b) => {
+      if (!a.session_time || !b.session_time) return 0;
+      return new Date(a.session_time).getTime() - new Date(b.session_time).getTime();
     });
-    return grouped;
-  };
+  });
 
-  const getSpeakerForSession = (sessionTitle?: string) => {
-    if (!sessionTitle) return null;
-    return speakers.find(speaker => 
-      speaker.session_title?.toLowerCase() === sessionTitle.toLowerCase()
-    );
-  };
+  const hasEventAccess = getJoinedEvents().length > 0;
 
-  if (isLoading) {
+  if (loading || participationLoading) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">
@@ -72,180 +62,82 @@ const AttendeeSchedule = () => {
     );
   }
 
-  const groupedEvents = groupEventsByDate(events);
-
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Event Schedule</h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Stay updated with all the events and sessions happening at the conference.
-          </p>
-        </div>
+      <EventAccessGuard hasAccess={hasEventAccess} loading={participationLoading}>
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center">
+              <Calendar className="h-8 w-8 mr-3" />
+              Event Schedule
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              Explore the event schedule and plan your day.
+            </p>
+          </div>
 
-        {events.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-12">
-              <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                No Events Scheduled
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Check back later for event updates or contact the organizers for more information.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-8">
-            {Object.entries(groupedEvents).map(([date, dayEvents]) => (
-              <div key={date}>
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
-                  <Calendar className="h-5 w-5 mr-2" />
-                  {formatDate(dayEvents[0].start_time)}
+          {Object.keys(groupedByDate).length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-12">
+                <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                  No Sessions Scheduled
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                  Check back later for the event schedule and session details.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            Object.entries(groupedByDate).sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime()).map(([date, sessions]) => (
+              <div key={date} className="mb-8">
+                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
+                  <Clock className="inline-block h-6 w-6 mr-2 align-middle" />
+                  {formatDateTime(date)}
                 </h2>
                 <div className="space-y-4">
-                  {dayEvents
-                    .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
-                    .map((event) => {
-                      const speaker = getSpeakerForSession(event.name);
-                      
-                      return (
-                        <Card key={event.id} className="overflow-hidden">
-                          {event.banner_url && (
-                            <div className="w-full h-48 overflow-hidden">
-                              <img 
-                                src={event.banner_url} 
-                                alt={event.name}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
-                          )}
-                          <CardContent className="p-6">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-3">
-                                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                                    {event.name}
-                                  </h3>
-                                  {isEventLive(event.start_time, event.end_time) && (
-                                    <Badge className="bg-red-100 text-red-800 hover:bg-red-200 animate-pulse">
-                                      Live Now
-                                    </Badge>
-                                  )}
-                                  {isEventUpcoming(event.start_time) && (
-                                    <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">
-                                      Upcoming
-                                    </Badge>
-                                  )}
-                                </div>
-
-                                {event.description && (
-                                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                                    {event.description}
-                                  </p>
-                                )}
-
-                                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-                                  <div className="flex items-center">
-                                    <Clock className="h-4 w-4 mr-1" />
-                                    {formatTime(event.start_time)} - {formatTime(event.end_time)}
-                                  </div>
-                                  {event.location && (
-                                    <div className="flex items-center">
-                                      <MapPin className="h-4 w-4 mr-1" />
-                                      {event.location}
-                                    </div>
-                                  )}
-                                </div>
-
-                                {speaker && (
-                                  <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                    <div className="flex items-start space-x-4">
-                                      <Avatar className="h-16 w-16 flex-shrink-0">
-                                        {speaker.photo_url ? (
-                                          <AvatarImage src={speaker.photo_url} alt={speaker.name} />
-                                        ) : (
-                                          <AvatarFallback className="bg-blue-100 text-blue-600 text-lg">
-                                            {speaker.name.split(' ').map(n => n[0]).join('')}
-                                          </AvatarFallback>
-                                        )}
-                                      </Avatar>
-                                      <div className="flex-1 min-w-0">
-                                        <p className="font-medium text-gray-900 dark:text-white mb-1">
-                                          {speaker.name}
-                                        </p>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                                          {speaker.title} {speaker.company && `at ${speaker.company}`}
-                                        </p>
-                                        {speaker.bio && (
-                                          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
-                                            {speaker.bio}
-                                          </p>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
+                  {sessions.map((speaker) => (
+                    <Card key={speaker.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                      <CardHeader>
+                        <div className="flex items-center">
+                          <Avatar className="h-10 w-10 mr-4">
+                            {speaker.photo_url ? (
+                              <AvatarImage src={speaker.photo_url} alt={speaker.name} />
+                            ) : (
+                              <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300">
+                                {speaker.name.split(' ').map(n => n[0]).join('')}
+                              </AvatarFallback>
+                            )}
+                          </Avatar>
+                          <div>
+                            <CardTitle className="text-lg text-gray-900 dark:text-white">{speaker.session_title}</CardTitle>
+                            <CardDescription className="text-sm text-gray-500 dark:text-gray-400">
+                              {speaker.name}, {speaker.title}
+                            </CardDescription>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center text-gray-600 dark:text-gray-300 mb-2">
+                          <Clock className="h-4 w-4 mr-2" />
+                          <span>{formatTime(speaker.session_time)}</span>
+                        </div>
+                        <div className="flex items-center text-gray-600 dark:text-gray-300 mb-2">
+                          <MapPin className="h-4 w-4 mr-2" />
+                          <span>{speaker.location || 'TBD'}</span>
+                        </div>
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                          {speaker.session_description}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-
-        {speakers.length > 0 && (
-          <div className="mt-12">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
-              <User className="h-5 w-5 mr-2" />
-              Featured Speakers
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {speakers.map((speaker) => (
-                <Card key={speaker.id} className="overflow-hidden">
-                  {speaker.photo_url && (
-                    <div className="w-full h-48 overflow-hidden">
-                      <img 
-                        src={speaker.photo_url} 
-                        alt={speaker.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <CardContent className="p-6 text-center">
-                    {!speaker.photo_url && (
-                      <Avatar className="h-16 w-16 mx-auto mb-4">
-                        <AvatarFallback className="bg-blue-100 text-blue-600 text-lg">
-                          {speaker.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-1 mt-4">
-                      {speaker.name}
-                    </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-                      {speaker.title} {speaker.company && `at ${speaker.company}`}
-                    </p>
-                    {speaker.session_title && (
-                      <Badge variant="outline" className="mb-3">
-                        {speaker.session_title}
-                      </Badge>
-                    )}
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
-                      {speaker.bio}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
+            ))
+          )}
+        </div>
+      </EventAccessGuard>
     </AppLayout>
   );
 };

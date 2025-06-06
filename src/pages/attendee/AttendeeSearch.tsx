@@ -1,300 +1,259 @@
-
-import React, { useState, useEffect } from 'react';
-import { Search, Filter, Users, X, UserPlus } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { Search, Filter, UserPlus, MessageSquare, Loader } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
-import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { useNavigate } from 'react-router-dom';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-
-// Mock data for attendees
-const mockAttendees = [
-  {
-    id: '1',
-    name: 'Alex Johnson',
-    role: 'Frontend Developer',
-    photoUrl: '',
-    niche: 'Web Development',
-    networkingPreferences: ['Investors', 'Designers'],
-    bio: 'Building beautiful interfaces for 5+ years. Looking to connect with designers and potential investors.',
-  },
-  {
-    id: '2',
-    name: 'Sarah Williams',
-    role: 'UX Designer',
-    photoUrl: '',
-    niche: 'Product Design',
-    networkingPreferences: ['Developers', 'Product Managers'],
-    bio: 'Passionate about creating intuitive user experiences. Always looking to collaborate with developers.',
-  },
-  {
-    id: '3',
-    name: 'Michael Rodriguez',
-    role: 'Startup Founder',
-    photoUrl: '',
-    niche: 'EdTech',
-    networkingPreferences: ['Investors', 'Developers', 'Marketers'],
-    bio: 'Building the future of education technology. Looking for tech talent and potential investors.',
-  },
-  {
-    id: '4',
-    name: 'Priya Patel',
-    role: 'Product Manager',
-    photoUrl: '',
-    niche: 'SaaS',
-    networkingPreferences: ['Developers', 'Designers', 'Marketers'],
-    bio: 'PM with 6+ years experience in SaaS. Looking to connect with talented developers and designers.',
-  },
-  {
-    id: '5',
-    name: 'David Chen',
-    role: 'Investor',
-    photoUrl: '',
-    niche: 'Venture Capital',
-    networkingPreferences: ['Founders', 'Entrepreneurs'],
-    bio: 'Early-stage investor focusing on AI and blockchain startups. Always looking for the next big idea.',
-  },
-];
-
-// Available niches and networking preferences for filtering
-const niches = ['All', 'Web Development', 'Product Design', 'EdTech', 'SaaS', 'Venture Capital', 'Marketing', 'Data Science', 'AI', 'Blockchain'];
-const networkingPreferences = ['All', 'Developers', 'Designers', 'Investors', 'Founders', 'Product Managers', 'Marketers', 'Students', 'Mentors'];
+import { useNetworking } from '@/hooks/useNetworking';
+import { NetworkingFilter } from '@/components/networking/NetworkingFilter';
+import EventAccessGuard from '@/components/EventAccessGuard';
+import { useEventParticipation } from '@/hooks/useEventParticipation';
 
 const AttendeeSearch = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedNiche, setSelectedNiche] = useState('All');
-  const [selectedPreference, setSelectedPreference] = useState('All');
-  const [filteredAttendees, setFilteredAttendees] = useState(mockAttendees);
-  const [showFilters, setShowFilters] = useState(false);
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
+  const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
+  const [selectedNetworkingPrefs, setSelectedNetworkingPrefs] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const { profiles, loading, sendConnectionRequest, getConnectionStatus } = useNetworking();
+  const { getJoinedEvents, loading: participationLoading } = useEventParticipation();
 
-  useEffect(() => {
-    const filtered = mockAttendees.filter((attendee) => {
-      // Search term filter
-      const matchesSearch = 
-        searchTerm === '' || 
-        attendee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        attendee.bio.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        attendee.role.toLowerCase().includes(searchTerm.toLowerCase());
+  // Get unique filter options from all profiles
+  const { availableNiches, availableNetworkingPrefs, availableTags } = useMemo(() => {
+    const niches = new Set<string>();
+    const networkingPrefs = new Set<string>();
+    const tags = new Set<string>();
 
-      // Niche filter
-      const matchesNiche = 
-        selectedNiche === 'All' || 
-        attendee.niche === selectedNiche;
-
-      // Networking preference filter
-      const matchesPreference = 
-        selectedPreference === 'All' || 
-        attendee.networkingPreferences.includes(selectedPreference);
-
-      return matchesSearch && matchesNiche && matchesPreference;
+    profiles.forEach(profile => {
+      if (profile.niche) niches.add(profile.niche);
+      if (profile.networking_preferences) {
+        profile.networking_preferences.forEach(pref => networkingPrefs.add(pref));
+      }
+      if (profile.tags) {
+        profile.tags.forEach(tag => tags.add(tag));
+      }
     });
 
-    setFilteredAttendees(filtered);
-  }, [searchTerm, selectedNiche, selectedPreference]);
+    return {
+      availableNiches: Array.from(niches).sort(),
+      availableNetworkingPrefs: Array.from(networkingPrefs).sort(),
+      availableTags: Array.from(tags).sort(),
+    };
+  }, [profiles]);
 
-  const handleViewProfile = (id: string) => {
-    navigate(`/attendee/profile/${id}`);
+  // Filter profiles based on search term and selected filters
+  const filteredProfiles = useMemo(() => {
+    return profiles.filter(profile => {
+      // Text search
+      const matchesSearch = !searchTerm || (
+        profile.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        profile.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        profile.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        profile.bio.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        profile.niche.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (profile.tags && profile.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))) ||
+        (profile.networking_preferences && profile.networking_preferences.some(pref => pref.toLowerCase().includes(searchTerm.toLowerCase())))
+      );
+
+      // Niche filter
+      const matchesNiche = selectedNiches.length === 0 || (
+        profile.niche && selectedNiches.includes(profile.niche)
+      );
+
+      // Networking preferences filter
+      const matchesNetworkingPref = selectedNetworkingPrefs.length === 0 || (
+        profile.networking_preferences && 
+        profile.networking_preferences.some(pref => selectedNetworkingPrefs.includes(pref))
+      );
+
+      // Tags filter
+      const matchesTags = selectedTags.length === 0 || (
+        profile.tags && 
+        profile.tags.some(tag => selectedTags.includes(tag))
+      );
+
+      return matchesSearch && matchesNiche && matchesNetworkingPref && matchesTags;
+    });
+  }, [profiles, searchTerm, selectedNiches, selectedNetworkingPrefs, selectedTags]);
+
+  const handleClearFilters = () => {
+    setSelectedNiches([]);
+    setSelectedNetworkingPrefs([]);
+    setSelectedTags([]);
+    setSearchTerm('');
   };
+
+  // Function to handle connection request
+  const handleConnect = (profileId: string) => {
+    sendConnectionRequest(profileId);
+  };
+
+  // Function to handle message sending - now opens direct message
+  const handleMessage = (profileId: string, profileName: string, profilePhoto?: string) => {
+    // setSelectedConversation({
+    //   userId: profileId,
+    //   userName: profileName,
+    //   userPhoto: profilePhoto
+    // });
+    // setActiveTab('messages');
+  };
+
+  const hasEventAccess = getJoinedEvents().length > 0;
+
+  if (loading || participationLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-64">
+          <Loader className="h-8 w-8 animate-spin" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Find Connections</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Discover and connect with other event attendees</p>
-          </div>
-          <Button 
-            variant="outline" 
-            size="icon"
-            onClick={() => setShowFilters(!showFilters)}
-            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300"
-          >
-            <Filter className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        <div className="mb-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <Input
-              className="pl-10 pr-4 py-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
-              placeholder="Search by name, role, or keywords..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-            {searchTerm && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 w-7"
-                onClick={() => setSearchTerm('')}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {showFilters && (
-          <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm mb-6 animate-fade-in border border-gray-200 dark:border-gray-700">
-            <div className="flex justify-between items-center mb-3">
-              <h2 className="text-sm font-medium text-gray-700 dark:text-gray-300">Filter by:</h2>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                onClick={() => {
-                  setSelectedNiche('All');
-                  setSelectedPreference('All');
-                  setSearchTerm('');
-                }}
-                className="text-connect-600 dark:text-connect-400 hover:text-connect-700 dark:hover:text-connect-300 h-7 px-2"
-              >
-                Reset All
-              </Button>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="text-sm text-gray-500 dark:text-gray-400 mb-1 block">Industry/Niche</label>
-                <Select 
-                  value={selectedNiche}
-                  onValueChange={setSelectedNiche}
-                >
-                  <SelectTrigger className="w-full bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600">
-                    <SelectValue placeholder="Select niche" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {niches.map((niche) => (
-                      <SelectItem key={niche} value={niche}>{niche}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm text-gray-500 dark:text-gray-400 mb-1 block">Looking For</label>
-                <Select 
-                  value={selectedPreference}
-                  onValueChange={setSelectedPreference}
-                >
-                  <SelectTrigger className="w-full bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600">
-                    <SelectValue placeholder="Select preference" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {networkingPreferences.map((pref) => (
-                      <SelectItem key={pref} value={pref}>{pref}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+      <EventAccessGuard hasAccess={hasEventAccess} loading={participationLoading}>
+        <div className="animate-fade-in max-w-6xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Find People</h1>
+              <p className="text-gray-600 dark:text-gray-400">Search for other attendees at the event</p>
             </div>
           </div>
-        )}
 
-        <div className="space-y-4">
-          {filteredAttendees.length > 0 ? (
-            filteredAttendees.map((attendee) => (
-              <Card 
-                key={attendee.id} 
-                className="overflow-hidden hover:shadow-md transition-all duration-300 border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
-              >
-                <CardContent className="p-0">
-                  <div className="p-4 flex items-start space-x-4">
-                    <Avatar className="h-12 w-12 flex-shrink-0 border-2 border-connect-100 dark:border-connect-900">
-                      {attendee.photoUrl ? (
-                        <AvatarImage src={attendee.photoUrl} alt={attendee.name} />
-                      ) : (
-                        <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-400 font-medium">
-                          {attendee.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start">
-                        <div>
-                          <h3 className="font-medium text-lg text-gray-900 dark:text-white">{attendee.name}</h3>
-                          <p className="text-sm text-muted-foreground">{attendee.role}</p>
+          <NetworkingFilter
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            selectedNiches={selectedNiches}
+            onNicheChange={setSelectedNiches}
+            selectedNetworkingPrefs={selectedNetworkingPrefs}
+            onNetworkingPrefChange={setSelectedNetworkingPrefs}
+            selectedTags={selectedTags}
+            onTagChange={setSelectedTags}
+            availableNiches={availableNiches}
+            availableNetworkingPrefs={availableNetworkingPrefs}
+            availableTags={availableTags}
+            onClearFilters={handleClearFilters}
+          />
+          
+          {filteredProfiles.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {filteredProfiles.map((profile) => {
+                const connectionStatus = getConnectionStatus(profile.id);
+                const isConnected = connectionStatus?.status === 'accepted';
+                const isPending = connectionStatus?.status === 'pending';
+                
+                return (
+                  <Card key={profile.id} className="hover-lift bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between">
+                        <Avatar className="h-12 w-12">
+                          {profile.photo_url ? (
+                            <AvatarImage src={profile.photo_url} alt={profile.name} />
+                          ) : (
+                            <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300">
+                              {profile.name.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                        <div className="flex gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleMessage(profile.id, profile.name, profile.photo_url)}
+                            className="h-8"
+                            disabled={!isConnected}
+                          >
+                            <MessageSquare size={16} className="mr-1" />
+                            Message
+                          </Button>
+                          <Button 
+                            size="sm"
+                            onClick={() => handleConnect(profile.id)}
+                            className="h-8 bg-connect-600 hover:bg-connect-700"
+                            disabled={isConnected || isPending}
+                          >
+                            <UserPlus size={16} className="mr-1" />
+                            {isPending ? 'Pending' : isConnected ? 'Connected' : 'Connect'}
+                          </Button>
                         </div>
-                        <Badge variant="outline" className="bg-connect-50 text-connect-800 dark:bg-connect-900/50 dark:text-connect-300 mt-1 sm:mt-0 self-start">
-                          {attendee.niche}
-                        </Badge>
                       </div>
-                      
-                      <p className="text-sm mt-2 text-gray-600 dark:text-gray-400 line-clamp-2">{attendee.bio}</p>
-                      
-                      <div className="mt-3 flex flex-wrap gap-1">
-                        <span className="text-xs text-muted-foreground mr-1">Looking for:</span>
-                        {attendee.networkingPreferences.map((pref, idx) => (
-                          <Badge key={idx} variant="secondary" className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200">
-                            {pref}
+                      <CardTitle className="mt-3 text-xl text-gray-900 dark:text-white">{profile.name}</CardTitle>
+                      <CardDescription className="text-sm flex flex-col">
+                        <span className="text-gray-700 dark:text-gray-300">{profile.role}</span>
+                        {profile.company && (
+                          <span className="text-gray-500 dark:text-gray-400">{profile.company}</span>
+                        )}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {profile.bio && (
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">{profile.bio}</p>
+                      )}
+
+                      {/* Professional Niche */}
+                      {profile.niche && (
+                        <div className="mb-4">
+                          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Professional Niche</h4>
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-700">
+                            {profile.niche}
                           </Badge>
-                        ))}
-                      </div>
+                        </div>
+                      )}
+
+                      {/* Networking Preferences */}
+                      {profile.networking_preferences && profile.networking_preferences.length > 0 && (
+                        <div className="mb-4">
+                          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Looking to connect with</h4>
+                          <div className="flex flex-wrap gap-1">
+                            {profile.networking_preferences.map((pref, index) => (
+                              <Badge key={index} variant="secondary" className="bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300">
+                                {pref}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                       
-                      <div className="mt-4 flex justify-between items-center">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="text-xs"
-                          onClick={() => handleViewProfile(attendee.id)}
-                        >
-                          View Profile
-                        </Button>
-                        
-                        <Button
-                          size="sm"
-                          className="text-xs bg-connect-600 hover:bg-connect-700 text-white"
-                        >
-                          <UserPlus className="h-3 w-3 mr-1" />
-                          Connect
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+                      {/* Custom Tags */}
+                      {profile.tags && profile.tags.length > 0 && (
+                        <div className="mb-4">
+                          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Skills & Interests</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {profile.tags.map((tag, index) => (
+                              <Badge key={index} variant="secondary" className="bg-connect-50 text-connect-600 dark:bg-connect-900/30 dark:text-connect-300">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           ) : (
-            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-              <Users className="mx-auto h-12 w-12 text-gray-300 dark:text-gray-600" />
-              <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">No attendees found</h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Try adjusting your search or filters</p>
-              <Button
-                variant="outline"
-                className="mt-4"
-                onClick={() => {
-                  setSelectedNiche('All');
-                  setSelectedPreference('All');
-                  setSearchTerm('');
-                }}
-              >
-                Clear Filters
-              </Button>
+            <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <Search className="h-12 w-12 mx-auto text-gray-400" />
+              <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">No matches found</h3>
+              <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
+                Try adjusting your search or filters to find more people
+              </p>
+              {(selectedNiches.length > 0 || selectedNetworkingPrefs.length > 0 || selectedTags.length > 0) && (
+                <Button 
+                  variant="outline" 
+                  onClick={handleClearFilters}
+                  className="mt-4"
+                >
+                  Clear All Filters
+                </Button>
+              )}
             </div>
           )}
         </div>
-
-        {/* Floating connection button for mobile */}
-        {isMobile && filteredAttendees.length > 0 && (
-          <Button 
-            className="fixed bottom-20 right-4 rounded-full w-12 h-12 flex items-center justify-center bg-connect-600 hover:bg-connect-700 shadow-lg"
-          >
-            <UserPlus className="h-5 w-5" />
-          </Button>
-        )}
-      </div>
+      </EventAccessGuard>
     </AppLayout>
   );
 };

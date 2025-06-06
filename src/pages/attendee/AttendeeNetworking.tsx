@@ -19,6 +19,8 @@ import { Separator } from '@/components/ui/separator';
 import { useNetworking } from '@/hooks/useNetworking';
 import { NetworkingFilter } from '@/components/networking/NetworkingFilter';
 import ChatRoom from '@/components/chat/ChatRoom';
+import { ConversationsList } from '@/components/messaging/ConversationsList';
+import { DirectMessageThread } from '@/components/messaging/DirectMessageThread';
 
 const AttendeeNetworking = () => {
   const navigate = useNavigate();
@@ -27,6 +29,11 @@ const AttendeeNetworking = () => {
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
   const [selectedNetworkingPrefs, setSelectedNetworkingPrefs] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedConversation, setSelectedConversation] = useState<{
+    userId: string;
+    userName: string;
+    userPhoto?: string;
+  } | null>(null);
   const { profiles, loading, sendConnectionRequest, getConnectionStatus } = useNetworking();
   
   // Get unique filter options from all profiles
@@ -99,11 +106,26 @@ const AttendeeNetworking = () => {
     sendConnectionRequest(profileId);
   };
 
-  // Function to handle message sending
-  const handleMessage = (profileId: string) => {
-    // For now, just switch to chats tab
-    setActiveTab('chats');
-    // In a real implementation, this would create a new chat or navigate to existing one
+  // Function to handle message sending - now opens direct message
+  const handleMessage = (profileId: string, profileName: string, profilePhoto?: string) => {
+    setSelectedConversation({
+      userId: profileId,
+      userName: profileName,
+      userPhoto: profilePhoto
+    });
+    setActiveTab('messages');
+  };
+
+  const handleSelectConversation = (userId: string, userName: string, userPhoto?: string) => {
+    setSelectedConversation({
+      userId,
+      userName,
+      userPhoto
+    });
+  };
+
+  const handleBackToConversations = () => {
+    setSelectedConversation(null);
   };
 
   const getSocialIcon = (platform: string) => {
@@ -221,7 +243,7 @@ const AttendeeNetworking = () => {
                             <Button 
                               size="sm" 
                               variant="outline"
-                              onClick={() => handleMessage(profile.id)}
+                              onClick={() => handleMessage(profile.id, profile.name, profile.photo_url)}
                               className="h-8"
                               disabled={!isConnected}
                             >
@@ -346,13 +368,16 @@ const AttendeeNetworking = () => {
           </TabsContent>
 
           <TabsContent value="messages" className="space-y-4">
-            <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <MessageSquare className="h-12 w-12 mx-auto text-gray-400" />
-              <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">Private Messages Coming Soon</h3>
-              <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-                Direct messaging with your connections will be available soon.
-              </p>
-            </div>
+            {selectedConversation ? (
+              <DirectMessageThread
+                recipientId={selectedConversation.userId}
+                recipientName={selectedConversation.userName}
+                recipientPhoto={selectedConversation.userPhoto}
+                onBack={handleBackToConversations}
+              />
+            ) : (
+              <ConversationsList onSelectConversation={handleSelectConversation} />
+            )}
           </TabsContent>
         </Tabs>
       </div>

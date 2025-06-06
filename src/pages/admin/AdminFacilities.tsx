@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Trash2, MapPin, Phone, MessageCircle, Building } from "lucide-react";
+import { Plus, Edit, Trash2, MapPin, Phone, MessageCircle, Building, Wifi, Coffee, Car, Utensils, Shield, Heart, Zap, Home, Users } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,9 +35,23 @@ const formSchema = z.object({
   rules: z.string().optional(),
   contactType: z.enum(["none", "phone", "whatsapp"]).default("none"),
   contactInfo: z.string().optional(),
+  iconType: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
+
+const facilityIcons = [
+  { value: 'building', label: 'Building', icon: Building },
+  { value: 'wifi', label: 'WiFi', icon: Wifi },
+  { value: 'coffee', label: 'Café/Coffee', icon: Coffee },
+  { value: 'car', label: 'Parking', icon: Car },
+  { value: 'utensils', label: 'Restaurant', icon: Utensils },
+  { value: 'shield', label: 'Security', icon: Shield },
+  { value: 'heart', label: 'Medical', icon: Heart },
+  { value: 'zap', label: 'Utilities', icon: Zap },
+  { value: 'home', label: 'Accommodation', icon: Home },
+  { value: 'users', label: 'Meeting Room', icon: Users },
+];
 
 const AdminFacilities = () => {
   const [editingFacility, setEditingFacility] = useState<Facility | null>(null);
@@ -52,10 +66,12 @@ const AdminFacilities = () => {
       rules: "",
       contactType: "none",
       contactInfo: "",
+      iconType: "building",
     },
   });
 
   const contactType = watch("contactType");
+  const iconType = watch("iconType");
 
   const onSubmit = (values: FormData) => {
     const facilityData = {
@@ -65,6 +81,7 @@ const AdminFacilities = () => {
       rules: values.rules,
       contact_type: values.contactType,
       contact_info: values.contactInfo,
+      icon_type: values.iconType,
     };
 
     if (editingFacility) {
@@ -84,6 +101,7 @@ const AdminFacilities = () => {
     setValue("rules", facility.rules || "");
     setValue("contactType", facility.contact_type || "none");
     setValue("contactInfo", facility.contact_info || "");
+    setValue("iconType", facility.icon_type || "building");
   };
 
   const handleCancelEdit = () => {
@@ -102,6 +120,12 @@ const AdminFacilities = () => {
     }
   };
 
+  const getFacilityIcon = (iconType?: string) => {
+    const iconConfig = facilityIcons.find(icon => icon.value === iconType) || facilityIcons[0];
+    const IconComponent = iconConfig.icon;
+    return <IconComponent className="h-5 w-5 text-primary" />;
+  };
+
   if (isLoading) {
     return (
       <AdminLayout>
@@ -117,15 +141,16 @@ const AdminFacilities = () => {
 
   return (
     <AdminLayout>
-      <div>
+      <div className="mb-6">
         <h1 className="text-3xl font-bold tracking-tight">Facilities</h1>
         <p className="text-muted-foreground">
-          Manage facilities and their details.
+          Manage facilities and their details ({facilities.length} total).
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        {/* Form Card */}
+        <Card className="h-fit">
           <CardHeader>
             <CardTitle>{editingFacility ? 'Edit Facility' : 'Add New Facility'}</CardTitle>
             <CardDescription>
@@ -175,7 +200,29 @@ const AdminFacilities = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Facility Icon</Label>
+                  <Select onValueChange={(value) => setValue("iconType", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select icon" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {facilityIcons.map((icon) => {
+                        const IconComponent = icon.icon;
+                        return (
+                          <SelectItem key={icon.value} value={icon.value}>
+                            <div className="flex items-center gap-2">
+                              <IconComponent className="h-4 w-4" />
+                              {icon.label}
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="space-y-2">
                   <Label>Contact Type</Label>
                   <Select onValueChange={(value) => setValue("contactType", value as "none" | "phone" | "whatsapp")}>
@@ -189,21 +236,21 @@ const AdminFacilities = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
-                {(contactType === "phone" || contactType === "whatsapp") && (
-                  <div className="space-y-2">
-                    <Label htmlFor="contactInfo">Contact Number</Label>
-                    <Input
-                      id="contactInfo"
-                      {...register("contactInfo")}
-                      placeholder="Enter phone number"
-                    />
-                    {errors.contactInfo?.message && (
-                      <p className="text-sm text-destructive">{errors.contactInfo.message}</p>
-                    )}
-                  </div>
-                )}
               </div>
+
+              {(contactType === "phone" || contactType === "whatsapp") && (
+                <div className="space-y-2">
+                  <Label htmlFor="contactInfo">Contact Number</Label>
+                  <Input
+                    id="contactInfo"
+                    {...register("contactInfo")}
+                    placeholder="Enter phone number"
+                  />
+                  {errors.contactInfo?.message && (
+                    <p className="text-sm text-destructive">{errors.contactInfo.message}</p>
+                  )}
+                </div>
+              )}
 
               <div className="flex gap-2">
                 {editingFacility && (
@@ -224,7 +271,8 @@ const AdminFacilities = () => {
           </CardContent>
         </Card>
 
-        <div>
+        {/* Facilities List */}
+        <div className="space-y-4">
           <Card>
             <CardHeader>
               <CardTitle>Facilities List ({facilities.length})</CardTitle>
@@ -234,27 +282,28 @@ const AdminFacilities = () => {
             </CardHeader>
             <CardContent>
               {facilities.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4">No facilities added yet.</p>
+                <p className="text-muted-foreground text-center py-8">No facilities added yet.</p>
               ) : (
-                <div className="space-y-4 max-h-96 overflow-y-auto">
+                <div className="space-y-4 max-h-[600px] overflow-y-auto">
                   {facilities.map((facility) => (
-                    <div key={facility.id} className="border rounded-lg p-4 space-y-3">
+                    <div key={facility.id} className="border rounded-lg p-4 space-y-3 hover:shadow-sm transition-shadow">
                       <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <Building className="h-5 w-5 text-primary" />
-                            <h4 className="font-medium">{facility.name}</h4>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            {getFacilityIcon(facility.icon_type)}
+                            <h4 className="font-medium truncate">{facility.name}</h4>
                           </div>
                           {facility.description && (
-                            <p className="text-sm text-muted-foreground mt-1">{facility.description}</p>
+                            <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{facility.description}</p>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 ml-2">
+                        <div className="flex items-center gap-1 ml-2 flex-shrink-0">
                           <Button
                             size="sm"
                             variant="ghost"
                             onClick={() => handleEdit(facility)}
                             disabled={isUpdating}
+                            className="p-2"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -263,7 +312,7 @@ const AdminFacilities = () => {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="text-destructive hover:text-destructive"
+                                className="text-destructive hover:text-destructive p-2"
                                 disabled={isDeleting}
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -290,8 +339,8 @@ const AdminFacilities = () => {
                       <div className="space-y-2">
                         {facility.location && (
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <MapPin className="h-4 w-4" />
-                            {facility.location}
+                            <MapPin className="h-4 w-4 flex-shrink-0" />
+                            <span className="truncate">{facility.location}</span>
                           </div>
                         )}
                         
@@ -306,15 +355,14 @@ const AdminFacilities = () => {
                         {facility.rules && (
                           <div className="text-sm">
                             <span className="text-muted-foreground">Rules:</span>
-                            <p className="text-sm mt-1 p-2 bg-muted rounded">{facility.rules}</p>
+                            <p className="text-sm mt-1 p-2 bg-muted rounded line-clamp-3">{facility.rules}</p>
                           </div>
                         )}
                       </div>
                       
-                      <div className="flex justify-between items-center pt-2 border-t">
-                        <span className="text-xs text-muted-foreground">
-                          Created {format(new Date(facility.created_at), 'MMM d, yyyy')}
-                        </span>
+                      <div className="flex justify-between items-center pt-2 border-t text-xs text-muted-foreground">
+                        <span>Created {format(new Date(facility.created_at), 'MMM d, yyyy')}</span>
+                        <span>ID: {facility.id.slice(0, 8)}...</span>
                       </div>
                     </div>
                   ))}

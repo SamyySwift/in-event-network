@@ -13,8 +13,9 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CheckCircle, XCircle, ArrowUpCircle, MessageSquare } from 'lucide-react';
+import { CheckCircle, XCircle, ArrowUpCircle, MessageSquare, Send, MessageCircleReply } from 'lucide-react';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -29,6 +30,8 @@ interface QuestionWithProfile {
   session_id: string | null;
   event_id: string | null;
   is_anonymous: boolean;
+  response: string | null;
+  response_created_at: string | null;
   profiles: {
     name: string;
     photo_url: string | null;
@@ -39,10 +42,33 @@ const AdminQuestions = () => {
   const [activeTab, setActiveTab] = useState<string>('all');
   const [questions, setQuestions] = useState<QuestionWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [responses, setResponses] = useState<{ [key: string]: string }>({});
+  const [sendingResponse, setSendingResponse] = useState<{ [key: string]: boolean }>({});
   const { toast } = useToast();
 
   useEffect(() => {
     fetchQuestions();
+    
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('questions-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'questions'
+        },
+        (payload) => {
+          console.log('Real-time question update:', payload);
+          fetchQuestions();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchQuestions = async () => {
@@ -166,6 +192,50 @@ const AdminQuestions = () => {
     }
   };
 
+  const handleSendResponse = async (questionId: string) => {
+    const responseText = responses[questionId];
+    if (!responseText?.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a response",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSendingResponse(prev => ({ ...prev, [questionId]: true }));
+
+    try {
+      const { error } = await supabase
+        .from('questions')
+        .update({ 
+          response: responseText,
+          response_created_at: new Date().toISOString(),
+          is_answered: true
+        })
+        .eq('id', questionId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Response sent successfully",
+      });
+
+      setResponses(prev => ({ ...prev, [questionId]: '' }));
+      fetchQuestions();
+    } catch (error) {
+      console.error('Error sending response:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send response",
+        variant: "destructive",
+      });
+    } finally {
+      setSendingResponse(prev => ({ ...prev, [questionId]: false }));
+    }
+  };
+
   const handleDeleteQuestion = async (question: QuestionWithProfile) => {
     try {
       const { error } = await supabase
@@ -210,9 +280,9 @@ const AdminQuestions = () => {
     <AdminLayout>
       <AdminPageHeader
         title="Attendee Questions"
-        description="Review and moderate questions from attendees"
+        description={`Review and moderate questions from attendees (${questions.length} total)`}
         tabs={[
-          { id: 'all', label: 'All Questions' },
+          { id: 'all', label: `All Questions (${questions.length})` },
           { id: 'unanswered', label: 'Unanswered' },
           { id: 'answered', label: 'Answered' },
           { id: 'trending', label: 'Trending' }
@@ -268,6 +338,45 @@ const AdminQuestions = () => {
                           <Badge variant="secondary">Anonymous</Badge>
                         )}
                       </div>
+
+                      {/* Show existing response if available */}
+                      {question.response && (
+                        <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-200">
+                          <div className="flex items-center gap-2 mb-2">
+                            <MessageCircleReply size={16} className="text-green-600" />
+                            <span className="text-sm font-medium text-green-800">Admin Response</span>
+                            {question.response_created_at && (
+                              <span className="text-xs text-green-600">
+                                {format(new Date(question.response_created_at), 'MMM d, yyyy h:mm a')}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-green-800">{question.response}</p>
+                        </div>
+                      )}
+
+                      {/* Response input for unanswered questions */}
+                      {!question.is_answered && (
+                        <div className="mt-4 space-y-2">
+                          <Textarea
+                            placeholder="Type your response to this question..."
+                            value={responses[question.id] || ''}
+                            onChange={(e) => setResponses(prev => ({ ...prev, [question.id]: e.target.value }))}
+                            rows={3}
+                          />
+                          <div className="flex justify-end">
+                            <Button 
+                              size="sm"
+                              onClick={() => handleSendResponse(question.id)}
+                              disabled={sendingResponse[question.id] || !responses[question.id]?.trim()}
+                              className="bg-green-600 hover:bg-green-700"
+                            >
+                              <Send size={16} className="mr-1" />
+                              {sendingResponse[question.id] ? 'Sending...' : 'Send Response'}
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </CardContent>
                     <CardFooter className="border-t pt-3 flex justify-between">
                       <div className="text-sm text-muted-foreground">

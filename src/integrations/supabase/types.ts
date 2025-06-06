@@ -196,7 +196,8 @@ export type Database = {
       }
       facilities: {
         Row: {
-          contact_number: string | null
+          contact_info: string | null
+          contact_type: string | null
           created_at: string | null
           description: string | null
           icon_type: string | null
@@ -208,7 +209,8 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          contact_number?: string | null
+          contact_info?: string | null
+          contact_type?: string | null
           created_at?: string | null
           description?: string | null
           icon_type?: string | null
@@ -220,7 +222,8 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          contact_number?: string | null
+          contact_info?: string | null
+          contact_type?: string | null
           created_at?: string | null
           description?: string | null
           icon_type?: string | null
@@ -552,6 +555,8 @@ export type Database = {
           id: string
           is_anonymous: boolean | null
           is_answered: boolean | null
+          response: string | null
+          response_created_at: string | null
           session_id: string | null
           updated_at: string | null
           upvotes: number | null
@@ -566,6 +571,8 @@ export type Database = {
           id?: string
           is_anonymous?: boolean | null
           is_answered?: boolean | null
+          response?: string | null
+          response_created_at?: string | null
           session_id?: string | null
           updated_at?: string | null
           upvotes?: number | null
@@ -580,10 +587,45 @@ export type Database = {
           id?: string
           is_anonymous?: boolean | null
           is_answered?: boolean | null
+          response?: string | null
+          response_created_at?: string | null
           session_id?: string | null
           updated_at?: string | null
           upvotes?: number | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      rules: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          priority: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          priority?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          priority?: string | null
+          title?: string
+          updated_at?: string | null
         }
         Relationships: []
       }

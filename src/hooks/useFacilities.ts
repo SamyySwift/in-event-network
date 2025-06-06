@@ -25,38 +25,56 @@ export const useFacilities = () => {
   const { data: facilities = [], isLoading, error } = useQuery({
     queryKey: ['facilities'],
     queryFn: async () => {
+      console.log('Fetching facilities...');
       const { data, error } = await supabase
         .from('facilities')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching facilities:', error);
+        throw error;
+      }
+      console.log('Facilities fetched successfully:', data);
       return data as Facility[];
     },
   });
 
   const createFacilityMutation = useMutation({
     mutationFn: async (facilityData: Omit<Facility, 'id' | 'created_at' | 'updated_at'>) => {
+      console.log('Creating facility with data:', facilityData);
+      
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('User not authenticated');
 
+      // Clean the data - remove empty strings and undefined values
+      const cleanData = {
+        name: facilityData.name?.trim(),
+        description: facilityData.description?.trim() || null,
+        location: facilityData.location?.trim() || null,
+        rules: facilityData.rules?.trim() || null,
+        contact_type: facilityData.contact_type || 'none',
+        contact_info: (facilityData.contact_type !== 'none' && facilityData.contact_info?.trim()) 
+          ? facilityData.contact_info.trim() 
+          : null,
+        icon_type: facilityData.icon_type || 'building',
+        created_by: user.user.id
+      };
+
+      console.log('Cleaned facility data:', cleanData);
+
       const { data, error } = await supabase
         .from('facilities')
-        .insert({
-          name: facilityData.name,
-          description: facilityData.description,
-          location: facilityData.location,
-          rules: facilityData.rules,
-          contact_type: facilityData.contact_type,
-          contact_info: facilityData.contact_info,
-          image_url: facilityData.image_url,
-          icon_type: facilityData.icon_type,
-          created_by: user.user.id
-        })
+        .insert(cleanData)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating facility:', error);
+        throw error;
+      }
+      
+      console.log('Facility created successfully:', data);
       return data;
     },
     onSuccess: () => {
@@ -66,26 +84,45 @@ export const useFacilities = () => {
         description: 'The facility has been created successfully.',
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('Error creating facility:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create facility. Please try again.',
+        description: error.message || 'Failed to create facility. Please try again.',
         variant: 'destructive',
       });
-      console.error('Error creating facility:', error);
     },
   });
 
   const updateFacilityMutation = useMutation({
     mutationFn: async ({ id, ...facilityData }: Partial<Facility> & { id: string }) => {
+      console.log('Updating facility:', id, facilityData);
+      
+      // Clean the data - remove empty strings and undefined values
+      const cleanData: any = {};
+      if (facilityData.name?.trim()) cleanData.name = facilityData.name.trim();
+      if (facilityData.description?.trim()) cleanData.description = facilityData.description.trim();
+      if (facilityData.location?.trim()) cleanData.location = facilityData.location.trim();
+      if (facilityData.rules?.trim()) cleanData.rules = facilityData.rules.trim();
+      if (facilityData.contact_type) cleanData.contact_type = facilityData.contact_type;
+      if (facilityData.contact_type !== 'none' && facilityData.contact_info?.trim()) {
+        cleanData.contact_info = facilityData.contact_info.trim();
+      } else if (facilityData.contact_type === 'none') {
+        cleanData.contact_info = null;
+      }
+      if (facilityData.icon_type) cleanData.icon_type = facilityData.icon_type;
+
       const { data, error } = await supabase
         .from('facilities')
-        .update(facilityData)
+        .update(cleanData)
         .eq('id', id)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating facility:', error);
+        throw error;
+      }
       return data;
     },
     onSuccess: () => {
@@ -95,24 +132,28 @@ export const useFacilities = () => {
         description: 'The facility has been updated successfully.',
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('Error updating facility:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update facility. Please try again.',
+        description: error.message || 'Failed to update facility. Please try again.',
         variant: 'destructive',
       });
-      console.error('Error updating facility:', error);
     },
   });
 
   const deleteFacilityMutation = useMutation({
     mutationFn: async (id: string) => {
+      console.log('Deleting facility:', id);
       const { error } = await supabase
         .from('facilities')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting facility:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['facilities'] });
@@ -122,13 +163,13 @@ export const useFacilities = () => {
         variant: 'destructive',
       });
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error('Error deleting facility:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete facility. Please try again.',
+        description: error.message || 'Failed to delete facility. Please try again.',
         variant: 'destructive',
       });
-      console.error('Error deleting facility:', error);
     },
   });
 

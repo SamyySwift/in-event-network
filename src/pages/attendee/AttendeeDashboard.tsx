@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Users, MapPin, MessageSquare, Clock, Star } from 'lucide-react';
+import { Calendar, Users, MapPin, MessageSquare, Clock, Star, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/components/layouts/AppLayout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,12 +37,13 @@ const suggestedConnections = [{
   role: 'UX Designer',
   photoUrl: ''
 }];
+
 const AttendeeDashboard = () => {
   const navigate = useNavigate();
-  const {
-    currentUser
-  } = useAuth();
-  return <AppLayout>
+  const { currentUser } = useAuth();
+
+  return (
+    <AppLayout>
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl sm:text-3xl font-bold">
@@ -115,7 +117,35 @@ const AttendeeDashboard = () => {
         </div>
         
         {/* Quick Actions */}
-        
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/attendee/rules')}>
+              <CardContent className="p-4 text-center">
+                <BookOpen className="h-8 w-8 mx-auto mb-2 text-connect-600" />
+                <p className="text-sm font-medium">Event Rules</p>
+              </CardContent>
+            </Card>
+            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/attendee/networking')}>
+              <CardContent className="p-4 text-center">
+                <Users className="h-8 w-8 mx-auto mb-2 text-connect-600" />
+                <p className="text-sm font-medium">Network</p>
+              </CardContent>
+            </Card>
+            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/attendee/questions')}>
+              <CardContent className="p-4 text-center">
+                <MessageSquare className="h-8 w-8 mx-auto mb-2 text-connect-600" />
+                <p className="text-sm font-medium">Q&A</p>
+              </CardContent>
+            </Card>
+            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/attendee/map')}>
+              <CardContent className="p-4 text-center">
+                <MapPin className="h-8 w-8 mx-auto mb-2 text-connect-600" />
+                <p className="text-sm font-medium">Find Way</p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
         
         {/* Suggested Connections */}
         <div className="mt-8">
@@ -127,12 +157,17 @@ const AttendeeDashboard = () => {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {suggestedConnections.map(connection => <Card key={connection.id} className="overflow-hidden">
+            {suggestedConnections.map(connection => (
+              <Card key={connection.id} className="overflow-hidden">
                 <div className="p-4 flex space-x-4">
                   <Avatar className="h-12 w-12">
-                    {connection.photoUrl ? <AvatarImage src={connection.photoUrl} alt={connection.name} /> : <AvatarFallback className="bg-connect-100 text-connect-600">
+                    {connection.photoUrl ? (
+                      <AvatarImage src={connection.photoUrl} alt={connection.name} />
+                    ) : (
+                      <AvatarFallback className="bg-connect-100 text-connect-600">
                         {connection.name.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>}
+                      </AvatarFallback>
+                    )}
                   </Avatar>
                   <div className="flex-1">
                     <h3 className="font-medium">{connection.name}</h3>
@@ -142,7 +177,8 @@ const AttendeeDashboard = () => {
                     </Button>
                   </div>
                 </div>
-              </Card>)}
+              </Card>
+            ))}
           </div>
         </div>
         
@@ -158,6 +194,8 @@ const AttendeeDashboard = () => {
           </Button>
         </div>
       </div>
-    </AppLayout>;
+    </AppLayout>
+  );
 };
+
 export default AttendeeDashboard;

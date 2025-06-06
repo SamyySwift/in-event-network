@@ -12,9 +12,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
-import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,21 +43,52 @@ interface QuestionWithProfile {
   } | null;
 }
 
+interface Session {
+  id: string;
+  name: string;
+  session_title: string | null;
+  session_time: string | null;
+}
+
 const AttendeeQuestions = () => {
   const { currentUser } = useAuth();
   const { toast } = useToast();
   const [questions, setQuestions] = useState<QuestionWithProfile[]>([]);
+  const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [newQuestion, setNewQuestion] = useState('');
-  const [sessionTitle, setSessionTitle] = useState('');
+  const [selectedSessionId, setSelectedSessionId] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchQuestions();
+    fetchSessions();
   }, []);
+
+  const fetchSessions = async () => {
+    try {
+      const { data: sessionsData, error } = await supabase
+        .from('speakers')
+        .select('id, name, session_title, session_time')
+        .not('session_time', 'is', null)
+        .not('session_title', 'is', null)
+        .order('session_time', { ascending: true });
+
+      if (error) throw error;
+
+      setSessions(sessionsData || []);
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+      toast({
+        title: "Error",
+        description: "Failed to fetch sessions",
+        variant: "destructive",
+      });
+    }
+  };
 
   const fetchQuestions = async () => {
     try {
@@ -113,7 +150,7 @@ const AttendeeQuestions = () => {
           content: newQuestion.trim(),
           user_id: user.data.user.id,
           is_anonymous: isAnonymous,
-          session_id: sessionTitle ? sessionTitle : null,
+          session_id: selectedSessionId || null,
           event_id: null,
           upvotes: 0,
           is_answered: false
@@ -127,7 +164,7 @@ const AttendeeQuestions = () => {
       });
 
       setNewQuestion('');
-      setSessionTitle('');
+      setSelectedSessionId('');
       setIsAnonymous(false);
       fetchQuestions();
     } catch (error) {
@@ -226,13 +263,35 @@ const AttendeeQuestions = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <Label htmlFor="session">Select Session or Speaker</Label>
-              <Input
-                id="session"
-                placeholder="Choose a session"
-                value={sessionTitle}
-                onChange={(e) => setSessionTitle(e.target.value)}
-              />
+              <Label htmlFor="session">Select Session</Label>
+              <Select value={selectedSessionId} onValueChange={setSelectedSessionId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a session (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">General Question</SelectItem>
+                  {sessions.map((session) => (
+                    <SelectItem key={session.id} value={session.id}>
+                      <div className="flex flex-col">
+                        <span className="font-medium">
+                          {session.session_title || `${session.name}'s Session`}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          by {session.name}
+                          {session.session_time && (
+                            ` • ${new Date(session.session_time).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              hour: 'numeric',
+                              minute: '2-digit',
+                            })}`
+                          )}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             
             <div>

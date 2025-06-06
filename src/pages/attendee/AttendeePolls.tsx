@@ -1,21 +1,43 @@
 
-import React from 'react';
-import { BarChart3, Clock, Users, Vote, Loader } from 'lucide-react';
+import React, { useState } from 'react';
 import AppLayout from '@/components/layouts/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Label } from '@/components/ui/label';
+import { BarChart3, Users, Clock, CheckCircle, Loader } from 'lucide-react';
 import { usePolls } from '@/hooks/usePolls';
 import EventAccessGuard from '@/components/EventAccessGuard';
 import { useEventParticipation } from '@/hooks/useEventParticipation';
 
 const AttendeePolls = () => {
-  const { polls, isLoading } = usePolls();
+  const { polls, submitVote, isLoading } = usePolls();
   const { getJoinedEvents, loading: participationLoading } = useEventParticipation();
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const [votingStates, setVotingStates] = useState<Record<string, boolean>>({});
+
+  const handleVoteSubmit = async (pollId: string) => {
+    const selectedOption = selectedOptions[pollId];
+    if (!selectedOption) return;
+
+    setVotingStates(prev => ({ ...prev, [pollId]: true }));
+    
+    try {
+      await submitVote(pollId, selectedOption);
+      // Remove the selected option after successful vote
+      setSelectedOptions(prev => ({ ...prev, [pollId]: '' }));
+    } catch (error) {
+      console.error('Error submitting vote:', error);
+    } finally {
+      setVotingStates(prev => ({ ...prev, [pollId]: false }));
+    }
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
+      weekday: 'short',
       month: 'short',
       day: 'numeric',
       hour: 'numeric',
@@ -23,25 +45,26 @@ const AttendeePolls = () => {
     });
   };
 
-  const isActivePoll = (poll: any) => {
+  const getStatusBadge = (poll: any) => {
     const now = new Date();
     const startTime = new Date(poll.start_time);
-    const endTime = new Date(poll.end_time);
-    return now >= startTime && now <= endTime && poll.is_active;
+    const endTime = poll.end_time ? new Date(poll.end_time) : null;
+
+    if (now < startTime) {
+      return <Badge variant="outline">Upcoming</Badge>;
+    } else if (endTime && now > endTime) {
+      return <Badge variant="secondary">Ended</Badge>;
+    } else {
+      return <Badge className="bg-green-100 text-green-800">Active</Badge>;
+    }
   };
 
-  const getVoteCount = (option: any) => {
-    return option.votes || 0;
-  };
-
-  const getTotalVotes = (poll: any) => {
-    if (!poll.options || !Array.isArray(poll.options)) return 0;
-    return poll.options.reduce((total: number, option: any) => total + getVoteCount(option), 0);
-  };
-
-  const getVotePercentage = (option: any, totalVotes: number) => {
-    if (totalVotes === 0) return 0;
-    return Math.round((getVoteCount(option) / totalVotes) * 100);
+  const isPollActive = (poll: any) => {
+    const now = new Date();
+    const startTime = new Date(poll.start_time);
+    const endTime = poll.end_time ? new Date(poll.end_time) : null;
+    
+    return now >= startTime && (!endTime || now <= endTime);
   };
 
   const hasEventAccess = getJoinedEvents().length > 0;
@@ -63,10 +86,10 @@ const AttendeePolls = () => {
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center">
               <BarChart3 className="h-8 w-8 mr-3" />
-              Live Polls
+              Event Polls
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
-              Participate in live polls and see real-time results from the event.
+              Participate in live polls and see real-time results from the community.
             </p>
           </div>
 
@@ -78,94 +101,114 @@ const AttendeePolls = () => {
                   No Polls Available
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Check back later for live polls from the event organizers.
+                  No polls have been created for this event yet. Check back later!
                 </p>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-6">
-              {polls.map((poll) => {
-                const totalVotes = getTotalVotes(poll);
-                const isActive = isActivePoll(poll);
-                
-                return (
-                  <Card key={poll.id} className={`overflow-hidden ${isActive ? 'border-green-200 bg-green-50/50' : ''}`}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <CardTitle className="text-xl text-gray-900 dark:text-white">
-                            {poll.question}
-                          </CardTitle>
-                          <CardDescription className="text-gray-600 dark:text-gray-400 mt-2">
-                            <div className="flex items-center gap-4 text-sm">
-                              <div className="flex items-center">
-                                <Clock className="h-4 w-4 mr-1" />
-                                Ends: {formatDate(poll.end_time)}
-                              </div>
-                              <div className="flex items-center">
-                                <Users className="h-4 w-4 mr-1" />
-                                {totalVotes} votes
-                              </div>
+              {polls.map((poll) => (
+                <Card key={poll.id} className="overflow-hidden">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-xl text-gray-900 dark:text-white">
+                          {poll.question}
+                        </CardTitle>
+                        <CardDescription className="text-gray-600 dark:text-gray-400 mt-2">
+                          {poll.description}
+                        </CardDescription>
+                        <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                          <div className="flex items-center">
+                            <Clock className="h-4 w-4 mr-1" />
+                            <span>Started: {formatDate(poll.start_time)}</span>
+                          </div>
+                          {poll.end_time && (
+                            <div className="flex items-center">
+                              <Clock className="h-4 w-4 mr-1" />
+                              <span>Ends: {formatDate(poll.end_time)}</span>
                             </div>
-                          </CardDescription>
-                        </div>
-                        <div className="flex gap-2">
-                          {isActive && (
-                            <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
-                              Active
-                            </Badge>
-                          )}
-                          {poll.display_as_banner && (
-                            <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">
-                              Featured
-                            </Badge>
                           )}
                         </div>
                       </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {poll.options && Array.isArray(poll.options) && poll.options.map((option: any, index: number) => {
-                          const voteCount = getVoteCount(option);
-                          const percentage = getVotePercentage(option, totalVotes);
-                          
-                          return (
-                            <div key={index} className="space-y-2">
-                              <div className="flex justify-between items-center">
-                                <span className="text-sm font-medium">{option.text || option.label}</span>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-sm text-gray-600">{voteCount} votes</span>
-                                  <span className="text-sm font-medium">{percentage}%</span>
+                      <div className="flex flex-col items-end gap-2">
+                        {getStatusBadge(poll)}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {isPollActive(poll) && !poll.user_has_voted ? (
+                      <div className="space-y-4">
+                        <RadioGroup
+                          value={selectedOptions[poll.id] || ''}
+                          onValueChange={(value) => 
+                            setSelectedOptions(prev => ({ ...prev, [poll.id]: value }))
+                          }
+                        >
+                          {poll.options.map((option, index) => (
+                            <div key={index} className="flex items-center space-x-2">
+                              <RadioGroupItem value={option} id={`${poll.id}-${index}`} />
+                              <Label htmlFor={`${poll.id}-${index}`} className="flex-1 cursor-pointer">
+                                {option}
+                              </Label>
+                            </div>
+                          ))}
+                        </RadioGroup>
+                        <Button
+                          onClick={() => handleVoteSubmit(poll.id)}
+                          disabled={!selectedOptions[poll.id] || votingStates[poll.id]}
+                          className="w-full"
+                        >
+                          {votingStates[poll.id] ? (
+                            <>
+                              <Loader className="h-4 w-4 mr-2 animate-spin" />
+                              Submitting Vote...
+                            </>
+                          ) : (
+                            'Submit Vote'
+                          )}
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {poll.user_has_voted && (
+                          <div className="flex items-center text-green-600 mb-4">
+                            <CheckCircle className="h-5 w-5 mr-2" />
+                            <span className="font-medium">You've already voted in this poll</span>
+                          </div>
+                        )}
+                        
+                        <h4 className="font-medium text-gray-900 dark:text-white mb-3">Results:</h4>
+                        <div className="space-y-3">
+                          {poll.options.map((option, index) => {
+                            const voteCount = poll.results?.[option] || 0;
+                            const percentage = poll.total_votes > 0 ? (voteCount / poll.total_votes) * 100 : 0;
+                            
+                            return (
+                              <div key={index} className="space-y-2">
+                                <div className="flex justify-between text-sm">
+                                  <span className="font-medium">{option}</span>
+                                  <span className="text-gray-500">
+                                    {voteCount} votes ({percentage.toFixed(1)}%)
+                                  </span>
                                 </div>
+                                <Progress value={percentage} className="h-2" />
                               </div>
-                              <div className="flex items-center gap-3">
-                                <Progress value={percentage} className="flex-1" />
-                                {isActive && (
-                                  <Button 
-                                    size="sm" 
-                                    variant="outline"
-                                    className="text-xs"
-                                    disabled={!isActive}
-                                  >
-                                    <Vote className="h-3 w-3 mr-1" />
-                                    Vote
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                      
-                      {!isActive && (
-                        <div className="mt-4 p-3 bg-gray-50 rounded-lg text-center">
-                          <p className="text-sm text-gray-600">This poll has ended</p>
+                            );
+                          })}
                         </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                        
+                        <div className="flex items-center justify-between pt-2 text-sm text-gray-500 border-t">
+                          <div className="flex items-center">
+                            <Users className="h-4 w-4 mr-1" />
+                            <span>Total votes: {poll.total_votes || 0}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
         </div>

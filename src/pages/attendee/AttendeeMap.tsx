@@ -36,8 +36,6 @@ const AttendeeMap = () => {
     switch (contactType) {
       case 'phone':
         return <Phone className="h-4 w-4" />;
-      case 'email':
-        return <Info className="h-4 w-4" />;
       default:
         return <Info className="h-4 w-4" />;
     }
@@ -110,9 +108,9 @@ const AttendeeMap = () => {
                         <span className="ml-1">{facility.contact_info}</span>
                       </div>
                     )}
-                    {facility.contact_info && facility.contact_type === 'email' && (
+                    {facility.contact_info && facility.contact_type !== 'phone' && (
                       <div className="flex items-center mb-2">
-                        {getContactIcon('email')}
+                        {getContactIcon('other')}
                         <span className="ml-1">{facility.contact_info}</span>
                       </div>
                     )}

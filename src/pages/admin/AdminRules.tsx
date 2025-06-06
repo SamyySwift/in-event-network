@@ -40,11 +40,21 @@ const AdminRules = () => {
   const { rules, isLoading, createRule, updateRule, deleteRule, isCreating, isUpdating, isDeleting } = useRules();
   
   const { register, handleSubmit, setValue, reset, watch, formState: { errors } } = useForm<RuleSchemaType>({
-    resolver: zodResolver(ruleSchema)
+    resolver: zodResolver(ruleSchema),
+    defaultValues: {
+      title: "",
+      content: "",
+      category: "",
+      priority: "medium"
+    }
   });
 
+  const selectedCategory = watch("category");
+  const selectedPriority = watch("priority");
+
   const onSubmit = (data: RuleSchemaType) => {
-    // Ensure required fields are present
+    console.log('Form submitted with data:', data);
+    
     if (!data.title || !data.content) {
       return;
     }
@@ -52,8 +62,8 @@ const AdminRules = () => {
     const ruleData = {
       title: data.title,
       content: data.content,
-      category: data.category,
-      priority: data.priority,
+      category: data.category || undefined,
+      priority: data.priority || 'medium' as const,
     };
 
     if (editingRule) {
@@ -78,32 +88,6 @@ const AdminRules = () => {
     reset();
   };
 
-  const getPriorityIcon = (priority?: string) => {
-    switch (priority) {
-      case 'high':
-        return <AlertTriangle className="h-4 w-4 text-red-500" />;
-      case 'medium':
-        return <Zap className="h-4 w-4 text-yellow-500" />;
-      case 'low':
-        return <Info className="h-4 w-4 text-blue-500" />;
-      default:
-        return null;
-    }
-  };
-
-  const getPriorityColor = (priority?: string) => {
-    switch (priority) {
-      case 'high':
-        return 'bg-red-100 text-red-800 hover:bg-red-200';
-      case 'medium':
-        return 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200';
-      case 'low':
-        return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
-      default:
-        return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
-    }
-  };
-
   if (isLoading) {
     return (
       <AdminLayout>
@@ -119,99 +103,99 @@ const AdminRules = () => {
 
   return (
     <AdminLayout>
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Event Rules</h1>
-        <p className="text-muted-foreground">
-          Manage rules and guidelines for event attendees.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>{editingRule ? 'Edit Rule' : 'Add New Rule'}</CardTitle>
-            <CardDescription>
-              {editingRule ? 'Update the rule details' : 'Create rules and guidelines for event attendees'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Rule Title</Label>
-                <Input
-                  id="title"
-                  {...register("title")}
-                  placeholder="Enter rule title"
-                />
-                {errors.title?.message && (
-                  <p className="text-sm text-destructive">{errors.title.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="content">Rule Content</Label>
-                <Textarea
-                  id="content"
-                  {...register("content")}
-                  placeholder="Enter detailed rule description"
-                  rows={4}
-                />
-                {errors.content?.message && (
-                  <p className="text-sm text-destructive">{errors.content.message}</p>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Category</Label>
-                  <Select onValueChange={(value) => setValue("category", value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="general">General</SelectItem>
-                      <SelectItem value="conduct">Conduct</SelectItem>
-                      <SelectItem value="safety">Safety</SelectItem>
-                      <SelectItem value="networking">Networking</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Priority</Label>
-                  <Select onValueChange={(value) => setValue("priority", value as "high" | "medium" | "low")}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select priority" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="high">High</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="low">Low</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="flex gap-2">
-                {editingRule && (
-                  <Button type="button" variant="outline" onClick={() => { setEditingRule(null); reset(); }} className="flex-1">
-                    Cancel
-                  </Button>
-                )}
-                <Button 
-                  type="submit" 
-                  className="flex-1"
-                  disabled={isCreating || isUpdating}
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  {editingRule ? (isUpdating ? 'Updating...' : 'Update Rule') : (isCreating ? 'Creating...' : 'Add Rule')}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-
+      <div className="space-y-6">
         <div>
+          <h1 className="text-3xl font-bold tracking-tight">Event Rules</h1>
+          <p className="text-muted-foreground">
+            Manage rules and guidelines for event attendees.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <Card className="h-fit">
+            <CardHeader>
+              <CardTitle>{editingRule ? 'Edit Rule' : 'Add New Rule'}</CardTitle>
+              <CardDescription>
+                {editingRule ? 'Update the rule details' : 'Create rules and guidelines for event attendees'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Rule Title *</Label>
+                  <Input
+                    id="title"
+                    {...register("title")}
+                    placeholder="Enter rule title"
+                  />
+                  {errors.title?.message && (
+                    <p className="text-sm text-destructive">{errors.title.message}</p>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="content">Rule Content *</Label>
+                  <Textarea
+                    id="content"
+                    {...register("content")}
+                    placeholder="Enter detailed rule description"
+                    rows={4}
+                  />
+                  {errors.content?.message && (
+                    <p className="text-sm text-destructive">{errors.content.message}</p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Category</Label>
+                    <Select value={selectedCategory} onValueChange={(value) => setValue("category", value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="general">General</SelectItem>
+                        <SelectItem value="conduct">Conduct</SelectItem>
+                        <SelectItem value="safety">Safety</SelectItem>
+                        <SelectItem value="networking">Networking</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Priority</Label>
+                    <Select value={selectedPriority} onValueChange={(value) => setValue("priority", value as "high" | "medium" | "low")}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="low">Low</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  {editingRule && (
+                    <Button type="button" variant="outline" onClick={handleCancelEdit} className="flex-1">
+                      Cancel
+                    </Button>
+                  )}
+                  <Button 
+                    type="submit" 
+                    className="flex-1"
+                    disabled={isCreating || isUpdating}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    {editingRule ? (isUpdating ? 'Updating...' : 'Update Rule') : (isCreating ? 'Creating...' : 'Add Rule')}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Current Rules ({rules.length})</CardTitle>
@@ -221,27 +205,25 @@ const AdminRules = () => {
             </CardHeader>
             <CardContent>
               {rules.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4">No rules added yet.</p>
+                <div className="text-center py-8 text-muted-foreground">
+                  <Info className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No rules added yet.</p>
+                  <p className="text-sm mt-2">Create your first rule using the form on the left.</p>
+                </div>
               ) : (
-                <div className="space-y-4 max-h-96 overflow-y-auto">
+                <div className="space-y-4 max-h-[600px] overflow-y-auto">
                   {rules.map((rule) => (
-                    <div key={rule.id} className="border rounded-lg p-4 space-y-2">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className="font-medium">{rule.title}</h4>
-                          <p className="text-sm text-muted-foreground mt-1">{rule.content}</p>
+                    <div key={rule.id} className="border rounded-lg p-4 space-y-3 hover:shadow-sm transition-shadow">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-medium text-sm sm:text-base break-words">{rule.title}</h4>
+                          <p className="text-sm text-muted-foreground mt-1 break-words">{rule.content}</p>
                         </div>
-                        <div className="flex items-center gap-2 ml-2">
+                        <div className="flex items-center gap-2 flex-shrink-0">
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => {
-                              setEditingRule(rule);
-                              setValue("title", rule.title);
-                              setValue("content", rule.content);
-                              setValue("category", rule.category || "");
-                              setValue("priority", rule.priority || "medium");
-                            }}
+                            onClick={() => handleEdit(rule)}
                             disabled={isUpdating}
                           >
                             <Edit className="h-4 w-4" />
@@ -274,9 +256,12 @@ const AdminRules = () => {
                           </AlertDialog>
                         </div>
                       </div>
+                      
                       <div className="flex items-center gap-2 flex-wrap">
                         {rule.category && (
-                          <Badge variant="outline">{rule.category}</Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {rule.category}
+                          </Badge>
                         )}
                         {rule.priority && (
                           <Badge className={
@@ -284,10 +269,12 @@ const AdminRules = () => {
                             rule.priority === 'medium' ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' :
                             'bg-blue-100 text-blue-800 hover:bg-blue-200'
                           }>
-                            {rule.priority === 'high' && <AlertTriangle className="h-4 w-4" />}
-                            {rule.priority === 'medium' && <Zap className="h-4 w-4" />}
-                            {rule.priority === 'low' && <Info className="h-4 w-4" />}
-                            <span className="ml-1 capitalize">{rule.priority}</span>
+                            <div className="flex items-center gap-1">
+                              {rule.priority === 'high' && <AlertTriangle className="h-3 w-3" />}
+                              {rule.priority === 'medium' && <Zap className="h-3 w-3" />}
+                              {rule.priority === 'low' && <Info className="h-3 w-3" />}
+                              <span className="capitalize text-xs">{rule.priority}</span>
+                            </div>
                           </Badge>
                         )}
                         <span className="text-xs text-muted-foreground">

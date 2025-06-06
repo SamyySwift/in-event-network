@@ -22,20 +22,23 @@ export const useRules = () => {
     queryKey: ['rules'],
     queryFn: async () => {
       try {
-        // Direct table access since rules table exists
+        console.log('Fetching rules...');
+        
         const { data, error } = await supabase
-          .from('rules' as any)
+          .from('rules')
           .select('*')
           .order('created_at', { ascending: false });
         
         if (error) {
           console.error('Error fetching rules:', error);
-          return [];
+          throw error;
         }
-        return (data || []) as unknown as Rule[];
+        
+        console.log('Rules fetched successfully:', data);
+        return (data || []) as Rule[];
       } catch (err) {
         console.error('Unexpected error fetching rules:', err);
-        return [];
+        throw err;
       }
     },
   });
@@ -46,12 +49,12 @@ export const useRules = () => {
       if (!user.user) throw new Error('User not authenticated');
 
       const { data, error } = await supabase
-        .from('rules' as any)
+        .from('rules')
         .insert({
           title: ruleData.title,
           content: ruleData.content,
           category: ruleData.category,
-          priority: ruleData.priority,
+          priority: ruleData.priority || 'medium',
           created_by: user.user.id
         })
         .select()
@@ -80,7 +83,7 @@ export const useRules = () => {
   const updateRuleMutation = useMutation({
     mutationFn: async ({ id, ...ruleData }: Partial<Rule> & { id: string }) => {
       const { data, error } = await supabase
-        .from('rules' as any)
+        .from('rules')
         .update(ruleData)
         .eq('id', id)
         .select()
@@ -109,7 +112,7 @@ export const useRules = () => {
   const deleteRuleMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('rules' as any)
+        .from('rules')
         .delete()
         .eq('id', id);
 
@@ -120,7 +123,6 @@ export const useRules = () => {
       toast({
         title: 'Rule Deleted',
         description: 'The rule has been removed successfully.',
-        variant: 'destructive',
       });
     },
     onError: (error) => {

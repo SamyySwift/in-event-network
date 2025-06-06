@@ -42,10 +42,33 @@ const AdminSuggestions = () => {
 
   useEffect(() => {
     fetchSuggestions();
+    
+    // Set up real-time subscription for suggestions
+    const channel = supabase
+      .channel('admin-suggestions-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'suggestions'
+        },
+        () => {
+          console.log('Suggestions updated, refetching...');
+          fetchSuggestions();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchSuggestions = async () => {
     try {
+      console.log('Fetching suggestions...');
+      
       const { data, error } = await supabase
         .from('suggestions')
         .select(`
@@ -61,7 +84,12 @@ const AdminSuggestions = () => {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching suggestions:', error);
+        throw error;
+      }
+      
+      console.log('Suggestions data:', data);
       
       // Transform the data to match our interface
       const transformedData: SuggestionWithProfile[] = (data || []).map(item => ({
@@ -78,7 +106,7 @@ const AdminSuggestions = () => {
       console.error('Error fetching suggestions:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch suggestions",
+        description: "Failed to fetch suggestions. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -182,7 +210,7 @@ const AdminSuggestions = () => {
   return (
     <AdminLayout>
       <AdminPageHeader
-        title="Suggestions & Feedback"
+        title="Attendee Suggestions & Feedback"
         description="Review suggestions and ratings from attendees"
         tabs={[
           { id: 'all', label: 'All' },
@@ -201,6 +229,9 @@ const AdminSuggestions = () => {
                 <CardContent className="py-10 text-center text-muted-foreground">
                   <Lightbulb className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No {tabId === 'all' ? 'suggestions' : tabId} found.</p>
+                  {activeTab === 'all' && (
+                    <p className="text-sm mt-2">Suggestions and feedback from attendees will appear here.</p>
+                  )}
                 </CardContent>
               </Card>
             ) : (
@@ -209,7 +240,7 @@ const AdminSuggestions = () => {
                 const userPhoto = suggestion.profiles?.photo_url;
                 
                 return (
-                  <Card key={suggestion.id}>
+                  <Card key={suggestion.id} className="hover:shadow-md transition-shadow">
                     <CardHeader className="pb-2">
                       <div className="flex justify-between items-start">
                         <div className="flex items-center gap-3">
@@ -251,7 +282,7 @@ const AdminSuggestions = () => {
                     </CardContent>
                     <CardFooter className="border-t pt-3 flex justify-between">
                       <div className="text-sm text-muted-foreground">
-                        ID: {suggestion.id}
+                        ID: {suggestion.id.slice(0, 8)}...
                       </div>
                       <div className="flex gap-2">
                         {suggestion.status === 'new' && (

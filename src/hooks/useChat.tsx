@@ -33,24 +33,49 @@ export const useChat = () => {
 
   const fetchMessages = async () => {
     try {
-      const { data, error } = await supabase
+      console.log('Fetching chat messages...');
+      
+      // First get the messages
+      const { data: messagesData, error: messagesError } = await supabase
         .from('chat_messages')
-        .select(`
-          *,
-          user_profile:profiles!chat_messages_user_id_fkey(name, photo_url),
-          quoted_message:chat_messages!quoted_message_id(
-            *,
-            user_profile:profiles!chat_messages_user_id_fkey(name, photo_url)
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: true })
         .limit(100);
 
-      if (error) throw error;
+      if (messagesError) {
+        console.error('Error fetching messages:', messagesError);
+        throw messagesError;
+      }
 
-      setMessages((data || []) as ChatMessage[]);
+      console.log('Messages fetched:', messagesData);
+
+      // Then get user profiles for all unique user IDs
+      const userIds = [...new Set(messagesData?.map(msg => msg.user_id) || [])];
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, name, photo_url')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+      }
+
+      // Create a map of user profiles
+      const profilesMap = new Map();
+      profilesData?.forEach(profile => {
+        profilesMap.set(profile.id, profile);
+      });
+
+      // Combine messages with user profiles
+      const messagesWithProfiles = messagesData?.map(message => ({
+        ...message,
+        user_profile: profilesMap.get(message.user_id) || { name: 'Unknown User' }
+      })) || [];
+
+      console.log('Messages with profiles:', messagesWithProfiles);
+      setMessages(messagesWithProfiles);
     } catch (error) {
-      console.error('Error fetching messages:', error);
+      console.error('Error in fetchMessages:', error);
       toast({
         title: "Error",
         description: "Failed to load chat messages",
@@ -62,6 +87,8 @@ export const useChat = () => {
   };
 
   const setupRealtimeSubscription = () => {
+    console.log('Setting up realtime subscription...');
+    
     const channel = supabase
       .channel('chat-messages')
       .on(
@@ -72,28 +99,34 @@ export const useChat = () => {
           table: 'chat_messages'
         },
         async (payload) => {
-          // Fetch the complete message with user profile
-          const { data, error } = await supabase
-            .from('chat_messages')
-            .select(`
-              *,
-              user_profile:profiles!chat_messages_user_id_fkey(name, photo_url),
-              quoted_message:chat_messages!quoted_message_id(
-                *,
-                user_profile:profiles!chat_messages_user_id_fkey(name, photo_url)
-              )
-            `)
-            .eq('id', payload.new.id)
+          console.log('New message received:', payload);
+          
+          // Get the user profile for the new message
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, name, photo_url')
+            .eq('id', payload.new.user_id)
             .single();
 
-          if (!error && data) {
-            setMessages(prev => [...prev, data as ChatMessage]);
+          if (profileError) {
+            console.error('Error fetching profile for new message:', profileError);
           }
+
+          const newMessage = {
+            ...payload.new,
+            user_profile: profileData || { name: 'Unknown User' }
+          } as ChatMessage;
+
+          console.log('Adding new message to state:', newMessage);
+          setMessages(prev => [...prev, newMessage]);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status);
+      });
 
     return () => {
+      console.log('Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
   };
@@ -109,6 +142,8 @@ export const useChat = () => {
     }
 
     try {
+      console.log('Sending message:', { content, quotedMessageId, userId: currentUser.id });
+      
       const { error } = await supabase
         .from('chat_messages')
         .insert({
@@ -117,9 +152,14 @@ export const useChat = () => {
           quoted_message_id: quotedMessageId || null,
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error sending message:', error);
+        throw error;
+      }
+
+      console.log('Message sent successfully');
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error in sendMessage:', error);
       toast({
         title: "Error",
         description: "Failed to send message",

@@ -1,42 +1,31 @@
-
+import React from 'react';
 import { createBrowserRouter } from 'react-router-dom';
-import Landing from '@/pages/Landing';
+import Index from '@/pages/Index';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
+import Landing from '@/pages/Landing';
+import NotFound from '@/pages/NotFound';
+import QRScanPage from '@/pages/QRScanPage';
 import AttendeeDashboard from '@/pages/attendee/AttendeeDashboard';
 import AttendeeProfile from '@/pages/attendee/AttendeeProfile';
 import AttendeeNetworking from '@/pages/attendee/AttendeeNetworking';
-import AttendeeSchedule from '@/pages/attendee/AttendeeSchedule';
 import AttendeeQuestions from '@/pages/attendee/AttendeeQuestions';
+import AttendeeSchedule from '@/pages/attendee/AttendeeSchedule';
 import AttendeeMap from '@/pages/attendee/AttendeeMap';
-import AttendeePolls from '@/pages/attendee/AttendeePolls';
-import AttendeeSuggestions from '@/pages/attendee/AttendeeSuggestions';
-import AttendeeAnnouncements from '@/pages/attendee/AttendeeAnnouncements';
+import AttendeeRate from '@/pages/attendee/AttendeeRate';
 import AttendeeRules from '@/pages/attendee/AttendeeRules';
 import AttendeeSearch from '@/pages/attendee/AttendeeSearch';
-import AttendeeNotifications from '@/pages/attendee/AttendeeNotifications';
-import AttendeeOnboarding from '@/pages/attendee/AttendeeOnboarding';
-import HostDashboard from '@/pages/host/HostDashboard';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
-import AdminEvents from '@/pages/admin/AdminEvents';
 import AdminAttendees from '@/pages/admin/AdminAttendees';
-import AdminSpeakers from '@/pages/admin/AdminSpeakers';
-import AdminAnnouncements from '@/pages/admin/AdminAnnouncements';
-import AdminFacilities from '@/pages/admin/AdminFacilities';
 import AdminQuestions from '@/pages/admin/AdminQuestions';
-import AdminSuggestions from '@/pages/admin/AdminSuggestions';
-import AdminPolls from '@/pages/admin/AdminPolls';
-import AdminAdvertisements from '@/pages/admin/AdminAdvertisements';
-import AdminRules from '@/pages/admin/AdminRules';
-import AdminSettings from '@/pages/admin/AdminSettings';
-import AdminTeam from '@/pages/admin/AdminTeam';
-import AdminNotifications from '@/pages/admin/AdminNotifications';
-import NotFound from '@/pages/NotFound';
+import AdminEvents from '@/pages/admin/AdminEvents';
+import HostDashboard from '@/pages/host/HostDashboard';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <Landing />,
+    element: <Index />,
   },
   {
     path: '/login',
@@ -47,116 +36,124 @@ export const router = createBrowserRouter([
     element: <Register />,
   },
   {
-    path: '/attendee',
-    element: <AttendeeDashboard />,
+    path: '/landing',
+    element: <Landing />,
   },
   {
-    path: '/attendee/profile',
-    element: <AttendeeProfile />,
+    path: '/scan',
+    element: <QRScanPage />,
+  },
+  {
+    path: '/attendee',
+    element: (
+      <ProtectedRoute requiredRole="attendee">
+        <AttendeeDashboard />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/attendee/profile/:id',
+    element: (
+      <ProtectedRoute requiredRole="attendee">
+        <AttendeeProfile />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/attendee/networking',
-    element: <AttendeeNetworking />,
-  },
-  {
-    path: '/attendee/schedule',
-    element: <AttendeeSchedule />,
+    element: (
+      <ProtectedRoute requiredRole="attendee">
+        <AttendeeNetworking />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/attendee/questions',
-    element: <AttendeeQuestions />,
+    element: (
+      <ProtectedRoute requiredRole="attendee">
+        <AttendeeQuestions />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: '/attendee/schedule',
+    element: (
+      <ProtectedRoute requiredRole="attendee">
+        <AttendeeSchedule />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/attendee/map',
-    element: <AttendeeMap />,
+    element: (
+      <ProtectedRoute requiredRole="attendee">
+        <AttendeeMap />
+      </ProtectedRoute>
+    ),
   },
   {
-    path: '/attendee/polls',
-    element: <AttendeePolls />,
-  },
-  {
-    path: '/attendee/suggestions',
-    element: <AttendeeSuggestions />,
-  },
-  {
-    path: '/attendee/announcements',
-    element: <AttendeeAnnouncements />,
+    path: '/attendee/rate',
+    element: (
+      <ProtectedRoute requiredRole="attendee">
+        <AttendeeRate />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/attendee/rules',
-    element: <AttendeeRules />,
+    element: (
+      <ProtectedRoute requiredRole="attendee">
+        <AttendeeRules />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/attendee/search',
-    element: <AttendeeSearch />,
-  },
-  {
-    path: '/attendee/notifications',
-    element: <AttendeeNotifications />,
-  },
-  {
-    path: '/attendee/onboarding',
-    element: <AttendeeOnboarding />,
-  },
-  {
-    path: '/host',
-    element: <HostDashboard />,
+    element: (
+      <ProtectedRoute requiredRole="attendee">
+        <AttendeeSearch />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/admin',
-    element: <AdminDashboard />,
-  },
-  {
-    path: '/admin/events',
-    element: <AdminEvents />,
+    element: (
+      <ProtectedRoute requiredRole="host">
+        <AdminDashboard />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/admin/attendees',
-    element: <AdminAttendees />,
-  },
-  {
-    path: '/admin/speakers',
-    element: <AdminSpeakers />,
-  },
-  {
-    path: '/admin/announcements',
-    element: <AdminAnnouncements />,
-  },
-  {
-    path: '/admin/facilities',
-    element: <AdminFacilities />,
+    element: (
+      <ProtectedRoute requiredRole="host">
+        <AdminAttendees />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '/admin/questions',
-    element: <AdminQuestions />,
+    element: (
+      <ProtectedRoute requiredRole="host">
+        <AdminQuestions />
+      </ProtectedRoute>
+    ),
   },
   {
-    path: '/admin/suggestions',
-    element: <AdminSuggestions />,
+    path: '/admin/events',
+    element: (
+      <ProtectedRoute requiredRole="host">
+        <AdminEvents />
+      </ProtectedRoute>
+    ),
   },
   {
-    path: '/admin/polls',
-    element: <AdminPolls />,
-  },
-  {
-    path: '/admin/advertisements',
-    element: <AdminAdvertisements />,
-  },
-  {
-    path: '/admin/rules',
-    element: <AdminRules />,
-  },
-  {
-    path: '/admin/settings',
-    element: <AdminSettings />,
-  },
-  {
-    path: '/admin/team',
-    element: <AdminTeam />,
-  },
-  {
-    path: '/admin/notifications',
-    element: <AdminNotifications />,
+    path: '/host',
+    element: (
+      <ProtectedRoute requiredRole="host">
+        <HostDashboard />
+      </ProtectedRoute>
+    ),
   },
   {
     path: '*',

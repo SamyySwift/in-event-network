@@ -27,9 +27,10 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
         setScannerReady(true);
 
         const qrCodeSuccessCallback = (decodedText: string) => {
+          console.log('QR Code scanned:', decodedText);
           onScanSuccess(decodedText);
           if (html5QrCode) {
-            html5QrCode.stop();
+            html5QrCode.stop().catch(err => console.error('Error stopping scanner:', err));
           }
         };
 
@@ -77,7 +78,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
       </div>
       
       <div className="text-center mt-3 text-sm text-gray-500">
-        Position the QR code within the scanner frame
+        Position the event QR code within the scanner frame to join
       </div>
     </div>
   );

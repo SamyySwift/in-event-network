@@ -1,6 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/layouts/AppLayout';
+import FloatingPollBanner from '@/components/polls/FloatingPollBanner';
 import { 
   Card, 
   CardContent,
@@ -23,11 +24,20 @@ import { BarChart, Loader } from 'lucide-react';
 const AttendeePolls = () => {
   const [activeTab, setActiveTab] = useState<string>('active');
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
+  const [activeBannerPoll, setActiveBannerPoll] = useState<Poll | null>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
   const { polls, isLoading } = usePolls();
   const { userVotes, submitVote, isSubmitting } = usePollVotes();
+
+  // Check for active banner polls
+  useEffect(() => {
+    const bannerPoll = polls.find(poll => poll.is_active && poll.display_as_banner);
+    if (bannerPoll && !hasUserVotedForPoll(bannerPoll.id)) {
+      setActiveBannerPoll(bannerPoll);
+    }
+  }, [polls]);
 
   // Helper functions
   const hasUserVotedForPoll = (pollId: string) => {
@@ -69,6 +79,11 @@ const AttendeePolls = () => {
     }
     
     submitVote({ pollId, optionId });
+    
+    // Close banner if this was a banner poll
+    if (activeBannerPoll?.id === pollId) {
+      setActiveBannerPoll(null);
+    }
   };
 
   const handleSelectOption = (pollId: string, optionId: string) => {
@@ -253,6 +268,17 @@ const AttendeePolls = () => {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Floating Poll Banner */}
+        {activeBannerPoll && (
+          <FloatingPollBanner
+            poll={activeBannerPoll}
+            onVote={handleVote}
+            onClose={() => setActiveBannerPoll(null)}
+            hasUserVoted={hasUserVotedForPoll(activeBannerPoll.id)}
+            userVote={getUserVoteForPoll(activeBannerPoll.id)}
+          />
+        )}
       </div>
     </AppLayout>
   );

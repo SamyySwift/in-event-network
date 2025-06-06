@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { MapPin, Search, Info, Phone, Compass, Coffee, Home, Utensils, HeartPulse, Bath, Car, CircleHelp, Clock } from 'lucide-react';
+import { MapPin, Search, Info, Phone, Compass, Coffee, Home, Utensils, HeartPulse, Bath, Car, CircleHelp, Clock, Building, Wifi, Users, Camera, Music, Tv, Gamepad2, Heart, ShoppingBag, Bed, MessageCircle } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -7,123 +8,138 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import { useFacilities } from '@/hooks/useFacilities';
 
-// Mock data for facilities
-const facilities = [
-  {
-    id: '1',
-    name: 'Main Restrooms',
-    type: 'restroom',
-    location: 'West Wing, First Floor',
-    description: 'Main restrooms with accessibility features',
-    icon: <Bath size={20} />
-  },
-  {
-    id: '2',
-    name: 'Coffee Shop',
-    type: 'food',
-    location: 'North Wing, Ground Floor',
-    description: 'Coffee, tea, and light refreshments',
-    contactInfo: '+1 (555) 123-4567',
-    icon: <Coffee size={20} />
-  },
-  {
-    id: '3',
-    name: 'Main Entrance',
-    type: 'entry',
-    location: 'South Side of the Building',
-    description: 'Badge check required for re-entry',
-    icon: <Home size={20} />
-  },
-  {
-    id: '4',
-    name: 'Event Cafeteria',
-    type: 'food',
-    location: 'East Wing, First Floor',
-    description: 'Full meals and refreshments available',
-    hours: '7:00 AM - 8:00 PM',
-    contactInfo: '+1 (555) 987-6543',
-    icon: <Utensils size={20} />
-  },
-  {
-    id: '5',
-    name: 'First Aid Station',
-    type: 'emergency',
-    location: 'Central Hall, First Floor',
-    description: 'Staffed during all event hours',
-    contactInfo: '+1 (555) 911-0000',
-    icon: <HeartPulse size={20} />
-  },
-  {
-    id: '6',
-    name: 'Parking Garage',
-    type: 'parking',
-    location: 'Adjacent to Main Building',
-    description: 'Validated parking available at information desk',
-    icon: <Car size={20} />
-  },
-  {
-    id: '7',
-    name: 'Information Desk',
-    type: 'assistance',
-    location: 'Main Lobby',
-    description: 'General assistance and lost & found',
-    contactInfo: '+1 (555) 333-4444',
-    icon: <Info size={20} />
-  },
-  {
-    id: '8',
-    name: 'Executive Restrooms',
-    type: 'restroom',
-    location: 'VIP Area, Second Floor',
-    description: 'For VIP badge holders only',
-    icon: <Bath size={20} />
-  }
-];
+// Icon mapping for facility types
+const facilityIcons = {
+  'building': Building,
+  'wifi': Wifi,
+  'parking': Car,
+  'coffee': Coffee,
+  'restaurant': Utensils,
+  'conference': Users,
+  'photography': Camera,
+  'music': Music,
+  'entertainment': Tv,
+  'gaming': Gamepad2,
+  'health': HeartPulse,
+  'shopping': ShoppingBag,
+  'restroom': Bath,
+  'accommodation': Bed,
+};
 
 // Facility type colors for badges
 const facilityTypeColors: Record<string, string> = {
   restroom: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-  food: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  entry: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-  exit: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
-  emergency: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+  coffee: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+  restaurant: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+  building: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
   parking: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-  assistance: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200',
+  wifi: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+  conference: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200',
+  photography: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+  music: 'bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200',
+  entertainment: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200',
+  gaming: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+  health: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+  shopping: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+  accommodation: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
   other: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'
 };
 
 // Facility type labels
 const facilityTypeLabels: Record<string, string> = {
   restroom: 'Restroom',
-  food: 'Food & Drinks',
-  entry: 'Entrance',
-  exit: 'Exit',
-  emergency: 'Emergency',
+  coffee: 'Coffee',
+  restaurant: 'Restaurant',
+  building: 'Building',
   parking: 'Parking',
-  assistance: 'Assistance',
+  wifi: 'WiFi',
+  conference: 'Conference',
+  photography: 'Photography',
+  music: 'Music',
+  entertainment: 'Entertainment',
+  gaming: 'Gaming',
+  health: 'Health',
+  shopping: 'Shopping',
+  accommodation: 'Accommodation',
   other: 'Other'
 };
 
 const AttendeeMap = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<string | null>(null);
-  const [selectedFacility, setSelectedFacility] = useState<typeof facilities[0] | null>(null);
+  const [selectedFacility, setSelectedFacility] = useState<any>(null);
+  
+  const { facilities, isLoading, error } = useFacilities();
   
   // Filter facilities based on search and type filter
   const filteredFacilities = facilities.filter(facility => {
     const matchesSearch = 
       facility.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      facility.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      facility.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       facility.description?.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesType = !selectedType || facility.type === selectedType;
+    const matchesType = !selectedType || facility.icon_type === selectedType;
     
     return matchesSearch && matchesType;
   });
   
-  // Get unique facility types
-  const facilityTypes = Array.from(new Set(facilities.map(f => f.type)));
+  // Get unique facility types from actual data
+  const facilityTypes = Array.from(new Set(facilities.map(f => f.icon_type).filter(Boolean)));
+
+  const getFacilityIcon = (iconType?: string) => {
+    const IconComponent = facilityIcons[iconType as keyof typeof facilityIcons] || Building;
+    return <IconComponent size={20} />;
+  };
+
+  const getContactIcon = (contactType?: string) => {
+    switch (contactType) {
+      case 'phone':
+        return <Phone className="h-4 w-4" />;
+      case 'whatsapp':
+        return <MessageCircle className="h-4 w-4" />;
+      default:
+        return null;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-muted-foreground">Loading facilities...</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AppLayout>
+        <div className="animate-fade-in max-w-6xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Find Your Way</h1>
+              <p className="text-gray-600 dark:text-gray-400">Locate facilities and services around the venue</p>
+            </div>
+          </div>
+          <Card>
+            <CardContent className="p-6">
+              <div className="text-center">
+                <CircleHelp className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium mb-2">Unable to load facilities</h3>
+                <p className="text-gray-500">Please try again later or contact support if the problem persists.</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -181,10 +197,10 @@ const AttendeeMap = () => {
                     {facilityTypes.map(type => (
                       <Badge
                         key={type}
-                        className={`cursor-pointer ${selectedType === type ? facilityTypeColors[type] : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'}`}
+                        className={`cursor-pointer ${selectedType === type ? (facilityTypeColors[type] || facilityTypeColors.other) : 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200'}`}
                         onClick={() => setSelectedType(type)}
                       >
-                        {facilityTypeLabels[type]}
+                        {facilityTypeLabels[type] || type}
                       </Badge>
                     ))}
                   </div>
@@ -204,16 +220,16 @@ const AttendeeMap = () => {
                         onClick={() => setSelectedFacility(facility)}
                       >
                         <div className="flex items-start gap-3">
-                          <div className={`p-2 rounded-full ${facilityTypeColors[facility.type].split(' ')[0]} ${facilityTypeColors[facility.type].split(' ')[1]}`}>
-                            {facility.icon}
+                          <div className={`p-2 rounded-full ${(facilityTypeColors[facility.icon_type] || facilityTypeColors.other).split(' ')[0]} ${(facilityTypeColors[facility.icon_type] || facilityTypeColors.other).split(' ')[1]}`}>
+                            {getFacilityIcon(facility.icon_type)}
                           </div>
                           <div>
                             <h3 className="font-medium text-gray-900 dark:text-white">{facility.name}</h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400">{facility.location}</p>
                             <Badge
-                              className={`mt-1 text-xs ${facilityTypeColors[facility.type]}`}
+                              className={`mt-1 text-xs ${facilityTypeColors[facility.icon_type] || facilityTypeColors.other}`}
                             >
-                              {facilityTypeLabels[facility.type]}
+                              {facilityTypeLabels[facility.icon_type] || facility.icon_type}
                             </Badge>
                           </div>
                         </div>
@@ -269,9 +285,9 @@ const AttendeeMap = () => {
                           <CardTitle className="text-xl">{selectedFacility.name}</CardTitle>
                           <CardDescription>
                             <Badge
-                              className={`mt-1 ${facilityTypeColors[selectedFacility.type]}`}
+                              className={`mt-1 ${facilityTypeColors[selectedFacility.icon_type] || facilityTypeColors.other}`}
                             >
-                              {facilityTypeLabels[selectedFacility.type]}
+                              {facilityTypeLabels[selectedFacility.icon_type] || selectedFacility.icon_type}
                             </Badge>
                           </CardDescription>
                         </div>
@@ -287,26 +303,31 @@ const AttendeeMap = () => {
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                      <div className="flex items-start gap-2">
-                        <MapPin className="h-4 w-4 text-gray-500 mt-1" />
-                        <p>{selectedFacility.location}</p>
-                      </div>
+                      {selectedFacility.location && (
+                        <div className="flex items-start gap-2">
+                          <MapPin className="h-4 w-4 text-gray-500 mt-1" />
+                          <p>{selectedFacility.location}</p>
+                        </div>
+                      )}
                       {selectedFacility.description && (
                         <div className="flex items-start gap-2">
                           <Info className="h-4 w-4 text-gray-500 mt-1" />
                           <p>{selectedFacility.description}</p>
                         </div>
                       )}
-                      {selectedFacility.contactInfo && (
+                      {selectedFacility.contact_info && selectedFacility.contact_type !== 'none' && (
                         <div className="flex items-start gap-2">
-                          <Phone className="h-4 w-4 text-gray-500 mt-1" />
-                          <p>{selectedFacility.contactInfo}</p>
+                          {getContactIcon(selectedFacility.contact_type)}
+                          <p>{selectedFacility.contact_info}</p>
                         </div>
                       )}
-                      {selectedFacility.hours && (
+                      {selectedFacility.rules && (
                         <div className="flex items-start gap-2">
-                          <Clock className="h-4 w-4 text-gray-500 mt-1" />
-                          <p>{selectedFacility.hours}</p>
+                          <Info className="h-4 w-4 text-gray-500 mt-1" />
+                          <div>
+                            <p className="font-medium">Rules:</p>
+                            <p className="text-sm mt-1">{selectedFacility.rules}</p>
+                          </div>
                         </div>
                       )}
                     </CardContent>
@@ -317,66 +338,72 @@ const AttendeeMap = () => {
               <TabsContent value="list">
                 <Card>
                   <CardHeader>
-                    <CardTitle>All Facilities</CardTitle>
+                    <CardTitle>All Facilities ({facilities.length})</CardTitle>
                     <CardDescription>Comprehensive list of all venue facilities</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-4">
-                      {Object.keys(facilityTypeLabels).map(type => {
-                        const typeFacilities = facilities.filter(f => f.type === type);
-                        if (typeFacilities.length === 0) return null;
-                        
-                        return (
-                          <div key={type} className="mb-6">
-                            <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
-                              {facilityTypeLabels[type]}
-                              <Badge className={facilityTypeColors[type]}>
-                                {typeFacilities.length}
-                              </Badge>
-                            </h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              {typeFacilities.map(facility => (
-                                <div 
-                                  key={facility.id}
-                                  className="border rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-800"
-                                >
-                                  <div className="flex items-center gap-3">
-                                    <div className={`p-2 rounded-full ${facilityTypeColors[facility.type].split(' ')[0]} ${facilityTypeColors[facility.type].split(' ')[1]}`}>
-                                      {facility.icon}
-                                    </div>
-                                    <div>
-                                      <h4 className="font-medium">{facility.name}</h4>
-                                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                                        {facility.location}
-                                      </p>
-                                    </div>
-                                  </div>
-                                  {(facility.contactInfo || facility.hours) && (
-                                    <>
-                                      <Separator className="my-2" />
-                                      <div className="text-sm">
-                                        {facility.contactInfo && (
-                                          <p className="flex items-center gap-1 text-gray-600 dark:text-gray-300">
-                                            <Phone className="h-3 w-3" />
-                                            {facility.contactInfo}
-                                          </p>
-                                        )}
-                                        {facility.hours && (
-                                          <p className="flex items-center gap-1 text-gray-600 dark:text-gray-300">
-                                            <Clock className="h-3 w-3" />
-                                            {facility.hours}
-                                          </p>
-                                        )}
+                    {facilities.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <Building className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No facilities available at the moment.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {Object.keys(facilityTypeLabels).map(type => {
+                          const typeFacilities = facilities.filter(f => f.icon_type === type);
+                          if (typeFacilities.length === 0) return null;
+                          
+                          return (
+                            <div key={type} className="mb-6">
+                              <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                                {facilityTypeLabels[type]}
+                                <Badge className={facilityTypeColors[type] || facilityTypeColors.other}>
+                                  {typeFacilities.length}
+                                </Badge>
+                              </h3>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {typeFacilities.map(facility => (
+                                  <div 
+                                    key={facility.id}
+                                    className="border rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <div className={`p-2 rounded-full ${(facilityTypeColors[facility.icon_type] || facilityTypeColors.other).split(' ')[0]} ${(facilityTypeColors[facility.icon_type] || facilityTypeColors.other).split(' ')[1]}`}>
+                                        {getFacilityIcon(facility.icon_type)}
                                       </div>
-                                    </>
-                                  )}
-                                </div>
-                              ))}
+                                      <div>
+                                        <h4 className="font-medium">{facility.name}</h4>
+                                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                                          {facility.location}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    {(facility.contact_info || facility.description) && (
+                                      <>
+                                        <Separator className="my-2" />
+                                        <div className="text-sm">
+                                          {facility.contact_info && facility.contact_type !== 'none' && (
+                                            <p className="flex items-center gap-1 text-gray-600 dark:text-gray-300">
+                                              {getContactIcon(facility.contact_type)}
+                                              {facility.contact_info}
+                                            </p>
+                                          )}
+                                          {facility.description && (
+                                            <p className="text-gray-600 dark:text-gray-300 mt-1">
+                                              {facility.description}
+                                            </p>
+                                          )}
+                                        </div>
+                                      </>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>

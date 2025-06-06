@@ -73,8 +73,8 @@ const JoinEvent = () => {
 
       toast.success(`Successfully joined ${event.name}!`);
       
-      // Redirect to attendee dashboard
-      navigate('/attendee');
+      // Redirect to attendee onboarding
+      navigate('/attendee/onboarding');
       
     } catch (error) {
       console.error('Error joining event:', error);
@@ -147,18 +147,20 @@ const JoinEvent = () => {
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
-              <p className="text-sm text-muted-foreground mb-2">
-                Don't have an account?
-              </p>
-              <Button 
-                variant="link" 
-                onClick={() => navigate('/register')}
-                className="text-connect-600"
-              >
-                Create Account
-              </Button>
-            </div>
+            {!currentUser && (
+              <div className="mt-6 text-center">
+                <p className="text-sm text-muted-foreground mb-2">
+                  Don't have an account?
+                </p>
+                <Button 
+                  variant="link" 
+                  onClick={() => navigate('/register')}
+                  className="text-connect-600"
+                >
+                  Create Account
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
 

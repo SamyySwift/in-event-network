@@ -42,8 +42,13 @@ const Register = () => {
     
     if (currentUser && !isLoading) {
       console.log("User authenticated after registration, redirecting...", currentUser);
-      const redirectPath = currentUser.role === "host" ? "/admin" : "/attendee";
-      navigate(redirectPath, { replace: true });
+      
+      if (currentUser.role === "host") {
+        navigate("/admin", { replace: true });
+      } else if (currentUser.role === "attendee") {
+        // Redirect attendees to join page to enter event key
+        navigate("/join", { replace: true });
+      }
     }
   }, [currentUser, isLoading, navigate]);
 

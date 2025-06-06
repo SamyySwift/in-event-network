@@ -14,7 +14,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CheckCircle, XCircle, ArrowUpCircle, MessageSquare } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { CheckCircle, XCircle, ArrowUpCircle, MessageSquare, Send } from 'lucide-react';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -29,6 +30,9 @@ interface QuestionWithProfile {
   session_id: string | null;
   event_id: string | null;
   is_anonymous: boolean;
+  response: string | null;
+  answered_at: string | null;
+  answered_by: string | null;
   profiles: {
     name: string;
     photo_url: string | null;
@@ -39,17 +43,39 @@ const AdminQuestions = () => {
   const [activeTab, setActiveTab] = useState<string>('all');
   const [questions, setQuestions] = useState<QuestionWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [responses, setResponses] = useState<{[key: string]: string}>({});
+  const [submittingResponse, setSubmittingResponse] = useState<{[key: string]: boolean}>({});
   const { toast } = useToast();
 
   useEffect(() => {
     fetchQuestions();
+    
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('questions-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'questions'
+        },
+        () => {
+          console.log('Questions table changed, refetching...');
+          fetchQuestions();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchQuestions = async () => {
     try {
       console.log('Fetching questions...');
       
-      // First get all questions
       const { data: questionsData, error: questionsError } = await supabase
         .from('questions')
         .select('*')
@@ -68,7 +94,6 @@ const AdminQuestions = () => {
         return;
       }
 
-      // Then get profiles for non-anonymous questions
       const questionsWithProfiles = await Promise.all(
         questionsData.map(async (question) => {
           if (question.is_anonymous) {
@@ -121,7 +146,6 @@ const AdminQuestions = () => {
     }
   };
 
-  // Filter questions based on active tab
   const getFilteredQuestions = () => {
     switch(activeTab) {
       case 'answered':
@@ -154,8 +178,6 @@ const AdminQuestions = () => {
         title: "Success",
         description: "Question marked as answered",
       });
-
-      fetchQuestions();
     } catch (error) {
       console.error('Error updating question:', error);
       toast({
@@ -179,8 +201,6 @@ const AdminQuestions = () => {
         title: "Success",
         description: "Question deleted successfully",
       });
-
-      fetchQuestions();
     } catch (error) {
       console.error('Error deleting question:', error);
       toast({
@@ -188,6 +208,57 @@ const AdminQuestions = () => {
         description: "Failed to delete question",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleResponseChange = (questionId: string, value: string) => {
+    setResponses(prev => ({
+      ...prev,
+      [questionId]: value
+    }));
+  };
+
+  const handleSubmitResponse = async (questionId: string) => {
+    const responseText = responses[questionId];
+    if (!responseText?.trim()) return;
+
+    setSubmittingResponse(prev => ({ ...prev, [questionId]: true }));
+
+    try {
+      const { data: user } = await supabase.auth.getUser();
+      
+      const { error } = await supabase
+        .from('questions')
+        .update({ 
+          response: responseText.trim(),
+          is_answered: true,
+          answered_at: new Date().toISOString(),
+          answered_by: user.user?.id,
+          response_created_at: new Date().toISOString()
+        })
+        .eq('id', questionId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Response submitted successfully",
+      });
+
+      // Clear the response input
+      setResponses(prev => ({
+        ...prev,
+        [questionId]: ''
+      }));
+    } catch (error) {
+      console.error('Error submitting response:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit response",
+        variant: "destructive",
+      });
+    } finally {
+      setSubmittingResponse(prev => ({ ...prev, [questionId]: false }));
     }
   };
 
@@ -210,7 +281,7 @@ const AdminQuestions = () => {
     <AdminLayout>
       <AdminPageHeader
         title="Attendee Questions"
-        description="Review and moderate questions from attendees"
+        description="Review, respond to, and moderate questions from attendees"
         tabs={[
           { id: 'all', label: 'All Questions' },
           { id: 'unanswered', label: 'Unanswered' },
@@ -260,7 +331,22 @@ const AdminQuestions = () => {
                     </CardHeader>
                     <CardContent>
                       <p className="text-base mb-3">{question.content}</p>
-                      <div className="flex flex-wrap gap-2 text-sm">
+                      
+                      {question.response && (
+                        <div className="mt-4 p-3 bg-blue-50 border-l-4 border-blue-200 rounded-r">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Badge variant="secondary">Admin Response</Badge>
+                            {question.answered_at && (
+                              <span className="text-xs text-muted-foreground">
+                                {format(new Date(question.answered_at), 'MMM d, yyyy h:mm a')}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm">{question.response}</p>
+                        </div>
+                      )}
+
+                      <div className="flex flex-wrap gap-2 text-sm mt-3">
                         <Badge variant="outline" className="flex items-center gap-1">
                           <ArrowUpCircle size={14} /> {question.upvotes} upvotes
                         </Badge>
@@ -268,13 +354,37 @@ const AdminQuestions = () => {
                           <Badge variant="secondary">Anonymous</Badge>
                         )}
                       </div>
+
+                      {!question.response && (
+                        <div className="mt-4 space-y-3">
+                          <div>
+                            <label className="text-sm font-medium">Admin Response:</label>
+                            <Textarea
+                              placeholder="Type your response to this question..."
+                              value={responses[question.id] || ''}
+                              onChange={(e) => handleResponseChange(question.id, e.target.value)}
+                              rows={3}
+                              className="mt-1"
+                            />
+                          </div>
+                          <Button
+                            size="sm"
+                            onClick={() => handleSubmitResponse(question.id)}
+                            disabled={!responses[question.id]?.trim() || submittingResponse[question.id]}
+                            className="w-full"
+                          >
+                            <Send size={16} className="mr-2" />
+                            {submittingResponse[question.id] ? 'Submitting...' : 'Submit Response'}
+                          </Button>
+                        </div>
+                      )}
                     </CardContent>
                     <CardFooter className="border-t pt-3 flex justify-between">
                       <div className="text-sm text-muted-foreground">
                         Question ID: {question.id}
                       </div>
                       <div className="flex gap-2">
-                        {!question.is_answered && (
+                        {!question.is_answered && question.response && (
                           <Button 
                             size="sm" 
                             variant="outline"

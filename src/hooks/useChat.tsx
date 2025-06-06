@@ -37,10 +37,10 @@ export const useChat = () => {
         .from('chat_messages')
         .select(`
           *,
-          user_profile:profiles!chat_messages_user_id_fkey(name, photo_url),
+          user_profile:profiles(name, photo_url),
           quoted_message:chat_messages!quoted_message_id(
             *,
-            user_profile:profiles!chat_messages_user_id_fkey(name, photo_url)
+            user_profile:profiles(name, photo_url)
           )
         `)
         .order('created_at', { ascending: true })
@@ -48,7 +48,7 @@ export const useChat = () => {
 
       if (error) throw error;
 
-      setMessages(data || []);
+      setMessages((data || []) as ChatMessage[]);
     } catch (error) {
       console.error('Error fetching messages:', error);
       toast({
@@ -77,10 +77,10 @@ export const useChat = () => {
             .from('chat_messages')
             .select(`
               *,
-              user_profile:profiles!chat_messages_user_id_fkey(name, photo_url),
+              user_profile:profiles(name, photo_url),
               quoted_message:chat_messages!quoted_message_id(
                 *,
-                user_profile:profiles!chat_messages_user_id_fkey(name, photo_url)
+                user_profile:profiles(name, photo_url)
               )
             `)
             .eq('id', payload.new.id)

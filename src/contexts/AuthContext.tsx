@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
@@ -163,6 +162,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setIsLoading(true);
       console.log("Attempting login for:", email);
       
+      // Clear any existing session first
+      await supabase.auth.signOut();
+      
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -191,6 +193,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   ) => {
     setIsLoading(true);
     try {
+      // Clear any existing session first
+      await supabase.auth.signOut();
+      
       const { error } = await supabase.auth.signUp({
         email,
         password,

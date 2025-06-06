@@ -21,23 +21,22 @@ export const useRules = () => {
   const { data: rules = [], isLoading, error } = useQuery({
     queryKey: ['rules'],
     queryFn: async () => {
-      // Use direct SQL query to access the rules table
-      const { data, error } = await supabase.rpc('get_rules');
-      
-      if (error) {
-        // Fallback: try direct table access (might work if types are updated)
-        const { data: fallbackData, error: fallbackError } = await supabase
+      try {
+        // Direct table access since rules table exists
+        const { data, error } = await supabase
           .from('rules' as any)
           .select('*')
           .order('created_at', { ascending: false });
         
-        if (fallbackError) {
-          console.error('Error fetching rules:', fallbackError);
+        if (error) {
+          console.error('Error fetching rules:', error);
           return [];
         }
-        return fallbackData as Rule[];
+        return (data || []) as Rule[];
+      } catch (err) {
+        console.error('Unexpected error fetching rules:', err);
+        return [];
       }
-      return data as Rule[];
     },
   });
 

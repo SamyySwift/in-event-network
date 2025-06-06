@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ArrowUp, MessageSquare, Send, User } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
@@ -41,6 +40,7 @@ interface QuestionWithProfile {
   is_anonymous: boolean;
   response: string | null;
   answered_at: string | null;
+  answered_by: string | null;
   response_created_at: string | null;
   profiles: {
     name: string;
@@ -118,6 +118,8 @@ const AttendeeQuestions = () => {
 
   const fetchQuestions = async () => {
     try {
+      console.log('Fetching questions with full response data...');
+      
       // Fetch questions with all fields including response and timestamps
       const { data: questionsData, error: questionsError } = await supabase
         .from('questions')
@@ -133,13 +135,14 @@ const AttendeeQuestions = () => {
           is_anonymous,
           response,
           answered_at,
+          answered_by,
           response_created_at
         `)
         .order('created_at', { ascending: false });
 
       if (questionsError) throw questionsError;
 
-      console.log('Fetched questions with responses:', questionsData);
+      console.log('Fetched questions data:', questionsData);
 
       // Then fetch profiles for each question
       const questionsWithProfiles = await Promise.all(
@@ -151,20 +154,28 @@ const AttendeeQuestions = () => {
             };
           }
 
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('name, photo_url')
-            .eq('id', question.user_id)
-            .single();
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('name, photo_url')
+              .eq('id', question.user_id)
+              .single();
 
-          return {
-            ...question,
-            profiles: profile
-          };
+            return {
+              ...question,
+              profiles: profile
+            };
+          } catch (error) {
+            console.warn('Error fetching profile for user:', question.user_id, error);
+            return {
+              ...question,
+              profiles: null
+            };
+          }
         })
       );
 
-      console.log('Questions with profiles:', questionsWithProfiles);
+      console.log('Questions with profiles and responses:', questionsWithProfiles);
       setQuestions(questionsWithProfiles);
     } catch (error) {
       console.error('Error fetching questions:', error);
@@ -270,7 +281,7 @@ const AttendeeQuestions = () => {
     const userName = question.profiles?.name || 'Anonymous';
     const userPhoto = question.profiles?.photo_url;
     
-    console.log('Rendering question:', question.id, 'with response:', question.response);
+    console.log('Rendering question:', question.id, 'with response:', question.response, 'response_created_at:', question.response_created_at);
     
     return (
       <Card key={question.id} className={question.is_answered ? 'border-green-200 bg-green-50/50' : ''}>

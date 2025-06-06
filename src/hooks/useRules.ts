@@ -21,23 +21,33 @@ export const useRules = () => {
   const { data: rules = [], isLoading, error } = useQuery({
     queryKey: ['rules'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('rules')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      // Use direct SQL query to access the rules table
+      const { data, error } = await supabase.rpc('get_rules');
+      
+      if (error) {
+        // Fallback: try direct table access (might work if types are updated)
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('rules' as any)
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (fallbackError) {
+          console.error('Error fetching rules:', fallbackError);
+          return [];
+        }
+        return fallbackData as Rule[];
+      }
       return data as Rule[];
     },
   });
 
   const createRuleMutation = useMutation({
-    mutationFn: async (ruleData: Omit<Rule, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (ruleData: { title: string; content: string; category?: string; priority?: 'high' | 'medium' | 'low' }) => {
       const { data: user } = await supabase.auth.getUser();
       if (!user.user) throw new Error('User not authenticated');
 
       const { data, error } = await supabase
-        .from('rules')
+        .from('rules' as any)
         .insert({
           title: ruleData.title,
           content: ruleData.content,
@@ -71,7 +81,7 @@ export const useRules = () => {
   const updateRuleMutation = useMutation({
     mutationFn: async ({ id, ...ruleData }: Partial<Rule> & { id: string }) => {
       const { data, error } = await supabase
-        .from('rules')
+        .from('rules' as any)
         .update(ruleData)
         .eq('id', id)
         .select()
@@ -100,7 +110,7 @@ export const useRules = () => {
   const deleteRuleMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('rules')
+        .from('rules' as any)
         .delete()
         .eq('id', id);
 

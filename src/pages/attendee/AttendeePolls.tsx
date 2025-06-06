@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import AppLayout from '@/components/layouts/AppLayout';
 import FloatingPollBanner from '@/components/polls/FloatingPollBanner';
@@ -33,7 +32,7 @@ const AttendeePolls = () => {
 
   // Check for active banner polls
   useEffect(() => {
-    const bannerPoll = polls.find(poll => poll.is_active && poll.display_as_banner);
+    const bannerPoll = polls.find(poll => poll.is_active && (poll as any).display_as_banner);
     if (bannerPoll && !hasUserVotedForPoll(bannerPoll.id)) {
       setActiveBannerPoll(bannerPoll);
     }

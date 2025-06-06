@@ -44,11 +44,23 @@ const AdminRules = () => {
   });
 
   const onSubmit = (data: RuleSchemaType) => {
+    // Ensure required fields are present
+    if (!data.title || !data.content) {
+      return;
+    }
+
+    const ruleData = {
+      title: data.title,
+      content: data.content,
+      category: data.category,
+      priority: data.priority,
+    };
+
     if (editingRule) {
-      updateRule({ id: editingRule.id, ...data });
+      updateRule({ id: editingRule.id, ...ruleData });
       setEditingRule(null);
     } else {
-      createRule(data);
+      createRule(ruleData);
     }
     reset();
   };
@@ -182,7 +194,7 @@ const AdminRules = () => {
 
               <div className="flex gap-2">
                 {editingRule && (
-                  <Button type="button" variant="outline" onClick={handleCancelEdit} className="flex-1">
+                  <Button type="button" variant="outline" onClick={() => { setEditingRule(null); reset(); }} className="flex-1">
                     Cancel
                   </Button>
                 )}
@@ -223,7 +235,13 @@ const AdminRules = () => {
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => handleEdit(rule)}
+                            onClick={() => {
+                              setEditingRule(rule);
+                              setValue("title", rule.title);
+                              setValue("content", rule.content);
+                              setValue("category", rule.category || "");
+                              setValue("priority", rule.priority || "medium");
+                            }}
                             disabled={isUpdating}
                           >
                             <Edit className="h-4 w-4" />
@@ -261,8 +279,14 @@ const AdminRules = () => {
                           <Badge variant="outline">{rule.category}</Badge>
                         )}
                         {rule.priority && (
-                          <Badge className={getPriorityColor(rule.priority)}>
-                            {getPriorityIcon(rule.priority)}
+                          <Badge className={
+                            rule.priority === 'high' ? 'bg-red-100 text-red-800 hover:bg-red-200' :
+                            rule.priority === 'medium' ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200' :
+                            'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                          }>
+                            {rule.priority === 'high' && <AlertTriangle className="h-4 w-4" />}
+                            {rule.priority === 'medium' && <Zap className="h-4 w-4" />}
+                            {rule.priority === 'low' && <Info className="h-4 w-4" />}
                             <span className="ml-1 capitalize">{rule.priority}</span>
                           </Badge>
                         )}

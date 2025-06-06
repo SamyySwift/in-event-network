@@ -14,6 +14,7 @@ interface Event {
   logo_url?: string;
   website?: string;
   host_id?: string;
+  event_key?: string;
   created_at: string;
   updated_at: string;
 }
@@ -96,6 +97,7 @@ export const useEvents = () => {
           logo_url: dataWithoutImage.logo_url || null,
           website: dataWithoutImage.website || null,
           host_id: dataWithoutImage.host_id || null,
+          event_key: dataWithoutImage.event_key || null,
         };
 
         console.log('Final event data:', finalData);
@@ -154,6 +156,7 @@ export const useEvents = () => {
           logo_url: eventData.logo_url || null,
           website: eventData.website || null,
           host_id: eventData.host_id || null,
+          event_key: eventData.event_key || null,
         };
 
         console.log('Final update data:', finalData);

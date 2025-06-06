@@ -1,19 +1,15 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useNotificationCount } from '@/hooks/useNotificationCount';
-import { Calendar, Users, Bell, Settings, MessageSquare, Star, MapPin, BarChart4, User, PanelLeft, Megaphone, Landmark, BookText, MessageCircle, ChevronRight, LogOut, Search, Sun, Moon, BarChart } from 'lucide-react';
+import { Calendar, Users, Bell, Settings, MessageSquare, Star, MapPin, BarChart4, User, PanelLeft, Megaphone, Landmark, BookText, MessageCircle, ChevronRight, LogOut, Menu, Search, Sun, Moon, BarChart } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
-
 const AdminLayout: React.FC<AdminLayoutProps> = ({
   children
 }) => {
@@ -26,7 +22,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [searchQuery, setSearchQuery] = useState('');
-  const { unreadCount } = useNotificationCount();
 
   // Toggle theme functionality
   const toggleTheme = () => {
@@ -34,7 +29,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
     setTheme(newTheme);
     document.documentElement.classList.toggle('dark');
   };
-
   const isActive = (path: string) => {
     if (path === '/admin') {
       return location.pathname === '/admin';
@@ -73,7 +67,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
         </BreadcrumbList>
       </Breadcrumb>;
   };
-
   const adminNavigation = [{
     name: 'Dashboard',
     href: '/admin',
@@ -125,45 +118,18 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
   }, {
     name: 'Notifications',
     href: '/admin/notifications',
-    icon: <Bell size={20} />,
-    badge: unreadCount
+    icon: <Bell size={20} />
   }, {
     name: 'Settings',
     href: '/admin/settings',
     icon: <Settings size={20} />
   }];
-
   return <div className="min-h-screen bg-background flex flex-col md:flex-row">
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-20 md:hidden" 
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
       {/* Mobile Header */}
       <header className="md:hidden bg-card glass-effect border-b py-4 px-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
         <div className="flex items-center">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            onClick={() => setSidebarOpen(!sidebarOpen)} 
-            className="mr-2"
-          >
-            <svg 
-              className="h-5 w-5 text-primary" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M4 6h16M4 12h16M4 18h16" 
-              />
-            </svg>
+          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)} className="mr-2">
+            <Menu size={20} className="text-primary" />
           </Button>
           <img src="/logo-placeholder.svg" alt="Connect Logo" className="h-8 w-auto" />
           <span className="ml-2 font-semibold text-gradient">Kconect Admin</span>
@@ -171,16 +137,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
         
         <Button variant="ghost" size="icon" onClick={() => navigate('/admin/notifications')} className="relative">
           <Bell size={20} className="text-primary" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 h-5 w-5 bg-primary text-white text-xs rounded-full flex items-center justify-center">
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
-          )}
+          <span className="absolute top-0 right-0 h-2 w-2 bg-primary rounded-full animate-pulse"></span>
         </Button>
       </header>
       
-      {/* Sidebar Navigation */}
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0 fixed md:static h-full bg-sidebar glass shadow-lg shadow-primary/5 transition-all duration-300 ease-in-out z-30 flex flex-col`}>
+      {/* Sidebar Navigation for Desktop */}
+      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} hidden md:flex flex-col bg-sidebar glass shadow-lg shadow-primary/5 fixed h-full transition-all duration-300 ease-in-out z-30`}>
         <div className={`p-4 border-b border-sidebar-border flex ${sidebarOpen ? 'justify-between' : 'justify-center'}`}>
           <div className={`flex items-center ${sidebarOpen ? '' : 'justify-center'}`}>
             <img src="/logo-placeholder.svg" alt="Connect Logo" className="h-8 w-auto" />
@@ -219,17 +181,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
         </div>
         
         <nav className="flex-1 py-2 px-2 space-y-1 overflow-y-auto scrollbar-hide">
-          {adminNavigation.map(item => <Button key={item.name} variant={isActive(item.href) ? "secondary" : "ghost"} className={`w-full ${sidebarOpen ? 'justify-start' : 'justify-center'} ${isActive(item.href) ? 'bg-primary/10 text-primary hover:bg-primary/20' : 'text-sidebar-foreground hover:bg-sidebar-accent/50'} relative`} onClick={() => navigate(item.href)} title={sidebarOpen ? '' : item.name}>
+          {adminNavigation.map(item => <Button key={item.name} variant={isActive(item.href) ? "secondary" : "ghost"} className={`w-full ${sidebarOpen ? 'justify-start' : 'justify-center'} ${isActive(item.href) ? 'bg-primary/10 text-primary hover:bg-primary/20' : 'text-sidebar-foreground hover:bg-sidebar-accent/50'}`} onClick={() => navigate(item.href)} title={sidebarOpen ? '' : item.name}>
               <span className={`${sidebarOpen ? 'mr-3' : ''} ${isActive(item.href) ? 'text-primary-700' : 'text-muted-foreground'}`}>
                 {item.icon}
               </span>
               {sidebarOpen && <span className="flex-1 text-left">{item.name}</span>}
               {sidebarOpen && isActive(item.href) && <ChevronRight size={16} className="ml-auto opacity-70" />}
-              {item.badge && item.badge > 0 && (
-                <span className={`absolute ${sidebarOpen ? '-top-1 -right-1' : '-top-1 -right-1'} h-5 w-5 bg-primary text-white text-xs rounded-full flex items-center justify-center`}>
-                  {item.badge > 9 ? '9+' : item.badge}
-                </span>
-              )}
             </Button>)}
           
           {currentUser && <Button variant="ghost" className={`w-full ${sidebarOpen ? 'justify-start' : 'justify-center'} text-sidebar-foreground mt-4 hover:text-destructive hover:bg-destructive/10`} onClick={() => {
@@ -271,11 +228,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
             
             <Button variant="outline" size="icon" onClick={() => navigate('/admin/notifications')} className={`relative bg-card ${isActive('/admin/notifications') ? 'border-primary/30 ring-1 ring-primary/30' : 'border-primary/20'} hover:bg-accent`}>
               <Bell size={18} className={isActive('/admin/notifications') ? 'text-primary' : ''} />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 h-5 w-5 bg-primary text-white text-xs rounded-full flex items-center justify-center">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
+              <span className="absolute top-0 right-0 h-2 w-2 bg-primary rounded-full animate-pulse"></span>
             </Button>
             
             <Button variant="outline" size="icon" onClick={() => navigate('/admin/settings')} className={`bg-card ${isActive('/admin/settings') ? 'border-primary/30 ring-1 ring-primary/30' : 'border-primary/20'} hover:bg-accent`}>
@@ -296,5 +249,4 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
       </main>
     </div>;
 };
-
 export default AdminLayout;

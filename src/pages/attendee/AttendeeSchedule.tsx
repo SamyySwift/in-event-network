@@ -1,4 +1,3 @@
-
 import React from 'react';
 import AppLayout from '@/components/layouts/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -113,6 +112,15 @@ const AttendeeSchedule = () => {
                       
                       return (
                         <Card key={event.id} className="overflow-hidden">
+                          {event.banner_url && (
+                            <div className="w-full h-48 overflow-hidden">
+                              <img 
+                                src={event.banner_url} 
+                                alt={event.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
                           <CardContent className="p-6">
                             <div className="flex items-start justify-between">
                               <div className="flex-1">
@@ -149,38 +157,32 @@ const AttendeeSchedule = () => {
                                       {event.location}
                                     </div>
                                   )}
-                                  {event.website && (
-                                    <Button
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-auto p-0 text-blue-600 hover:text-blue-800"
-                                      onClick={() => window.open(event.website, '_blank')}
-                                    >
-                                      <ExternalLink className="h-4 w-4 mr-1" />
-                                      Event Website
-                                    </Button>
-                                  )}
                                 </div>
 
                                 {speaker && (
-                                  <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                    <div className="flex items-center space-x-3">
-                                      <Avatar className="h-10 w-10">
+                                  <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                    <div className="flex items-start space-x-4">
+                                      <Avatar className="h-16 w-16 flex-shrink-0">
                                         {speaker.photo_url ? (
                                           <AvatarImage src={speaker.photo_url} alt={speaker.name} />
                                         ) : (
-                                          <AvatarFallback className="bg-blue-100 text-blue-600">
+                                          <AvatarFallback className="bg-blue-100 text-blue-600 text-lg">
                                             {speaker.name.split(' ').map(n => n[0]).join('')}
                                           </AvatarFallback>
                                         )}
                                       </Avatar>
-                                      <div>
-                                        <p className="font-medium text-gray-900 dark:text-white">
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-medium text-gray-900 dark:text-white mb-1">
                                           {speaker.name}
                                         </p>
-                                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
                                           {speaker.title} {speaker.company && `at ${speaker.company}`}
                                         </p>
+                                        {speaker.bio && (
+                                          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                                            {speaker.bio}
+                                          </p>
+                                        )}
                                       </div>
                                     </div>
                                   </div>
@@ -205,18 +207,25 @@ const AttendeeSchedule = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {speakers.map((speaker) => (
-                <Card key={speaker.id}>
+                <Card key={speaker.id} className="overflow-hidden">
+                  {speaker.photo_url && (
+                    <div className="w-full h-48 overflow-hidden">
+                      <img 
+                        src={speaker.photo_url} 
+                        alt={speaker.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
                   <CardContent className="p-6 text-center">
-                    <Avatar className="h-16 w-16 mx-auto mb-4">
-                      {speaker.photo_url ? (
-                        <AvatarImage src={speaker.photo_url} alt={speaker.name} />
-                      ) : (
+                    {!speaker.photo_url && (
+                      <Avatar className="h-16 w-16 mx-auto mb-4">
                         <AvatarFallback className="bg-blue-100 text-blue-600 text-lg">
                           {speaker.name.split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
-                      )}
-                    </Avatar>
-                    <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
+                      </Avatar>
+                    )}
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-1 mt-4">
                       {speaker.name}
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">

@@ -1,22 +1,23 @@
-
 import React from 'react';
-import { Calendar, Clock, User, MapPin, ExternalLink, Loader } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Calendar, Clock, MapPin, User, Loader, ExternalLink } from 'lucide-react';
+import { useEvents } from '@/hooks/useEvents';
 import { useSpeakers } from '@/hooks/useSpeakers';
-import EventAccessGuard from '@/components/EventAccessGuard';
-import { useEventParticipation } from '@/hooks/useEventParticipation';
 
 const AttendeeSchedule = () => {
-  const { speakers, isLoading } = useSpeakers();
-  const { getJoinedEvents, loading: participationLoading } = useEventParticipation();
+  const { events, isLoading: eventsLoading } = useEvents();
+  const { speakers, isLoading: speakersLoading } = useSpeakers();
+
+  const isLoading = eventsLoading || speakersLoading;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'long',
+      year: 'numeric',
       month: 'long',
       day: 'numeric',
     });
@@ -24,45 +25,44 @@ const AttendeeSchedule = () => {
 
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString('en-US', {
-      hour: 'numeric',
+      hour: '2-digit',
       minute: '2-digit',
     });
   };
 
-  const getTimeStatus = (sessionTime: string) => {
+  const isEventLive = (startTime: string, endTime: string) => {
     const now = new Date();
-    const session = new Date(sessionTime);
-    const diffHours = (session.getTime() - now.getTime()) / (1000 * 60 * 60);
-    
-    if (diffHours < 0) return { status: 'completed', color: 'bg-gray-100 text-gray-800' };
-    if (diffHours < 1) return { status: 'starting soon', color: 'bg-orange-100 text-orange-800' };
-    if (diffHours < 24) return { status: 'today', color: 'bg-blue-100 text-blue-800' };
-    return { status: 'upcoming', color: 'bg-green-100 text-green-800' };
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    return now >= start && now <= end;
   };
 
-  // Group speakers by date
-  const groupedSpeakers = speakers.reduce((acc, speaker) => {
-    if (!speaker.session_time) return acc;
-    
-    const date = formatDate(speaker.session_time);
-    if (!acc[date]) {
-      acc[date] = [];
-    }
-    acc[date].push(speaker);
-    return acc;
-  }, {} as Record<string, typeof speakers>);
+  const isEventUpcoming = (startTime: string) => {
+    const now = new Date();
+    const start = new Date(startTime);
+    return now < start;
+  };
 
-  // Sort speakers within each date by time
-  Object.keys(groupedSpeakers).forEach(date => {
-    groupedSpeakers[date].sort((a, b) => {
-      if (!a.session_time || !b.session_time) return 0;
-      return new Date(a.session_time).getTime() - new Date(b.session_time).getTime();
+  const groupEventsByDate = (events: any[]) => {
+    const grouped: { [key: string]: any[] } = {};
+    events.forEach(event => {
+      const date = new Date(event.start_time).toDateString();
+      if (!grouped[date]) {
+        grouped[date] = [];
+      }
+      grouped[date].push(event);
     });
-  });
+    return grouped;
+  };
 
-  const hasEventAccess = getJoinedEvents().length > 0;
+  const getSpeakerForSession = (sessionTitle?: string) => {
+    if (!sessionTitle) return null;
+    return speakers.find(speaker => 
+      speaker.session_title?.toLowerCase() === sessionTitle.toLowerCase()
+    );
+  };
 
-  if (isLoading || participationLoading) {
+  if (isLoading) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">
@@ -72,138 +72,180 @@ const AttendeeSchedule = () => {
     );
   }
 
+  const groupedEvents = groupEventsByDate(events);
+
   return (
     <AppLayout>
-      <EventAccessGuard hasAccess={hasEventAccess} loading={participationLoading}>
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 flex items-center">
-              <Calendar className="h-8 w-8 mr-3" />
-              Event Schedule
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              View the complete schedule of speakers and sessions for this event.
-            </p>
-          </div>
+      <div className="max-w-4xl mx-auto">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Event Schedule</h1>
+          <p className="text-gray-600 dark:text-gray-400">
+            Stay updated with all the events and sessions happening at the conference.
+          </p>
+        </div>
 
-          {Object.keys(groupedSpeakers).length === 0 ? (
-            <Card>
-              <CardContent className="text-center py-12">
-                <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  No Schedule Available
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  The event schedule hasn't been published yet. Check back later for updates.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            Object.entries(groupedSpeakers).map(([date, dateSpeakers]) => (
-              <div key={date} className="mb-8">
-                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4 border-b pb-2">
-                  {date}
+        {events.length === 0 ? (
+          <Card>
+            <CardContent className="text-center py-12">
+              <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                No Events Scheduled
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Check back later for event updates or contact the organizers for more information.
+              </p>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-8">
+            {Object.entries(groupedEvents).map(([date, dayEvents]) => (
+              <div key={date}>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
+                  <Calendar className="h-5 w-5 mr-2" />
+                  {formatDate(dayEvents[0].start_time)}
                 </h2>
                 <div className="space-y-4">
-                  {dateSpeakers.map((speaker) => {
-                    const timeStatus = speaker.session_time ? getTimeStatus(speaker.session_time) : null;
-                    
-                    return (
-                      <Card key={speaker.id} className="overflow-hidden">
-                        <CardHeader>
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-start space-x-4">
-                              <Avatar className="h-12 w-12">
-                                {speaker.photo_url ? (
-                                  <AvatarImage src={speaker.photo_url} alt={speaker.name} />
-                                ) : (
-                                  <AvatarFallback className="bg-connect-100 text-connect-600">
-                                    {speaker.name.split(' ').map(n => n[0]).join('')}
-                                  </AvatarFallback>
-                                )}
-                              </Avatar>
+                  {dayEvents
+                    .sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime())
+                    .map((event) => {
+                      const speaker = getSpeakerForSession(event.name);
+                      
+                      return (
+                        <Card key={event.id} className="overflow-hidden">
+                          {event.banner_url && (
+                            <div className="w-full h-48 overflow-hidden">
+                              <img 
+                                src={event.banner_url} 
+                                alt={event.name}
+                                className="w-full h-full object-cover"
+                              />
+                            </div>
+                          )}
+                          <CardContent className="p-6">
+                            <div className="flex items-start justify-between">
                               <div className="flex-1">
-                                <CardTitle className="text-xl text-gray-900 dark:text-white">
-                                  {speaker.session_title || 'Speaker Session'}
-                                </CardTitle>
-                                <CardDescription className="text-gray-600 dark:text-gray-400">
-                                  <div className="flex items-center gap-4 mt-1">
-                                    <div className="flex items-center">
-                                      <User className="h-4 w-4 mr-1" />
-                                      {speaker.name}
-                                    </div>
-                                    {speaker.session_time && (
-                                      <div className="flex items-center">
-                                        <Clock className="h-4 w-4 mr-1" />
-                                        {formatTime(speaker.session_time)}
-                                      </div>
-                                    )}
+                                <div className="flex items-center gap-3 mb-3">
+                                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                                    {event.name}
+                                  </h3>
+                                  {isEventLive(event.start_time, event.end_time) && (
+                                    <Badge className="bg-red-100 text-red-800 hover:bg-red-200 animate-pulse">
+                                      Live Now
+                                    </Badge>
+                                  )}
+                                  {isEventUpcoming(event.start_time) && (
+                                    <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">
+                                      Upcoming
+                                    </Badge>
+                                  )}
+                                </div>
+
+                                {event.description && (
+                                  <p className="text-gray-600 dark:text-gray-400 mb-4">
+                                    {event.description}
+                                  </p>
+                                )}
+
+                                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+                                  <div className="flex items-center">
+                                    <Clock className="h-4 w-4 mr-1" />
+                                    {formatTime(event.start_time)} - {formatTime(event.end_time)}
                                   </div>
-                                </CardDescription>
+                                  {event.location && (
+                                    <div className="flex items-center">
+                                      <MapPin className="h-4 w-4 mr-1" />
+                                      {event.location}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {speaker && (
+                                  <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                    <div className="flex items-start space-x-4">
+                                      <Avatar className="h-16 w-16 flex-shrink-0">
+                                        {speaker.photo_url ? (
+                                          <AvatarImage src={speaker.photo_url} alt={speaker.name} />
+                                        ) : (
+                                          <AvatarFallback className="bg-blue-100 text-blue-600 text-lg">
+                                            {speaker.name.split(' ').map(n => n[0]).join('')}
+                                          </AvatarFallback>
+                                        )}
+                                      </Avatar>
+                                      <div className="flex-1 min-w-0">
+                                        <p className="font-medium text-gray-900 dark:text-white mb-1">
+                                          {speaker.name}
+                                        </p>
+                                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                          {speaker.title} {speaker.company && `at ${speaker.company}`}
+                                        </p>
+                                        {speaker.bio && (
+                                          <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+                                            {speaker.bio}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             </div>
-                            {timeStatus && (
-                              <Badge className={timeStatus.color}>
-                                {timeStatus.status}
-                              </Badge>
-                            )}
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                              <h4 className="font-semibold text-gray-900 dark:text-white mb-2">About the Speaker</h4>
-                              <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
-                                {speaker.bio}
-                              </p>
-                              {speaker.company && (
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                  <strong>Company:</strong> {speaker.company}
-                                </p>
-                              )}
-                              {speaker.title && (
-                                <p className="text-sm text-gray-600 dark:text-gray-400">
-                                  <strong>Title:</strong> {speaker.title}
-                                </p>
-                              )}
-                            </div>
-                            <div className="space-y-3">
-                              {speaker.linkedin_link && (
-                                <Button variant="outline" size="sm" className="w-full" asChild>
-                                  <a href={speaker.linkedin_link} target="_blank" rel="noopener noreferrer">
-                                    <ExternalLink className="h-4 w-4 mr-2" />
-                                    LinkedIn
-                                  </a>
-                                </Button>
-                              )}
-                              {speaker.twitter_link && (
-                                <Button variant="outline" size="sm" className="w-full" asChild>
-                                  <a href={speaker.twitter_link} target="_blank" rel="noopener noreferrer">
-                                    <ExternalLink className="h-4 w-4 mr-2" />
-                                    Twitter
-                                  </a>
-                                </Button>
-                              )}
-                              {speaker.website_link && (
-                                <Button variant="outline" size="sm" className="w-full" asChild>
-                                  <a href={speaker.website_link} target="_blank" rel="noopener noreferrer">
-                                    <ExternalLink className="h-4 w-4 mr-2" />
-                                    Website
-                                  </a>
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                 </div>
               </div>
-            ))
-          )}
-        </div>
-      </EventAccessGuard>
+            ))}
+          </div>
+        )}
+
+        {speakers.length > 0 && (
+          <div className="mt-12">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6 flex items-center">
+              <User className="h-5 w-5 mr-2" />
+              Featured Speakers
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {speakers.map((speaker) => (
+                <Card key={speaker.id} className="overflow-hidden">
+                  {speaker.photo_url && (
+                    <div className="w-full h-48 overflow-hidden">
+                      <img 
+                        src={speaker.photo_url} 
+                        alt={speaker.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <CardContent className="p-6 text-center">
+                    {!speaker.photo_url && (
+                      <Avatar className="h-16 w-16 mx-auto mb-4">
+                        <AvatarFallback className="bg-blue-100 text-blue-600 text-lg">
+                          {speaker.name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                    <h3 className="font-semibold text-gray-900 dark:text-white mb-1 mt-4">
+                      {speaker.name}
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                      {speaker.title} {speaker.company && `at ${speaker.company}`}
+                    </p>
+                    {speaker.session_title && (
+                      <Badge variant="outline" className="mb-3">
+                        {speaker.session_title}
+                      </Badge>
+                    )}
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      {speaker.bio}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
     </AppLayout>
   );
 };

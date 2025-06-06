@@ -13,7 +13,6 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
-import QRScanPage from "./pages/QRScanPage";
 
 // Attendee Pages
 import AttendeeDashboard from "./pages/attendee/AttendeeDashboard";
@@ -78,13 +77,6 @@ const App = () => {
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              
-              {/* QR Scan Route - Protected but accessible to all authenticated users */}
-              <Route path="/scan" element={
-                <ProtectedRoute>
-                  <QRScanPage />
-                </ProtectedRoute>
-              } />
               
               {/* Protected Attendee Routes */}
               <Route path="/attendee" element={

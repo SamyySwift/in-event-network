@@ -1,19 +1,32 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/layouts/AppLayout';
-import { Github, Instagram, Linkedin, Twitter, Facebook, Globe } from 'lucide-react';
+import { ProfilePictureUpload } from '@/components/profile/ProfilePictureUpload';
+import { Github, Instagram, Linkedin, Facebook, Globe } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+
+// Twitter/X icon component
+const XIcon = ({ size = 16, className = "" }: { size?: number; className?: string }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    className={className}
+  >
+    <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/>
+  </svg>
+);
 
 // Mock data for niche options
 const nicheOptions = [
@@ -48,31 +61,85 @@ const AttendeeProfile = () => {
   const { currentUser, updateUser } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
   
   const [profileData, setProfileData] = useState({
-    name: currentUser?.name || '',
-    photoUrl: currentUser?.photoUrl || '',
-    bio: currentUser?.bio || '',
-    niche: currentUser?.niche || '',
-    customTags: currentUser?.customTags || [],
-    networkingPreferences: currentUser?.networkingPreferences || [],
+    name: '',
+    photoUrl: '',
+    bio: '',
+    niche: '',
+    company: '',
+    customTags: [] as string[],
+    networkingPreferences: [] as string[],
     links: {
-      twitter: currentUser?.links?.twitter || '',
-      linkedin: currentUser?.links?.linkedin || '',
-      github: currentUser?.links?.github || '',
-      website: currentUser?.links?.website || '',
-      facebook: currentUser?.links?.facebook || '',
-      instagram: currentUser?.links?.instagram || '',
+      twitter: '',
+      linkedin: '',
+      github: '',
+      website: '',
+      facebook: '',
+      instagram: '',
     }
   });
   
   const [newTag, setNewTag] = useState('');
-  const [selectedNiche, setSelectedNiche] = useState(profileData.niche || '');
-  const [selectedNetworking, setSelectedNetworking] = useState<string[]>(
-    profileData.networkingPreferences || []
-  );
+  const [selectedNiche, setSelectedNiche] = useState('');
+  const [selectedNetworking, setSelectedNetworking] = useState<string[]>([]);
+
+  // Load profile data from Supabase on component mount
+  useEffect(() => {
+    const loadProfileData = async () => {
+      if (!currentUser?.id) return;
+
+      try {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', currentUser.id)
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          throw error;
+        }
+
+        if (profile) {
+          const loadedData = {
+            name: profile.name || '',
+            photoUrl: profile.photo_url || '',
+            bio: profile.bio || '',
+            niche: profile.niche || '',
+            company: profile.company || '',
+            customTags: profile.tags || [],
+            networkingPreferences: profile.networking_preferences || [],
+            links: {
+              twitter: profile.twitter_link || '',
+              linkedin: profile.linkedin_link || '',
+              github: profile.github_link || '',
+              website: profile.website_link || '',
+              facebook: profile.facebook_link || '',
+              instagram: profile.instagram_link || '',
+            }
+          };
+          
+          setProfileData(loadedData);
+          setSelectedNiche(loadedData.niche);
+          setSelectedNetworking(loadedData.networkingPreferences);
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error);
+        toast({
+          title: "Error loading profile",
+          description: "There was a problem loading your profile data",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProfileData();
+  }, [currentUser?.id, toast]);
   
   const handleAddTag = () => {
     if (newTag.trim() && !profileData.customTags.includes(newTag.trim())) {
@@ -98,6 +165,10 @@ const AttendeeProfile = () => {
       setSelectedNetworking([...selectedNetworking, pref]);
     }
   };
+
+  const handleProfilePictureUpdate = (imageUrl: string) => {
+    setProfileData(prev => ({ ...prev, photoUrl: imageUrl }));
+  };
   
   const handleSave = async () => {
     setIsSubmitting(true);
@@ -111,6 +182,7 @@ const AttendeeProfile = () => {
           photo_url: profileData.photoUrl,
           bio: profileData.bio,
           niche: selectedNiche,
+          company: profileData.company,
           tags: profileData.customTags,
           networking_preferences: selectedNetworking,
           twitter_link: profileData.links.twitter,
@@ -169,6 +241,18 @@ const AttendeeProfile = () => {
       </AppLayout>
     );
   }
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="max-w-4xl mx-auto">
+          <div className="flex justify-center items-center min-h-[400px]">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
   
   return (
     <AppLayout>
@@ -207,28 +291,13 @@ const AttendeeProfile = () => {
           {/* Profile Header */}
           <CardHeader className="bg-connect-50 dark:bg-connect-900/20 border-b dark:border-gray-700">
             <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
-              <div className="relative">
-                <Avatar className="h-24 w-24 border-4 border-white shadow-md">
-                  {profileData.photoUrl ? (
-                    <AvatarImage src={profileData.photoUrl} alt={profileData.name} />
-                  ) : (
-                    <AvatarFallback className="text-2xl bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300">
-                      {profileData.name.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                
-                {isEditing && (
-                  <div className="absolute bottom-0 right-0">
-                    <Button size="sm" variant="secondary" className="h-8 w-8 rounded-full p-0">
-                      <span className="sr-only">Edit photo</span>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
-                      </svg>
-                    </Button>
-                  </div>
-                )}
-              </div>
+              <ProfilePictureUpload
+                currentImageUrl={profileData.photoUrl}
+                userId={currentUser.id}
+                userName={profileData.name || 'User'}
+                onImageUpdate={handleProfilePictureUpdate}
+                isEditing={isEditing}
+              />
               
               <div className="flex-1">
                 {isEditing ? (
@@ -242,11 +311,14 @@ const AttendeeProfile = () => {
                   </div>
                 ) : (
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{profileData.name}</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{profileData.name || 'Add your name'}</h2>
                     {profileData.niche && (
                       <Badge variant="secondary" className="mt-1 bg-connect-100 text-connect-800 hover:bg-connect-200 dark:bg-connect-900/50 dark:text-connect-300">
                         {profileData.niche}
                       </Badge>
+                    )}
+                    {profileData.company && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{profileData.company}</p>
                     )}
                   </div>
                 )}
@@ -268,6 +340,24 @@ const AttendeeProfile = () => {
               ) : (
                 <p className="text-gray-700 dark:text-gray-300">
                   {profileData.bio || "No bio added yet."}
+                </p>
+              )}
+            </div>
+            
+            <Separator />
+
+            {/* Company Section */}
+            <div>
+              <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">Company</h3>
+              {isEditing ? (
+                <Input
+                  placeholder="Your company or organization"
+                  value={profileData.company}
+                  onChange={(e) => setProfileData({ ...profileData, company: e.target.value })}
+                />
+              ) : (
+                <p className="text-gray-700 dark:text-gray-300">
+                  {profileData.company || "No company added yet."}
                 </p>
               )}
             </div>
@@ -464,8 +554,8 @@ const AttendeeProfile = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="twitter" className="flex items-center text-gray-900 dark:text-white">
-                      <Twitter size={16} className="mr-2" />
-                      Twitter
+                      <XIcon size={16} className="mr-2" />
+                      X (Twitter)
                     </Label>
                     <Input
                       id="twitter"
@@ -474,7 +564,7 @@ const AttendeeProfile = () => {
                         ...profileData,
                         links: { ...profileData.links, twitter: e.target.value }
                       })}
-                      placeholder="https://twitter.com/username"
+                      placeholder="https://x.com/username"
                     />
                   </div>
                   
@@ -567,8 +657,8 @@ const AttendeeProfile = () => {
                       rel="noopener noreferrer"
                       className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
                     >
-                      <Twitter size={24} className="text-[#1DA1F2] mb-2" />
-                      <span className="text-xs text-gray-900 dark:text-white">Twitter</span>
+                      <XIcon size={24} className="text-black dark:text-white mb-2" />
+                      <span className="text-xs text-gray-900 dark:text-white">X</span>
                     </a>
                   )}
                   

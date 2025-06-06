@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Users, MapPin, MessageSquare, Clock, Star, BookOpen, Wifi, WifiOff } from 'lucide-react';
@@ -10,32 +9,33 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useDashboard } from '@/hooks/useDashboard';
 import { Skeleton } from '@/components/ui/skeleton';
-
 const AttendeeDashboard = () => {
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
-  const { dashboardData, isLoading, error } = useDashboard();
-
+  const {
+    currentUser
+  } = useAuth();
+  const {
+    dashboardData,
+    isLoading,
+    error
+  } = useDashboard();
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
       hour: 'numeric',
-      minute: '2-digit',
+      minute: '2-digit'
     });
   };
-
   const formatTime = (dateString: string) => {
     return new Date(dateString).toLocaleTimeString('en-US', {
       hour: 'numeric',
-      minute: '2-digit',
+      minute: '2-digit'
     });
   };
-
   if (isLoading) {
-    return (
-      <AppLayout>
+    return <AppLayout>
         <div className="max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <Skeleton className="h-8 w-64" />
@@ -48,13 +48,10 @@ const AttendeeDashboard = () => {
             <Skeleton className="h-48 w-full" />
           </div>
         </div>
-      </AppLayout>
-    );
+      </AppLayout>;
   }
-
   if (error) {
-    return (
-      <AppLayout>
+    return <AppLayout>
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
@@ -66,14 +63,16 @@ const AttendeeDashboard = () => {
             </div>
           </div>
         </div>
-      </AppLayout>
-    );
+      </AppLayout>;
   }
-
-  const { currentEvent, upcomingEvents, nextSession, recentAnnouncements, suggestedConnections } = dashboardData || {};
-
-  return (
-    <AppLayout>
+  const {
+    currentEvent,
+    upcomingEvents,
+    nextSession,
+    recentAnnouncements,
+    suggestedConnections
+  } = dashboardData || {};
+  return <AppLayout>
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div>
@@ -84,9 +83,7 @@ const AttendeeDashboard = () => {
             <p className="text-muted-foreground">Live dashboard updated every 30 seconds</p>
           </div>
           
-          <Button onClick={() => navigate('/scan')} className="bg-connect-600 hover:bg-connect-700">
-            Scan QR Code
-          </Button>
+          
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -95,25 +92,20 @@ const AttendeeDashboard = () => {
             <Card>
               <CardHeader className="bg-connect-50 border-b">
                 <CardTitle className="text-xl flex items-center gap-2">
-                  {currentEvent ? (
-                    <>
+                  {currentEvent ? <>
                       <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
                       Live Event
-                    </>
-                  ) : (
-                    <>
+                    </> : <>
                       <Calendar className="h-5 w-5" />
                       {upcomingEvents?.[0] ? 'Next Event' : 'No Events Scheduled'}
-                    </>
-                  )}
+                    </>}
                 </CardTitle>
                 <CardDescription>
                   {currentEvent ? 'You\'re attending this event now' : 'Upcoming event information'}
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
-                {currentEvent || upcomingEvents?.[0] ? (
-                  <>
+                {currentEvent || upcomingEvents?.[0] ? <>
                     <h3 className="text-xl font-semibold mb-2">
                       {(currentEvent || upcomingEvents?.[0])?.name}
                     </h3>
@@ -121,41 +113,30 @@ const AttendeeDashboard = () => {
                       <div className="flex items-center">
                         <Clock className="h-4 w-4 mr-2" />
                         <span>
-                          {currentEvent ? (
-                            `Started: ${formatTime(currentEvent.start_time)} - Ends: ${formatTime(currentEvent.end_time)}`
-                          ) : (
-                            `Starts: ${formatDate(upcomingEvents[0].start_time)}`
-                          )}
+                          {currentEvent ? `Started: ${formatTime(currentEvent.start_time)} - Ends: ${formatTime(currentEvent.end_time)}` : `Starts: ${formatDate(upcomingEvents[0].start_time)}`}
                         </span>
                       </div>
                       <div className="flex items-center">
                         <MapPin className="h-4 w-4 mr-2" />
                         <span>{(currentEvent || upcomingEvents?.[0])?.location || 'Online'}</span>
                       </div>
-                      {(currentEvent || upcomingEvents?.[0])?.description && (
-                        <p className="text-sm mt-2">
+                      {(currentEvent || upcomingEvents?.[0])?.description && <p className="text-sm mt-2">
                           {(currentEvent || upcomingEvents?.[0])?.description}
-                        </p>
-                      )}
+                        </p>}
                     </div>
-                  </>
-                ) : (
-                  <div className="text-center py-8">
+                  </> : <div className="text-center py-8">
                     <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
                     <p className="text-muted-foreground">No events scheduled at this time</p>
-                  </div>
-                )}
+                  </div>}
               </CardContent>
-              {(currentEvent || upcomingEvents?.[0]) && (
-                <CardFooter className="flex justify-between">
+              {(currentEvent || upcomingEvents?.[0]) && <CardFooter className="flex justify-between">
                   <Button variant="outline" onClick={() => navigate('/attendee/map')}>
                     Find Your Way
                   </Button>
                   <Button onClick={() => navigate('/attendee/schedule')}>
                     View Schedule
                   </Button>
-                </CardFooter>
-              )}
+                </CardFooter>}
             </Card>
           </div>
           
@@ -169,8 +150,7 @@ const AttendeeDashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
-                {nextSession ? (
-                  <>
+                {nextSession ? <>
                     <h3 className="text-lg font-semibold mb-2">
                       {nextSession.session_title || 'Speaker Session'}
                     </h3>
@@ -183,17 +163,12 @@ const AttendeeDashboard = () => {
                         <Users className="h-4 w-4 mr-2" />
                         <span>Speaker: {nextSession.name}</span>
                       </div>
-                      {nextSession.title && (
-                        <p className="text-xs">{nextSession.title}</p>
-                      )}
+                      {nextSession.title && <p className="text-xs">{nextSession.title}</p>}
                     </div>
-                  </>
-                ) : (
-                  <div className="text-center py-4">
+                  </> : <div className="text-center py-4">
                     <MessageSquare className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                     <p className="text-sm text-muted-foreground">No sessions scheduled</p>
-                  </div>
-                )}
+                  </div>}
               </CardContent>
               <CardFooter>
                 <Button variant="outline" className="w-full" onClick={() => navigate('/attendee/questions')}>
@@ -205,15 +180,13 @@ const AttendeeDashboard = () => {
         </div>
 
         {/* Recent Announcements */}
-        {recentAnnouncements && recentAnnouncements.length > 0 && (
-          <div className="mt-8">
+        {recentAnnouncements && recentAnnouncements.length > 0 && <div className="mt-8">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
               Recent Announcements
             </h2>
             <div className="grid gap-4">
-              {recentAnnouncements.map((announcement) => (
-                <Card key={announcement.id} className="border-l-4 border-l-blue-500">
+              {recentAnnouncements.map(announcement => <Card key={announcement.id} className="border-l-4 border-l-blue-500">
                   <CardContent className="pt-4">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
@@ -232,11 +205,9 @@ const AttendeeDashboard = () => {
                       </div>
                     </div>
                   </CardContent>
-                </Card>
-              ))}
+                </Card>)}
             </div>
-          </div>
-        )}
+          </div>}
         
         {/* Quick Actions */}
         <div className="mt-8">
@@ -270,8 +241,7 @@ const AttendeeDashboard = () => {
         </div>
         
         {/* Suggested Connections */}
-        {suggestedConnections && suggestedConnections.length > 0 && (
-          <div className="mt-8">
+        {suggestedConnections && suggestedConnections.length > 0 && <div className="mt-8">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">People You Might Want to Meet</h2>
               <Button variant="link" className="text-connect-600 p-0" onClick={() => navigate('/attendee/search')}>
@@ -280,42 +250,29 @@ const AttendeeDashboard = () => {
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-              {suggestedConnections.map(connection => (
-                <Card key={connection.id} className="overflow-hidden">
+              {suggestedConnections.map(connection => <Card key={connection.id} className="overflow-hidden">
                   <div className="p-4 flex space-x-4">
                     <Avatar className="h-12 w-12">
-                      {connection.photo_url ? (
-                        <AvatarImage src={connection.photo_url} alt={connection.name} />
-                      ) : (
-                        <AvatarFallback className="bg-connect-100 text-connect-600">
+                      {connection.photo_url ? <AvatarImage src={connection.photo_url} alt={connection.name} /> : <AvatarFallback className="bg-connect-100 text-connect-600">
                           {connection.name?.split(' ').map(n => n[0]).join('') || '?'}
-                        </AvatarFallback>
-                      )}
+                        </AvatarFallback>}
                     </Avatar>
                     <div className="flex-1">
                       <h3 className="font-medium">{connection.name || 'Unknown'}</h3>
                       <p className="text-sm text-muted-foreground">
                         {connection.niche || connection.company || 'Professional'}
                       </p>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="mt-2 text-xs h-8" 
-                        onClick={() => navigate(`/attendee/profile/${connection.id}`)}
-                      >
+                      <Button size="sm" variant="outline" className="mt-2 text-xs h-8" onClick={() => navigate(`/attendee/profile/${connection.id}`)}>
                         View Profile
                       </Button>
                     </div>
                   </div>
-                </Card>
-              ))}
+                </Card>)}
             </div>
-          </div>
-        )}
+          </div>}
         
         {/* Event Feedback */}
-        {currentEvent && (
-          <div className="mt-8 bg-gray-50 rounded-lg p-6 flex flex-col sm:flex-row items-center justify-between">
+        {currentEvent && <div className="mt-8 bg-gray-50 rounded-lg p-6 flex flex-col sm:flex-row items-center justify-between">
             <div>
               <h3 className="font-semibold text-lg">How's your event experience?</h3>
               <p className="text-muted-foreground text-sm">Help improve future events by sharing your feedback</p>
@@ -324,11 +281,8 @@ const AttendeeDashboard = () => {
               <Star className="h-4 w-4 mr-2" />
               Rate this Event
             </Button>
-          </div>
-        )}
+          </div>}
       </div>
-    </AppLayout>
-  );
+    </AppLayout>;
 };
-
 export default AttendeeDashboard;

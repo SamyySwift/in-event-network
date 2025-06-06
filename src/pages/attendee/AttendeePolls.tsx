@@ -43,8 +43,8 @@ const AttendeePolls = () => {
 
   const getStatusBadge = (poll: any) => {
     const now = new Date();
-    const startTime = new Date(poll.start_time);
-    const endTime = poll.end_time ? new Date(poll.end_time) : null;
+    const startTime = new Date((poll as any).start_time);
+    const endTime = (poll as any).end_time ? new Date((poll as any).end_time) : null;
 
     if (now < startTime) {
       return <Badge variant="outline">Upcoming</Badge>;
@@ -57,8 +57,8 @@ const AttendeePolls = () => {
 
   const isPollActive = (poll: any) => {
     const now = new Date();
-    const startTime = new Date(poll.start_time);
-    const endTime = poll.end_time ? new Date(poll.end_time) : null;
+    const startTime = new Date((poll as any).start_time);
+    const endTime = (poll as any).end_time ? new Date((poll as any).end_time) : null;
     
     return now >= startTime && (!endTime || now <= endTime);
   };
@@ -118,12 +118,12 @@ const AttendeePolls = () => {
                         <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
                           <div className="flex items-center">
                             <Clock className="h-4 w-4 mr-1" />
-                            <span>Started: {formatDate(poll.start_time)}</span>
+                            <span>Started: {formatDate((poll as any).start_time)}</span>
                           </div>
-                          {poll.end_time && (
+                          {(poll as any).end_time && (
                             <div className="flex items-center">
                               <Clock className="h-4 w-4 mr-1" />
-                              <span>Ends: {formatDate(poll.end_time)}</span>
+                              <span>Ends: {formatDate((poll as any).end_time)}</span>
                             </div>
                           )}
                         </div>

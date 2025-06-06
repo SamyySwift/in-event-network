@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Shield, AlertTriangle, Info, CheckCircle, Loader } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
@@ -8,7 +9,7 @@ import EventAccessGuard from '@/components/EventAccessGuard';
 import { useEventParticipation } from '@/hooks/useEventParticipation';
 
 const AttendeeRules = () => {
-  const { rules, loading } = useRules();
+  const { rules, isLoading } = useRules();
   const { getJoinedEvents, loading: participationLoading } = useEventParticipation();
 
   const getPriorityIcon = (priority: string) => {
@@ -45,7 +46,7 @@ const AttendeeRules = () => {
 
   const hasEventAccess = getJoinedEvents().length > 0;
 
-  if (loading || participationLoading) {
+  if (isLoading || participationLoading) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">
@@ -69,7 +70,7 @@ const AttendeeRules = () => {
             </p>
           </div>
 
-          {loading ? (
+          {isLoading ? (
             <div className="flex items-center justify-center h-48">
               <Loader className="h-8 w-8 animate-spin" />
             </div>
@@ -96,7 +97,7 @@ const AttendeeRules = () => {
                       </CardHeader>
                       <CardContent>
                         <CardDescription className="text-gray-700 dark:text-gray-300">
-                          {rule.description}
+                          {rule.content}
                         </CardDescription>
                       </CardContent>
                     </Card>

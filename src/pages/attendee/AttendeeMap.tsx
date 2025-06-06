@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { MapPin, Phone, Clock, Info, Navigation } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
@@ -9,7 +10,7 @@ import EventAccessGuard from '@/components/EventAccessGuard';
 import { useEventParticipation } from '@/hooks/useEventParticipation';
 
 const AttendeeMap = () => {
-  const { facilities, loading } = useFacilities();
+  const { facilities, isLoading } = useFacilities();
   const { getJoinedEvents, loading: participationLoading } = useEventParticipation();
 
   const getIconForType = (iconType: string) => {
@@ -44,7 +45,7 @@ const AttendeeMap = () => {
 
   const hasEventAccess = getJoinedEvents().length > 0;
 
-  if (loading || participationLoading) {
+  if (isLoading || participationLoading) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-64">
@@ -88,14 +89,14 @@ const AttendeeMap = () => {
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <CardTitle className="text-xl text-gray-900 dark:text-white flex items-center gap-2">
-                          {getIconForType(facility.type)}
+                          {getIconForType(facility.icon_type || 'building')}
                           {facility.name}
                         </CardTitle>
                         <CardDescription className="text-gray-600 dark:text-gray-400">
                           {facility.description}
                         </CardDescription>
                       </div>
-                      <Badge className="uppercase">{facility.type}</Badge>
+                      <Badge className="uppercase">{facility.icon_type || 'facility'}</Badge>
                     </div>
                   </CardHeader>
                   <CardContent className="text-gray-700 dark:text-gray-300">
@@ -103,28 +104,22 @@ const AttendeeMap = () => {
                       <MapPin className="h-4 w-4 mr-2" />
                       <span>{facility.location}</span>
                     </div>
-                    {facility.hours && (
-                      <div className="flex items-center mb-2">
-                        <Clock className="h-4 w-4 mr-2" />
-                        <span>Hours: {facility.hours}</span>
-                      </div>
-                    )}
-                    {facility.contact_phone && (
+                    {facility.contact_info && facility.contact_type === 'phone' && (
                       <div className="flex items-center mb-2">
                         {getContactIcon('phone')}
-                        <span className="ml-1">{facility.contact_phone}</span>
+                        <span className="ml-1">{facility.contact_info}</span>
                       </div>
                     )}
-                    {facility.contact_email && (
+                    {facility.contact_info && facility.contact_type === 'email' && (
                       <div className="flex items-center mb-2">
                         {getContactIcon('email')}
-                        <span className="ml-1">{facility.contact_email}</span>
+                        <span className="ml-1">{facility.contact_info}</span>
                       </div>
                     )}
-                    {facility.directions && (
+                    {facility.rules && (
                       <div className="mt-4">
-                        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Directions</h4>
-                        <p className="text-sm">{facility.directions}</p>
+                        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Rules & Information</h4>
+                        <p className="text-sm">{facility.rules}</p>
                       </div>
                     )}
                   </CardContent>

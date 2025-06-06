@@ -19,7 +19,7 @@ import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
-interface SuggestionWithProfile {
+interface Suggestion {
   id: string;
   content: string;
   type: 'suggestion' | 'rating';
@@ -28,10 +28,16 @@ interface SuggestionWithProfile {
   created_at: string;
   user_id: string;
   event_id: string | null;
-  profiles: {
-    name: string;
-    photo_url: string | null;
-  } | null;
+}
+
+interface Profile {
+  id: string;
+  name: string | null;
+  photo_url: string | null;
+}
+
+interface SuggestionWithProfile extends Suggestion {
+  profile: Profile | null;
 }
 
 const AdminSuggestions = () => {
@@ -69,39 +75,58 @@ const AdminSuggestions = () => {
     try {
       console.log('Fetching suggestions...');
       
-      const { data, error } = await supabase
+      // First fetch suggestions
+      const { data: suggestionsData, error: suggestionsError } = await supabase
         .from('suggestions')
-        .select(`
-          id,
-          content,
-          type,
-          rating,
-          status,
-          created_at,
-          user_id,
-          event_id,
-          profiles(name, photo_url)
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching suggestions:', error);
-        throw error;
+      if (suggestionsError) {
+        console.error('Error fetching suggestions:', suggestionsError);
+        throw suggestionsError;
       }
       
-      console.log('Suggestions data:', data);
+      console.log('Suggestions data:', suggestionsData);
       
-      // Transform the data to match our interface
-      const transformedData: SuggestionWithProfile[] = (data || []).map(item => ({
-        ...item,
-        type: item.type as 'suggestion' | 'rating',
-        status: item.status as 'new' | 'reviewed' | 'implemented',
-        profiles: Array.isArray(item.profiles) && item.profiles.length > 0 
-          ? item.profiles[0] 
-          : null
+      if (!suggestionsData || suggestionsData.length === 0) {
+        setSuggestions([]);
+        setLoading(false);
+        return;
+      }
+
+      // Get unique user IDs
+      const userIds = [...new Set(suggestionsData.map(s => s.user_id).filter(Boolean))];
+      
+      // Fetch profiles for these users
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, name, photo_url')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        // Continue without profiles rather than failing completely
+      }
+
+      console.log('Profiles data:', profilesData);
+
+      // Map profiles by ID for easy lookup
+      const profilesMap = new Map();
+      if (profilesData) {
+        profilesData.forEach(profile => {
+          profilesMap.set(profile.id, profile);
+        });
+      }
+
+      // Combine suggestions with profiles
+      const suggestionsWithProfiles: SuggestionWithProfile[] = suggestionsData.map(suggestion => ({
+        ...suggestion,
+        type: suggestion.type as 'suggestion' | 'rating',
+        status: suggestion.status as 'new' | 'reviewed' | 'implemented',
+        profile: suggestion.user_id ? profilesMap.get(suggestion.user_id) || null : null
       }));
       
-      setSuggestions(transformedData);
+      setSuggestions(suggestionsWithProfiles);
     } catch (error) {
       console.error('Error fetching suggestions:', error);
       toast({
@@ -236,8 +261,8 @@ const AdminSuggestions = () => {
               </Card>
             ) : (
               filteredSuggestions.map(suggestion => {
-                const userName = suggestion.profiles?.name || 'Anonymous User';
-                const userPhoto = suggestion.profiles?.photo_url;
+                const userName = suggestion.profile?.name || 'Anonymous User';
+                const userPhoto = suggestion.profile?.photo_url;
                 
                 return (
                   <Card key={suggestion.id} className="hover:shadow-md transition-shadow">

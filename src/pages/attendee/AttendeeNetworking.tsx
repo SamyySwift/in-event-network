@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Send, Filter, UserPlus, MessageSquare, Twitter, Linkedin, Github, Instagram, Globe } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
@@ -328,7 +329,7 @@ const AttendeeNetworking = () => {
                                   return (
                                     <a 
                                       key={platform} 
-                                      href={getSocialUrl(platform, handle)}
+                                      href={getSocialUrl(platform, handle as string)}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="inline-flex items-center text-sm bg-gray-100 dark:bg-gray-700 rounded-full py-1 px-3 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"

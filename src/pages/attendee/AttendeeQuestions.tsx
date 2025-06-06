@@ -372,6 +372,7 @@ const AttendeeQuestions = () => {
 
   const myQuestions = questions.filter(q => q.user_id === currentUser?.id);
   const otherQuestions = questions.filter(q => q.user_id !== currentUser?.id);
+  const hasEventAccess = getJoinedEvents().length > 0;
 
   if (loading || participationLoading) {
     return (

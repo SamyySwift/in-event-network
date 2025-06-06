@@ -15,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle, XCircle, ArrowUpCircle, MessageSquare, Send } from 'lucide-react';
+import { CheckCircle, XCircle, ArrowUpCircle, MessageSquare, Send, Reply } from 'lucide-react';
 import { format } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -319,7 +319,7 @@ const AdminQuestions = () => {
         onTabChange={setActiveTab}
       >
         {['all', 'unanswered', 'answered', 'trending'].map(tabId => (
-          <TabsContent key={tabId} value={tabId} className="space-y-4">
+          <TabsContent key={tabId} value={tabId} className="space-y-6">
             {filteredQuestions.length === 0 ? (
               <Card>
                 <CardContent className="py-10 text-center text-muted-foreground">
@@ -336,79 +336,96 @@ const AdminQuestions = () => {
                 const userPhoto = question.profiles?.photo_url;
                 
                 return (
-                  <Card key={question.id} className={question.is_answered ? 'border-green-100' : ''}>
-                    <CardHeader className="pb-2">
+                  <Card key={question.id} className="shadow-lg border-l-4 border-l-primary/20">
+                    <CardHeader className="bg-gray-50/50 dark:bg-gray-800/50">
                       <div className="flex justify-between items-start">
                         <div className="flex items-center gap-3">
-                          <Avatar>
+                          <Avatar className="h-10 w-10">
                             <AvatarImage src={userPhoto || ''} />
-                            <AvatarFallback>{userName.charAt(0)}</AvatarFallback>
+                            <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                              {userName.charAt(0)}
+                            </AvatarFallback>
                           </Avatar>
                           <div>
-                            <CardTitle className="text-base">{userName}</CardTitle>
-                            <CardDescription>
+                            <CardTitle className="text-lg font-semibold">{userName}</CardTitle>
+                            <CardDescription className="flex items-center gap-2">
                               {format(new Date(question.created_at), 'MMM d, yyyy h:mm a')}
+                              <Badge variant="outline" className="ml-2">
+                                <ArrowUpCircle className="h-3 w-3 mr-1" />
+                                {question.upvotes}
+                              </Badge>
                             </CardDescription>
                           </div>
                         </div>
-                        <Badge variant={question.is_answered ? 'outline' : 'default'}>
-                          {question.is_answered ? 'Answered' : 'Pending'}
+                        <Badge variant={question.is_answered ? 'success' : 'warning'} className="text-xs">
+                          {question.is_answered ? '✓ Answered' : '⏳ Pending'}
                         </Badge>
                       </div>
                     </CardHeader>
-                    <CardContent>
-                      <p className="text-base mb-3">{question.content}</p>
+                    
+                    <CardContent className="pt-4">
+                      <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border">
+                        <p className="text-base leading-relaxed">{question.content}</p>
+                      </div>
                       
                       {question.response && (
-                        <div className="mt-4 p-3 bg-blue-50 border-l-4 border-blue-200 rounded-r">
-                          <div className="flex items-center gap-2 mb-2">
-                            <Badge variant="secondary">Admin Response</Badge>
+                        <div className="mt-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Reply className="h-4 w-4 text-blue-600" />
+                            <Badge variant="info" className="text-xs font-medium">
+                              Admin Response
+                            </Badge>
                             {question.response_created_at && (
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-xs text-blue-600 dark:text-blue-400">
                                 {format(new Date(question.response_created_at), 'MMM d, yyyy h:mm a')}
                               </span>
                             )}
                           </div>
-                          <p className="text-sm">{question.response}</p>
+                          <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed bg-white dark:bg-gray-800 p-3 rounded border-l-4 border-blue-400">
+                            {question.response}
+                          </p>
                         </div>
                       )}
 
-                      <div className="flex flex-wrap gap-2 text-sm mt-3">
-                        <Badge variant="outline" className="flex items-center gap-1">
-                          <ArrowUpCircle size={14} /> {question.upvotes} upvotes
-                        </Badge>
-                        {question.is_anonymous && (
-                          <Badge variant="secondary">Anonymous</Badge>
-                        )}
-                      </div>
-
                       {!question.response && (
-                        <div className="mt-4 space-y-3">
-                          <div>
-                            <label className="text-sm font-medium">Admin Response:</label>
-                            <Textarea
-                              placeholder="Type your response to this question..."
-                              value={responses[question.id] || ''}
-                              onChange={(e) => handleResponseChange(question.id, e.target.value)}
-                              rows={3}
-                              className="mt-1"
-                            />
+                        <div className="mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Send className="h-4 w-4 text-yellow-600" />
+                            <label className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                              Compose Response:
+                            </label>
                           </div>
+                          <Textarea
+                            placeholder="Type your response to this question..."
+                            value={responses[question.id] || ''}
+                            onChange={(e) => handleResponseChange(question.id, e.target.value)}
+                            rows={3}
+                            className="mb-3 border-yellow-300 focus:border-yellow-500"
+                          />
                           <Button
                             size="sm"
                             onClick={() => handleSubmitResponse(question.id)}
                             disabled={!responses[question.id]?.trim() || submittingResponse[question.id]}
-                            className="w-full"
+                            className="w-full bg-yellow-600 hover:bg-yellow-700"
                           >
                             <Send size={16} className="mr-2" />
                             {submittingResponse[question.id] ? 'Submitting...' : 'Submit Response'}
                           </Button>
                         </div>
                       )}
+
+                      {question.is_anonymous && (
+                        <div className="mt-3">
+                          <Badge variant="secondary" className="text-xs">
+                            🔒 Anonymous Question
+                          </Badge>
+                        </div>
+                      )}
                     </CardContent>
-                    <CardFooter className="border-t pt-3 flex justify-between">
-                      <div className="text-sm text-muted-foreground">
-                        Question ID: {question.id}
+                    
+                    <CardFooter className="border-t bg-gray-50/30 dark:bg-gray-800/30 flex justify-between items-center">
+                      <div className="text-xs text-muted-foreground">
+                        ID: {question.id.slice(0, 8)}...
                       </div>
                       <div className="flex gap-2">
                         {!question.is_answered && question.response && (

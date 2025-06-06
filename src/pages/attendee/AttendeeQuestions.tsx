@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { ArrowUp, MessageSquare, Send, User } from 'lucide-react';
+import { ArrowUp, MessageSquare, Send, User, Reply } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
 import { 
   Card, 
@@ -280,76 +281,86 @@ const AttendeeQuestions = () => {
   const renderQuestionCard = (question: QuestionWithProfile) => {
     const userName = question.profiles?.name || 'Anonymous';
     const userPhoto = question.profiles?.photo_url;
+    const isMyQuestion = question.user_id === currentUser?.id;
     
     console.log('Rendering question:', question.id, 'with response:', question.response, 'response_created_at:', question.response_created_at);
     
     return (
-      <Card key={question.id} className={question.is_answered ? 'border-green-200 bg-green-50/50' : ''}>
-        <CardContent className="pt-6">
+      <Card key={question.id} className={`shadow-md border-l-4 ${question.is_answered ? 'border-l-green-400 bg-green-50/30' : 'border-l-primary/30'} ${isMyQuestion ? 'ring-2 ring-primary/10' : ''}`}>
+        <CardContent className="p-6">
           <div className="flex items-start gap-4">
-            <Avatar className="flex-shrink-0">
+            <Avatar className="flex-shrink-0 h-12 w-12">
               {!question.is_anonymous && userPhoto ? (
                 <AvatarImage src={userPhoto} />
               ) : (
-                <AvatarFallback>
-                  {question.is_anonymous ? <User className="h-4 w-4" /> : userName.charAt(0)}
+                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                  {question.is_anonymous ? <User className="h-5 w-5" /> : userName.charAt(0)}
                 </AvatarFallback>
               )}
             </Avatar>
             
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="font-medium text-sm">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="font-semibold text-base">
                   {question.is_anonymous ? 'Anonymous' : userName}
                 </span>
-                <span className="text-xs text-muted-foreground">
+                {isMyQuestion && (
+                  <Badge variant="subtle" className="text-xs">
+                    Your Question
+                  </Badge>
+                )}
+                <span className="text-sm text-muted-foreground">
                   {format(new Date(question.created_at), 'MMM d, yyyy h:mm a')}
                 </span>
                 {question.is_answered && (
-                  <Badge className="bg-green-100 text-green-800">
-                    Answered
+                  <Badge variant="success" className="text-xs">
+                    ✓ Answered
                   </Badge>
                 )}
               </div>
               
-              <p className="text-gray-800 dark:text-gray-200 mb-3">
-                {question.content}
-              </p>
+              <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border mb-4">
+                <p className="text-gray-800 dark:text-gray-200 leading-relaxed">
+                  {question.content}
+                </p>
+              </div>
 
               {question.response && (
-                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-200 dark:border-blue-600 rounded-r">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100">
+                <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Reply className="h-4 w-4 text-blue-600" />
+                    <Badge variant="info" className="text-xs font-medium">
                       Admin Response
                     </Badge>
                     {question.response_created_at && (
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-blue-600 dark:text-blue-400">
                         {format(new Date(question.response_created_at), 'MMM d, yyyy h:mm a')}
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed bg-white dark:bg-gray-800 p-3 rounded border-l-4 border-blue-400">
                     {question.response}
                   </p>
                 </div>
               )}
               
-              <div className="flex items-center gap-4 mt-3">
+              <div className="flex items-center gap-4">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={() => handleUpvote(question.id)}
-                  className="text-gray-600 hover:text-connect-600"
+                  className="text-gray-600 hover:text-primary hover:bg-primary/10"
                 >
                   <ArrowUp className="h-4 w-4 mr-1" />
                   {question.upvotes}
                 </Button>
                 
-                {question.response && question.user_id === currentUser?.id && (
+                {question.response && isMyQuestion && (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleFeedback(question.id)}
+                    className="text-primary border-primary/20 hover:bg-primary/10"
                   >
                     Rate Answer
                   </Button>
@@ -381,29 +392,31 @@ const AttendeeQuestions = () => {
   return (
     <AppLayout>
       <div className="animate-fade-in max-w-4xl mx-auto">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Q&A Session</h1>
-          <p className="text-gray-600 dark:text-gray-400">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary-600 bg-clip-text text-transparent">
+            Q&A Session
+          </h1>
+          <p className="text-lg text-muted-foreground mt-2">
             Ask questions to speakers and interact with other attendees
           </p>
         </div>
 
         {/* Submit Question Form */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-connect-600" />
+        <Card className="mb-8 shadow-lg border-2 border-primary/10">
+          <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10">
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <MessageSquare className="h-6 w-6 text-primary" />
               Ask Your Question
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-base">
               Your question will be visible to speakers and other attendees
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6 p-6">
             <div>
-              <Label htmlFor="session">Select Session</Label>
+              <Label htmlFor="session" className="text-sm font-medium">Select Session</Label>
               <Select value={selectedSessionId} onValueChange={setSelectedSessionId}>
-                <SelectTrigger>
+                <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Choose a session (optional)" />
                 </SelectTrigger>
                 <SelectContent>
@@ -433,13 +446,14 @@ const AttendeeQuestions = () => {
             </div>
             
             <div>
-              <Label htmlFor="question">Your Question</Label>
+              <Label htmlFor="question" className="text-sm font-medium">Your Question</Label>
               <Textarea
                 id="question"
                 placeholder="Type your question here..."
                 value={newQuestion}
                 onChange={(e) => setNewQuestion(e.target.value)}
                 rows={4}
+                className="mt-1"
               />
             </div>
 
@@ -449,21 +463,21 @@ const AttendeeQuestions = () => {
                 checked={isAnonymous}
                 onCheckedChange={setIsAnonymous}
               />
-              <Label htmlFor="anonymous">Ask anonymously</Label>
+              <Label htmlFor="anonymous" className="text-sm">Ask anonymously</Label>
             </div>
 
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground font-medium">Tips for good questions:</p>
-              <ul className="text-sm text-muted-foreground space-y-1">
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-700">
+              <p className="text-sm font-medium text-blue-800 dark:text-blue-200 mb-2">Tips for good questions:</p>
+              <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
                 <li>• Be specific and concise</li>
                 <li>• Ask about topics relevant to the session</li>
                 <li>• Avoid yes/no questions</li>
               </ul>
             </div>
 
-            <div className="flex gap-2">
-              <Button variant="outline" className="flex-1">
-                Cancel
+            <div className="flex gap-3">
+              <Button variant="outline" className="flex-1" onClick={() => setNewQuestion('')}>
+                Clear
               </Button>
               <Button 
                 onClick={handleSubmitQuestion} 
@@ -480,30 +494,32 @@ const AttendeeQuestions = () => {
         {/* My Questions */}
         {myQuestions.length > 0 && (
           <>
-            <div className="mb-4">
-              <h2 className="text-xl font-semibold">My Questions</h2>
+            <div className="mb-6">
+              <h2 className="text-2xl font-semibold text-primary">My Questions</h2>
+              <p className="text-muted-foreground">Questions you have submitted</p>
             </div>
-            <div className="space-y-4 mb-6">
+            <div className="space-y-6 mb-8">
               {myQuestions.map(renderQuestionCard)}
             </div>
-            <Separator className="my-6" />
+            <Separator className="my-8" />
           </>
         )}
 
         {/* All Questions */}
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold">Community Questions</h2>
+        <div className="mb-6">
+          <h2 className="text-2xl font-semibold">Community Questions</h2>
+          <p className="text-muted-foreground">Questions from other attendees</p>
         </div>
         
-        <div className="space-y-4">
+        <div className="space-y-6">
           {otherQuestions.length > 0 ? (
             otherQuestions.map(renderQuestionCard)
           ) : (
-            <Card>
-              <CardContent className="py-10 text-center text-muted-foreground">
-                <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No questions from other attendees yet.</p>
-                <p className="text-sm">Be the first to ask a question!</p>
+            <Card className="shadow-md">
+              <CardContent className="py-12 text-center text-muted-foreground">
+                <MessageSquare className="h-16 w-16 mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium">No questions from other attendees yet.</p>
+                <p className="text-sm mt-2">Be the first to ask a question!</p>
               </CardContent>
             </Card>
           )}

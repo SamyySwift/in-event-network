@@ -33,6 +33,7 @@ interface QuestionWithProfile {
   response: string | null;
   answered_at: string | null;
   answered_by: string | null;
+  response_created_at: string | null;
   profiles: {
     name: string;
     photo_url: string | null;
@@ -78,7 +79,21 @@ const AdminQuestions = () => {
       
       const { data: questionsData, error: questionsError } = await supabase
         .from('questions')
-        .select('*')
+        .select(`
+          id,
+          content,
+          created_at,
+          upvotes,
+          is_answered,
+          user_id,
+          session_id,
+          event_id,
+          is_anonymous,
+          response,
+          answered_at,
+          answered_by,
+          response_created_at
+        `)
         .order('created_at', { ascending: false });
 
       if (questionsError) {
@@ -226,19 +241,28 @@ const AdminQuestions = () => {
 
     try {
       const { data: user } = await supabase.auth.getUser();
+      const now = new Date().toISOString();
       
-      const { error } = await supabase
+      console.log('Submitting response for question:', questionId, 'Response:', responseText.trim());
+      
+      const { data, error } = await supabase
         .from('questions')
         .update({ 
           response: responseText.trim(),
           is_answered: true,
-          answered_at: new Date().toISOString(),
+          answered_at: now,
           answered_by: user.user?.id,
-          response_created_at: new Date().toISOString()
+          response_created_at: now
         })
-        .eq('id', questionId);
+        .eq('id', questionId)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+
+      console.log('Response submitted successfully:', data);
 
       toast({
         title: "Success",
@@ -250,6 +274,9 @@ const AdminQuestions = () => {
         ...prev,
         [questionId]: ''
       }));
+
+      // Immediately refresh the questions to show the update
+      await fetchQuestions();
     } catch (error) {
       console.error('Error submitting response:', error);
       toast({
@@ -336,9 +363,9 @@ const AdminQuestions = () => {
                         <div className="mt-4 p-3 bg-blue-50 border-l-4 border-blue-200 rounded-r">
                           <div className="flex items-center gap-2 mb-2">
                             <Badge variant="secondary">Admin Response</Badge>
-                            {question.answered_at && (
+                            {question.response_created_at && (
                               <span className="text-xs text-muted-foreground">
-                                {format(new Date(question.answered_at), 'MMM d, yyyy h:mm a')}
+                                {format(new Date(question.response_created_at), 'MMM d, yyyy h:mm a')}
                               </span>
                             )}
                           </div>

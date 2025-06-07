@@ -1,8 +1,7 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -17,53 +16,17 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 }) => {
   const { currentUser, isLoading } = useAuth();
   const location = useLocation();
-  const [hasEventAccess, setHasEventAccess] = useState<boolean | null>(null);
 
-  useEffect(() => {
-    console.log('ProtectedRoute check:', { 
-      currentUser: currentUser?.email, 
-      userRole: currentUser?.role,
-      requiredRole,
-      isLoading,
-      path: location.pathname
-    });
+  console.log('ProtectedRoute check:', { 
+    currentUser: currentUser?.email, 
+    userRole: currentUser?.role,
+    requiredRole,
+    isLoading,
+    path: location.pathname
+  });
 
-    // Only check event access for attendee protected routes
-    const checkEventAccess = async () => {
-      if (currentUser?.role === 'attendee' && requiredRole === 'attendee') {
-        try {
-          const { data, error } = await supabase
-            .from('event_participants')
-            .select('id')
-            .eq('user_id', currentUser.id)
-            .limit(1);
-
-          if (error) {
-            console.error('Error checking event participation:', error);
-            setHasEventAccess(false);
-            return;
-          }
-
-          const hasAccess = data && data.length > 0;
-          console.log('Attendee event access check:', hasAccess);
-          setHasEventAccess(hasAccess);
-        } catch (error) {
-          console.error('Error in event access check:', error);
-          setHasEventAccess(false);
-        }
-      } else {
-        // Hosts or non-attendee-specific routes don't need event access
-        setHasEventAccess(true);
-      }
-    };
-
-    if (currentUser && !isLoading) {
-      checkEventAccess();
-    }
-  }, [currentUser, isLoading, requiredRole]);
-
-  // Show loading while checking authentication or event access (only for attendee routes)
-  if (isLoading || (currentUser && requiredRole === 'attendee' && currentUser.role === 'attendee' && hasEventAccess === null)) {
+  // Show loading while checking authentication
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
         <div className="text-center">
@@ -85,13 +48,18 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     console.log(`Access denied: User role ${currentUser.role} != required ${requiredRole}`);
     
     // Redirect based on user's actual role
-    const redirectPath = currentUser.role === 'host' ? '/admin' : '/attendee';
-    return <Navigate to={redirectPath} replace />;
+    if (currentUser.role === 'host') {
+      return <Navigate to="/admin" replace />;
+    } else if (currentUser.role === 'attendee') {
+      // Always redirect attendees to join page for access verification
+      return <Navigate to="/join" replace />;
+    }
   }
 
-  // For attendees accessing attendee routes, check if they have joined an event
-  if (currentUser.role === 'attendee' && requiredRole === 'attendee' && !hasEventAccess) {
-    console.log('Attendee has not joined an event, redirecting to join page');
+  // For attendees accessing attendee routes, always redirect to join first
+  // The join page will handle the access verification and redirect appropriately
+  if (currentUser.role === 'attendee' && requiredRole === 'attendee' && location.pathname !== '/join') {
+    console.log('Attendee accessing protected route, redirecting to join for verification');
     return <Navigate to="/join" replace />;
   }
 

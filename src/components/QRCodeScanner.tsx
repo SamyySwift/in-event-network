@@ -27,9 +27,10 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
         setScannerReady(true);
 
         const qrCodeSuccessCallback = (decodedText: string) => {
+          console.log('QR Code scanned:', decodedText);
           onScanSuccess(decodedText);
           if (html5QrCode) {
-            html5QrCode.stop();
+            html5QrCode.stop().catch(err => console.error('Error stopping scanner:', err));
           }
         };
 
@@ -41,13 +42,17 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
             config,
             qrCodeSuccessCallback,
             (errorMessage) => {
-              if (onScanError) onScanError(errorMessage);
+              // Only log actual errors, not routine scanning messages
+              if (!errorMessage.includes('NotFoundException')) {
+                console.log('QR Scanner message:', errorMessage);
+                if (onScanError) onScanError(errorMessage);
+              }
             }
           );
         }
       } catch (err: any) {
+        console.error("QR Scanner initialization error:", err);
         if (onScanError) onScanError(err.toString());
-        console.error("QR Scanner error:", err);
       }
     };
 

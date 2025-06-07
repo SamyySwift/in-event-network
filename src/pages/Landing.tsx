@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import QRCodeScanner from '@/components/QRCodeScanner';
 import { useToast } from '@/hooks/use-toast';
+import { useJoinEvent } from '@/hooks/useJoinEvent';
 import { Users, Calendar, MapPin, Zap, ArrowRight, Sparkles, Network, Brain, Rocket, Globe, Shield, Star } from 'lucide-react';
 import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from '@/components/ui/navigation-menu';
 import { cn } from '@/lib/utils';
@@ -12,11 +13,28 @@ const Landing = () => {
   const [showScanner, setShowScanner] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { joinEvent, isJoining } = useJoinEvent();
 
   const handleScanSuccess = (decodedText: string) => {
+    console.log('QR Code decoded:', decodedText);
+    setShowScanner(false);
+
     try {
-      const url = new URL(decodedText);
-      if (url.protocol === 'connect:') {
+      // Handle different QR code formats
+      let accessCode = '';
+
+      // Check if it's a URL with access code parameter
+      if (decodedText.includes('code=')) {
+        const url = new URL(decodedText);
+        accessCode = url.searchParams.get('code') || '';
+      }
+      // Check if it's just a 6-digit access code
+      else if (/^\d{6}$/.test(decodedText.trim())) {
+        accessCode = decodedText.trim();
+      }
+      // Handle connect:// protocol URLs
+      else if (decodedText.startsWith('connect://')) {
+        const url = new URL(decodedText);
         const pathParts = url.pathname.split('/');
         if (pathParts.length >= 2 && pathParts[1] === 'event') {
           const eventId = pathParts[2];
@@ -26,13 +44,19 @@ const Landing = () => {
           }
         }
       }
-      
-      toast({
-        title: "Invalid QR Code",
-        description: "This doesn't appear to be a valid Connect event code.",
-        variant: "destructive"
-      });
+
+      if (accessCode && /^\d{6}$/.test(accessCode)) {
+        console.log('Extracted access code:', accessCode);
+        joinEvent(accessCode);
+      } else {
+        toast({
+          title: "Invalid QR Code",
+          description: "This doesn't appear to be a valid Connect event code.",
+          variant: "destructive"
+        });
+      }
     } catch (error) {
+      console.error('QR Code parsing error:', error);
       toast({
         title: "Invalid QR Code",
         description: "This doesn't appear to be a valid Connect event code.",
@@ -161,9 +185,10 @@ const Landing = () => {
                 size="lg" 
                 className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white shadow-2xl shadow-purple-500/30 border-0 px-8 py-4 text-lg font-semibold transform hover:scale-105 transition-all duration-200"
                 onClick={() => setShowScanner(true)}
+                disabled={isJoining}
               >
                 <Zap className="mr-2 h-5 w-5" />
-                Quantum Scan
+                {isJoining ? 'Joining...' : 'Quantum Scan'}
               </Button>
               <Button 
                 size="lg" 
@@ -192,6 +217,7 @@ const Landing = () => {
                     variant="ghost" 
                     className="mt-6 w-full text-white/80 hover:text-white hover:bg-white/10"
                     onClick={() => setShowScanner(false)}
+                    disabled={isJoining}
                   >
                     Deactivate Scanner
                   </Button>

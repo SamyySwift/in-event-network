@@ -72,18 +72,21 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="qr-url">Event URL</Label>
+          <Label htmlFor="qr-url">Event Registration URL</Label>
           <div className="flex gap-2">
             <Input
               id="qr-url"
               value={qrUrl}
               onChange={(e) => setQrUrl(e.target.value)}
-              placeholder="Enter event URL"
+              placeholder="Enter event registration URL"
             />
             <Button variant="outline" size="icon" onClick={copyQRCodeUrl}>
               <Copy className="h-4 w-4" />
             </Button>
           </div>
+          <p className="text-xs text-muted-foreground">
+            This URL should contain your access code (e.g., {window.location.origin}/register?code=123456)
+          </p>
         </div>
         
         <div className="space-y-2">

@@ -33,6 +33,12 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
         setPermissionDenied(false);
         setIsInitializing(true);
         
+        // Clear any existing content in the container
+        const container = document.getElementById(qrId);
+        if (container) {
+          container.innerHTML = '';
+        }
+
         html5QrCode = new Html5Qrcode(qrId);
 
         const qrCodeSuccessCallback = (decodedText: string) => {
@@ -43,40 +49,87 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
           }
         };
 
+        // Enhanced config for better mobile compatibility
         const config = { 
           fps: 10, 
-          qrbox: { width: 200, height: 200 },
-          aspectRatio: 1.0
+          qrbox: { width: 250, height: 250 },
+          aspectRatio: 1.0,
+          disableFlip: false,
+          videoConstraints: {
+            facingMode: { ideal: "environment" }
+          }
         };
 
-        console.log('Starting camera...');
-        await html5QrCode.start(
+        console.log('Starting camera with enhanced config...');
+        
+        // Try different camera constraints for better mobile support
+        const cameraConstraints = [
           { facingMode: "environment" },
-          config,
-          qrCodeSuccessCallback,
-          (errorMessage) => {
-            // Only log actual errors, not routine scanning messages
-            if (!errorMessage.includes('NotFoundException')) {
-              console.log('QR Scanner message:', errorMessage);
-              if (onScanError) onScanError(errorMessage);
-            }
-          }
-        );
+          { facingMode: "user" },
+          { facingMode: { exact: "environment" } },
+          "environment",
+          "user"
+        ];
 
-        console.log('Camera started successfully');
+        let cameraStarted = false;
+        
+        for (const constraint of cameraConstraints) {
+          try {
+            console.log('Trying camera constraint:', constraint);
+            await html5QrCode.start(
+              constraint,
+              config,
+              qrCodeSuccessCallback,
+              (errorMessage) => {
+                // Only log actual errors, not routine scanning messages
+                if (!errorMessage.includes('NotFoundException')) {
+                  console.log('QR Scanner message:', errorMessage);
+                  if (onScanError) onScanError(errorMessage);
+                }
+              }
+            );
+            cameraStarted = true;
+            console.log('Camera started successfully with constraint:', constraint);
+            break;
+          } catch (constraintError) {
+            console.log('Failed with constraint:', constraint, constraintError);
+            continue;
+          }
+        }
+
+        if (!cameraStarted) {
+          throw new Error('Could not start camera with any constraint');
+        }
+
         setScannerReady(true);
         setIsInitializing(false);
         
-        // Ensure the video element is properly styled after initialization
-        setTimeout(() => {
+        // Enhanced video element styling with multiple attempts
+        const styleVideo = () => {
           const videoElement = document.querySelector(`#${qrId} video`) as HTMLVideoElement;
+          const canvasElement = document.querySelector(`#${qrId} canvas`) as HTMLCanvasElement;
+          
           if (videoElement) {
             videoElement.style.width = '100%';
             videoElement.style.height = '100%';
             videoElement.style.objectFit = 'cover';
+            videoElement.style.display = 'block';
+            videoElement.style.backgroundColor = 'transparent';
             console.log('Video element styled successfully');
           }
-        }, 500);
+          
+          if (canvasElement) {
+            canvasElement.style.display = 'block';
+            canvasElement.style.width = '100%';
+            canvasElement.style.height = '100%';
+            console.log('Canvas element styled successfully');
+          }
+        };
+
+        // Try styling multiple times to ensure it works
+        setTimeout(styleVideo, 100);
+        setTimeout(styleVideo, 500);
+        setTimeout(styleVideo, 1000);
         
       } catch (err: any) {
         console.error("QR Scanner initialization error:", err);
@@ -87,8 +140,10 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
           setError('Camera permission denied. Please allow camera access and try again.');
         } else if (err.toString().includes('NotFoundError')) {
           setError('No camera found. Please make sure you have a camera connected.');
+        } else if (err.toString().includes('NotReadableError')) {
+          setError('Camera is already in use by another application. Please close other camera apps and try again.');
         } else {
-          setError('Failed to initialize camera. Please try again.');
+          setError(`Failed to initialize camera: ${err.message || 'Unknown error'}`);
         }
         
         if (onScanError) onScanError(err.toString());
@@ -96,7 +151,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
     };
 
     // Add a small delay to ensure the DOM element is ready
-    const timeoutId = setTimeout(initializeScanner, 100);
+    const timeoutId = setTimeout(initializeScanner, 200);
 
     return () => {
       clearTimeout(timeoutId);
@@ -147,7 +202,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
       <div 
         id={qrId} 
         style={{ width, height }} 
-        className="relative rounded-lg overflow-hidden border bg-white"
+        className="relative rounded-lg overflow-hidden border"
       >
         {isInitializing && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">

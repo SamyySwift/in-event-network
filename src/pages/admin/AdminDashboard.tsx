@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,20 +23,22 @@ import {
 import { useEvents } from '@/hooks/useEvents';
 import { useSpeakers } from '@/hooks/useSpeakers';
 import { useAnnouncements } from '@/hooks/useAnnouncements';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import QRCodeGenerator from '@/components/admin/QRCodeGenerator';
 
 const AdminDashboard = () => {
-  const { events, isLoading: eventsLoading, updateEvent } = useEvents();
+  const { events, isLoading: eventsLoading } = useEvents();
   const { speakers, isLoading: speakersLoading } = useSpeakers();
   const { announcements, isLoading: announcementsLoading } = useAnnouncements();
+  const { currentUser } = useAuth();
   
   const [attendeesCount, setAttendeesCount] = useState(0);
   const [questionsCount, setQuestionsCount] = useState(0);
   const [pollResponsesCount, setPollResponsesCount] = useState(0);
   const [recentActivity, setRecentActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
   // Calculate metrics from real data
   const totalEvents = events.length;
@@ -52,13 +55,6 @@ const AdminDashboard = () => {
     return new Date(event.start_time) > now;
   }).length;
 
-  // Set the first event as selected by default
-  useEffect(() => {
-    if (events.length > 0 && !selectedEvent) {
-      setSelectedEvent(events[0]);
-    }
-  }, [events, selectedEvent]);
-
   useEffect(() => {
     fetchDashboardData();
     setupRealTimeSubscriptions();
@@ -66,29 +62,44 @@ const AdminDashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      // Fetch attendees count
-      const { data: attendees, error: attendeesError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('role', 'attendee');
+      if (!currentUser) return;
+
+      // Fetch attendees count for this host's events
+      const { data: participants, error: participantsError } = await supabase
+        .from('event_participants')
+        .select(`
+          user_id,
+          events!inner(host_id)
+        `)
+        .eq('events.host_id', currentUser.id);
       
-      if (!attendeesError) {
-        setAttendeesCount(attendees?.length || 0);
+      if (!participantsError) {
+        // Count unique attendees across all events
+        const uniqueAttendees = new Set(participants?.map(p => p.user_id) || []);
+        setAttendeesCount(uniqueAttendees.size);
       }
 
-      // Fetch questions count
+      // Fetch questions count for this host's events
       const { data: questions, error: questionsError } = await supabase
         .from('questions')
-        .select('id');
+        .select(`
+          id,
+          events!inner(host_id)
+        `)
+        .eq('events.host_id', currentUser.id);
       
       if (!questionsError) {
         setQuestionsCount(questions?.length || 0);
       }
 
-      // Fetch poll responses count
+      // Fetch poll responses count for this host's polls
       const { data: pollVotes, error: pollVotesError } = await supabase
         .from('poll_votes')
-        .select('id');
+        .select(`
+          id,
+          polls!inner(created_by)
+        `)
+        .eq('polls.created_by', currentUser.id);
       
       if (!pollVotesError) {
         setPollResponsesCount(pollVotes?.length || 0);
@@ -106,12 +117,21 @@ const AdminDashboard = () => {
 
   const fetchRecentActivity = async () => {
     try {
+      if (!currentUser) return;
+
       const activities = [];
 
-      // Recent questions
+      // Recent questions for this host's events
       const { data: recentQuestions } = await supabase
         .from('questions')
-        .select('id, content, created_at, is_answered')
+        .select(`
+          id, 
+          content, 
+          created_at, 
+          is_answered,
+          events!inner(host_id)
+        `)
+        .eq('events.host_id', currentUser.id)
         .order('created_at', { ascending: false })
         .limit(2);
 
@@ -127,26 +147,31 @@ const AdminDashboard = () => {
         });
       }
 
-      // Recent registrations (new profiles)
-      const { data: recentProfiles } = await supabase
-        .from('profiles')
-        .select('id, created_at, name')
+      // Recent registrations for this host's events
+      const { data: recentParticipants } = await supabase
+        .from('event_participants')
+        .select(`
+          created_at,
+          profiles!inner(name),
+          events!inner(host_id)
+        `)
+        .eq('events.host_id', currentUser.id)
         .order('created_at', { ascending: false })
         .limit(2);
 
-      if (recentProfiles) {
-        recentProfiles.forEach(profile => {
+      if (recentParticipants) {
+        recentParticipants.forEach(participant => {
           activities.push({
-            id: `registration-${profile.id}`,
+            id: `registration-${participant.created_at}`,
             type: 'registration',
-            content: `${profile.name || 'New user'} registered`,
-            time: getTimeAgo(profile.created_at),
+            content: `${participant.profiles.name || 'New user'} joined an event`,
+            time: getTimeAgo(participant.created_at),
             status: 'success'
           });
         });
       }
 
-      // Recent announcements
+      // Recent announcements by this host
       const recentAnnouncementsList = announcements
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, 2);
@@ -175,24 +200,26 @@ const AdminDashboard = () => {
   };
 
   const setupRealTimeSubscriptions = () => {
-    // Subscribe to profile changes (new registrations)
-    const profilesChannel = supabase
-      .channel('admin-profiles-changes')
+    if (!currentUser) return;
+
+    // Subscribe to event participants changes for this host's events
+    const participantsChannel = supabase
+      .channel('admin-participants-changes')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'profiles'
+          table: 'event_participants'
         },
         () => {
-          console.log('Profiles updated, refetching...');
+          console.log('Event participants updated, refetching...');
           fetchDashboardData();
         }
       )
       .subscribe();
 
-    // Subscribe to questions changes
+    // Subscribe to questions changes for this host's events
     const questionsChannel = supabase
       .channel('admin-questions-changes')
       .on(
@@ -209,7 +236,7 @@ const AdminDashboard = () => {
       )
       .subscribe();
 
-    // Subscribe to poll votes changes
+    // Subscribe to poll votes changes for this host's polls
     const pollVotesChannel = supabase
       .channel('admin-poll-votes-changes')
       .on(
@@ -228,7 +255,7 @@ const AdminDashboard = () => {
 
     // Cleanup subscriptions on unmount
     return () => {
-      supabase.removeChannel(profilesChannel);
+      supabase.removeChannel(participantsChannel);
       supabase.removeChannel(questionsChannel);
       supabase.removeChannel(pollVotesChannel);
     };
@@ -268,30 +295,11 @@ const AdminDashboard = () => {
     return now;
   };
 
-  const copyEventKey = (eventKey: string) => {
-    navigator.clipboard.writeText(eventKey);
-    toast.success('Event key copied to clipboard!');
-  };
-
-  const generateNewEventKey = async (eventId: string) => {
-    try {
-      // Generate a new random 6-digit key
-      const newKey = Math.floor(100000 + Math.random() * 900000).toString();
-      
-      await updateEvent({ id: eventId, event_key: newKey });
-      setSelectedEvent({ ...selectedEvent, event_key: newKey });
-      toast.success('New event key generated successfully!');
-    } catch (error) {
-      toast.error('Failed to generate new event key');
-      console.error('Error generating new event key:', error);
-    }
-  };
-
   const metrics = [
     {
       title: 'Total Attendees',
       value: attendeesCount.toString(),
-      change: 'Registered',
+      change: 'Unique attendees',
       icon: Users,
       color: 'text-blue-600',
     },
@@ -341,7 +349,7 @@ const AdminDashboard = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back! Here's what's happening with your event.
+            Welcome back! Here's what's happening with your events.
           </p>
         </div>
 
@@ -370,99 +378,8 @@ const AdminDashboard = () => {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          {/* Event Key Section */}
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold flex items-center gap-2">
-              <Key className="h-5 w-5" />
-              Event Access Key
-            </h2>
-            
-            {events.length > 0 ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Event Access</CardTitle>
-                  <CardDescription>
-                    Share this 6-digit key with attendees to join your event
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {events.length > 1 && (
-                    <div className="space-y-2">
-                      <Label htmlFor="event-select">Select Event</Label>
-                      <select
-                        id="event-select"
-                        className="w-full p-2 border rounded-md"
-                        value={selectedEvent?.id || ''}
-                        onChange={(e) => {
-                          const event = events.find(ev => ev.id === e.target.value);
-                          setSelectedEvent(event);
-                        }}
-                      >
-                        {events.map((event) => (
-                          <option key={event.id} value={event.id}>
-                            {event.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                  
-                  {selectedEvent && (
-                    <>
-                      <div className="space-y-2">
-                        <Label>Event Key</Label>
-                        <div className="flex gap-2">
-                          <Input
-                            value={selectedEvent.event_key || 'Generating...'}
-                            readOnly
-                            className="text-2xl font-mono text-center tracking-widest"
-                          />
-                          <Button
-                            variant="outline"
-                            size="icon"
-                            onClick={() => copyEventKey(selectedEvent.event_key)}
-                            disabled={!selectedEvent.event_key}
-                          >
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => generateNewEventKey(selectedEvent.id)}
-                          className="flex-1"
-                        >
-                          <RefreshCw className="h-4 w-4 mr-2" />
-                          Generate New Key
-                        </Button>
-                      </div>
-                      
-                      <div className="text-sm text-muted-foreground">
-                        <p>Attendees can use this key to join the event at:</p>
-                        <p className="font-mono bg-gray-100 p-2 rounded mt-1">
-                          {window.location.origin}/join
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="text-center py-12">
-                  <Key className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                    No Events Created
-                  </h3>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Create an event first to get an access key for attendees.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-          </div>
+          {/* Host Access Key Section */}
+          <QRCodeGenerator />
 
           {/* Recent Activity */}
           <Card>
@@ -472,7 +389,7 @@ const AdminDashboard = () => {
                 Recent Activity
               </CardTitle>
               <CardDescription>
-                Latest updates from your event
+                Latest updates from your events
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -548,7 +465,7 @@ const AdminDashboard = () => {
               </div>
             </div>
           </CardContent>
-        </Card>
+        </div>
       </div>
     </AdminLayout>
   );

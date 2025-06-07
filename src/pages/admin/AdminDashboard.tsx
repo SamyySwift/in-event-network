@@ -16,16 +16,14 @@ const AdminDashboard = () => {
   const { events, isLoading: eventsLoading } = useEvents();
   const { speakers, isLoading: speakersLoading } = useSpeakers();
   const { announcements, isLoading: announcementsLoading } = useAnnouncements();
-  const { 
-    attendeesCount, 
-    questionsCount, 
-    pollResponsesCount, 
-    recentActivity, 
-    loading: dashboardLoading 
-  } = useDashboardData();
+  const { data: dashboardData, isLoading: dashboardLoading } = useDashboardData();
   
   // Calculate metrics from admin's own data only
   const totalSpeakers = speakers.length;
+  const attendeesCount = 0; // Will be calculated from actual attendees data
+  const questionsCount = 0; // Q&A removed
+  const pollResponsesCount = 0; // Will be calculated from actual poll responses
+  const recentActivity: any[] = []; // Will be populated with actual activity data
   
   const liveEvents = events.filter(event => {
     const now = new Date();

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -71,136 +70,136 @@ function App() {
 
               {/* Attendee routes */}
               <Route path="/attendee/dashboard" element={
-                <ProtectedRoute allowedRoles={['attendee']}>
+                <ProtectedRoute>
                   <AttendeeDashboard />
                 </ProtectedRoute>
               } />
               <Route path="/attendee/onboarding" element={
-                <ProtectedRoute allowedRoles={['attendee']}>
+                <ProtectedRoute>
                   <AttendeeOnboarding />
                 </ProtectedRoute>
               } />
               <Route path="/attendee/profile" element={
-                <ProtectedRoute allowedRoles={['attendee']}>
+                <ProtectedRoute>
                   <AttendeeProfile />
                 </ProtectedRoute>
               } />
               <Route path="/attendee/schedule" element={
-                <ProtectedRoute allowedRoles={['attendee']}>
+                <ProtectedRoute>
                   <AttendeeSchedule />
                 </ProtectedRoute>
               } />
               <Route path="/attendee/networking" element={
-                <ProtectedRoute allowedRoles={['attendee']}>
+                <ProtectedRoute>
                   <AttendeeNetworking />
                 </ProtectedRoute>
               } />
               <Route path="/attendee/announcements" element={
-                <ProtectedRoute allowedRoles={['attendee']}>
+                <ProtectedRoute>
                   <AttendeeAnnouncements />
                 </ProtectedRoute>
               } />
               <Route path="/attendee/rules" element={
-                <ProtectedRoute allowedRoles={['attendee']}>
+                <ProtectedRoute>
                   <AttendeeRules />
                 </ProtectedRoute>
               } />
               <Route path="/attendee/map" element={
-                <ProtectedRoute allowedRoles={['attendee']}>
+                <ProtectedRoute>
                   <AttendeeMap />
                 </ProtectedRoute>
               } />
               <Route path="/attendee/notifications" element={
-                <ProtectedRoute allowedRoles={['attendee']}>
+                <ProtectedRoute>
                   <AttendeeNotifications />
                 </ProtectedRoute>
               } />
               <Route path="/attendee/polls" element={
-                <ProtectedRoute allowedRoles={['attendee']}>
+                <ProtectedRoute>
                   <AttendeePolls />
                 </ProtectedRoute>
               } />
               <Route path="/attendee/suggestions" element={
-                <ProtectedRoute allowedRoles={['attendee']}>
+                <ProtectedRoute>
                   <AttendeeSuggestions />
                 </ProtectedRoute>
               } />
               <Route path="/attendee/search" element={
-                <ProtectedRoute allowedRoles={['attendee']}>
+                <ProtectedRoute>
                   <AttendeeSearch />
                 </ProtectedRoute>
               } />
 
               {/* Admin routes */}
               <Route path="/admin/dashboard" element={
-                <ProtectedRoute allowedRoles={['host']}>
+                <ProtectedRoute>
                   <AdminDashboard />
                 </ProtectedRoute>
               } />
               <Route path="/admin/events" element={
-                <ProtectedRoute allowedRoles={['host']}>
+                <ProtectedRoute>
                   <AdminEvents />
                 </ProtectedRoute>
               } />
               <Route path="/admin/attendees" element={
-                <ProtectedRoute allowedRoles={['host']}>
+                <ProtectedRoute>
                   <AdminAttendees />
                 </ProtectedRoute>
               } />
               <Route path="/admin/speakers" element={
-                <ProtectedRoute allowedRoles={['host']}>
+                <ProtectedRoute>
                   <AdminSpeakers />
                 </ProtectedRoute>
               } />
               <Route path="/admin/announcements" element={
-                <ProtectedRoute allowedRoles={['host']}>
+                <ProtectedRoute>
                   <AdminAnnouncements />
                 </ProtectedRoute>
               } />
               <Route path="/admin/rules" element={
-                <ProtectedRoute allowedRoles={['host']}>
+                <ProtectedRoute>
                   <AdminRules />
                 </ProtectedRoute>
               } />
               <Route path="/admin/facilities" element={
-                <ProtectedRoute allowedRoles={['host']}>
+                <ProtectedRoute>
                   <AdminFacilities />
                 </ProtectedRoute>
               } />
               <Route path="/admin/notifications" element={
-                <ProtectedRoute allowedRoles={['host']}>
+                <ProtectedRoute>
                   <AdminNotifications />
                 </ProtectedRoute>
               } />
               <Route path="/admin/polls" element={
-                <ProtectedRoute allowedRoles={['host']}>
+                <ProtectedRoute>
                   <AdminPolls />
                 </ProtectedRoute>
               } />
               <Route path="/admin/suggestions" element={
-                <ProtectedRoute allowedRoles={['host']}>
+                <ProtectedRoute>
                   <AdminSuggestions />
                 </ProtectedRoute>
               } />
               <Route path="/admin/settings" element={
-                <ProtectedRoute allowedRoles={['host']}>
+                <ProtectedRoute>
                   <AdminSettings />
                 </ProtectedRoute>
               } />
               <Route path="/admin/team" element={
-                <ProtectedRoute allowedRoles={['host']}>
+                <ProtectedRoute>
                   <AdminTeam />
                 </ProtectedRoute>
               } />
               <Route path="/admin/advertisements" element={
-                <ProtectedRoute allowedRoles={['host']}>
+                <ProtectedRoute>
                   <AdminAdvertisements />
                 </ProtectedRoute>
               } />
 
               {/* Host routes */}
               <Route path="/host/dashboard" element={
-                <ProtectedRoute allowedRoles={['host']}>
+                <ProtectedRoute>
                   <HostDashboard />
                 </ProtectedRoute>
               } />

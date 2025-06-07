@@ -207,8 +207,8 @@ const AttendeeDashboard = () => {
                 )}
               </CardContent>
               <CardFooter>
-                <Button variant="outline" className="w-full" onClick={() => navigate('/attendee/questions')}>
-                  Ask a Question
+                <Button variant="outline" className="w-full" onClick={() => navigate('/attendee/suggestions')}>
+                  Share Feedback
                 </Button>
               </CardFooter>
             </Card>
@@ -265,10 +265,10 @@ const AttendeeDashboard = () => {
                 <p className="text-sm font-medium">Network</p>
               </CardContent>
             </Card>
-            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/attendee/questions')}>
+            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/attendee/suggestions')}>
               <CardContent className="p-4 text-center">
                 <MessageSquare className="h-8 w-8 mx-auto mb-2 text-connect-600" />
-                <p className="text-sm font-medium">Q&A</p>
+                <p className="text-sm font-medium">Feedback</p>
               </CardContent>
             </Card>
             <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/attendee/map')}>
@@ -334,7 +334,7 @@ const AttendeeDashboard = () => {
             <Button 
               className="mt-4 sm:mt-0 flex items-center" 
               variant="outline" 
-              onClick={() => navigate('/attendee/rate')}
+              onClick={() => navigate('/attendee/suggestions')}
             >
               <Star className="h-4 w-4 mr-2" />
               Rate this Event

@@ -1,118 +1,110 @@
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Star } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface FeedbackModalProps {
-  questionId: string;
   isOpen: boolean;
   onClose: () => void;
+  eventId?: string;
+  type?: 'event' | 'general';
 }
 
-const FeedbackModal: React.FC<FeedbackModalProps> = ({ questionId, isOpen, onClose }) => {
-  const [rating, setRating] = useState(0);
+const FeedbackModal = ({ isOpen, onClose, eventId, type = 'general' }: FeedbackModalProps) => {
+  const [satisfaction, setSatisfaction] = useState('');
   const [feedback, setFeedback] = useState('');
-  const [submitting, setSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { currentUser } = useAuth();
   const { toast } = useToast();
 
-  const handleSubmit = async () => {
-    if (rating === 0) {
-      toast({
-        title: "Error",
-        description: "Please provide a rating",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser || !satisfaction) return;
 
-    setSubmitting(true);
+    setIsSubmitting(true);
     try {
-      const user = await supabase.auth.getUser();
-      if (!user.data.user) throw new Error('User not authenticated');
-
+      // Submit as a suggestion instead since we removed the feedback table
       const { error } = await supabase
-        .from('question_feedback')
-        .insert([{
-          question_id: questionId,
-          user_id: user.data.user.id,
-          satisfaction_level: rating,
-          feedback_text: feedback.trim() || null
-        }]);
+        .from('suggestions')
+        .insert([
+          {
+            user_id: currentUser.id,
+            content: `Satisfaction: ${satisfaction}/5\n\nFeedback: ${feedback}`,
+            type: 'feedback',
+            event_id: eventId,
+          }
+        ]);
 
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Thank you for your feedback!",
+        title: 'Feedback submitted',
+        description: 'Thank you for your feedback!',
       });
 
       onClose();
-      setRating(0);
+      setSatisfaction('');
       setFeedback('');
     } catch (error) {
       console.error('Error submitting feedback:', error);
       toast({
-        title: "Error",
-        description: "Failed to submit feedback",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to submit feedback. Please try again.',
+        variant: 'destructive',
       });
     } finally {
-      setSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Rate the Answer</DialogTitle>
+          <DialogTitle>Share Your Feedback</DialogTitle>
           <DialogDescription>
-            How satisfied were you with the answer to this question?
+            Help us improve by sharing your experience with this {type}.
           </DialogDescription>
         </DialogHeader>
-        
-        <div className="space-y-4">
-          <div>
-            <Label>Satisfaction Level</Label>
-            <div className="flex gap-1 mt-2">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star
-                  key={star}
-                  size={24}
-                  className={`cursor-pointer ${
-                    star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
-                  }`}
-                  onClick={() => setRating(star)}
-                />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-3">
+            <Label htmlFor="satisfaction">How satisfied are you? (1-5)</Label>
+            <RadioGroup value={satisfaction} onValueChange={setSatisfaction}>
+              {[1, 2, 3, 4, 5].map((value) => (
+                <div key={value} className="flex items-center space-x-2">
+                  <RadioGroupItem value={value.toString()} id={`satisfaction-${value}`} />
+                  <Label htmlFor={`satisfaction-${value}`} className="flex-1">
+                    {value} {value === 1 ? '(Very Dissatisfied)' : value === 5 ? '(Very Satisfied)' : ''}
+                  </Label>
+                </div>
               ))}
-            </div>
+            </RadioGroup>
           </div>
-          
-          <div>
-            <Label htmlFor="feedback">Additional Feedback (Optional)</Label>
+          <div className="space-y-2">
+            <Label htmlFor="feedback">Additional Comments (Optional)</Label>
             <Textarea
               id="feedback"
-              placeholder="Share your thoughts about the answer..."
+              placeholder="Tell us more about your experience..."
               value={feedback}
               onChange={(e) => setFeedback(e.target.value)}
-              rows={3}
+              rows={4}
             />
           </div>
-          
-          <div className="flex gap-2 justify-end">
-            <Button variant="outline" onClick={onClose}>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button onClick={handleSubmit} disabled={submitting || rating === 0}>
-              {submitting ? 'Submitting...' : 'Submit Feedback'}
+            <Button type="submit" disabled={!satisfaction || isSubmitting}>
+              {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
             </Button>
-          </div>
-        </div>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );

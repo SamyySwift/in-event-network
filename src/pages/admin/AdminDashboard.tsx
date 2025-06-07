@@ -9,6 +9,8 @@ import { MetricsCards } from '@/components/admin/dashboard/MetricsCards';
 import { RecentActivity } from '@/components/admin/dashboard/RecentActivity';
 import { EventOverview } from '@/components/admin/dashboard/EventOverview';
 import QRCodeGenerator from '@/components/admin/QRCodeGenerator';
+import { Card, CardContent } from '@/components/ui/card';
+import { Calendar } from 'lucide-react';
 
 const AdminDashboard = () => {
   const { events, isLoading: eventsLoading } = useEvents();
@@ -22,7 +24,7 @@ const AdminDashboard = () => {
     loading: dashboardLoading 
   } = useDashboardData();
   
-  // Calculate metrics from real data
+  // Calculate metrics from admin's own data only
   const totalSpeakers = speakers.length;
   
   const liveEvents = events.filter(event => {
@@ -36,6 +38,42 @@ const AdminDashboard = () => {
   }).length;
 
   const isDataLoading = dashboardLoading || eventsLoading || speakersLoading || announcementsLoading;
+
+  // Show empty state for new admins with no events
+  if (!isDataLoading && events.length === 0) {
+    return (
+      <AdminLayout>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+            <p className="text-muted-foreground">
+              Welcome to your admin dashboard!
+            </p>
+          </div>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="text-center py-8">
+                <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">
+                  Welcome to your Admin Dashboard!
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  You haven't created any events yet. Create your first event to start managing attendees, speakers, and more.
+                </p>
+                <p className="text-sm text-gray-500">
+                  This dashboard will show data only from your events. Each admin has their own isolated view.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Host Access Key Section - always show */}
+          <QRCodeGenerator />
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>

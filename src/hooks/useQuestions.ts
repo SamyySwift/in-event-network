@@ -1,6 +1,6 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -33,85 +33,90 @@ export const useQuestions = () => {
         return [];
       }
 
-      if (currentUser.role === 'attendee') {
-        // Get the current user's profile to find their current event
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('current_event_id')
-          .eq('id', currentUser.id)
-          .single();
+      try {
+        if (currentUser.role === 'attendee') {
+          // Get the current user's profile to find their current event
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('current_event_id')
+            .eq('id', currentUser.id)
+            .single();
 
-        if (profileError || !profile?.current_event_id) {
-          console.error('Error fetching profile or no current event:', profileError);
-          return [];
+          if (profileError || !profile?.current_event_id) {
+            console.error('Error fetching profile or no current event:', profileError);
+            return [];
+          }
+
+          // Get the current event to find the host
+          const { data: currentEvent, error: eventError } = await supabase
+            .from('events')
+            .select('host_id')
+            .eq('id', profile.current_event_id)
+            .single();
+
+          if (eventError || !currentEvent?.host_id) {
+            console.error('Error fetching current event:', eventError);
+            return [];
+          }
+
+          // Get all events from the same host
+          const { data: hostEvents, error: hostEventsError } = await supabase
+            .from('events')
+            .select('id')
+            .eq('host_id', currentEvent.host_id);
+
+          if (hostEventsError) {
+            console.error('Error fetching host events:', hostEventsError);
+            return [];
+          }
+
+          const eventIds = hostEvents?.map(e => e.id) || [];
+          if (eventIds.length === 0) {
+            return [];
+          }
+
+          // Get questions from the host's events only
+          const { data, error } = await supabase
+            .from('questions')
+            .select('*')
+            .in('event_id', eventIds)
+            .order('created_at', { ascending: false });
+
+          if (error) {
+            console.error('Error fetching questions:', error);
+            throw error;
+          }
+          return data as Question[];
+        } else if (currentUser.role === 'host') {
+          // Hosts see questions from their own events
+          const { data: hostEvents } = await supabase
+            .from('events')
+            .select('id')
+            .eq('host_id', currentUser.id);
+
+          const eventIds = hostEvents?.map(e => e.id) || [];
+          if (eventIds.length === 0) {
+            return [];
+          }
+
+          const { data, error } = await supabase
+            .from('questions')
+            .select('*')
+            .in('event_id', eventIds)
+            .order('created_at', { ascending: false });
+
+          if (error) {
+            console.error('Error fetching questions:', error);
+            throw error;
+          }
+          return data as Question[];
         }
 
-        // Get the current event to find the host
-        const { data: currentEvent, error: eventError } = await supabase
-          .from('events')
-          .select('host_id')
-          .eq('id', profile.current_event_id)
-          .single();
-
-        if (eventError || !currentEvent?.host_id) {
-          console.error('Error fetching current event:', eventError);
-          return [];
-        }
-
-        // Get all events from the same host
-        const { data: hostEvents, error: hostEventsError } = await supabase
-          .from('events')
-          .select('id')
-          .eq('host_id', currentEvent.host_id);
-
-        if (hostEventsError) {
-          console.error('Error fetching host events:', hostEventsError);
-          return [];
-        }
-
-        const eventIds = hostEvents?.map(e => e.id) || [];
-        if (eventIds.length === 0) {
-          return [];
-        }
-
-        // Get questions from the host's events only
-        const { data, error } = await supabase
-          .from('questions')
-          .select('*')
-          .in('event_id', eventIds)
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error('Error fetching questions:', error);
-          throw error;
-        }
-        return data as Question[];
-      } else if (currentUser.role === 'host') {
-        // Hosts see questions from their own events
-        const { data: hostEvents } = await supabase
-          .from('events')
-          .select('id')
-          .eq('host_id', currentUser.id);
-
-        const eventIds = hostEvents?.map(e => e.id) || [];
-        if (eventIds.length === 0) {
-          return [];
-        }
-
-        const { data, error } = await supabase
-          .from('questions')
-          .select('*')
-          .in('event_id', eventIds)
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error('Error fetching questions:', error);
-          throw error;
-        }
-        return data as Question[];
+        return [];
+      } catch (error) {
+        console.log('Questions functionality not available');
+        return [];
       }
-
-      return [];
     },
     enabled: !!currentUser,
   });

@@ -1,6 +1,5 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -101,6 +100,7 @@ export const useFacilities = () => {
       return data as Facility[];
     },
     enabled: !!currentUser,
+    refetchInterval: 30000, // Refetch every 30 seconds for real-time updates
   });
 
   const createFacilityMutation = useMutation({
@@ -152,7 +152,7 @@ export const useFacilities = () => {
         .from('facilities')
         .update(facilityData)
         .eq('id', id)
-        .eq('created_by', currentUser.id) // Ensure only creator can update
+        .eq('created_by', currentUser.id)
         .select()
         .single();
 
@@ -190,7 +190,7 @@ export const useFacilities = () => {
         .from('facilities')
         .delete()
         .eq('id', id)
-        .eq('created_by', currentUser.id); // Ensure only creator can delete
+        .eq('created_by', currentUser.id);
 
       if (error) {
         console.error('Delete facility error:', error);

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 
 export const useDashboardData = () => {
@@ -61,16 +61,19 @@ export const useDashboardData = () => {
         setAttendeesCount(uniqueAttendees.size);
       }
 
-      // Fetch questions count for admin's events
-      const { data: questions, error: questionsError } = await supabase
-        .from('questions')
-        .select('id')
-        .in('event_id', eventIds);
+      // Fetch questions count for admin's events - skip if table doesn't exist
+      try {
+        const { data: questions, error: questionsError } = await supabase
+          .from('questions')
+          .select('id')
+          .in('event_id', eventIds);
 
-      if (questionsError) {
-        console.error('Error fetching questions:', questionsError);
-      } else {
-        setQuestionsCount(questions?.length || 0);
+        if (!questionsError) {
+          setQuestionsCount(questions?.length || 0);
+        }
+      } catch (error) {
+        console.log('Questions table not available');
+        setQuestionsCount(0);
       }
 
       // Fetch poll responses count for admin's polls
@@ -103,31 +106,13 @@ export const useDashboardData = () => {
       // Fetch recent activity for admin's events
       const recentActivityData = [];
 
-      // Add recent questions
-      const { data: recentQuestions } = await supabase
-        .from('questions')
-        .select('id, content, created_at, is_answered')
-        .in('event_id', eventIds)
-        .order('created_at', { ascending: false })
-        .limit(3);
-
-      recentQuestions?.forEach(question => {
-        recentActivityData.push({
-          id: question.id,
-          type: 'question',
-          content: `New question: ${question.content.substring(0, 50)}...`,
-          time: new Date(question.created_at).toLocaleDateString(),
-          status: question.is_answered ? 'answered' : 'pending'
-        });
-      });
-
       // Add recent announcements
       const { data: recentAnnouncements } = await supabase
         .from('announcements')
         .select('id, title, created_at')
         .in('event_id', eventIds)
         .order('created_at', { ascending: false })
-        .limit(2);
+        .limit(5);
 
       recentAnnouncements?.forEach(announcement => {
         recentActivityData.push({
@@ -139,12 +124,7 @@ export const useDashboardData = () => {
         });
       });
 
-      // Sort by most recent and limit to 5 items
-      const sortedActivity = recentActivityData
-        .sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime())
-        .slice(0, 5);
-
-      setRecentActivity(sortedActivity);
+      setRecentActivity(recentActivityData);
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);

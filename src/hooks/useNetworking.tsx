@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -42,6 +42,22 @@ export const useNetworking = () => {
     if (currentUser) {
       fetchProfiles();
       fetchConnections();
+      
+      // Set up real-time subscription for profile updates
+      const profilesChannel = supabase
+        .channel('profiles-changes')
+        .on('postgres_changes', 
+          { event: '*', schema: 'public', table: 'profiles' }, 
+          () => {
+            console.log('Profile updated, refetching...');
+            fetchProfiles();
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(profilesChannel);
+      };
     }
   }, [currentUser]);
 
@@ -65,6 +81,7 @@ export const useNetworking = () => {
       }
 
       if (!profile?.current_event_id) {
+        console.log('No current event set for user');
         setProfiles([]);
         return;
       }
@@ -83,6 +100,7 @@ export const useNetworking = () => {
       const participantUserIds = sameEventParticipants?.map(p => p.user_id) || [];
 
       if (participantUserIds.length === 0) {
+        console.log('No other participants found for this event');
         setProfiles([]);
         return;
       }
@@ -114,6 +132,7 @@ export const useNetworking = () => {
         },
       }));
 
+      console.log(`Found ${formattedProfiles.length} networking profiles`);
       setProfiles(formattedProfiles);
     } catch (error) {
       console.error('Error fetching profiles:', error);

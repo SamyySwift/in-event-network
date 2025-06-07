@@ -1,6 +1,5 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -98,6 +97,7 @@ export const useAnnouncements = () => {
       return data as Announcement[];
     },
     enabled: !!currentUser,
+    refetchInterval: 30000, // Refetch every 30 seconds for real-time updates
   });
 
   const createAnnouncementMutation = useMutation({
@@ -149,7 +149,7 @@ export const useAnnouncements = () => {
         .from('announcements')
         .update(announcementData)
         .eq('id', id)
-        .eq('created_by', currentUser.id) // Ensure only creator can update
+        .eq('created_by', currentUser.id)
         .select()
         .single();
 
@@ -187,7 +187,7 @@ export const useAnnouncements = () => {
         .from('announcements')
         .delete()
         .eq('id', id)
-        .eq('created_by', currentUser.id); // Ensure only creator can delete
+        .eq('created_by', currentUser.id);
 
       if (error) {
         console.error('Delete announcement error:', error);

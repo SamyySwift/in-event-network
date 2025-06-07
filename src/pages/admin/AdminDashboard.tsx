@@ -80,7 +80,7 @@ const AdminDashboard = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Your Admin Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back, {currentUser?.user_metadata?.name || currentUser?.email}! Here's what's happening with your events.
+            Welcome back, {currentUser?.name || currentUser?.email}! Here's what's happening with your events.
           </p>
         </div>
 

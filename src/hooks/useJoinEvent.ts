@@ -4,6 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
+interface JoinEventResponse {
+  success: boolean;
+  message?: string;
+  event_id?: string;
+  event_name?: string;
+}
+
 export const useJoinEvent = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -22,7 +29,7 @@ export const useJoinEvent = () => {
       }
 
       console.log('Join event response:', data);
-      return data;
+      return data as JoinEventResponse;
     },
     onSuccess: (data) => {
       if (data?.success) {

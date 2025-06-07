@@ -62,6 +62,7 @@ export type Database = {
           content: string
           created_at: string
           created_by: string | null
+          event_id: string | null
           id: string
           image_url: string | null
           priority: string | null
@@ -73,6 +74,7 @@ export type Database = {
           content: string
           created_at?: string
           created_by?: string | null
+          event_id?: string | null
           id?: string
           image_url?: string | null
           priority?: string | null
@@ -84,6 +86,7 @@ export type Database = {
           content?: string
           created_at?: string
           created_by?: string | null
+          event_id?: string | null
           id?: string
           image_url?: string | null
           priority?: string | null
@@ -91,7 +94,15 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "announcements_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       chat_messages: {
         Row: {
@@ -351,6 +362,7 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           description: string | null
+          event_id: string | null
           icon_type: string | null
           id: string
           image_url: string | null
@@ -365,6 +377,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           description?: string | null
+          event_id?: string | null
           icon_type?: string | null
           id?: string
           image_url?: string | null
@@ -379,6 +392,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           description?: string | null
+          event_id?: string | null
           icon_type?: string | null
           id?: string
           image_url?: string | null
@@ -387,7 +401,15 @@ export type Database = {
           rules?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "facilities_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       media_files: {
         Row: {
@@ -558,6 +580,7 @@ export type Database = {
           created_by: string | null
           display_as_banner: boolean | null
           end_time: string
+          event_id: string | null
           id: string
           is_active: boolean | null
           options: Json
@@ -571,6 +594,7 @@ export type Database = {
           created_by?: string | null
           display_as_banner?: boolean | null
           end_time: string
+          event_id?: string | null
           id?: string
           is_active?: boolean | null
           options: Json
@@ -584,6 +608,7 @@ export type Database = {
           created_by?: string | null
           display_as_banner?: boolean | null
           end_time?: string
+          event_id?: string | null
           id?: string
           is_active?: boolean | null
           options?: Json
@@ -592,7 +617,15 @@ export type Database = {
           start_time?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "polls_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -600,6 +633,7 @@ export type Database = {
           bio: string | null
           company: string | null
           created_at: string
+          current_event_id: string | null
           email: string | null
           facebook_link: string | null
           github_link: string | null
@@ -623,6 +657,7 @@ export type Database = {
           bio?: string | null
           company?: string | null
           created_at?: string
+          current_event_id?: string | null
           email?: string | null
           facebook_link?: string | null
           github_link?: string | null
@@ -646,6 +681,7 @@ export type Database = {
           bio?: string | null
           company?: string | null
           created_at?: string
+          current_event_id?: string | null
           email?: string | null
           facebook_link?: string | null
           github_link?: string | null
@@ -664,7 +700,15 @@ export type Database = {
           updated_at?: string
           website_link?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_current_event_id_fkey"
+            columns: ["current_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       question_feedback: {
         Row: {
@@ -758,6 +802,7 @@ export type Database = {
           content: string
           created_at: string | null
           created_by: string | null
+          event_id: string | null
           id: string
           priority: string | null
           title: string
@@ -768,6 +813,7 @@ export type Database = {
           content: string
           created_at?: string | null
           created_by?: string | null
+          event_id?: string | null
           id?: string
           priority?: string | null
           title: string
@@ -778,12 +824,21 @@ export type Database = {
           content?: string
           created_at?: string | null
           created_by?: string | null
+          event_id?: string | null
           id?: string
           priority?: string | null
           title?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "rules_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       speakers: {
         Row: {
@@ -791,6 +846,7 @@ export type Database = {
           company: string | null
           created_at: string
           created_by: string | null
+          event_id: string | null
           id: string
           linkedin_link: string | null
           name: string
@@ -807,6 +863,7 @@ export type Database = {
           company?: string | null
           created_at?: string
           created_by?: string | null
+          event_id?: string | null
           id?: string
           linkedin_link?: string | null
           name: string
@@ -823,6 +880,7 @@ export type Database = {
           company?: string | null
           created_at?: string
           created_by?: string | null
+          event_id?: string | null
           id?: string
           linkedin_link?: string | null
           name?: string
@@ -847,6 +905,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "speakers_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
             referencedColumns: ["id"]
           },
         ]
@@ -964,9 +1029,17 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_current_user_event: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_poll_with_results: {
         Args: { poll_uuid: string }
         Returns: Json
+      }
+      is_event_host: {
+        Args: { event_uuid: string }
+        Returns: boolean
       }
       user_has_joined_event: {
         Args: { user_uuid: string; event_uuid: string }

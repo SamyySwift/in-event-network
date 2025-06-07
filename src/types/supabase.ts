@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -82,6 +81,56 @@ export interface Database {
           updated_at?: string;
           current_event_id?: string | null;
           access_key?: string | null;
+        };
+      };
+      questions: {
+        Row: {
+          id: string;
+          content: string;
+          user_id: string | null;
+          event_id: string | null;
+          session_id: string | null;
+          is_anonymous: boolean | null;
+          is_answered: boolean | null;
+          response: string | null;
+          upvotes: number | null;
+          answered_at: string | null;
+          answered_by: string | null;
+          response_created_at: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          content: string;
+          user_id?: string | null;
+          event_id?: string | null;
+          session_id?: string | null;
+          is_anonymous?: boolean | null;
+          is_answered?: boolean | null;
+          response?: string | null;
+          upvotes?: number | null;
+          answered_at?: string | null;
+          answered_by?: string | null;
+          response_created_at?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          content?: string;
+          user_id?: string | null;
+          event_id?: string | null;
+          session_id?: string | null;
+          is_anonymous?: boolean | null;
+          is_answered?: boolean | null;
+          response?: string | null;
+          upvotes?: number | null;
+          answered_at?: string | null;
+          answered_by?: string | null;
+          response_created_at?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
         };
       };
       connections: {
@@ -181,56 +230,6 @@ export interface Database {
           host_id?: string | null;
           created_at?: string;
           updated_at?: string;
-        };
-      };
-      questions: {
-        Row: {
-          id: string;
-          content: string;
-          user_id: string | null;
-          event_id: string | null;
-          session_id: string | null;
-          is_anonymous: boolean | null;
-          is_answered: boolean | null;
-          response: string | null;
-          upvotes: number | null;
-          answered_at: string | null;
-          answered_by: string | null;
-          response_created_at: string | null;
-          created_at: string | null;
-          updated_at: string | null;
-        };
-        Insert: {
-          id?: string;
-          content: string;
-          user_id?: string | null;
-          event_id?: string | null;
-          session_id?: string | null;
-          is_anonymous?: boolean | null;
-          is_answered?: boolean | null;
-          response?: string | null;
-          upvotes?: number | null;
-          answered_at?: string | null;
-          answered_by?: string | null;
-          response_created_at?: string | null;
-          created_at?: string | null;
-          updated_at?: string | null;
-        };
-        Update: {
-          id?: string;
-          content?: string;
-          user_id?: string | null;
-          event_id?: string | null;
-          session_id?: string | null;
-          is_anonymous?: boolean | null;
-          is_answered?: boolean | null;
-          response?: string | null;
-          upvotes?: number | null;
-          answered_at?: string | null;
-          answered_by?: string | null;
-          response_created_at?: string | null;
-          created_at?: string | null;
-          updated_at?: string | null;
         };
       };
       announcements: {

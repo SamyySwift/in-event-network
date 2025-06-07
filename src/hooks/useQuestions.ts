@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffect } from 'react';
 
 interface Question {
   id: string;
@@ -25,6 +26,31 @@ export const useQuestions = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentUser } = useAuth();
+
+  // Set up real-time subscription for questions
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const channel = supabase
+      .channel('questions-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'questions'
+        },
+        (payload) => {
+          console.log('Questions real-time update:', payload);
+          queryClient.invalidateQueries({ queryKey: ['questions'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser, queryClient]);
 
   const { data: questions = [], isLoading, error } = useQuery({
     queryKey: ['questions', currentUser?.id],
@@ -114,7 +140,7 @@ export const useQuestions = () => {
 
         return [];
       } catch (error) {
-        console.log('Questions functionality not available');
+        console.log('Questions functionality not available:', error);
         return [];
       }
     },
@@ -218,13 +244,62 @@ export const useQuestions = () => {
     },
   });
 
+  const upvoteQuestionMutation = useMutation({
+    mutationFn: async (questionId: string) => {
+      if (!currentUser) {
+        throw new Error('You must be logged in to upvote questions');
+      }
+
+      // Get current upvotes
+      const { data: question, error: fetchError } = await supabase
+        .from('questions')
+        .select('upvotes')
+        .eq('id', questionId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Update upvotes
+      const { data, error } = await supabase
+        .from('questions')
+        .update({ upvotes: (question.upvotes || 0) + 1 })
+        .eq('id', questionId)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Upvote question error:', error);
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['questions'] });
+      toast({
+        title: 'Question Upvoted',
+        description: 'You have upvoted this question.',
+      });
+    },
+    onError: (error) => {
+      console.error('Upvote question error:', error);
+      toast({
+        title: 'Error',
+        description: `Failed to upvote question: ${error.message}`,
+        variant: 'destructive',
+      });
+    },
+  });
+
   return {
     questions,
     isLoading,
     error,
     createQuestion: createQuestionMutation.mutate,
     answerQuestion: answerQuestionMutation.mutate,
+    upvoteQuestion: upvoteQuestionMutation.mutate,
     isCreating: createQuestionMutation.isPending,
     isAnswering: answerQuestionMutation.isPending,
+    isUpvoting: upvoteQuestionMutation.isPending,
   };
 };

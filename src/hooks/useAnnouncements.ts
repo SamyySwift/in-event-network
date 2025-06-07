@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffect } from 'react';
 
 interface Announcement {
   id: string;
@@ -21,6 +22,31 @@ export const useAnnouncements = () => {
   const queryClient = useQueryClient();
   const { currentUser } = useAuth();
 
+  // Set up real-time subscription
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const channel = supabase
+      .channel('announcements-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'announcements'
+        },
+        (payload) => {
+          console.log('Announcements real-time update:', payload);
+          queryClient.invalidateQueries({ queryKey: ['announcements'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser, queryClient]);
+
   const { data: announcements = [], isLoading, error } = useQuery({
     queryKey: ['announcements', currentUser?.id],
     queryFn: async () => {
@@ -28,76 +54,63 @@ export const useAnnouncements = () => {
         return [];
       }
 
-      let query = supabase
-        .from('announcements')
-        .select('*')
-        .order('created_at', { ascending: false });
+      try {
+        let query = supabase
+          .from('announcements')
+          .select('*')
+          .order('created_at', { ascending: false });
 
-      if (currentUser.role === 'host') {
-        // Hosts see only their own announcements
-        const { data: hostEvents } = await supabase
-          .from('events')
-          .select('id')
-          .eq('host_id', currentUser.id);
+        if (currentUser.role === 'host') {
+          // Hosts see announcements from their events
+          const { data: hostEvents } = await supabase
+            .from('events')
+            .select('id')
+            .eq('host_id', currentUser.id);
 
-        const eventIds = hostEvents?.map(e => e.id) || [];
-        if (eventIds.length === 0) {
-          return [];
-        }
-        query = query.in('event_id', eventIds);
-      } else if (currentUser.role === 'attendee') {
-        // Get the current user's profile to find their current event
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('current_event_id')
-          .eq('id', currentUser.id)
-          .single();
+          const eventIds = hostEvents?.map(e => e.id) || [];
+          if (eventIds.length === 0) {
+            return [];
+          }
+          query = query.in('event_id', eventIds);
+        } else if (currentUser.role === 'attendee' && currentUser.current_event_id) {
+          // Get the current event to find the host
+          const { data: currentEvent } = await supabase
+            .from('events')
+            .select('host_id')
+            .eq('id', currentUser.current_event_id)
+            .single();
 
-        if (profileError || !profile?.current_event_id) {
-          console.error('Error fetching profile or no current event:', profileError);
-          return [];
-        }
+          if (currentEvent?.host_id) {
+            // Get all events from the same host
+            const { data: hostEvents } = await supabase
+              .from('events')
+              .select('id')
+              .eq('host_id', currentEvent.host_id);
 
-        // Get the current event to find the host
-        const { data: currentEvent, error: eventError } = await supabase
-          .from('events')
-          .select('host_id')
-          .eq('id', profile.current_event_id)
-          .single();
-
-        if (eventError || !currentEvent?.host_id) {
-          console.error('Error fetching current event:', eventError);
-          return [];
-        }
-
-        // Get all events from the same host
-        const { data: hostEvents, error: hostEventsError } = await supabase
-          .from('events')
-          .select('id')
-          .eq('host_id', currentEvent.host_id);
-
-        if (hostEventsError) {
-          console.error('Error fetching host events:', hostEventsError);
-          return [];
+            const eventIds = hostEvents?.map(e => e.id) || [];
+            if (eventIds.length > 0) {
+              query = query.in('event_id', eventIds);
+            } else {
+              return [];
+            }
+          } else {
+            return [];
+          }
         }
 
-        const eventIds = hostEvents?.map(e => e.id) || [];
-        if (eventIds.length === 0) {
-          return [];
+        const { data, error } = await query;
+
+        if (error) {
+          console.error('Error fetching announcements:', error);
+          throw error;
         }
-        query = query.in('event_id', eventIds);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
+        return data as Announcement[];
+      } catch (error) {
         console.error('Error fetching announcements:', error);
-        throw error;
+        return [];
       }
-      return data as Announcement[];
     },
     enabled: !!currentUser,
-    refetchInterval: 30000, // Refetch every 30 seconds for real-time updates
   });
 
   const createAnnouncementMutation = useMutation({
@@ -126,7 +139,7 @@ export const useAnnouncements = () => {
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
       toast({
         title: 'Announcement Created',
-        description: 'The announcement has been created successfully.',
+        description: 'The announcement has been published successfully.',
       });
     },
     onError: (error) => {

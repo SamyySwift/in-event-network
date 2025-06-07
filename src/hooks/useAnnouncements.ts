@@ -2,14 +2,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Announcement {
   id: string;
   title: string;
   content: string;
-  priority: 'high' | 'normal' | 'low';
-  send_immediately: boolean;
+  priority: 'low' | 'normal' | 'high';
   image_url?: string;
+  send_immediately: boolean;
+  event_id?: string;
   created_by?: string;
   created_at: string;
   updated_at: string;
@@ -18,97 +20,115 @@ interface Announcement {
 export const useAnnouncements = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentUser } = useAuth();
 
   const { data: announcements = [], isLoading, error } = useQuery({
-    queryKey: ['announcements'],
+    queryKey: ['announcements', currentUser?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      if (!currentUser) {
+        return [];
+      }
+
+      let query = supabase
         .from('announcements')
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data as Announcement[];
-    },
-  });
+      if (currentUser.role === 'host') {
+        // Hosts see only their own announcements
+        const { data: hostEvents } = await supabase
+          .from('events')
+          .select('id')
+          .eq('host_id', currentUser.id);
 
-  const uploadImage = async (file: File): Promise<string> => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random()}.${fileExt}`;
-    const filePath = `announcements/${fileName}`;
+        const eventIds = hostEvents?.map(e => e.id) || [];
+        if (eventIds.length === 0) {
+          return [];
+        }
+        query = query.in('event_id', eventIds);
+      } else if (currentUser.role === 'attendee') {
+        // Attendees see announcements from events they've joined
+        const { data: participantData } = await supabase
+          .from('event_participants')
+          .select('event_id')
+          .eq('user_id', currentUser.id);
 
-    const { error: uploadError } = await supabase.storage
-      .from('media')
-      .upload(filePath, file);
-
-    if (uploadError) throw uploadError;
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('media')
-      .getPublicUrl(filePath);
-
-    return publicUrl;
-  };
-
-  const createAnnouncementMutation = useMutation({
-    mutationFn: async (announcementData: Omit<Announcement, 'id' | 'created_at' | 'updated_at'> & { image?: File }) => {
-      let imageUrl;
-      if (announcementData.image) {
-        imageUrl = await uploadImage(announcementData.image);
+        const eventIds = participantData?.map(p => p.event_id) || [];
+        if (eventIds.length === 0) {
+          return [];
+        }
+        query = query.in('event_id', eventIds);
       }
 
-      const { image, ...dataWithoutImage } = announcementData;
-      const finalData = {
-        ...dataWithoutImage,
-        image_url: imageUrl || announcementData.image_url,
-      };
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching announcements:', error);
+        throw error;
+      }
+      return data as Announcement[];
+    },
+    enabled: !!currentUser,
+  });
+
+  const createAnnouncementMutation = useMutation({
+    mutationFn: async (announcementData: Omit<Announcement, 'id' | 'created_at' | 'updated_at'>) => {
+      if (!currentUser || currentUser.role !== 'host') {
+        throw new Error('Only hosts can create announcements');
+      }
 
       const { data, error } = await supabase
         .from('announcements')
-        .insert([finalData])
+        .insert([{
+          ...announcementData,
+          created_by: currentUser.id,
+        }])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Create announcement error:', error);
+        throw error;
+      }
+
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
       toast({
         title: 'Announcement Created',
-        description: 'The announcement has been published successfully.',
+        description: 'The announcement has been created successfully.',
       });
     },
     onError: (error) => {
+      console.error('Create announcement error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create announcement. Please try again.',
+        description: `Failed to create announcement: ${error.message}`,
         variant: 'destructive',
       });
-      console.error('Error creating announcement:', error);
     },
   });
 
   const updateAnnouncementMutation = useMutation({
-    mutationFn: async ({ id, image, ...announcementData }: Partial<Announcement> & { id: string; image?: File }) => {
-      let imageUrl = announcementData.image_url;
-      if (image) {
-        imageUrl = await uploadImage(image);
+    mutationFn: async ({ id, ...announcementData }: Partial<Announcement> & { id: string }) => {
+      if (!currentUser || currentUser.role !== 'host') {
+        throw new Error('Only hosts can update announcements');
       }
-
-      const finalData = {
-        ...announcementData,
-        image_url: imageUrl,
-      };
 
       const { data, error } = await supabase
         .from('announcements')
-        .update(finalData)
+        .update(announcementData)
         .eq('id', id)
+        .eq('created_by', currentUser.id) // Ensure only creator can update
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Update announcement error:', error);
+        throw error;
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -119,23 +139,31 @@ export const useAnnouncements = () => {
       });
     },
     onError: (error) => {
+      console.error('Update announcement error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update announcement. Please try again.',
+        description: `Failed to update announcement: ${error.message}`,
         variant: 'destructive',
       });
-      console.error('Error updating announcement:', error);
     },
   });
 
   const deleteAnnouncementMutation = useMutation({
     mutationFn: async (id: string) => {
+      if (!currentUser || currentUser.role !== 'host') {
+        throw new Error('Only hosts can delete announcements');
+      }
+
       const { error } = await supabase
         .from('announcements')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('created_by', currentUser.id); // Ensure only creator can delete
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete announcement error:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
@@ -146,12 +174,12 @@ export const useAnnouncements = () => {
       });
     },
     onError: (error) => {
+      console.error('Delete announcement error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete announcement. Please try again.',
+        description: `Failed to delete announcement: ${error.message}`,
         variant: 'destructive',
       });
-      console.error('Error deleting announcement:', error);
     },
   });
 
@@ -165,6 +193,5 @@ export const useAnnouncements = () => {
     isCreating: createAnnouncementMutation.isPending,
     isUpdating: updateAnnouncementMutation.isPending,
     isDeleting: deleteAnnouncementMutation.isPending,
-    uploadImage,
   };
 };

@@ -2,65 +2,95 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
-export interface Rule {
+interface Rule {
   id: string;
   title: string;
   content: string;
   category?: string;
-  priority?: 'high' | 'medium' | 'low';
+  priority: 'low' | 'medium' | 'high';
+  event_id?: string;
   created_by?: string;
   created_at: string;
-  updated_at?: string;
+  updated_at: string;
 }
 
 export const useRules = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentUser } = useAuth();
 
   const { data: rules = [], isLoading, error } = useQuery({
-    queryKey: ['rules'],
+    queryKey: ['rules', currentUser?.id],
     queryFn: async () => {
-      try {
-        console.log('Fetching rules...');
-        
-        const { data, error } = await supabase
-          .from('rules')
-          .select('*')
-          .order('created_at', { ascending: false });
-        
-        if (error) {
-          console.error('Error fetching rules:', error);
-          throw error;
-        }
-        
-        console.log('Rules fetched successfully:', data);
-        return (data || []) as Rule[];
-      } catch (err) {
-        console.error('Unexpected error fetching rules:', err);
-        throw err;
+      if (!currentUser) {
+        return [];
       }
+
+      let query = supabase
+        .from('rules')
+        .select('*')
+        .order('priority', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (currentUser.role === 'host') {
+        // Hosts see only their own rules
+        const { data: hostEvents } = await supabase
+          .from('events')
+          .select('id')
+          .eq('host_id', currentUser.id);
+
+        const eventIds = hostEvents?.map(e => e.id) || [];
+        if (eventIds.length === 0) {
+          return [];
+        }
+        query = query.in('event_id', eventIds);
+      } else if (currentUser.role === 'attendee') {
+        // Attendees see rules from events they've joined
+        const { data: participantData } = await supabase
+          .from('event_participants')
+          .select('event_id')
+          .eq('user_id', currentUser.id);
+
+        const eventIds = participantData?.map(p => p.event_id) || [];
+        if (eventIds.length === 0) {
+          return [];
+        }
+        query = query.in('event_id', eventIds);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Error fetching rules:', error);
+        throw error;
+      }
+      return data as Rule[];
     },
+    enabled: !!currentUser,
   });
 
   const createRuleMutation = useMutation({
-    mutationFn: async (ruleData: { title: string; content: string; category?: string; priority?: 'high' | 'medium' | 'low' }) => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error('User not authenticated');
+    mutationFn: async (ruleData: Omit<Rule, 'id' | 'created_at' | 'updated_at'>) => {
+      if (!currentUser || currentUser.role !== 'host') {
+        throw new Error('Only hosts can create rules');
+      }
 
       const { data, error } = await supabase
         .from('rules')
-        .insert({
-          title: ruleData.title,
-          content: ruleData.content,
-          category: ruleData.category,
-          priority: ruleData.priority || 'medium',
-          created_by: user.user.id
-        })
+        .insert([{
+          ...ruleData,
+          created_by: currentUser.id,
+        }])
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Create rule error:', error);
+        throw error;
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -71,25 +101,34 @@ export const useRules = () => {
       });
     },
     onError: (error) => {
+      console.error('Create rule error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to create rule. Please try again.',
+        description: `Failed to create rule: ${error.message}`,
         variant: 'destructive',
       });
-      console.error('Error creating rule:', error);
     },
   });
 
   const updateRuleMutation = useMutation({
     mutationFn: async ({ id, ...ruleData }: Partial<Rule> & { id: string }) => {
+      if (!currentUser || currentUser.role !== 'host') {
+        throw new Error('Only hosts can update rules');
+      }
+
       const { data, error } = await supabase
         .from('rules')
         .update(ruleData)
         .eq('id', id)
+        .eq('created_by', currentUser.id) // Ensure only creator can update
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Update rule error:', error);
+        throw error;
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -100,38 +139,47 @@ export const useRules = () => {
       });
     },
     onError: (error) => {
+      console.error('Update rule error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update rule. Please try again.',
+        description: `Failed to update rule: ${error.message}`,
         variant: 'destructive',
       });
-      console.error('Error updating rule:', error);
     },
   });
 
   const deleteRuleMutation = useMutation({
     mutationFn: async (id: string) => {
+      if (!currentUser || currentUser.role !== 'host') {
+        throw new Error('Only hosts can delete rules');
+      }
+
       const { error } = await supabase
         .from('rules')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('created_by', currentUser.id); // Ensure only creator can delete
 
-      if (error) throw error;
+      if (error) {
+        console.error('Delete rule error:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rules'] });
       toast({
         title: 'Rule Deleted',
         description: 'The rule has been removed successfully.',
+        variant: 'destructive',
       });
     },
     onError: (error) => {
+      console.error('Delete rule error:', error);
       toast({
         title: 'Error',
-        description: 'Failed to delete rule. Please try again.',
+        description: `Failed to delete rule: ${error.message}`,
         variant: 'destructive',
       });
-      console.error('Error deleting rule:', error);
     },
   });
 

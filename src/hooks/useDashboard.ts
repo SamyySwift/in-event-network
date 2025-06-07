@@ -15,60 +15,113 @@ export const useDashboard = () => {
   const { currentUser } = useAuth();
 
   const { data: dashboardData, isLoading, error } = useQuery({
-    queryKey: ['dashboard', currentUser?.id],
+    queryKey: ['attendeeDashboard', currentUser?.id],
     queryFn: async (): Promise<DashboardData> => {
-      const now = new Date().toISOString();
+      if (!currentUser || currentUser.role !== 'attendee') {
+        throw new Error('Only attendees can access this dashboard');
+      }
 
-      // Get current/live events
-      const { data: currentEvents } = await supabase
-        .from('events')
-        .select('*')
-        .lte('start_time', now)
-        .gte('end_time', now)
-        .order('start_time', { ascending: true })
-        .limit(1);
+      // Get the events the attendee has joined
+      const { data: participantData, error: participantError } = await supabase
+        .from('event_participants')
+        .select(`
+          event_id,
+          events (
+            id,
+            name,
+            description,
+            start_time,
+            end_time,
+            location,
+            banner_url,
+            host_id
+          )
+        `)
+        .eq('user_id', currentUser.id);
 
-      // Get upcoming events
-      const { data: upcomingEvents } = await supabase
-        .from('events')
-        .select('*')
-        .gt('start_time', now)
-        .order('start_time', { ascending: true })
-        .limit(5);
+      if (participantError) {
+        console.error('Error fetching participant events:', participantError);
+        throw participantError;
+      }
 
-      // Get recent announcements
-      const { data: announcements } = await supabase
-        .from('announcements')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(3);
+      const events = participantData?.map(p => p.events).filter(Boolean) || [];
+      const eventIds = events.map(e => e.id);
+      const hostIds = events.map(e => e.host_id).filter(Boolean);
 
-      // Get speakers for upcoming sessions
+      if (eventIds.length === 0) {
+        return {
+          currentEvent: null,
+          upcomingEvents: [],
+          nextSession: null,
+          recentAnnouncements: [],
+          suggestedConnections: []
+        };
+      }
+
+      // Determine current and upcoming events
+      const now = new Date();
+      const currentEvent = events.find(event => {
+        const startTime = new Date(event.start_time);
+        const endTime = new Date(event.end_time);
+        return startTime <= now && endTime >= now;
+      }) || null;
+
+      const upcomingEvents = events.filter(event => {
+        const startTime = new Date(event.start_time);
+        return startTime > now;
+      }).sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+
+      // Get next speaker session from attendee's events only
       const { data: speakers } = await supabase
         .from('speakers')
         .select('*')
+        .in('event_id', eventIds)
         .not('session_time', 'is', null)
-        .gt('session_time', now)
+        .gte('session_time', now.toISOString())
         .order('session_time', { ascending: true })
         .limit(1);
 
-      // Get suggested connections (other attendees)
-      const { data: profiles } = await supabase
-        .from('public_profiles')
+      const nextSession = speakers?.[0] || null;
+
+      // Get recent announcements from attendee's events only
+      const { data: announcements } = await supabase
+        .from('announcements')
         .select('*')
-        .neq('id', currentUser?.id || '')
+        .in('event_id', eventIds)
+        .order('created_at', { ascending: false })
         .limit(3);
 
+      const recentAnnouncements = announcements || [];
+
+      // Get suggested connections from the same events
+      const { data: otherParticipants } = await supabase
+        .from('event_participants')
+        .select(`
+          user_id,
+          profiles!inner (
+            id,
+            name,
+            photo_url,
+            niche,
+            company
+          )
+        `)
+        .in('event_id', eventIds)
+        .neq('user_id', currentUser.id)
+        .limit(6);
+
+      const suggestedConnections = otherParticipants?.map(p => p.profiles).filter(Boolean) || [];
+
       return {
-        currentEvent: currentEvents?.[0] || null,
-        upcomingEvents: upcomingEvents || [],
-        nextSession: speakers?.[0] || null,
-        recentAnnouncements: announcements || [],
-        suggestedConnections: profiles || [],
+        currentEvent,
+        upcomingEvents,
+        nextSession,
+        recentAnnouncements,
+        suggestedConnections
       };
     },
-    enabled: !!currentUser,
-    refetchInterval: 30000, // Refetch every 30 seconds for real-time updates
+    enabled: !!currentUser && currentUser.role === 'attendee',
+    refetchInterval: 30000, // Refetch every 30 seconds for live updates
   });
 
   return {

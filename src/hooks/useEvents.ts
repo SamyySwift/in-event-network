@@ -106,18 +106,20 @@ export const useEvents = () => {
           throw new Error('Name, start time, and end time are required fields');
         }
 
+        // Create the final data object with only the fields that exist in the database
         const finalData = {
-          ...dataWithoutImage,
-          banner_url: bannerUrl,
-          host_id: currentUser.id, // Always set to current user
-          // Convert empty strings to null for optional fields
+          name: dataWithoutImage.name,
           description: dataWithoutImage.description || null,
+          start_time: dataWithoutImage.start_time,
+          end_time: dataWithoutImage.end_time,
           location: dataWithoutImage.location || null,
+          banner_url: bannerUrl || null,
           logo_url: dataWithoutImage.logo_url || null,
           website: dataWithoutImage.website || null,
+          host_id: currentUser.id, // Always set to current user
         };
 
-        console.log('Final event data:', finalData);
+        console.log('Final event data being sent to database:', finalData);
 
         const { data, error } = await supabase
           .from('events')
@@ -168,16 +170,18 @@ export const useEvents = () => {
           bannerUrl = await uploadImage(image);
         }
 
-        const finalData = {
-          ...eventData,
-          banner_url: bannerUrl,
-          // Convert empty strings to null for optional fields
-          description: eventData.description || null,
-          location: eventData.location || null,
-          logo_url: eventData.logo_url || null,
-          website: eventData.website || null,
-          host_id: eventData.host_id || null,
-        };
+        const finalData: Partial<Event> = {};
+        
+        // Only include fields that exist in the database schema
+        if (eventData.name !== undefined) finalData.name = eventData.name;
+        if (eventData.description !== undefined) finalData.description = eventData.description || null;
+        if (eventData.start_time !== undefined) finalData.start_time = eventData.start_time;
+        if (eventData.end_time !== undefined) finalData.end_time = eventData.end_time;
+        if (eventData.location !== undefined) finalData.location = eventData.location || null;
+        if (bannerUrl !== undefined) finalData.banner_url = bannerUrl;
+        if (eventData.logo_url !== undefined) finalData.logo_url = eventData.logo_url || null;
+        if (eventData.website !== undefined) finalData.website = eventData.website || null;
+        if (eventData.host_id !== undefined) finalData.host_id = eventData.host_id || null;
 
         console.log('Final update data:', finalData);
 

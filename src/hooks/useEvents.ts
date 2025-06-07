@@ -1,7 +1,7 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Event {
   id: string;
@@ -22,13 +22,19 @@ interface Event {
 export const useEvents = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentUser } = useAuth();
 
   const { data: events = [], isLoading, error } = useQuery({
-    queryKey: ['events'],
+    queryKey: ['events', currentUser?.id],
     queryFn: async () => {
+      if (!currentUser?.id) {
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('events')
         .select('*')
+        .eq('host_id', currentUser.id)
         .order('start_time', { ascending: true });
 
       if (error) {
@@ -37,6 +43,7 @@ export const useEvents = () => {
       }
       return data as Event[];
     },
+    enabled: !!currentUser?.id && currentUser?.role === 'host',
   });
 
   const uploadImage = async (file: File): Promise<string> => {
@@ -72,10 +79,14 @@ export const useEvents = () => {
   };
 
   const createEventMutation = useMutation({
-    mutationFn: async (eventData: Omit<Event, 'id' | 'created_at' | 'updated_at'> & { image?: File }) => {
+    mutationFn: async (eventData: Omit<Event, 'id' | 'created_at' | 'updated_at' | 'event_key'> & { image?: File }) => {
       try {
         console.log('Creating event with data:', eventData);
         
+        if (!currentUser?.id) {
+          throw new Error('User must be logged in to create events');
+        }
+
         let bannerUrl = eventData.banner_url;
         if (eventData.image) {
           bannerUrl = await uploadImage(eventData.image);
@@ -91,13 +102,12 @@ export const useEvents = () => {
         const finalData = {
           ...dataWithoutImage,
           banner_url: bannerUrl,
+          host_id: currentUser.id,
           // Convert empty strings to null for optional fields
           description: dataWithoutImage.description || null,
           location: dataWithoutImage.location || null,
           logo_url: dataWithoutImage.logo_url || null,
           website: dataWithoutImage.website || null,
-          host_id: dataWithoutImage.host_id || null,
-          event_key: dataWithoutImage.event_key || null,
         };
 
         console.log('Final event data:', finalData);
@@ -121,10 +131,10 @@ export const useEvents = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['events', currentUser?.id] });
       toast({
         title: 'Event Created',
-        description: 'The event has been created successfully.',
+        description: 'The event has been created successfully with a unique access code.',
       });
     },
     onError: (error) => {
@@ -155,8 +165,6 @@ export const useEvents = () => {
           location: eventData.location || null,
           logo_url: eventData.logo_url || null,
           website: eventData.website || null,
-          host_id: eventData.host_id || null,
-          event_key: eventData.event_key || null,
         };
 
         console.log('Final update data:', finalData);
@@ -165,6 +173,7 @@ export const useEvents = () => {
           .from('events')
           .update(finalData)
           .eq('id', id)
+          .eq('host_id', currentUser?.id) // Ensure host can only update their own events
           .select()
           .single();
 
@@ -181,7 +190,7 @@ export const useEvents = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['events', currentUser?.id] });
       toast({
         title: 'Event Updated',
         description: 'The event has been updated successfully.',
@@ -203,7 +212,8 @@ export const useEvents = () => {
       const { error } = await supabase
         .from('events')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('host_id', currentUser?.id); // Ensure host can only delete their own events
 
       if (error) {
         console.error('Delete error:', error);
@@ -211,7 +221,7 @@ export const useEvents = () => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['events'] });
+      queryClient.invalidateQueries({ queryKey: ['events', currentUser?.id] });
       toast({
         title: 'Event Deleted',
         description: 'The event has been removed successfully.',

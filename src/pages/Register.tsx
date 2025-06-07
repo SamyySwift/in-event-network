@@ -154,7 +154,10 @@ const Register = () => {
               Create your account
             </CardTitle>
             <CardDescription className="text-center">
-              Enter your information to create a Connect account
+              {role === 'host' 
+                ? 'Create events and manage attendees' 
+                : 'Join events and connect with others'
+              }
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>

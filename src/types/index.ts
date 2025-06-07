@@ -48,13 +48,14 @@ export interface Event {
   id: string;
   name: string;
   description?: string;
-  startDate: string;
-  endDate: string;
+  start_time: string;
+  end_time: string;
   bannerUrl?: string;
   logoUrl?: string;
   website?: string;
   location?: string;
   hostId: string;
+  eventKey: string;
   socialLinks?: {
     twitter?: string;
     facebook?: string;
@@ -87,6 +88,7 @@ export interface Question {
   isAnonymous?: boolean;
   answer?: string;
   answerSatisfactionRating?: number;
+  userNotified?: boolean;
 }
 
 export interface Suggestion {
@@ -95,6 +97,8 @@ export interface Suggestion {
   userId: string;
   eventId: string;
   createdAt: string;
+  type: 'suggestion' | 'rating';
+  rating?: number;
 }
 
 export interface Rating {
@@ -113,6 +117,10 @@ export interface Facility {
   location: string;
   description?: string;
   icon?: string;
+  imageUrl?: string;
+  rules?: string;
+  contactType?: 'call' | 'text' | 'whatsapp' | null;
+  contactNumber?: string;
 }
 
 export interface Connection {
@@ -205,45 +213,4 @@ export interface SurveyResponse {
   userId?: string;
   responses: { [questionId: string]: any };
   submittedAt: string;
-}
-
-// Update the Facility interface to include new fields
-export interface Facility {
-  id: string;
-  name: string;
-  type: "restroom" | "emergency" | "food" | "accessibility" | "parking" | "entry" | "exit" | "other";
-  location: string;
-  description?: string;
-  icon?: string;
-  imageUrl?: string;
-  rules?: string;
-  contactType?: 'call' | 'text' | 'whatsapp' | null;
-  contactNumber?: string;
-}
-
-// Update the Question interface
-export interface Question {
-  id: string;
-  question: string;
-  sessionId: string;
-  userId: string;
-  speakerId?: string;
-  upvotes: number;
-  answered: boolean;
-  createdAt: string;
-  isAnonymous?: boolean;
-  answer?: string;
-  answerSatisfactionRating?: number;
-  userNotified?: boolean;
-}
-
-// Update the Suggestion interface
-export interface Suggestion {
-  id: string;
-  content: string;
-  userId: string;
-  eventId: string;
-  createdAt: string;
-  type: 'suggestion' | 'rating';
-  rating?: number;
 }

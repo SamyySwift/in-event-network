@@ -302,6 +302,7 @@ export type Database = {
           created_at: string
           description: string | null
           end_time: string
+          event_key: string | null
           host_id: string | null
           id: string
           location: string | null
@@ -316,6 +317,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           end_time: string
+          event_key?: string | null
           host_id?: string | null
           id?: string
           location?: string | null
@@ -330,6 +332,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           end_time?: string
+          event_key?: string | null
           host_id?: string | null
           id?: string
           location?: string | null

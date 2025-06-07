@@ -78,7 +78,7 @@ export const usePolls = () => {
       // Transform the data to match our Poll interface
       return (data || []).map(poll => ({
         ...poll,
-        options: Array.isArray(poll.options) ? poll.options : []
+        options: Array.isArray(poll.options) ? poll.options as PollOption[] : []
       })) as Poll[];
     },
     enabled: !!currentUser,
@@ -122,7 +122,7 @@ export const usePolls = () => {
 
       return poll ? {
         ...poll,
-        options: Array.isArray(poll.options) ? poll.options : []
+        options: Array.isArray(poll.options) ? poll.options as PollOption[] : []
       } as Poll : null;
     },
     enabled: !!currentUser,
@@ -135,16 +135,10 @@ export const usePolls = () => {
         throw new Error('Only hosts can create polls');
       }
 
-      const now = new Date().toISOString();
-      const endTime = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours from now
-
       const { data, error } = await supabase
         .from('polls')
         .insert([{
           ...pollData,
-          start_time: now,
-          end_time: endTime,
-          display_as_banner: false,
           options: pollData.options as any,
           created_by: currentUser.id,
         }])
@@ -259,6 +253,42 @@ export const usePolls = () => {
     },
   });
 
+  const deletePollMutation = useMutation({
+    mutationFn: async (id: string) => {
+      if (!currentUser || currentUser.role !== 'host') {
+        throw new Error('Only hosts can delete polls');
+      }
+
+      const { error } = await supabase
+        .from('polls')
+        .delete()
+        .eq('id', id)
+        .eq('created_by', currentUser.id); // Ensure only creator can delete
+
+      if (error) {
+        console.error('Delete poll error:', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['polls'] });
+      queryClient.invalidateQueries({ queryKey: ['activePoll'] });
+      toast({
+        title: 'Poll Deleted',
+        description: 'The poll has been removed successfully.',
+        variant: 'destructive',
+      });
+    },
+    onError: (error) => {
+      console.error('Delete poll error:', error);
+      toast({
+        title: 'Error',
+        description: `Failed to delete poll: ${error.message}`,
+        variant: 'destructive',
+      });
+    },
+  });
+
   return {
     polls,
     activePoll,
@@ -267,9 +297,11 @@ export const usePolls = () => {
     createPoll: createPollMutation.mutate,
     votePoll: votePollMutation.mutate,
     updatePoll: updatePollMutation.mutate,
+    deletePoll: deletePollMutation.mutate,
     isCreating: createPollMutation.isPending,
     isVoting: votePollMutation.isPending,
     isUpdating: updatePollMutation.isPending,
+    isDeleting: deletePollMutation.isPending,
   };
 };
 

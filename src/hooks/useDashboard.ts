@@ -15,7 +15,7 @@ export const useDashboard = () => {
   const { currentUser } = useAuth();
 
   const { data: dashboardData, isLoading, error } = useQuery({
-    queryKey: ['attendeeDashboard', currentUser?.id],
+    queryKey: ['attendeeDashboard', currentUser?.id, currentUser?.current_event_id],
     queryFn: async (): Promise<DashboardData> => {
       if (!currentUser || currentUser.role !== 'attendee') {
         throw new Error('Only attendees can access this dashboard');

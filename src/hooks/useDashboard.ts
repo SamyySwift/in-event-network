@@ -26,7 +26,7 @@ export const useDashboard = () => {
         .from('event_participants')
         .select(`
           event_id,
-          events (
+          events!inner (
             id,
             name,
             description,

@@ -4,13 +4,13 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
-interface PollOption {
+export interface PollOption {
   id: string;
   text: string;
   votes?: number;
 }
 
-interface Poll {
+export interface Poll {
   id: string;
   question: string;
   options: PollOption[];
@@ -74,7 +74,12 @@ export const usePolls = () => {
         console.error('Error fetching polls:', error);
         throw error;
       }
-      return data as Poll[];
+      
+      // Transform the data to match our Poll interface
+      return (data || []).map(poll => ({
+        ...poll,
+        options: Array.isArray(poll.options) ? poll.options : []
+      })) as Poll[];
     },
     enabled: !!currentUser,
   });
@@ -103,7 +108,7 @@ export const usePolls = () => {
       if (eventIds.length === 0) return null;
 
       const { data: poll, error } = await supabase
-        .rpc('get_poll_with_results', { poll_uuid: null })
+        .from('polls')
         .select('*')
         .in('event_id', eventIds)
         .eq('is_active', true)
@@ -115,7 +120,10 @@ export const usePolls = () => {
         return null;
       }
 
-      return poll as Poll | null;
+      return poll ? {
+        ...poll,
+        options: Array.isArray(poll.options) ? poll.options : []
+      } as Poll : null;
     },
     enabled: !!currentUser,
     refetchInterval: 10000, // Refetch every 10 seconds
@@ -127,10 +135,17 @@ export const usePolls = () => {
         throw new Error('Only hosts can create polls');
       }
 
+      const now = new Date().toISOString();
+      const endTime = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24 hours from now
+
       const { data, error } = await supabase
         .from('polls')
         .insert([{
           ...pollData,
+          start_time: now,
+          end_time: endTime,
+          display_as_banner: false,
+          options: pollData.options as any,
           created_by: currentUser.id,
         }])
         .select()
@@ -206,9 +221,14 @@ export const usePolls = () => {
         throw new Error('Only hosts can update polls');
       }
 
+      const updateData = {
+        ...pollData,
+        options: pollData.options as any
+      };
+
       const { data, error } = await supabase
         .from('polls')
-        .update(pollData)
+        .update(updateData)
         .eq('id', id)
         .eq('created_by', currentUser.id) // Ensure only creator can update
         .select()
@@ -250,5 +270,37 @@ export const usePolls = () => {
     isCreating: createPollMutation.isPending,
     isVoting: votePollMutation.isPending,
     isUpdating: updatePollMutation.isPending,
+  };
+};
+
+// Create a separate hook for poll votes
+export const usePollVotes = () => {
+  const { currentUser } = useAuth();
+  const { votePoll, isVoting } = usePolls();
+
+  const { data: userVotes = [] } = useQuery({
+    queryKey: ['pollVotes', currentUser?.id],
+    queryFn: async () => {
+      if (!currentUser) return [];
+
+      const { data, error } = await supabase
+        .from('poll_votes')
+        .select('*')
+        .eq('user_id', currentUser.id);
+
+      if (error) {
+        console.error('Error fetching user votes:', error);
+        return [];
+      }
+
+      return data || [];
+    },
+    enabled: !!currentUser,
+  });
+
+  return {
+    userVotes,
+    submitVote: votePoll,
+    isSubmitting: isVoting,
   };
 };

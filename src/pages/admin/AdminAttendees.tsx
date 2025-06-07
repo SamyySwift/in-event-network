@@ -9,74 +9,114 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const AdminAttendees = () => {
   const [activeTab, setActiveTab] = useState<string>('all');
   const [attendees, setAttendees] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { currentUser } = useAuth();
 
   useEffect(() => {
-    fetchAttendees();
-    
-    // Set up real-time subscription
-    const channel = supabase
-      .channel('attendees-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'profiles',
-          filter: 'role=eq.attendee'
-        },
-        (payload) => {
-          console.log('Real-time attendee update:', payload);
-          fetchAttendees();
-        }
-      )
-      .subscribe();
+    if (currentUser?.id) {
+      fetchHostAttendees();
+      
+      // Set up real-time subscription for attendees joining this host's events
+      const channel = supabase
+        .channel('host-attendees-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'event_participants'
+          },
+          (payload) => {
+            console.log('Real-time event participant update:', payload);
+            fetchHostAttendees();
+          }
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, []);
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [currentUser?.id]);
 
-  const fetchAttendees = async () => {
+  const fetchHostAttendees = async () => {
+    if (!currentUser?.id) return;
+
     try {
+      // Get attendees who have joined this host's events
       const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('role', 'attendee')
-        .order('created_at', { ascending: false });
+        .from('event_participants')
+        .select(`
+          user_id,
+          joined_at,
+          profiles:user_id (
+            id,
+            name,
+            email,
+            role,
+            photo_url,
+            bio,
+            niche,
+            company,
+            networking_preferences,
+            twitter_link,
+            facebook_link,
+            linkedin_link,
+            instagram_link,
+            snapchat_link,
+            tiktok_link,
+            github_link,
+            website_link
+          ),
+          events:event_id (
+            host_id,
+            name
+          )
+        `)
+        .eq('events.host_id', currentUser.id);
 
       if (error) throw error;
 
-      const transformedAttendees: User[] = (data || []).map(profile => ({
-        id: profile.id,
-        name: profile.name || 'Unknown',
-        email: profile.email || '',
-        role: profile.role as 'host' | 'attendee',
-        photoUrl: profile.photo_url,
-        bio: profile.bio,
-        niche: profile.niche,
-        company: profile.company,
-        networkingPreferences: profile.networking_preferences || [],
-        links: {
-          twitter: profile.twitter_link,
-          facebook: profile.facebook_link,
-          linkedin: profile.linkedin_link,
-          instagram: profile.instagram_link,
-          snapchat: profile.snapchat_link,
-          tiktok: profile.tiktok_link,
-          github: profile.github_link,
-          website: profile.website_link,
-        },
-      }));
+      // Transform and deduplicate attendees (same user might join multiple events)
+      const uniqueAttendees = new Map<string, User>();
+      
+      (data || []).forEach(participant => {
+        if (participant.profiles && participant.events) {
+          const profile = participant.profiles;
+          const attendee: User = {
+            id: profile.id,
+            name: profile.name || 'Unknown',
+            email: profile.email || '',
+            role: profile.role as 'host' | 'attendee',
+            photoUrl: profile.photo_url,
+            bio: profile.bio,
+            niche: profile.niche,
+            company: profile.company,
+            networkingPreferences: profile.networking_preferences || [],
+            links: {
+              twitter: profile.twitter_link,
+              facebook: profile.facebook_link,
+              linkedin: profile.linkedin_link,
+              instagram: profile.instagram_link,
+              snapchat: profile.snapchat_link,
+              tiktok: profile.tiktok_link,
+              github: profile.github_link,
+              website: profile.website_link,
+            },
+          };
+          uniqueAttendees.set(profile.id, attendee);
+        }
+      });
 
-      setAttendees(transformedAttendees);
+      setAttendees(Array.from(uniqueAttendees.values()));
     } catch (error) {
-      console.error('Error fetching attendees:', error);
+      console.error('Error fetching host attendees:', error);
       toast({
         title: "Error",
         description: "Failed to fetch attendees",
@@ -163,22 +203,31 @@ const AdminAttendees = () => {
   };
 
   const handleDeleteAttendee = async (attendee: User) => {
+    if (!currentUser?.id) return;
+
     try {
+      // Remove attendee from all of this host's events
       const { error } = await supabase
-        .from('profiles')
+        .from('event_participants')
         .delete()
-        .eq('id', attendee.id);
+        .eq('user_id', attendee.id)
+        .in('event_id', 
+          supabase
+            .from('events')
+            .select('id')
+            .eq('host_id', currentUser.id)
+        );
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Attendee removed successfully",
+        description: "Attendee removed from your events",
       });
 
-      fetchAttendees();
+      fetchHostAttendees();
     } catch (error) {
-      console.error('Error deleting attendee:', error);
+      console.error('Error removing attendee:', error);
       toast({
         title: "Error",
         description: "Failed to remove attendee",
@@ -203,8 +252,8 @@ const AdminAttendees = () => {
   return (
     <AdminLayout>
       <AdminPageHeader
-        title="Attendees"
-        description={`Manage event attendees and their profiles (${attendees.length} total)`}
+        title="Event Attendees"
+        description={`Manage attendees who have joined your events (${attendees.length} total)`}
         tabs={[
           { id: 'all', label: `All Attendees (${attendees.length})` },
           { id: 'technical', label: 'Technical' },
@@ -216,12 +265,20 @@ const AdminAttendees = () => {
       >
         {['all', 'technical', 'design', 'business'].map(tabId => (
           <TabsContent key={tabId} value={tabId} className="space-y-4">
-            <AdminDataTable
-              columns={columns}
-              data={getFilteredAttendees()}
-              onEdit={handleEditAttendee}
-              onDelete={handleDeleteAttendee}
-            />
+            {attendees.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">
+                  No attendees have joined your events yet. Share your event access codes to get started!
+                </p>
+              </div>
+            ) : (
+              <AdminDataTable
+                columns={columns}
+                data={getFilteredAttendees()}
+                onEdit={handleEditAttendee}
+                onDelete={handleDeleteAttendee}
+              />
+            )}
           </TabsContent>
         ))}
       </AdminPageHeader>

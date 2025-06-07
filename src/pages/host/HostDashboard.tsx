@@ -22,7 +22,7 @@ const HostDashboard = () => {
   const { speakers } = useSpeakers();
   const { announcements } = useAnnouncements();
 
-  // Calculate metrics
+  // Calculate metrics for this host's events only
   const totalEvents = events.length;
   const totalSpeakers = speakers.length;
   const totalAnnouncements = announcements.length;
@@ -39,7 +39,7 @@ const HostDashboard = () => {
 
   const metrics = [
     {
-      title: 'Total Events',
+      title: 'Your Events',
       value: totalEvents.toString(),
       change: `${upcomingEvents} upcoming`,
       icon: Calendar,
@@ -53,14 +53,14 @@ const HostDashboard = () => {
       color: 'text-green-600',
     },
     {
-      title: 'Speakers',
+      title: 'Your Speakers',
       value: totalSpeakers.toString(),
       change: 'Registered',
       icon: User,
       color: 'text-purple-600',
     },
     {
-      title: 'Announcements',
+      title: 'Your Announcements',
       value: totalAnnouncements.toString(),
       change: 'Published',
       icon: Megaphone,
@@ -112,7 +112,7 @@ const HostDashboard = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
-                Recent Events
+                Your Recent Events
               </CardTitle>
               <CardDescription>
                 Latest events you've created
@@ -122,7 +122,7 @@ const HostDashboard = () => {
               <div className="space-y-4">
                 {recentEvents.length === 0 ? (
                   <p className="text-center text-muted-foreground py-4">
-                    No events created yet
+                    No events created yet. Create your first event to get started!
                   </p>
                 ) : (
                   recentEvents.map((event) => (
@@ -150,7 +150,7 @@ const HostDashboard = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Megaphone className="h-5 w-5" />
-                Recent Announcements
+                Your Recent Announcements
               </CardTitle>
               <CardDescription>
                 Latest announcements you've published
@@ -187,27 +187,27 @@ const HostDashboard = () => {
           </Card>
         </div>
 
-        {/* Quick Stats */}
+        {/* Event Overview - Only showing this host's data */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5" />
-              Event Overview
+              Your Event Overview
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-3">
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">{upcomingEvents}</div>
-                <p className="text-sm text-muted-foreground">Upcoming Events</p>
+                <p className="text-sm text-muted-foreground">Your Upcoming Events</p>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">{liveEvents}</div>
-                <p className="text-sm text-muted-foreground">Live Events</p>
+                <p className="text-sm text-muted-foreground">Your Live Events</p>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-purple-600">{totalSpeakers}</div>
-                <p className="text-sm text-muted-foreground">Total Speakers</p>
+                <p className="text-sm text-muted-foreground">Your Speakers</p>
               </div>
             </div>
           </CardContent>

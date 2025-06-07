@@ -1,3 +1,4 @@
+
 import React from 'react';
 import AppLayout from '@/components/layouts/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,12 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, MapPin, User, Loader, ExternalLink } from 'lucide-react';
-import { useEvents } from '@/hooks/useEvents';
-import { useSpeakers } from '@/hooks/useSpeakers';
+import { useAttendeeEvents } from '@/hooks/useAttendeeEvents';
+import { useAttendeeSpeakers } from '@/hooks/useAttendeeSpeakers';
 
 const AttendeeSchedule = () => {
-  const { events, isLoading: eventsLoading } = useEvents();
-  const { speakers, isLoading: speakersLoading } = useSpeakers();
+  const { events, isLoading: eventsLoading } = useAttendeeEvents();
+  const { speakers, isLoading: speakersLoading } = useAttendeeSpeakers();
 
   const isLoading = eventsLoading || speakersLoading;
 

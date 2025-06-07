@@ -72,6 +72,30 @@ const AttendeeDashboard = () => {
 
   const { currentEvent, upcomingEvents, nextSession, recentAnnouncements, suggestedConnections } = dashboardData || {};
 
+  // Show message if user hasn't joined any event
+  if (!currentEvent && (!upcomingEvents || upcomingEvents.length === 0)) {
+    return (
+      <AppLayout>
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                No Events Available
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                You haven't joined any events yet. Scan a QR code to join an event.
+              </p>
+              <Button onClick={() => navigate('/scan')} className="bg-connect-600 hover:bg-connect-700">
+                Scan QR Code
+              </Button>
+            </div>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="max-w-6xl mx-auto">

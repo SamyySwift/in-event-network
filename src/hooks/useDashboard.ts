@@ -17,54 +17,122 @@ export const useDashboard = () => {
   const { data: dashboardData, isLoading, error } = useQuery({
     queryKey: ['dashboard', currentUser?.id],
     queryFn: async (): Promise<DashboardData> => {
+      if (!currentUser?.id) {
+        throw new Error('User not authenticated');
+      }
+
       const now = new Date().toISOString();
 
-      // Get current/live events
-      const { data: currentEvents } = await supabase
+      // Get the user's current event from their profile
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('current_event_id')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (!userProfile?.current_event_id) {
+        // If user has no current event, return empty data
+        return {
+          currentEvent: null,
+          upcomingEvents: [],
+          nextSession: null,
+          recentAnnouncements: [],
+          suggestedConnections: [],
+        };
+      }
+
+      // Get the current event details
+      const { data: currentEventData } = await supabase
         .from('events')
         .select('*')
-        .lte('start_time', now)
-        .gte('end_time', now)
-        .order('start_time', { ascending: true })
-        .limit(1);
+        .eq('id', userProfile.current_event_id)
+        .single();
 
-      // Get upcoming events
+      if (!currentEventData) {
+        return {
+          currentEvent: null,
+          upcomingEvents: [],
+          nextSession: null,
+          recentAnnouncements: [],
+          suggestedConnections: [],
+        };
+      }
+
+      const hostId = currentEventData.host_id;
+
+      // Check if current event is live
+      const isCurrentEventLive = currentEventData.start_time <= now && currentEventData.end_time >= now;
+      const currentEvent = isCurrentEventLive ? currentEventData : null;
+
+      // Get upcoming events from the same host only
       const { data: upcomingEvents } = await supabase
         .from('events')
         .select('*')
+        .eq('host_id', hostId)
         .gt('start_time', now)
         .order('start_time', { ascending: true })
         .limit(5);
 
-      // Get recent announcements
+      // Get recent announcements for events from this host only
+      const { data: hostEvents } = await supabase
+        .from('events')
+        .select('id')
+        .eq('host_id', hostId);
+
+      const eventIds = hostEvents?.map(e => e.id) || [];
+
       const { data: announcements } = await supabase
         .from('announcements')
         .select('*')
+        .in('event_id', eventIds)
         .order('created_at', { ascending: false })
         .limit(3);
 
-      // Get speakers for upcoming sessions
+      // Get speakers for upcoming sessions from this host's events only
       const { data: speakers } = await supabase
         .from('speakers')
         .select('*')
+        .in('event_id', eventIds)
         .not('session_time', 'is', null)
         .gt('session_time', now)
         .order('session_time', { ascending: true })
         .limit(1);
 
-      // Get suggested connections (other attendees)
-      const { data: profiles } = await supabase
-        .from('public_profiles')
-        .select('*')
-        .neq('id', currentUser?.id || '')
-        .limit(3);
+      // Get suggested connections from attendees of the same host's events
+      const { data: sameHostAttendees } = await supabase
+        .from('event_participants')
+        .select(`
+          user_id,
+          profiles:user_id (
+            id,
+            name,
+            role,
+            company,
+            bio,
+            niche,
+            photo_url,
+            networking_preferences,
+            tags,
+            twitter_link,
+            linkedin_link,
+            github_link,
+            instagram_link,
+            website_link,
+            created_at
+          )
+        `)
+        .in('event_id', eventIds)
+        .neq('user_id', currentUser.id)
+        .limit(6);
+
+      const suggestedConnections = sameHostAttendees?.map((participant: any) => participant.profiles).filter(Boolean) || [];
 
       return {
-        currentEvent: currentEvents?.[0] || null,
+        currentEvent,
         upcomingEvents: upcomingEvents || [],
         nextSession: speakers?.[0] || null,
         recentAnnouncements: announcements || [],
-        suggestedConnections: profiles || [],
+        suggestedConnections: suggestedConnections.slice(0, 3),
       };
     },
     enabled: !!currentUser,

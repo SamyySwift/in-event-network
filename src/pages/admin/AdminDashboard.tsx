@@ -465,7 +465,7 @@ const AdminDashboard = () => {
               </div>
             </div>
           </CardContent>
-        </div>
+        </Card>
       </div>
     </AdminLayout>
   );

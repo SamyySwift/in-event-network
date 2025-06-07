@@ -1,359 +1,331 @@
 
-import React, { useEffect, useState } from 'react';
-import { Calendar, Users, MessageSquare, Megaphone, Clock, MapPin } from 'lucide-react';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Calendar, Users, MapPin, MessageSquare, Clock, Star, BookOpen, Wifi, WifiOff } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import AppLayout from '@/components/layouts/AppLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/lib/supabase';
-import { format, parseISO } from 'date-fns';
-
-interface DashboardData {
-  upcomingSessions: any[];
-  recentAnnouncements: any[];
-  totalAttendees: number;
-  myConnections: number;
-  currentEvent: any;
-}
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { useDashboard } from '@/hooks/useDashboard';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const AttendeeDashboard = () => {
+  const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const [dashboardData, setDashboardData] = useState<DashboardData>({
-    upcomingSessions: [],
-    recentAnnouncements: [],
-    totalAttendees: 0,
-    myConnections: 0,
-    currentEvent: null,
-  });
-  const [loading, setLoading] = useState(true);
+  const { dashboardData, isLoading, error } = useDashboard();
 
-  useEffect(() => {
-    if (currentUser) {
-      fetchDashboardData();
-      
-      // Set up real-time subscriptions
-      const announcementsChannel = supabase
-        .channel('announcements-realtime')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'announcements'
-          },
-          () => {
-            console.log('Announcements updated');
-            fetchDashboardData();
-          }
-        )
-        .subscribe();
-
-      const speakersChannel = supabase
-        .channel('speakers-realtime')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'speakers'
-          },
-          () => {
-            console.log('Speakers updated');
-            fetchDashboardData();
-          }
-        )
-        .subscribe();
-
-      const participantsChannel = supabase
-        .channel('participants-realtime')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'event_participants'
-          },
-          () => {
-            console.log('Participants updated');
-            fetchDashboardData();
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(announcementsChannel);
-        supabase.removeChannel(speakersChannel);
-        supabase.removeChannel(participantsChannel);
-      };
-    }
-  }, [currentUser]);
-
-  const fetchDashboardData = async () => {
-    if (!currentUser) {
-      setLoading(false);
-      return;
-    }
-
-    try {
-      // Get user's profile to find their current event
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('current_event_id')
-        .eq('id', currentUser.id)
-        .single();
-
-      if (!profile?.current_event_id) {
-        setLoading(false);
-        return;
-      }
-
-      console.log('Fetching dashboard data for event:', profile.current_event_id);
-
-      // Get current event details
-      const { data: currentEvent } = await supabase
-        .from('events')
-        .select('*')
-        .eq('id', profile.current_event_id)
-        .single();
-
-      console.log('Current event:', currentEvent);
-
-      // Get host's events to fetch all related data
-      let hostEventIds = [profile.current_event_id];
-      if (currentEvent?.host_id) {
-        const { data: hostEvents } = await supabase
-          .from('events')
-          .select('id')
-          .eq('host_id', currentEvent.host_id);
-        
-        hostEventIds = hostEvents?.map(e => e.id) || [profile.current_event_id];
-      }
-
-      // Fetch upcoming sessions (speakers with session times)
-      const { data: speakers } = await supabase
-        .from('speakers')
-        .select('*')
-        .in('event_id', hostEventIds)
-        .not('session_time', 'is', null)
-        .gte('session_time', new Date().toISOString())
-        .order('session_time', { ascending: true })
-        .limit(5);
-
-      // Fetch recent announcements
-      const { data: announcements } = await supabase
-        .from('announcements')
-        .select('*')
-        .in('event_id', hostEventIds)
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      // Get total attendees count
-      const { data: participants } = await supabase
-        .from('event_participants')
-        .select('user_id')
-        .in('event_id', hostEventIds);
-
-      // Get my connections count
-      const { data: connections } = await supabase
-        .from('connections')
-        .select('id')
-        .or(`requester_id.eq.${currentUser.id},recipient_id.eq.${currentUser.id}`)
-        .eq('status', 'accepted');
-
-      setDashboardData({
-        upcomingSessions: speakers || [],
-        recentAnnouncements: announcements || [],
-        totalAttendees: participants?.length || 0,
-        myConnections: connections?.length || 0,
-        currentEvent: currentEvent,
-      });
-
-      console.log('Dashboard data loaded:', {
-        speakers: speakers?.length,
-        announcements: announcements?.length,
-        participants: participants?.length,
-        connections: connections?.length
-      });
-
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
   };
 
-  if (loading) {
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  };
+
+  if (isLoading) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-2 text-muted-foreground">Loading dashboard...</p>
+        <div className="max-w-6xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <Skeleton className="h-8 w-64" />
+            <Skeleton className="h-10 w-32" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="md:col-span-2">
+              <Skeleton className="h-48 w-full" />
+            </div>
+            <Skeleton className="h-48 w-full" />
           </div>
         </div>
       </AppLayout>
     );
   }
 
+  if (error) {
+    return (
+      <AppLayout>
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <WifiOff className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">Unable to load dashboard data</p>
+              <Button onClick={() => window.location.reload()} variant="outline" className="mt-2">
+                Retry
+              </Button>
+            </div>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  const { currentEvent, upcomingEvents, nextSession, recentAnnouncements, suggestedConnections } = dashboardData || {};
+
   return (
     <AppLayout>
-      <div className="animate-fade-in">
-        {/* Welcome Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary-600 bg-clip-text text-transparent">
-            Welcome back, {currentUser?.name || 'Attendee'}!
-          </h1>
-          {dashboardData.currentEvent && (
-            <div className="mt-2 flex items-center gap-2 text-muted-foreground">
-              <MapPin className="h-4 w-4" />
-              <span>{dashboardData.currentEvent.name}</span>
-              {dashboardData.currentEvent.location && (
-                <>
-                  <span>•</span>
-                  <span>{dashboardData.currentEvent.location}</span>
-                </>
-              )}
-            </div>
-          )}
+      <div className="max-w-6xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2">
+              <Wifi className="h-6 w-6 text-green-500" />
+              Welcome back, {currentUser?.name?.split(' ')[0]}
+            </h1>
+            <p className="text-muted-foreground">Live dashboard updated every 30 seconds</p>
+          </div>
+          
+          <Button onClick={() => navigate('/scan')} className="bg-connect-600 hover:bg-connect-700">
+            Scan QR Code
+          </Button>
         </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-blue-100">Total Attendees</p>
-                  <p className="text-3xl font-bold">{dashboardData.totalAttendees}</p>
-                </div>
-                <Users className="h-8 w-8 text-blue-200" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-green-100">My Connections</p>
-                  <p className="text-3xl font-bold">{dashboardData.myConnections}</p>
-                </div>
-                <MessageSquare className="h-8 w-8 text-green-200" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-purple-100">Sessions Today</p>
-                  <p className="text-3xl font-bold">{dashboardData.upcomingSessions.length}</p>
-                </div>
-                <Calendar className="h-8 w-8 text-purple-200" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-orange-100">Announcements</p>
-                  <p className="text-3xl font-bold">{dashboardData.recentAnnouncements.length}</p>
-                </div>
-                <Megaphone className="h-8 w-8 text-orange-200" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Upcoming Sessions */}
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-primary" />
-                Upcoming Sessions
-              </CardTitle>
-              <CardDescription>
-                Don't miss these upcoming sessions and talks
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {dashboardData.upcomingSessions.length > 0 ? (
-                <div className="space-y-4">
-                  {dashboardData.upcomingSessions.map((session) => (
-                    <div key={session.id} className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                      <div className="flex-shrink-0">
-                        <Clock className="h-5 w-5 text-primary mt-1" />
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Current Event Card */}
+          <div className="md:col-span-2">
+            <Card>
+              <CardHeader className="bg-connect-50 border-b">
+                <CardTitle className="text-xl flex items-center gap-2">
+                  {currentEvent ? (
+                    <>
+                      <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                      Live Event
+                    </>
+                  ) : (
+                    <>
+                      <Calendar className="h-5 w-5" />
+                      {upcomingEvents?.[0] ? 'Next Event' : 'No Events Scheduled'}
+                    </>
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  {currentEvent ? 'You\'re attending this event now' : 'Upcoming event information'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                {currentEvent || upcomingEvents?.[0] ? (
+                  <>
+                    <h3 className="text-xl font-semibold mb-2">
+                      {(currentEvent || upcomingEvents?.[0])?.name}
+                    </h3>
+                    <div className="flex flex-col space-y-3 text-sm text-muted-foreground">
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-2" />
+                        <span>
+                          {currentEvent ? (
+                            `Started: ${formatTime(currentEvent.start_time)} - Ends: ${formatTime(currentEvent.end_time)}`
+                          ) : (
+                            `Starts: ${formatDate(upcomingEvents[0].start_time)}`
+                          )}
+                        </span>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold text-sm">
-                          {session.session_title || `${session.name}'s Session`}
-                        </h4>
-                        <p className="text-sm text-muted-foreground">by {session.name}</p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <Badge variant="outline" className="text-xs">
-                            {format(parseISO(session.session_time), 'MMM d, h:mm a')}
-                          </Badge>
-                        </div>
+                      <div className="flex items-center">
+                        <MapPin className="h-4 w-4 mr-2" />
+                        <span>{(currentEvent || upcomingEvents?.[0])?.location || 'Online'}</span>
                       </div>
+                      {(currentEvent || upcomingEvents?.[0])?.description && (
+                        <p className="text-sm mt-2">
+                          {(currentEvent || upcomingEvents?.[0])?.description}
+                        </p>
+                      )}
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No upcoming sessions scheduled</p>
-                </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-muted-foreground">No events scheduled at this time</p>
+                  </div>
+                )}
+              </CardContent>
+              {(currentEvent || upcomingEvents?.[0]) && (
+                <CardFooter className="flex justify-between">
+                  <Button variant="outline" onClick={() => navigate('/attendee/map')}>
+                    Find Your Way
+                  </Button>
+                  <Button onClick={() => navigate('/attendee/schedule')}>
+                    View Schedule
+                  </Button>
+                </CardFooter>
               )}
-            </CardContent>
-          </Card>
+            </Card>
+          </div>
+          
+          {/* Next Session Card */}
+          <div>
+            <Card>
+              <CardHeader className="bg-yellow-50 border-b">
+                <CardTitle className="text-xl">Next Session</CardTitle>
+                <CardDescription>
+                  {nextSession ? 'Upcoming speaker session' : 'No sessions scheduled'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                {nextSession ? (
+                  <>
+                    <h3 className="text-lg font-semibold mb-2">
+                      {nextSession.session_title || 'Speaker Session'}
+                    </h3>
+                    <div className="flex flex-col space-y-3 text-sm text-muted-foreground">
+                      <div className="flex items-center">
+                        <Clock className="h-4 w-4 mr-2" />
+                        <span>{formatDate(nextSession.session_time)}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <Users className="h-4 w-4 mr-2" />
+                        <span>Speaker: {nextSession.name}</span>
+                      </div>
+                      {nextSession.title && (
+                        <p className="text-xs">{nextSession.title}</p>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-4">
+                    <MessageSquare className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                    <p className="text-sm text-muted-foreground">No sessions scheduled</p>
+                  </div>
+                )}
+              </CardContent>
+              <CardFooter>
+                <Button variant="outline" className="w-full" onClick={() => navigate('/attendee/questions')}>
+                  Ask a Question
+                </Button>
+              </CardFooter>
+            </Card>
+          </div>
+        </div>
 
-          {/* Recent Announcements */}
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Megaphone className="h-5 w-5 text-primary" />
-                Recent Announcements
-              </CardTitle>
-              <CardDescription>
-                Stay updated with the latest event announcements
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {dashboardData.recentAnnouncements.length > 0 ? (
-                <div className="space-y-4">
-                  {dashboardData.recentAnnouncements.map((announcement) => (
-                    <div key={announcement.id} className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                      <div className="flex items-start justify-between">
-                        <h4 className="font-semibold text-sm">{announcement.title}</h4>
-                        <Badge 
-                          variant={announcement.priority === 'high' ? 'destructive' : 'secondary'}
-                          className="text-xs"
-                        >
+        {/* Recent Announcements */}
+        {recentAnnouncements && recentAnnouncements.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              Recent Announcements
+            </h2>
+            <div className="grid gap-4">
+              {recentAnnouncements.map((announcement) => (
+                <Card key={announcement.id} className="border-l-4 border-l-blue-500">
+                  <CardContent className="pt-4">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h3 className="font-medium">{announcement.title}</h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {announcement.content}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2 ml-4">
+                        <Badge variant={announcement.priority === 'high' ? 'destructive' : 'outline'}>
                           {announcement.priority}
                         </Badge>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDate(announcement.created_at)}
+                        </span>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
-                        {announcement.content}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {format(parseISO(announcement.created_at), 'MMM d, h:mm a')}
-                      </p>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Megaphone className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No announcements yet</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* Quick Actions */}
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/attendee/rules')}>
+              <CardContent className="p-4 text-center">
+                <BookOpen className="h-8 w-8 mx-auto mb-2 text-connect-600" />
+                <p className="text-sm font-medium">Event Rules</p>
+              </CardContent>
+            </Card>
+            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/attendee/networking')}>
+              <CardContent className="p-4 text-center">
+                <Users className="h-8 w-8 mx-auto mb-2 text-connect-600" />
+                <p className="text-sm font-medium">Network</p>
+              </CardContent>
+            </Card>
+            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/attendee/questions')}>
+              <CardContent className="p-4 text-center">
+                <MessageSquare className="h-8 w-8 mx-auto mb-2 text-connect-600" />
+                <p className="text-sm font-medium">Q&A</p>
+              </CardContent>
+            </Card>
+            <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/attendee/map')}>
+              <CardContent className="p-4 text-center">
+                <MapPin className="h-8 w-8 mx-auto mb-2 text-connect-600" />
+                <p className="text-sm font-medium">Find Way</p>
+              </CardContent>
+            </Card>
+          </div>
         </div>
+        
+        {/* Suggested Connections */}
+        {suggestedConnections && suggestedConnections.length > 0 && (
+          <div className="mt-8">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">People You Might Want to Meet</h2>
+              <Button variant="link" className="text-connect-600 p-0" onClick={() => navigate('/attendee/search')}>
+                View All
+              </Button>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {suggestedConnections.map(connection => (
+                <Card key={connection.id} className="overflow-hidden">
+                  <div className="p-4 flex space-x-4">
+                    <Avatar className="h-12 w-12">
+                      {connection.photo_url ? (
+                        <AvatarImage src={connection.photo_url} alt={connection.name} />
+                      ) : (
+                        <AvatarFallback className="bg-connect-100 text-connect-600">
+                          {connection.name?.split(' ').map(n => n[0]).join('') || '?'}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                    <div className="flex-1">
+                      <h3 className="font-medium">{connection.name || 'Unknown'}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {connection.niche || connection.company || 'Professional'}
+                      </p>
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="mt-2 text-xs h-8" 
+                        onClick={() => navigate(`/attendee/profile/${connection.id}`)}
+                      >
+                        View Profile
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* Event Feedback */}
+        {currentEvent && (
+          <div className="mt-8 bg-gray-50 rounded-lg p-6 flex flex-col sm:flex-row items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-lg">How's your event experience?</h3>
+              <p className="text-muted-foreground text-sm">Help improve future events by sharing your feedback</p>
+            </div>
+            <Button className="mt-4 sm:mt-0 flex items-center" variant="outline" onClick={() => navigate('/attendee/rate')}>
+              <Star className="h-4 w-4 mr-2" />
+              Rate this Event
+            </Button>
+          </div>
+        )}
       </div>
     </AppLayout>
   );

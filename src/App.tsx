@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,7 +13,6 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
-import JoinEvent from "./pages/JoinEvent";
 
 // Attendee Pages
 import AttendeeDashboard from "./pages/attendee/AttendeeDashboard";
@@ -73,13 +73,12 @@ const App = () => {
         <TooltipProvider>
           <BrowserRouter>
             <Routes>
-              {/* Public Routes - No ProtectedRoute wrapper needed */}
+              {/* Public Routes */}
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/join" element={<JoinEvent />} />
               
-              {/* Protected Attendee Routes - These require event access */}
+              {/* Protected Attendee Routes */}
               <Route path="/attendee" element={
                 <ProtectedRoute requiredRole="attendee">
                   <AttendeeDashboard />
@@ -141,7 +140,7 @@ const App = () => {
                 </ProtectedRoute>
               } />
               
-              {/* Protected Admin Routes - No event access check needed */}
+              {/* Protected Admin Routes */}
               <Route path="/admin" element={
                 <ProtectedRoute requiredRole="host">
                   <AdminDashboard />

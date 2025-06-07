@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +18,7 @@ type EventFormData = {
   start_time: string;
   end_time: string;
   location?: string;
-  banner_url?: string;
+  image?: File;
 };
 
 const AdminEvents = () => {
@@ -42,7 +41,7 @@ const AdminEvents = () => {
     const eventData = {
       ...data,
       host_id: currentUser?.id,
-      banner_url: selectedImage ? URL.createObjectURL(selectedImage) : undefined,
+      image: selectedImage,
     };
 
     if (editingEvent) {

@@ -1,7 +1,7 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
 
 export interface Facility {
   id: string;
@@ -9,120 +9,72 @@ export interface Facility {
   description?: string;
   location?: string;
   rules?: string;
-  image_url?: string;
-  icon_type: string;
-  contact_type: 'none' | 'phone' | 'email' | 'website';
+  contact_type?: 'none' | 'phone' | 'whatsapp';
   contact_info?: string;
-  event_id?: string;
+  image_url?: string;
+  icon_type?: string;
   created_by?: string;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
 }
 
 export const useFacilities = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { currentUser } = useAuth();
 
   const { data: facilities = [], isLoading, error } = useQuery({
-    queryKey: ['facilities', currentUser?.id],
+    queryKey: ['facilities'],
     queryFn: async () => {
-      if (!currentUser) {
-        return [];
-      }
-
-      let query = supabase
+      console.log('Fetching facilities...');
+      const { data, error } = await supabase
         .from('facilities')
         .select('*')
-        .order('name', { ascending: true });
-
-      if (currentUser.role === 'host') {
-        // Hosts see only their own facilities
-        const { data: hostEvents } = await supabase
-          .from('events')
-          .select('id')
-          .eq('host_id', currentUser.id);
-
-        const eventIds = hostEvents?.map(e => e.id) || [];
-        if (eventIds.length === 0) {
-          return [];
-        }
-        query = query.in('event_id', eventIds);
-      } else if (currentUser.role === 'attendee') {
-        // Get the current user's profile to find their current event
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('current_event_id')
-          .eq('id', currentUser.id)
-          .single();
-
-        if (profileError || !profile?.current_event_id) {
-          console.error('Error fetching profile or no current event:', profileError);
-          return [];
-        }
-
-        // Get the current event to find the host
-        const { data: currentEvent, error: eventError } = await supabase
-          .from('events')
-          .select('host_id')
-          .eq('id', profile.current_event_id)
-          .single();
-
-        if (eventError || !currentEvent?.host_id) {
-          console.error('Error fetching current event:', eventError);
-          return [];
-        }
-
-        // Get all events from the same host
-        const { data: hostEvents, error: hostEventsError } = await supabase
-          .from('events')
-          .select('id')
-          .eq('host_id', currentEvent.host_id);
-
-        if (hostEventsError) {
-          console.error('Error fetching host events:', hostEventsError);
-          return [];
-        }
-
-        const eventIds = hostEvents?.map(e => e.id) || [];
-        if (eventIds.length === 0) {
-          return [];
-        }
-        query = query.in('event_id', eventIds);
-      }
-
-      const { data, error } = await query;
+        .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching facilities:', error);
         throw error;
       }
+      console.log('Facilities fetched successfully:', data);
       return data as Facility[];
     },
-    enabled: !!currentUser,
-    refetchInterval: 30000, // Refetch every 30 seconds for real-time updates
   });
 
   const createFacilityMutation = useMutation({
     mutationFn: async (facilityData: Omit<Facility, 'id' | 'created_at' | 'updated_at'>) => {
-      if (!currentUser || currentUser.role !== 'host') {
-        throw new Error('Only hosts can create facilities');
-      }
+      console.log('Creating facility with data:', facilityData);
+      
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('User not authenticated');
+
+      // Clean the data - remove empty strings and undefined values
+      const cleanData = {
+        name: facilityData.name?.trim(),
+        description: facilityData.description?.trim() || null,
+        location: facilityData.location?.trim() || null,
+        rules: facilityData.rules?.trim() || null,
+        contact_type: facilityData.contact_type || 'none',
+        contact_info: (facilityData.contact_type !== 'none' && facilityData.contact_info?.trim()) 
+          ? facilityData.contact_info.trim() 
+          : null,
+        icon_type: facilityData.icon_type || 'building',
+        created_by: user.user.id
+      };
+
+      console.log('Cleaned facility data:', cleanData);
 
       const { data, error } = await supabase
         .from('facilities')
-        .insert([{
-          ...facilityData,
-          created_by: currentUser.id,
-        }])
+        .insert(cleanData)
         .select()
         .single();
 
       if (error) {
-        console.error('Create facility error:', error);
+        console.error('Error creating facility:', error);
         throw error;
       }
-
+      
+      console.log('Facility created successfully:', data);
       return data;
     },
     onSuccess: () => {
@@ -132,11 +84,11 @@ export const useFacilities = () => {
         description: 'The facility has been created successfully.',
       });
     },
-    onError: (error) => {
-      console.error('Create facility error:', error);
+    onError: (error: any) => {
+      console.error('Error creating facility:', error);
       toast({
         title: 'Error',
-        description: `Failed to create facility: ${error.message}`,
+        description: error.message || 'Failed to create facility. Please try again.',
         variant: 'destructive',
       });
     },
@@ -144,23 +96,33 @@ export const useFacilities = () => {
 
   const updateFacilityMutation = useMutation({
     mutationFn: async ({ id, ...facilityData }: Partial<Facility> & { id: string }) => {
-      if (!currentUser || currentUser.role !== 'host') {
-        throw new Error('Only hosts can update facilities');
+      console.log('Updating facility:', id, facilityData);
+      
+      // Clean the data - remove empty strings and undefined values
+      const cleanData: any = {};
+      if (facilityData.name?.trim()) cleanData.name = facilityData.name.trim();
+      if (facilityData.description?.trim()) cleanData.description = facilityData.description.trim();
+      if (facilityData.location?.trim()) cleanData.location = facilityData.location.trim();
+      if (facilityData.rules?.trim()) cleanData.rules = facilityData.rules.trim();
+      if (facilityData.contact_type) cleanData.contact_type = facilityData.contact_type;
+      if (facilityData.contact_type !== 'none' && facilityData.contact_info?.trim()) {
+        cleanData.contact_info = facilityData.contact_info.trim();
+      } else if (facilityData.contact_type === 'none') {
+        cleanData.contact_info = null;
       }
+      if (facilityData.icon_type) cleanData.icon_type = facilityData.icon_type;
 
       const { data, error } = await supabase
         .from('facilities')
-        .update(facilityData)
+        .update(cleanData)
         .eq('id', id)
-        .eq('created_by', currentUser.id)
         .select()
         .single();
 
       if (error) {
-        console.error('Update facility error:', error);
+        console.error('Error updating facility:', error);
         throw error;
       }
-
       return data;
     },
     onSuccess: () => {
@@ -170,11 +132,11 @@ export const useFacilities = () => {
         description: 'The facility has been updated successfully.',
       });
     },
-    onError: (error) => {
-      console.error('Update facility error:', error);
+    onError: (error: any) => {
+      console.error('Error updating facility:', error);
       toast({
         title: 'Error',
-        description: `Failed to update facility: ${error.message}`,
+        description: error.message || 'Failed to update facility. Please try again.',
         variant: 'destructive',
       });
     },
@@ -182,18 +144,14 @@ export const useFacilities = () => {
 
   const deleteFacilityMutation = useMutation({
     mutationFn: async (id: string) => {
-      if (!currentUser || currentUser.role !== 'host') {
-        throw new Error('Only hosts can delete facilities');
-      }
-
+      console.log('Deleting facility:', id);
       const { error } = await supabase
         .from('facilities')
         .delete()
-        .eq('id', id)
-        .eq('created_by', currentUser.id);
+        .eq('id', id);
 
       if (error) {
-        console.error('Delete facility error:', error);
+        console.error('Error deleting facility:', error);
         throw error;
       }
     },
@@ -205,11 +163,11 @@ export const useFacilities = () => {
         variant: 'destructive',
       });
     },
-    onError: (error) => {
-      console.error('Delete facility error:', error);
+    onError: (error: any) => {
+      console.error('Error deleting facility:', error);
       toast({
         title: 'Error',
-        description: `Failed to delete facility: ${error.message}`,
+        description: error.message || 'Failed to delete facility. Please try again.',
         variant: 'destructive',
       });
     },

@@ -1,161 +1,120 @@
 
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Copy, RefreshCw } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Download, QrCode, Copy } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface QRCodeGeneratorProps {
-  onRegenerateKey?: () => void;
+  eventName?: string;
+  eventUrl?: string;
 }
 
-const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ onRegenerateKey }) => {
-  const { currentUser, updateUser } = useAuth();
-  const { toast } = useToast();
-  const [isRegenerating, setIsRegenerating] = React.useState(false);
+const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({ 
+  eventName = "Connect Event", 
+  eventUrl = window.location.origin 
+}) => {
+  const [qrUrl, setQrUrl] = useState(eventUrl);
+  const [qrSize, setQrSize] = useState(256);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const accessKey = currentUser?.accessKey;
-  const joinUrl = `${window.location.origin}/join`;
-
-  const copyAccessKey = () => {
-    if (accessKey) {
-      navigator.clipboard.writeText(accessKey);
-      toast({
-        title: "Copied!",
-        description: "Access key copied to clipboard",
-      });
+  const generateQRCode = () => {
+    // Using QR Server API for QR code generation
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(qrUrl)}`;
+    
+    if (canvasRef.current) {
+      const ctx = canvasRef.current.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        canvasRef.current!.width = qrSize;
+        canvasRef.current!.height = qrSize;
+        ctx?.drawImage(img, 0, 0, qrSize, qrSize);
+        toast.success("QR Code generated successfully!");
+      };
+      
+      img.onerror = () => {
+        toast.error("Failed to generate QR code");
+      };
+      
+      img.src = qrApiUrl;
     }
   };
 
-  const copyJoinUrl = () => {
-    navigator.clipboard.writeText(joinUrl);
-    toast({
-      title: "Copied!",
-      description: "Join URL copied to clipboard",
-    });
-  };
-
-  const regenerateAccessKey = async () => {
-    if (!currentUser) return;
-
-    setIsRegenerating(true);
-    try {
-      // Generate new access key by updating the profile
-      // The trigger will automatically generate a new key
-      const { data, error } = await supabase
-        .from('profiles')
-        .update({ 
-          access_key: null, // This will trigger the function to generate a new key
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', currentUser.id)
-        .select('access_key')
-        .single();
-
-      if (error) {
-        console.error('Error regenerating access key:', error);
-        toast({
-          title: "Error",
-          description: "Failed to regenerate access key",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Update the current user context
-      if (data) {
-        await updateUser({ accessKey: data.access_key });
-        toast({
-          title: "Success!",
-          description: "New access key generated successfully",
-        });
-        onRegenerateKey?.();
-      }
-    } catch (error) {
-      console.error('Error regenerating access key:', error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setIsRegenerating(false);
+  const downloadQRCode = () => {
+    if (canvasRef.current) {
+      const link = document.createElement('a');
+      link.download = `${eventName.replace(/\s+/g, '_')}_QR_Code.png`;
+      link.href = canvasRef.current.toDataURL();
+      link.click();
+      toast.success("QR Code downloaded!");
     }
   };
 
-  if (!accessKey) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Event Access</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Access key not available. Please try refreshing the page.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const copyQRCodeUrl = () => {
+    navigator.clipboard.writeText(qrUrl);
+    toast.success("URL copied to clipboard!");
+  };
+
+  React.useEffect(() => {
+    generateQRCode();
+  }, [qrUrl, qrSize]);
 
   return (
-    <Card>
+    <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>Event Access</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Share this access key with attendees to join your events
-        </p>
+        <CardTitle className="flex items-center gap-2">
+          <QrCode className="h-5 w-5" />
+          Event QR Code Generator
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="text-center space-y-4">
-          <div className="bg-gray-50 dark:bg-gray-800 p-6 rounded-lg">
-            <p className="text-sm text-muted-foreground mb-2">Access Key</p>
-            <p className="text-4xl font-mono font-bold tracking-widest text-primary">
-              {accessKey}
-            </p>
-          </div>
-
+        <div className="space-y-2">
+          <Label htmlFor="qr-url">Event URL</Label>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={copyAccessKey}
-              className="flex-1"
-            >
-              <Copy className="h-4 w-4 mr-2" />
-              Copy Key
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={regenerateAccessKey}
-              disabled={isRegenerating}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isRegenerating ? 'animate-spin' : ''}`} />
-              Regenerate
-            </Button>
-          </div>
-        </div>
-
-        <div className="border-t pt-4">
-          <p className="text-sm text-muted-foreground mb-2">Join URL</p>
-          <div className="flex items-center gap-2">
-            <code className="flex-1 bg-gray-50 dark:bg-gray-800 p-2 rounded text-xs">
-              {joinUrl}
-            </code>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={copyJoinUrl}
-            >
+            <Input
+              id="qr-url"
+              value={qrUrl}
+              onChange={(e) => setQrUrl(e.target.value)}
+              placeholder="Enter event URL"
+            />
+            <Button variant="outline" size="icon" onClick={copyQRCodeUrl}>
               <Copy className="h-4 w-4" />
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Attendees can visit this URL and enter your access key to join all your events
-          </p>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="qr-size">QR Code Size</Label>
+          <Input
+            id="qr-size"
+            type="number"
+            min="128"
+            max="512"
+            value={qrSize}
+            onChange={(e) => setQrSize(parseInt(e.target.value) || 256)}
+          />
+        </div>
+        
+        <div className="flex flex-col items-center space-y-4">
+          <canvas 
+            ref={canvasRef}
+            className="border rounded-lg shadow-sm"
+            style={{ maxWidth: '100%', height: 'auto' }}
+          />
+          
+          <div className="flex gap-2">
+            <Button onClick={generateQRCode} variant="outline">
+              <QrCode className="h-4 w-4 mr-2" />
+              Regenerate
+            </Button>
+            <Button onClick={downloadQRCode}>
+              <Download className="h-4 w-4 mr-2" />
+              Download
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

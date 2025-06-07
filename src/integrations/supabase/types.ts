@@ -62,7 +62,6 @@ export type Database = {
           content: string
           created_at: string
           created_by: string | null
-          event_id: string | null
           id: string
           image_url: string | null
           priority: string | null
@@ -74,7 +73,6 @@ export type Database = {
           content: string
           created_at?: string
           created_by?: string | null
-          event_id?: string | null
           id?: string
           image_url?: string | null
           priority?: string | null
@@ -86,7 +84,6 @@ export type Database = {
           content?: string
           created_at?: string
           created_by?: string | null
-          event_id?: string | null
           id?: string
           image_url?: string | null
           priority?: string | null
@@ -94,15 +91,7 @@ export type Database = {
           title?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "announcements_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       chat_messages: {
         Row: {
@@ -254,66 +243,12 @@ export type Database = {
           },
         ]
       }
-      event_participants: {
-        Row: {
-          created_at: string
-          event_id: string
-          id: string
-          joined_at: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          event_id: string
-          id?: string
-          joined_at?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          event_id?: string
-          id?: string
-          joined_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "event_participants_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_event_participants_event_id"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_event_participants_user_id"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_event_participants_user_id"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       events: {
         Row: {
           banner_url: string | null
           created_at: string
           description: string | null
           end_time: string
-          event_key: string | null
           host_id: string | null
           id: string
           location: string | null
@@ -328,7 +263,6 @@ export type Database = {
           created_at?: string
           description?: string | null
           end_time: string
-          event_key?: string | null
           host_id?: string | null
           id?: string
           location?: string | null
@@ -343,7 +277,6 @@ export type Database = {
           created_at?: string
           description?: string | null
           end_time?: string
-          event_key?: string | null
           host_id?: string | null
           id?: string
           location?: string | null
@@ -362,7 +295,6 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           description: string | null
-          event_id: string | null
           icon_type: string | null
           id: string
           image_url: string | null
@@ -377,7 +309,6 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           description?: string | null
-          event_id?: string | null
           icon_type?: string | null
           id?: string
           image_url?: string | null
@@ -392,7 +323,6 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           description?: string | null
-          event_id?: string | null
           icon_type?: string | null
           id?: string
           image_url?: string | null
@@ -401,15 +331,7 @@ export type Database = {
           rules?: string | null
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "facilities_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       media_files: {
         Row: {
@@ -580,7 +502,6 @@ export type Database = {
           created_by: string | null
           display_as_banner: boolean | null
           end_time: string
-          event_id: string | null
           id: string
           is_active: boolean | null
           options: Json
@@ -594,7 +515,6 @@ export type Database = {
           created_by?: string | null
           display_as_banner?: boolean | null
           end_time: string
-          event_id?: string | null
           id?: string
           is_active?: boolean | null
           options: Json
@@ -608,7 +528,6 @@ export type Database = {
           created_by?: string | null
           display_as_banner?: boolean | null
           end_time?: string
-          event_id?: string | null
           id?: string
           is_active?: boolean | null
           options?: Json
@@ -617,23 +536,13 @@ export type Database = {
           start_time?: string
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "polls_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       profiles: {
         Row: {
-          access_key: string | null
           bio: string | null
           company: string | null
           created_at: string
-          current_event_id: string | null
           email: string | null
           facebook_link: string | null
           github_link: string | null
@@ -653,11 +562,9 @@ export type Database = {
           website_link: string | null
         }
         Insert: {
-          access_key?: string | null
           bio?: string | null
           company?: string | null
           created_at?: string
-          current_event_id?: string | null
           email?: string | null
           facebook_link?: string | null
           github_link?: string | null
@@ -677,11 +584,9 @@ export type Database = {
           website_link?: string | null
         }
         Update: {
-          access_key?: string | null
           bio?: string | null
           company?: string | null
           created_at?: string
-          current_event_id?: string | null
           email?: string | null
           facebook_link?: string | null
           github_link?: string | null
@@ -700,15 +605,93 @@ export type Database = {
           updated_at?: string
           website_link?: string | null
         }
+        Relationships: []
+      }
+      question_feedback: {
+        Row: {
+          created_at: string | null
+          feedback_text: string | null
+          id: string
+          question_id: string | null
+          satisfaction_level: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          feedback_text?: string | null
+          id?: string
+          question_id?: string | null
+          satisfaction_level?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          feedback_text?: string | null
+          id?: string
+          question_id?: string | null
+          satisfaction_level?: number | null
+          user_id?: string | null
+        }
         Relationships: [
           {
-            foreignKeyName: "profiles_current_event_id_fkey"
-            columns: ["current_event_id"]
+            foreignKeyName: "question_feedback_question_id_fkey"
+            columns: ["question_id"]
             isOneToOne: false
-            referencedRelation: "events"
+            referencedRelation: "questions"
             referencedColumns: ["id"]
           },
         ]
+      }
+      questions: {
+        Row: {
+          answered_at: string | null
+          answered_by: string | null
+          content: string
+          created_at: string | null
+          event_id: string | null
+          id: string
+          is_anonymous: boolean | null
+          is_answered: boolean | null
+          response: string | null
+          response_created_at: string | null
+          session_id: string | null
+          updated_at: string | null
+          upvotes: number | null
+          user_id: string | null
+        }
+        Insert: {
+          answered_at?: string | null
+          answered_by?: string | null
+          content: string
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          is_answered?: boolean | null
+          response?: string | null
+          response_created_at?: string | null
+          session_id?: string | null
+          updated_at?: string | null
+          upvotes?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          answered_at?: string | null
+          answered_by?: string | null
+          content?: string
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          is_answered?: boolean | null
+          response?: string | null
+          response_created_at?: string | null
+          session_id?: string | null
+          updated_at?: string | null
+          upvotes?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       rules: {
         Row: {
@@ -716,7 +699,6 @@ export type Database = {
           content: string
           created_at: string | null
           created_by: string | null
-          event_id: string | null
           id: string
           priority: string | null
           title: string
@@ -727,7 +709,6 @@ export type Database = {
           content: string
           created_at?: string | null
           created_by?: string | null
-          event_id?: string | null
           id?: string
           priority?: string | null
           title: string
@@ -738,29 +719,18 @@ export type Database = {
           content?: string
           created_at?: string | null
           created_by?: string | null
-          event_id?: string | null
           id?: string
           priority?: string | null
           title?: string
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "rules_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       speakers: {
         Row: {
           bio: string
           company: string | null
           created_at: string
-          created_by: string | null
-          event_id: string | null
           id: string
           linkedin_link: string | null
           name: string
@@ -776,8 +746,6 @@ export type Database = {
           bio: string
           company?: string | null
           created_at?: string
-          created_by?: string | null
-          event_id?: string | null
           id?: string
           linkedin_link?: string | null
           name: string
@@ -793,8 +761,6 @@ export type Database = {
           bio?: string
           company?: string | null
           created_at?: string
-          created_by?: string | null
-          event_id?: string | null
           id?: string
           linkedin_link?: string | null
           name?: string
@@ -806,29 +772,7 @@ export type Database = {
           updated_at?: string
           website_link?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "speakers_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "speakers_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "speakers_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       suggestions: {
         Row: {
@@ -935,29 +879,9 @@ export type Database = {
       }
     }
     Functions: {
-      generate_unique_event_key: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      generate_unique_host_access_key: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_current_user_event: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
       get_poll_with_results: {
         Args: { poll_uuid: string }
         Returns: Json
-      }
-      is_event_host: {
-        Args: { event_uuid: string }
-        Returns: boolean
-      }
-      user_has_joined_event: {
-        Args: { user_uuid: string; event_uuid: string }
-        Returns: boolean
       }
     }
     Enums: {

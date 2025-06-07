@@ -2,11 +2,9 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Camera, X, Crop } from 'lucide-react';
+import { Camera, Upload, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { ImageCropper } from '@/components/ui/image-cropper';
-import { useImageCropper } from '@/hooks/useImageCropper';
 
 interface ProfilePictureUploadProps {
   currentImageUrl?: string;
@@ -25,11 +23,6 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
-  
-  const { isOpen, imageSrc, openCropper, closeCropper, handleCropComplete } = useImageCropper({
-    cropShape: 'round',
-    aspectRatio: 1
-  });
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -55,21 +48,17 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
       return;
     }
 
-    openCropper(file);
-  };
-
-  const uploadCroppedImage = async (croppedFile: File) => {
     setIsUploading(true);
 
     try {
       // Create unique filename
-      const fileExt = croppedFile.name.split('.').pop() || 'png';
+      const fileExt = file.name.split('.').pop();
       const fileName = `${userId}/avatar.${fileExt}`;
 
       // Upload to Supabase storage
       const { data, error } = await supabase.storage
         .from('profile-pictures')
-        .upload(fileName, croppedFile, {
+        .upload(fileName, file, {
           upsert: true
         });
 
@@ -98,10 +87,6 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
     } finally {
       setIsUploading(false);
     }
-  };
-
-  const handleCropConfirm = (croppedBlob: Blob) => {
-    handleCropComplete(croppedBlob, uploadCroppedImage);
   };
 
   const handleRemove = async () => {
@@ -159,7 +144,6 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
             className="h-8 w-8 rounded-full p-0"
             onClick={() => document.getElementById('profile-picture-input')?.click()}
             disabled={isUploading}
-            title="Upload & Crop Photo"
           >
             {isUploading ? (
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
@@ -179,16 +163,6 @@ export const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
             </Button>
           )}
         </div>
-      )}
-
-      {isOpen && (
-        <ImageCropper
-          imageSrc={imageSrc}
-          onCropComplete={handleCropConfirm}
-          onCancel={closeCropper}
-          aspectRatio={1}
-          cropShape="round"
-        />
       )}
     </div>
   );

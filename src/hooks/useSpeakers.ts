@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface Speaker {
   id: string;
@@ -17,7 +16,6 @@ interface Speaker {
   twitter_link?: string;
   linkedin_link?: string;
   website_link?: string;
-  event_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -25,15 +23,10 @@ interface Speaker {
 export const useSpeakers = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { currentUser } = useAuth();
 
   const { data: speakers = [], isLoading, error } = useQuery({
-    queryKey: ['speakers', currentUser?.id],
+    queryKey: ['speakers'],
     queryFn: async () => {
-      if (!currentUser) {
-        return [];
-      }
-
       const { data, error } = await supabase
         .from('speakers')
         .select('*')
@@ -45,7 +38,6 @@ export const useSpeakers = () => {
       }
       return data as Speaker[];
     },
-    enabled: !!currentUser,
   });
 
   const uploadImage = async (file: File): Promise<string> => {
@@ -85,23 +77,6 @@ export const useSpeakers = () => {
       try {
         console.log('Creating speaker with data:', speakerData);
         
-        if (!currentUser || currentUser.role !== 'host') {
-          throw new Error('Only hosts can create speakers');
-        }
-
-        // Get the current user's first event (hosts should have events)
-        const { data: userEvents, error: eventsError } = await supabase
-          .from('events')
-          .select('id')
-          .eq('host_id', currentUser.id)
-          .limit(1);
-
-        if (eventsError || !userEvents || userEvents.length === 0) {
-          throw new Error('You must create an event first before adding speakers');
-        }
-
-        const eventId = userEvents[0].id;
-        
         let photoUrl = speakerData.photo_url;
         if (speakerData.image) {
           photoUrl = await uploadImage(speakerData.image);
@@ -117,7 +92,6 @@ export const useSpeakers = () => {
         const finalData = {
           ...dataWithoutImage,
           photo_url: photoUrl,
-          event_id: eventId,
           // Convert empty strings to null for optional fields
           title: dataWithoutImage.title || null,
           company: dataWithoutImage.company || null,
@@ -169,10 +143,6 @@ export const useSpeakers = () => {
     mutationFn: async ({ id, image, ...speakerData }: Partial<Speaker> & { id: string; image?: File }) => {
       try {
         console.log('Updating speaker:', id, speakerData);
-        
-        if (!currentUser || currentUser.role !== 'host') {
-          throw new Error('Only hosts can update speakers');
-        }
         
         let photoUrl = speakerData.photo_url;
         if (image) {
@@ -233,11 +203,6 @@ export const useSpeakers = () => {
   const deleteSpeakerMutation = useMutation({
     mutationFn: async (id: string) => {
       console.log('Deleting speaker:', id);
-      
-      if (!currentUser || currentUser.role !== 'host') {
-        throw new Error('Only hosts can delete speakers');
-      }
-
       const { error } = await supabase
         .from('speakers')
         .delete()

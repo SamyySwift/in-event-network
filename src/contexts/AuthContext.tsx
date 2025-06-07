@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
@@ -145,7 +146,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             website: data.website_link,
           },
           niche: data.niche,
-          accessKey: data.access_key, // Include access key for hosts
         };
         console.log("Profile loaded successfully:", userProfile);
         setCurrentUser(userProfile);

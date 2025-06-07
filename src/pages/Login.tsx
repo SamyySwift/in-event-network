@@ -30,15 +30,9 @@ const Login = () => {
     console.log("Login component - Auth state:", { currentUser, isLoading });
     
     if (currentUser && !isLoading) {
-      console.log("User authenticated, checking redirect...", currentUser);
-      
-      if (currentUser.role === "host") {
-        // Hosts go directly to admin dashboard
-        navigate("/admin", { replace: true });
-      } else if (currentUser.role === "attendee") {
-        // Attendees need to join an event first
-        navigate("/join", { replace: true });
-      }
+      console.log("User authenticated, redirecting...", currentUser);
+      const redirectPath = currentUser.role === "host" ? "/admin" : "/attendee";
+      navigate(redirectPath, { replace: true });
     }
   }, [currentUser, isLoading, navigate]);
 

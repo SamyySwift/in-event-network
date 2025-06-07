@@ -18,7 +18,6 @@ export interface User {
   niche?: string;
   networkingPreferences?: string[];
   customTags?: string[];
-  accessKey?: string; // Host access key for event joining
 }
 
 export interface Speaker {

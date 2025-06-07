@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,9 +28,7 @@ import {
   ShoppingBag,
   Bath,
   Bed,
-  AlertCircle,
-  Mail,
-  Globe
+  AlertCircle
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
@@ -57,7 +56,7 @@ const formSchema = z.object({
   description: z.string().optional(),
   location: z.string().optional(),
   rules: z.string().optional(),
-  contactType: z.enum(["none", "phone", "email", "website"]).default("none"),
+  contactType: z.enum(["none", "phone", "whatsapp"]).default("none"),
   contactInfo: z.string().optional(),
   iconType: z.string().optional(),
 });
@@ -143,10 +142,8 @@ const AdminFacilities = () => {
     switch (contactType) {
       case 'phone':
         return <Phone className="h-4 w-4" />;
-      case 'email':
-        return <Mail className="h-4 w-4" />;
-      case 'website':
-        return <Globe className="h-4 w-4" />;
+      case 'whatsapp':
+        return <MessageCircle className="h-4 w-4" />;
       default:
         return null;
     }
@@ -285,32 +282,25 @@ const AdminFacilities = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Contact Type</Label>
-                    <Select value={contactType} onValueChange={(value) => setValue("contactType", value as "none" | "phone" | "email" | "website")}>
+                    <Select value={contactType} onValueChange={(value) => setValue("contactType", value as "none" | "phone" | "whatsapp")}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select contact type" />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="none">No Contact</SelectItem>
                         <SelectItem value="phone">Phone Call</SelectItem>
-                        <SelectItem value="email">Email</SelectItem>
-                        <SelectItem value="website">Website</SelectItem>
+                        <SelectItem value="whatsapp">WhatsApp</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
-                  {(contactType === "phone" || contactType === "email" || contactType === "website") && (
+                  {(contactType === "phone" || contactType === "whatsapp") && (
                     <div className="space-y-2">
-                      <Label htmlFor="contactInfo">
-                        Contact {contactType === "phone" ? "Number" : contactType === "email" ? "Address" : "URL"}
-                      </Label>
+                      <Label htmlFor="contactInfo">Contact Number</Label>
                       <Input
                         id="contactInfo"
                         {...register("contactInfo")}
-                        placeholder={
-                          contactType === "phone" ? "Enter phone number" :
-                          contactType === "email" ? "Enter email address" :
-                          "Enter website URL"
-                        }
+                        placeholder="Enter phone number"
                       />
                       {errors.contactInfo?.message && (
                         <p className="text-sm text-destructive">{errors.contactInfo.message}</p>

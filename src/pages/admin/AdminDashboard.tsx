@@ -1,31 +1,42 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
+import QRCodeGenerator from '@/components/admin/QRCodeGenerator';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { 
+  Users, 
+  Calendar, 
+  MessageSquare, 
+  BarChart3, 
+  TrendingUp, 
+  Bell,
+  QrCode,
+  User,
+  Megaphone
+} from 'lucide-react';
 import { useEvents } from '@/hooks/useEvents';
 import { useSpeakers } from '@/hooks/useSpeakers';
 import { useAnnouncements } from '@/hooks/useAnnouncements';
-import { useDashboardData } from '@/hooks/useDashboardData';
-import { MetricsCards } from '@/components/admin/dashboard/MetricsCards';
-import { RecentActivity } from '@/components/admin/dashboard/RecentActivity';
-import { EventOverview } from '@/components/admin/dashboard/EventOverview';
-import QRCodeGenerator from '@/components/admin/QRCodeGenerator';
-import { Card, CardContent } from '@/components/ui/card';
-import { Calendar } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
 
 const AdminDashboard = () => {
   const { events, isLoading: eventsLoading } = useEvents();
   const { speakers, isLoading: speakersLoading } = useSpeakers();
   const { announcements, isLoading: announcementsLoading } = useAnnouncements();
-  const { 
-    attendeesCount, 
-    questionsCount, 
-    pollResponsesCount, 
-    recentActivity, 
-    loading: dashboardLoading 
-  } = useDashboardData();
   
-  // Calculate metrics from admin's own data only
+  const [attendeesCount, setAttendeesCount] = useState(0);
+  const [questionsCount, setQuestionsCount] = useState(0);
+  const [pollResponsesCount, setPollResponsesCount] = useState(0);
+  const [recentActivity, setRecentActivity] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Calculate metrics from real data
+  const totalEvents = events.length;
   const totalSpeakers = speakers.length;
+  const totalAnnouncements = announcements.length;
   
   const liveEvents = events.filter(event => {
     const now = new Date();
@@ -37,43 +48,263 @@ const AdminDashboard = () => {
     return new Date(event.start_time) > now;
   }).length;
 
-  const isDataLoading = dashboardLoading || eventsLoading || speakersLoading || announcementsLoading;
+  // Fetch real-time data
+  useEffect(() => {
+    fetchDashboardData();
+    setupRealTimeSubscriptions();
+  }, []);
 
-  // Show empty state for new admins with no events
-  if (!isDataLoading && events.length === 0) {
-    return (
-      <AdminLayout>
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground">
-              Welcome to your admin dashboard!
-            </p>
-          </div>
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch attendees count
+      const { data: attendees, error: attendeesError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('role', 'attendee');
+      
+      if (!attendeesError) {
+        setAttendeesCount(attendees?.length || 0);
+      }
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center py-8">
-                <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">
-                  Welcome to your Admin Dashboard!
-                </h3>
-                <p className="text-muted-foreground mb-4">
-                  You haven't created any events yet. Create your first event to start managing attendees, speakers, and more.
-                </p>
-                <p className="text-sm text-gray-500">
-                  This dashboard will show data only from your events. Each admin has their own isolated view.
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+      // Fetch questions count
+      const { data: questions, error: questionsError } = await supabase
+        .from('questions')
+        .select('id');
+      
+      if (!questionsError) {
+        setQuestionsCount(questions?.length || 0);
+      }
 
-          {/* Host Access Key Section - always show */}
-          <QRCodeGenerator />
-        </div>
-      </AdminLayout>
-    );
-  }
+      // Fetch poll responses count
+      const { data: pollVotes, error: pollVotesError } = await supabase
+        .from('poll_votes')
+        .select('id');
+      
+      if (!pollVotesError) {
+        setPollResponsesCount(pollVotes?.length || 0);
+      }
+
+      // Fetch recent activity
+      await fetchRecentActivity();
+      
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchRecentActivity = async () => {
+    try {
+      const activities = [];
+
+      // Recent questions
+      const { data: recentQuestions } = await supabase
+        .from('questions')
+        .select('id, content, created_at, is_answered')
+        .order('created_at', { ascending: false })
+        .limit(2);
+
+      if (recentQuestions) {
+        recentQuestions.forEach(question => {
+          activities.push({
+            id: `question-${question.id}`,
+            type: 'question',
+            content: `New question: "${question.content.substring(0, 50)}${question.content.length > 50 ? '...' : ''}"`,
+            time: getTimeAgo(question.created_at),
+            status: question.is_answered ? 'answered' : 'pending'
+          });
+        });
+      }
+
+      // Recent registrations (new profiles)
+      const { data: recentProfiles } = await supabase
+        .from('profiles')
+        .select('id, created_at, name')
+        .order('created_at', { ascending: false })
+        .limit(2);
+
+      if (recentProfiles) {
+        recentProfiles.forEach(profile => {
+          activities.push({
+            id: `registration-${profile.id}`,
+            type: 'registration',
+            content: `${profile.name || 'New user'} registered`,
+            time: getTimeAgo(profile.created_at),
+            status: 'success'
+          });
+        });
+      }
+
+      // Recent announcements
+      const recentAnnouncementsList = announcements
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 2);
+
+      recentAnnouncementsList.forEach(announcement => {
+        activities.push({
+          id: `announcement-${announcement.id}`,
+          type: 'announcement',
+          content: `New announcement: "${announcement.title}"`,
+          time: getTimeAgo(announcement.created_at),
+          status: 'published'
+        });
+      });
+
+      // Sort by most recent
+      activities.sort((a, b) => {
+        const timeA = convertTimeAgoToDate(a.time);
+        const timeB = convertTimeAgoToDate(b.time);
+        return timeB.getTime() - timeA.getTime();
+      });
+
+      setRecentActivity(activities.slice(0, 4));
+    } catch (error) {
+      console.error('Error fetching recent activity:', error);
+    }
+  };
+
+  const setupRealTimeSubscriptions = () => {
+    // Subscribe to profile changes (new registrations)
+    const profilesChannel = supabase
+      .channel('admin-profiles-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles'
+        },
+        () => {
+          console.log('Profiles updated, refetching...');
+          fetchDashboardData();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to questions changes
+    const questionsChannel = supabase
+      .channel('admin-questions-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'questions'
+        },
+        () => {
+          console.log('Questions updated, refetching...');
+          fetchDashboardData();
+        }
+      )
+      .subscribe();
+
+    // Subscribe to poll votes changes
+    const pollVotesChannel = supabase
+      .channel('admin-poll-votes-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'poll_votes'
+        },
+        () => {
+          console.log('Poll votes updated, refetching...');
+          fetchDashboardData();
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscriptions on unmount
+    return () => {
+      supabase.removeChannel(profilesChannel);
+      supabase.removeChannel(questionsChannel);
+      supabase.removeChannel(pollVotesChannel);
+    };
+  };
+
+  const getTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - date.getTime());
+    const diffMinutes = Math.floor(diffTime / (1000 * 60));
+    const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+    
+    if (diffMinutes < 1) {
+      return 'Just now';
+    } else if (diffMinutes < 60) {
+      return `${diffMinutes} ${diffMinutes === 1 ? 'minute' : 'minutes'} ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours} ${diffHours === 1 ? 'hour' : 'hours'} ago`;
+    } else {
+      const diffDays = Math.floor(diffHours / 24);
+      return `${diffDays} ${diffDays === 1 ? 'day' : 'days'} ago`;
+    }
+  };
+
+  const convertTimeAgoToDate = (timeAgo: string): Date => {
+    const now = new Date();
+    if (timeAgo.includes('minute')) {
+      const minutes = parseInt(timeAgo.split(' ')[0]);
+      return new Date(now.getTime() - minutes * 60 * 1000);
+    } else if (timeAgo.includes('hour')) {
+      const hours = parseInt(timeAgo.split(' ')[0]);
+      return new Date(now.getTime() - hours * 60 * 60 * 1000);
+    } else if (timeAgo.includes('day')) {
+      const days = parseInt(timeAgo.split(' ')[0]);
+      return new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
+    }
+    return now;
+  };
+
+  const metrics = [
+    {
+      title: 'Total Attendees',
+      value: attendeesCount.toString(),
+      change: 'Registered',
+      icon: Users,
+      color: 'text-blue-600',
+    },
+    {
+      title: 'Live Events',
+      value: liveEvents.toString(),
+      change: 'Currently active',
+      icon: Calendar,
+      color: 'text-green-600',
+    },
+    {
+      title: 'Questions Asked',
+      value: questionsCount.toString(),
+      change: 'Total submitted',
+      icon: MessageSquare,
+      color: 'text-purple-600',
+    },
+    {
+      title: 'Poll Responses',
+      value: pollResponsesCount.toString(),
+      change: 'Total votes',
+      icon: BarChart3,
+      color: 'text-orange-600',
+    },
+  ];
+
+  const getStatusBadge = (status: string) => {
+    switch(status) {
+      case 'success':
+        return <Badge className="bg-green-100 text-green-800">Success</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+      case 'answered':
+        return <Badge className="bg-blue-100 text-blue-800">Answered</Badge>;
+      case 'published':
+        return <Badge className="bg-purple-100 text-purple-800">Published</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const isDataLoading = loading || eventsLoading || speakersLoading || announcementsLoading;
 
   return (
     <AdminLayout>
@@ -81,37 +312,132 @@ const AdminDashboard = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back! Here's what's happening with your events.
+            Welcome back! Here's what's happening with your event.
           </p>
         </div>
 
         {/* Metrics Cards */}
-        <MetricsCards
-          attendeesCount={attendeesCount}
-          liveEvents={liveEvents}
-          questionsCount={questionsCount}
-          pollResponsesCount={pollResponsesCount}
-          isLoading={isDataLoading}
-        />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {metrics.map((metric) => (
+            <Card key={metric.title}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {metric.title}
+                </CardTitle>
+                <metric.icon className={`h-4 w-4 ${metric.color}`} />
+              </CardHeader>
+              <CardContent>
+                {isDataLoading ? (
+                  <Skeleton className="h-8 w-16 mb-2" />
+                ) : (
+                  <div className="text-2xl font-bold">{metric.value}</div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  {metric.change}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
         <div className="grid gap-6 md:grid-cols-2">
-          {/* Host Access Key Section */}
-          <QRCodeGenerator />
+          {/* QR Code Generator Section */}
+          <div className="space-y-4">
+            <h2 className="text-xl font-semibold flex items-center gap-2">
+              <QrCode className="h-5 w-5" />
+              Event QR Code
+            </h2>
+            <QRCodeGenerator 
+              eventName="Connect 2025" 
+              eventUrl={`${window.location.origin}/register`}
+            />
+          </div>
 
           {/* Recent Activity */}
-          <RecentActivity
-            recentActivity={recentActivity}
-            isLoading={isDataLoading}
-          />
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Recent Activity
+              </CardTitle>
+              <CardDescription>
+                Latest updates from your event
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {isDataLoading ? (
+                  // Loading skeletons
+                  [...Array(4)].map((_, i) => (
+                    <div key={i} className="flex items-start space-x-3">
+                      <Skeleton className="h-10 w-10 rounded-full" />
+                      <div className="flex-1 space-y-2">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-1/2" />
+                      </div>
+                    </div>
+                  ))
+                ) : recentActivity.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-4">
+                    No recent activity found.
+                  </p>
+                ) : (
+                  recentActivity.map((activity) => (
+                    <div key={activity.id} className="flex items-start space-x-3">
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {activity.content}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {activity.time}
+                        </p>
+                      </div>
+                      {getStatusBadge(activity.status)}
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Quick Stats */}
-        <EventOverview
-          upcomingEvents={upcomingEvents}
-          liveEvents={liveEvents}
-          totalSpeakers={totalSpeakers}
-          isLoading={isDataLoading}
-        />
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Event Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="text-center">
+                {isDataLoading ? (
+                  <Skeleton className="h-8 w-16 mx-auto mb-2" />
+                ) : (
+                  <div className="text-2xl font-bold text-blue-600">{upcomingEvents}</div>
+                )}
+                <p className="text-sm text-muted-foreground">Upcoming Events</p>
+              </div>
+              <div className="text-center">
+                {isDataLoading ? (
+                  <Skeleton className="h-8 w-16 mx-auto mb-2" />
+                ) : (
+                  <div className="text-2xl font-bold text-green-600">{liveEvents}</div>
+                )}
+                <p className="text-sm text-muted-foreground">Live Events</p>
+              </div>
+              <div className="text-center">
+                {isDataLoading ? (
+                  <Skeleton className="h-8 w-16 mx-auto mb-2" />
+                ) : (
+                  <div className="text-2xl font-bold text-purple-600">{totalSpeakers}</div>
+                )}
+                <p className="text-sm text-muted-foreground">Total Speakers</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </AdminLayout>
   );

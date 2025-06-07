@@ -1,125 +1,66 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
 
 export interface Rule {
   id: string;
   title: string;
   content: string;
   category?: string;
-  priority: 'low' | 'medium' | 'high';
-  event_id?: string;
+  priority?: 'high' | 'medium' | 'low';
   created_by?: string;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
 }
 
 export const useRules = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { currentUser } = useAuth();
 
   const { data: rules = [], isLoading, error } = useQuery({
-    queryKey: ['rules', currentUser?.id],
+    queryKey: ['rules'],
     queryFn: async () => {
-      if (!currentUser) {
-        return [];
+      try {
+        console.log('Fetching rules...');
+        
+        const { data, error } = await supabase
+          .from('rules')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          console.error('Error fetching rules:', error);
+          throw error;
+        }
+        
+        console.log('Rules fetched successfully:', data);
+        return (data || []) as Rule[];
+      } catch (err) {
+        console.error('Unexpected error fetching rules:', err);
+        throw err;
       }
-
-      let query = supabase
-        .from('rules')
-        .select('*')
-        .order('priority', { ascending: false })
-        .order('created_at', { ascending: false });
-
-      if (currentUser.role === 'host') {
-        // Hosts see only their own rules
-        const { data: hostEvents } = await supabase
-          .from('events')
-          .select('id')
-          .eq('host_id', currentUser.id);
-
-        const eventIds = hostEvents?.map(e => e.id) || [];
-        if (eventIds.length === 0) {
-          return [];
-        }
-        query = query.in('event_id', eventIds);
-      } else if (currentUser.role === 'attendee') {
-        // Get the current user's profile to find their current event
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('current_event_id')
-          .eq('id', currentUser.id)
-          .single();
-
-        if (profileError || !profile?.current_event_id) {
-          console.error('Error fetching profile or no current event:', profileError);
-          return [];
-        }
-
-        // Get the current event to find the host
-        const { data: currentEvent, error: eventError } = await supabase
-          .from('events')
-          .select('host_id')
-          .eq('id', profile.current_event_id)
-          .single();
-
-        if (eventError || !currentEvent?.host_id) {
-          console.error('Error fetching current event:', eventError);
-          return [];
-        }
-
-        // Get all events from the same host
-        const { data: hostEvents, error: hostEventsError } = await supabase
-          .from('events')
-          .select('id')
-          .eq('host_id', currentEvent.host_id);
-
-        if (hostEventsError) {
-          console.error('Error fetching host events:', hostEventsError);
-          return [];
-        }
-
-        const eventIds = hostEvents?.map(e => e.id) || [];
-        if (eventIds.length === 0) {
-          return [];
-        }
-        query = query.in('event_id', eventIds);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching rules:', error);
-        throw error;
-      }
-      return data as Rule[];
     },
-    enabled: !!currentUser,
-    refetchInterval: 30000, // Refetch every 30 seconds for real-time updates
   });
 
   const createRuleMutation = useMutation({
-    mutationFn: async (ruleData: Omit<Rule, 'id' | 'created_at' | 'updated_at'>) => {
-      if (!currentUser || currentUser.role !== 'host') {
-        throw new Error('Only hosts can create rules');
-      }
+    mutationFn: async (ruleData: { title: string; content: string; category?: string; priority?: 'high' | 'medium' | 'low' }) => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('User not authenticated');
 
       const { data, error } = await supabase
         .from('rules')
-        .insert([{
-          ...ruleData,
-          created_by: currentUser.id,
-        }])
+        .insert({
+          title: ruleData.title,
+          content: ruleData.content,
+          category: ruleData.category,
+          priority: ruleData.priority || 'medium',
+          created_by: user.user.id
+        })
         .select()
         .single();
 
-      if (error) {
-        console.error('Create rule error:', error);
-        throw error;
-      }
-
+      if (error) throw error;
       return data;
     },
     onSuccess: () => {
@@ -130,34 +71,25 @@ export const useRules = () => {
       });
     },
     onError: (error) => {
-      console.error('Create rule error:', error);
       toast({
         title: 'Error',
-        description: `Failed to create rule: ${error.message}`,
+        description: 'Failed to create rule. Please try again.',
         variant: 'destructive',
       });
+      console.error('Error creating rule:', error);
     },
   });
 
   const updateRuleMutation = useMutation({
     mutationFn: async ({ id, ...ruleData }: Partial<Rule> & { id: string }) => {
-      if (!currentUser || currentUser.role !== 'host') {
-        throw new Error('Only hosts can update rules');
-      }
-
       const { data, error } = await supabase
         .from('rules')
         .update(ruleData)
         .eq('id', id)
-        .eq('created_by', currentUser.id)
         .select()
         .single();
 
-      if (error) {
-        console.error('Update rule error:', error);
-        throw error;
-      }
-
+      if (error) throw error;
       return data;
     },
     onSuccess: () => {
@@ -168,47 +100,38 @@ export const useRules = () => {
       });
     },
     onError: (error) => {
-      console.error('Update rule error:', error);
       toast({
         title: 'Error',
-        description: `Failed to update rule: ${error.message}`,
+        description: 'Failed to update rule. Please try again.',
         variant: 'destructive',
       });
+      console.error('Error updating rule:', error);
     },
   });
 
   const deleteRuleMutation = useMutation({
     mutationFn: async (id: string) => {
-      if (!currentUser || currentUser.role !== 'host') {
-        throw new Error('Only hosts can delete rules');
-      }
-
       const { error } = await supabase
         .from('rules')
         .delete()
-        .eq('id', id)
-        .eq('created_by', currentUser.id);
+        .eq('id', id);
 
-      if (error) {
-        console.error('Delete rule error:', error);
-        throw error;
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rules'] });
       toast({
         title: 'Rule Deleted',
         description: 'The rule has been removed successfully.',
-        variant: 'destructive',
       });
     },
     onError: (error) => {
-      console.error('Delete rule error:', error);
       toast({
         title: 'Error',
-        description: `Failed to delete rule: ${error.message}`,
+        description: 'Failed to delete rule. Please try again.',
         variant: 'destructive',
       });
+      console.error('Error deleting rule:', error);
     },
   });
 

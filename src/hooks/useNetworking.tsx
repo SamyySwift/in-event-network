@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -42,74 +42,15 @@ export const useNetworking = () => {
     if (currentUser) {
       fetchProfiles();
       fetchConnections();
-      
-      // Set up real-time subscription for profile updates
-      const profilesChannel = supabase
-        .channel('profiles-changes')
-        .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'profiles' }, 
-          () => {
-            console.log('Profile updated, refetching...');
-            fetchProfiles();
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(profilesChannel);
-      };
     }
   }, [currentUser]);
 
   const fetchProfiles = async () => {
     try {
-      if (!currentUser || currentUser.role !== 'attendee') {
-        setProfiles([]);
-        return;
-      }
-
-      // Get the current user's profile to find their current event
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('current_event_id')
-        .eq('id', currentUser.id)
-        .single();
-
-      if (profileError) {
-        console.error('Error fetching profile:', profileError);
-        throw profileError;
-      }
-
-      if (!profile?.current_event_id) {
-        console.log('No current event set for user');
-        setProfiles([]);
-        return;
-      }
-
-      // Get other participants from the SAME SPECIFIC EVENT only
-      const { data: sameEventParticipants, error: participantsError } = await supabase
-        .from('event_participants')
-        .select('user_id')
-        .eq('event_id', profile.current_event_id)
-        .neq('user_id', currentUser.id);
-
-      if (participantsError) {
-        throw participantsError;
-      }
-
-      const participantUserIds = sameEventParticipants?.map(p => p.user_id) || [];
-
-      if (participantUserIds.length === 0) {
-        console.log('No other participants found for this event');
-        setProfiles([]);
-        return;
-      }
-
-      // Get profiles for these users only
       const { data, error } = await supabase
         .from('public_profiles')
         .select('*')
-        .in('id', participantUserIds);
+        .neq('id', currentUser?.id); // Exclude current user
 
       if (error) throw error;
 
@@ -132,7 +73,6 @@ export const useNetworking = () => {
         },
       }));
 
-      console.log(`Found ${formattedProfiles.length} networking profiles`);
       setProfiles(formattedProfiles);
     } catch (error) {
       console.error('Error fetching profiles:', error);
@@ -155,6 +95,7 @@ export const useNetworking = () => {
 
       if (error) throw error;
 
+      // Type assertion to ensure proper typing
       const typedConnections: ConnectionRequest[] = (data || []).map(conn => ({
         id: conn.id,
         requester_id: conn.requester_id || '',

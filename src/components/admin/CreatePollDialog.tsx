@@ -25,7 +25,6 @@ const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
   const [options, setOptions] = useState(['', '']);
   const [isActive, setIsActive] = useState(true);
   const [showResults, setShowResults] = useState(false);
-  const [displayAsBanner, setDisplayAsBanner] = useState(false);
   
   const { createPoll, isCreating } = usePolls();
   const { toast } = useToast();
@@ -66,20 +65,14 @@ const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
       return;
     }
 
-    const now = new Date();
-    const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours from now
-
     const pollData = {
       question: question.trim(),
       options: filteredOptions.map((text, index) => ({
         id: `option_${index + 1}`,
         text: text.trim()
       })),
-      start_time: now.toISOString(),
-      end_time: endTime.toISOString(),
       is_active: isActive,
-      show_results: showResults,
-      display_as_banner: displayAsBanner
+      show_results: showResults
     };
 
     createPoll(pollData);
@@ -89,7 +82,6 @@ const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
     setOptions(['', '']);
     setIsActive(true);
     setShowResults(false);
-    setDisplayAsBanner(false);
     setOpen(false);
   };
 
@@ -165,15 +157,6 @@ const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
                 onCheckedChange={setShowResults}
               />
               <Label htmlFor="results">Show results immediately</Label>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="banner"
-                checked={displayAsBanner}
-                onCheckedChange={setDisplayAsBanner}
-              />
-              <Label htmlFor="banner">Display as banner</Label>
             </div>
           </div>
 

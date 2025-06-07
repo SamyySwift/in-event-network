@@ -66,6 +66,18 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
         console.log('Camera started successfully');
         setScannerReady(true);
         setIsInitializing(false);
+        
+        // Ensure the video element is properly styled after initialization
+        setTimeout(() => {
+          const videoElement = document.querySelector(`#${qrId} video`) as HTMLVideoElement;
+          if (videoElement) {
+            videoElement.style.width = '100%';
+            videoElement.style.height = '100%';
+            videoElement.style.objectFit = 'cover';
+            console.log('Video element styled successfully');
+          }
+        }, 500);
+        
       } catch (err: any) {
         console.error("QR Scanner initialization error:", err);
         setIsInitializing(false);
@@ -135,7 +147,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
       <div 
         id={qrId} 
         style={{ width, height }} 
-        className="relative rounded-lg overflow-hidden border bg-black"
+        className="relative rounded-lg overflow-hidden border bg-white"
       >
         {isInitializing && (
           <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">

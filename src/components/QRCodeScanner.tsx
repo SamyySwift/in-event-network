@@ -20,6 +20,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
   const [scannerReady, setScannerReady] = useState(false);
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [error, setError] = useState<string>('');
+  const [isInitializing, setIsInitializing] = useState(true);
   const qrId = 'connect-qr-reader';
 
   useEffect(() => {
@@ -27,11 +28,12 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
 
     const initializeScanner = async () => {
       try {
+        console.log('Initializing QR scanner...');
         setError('');
         setPermissionDenied(false);
+        setIsInitializing(true);
         
         html5QrCode = new Html5Qrcode(qrId);
-        setScannerReady(true);
 
         const qrCodeSuccessCallback = (decodedText: string) => {
           console.log('QR Code scanned:', decodedText);
@@ -41,24 +43,32 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
           }
         };
 
-        const config = { fps: 10, qrbox: { width: 200, height: 200 } };
+        const config = { 
+          fps: 10, 
+          qrbox: { width: 200, height: 200 },
+          aspectRatio: 1.0
+        };
 
-        if (html5QrCode) {
-          await html5QrCode.start(
-            { facingMode: "environment" },
-            config,
-            qrCodeSuccessCallback,
-            (errorMessage) => {
-              // Only log actual errors, not routine scanning messages
-              if (!errorMessage.includes('NotFoundException')) {
-                console.log('QR Scanner message:', errorMessage);
-                if (onScanError) onScanError(errorMessage);
-              }
+        console.log('Starting camera...');
+        await html5QrCode.start(
+          { facingMode: "environment" },
+          config,
+          qrCodeSuccessCallback,
+          (errorMessage) => {
+            // Only log actual errors, not routine scanning messages
+            if (!errorMessage.includes('NotFoundException')) {
+              console.log('QR Scanner message:', errorMessage);
+              if (onScanError) onScanError(errorMessage);
             }
-          );
-        }
+          }
+        );
+
+        console.log('Camera started successfully');
+        setScannerReady(true);
+        setIsInitializing(false);
       } catch (err: any) {
         console.error("QR Scanner initialization error:", err);
+        setIsInitializing(false);
         
         if (err.toString().includes('NotAllowedError') || err.toString().includes('Permission denied')) {
           setPermissionDenied(true);
@@ -73,9 +83,11 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
       }
     };
 
-    initializeScanner();
+    // Add a small delay to ensure the DOM element is ready
+    const timeoutId = setTimeout(initializeScanner, 100);
 
     return () => {
+      clearTimeout(timeoutId);
       if (html5QrCode?.isScanning) {
         html5QrCode
           .stop()
@@ -123,11 +135,14 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
       <div 
         id={qrId} 
         style={{ width, height }} 
-        className="relative rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border"
+        className="relative rounded-lg overflow-hidden border bg-black"
       >
-        {!scannerReady && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-connect-600"></div>
+        {isInitializing && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-100 z-10">
+            <div className="flex flex-col items-center space-y-3">
+              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-connect-600"></div>
+              <p className="text-sm text-gray-600">Initializing camera...</p>
+            </div>
           </div>
         )}
       </div>

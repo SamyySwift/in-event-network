@@ -38,7 +38,7 @@ export const useJoinEvent = () => {
           description: `Welcome to ${data.event_name}`,
         });
         // Navigate to attendee dashboard
-        navigate('/dashboard');
+        navigate('/attendee');
       } else {
         toast({
           title: 'Failed to Join Event',

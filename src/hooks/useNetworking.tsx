@@ -52,28 +52,28 @@ export const useNetworking = () => {
         return;
       }
 
-      // First, get the events the current user has joined
-      const { data: userEvents, error: userEventsError } = await supabase
-        .from('event_participants')
-        .select('event_id')
-        .eq('user_id', currentUser.id);
+      // Get the current user's profile to find their current event
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('current_event_id')
+        .eq('id', currentUser.id)
+        .single();
 
-      if (userEventsError) {
-        throw userEventsError;
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        throw profileError;
       }
 
-      const eventIds = userEvents?.map(ep => ep.event_id) || [];
-
-      if (eventIds.length === 0) {
+      if (!profile?.current_event_id) {
         setProfiles([]);
         return;
       }
 
-      // Get other participants from the same events
+      // Get other participants from the SAME SPECIFIC EVENT only
       const { data: sameEventParticipants, error: participantsError } = await supabase
         .from('event_participants')
         .select('user_id')
-        .in('event_id', eventIds)
+        .eq('event_id', profile.current_event_id)
         .neq('user_id', currentUser.id);
 
       if (participantsError) {

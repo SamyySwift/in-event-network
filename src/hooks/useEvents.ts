@@ -14,8 +14,8 @@ interface Event {
   banner_url?: string;
   logo_url?: string;
   website?: string;
-  host_id?: string;
   event_key?: string;
+  host_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -28,117 +28,89 @@ export const useEvents = () => {
   const { data: events = [], isLoading, error } = useQuery({
     queryKey: ['events', currentUser?.id],
     queryFn: async () => {
-      // Only fetch events for authenticated users
       if (!currentUser) {
         return [];
       }
 
-      let query = supabase
-        .from('events')
-        .select('*')
-        .order('start_time', { ascending: true });
-
-      // If user is a host, only show their events
-      if (currentUser.role === 'host') {
-        query = query.eq('host_id', currentUser.id);
-      }
-
-      const { data, error } = await query;
-
-      if (error) {
-        console.error('Error fetching events:', error);
-        throw error;
-      }
-      return data as Event[];
-    },
-    enabled: !!currentUser, // Only run query when user is authenticated
-  });
-
-  const uploadImage = async (file: File): Promise<string> => {
-    try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random()}.${fileExt}`;
-      const filePath = `events/${fileName}`;
-
-      console.log('Uploading event image to:', filePath);
-
-      const { error: uploadError } = await supabase.storage
-        .from('media')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadError) {
-        console.error('Upload error:', uploadError);
-        throw uploadError;
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('media')
-        .getPublicUrl(filePath);
-
-      console.log('Event image uploaded successfully:', publicUrl);
-      return publicUrl;
-    } catch (error) {
-      console.error('Error in uploadImage:', error);
-      throw error;
-    }
-  };
-
-  const createEventMutation = useMutation({
-    mutationFn: async (eventData: Omit<Event, 'id' | 'created_at' | 'updated_at'> & { image?: File }) => {
-      try {
-        console.log('Creating event with data:', eventData);
-        
-        if (!currentUser || currentUser.role !== 'host') {
-          throw new Error('Only hosts can create events');
-        }
-        
-        let bannerUrl = eventData.banner_url;
-        if (eventData.image) {
-          bannerUrl = await uploadImage(eventData.image);
-        }
-
-        const { image, ...dataWithoutImage } = eventData;
-        
-        // Ensure required fields are not empty
-        if (!dataWithoutImage.name || !dataWithoutImage.start_time || !dataWithoutImage.end_time) {
-          throw new Error('Name, start time, and end time are required fields');
-        }
-
-        // Create the final data object with only the fields that exist in the database
-        const finalData = {
-          name: dataWithoutImage.name,
-          description: dataWithoutImage.description || null,
-          start_time: dataWithoutImage.start_time,
-          end_time: dataWithoutImage.end_time,
-          location: dataWithoutImage.location || null,
-          banner_url: bannerUrl || null,
-          logo_url: dataWithoutImage.logo_url || null,
-          website: dataWithoutImage.website || null,
-          host_id: currentUser.id, // Always set to current user
-        };
-
-        console.log('Final event data being sent to database:', finalData);
-
-        const { data, error } = await supabase
-          .from('events')
-          .insert([finalData])
-          .select()
+      if (currentUser.role === 'attendee') {
+        // Get the current user's profile to find their current event
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('current_event_id')
+          .eq('id', currentUser.id)
           .single();
 
-        if (error) {
-          console.error('Database error:', error);
-          throw error;
+        if (profileError || !profile?.current_event_id) {
+          console.error('Error fetching profile or no current event:', profileError);
+          return [];
         }
 
-        console.log('Event created successfully:', data);
-        return data;
-      } catch (error) {
-        console.error('Error in createEventMutation:', error);
+        // Get the current event to find the host
+        const { data: currentEvent, error: eventError } = await supabase
+          .from('events')
+          .select('*')
+          .eq('id', profile.current_event_id)
+          .single();
+
+        if (eventError || !currentEvent) {
+          console.error('Error fetching current event:', eventError);
+          return [];
+        }
+
+        // Get all events from the same host only
+        const { data: hostEvents, error: hostEventsError } = await supabase
+          .from('events')
+          .select('*')
+          .eq('host_id', currentEvent.host_id)
+          .order('start_time', { ascending: true });
+
+        if (hostEventsError) {
+          console.error('Error fetching host events:', hostEventsError);
+          throw hostEventsError;
+        }
+
+        return hostEvents as Event[];
+      } else if (currentUser.role === 'host') {
+        // Hosts see their own events
+        const { data, error } = await supabase
+          .from('events')
+          .select('*')
+          .eq('host_id', currentUser.id)
+          .order('start_time', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching events:', error);
+          throw error;
+        }
+        return data as Event[];
+      }
+
+      return [];
+    },
+    enabled: !!currentUser,
+  });
+
+  const createEventMutation = useMutation({
+    mutationFn: async (eventData: Omit<Event, 'id' | 'created_at' | 'updated_at' | 'event_key'>) => {
+      if (!currentUser || currentUser.role !== 'host') {
+        throw new Error('Only hosts can create events');
+      }
+
+      const { data, error } = await supabase
+        .from('events')
+        .insert([{
+          ...eventData,
+          host_id: currentUser.id,
+        }])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Create event error:', error);
         throw error;
       }
+
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
@@ -158,53 +130,25 @@ export const useEvents = () => {
   });
 
   const updateEventMutation = useMutation({
-    mutationFn: async ({ id, image, ...eventData }: Partial<Event> & { id: string; image?: File }) => {
-      try {
-        console.log('Updating event:', id, eventData);
-        
-        if (!currentUser || currentUser.role !== 'host') {
-          throw new Error('Only hosts can update events');
-        }
-        
-        let bannerUrl = eventData.banner_url;
-        if (image) {
-          bannerUrl = await uploadImage(image);
-        }
+    mutationFn: async ({ id, ...eventData }: Partial<Event> & { id: string }) => {
+      if (!currentUser || currentUser.role !== 'host') {
+        throw new Error('Only hosts can update events');
+      }
 
-        const finalData: Partial<Event> = {};
-        
-        // Only include fields that exist in the database schema
-        if (eventData.name !== undefined) finalData.name = eventData.name;
-        if (eventData.description !== undefined) finalData.description = eventData.description || null;
-        if (eventData.start_time !== undefined) finalData.start_time = eventData.start_time;
-        if (eventData.end_time !== undefined) finalData.end_time = eventData.end_time;
-        if (eventData.location !== undefined) finalData.location = eventData.location || null;
-        if (bannerUrl !== undefined) finalData.banner_url = bannerUrl;
-        if (eventData.logo_url !== undefined) finalData.logo_url = eventData.logo_url || null;
-        if (eventData.website !== undefined) finalData.website = eventData.website || null;
-        if (eventData.host_id !== undefined) finalData.host_id = eventData.host_id || null;
+      const { data, error } = await supabase
+        .from('events')
+        .update(eventData)
+        .eq('id', id)
+        .eq('host_id', currentUser.id)
+        .select()
+        .single();
 
-        console.log('Final update data:', finalData);
-
-        const { data, error } = await supabase
-          .from('events')
-          .update(finalData)
-          .eq('id', id)
-          .eq('host_id', currentUser.id) // Ensure only host can update their events
-          .select()
-          .single();
-
-        if (error) {
-          console.error('Database update error:', error);
-          throw error;
-        }
-
-        console.log('Event updated successfully:', data);
-        return data;
-      } catch (error) {
-        console.error('Error in updateEventMutation:', error);
+      if (error) {
+        console.error('Update event error:', error);
         throw error;
       }
+
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['events'] });
@@ -225,8 +169,6 @@ export const useEvents = () => {
 
   const deleteEventMutation = useMutation({
     mutationFn: async (id: string) => {
-      console.log('Deleting event:', id);
-      
       if (!currentUser || currentUser.role !== 'host') {
         throw new Error('Only hosts can delete events');
       }
@@ -235,10 +177,10 @@ export const useEvents = () => {
         .from('events')
         .delete()
         .eq('id', id)
-        .eq('host_id', currentUser.id); // Ensure only host can delete their events
+        .eq('host_id', currentUser.id);
 
       if (error) {
-        console.error('Delete error:', error);
+        console.error('Delete event error:', error);
         throw error;
       }
     },
@@ -270,6 +212,5 @@ export const useEvents = () => {
     isCreating: createEventMutation.isPending,
     isUpdating: updateEventMutation.isPending,
     isDeleting: deleteEventMutation.isPending,
-    uploadImage,
   };
 };

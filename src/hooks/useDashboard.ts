@@ -21,34 +21,19 @@ export const useDashboard = () => {
         throw new Error('Only attendees can access this dashboard');
       }
 
-      // Get the events the attendee has joined - with proper column hinting
-      const { data: participantData, error: participantError } = await supabase
-        .from('event_participants')
-        .select(`
-          event_id,
-          events!event_participants_event_id_fkey (
-            id,
-            name,
-            description,
-            start_time,
-            end_time,
-            location,
-            banner_url,
-            host_id
-          )
-        `)
-        .eq('user_id', currentUser.id);
+      // First, get the current user's profile to find their current event
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('current_event_id')
+        .eq('id', currentUser.id)
+        .single();
 
-      if (participantError) {
-        console.error('Error fetching participant events:', participantError);
-        throw participantError;
+      if (profileError) {
+        console.error('Error fetching profile:', profileError);
+        throw profileError;
       }
 
-      const events = participantData?.map(p => p.events).filter(Boolean) || [];
-      const eventIds = events.map(e => e?.id).filter(Boolean);
-      const hostIds = events.map(e => e?.host_id).filter(Boolean);
-
-      if (eventIds.length === 0) {
+      if (!profile?.current_event_id) {
         return {
           currentEvent: null,
           upcomingEvents: [],
@@ -58,9 +43,45 @@ export const useDashboard = () => {
         };
       }
 
-      // Determine current and upcoming events
+      // Get the specific event details
+      const { data: currentEvent, error: eventError } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', profile.current_event_id)
+        .single();
+
+      if (eventError) {
+        console.error('Error fetching current event:', eventError);
+        throw eventError;
+      }
+
+      if (!currentEvent) {
+        return {
+          currentEvent: null,
+          upcomingEvents: [],
+          nextSession: null,
+          recentAnnouncements: [],
+          suggestedConnections: []
+        };
+      }
+
+      // Get all events from the same host (admin)
+      const { data: hostEvents, error: hostEventsError } = await supabase
+        .from('events')
+        .select('*')
+        .eq('host_id', currentEvent.host_id);
+
+      if (hostEventsError) {
+        console.error('Error fetching host events:', hostEventsError);
+        throw hostEventsError;
+      }
+
+      const events = hostEvents || [];
+      const eventIds = events.map(e => e.id);
+
+      // Determine current and upcoming events from this host only
       const now = new Date();
-      const currentEvent = events.find(event => {
+      const liveEvent = events.find(event => {
         if (!event?.start_time || !event?.end_time) return false;
         const startTime = new Date(event.start_time);
         const endTime = new Date(event.end_time);
@@ -76,7 +97,7 @@ export const useDashboard = () => {
         return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
       });
 
-      // Get next speaker session from attendee's events only
+      // Get next speaker session from this host's events only
       const { data: speakers } = await supabase
         .from('speakers')
         .select('*')
@@ -88,7 +109,7 @@ export const useDashboard = () => {
 
       const nextSession = speakers?.[0] || null;
 
-      // Get recent announcements from attendee's events only
+      // Get recent announcements from this host's events only
       const { data: announcements } = await supabase
         .from('announcements')
         .select('*')
@@ -98,8 +119,8 @@ export const useDashboard = () => {
 
       const recentAnnouncements = announcements || [];
 
-      // Get suggested connections from the same events
-      const { data: otherParticipants } = await supabase
+      // Get suggested connections only from attendees of the current specific event
+      const { data: currentEventParticipants } = await supabase
         .from('event_participants')
         .select(`
           user_id,
@@ -111,14 +132,14 @@ export const useDashboard = () => {
             company
           )
         `)
-        .in('event_id', eventIds)
+        .eq('event_id', profile.current_event_id)
         .neq('user_id', currentUser.id)
         .limit(6);
 
-      const suggestedConnections = otherParticipants?.map(p => p.profiles).filter(Boolean) || [];
+      const suggestedConnections = currentEventParticipants?.map(p => p.profiles).filter(Boolean) || [];
 
       return {
-        currentEvent,
+        currentEvent: liveEvent,
         upcomingEvents,
         nextSession,
         recentAnnouncements,

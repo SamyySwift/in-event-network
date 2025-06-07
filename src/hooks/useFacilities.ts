@@ -50,13 +50,42 @@ export const useFacilities = () => {
         }
         query = query.in('event_id', eventIds);
       } else if (currentUser.role === 'attendee') {
-        // Attendees see facilities from events they've joined
-        const { data: participantData } = await supabase
-          .from('event_participants')
-          .select('event_id')
-          .eq('user_id', currentUser.id);
+        // Get the current user's profile to find their current event
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('current_event_id')
+          .eq('id', currentUser.id)
+          .single();
 
-        const eventIds = participantData?.map(p => p.event_id) || [];
+        if (profileError || !profile?.current_event_id) {
+          console.error('Error fetching profile or no current event:', profileError);
+          return [];
+        }
+
+        // Get the current event to find the host
+        const { data: currentEvent, error: eventError } = await supabase
+          .from('events')
+          .select('host_id')
+          .eq('id', profile.current_event_id)
+          .single();
+
+        if (eventError || !currentEvent?.host_id) {
+          console.error('Error fetching current event:', eventError);
+          return [];
+        }
+
+        // Get all events from the same host
+        const { data: hostEvents, error: hostEventsError } = await supabase
+          .from('events')
+          .select('id')
+          .eq('host_id', currentEvent.host_id);
+
+        if (hostEventsError) {
+          console.error('Error fetching host events:', hostEventsError);
+          return [];
+        }
+
+        const eventIds = hostEvents?.map(e => e.id) || [];
         if (eventIds.length === 0) {
           return [];
         }

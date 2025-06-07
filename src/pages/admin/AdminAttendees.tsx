@@ -64,68 +64,73 @@ const AdminAttendees = () => {
 
       const eventIds = hostEvents.map(event => event.id);
 
-      // Get attendees who have joined this host's events
+      // Get unique user IDs who have joined this host's events
       const { data: participants, error: participantsError } = await supabase
         .from('event_participants')
-        .select(`
-          user_id,
-          joined_at,
-          profiles!inner (
-            id,
-            name,
-            email,
-            role,
-            photo_url,
-            bio,
-            niche,
-            company,
-            networking_preferences,
-            twitter_link,
-            facebook_link,
-            linkedin_link,
-            instagram_link,
-            snapchat_link,
-            tiktok_link,
-            github_link,
-            website_link
-          )
-        `)
+        .select('user_id')
         .in('event_id', eventIds);
 
       if (participantsError) throw participantsError;
 
-      // Transform and deduplicate attendees (same user might join multiple events)
-      const uniqueAttendees = new Map<string, User>();
-      
-      (participants || []).forEach(participant => {
-        if (participant.profiles) {
-          const profile = participant.profiles;
-          const attendee: User = {
-            id: profile.id,
-            name: profile.name || 'Unknown',
-            email: profile.email || '',
-            role: profile.role as 'host' | 'attendee',
-            photoUrl: profile.photo_url,
-            bio: profile.bio,
-            niche: profile.niche,
-            company: profile.company,
-            networkingPreferences: profile.networking_preferences || [],
-            links: {
-              twitter: profile.twitter_link,
-              facebook: profile.facebook_link,
-              linkedin: profile.linkedin_link,
-              instagram: profile.instagram_link,
-              snapchat: profile.snapchat_link,
-              tiktok: profile.tiktok_link,
-              github: profile.github_link,
-              website: profile.website_link,
-            },
-          };
-          uniqueAttendees.set(profile.id, attendee);
-        }
-      });
+      if (!participants || participants.length === 0) {
+        setAttendees([]);
+        setLoading(false);
+        return;
+      }
 
-      setAttendees(Array.from(uniqueAttendees.values()));
+      // Get unique user IDs
+      const uniqueUserIds = [...new Set(participants.map(p => p.user_id))];
+
+      // Now fetch the profiles for these users
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select(`
+          id,
+          name,
+          email,
+          role,
+          photo_url,
+          bio,
+          niche,
+          company,
+          networking_preferences,
+          twitter_link,
+          facebook_link,
+          linkedin_link,
+          instagram_link,
+          snapchat_link,
+          tiktok_link,
+          github_link,
+          website_link
+        `)
+        .in('id', uniqueUserIds);
+
+      if (profilesError) throw profilesError;
+
+      // Transform profiles to User objects
+      const transformedAttendees: User[] = (profiles || []).map(profile => ({
+        id: profile.id,
+        name: profile.name || 'Unknown',
+        email: profile.email || '',
+        role: profile.role as 'host' | 'attendee',
+        photoUrl: profile.photo_url,
+        bio: profile.bio,
+        niche: profile.niche,
+        company: profile.company,
+        networkingPreferences: profile.networking_preferences || [],
+        links: {
+          twitter: profile.twitter_link,
+          facebook: profile.facebook_link,
+          linkedin: profile.linkedin_link,
+          instagram: profile.instagram_link,
+          snapchat: profile.snapchat_link,
+          tiktok: profile.tiktok_link,
+          github: profile.github_link,
+          website: profile.website_link,
+        },
+      }));
+
+      setAttendees(transformedAttendees);
     } catch (error) {
       console.error('Error fetching host attendees:', error);
       toast({

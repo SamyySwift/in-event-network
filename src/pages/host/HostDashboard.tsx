@@ -22,20 +22,20 @@ const HostDashboard = () => {
   const { speakers } = useSpeakers();
   const { announcements } = useAnnouncements();
 
-  // Calculate metrics for this host's events only
-  const totalEvents = events.length;
-  const totalSpeakers = speakers.length;
-  const totalAnnouncements = announcements.length;
+  // Calculate metrics for this host's events only - all data comes from host-specific hooks
+  const totalEvents = events?.length || 0;
+  const totalSpeakers = speakers?.length || 0;
+  const totalAnnouncements = announcements?.length || 0;
   
-  const liveEvents = events.filter(event => {
+  const liveEvents = events?.filter(event => {
     const now = new Date();
     return new Date(event.start_time) <= now && new Date(event.end_time) >= now;
-  }).length;
+  }).length || 0;
 
-  const upcomingEvents = events.filter(event => {
+  const upcomingEvents = events?.filter(event => {
     const now = new Date();
     return new Date(event.start_time) > now;
-  }).length;
+  }).length || 0;
 
   const metrics = [
     {
@@ -68,13 +68,15 @@ const HostDashboard = () => {
     },
   ];
 
+  // Only show recent events if they exist
   const recentEvents = events
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 5);
+    ?.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 5) || [];
 
+  // Only show recent announcements if they exist
   const recentAnnouncements = announcements
-    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 3);
+    ?.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 3) || [];
 
   return (
     <AppLayout>

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,6 +12,7 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
+import ScanQR from "./pages/ScanQR";
 
 // Attendee Pages
 import AttendeeDashboard from "./pages/attendee/AttendeeDashboard";
@@ -77,6 +77,7 @@ const App = () => {
               <Route path="/" element={<Landing />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/scan" element={<ScanQR />} />
               
               {/* Protected Attendee Routes */}
               <Route path="/attendee" element={

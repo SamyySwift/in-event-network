@@ -22,24 +22,24 @@ const HostDashboard = () => {
   const { speakers } = useSpeakers();
   const { announcements } = useAnnouncements();
 
-  // Calculate metrics for this host's events only - all data comes from host-specific hooks
-  const totalEvents = events?.length || 0;
-  const totalSpeakers = speakers?.length || 0;
-  const totalAnnouncements = announcements?.length || 0;
+  // Calculate metrics
+  const totalEvents = events.length;
+  const totalSpeakers = speakers.length;
+  const totalAnnouncements = announcements.length;
   
-  const liveEvents = events?.filter(event => {
+  const liveEvents = events.filter(event => {
     const now = new Date();
     return new Date(event.start_time) <= now && new Date(event.end_time) >= now;
-  }).length || 0;
+  }).length;
 
-  const upcomingEvents = events?.filter(event => {
+  const upcomingEvents = events.filter(event => {
     const now = new Date();
     return new Date(event.start_time) > now;
-  }).length || 0;
+  }).length;
 
   const metrics = [
     {
-      title: 'Your Events',
+      title: 'Total Events',
       value: totalEvents.toString(),
       change: `${upcomingEvents} upcoming`,
       icon: Calendar,
@@ -53,14 +53,14 @@ const HostDashboard = () => {
       color: 'text-green-600',
     },
     {
-      title: 'Your Speakers',
+      title: 'Speakers',
       value: totalSpeakers.toString(),
       change: 'Registered',
       icon: User,
       color: 'text-purple-600',
     },
     {
-      title: 'Your Announcements',
+      title: 'Announcements',
       value: totalAnnouncements.toString(),
       change: 'Published',
       icon: Megaphone,
@@ -68,15 +68,13 @@ const HostDashboard = () => {
     },
   ];
 
-  // Only show recent events if they exist
   const recentEvents = events
-    ?.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 5) || [];
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 5);
 
-  // Only show recent announcements if they exist
   const recentAnnouncements = announcements
-    ?.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    .slice(0, 3) || [];
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 3);
 
   return (
     <AppLayout>
@@ -114,7 +112,7 @@ const HostDashboard = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-5 w-5" />
-                Your Recent Events
+                Recent Events
               </CardTitle>
               <CardDescription>
                 Latest events you've created
@@ -124,7 +122,7 @@ const HostDashboard = () => {
               <div className="space-y-4">
                 {recentEvents.length === 0 ? (
                   <p className="text-center text-muted-foreground py-4">
-                    No events created yet. Create your first event to get started!
+                    No events created yet
                   </p>
                 ) : (
                   recentEvents.map((event) => (
@@ -152,7 +150,7 @@ const HostDashboard = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Megaphone className="h-5 w-5" />
-                Your Recent Announcements
+                Recent Announcements
               </CardTitle>
               <CardDescription>
                 Latest announcements you've published
@@ -189,27 +187,27 @@ const HostDashboard = () => {
           </Card>
         </div>
 
-        {/* Event Overview - Only showing this host's data */}
+        {/* Quick Stats */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <BarChart3 className="h-5 w-5" />
-              Your Event Overview
+              Event Overview
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid gap-4 md:grid-cols-3">
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">{upcomingEvents}</div>
-                <p className="text-sm text-muted-foreground">Your Upcoming Events</p>
+                <p className="text-sm text-muted-foreground">Upcoming Events</p>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-green-600">{liveEvents}</div>
-                <p className="text-sm text-muted-foreground">Your Live Events</p>
+                <p className="text-sm text-muted-foreground">Live Events</p>
               </div>
               <div className="text-center">
                 <div className="text-2xl font-bold text-purple-600">{totalSpeakers}</div>
-                <p className="text-sm text-muted-foreground">Your Speakers</p>
+                <p className="text-sm text-muted-foreground">Total Speakers</p>
               </div>
             </div>
           </CardContent>

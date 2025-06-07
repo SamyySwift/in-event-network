@@ -4,14 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Plus, Pencil, Trash2, Loader, Calendar, MapPin, Copy, Key } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader, Calendar, MapPin } from 'lucide-react';
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { Badge } from '@/components/ui/badge';
 import { useEvents } from '@/hooks/useEvents';
 import { useAuth } from '@/contexts/AuthContext';
 import { ImageUpload } from '@/components/ui/image-upload';
-import { useToast } from '@/hooks/use-toast';
 
 type EventFormData = {
   name: string;
@@ -27,7 +26,6 @@ const AdminEvents = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const { currentUser } = useAuth();
   const { events, isLoading, createEvent, updateEvent, deleteEvent, isCreating, isUpdating, isDeleting } = useEvents();
-  const { toast } = useToast();
 
   const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm<EventFormData>({
     defaultValues: {
@@ -101,22 +99,6 @@ const AdminEvents = () => {
     return now < start;
   };
 
-  const copyAccessCode = async (eventKey: string) => {
-    try {
-      await navigator.clipboard.writeText(eventKey);
-      toast({
-        title: 'Access Code Copied',
-        description: 'The event access code has been copied to your clipboard.',
-      });
-    } catch (error) {
-      toast({
-        title: 'Copy Failed',
-        description: 'Failed to copy access code. Please copy it manually.',
-        variant: 'destructive',
-      });
-    }
-  };
-
   if (isLoading) {
     return (
       <AdminLayout>
@@ -132,7 +114,7 @@ const AdminEvents = () => {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Events</h1>
         <p className="text-muted-foreground">
-          Create and manage your events. Each event gets a unique 6-digit access code.
+          Manage and schedule events for your attendees.
         </p>
       </div>
 
@@ -141,7 +123,7 @@ const AdminEvents = () => {
           <CardHeader>
             <CardTitle>{editingEvent ? 'Edit Event' : 'Create New Event'}</CardTitle>
             <CardDescription>
-              {editingEvent ? 'Update event information' : 'Add a new event and get a unique access code'}
+              {editingEvent ? 'Update event information' : 'Add a new event to the schedule'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -226,19 +208,16 @@ const AdminEvents = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Your Events</CardTitle>
+            <CardTitle>Scheduled Events</CardTitle>
             <CardDescription>
-              {events.length} events created. Share the access codes with attendees.
+              {events.length} events in your schedule
             </CardDescription>
           </CardHeader>
           <CardContent>
             {events.length === 0 ? (
-              <div className="text-center py-8">
-                <Key className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <p className="text-center text-muted-foreground">
-                  No events created yet. Create your first event to get started.
-                </p>
-              </div>
+              <p className="text-center text-muted-foreground py-8">
+                No events scheduled yet. Create your first event using the form.
+              </p>
             ) : (
               <div className="space-y-4">
                 {events.map((event) => (
@@ -254,23 +233,6 @@ const AdminEvents = () => {
                             <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200">Upcoming</Badge>
                           )}
                         </div>
-                        
-                        {/* Access Code Display */}
-                        <div className="flex items-center gap-2 mb-2 p-2 bg-muted rounded">
-                          <Key className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm font-mono font-semibold">
-                            Access Code: {event.event_key}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => copyAccessCode(event.event_key || '')}
-                            className="h-6 w-6 p-0"
-                          >
-                            <Copy className="h-3 w-3" />
-                          </Button>
-                        </div>
-                        
                         {event.description && (
                           <p className="text-sm text-muted-foreground mb-2">{event.description}</p>
                         )}

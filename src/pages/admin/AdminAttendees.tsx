@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -8,107 +9,50 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { User } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
 
 const AdminAttendees = () => {
   const [activeTab, setActiveTab] = useState<string>('all');
   const [attendees, setAttendees] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const { currentUser } = useAuth();
 
   useEffect(() => {
-    if (currentUser?.id) {
-      fetchHostAttendees();
-      
-      // Set up real-time subscription for attendees joining this host's events
-      const channel = supabase
-        .channel('host-attendees-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'event_participants'
-          },
-          (payload) => {
-            console.log('Real-time event participant update:', payload);
-            fetchHostAttendees();
-          }
-        )
-        .subscribe();
+    fetchAttendees();
+    
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('attendees-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'profiles',
+          filter: 'role=eq.attendee'
+        },
+        (payload) => {
+          console.log('Real-time attendee update:', payload);
+          fetchAttendees();
+        }
+      )
+      .subscribe();
 
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [currentUser?.id]);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
 
-  const fetchHostAttendees = async () => {
-    if (!currentUser?.id) return;
-
+  const fetchAttendees = async () => {
     try {
-      // First get the host's events
-      const { data: hostEvents, error: eventsError } = await supabase
-        .from('events')
-        .select('id')
-        .eq('host_id', currentUser.id);
-
-      if (eventsError) throw eventsError;
-
-      if (!hostEvents || hostEvents.length === 0) {
-        setAttendees([]);
-        setLoading(false);
-        return;
-      }
-
-      const eventIds = hostEvents.map(event => event.id);
-
-      // Get unique user IDs who have joined this host's events
-      const { data: participants, error: participantsError } = await supabase
-        .from('event_participants')
-        .select('user_id')
-        .in('event_id', eventIds);
-
-      if (participantsError) throw participantsError;
-
-      if (!participants || participants.length === 0) {
-        setAttendees([]);
-        setLoading(false);
-        return;
-      }
-
-      // Get unique user IDs
-      const uniqueUserIds = [...new Set(participants.map(p => p.user_id))];
-
-      // Now fetch the profiles for these users
-      const { data: profiles, error: profilesError } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
-        .select(`
-          id,
-          name,
-          email,
-          role,
-          photo_url,
-          bio,
-          niche,
-          company,
-          networking_preferences,
-          twitter_link,
-          facebook_link,
-          linkedin_link,
-          instagram_link,
-          snapchat_link,
-          tiktok_link,
-          github_link,
-          website_link
-        `)
-        .in('id', uniqueUserIds);
+        .select('*')
+        .eq('role', 'attendee')
+        .order('created_at', { ascending: false });
 
-      if (profilesError) throw profilesError;
+      if (error) throw error;
 
-      // Transform profiles to User objects
-      const transformedAttendees: User[] = (profiles || []).map(profile => ({
+      const transformedAttendees: User[] = (data || []).map(profile => ({
         id: profile.id,
         name: profile.name || 'Unknown',
         email: profile.email || '',
@@ -132,7 +76,7 @@ const AdminAttendees = () => {
 
       setAttendees(transformedAttendees);
     } catch (error) {
-      console.error('Error fetching host attendees:', error);
+      console.error('Error fetching attendees:', error);
       toast({
         title: "Error",
         description: "Failed to fetch attendees",
@@ -219,38 +163,22 @@ const AdminAttendees = () => {
   };
 
   const handleDeleteAttendee = async (attendee: User) => {
-    if (!currentUser?.id) return;
-
     try {
-      // Get the host's event IDs
-      const { data: hostEvents, error: eventsError } = await supabase
-        .from('events')
-        .select('id')
-        .eq('host_id', currentUser.id);
-
-      if (eventsError) throw eventsError;
-
-      if (!hostEvents || hostEvents.length === 0) return;
-
-      const eventIds = hostEvents.map(event => event.id);
-
-      // Remove attendee from all of this host's events
       const { error } = await supabase
-        .from('event_participants')
+        .from('profiles')
         .delete()
-        .eq('user_id', attendee.id)
-        .in('event_id', eventIds);
+        .eq('id', attendee.id);
 
       if (error) throw error;
 
       toast({
         title: "Success",
-        description: "Attendee removed from your events",
+        description: "Attendee removed successfully",
       });
 
-      fetchHostAttendees();
+      fetchAttendees();
     } catch (error) {
-      console.error('Error removing attendee:', error);
+      console.error('Error deleting attendee:', error);
       toast({
         title: "Error",
         description: "Failed to remove attendee",
@@ -275,8 +203,8 @@ const AdminAttendees = () => {
   return (
     <AdminLayout>
       <AdminPageHeader
-        title="Event Attendees"
-        description={`Manage attendees who have joined your events (${attendees.length} total)`}
+        title="Attendees"
+        description={`Manage event attendees and their profiles (${attendees.length} total)`}
         tabs={[
           { id: 'all', label: `All Attendees (${attendees.length})` },
           { id: 'technical', label: 'Technical' },
@@ -288,20 +216,12 @@ const AdminAttendees = () => {
       >
         {['all', 'technical', 'design', 'business'].map(tabId => (
           <TabsContent key={tabId} value={tabId} className="space-y-4">
-            {attendees.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-muted-foreground">
-                  No attendees have joined your events yet. Share your event access codes to get started!
-                </p>
-              </div>
-            ) : (
-              <AdminDataTable
-                columns={columns}
-                data={getFilteredAttendees()}
-                onEdit={handleEditAttendee}
-                onDelete={handleDeleteAttendee}
-              />
-            )}
+            <AdminDataTable
+              columns={columns}
+              data={getFilteredAttendees()}
+              onEdit={handleEditAttendee}
+              onDelete={handleDeleteAttendee}
+            />
           </TabsContent>
         ))}
       </AdminPageHeader>

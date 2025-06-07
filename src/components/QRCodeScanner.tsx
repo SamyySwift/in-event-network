@@ -21,9 +21,12 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
   const [error, setError] = useState<string>('');
 
   const handleScan = (result: any) => {
-    if (result && result.text) {
-      console.log('QR Code scanned:', result.text);
-      onScanSuccess(result.text);
+    if (result && result.length > 0) {
+      const scannedText = result[0]?.rawValue || result[0]?.text;
+      if (scannedText) {
+        console.log('QR Code scanned:', scannedText);
+        onScanSuccess(scannedText);
+      }
     }
   };
 
@@ -92,14 +95,16 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
           constraints={{
             facingMode: 'environment'
           }}
-          containerStyle={{
-            width: '100%',
-            height: '100%'
-          }}
-          videoStyle={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover'
+          styles={{
+            container: {
+              width: '100%',
+              height: '100%'
+            },
+            video: {
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover'
+            }
           }}
         />
       </div>

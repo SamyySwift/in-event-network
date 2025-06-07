@@ -35,13 +35,14 @@ const FeedbackModal: React.FC<FeedbackModalProps> = ({ questionId, isOpen, onClo
       const user = await supabase.auth.getUser();
       if (!user.data.user) throw new Error('User not authenticated');
 
+      // For now, we'll store feedback in the suggestions table until question_feedback is created
       const { error } = await supabase
-        .from('question_feedback')
+        .from('suggestions')
         .insert([{
-          question_id: questionId,
-          user_id: user.data.user.id,
-          satisfaction_level: rating,
-          feedback_text: feedback.trim() || null
+          content: `Question Feedback (Rating: ${rating}/5): ${feedback.trim() || 'No additional feedback'}`,
+          type: 'feedback',
+          rating: rating,
+          user_id: user.data.user.id
         }]);
 
       if (error) throw error;

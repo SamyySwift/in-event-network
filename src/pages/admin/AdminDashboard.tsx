@@ -14,10 +14,34 @@ import {
 } from 'lucide-react';
 import { useAdminDashboard } from '@/hooks/useAdminDashboard';
 import { useAuth } from '@/contexts/AuthContext';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 const AdminDashboard = () => {
   const { currentUser } = useAuth();
   const { dashboardData, isLoading } = useAdminDashboard();
+
+  // Get the current user's profile data including access_key
+  const { data: userProfile } = useQuery({
+    queryKey: ['user-profile', currentUser?.id],
+    queryFn: async () => {
+      if (!currentUser?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('access_key')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        return null;
+      }
+
+      return data;
+    },
+    enabled: !!currentUser?.id,
+  });
 
   const metrics = [
     {
@@ -56,7 +80,7 @@ const AdminDashboard = () => {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Your Admin Dashboard</h1>
           <p className="text-muted-foreground">
-            Welcome back, {currentUser?.name}! Here's what's happening with your events.
+            Welcome back, {currentUser?.user_metadata?.name || currentUser?.email}! Here's what's happening with your events.
           </p>
         </div>
 
@@ -91,10 +115,10 @@ const AdminDashboard = () => {
               <QrCode className="h-5 w-5" />
               Event Registration QR Code
             </h2>
-            {currentUser?.access_key ? (
+            {userProfile?.access_key ? (
               <QRCodeGenerator 
                 eventName="Join Event" 
-                eventUrl={`${window.location.origin}/register?code=${currentUser.access_key}`}
+                eventUrl={`${window.location.origin}/register?code=${userProfile.access_key}`}
               />
             ) : (
               <div className="text-muted-foreground">

@@ -51,8 +51,11 @@ export const useAdminDashboard = () => {
         return current < start;
       }) || [];
 
-      // Get attendees count using the admin function
-      const { data: attendees, error: attendeesError } = await supabase.rpc('get_admin_attendees');
+      // Get attendees count for admin's events
+      const { data: attendees, error: attendeesError } = await supabase
+        .from('event_participants')
+        .select('id', { count: 'exact' })
+        .in('event_id', events?.map(e => e.id) || []);
       
       if (attendeesError) {
         console.error('Error fetching attendees:', attendeesError);
@@ -61,8 +64,8 @@ export const useAdminDashboard = () => {
       // Get speakers count for admin's events
       const { data: speakers, error: speakersError } = await supabase
         .from('speakers')
-        .select('id, events!inner(host_id)')
-        .eq('events.host_id', currentUser.id);
+        .select('id', { count: 'exact' })
+        .in('event_id', events?.map(e => e.id) || []);
 
       if (speakersError) {
         console.error('Error fetching speakers:', speakersError);
@@ -71,8 +74,8 @@ export const useAdminDashboard = () => {
       // Get questions count for admin's events
       const { data: questions, error: questionsError } = await supabase
         .from('questions')
-        .select('id, events!inner(host_id)')
-        .eq('events.host_id', currentUser.id);
+        .select('id', { count: 'exact' })
+        .in('event_id', events?.map(e => e.id) || []);
 
       if (questionsError) {
         console.error('Error fetching questions:', questionsError);
@@ -80,9 +83,9 @@ export const useAdminDashboard = () => {
 
       return {
         eventsCount: events?.length || 0,
-        attendeesCount: attendees?.length || 0,
-        speakersCount: speakers?.length || 0,
-        questionsCount: questions?.length || 0,
+        attendeesCount: (attendees as any)?.length || 0,
+        speakersCount: (speakers as any)?.length || 0,
+        questionsCount: (questions as any)?.length || 0,
         liveEventsCount: liveEvents.length,
         upcomingEventsCount: upcomingEvents.length,
       };

@@ -2,12 +2,10 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
 
 export const useJoinEvent = () => {
   const [isJoining, setIsJoining] = useState(false);
   const { toast } = useToast();
-  const { refetchUser } = useAuth();
 
   const joinEventByAccessKey = async (accessKey: string) => {
     if (!accessKey.trim()) {
@@ -41,8 +39,8 @@ export const useJoinEvent = () => {
           description: `Welcome to ${data.event_name}!`,
         });
         
-        // Refresh user data to get updated event info
-        await refetchUser();
+        // Refresh the page to load new event data
+        window.location.reload();
         return true;
       } else {
         toast({

@@ -72,24 +72,35 @@ export const useAnnouncements = () => {
             return [];
           }
           query = query.in('event_id', eventIds);
-        } else if (currentUser.role === 'attendee' && currentUser.current_event_id) {
-          // Get the current event to find the host
-          const { data: currentEvent } = await supabase
-            .from('events')
-            .select('host_id')
-            .eq('id', currentUser.current_event_id)
+        } else if (currentUser.role === 'attendee') {
+          // Get the user's profile to find their current event
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('current_event_id')
+            .eq('id', currentUser.id)
             .single();
 
-          if (currentEvent?.host_id) {
-            // Get all events from the same host
-            const { data: hostEvents } = await supabase
+          if (profile?.current_event_id) {
+            // Get the current event to find the host
+            const { data: currentEvent } = await supabase
               .from('events')
-              .select('id')
-              .eq('host_id', currentEvent.host_id);
+              .select('host_id')
+              .eq('id', profile.current_event_id)
+              .single();
 
-            const eventIds = hostEvents?.map(e => e.id) || [];
-            if (eventIds.length > 0) {
-              query = query.in('event_id', eventIds);
+            if (currentEvent?.host_id) {
+              // Get all events from the same host
+              const { data: hostEvents } = await supabase
+                .from('events')
+                .select('id')
+                .eq('host_id', currentEvent.host_id);
+
+              const eventIds = hostEvents?.map(e => e.id) || [];
+              if (eventIds.length > 0) {
+                query = query.in('event_id', eventIds);
+              } else {
+                return [];
+              }
             } else {
               return [];
             }

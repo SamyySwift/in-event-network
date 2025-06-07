@@ -738,9 +738,17 @@ export interface Database {
       };
     };
     Functions: {
-      [_ in never]: never;
+      join_event_by_access_key: {
+        Args: {
+          access_code: string;
+        };
+        Returns: Json;
+      };
     };
     Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
       [_ in never]: never;
     };
   };

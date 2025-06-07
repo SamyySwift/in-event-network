@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { Calendar, Users, MessageSquare, Announcement, Clock, MapPin } from 'lucide-react';
+import { Calendar, Users, MessageSquare, Megaphone, Clock, MapPin } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -89,32 +89,44 @@ const AttendeeDashboard = () => {
   }, [currentUser]);
 
   const fetchDashboardData = async () => {
-    if (!currentUser?.current_event_id) {
+    if (!currentUser) {
       setLoading(false);
       return;
     }
 
     try {
-      console.log('Fetching dashboard data for event:', currentUser.current_event_id);
+      // Get user's profile to find their current event
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('current_event_id')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (!profile?.current_event_id) {
+        setLoading(false);
+        return;
+      }
+
+      console.log('Fetching dashboard data for event:', profile.current_event_id);
 
       // Get current event details
       const { data: currentEvent } = await supabase
         .from('events')
         .select('*')
-        .eq('id', currentUser.current_event_id)
+        .eq('id', profile.current_event_id)
         .single();
 
       console.log('Current event:', currentEvent);
 
       // Get host's events to fetch all related data
-      let hostEventIds = [currentUser.current_event_id];
+      let hostEventIds = [profile.current_event_id];
       if (currentEvent?.host_id) {
         const { data: hostEvents } = await supabase
           .from('events')
           .select('id')
           .eq('host_id', currentEvent.host_id);
         
-        hostEventIds = hostEvents?.map(e => e.id) || [currentUser.current_event_id];
+        hostEventIds = hostEvents?.map(e => e.id) || [profile.current_event_id];
       }
 
       // Fetch upcoming sessions (speakers with session times)
@@ -250,7 +262,7 @@ const AttendeeDashboard = () => {
                   <p className="text-orange-100">Announcements</p>
                   <p className="text-3xl font-bold">{dashboardData.recentAnnouncements.length}</p>
                 </div>
-                <Announcement className="h-8 w-8 text-orange-200" />
+                <Megaphone className="h-8 w-8 text-orange-200" />
               </div>
             </CardContent>
           </Card>
@@ -303,7 +315,7 @@ const AttendeeDashboard = () => {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Announcement className="h-5 w-5 text-primary" />
+                <Megaphone className="h-5 w-5 text-primary" />
                 Recent Announcements
               </CardTitle>
               <CardDescription>
@@ -335,7 +347,7 @@ const AttendeeDashboard = () => {
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  <Announcement className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <Megaphone className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No announcements yet</p>
                 </div>
               )}

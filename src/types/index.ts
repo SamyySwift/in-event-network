@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   name: string;
@@ -16,6 +17,7 @@ export interface User {
     website?: string;
   };
   niche?: string;
+  company?: string;
   networkingPreferences?: string[];
   customTags?: string[];
 }

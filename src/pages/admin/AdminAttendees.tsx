@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -49,13 +48,29 @@ const AdminAttendees = () => {
     if (!currentUser?.id) return;
 
     try {
+      // First get the host's events
+      const { data: hostEvents, error: eventsError } = await supabase
+        .from('events')
+        .select('id')
+        .eq('host_id', currentUser.id);
+
+      if (eventsError) throw eventsError;
+
+      if (!hostEvents || hostEvents.length === 0) {
+        setAttendees([]);
+        setLoading(false);
+        return;
+      }
+
+      const eventIds = hostEvents.map(event => event.id);
+
       // Get attendees who have joined this host's events
-      const { data, error } = await supabase
+      const { data: participants, error: participantsError } = await supabase
         .from('event_participants')
         .select(`
           user_id,
           joined_at,
-          profiles:user_id (
+          profiles!inner (
             id,
             name,
             email,
@@ -73,21 +88,17 @@ const AdminAttendees = () => {
             tiktok_link,
             github_link,
             website_link
-          ),
-          events:event_id (
-            host_id,
-            name
           )
         `)
-        .eq('events.host_id', currentUser.id);
+        .in('event_id', eventIds);
 
-      if (error) throw error;
+      if (participantsError) throw participantsError;
 
       // Transform and deduplicate attendees (same user might join multiple events)
       const uniqueAttendees = new Map<string, User>();
       
-      (data || []).forEach(participant => {
-        if (participant.profiles && participant.events) {
+      (participants || []).forEach(participant => {
+        if (participant.profiles) {
           const profile = participant.profiles;
           const attendee: User = {
             id: profile.id,
@@ -206,17 +217,24 @@ const AdminAttendees = () => {
     if (!currentUser?.id) return;
 
     try {
+      // Get the host's event IDs
+      const { data: hostEvents, error: eventsError } = await supabase
+        .from('events')
+        .select('id')
+        .eq('host_id', currentUser.id);
+
+      if (eventsError) throw eventsError;
+
+      if (!hostEvents || hostEvents.length === 0) return;
+
+      const eventIds = hostEvents.map(event => event.id);
+
       // Remove attendee from all of this host's events
       const { error } = await supabase
         .from('event_participants')
         .delete()
         .eq('user_id', attendee.id)
-        .in('event_id', 
-          supabase
-            .from('events')
-            .select('id')
-            .eq('host_id', currentUser.id)
-        );
+        .in('event_id', eventIds);
 
       if (error) throw error;
 

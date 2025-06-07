@@ -29,7 +29,7 @@ export const useJoinEvent = () => {
       }
 
       console.log('Join event response:', data);
-      return data as JoinEventResponse;
+      return data as unknown as JoinEventResponse;
     },
     onSuccess: (data) => {
       if (data?.success) {

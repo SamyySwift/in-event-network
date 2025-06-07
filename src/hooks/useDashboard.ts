@@ -21,12 +21,12 @@ export const useDashboard = () => {
         throw new Error('Only attendees can access this dashboard');
       }
 
-      // Get the events the attendee has joined
+      // Get the events the attendee has joined - with proper column hinting
       const { data: participantData, error: participantError } = await supabase
         .from('event_participants')
         .select(`
           event_id,
-          events (
+          events!event_participants_event_id_fkey (
             id,
             name,
             description,
@@ -45,8 +45,8 @@ export const useDashboard = () => {
       }
 
       const events = participantData?.map(p => p.events).filter(Boolean) || [];
-      const eventIds = events.map(e => e.id);
-      const hostIds = events.map(e => e.host_id).filter(Boolean);
+      const eventIds = events.map(e => e?.id).filter(Boolean);
+      const hostIds = events.map(e => e?.host_id).filter(Boolean);
 
       if (eventIds.length === 0) {
         return {
@@ -61,15 +61,20 @@ export const useDashboard = () => {
       // Determine current and upcoming events
       const now = new Date();
       const currentEvent = events.find(event => {
+        if (!event?.start_time || !event?.end_time) return false;
         const startTime = new Date(event.start_time);
         const endTime = new Date(event.end_time);
         return startTime <= now && endTime >= now;
       }) || null;
 
       const upcomingEvents = events.filter(event => {
+        if (!event?.start_time) return false;
         const startTime = new Date(event.start_time);
         return startTime > now;
-      }).sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+      }).sort((a, b) => {
+        if (!a?.start_time || !b?.start_time) return 0;
+        return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+      });
 
       // Get next speaker session from attendee's events only
       const { data: speakers } = await supabase

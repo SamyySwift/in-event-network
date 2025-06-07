@@ -18,17 +18,11 @@ const AttendeeDashboard = () => {
   const { dashboardData, isLoading, error } = useDashboard();
   const queryClient = useQueryClient();
 
-  // Reset dashboard data when user changes or new access key entered
+  // Reset dashboard data when user changes or when component mounts
   useEffect(() => {
     if (currentUser?.id) {
-      // Invalidate all attendee-related queries to force fresh data
-      queryClient.invalidateQueries({ queryKey: ['attendeeDashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['announcements'] });
-      queryClient.invalidateQueries({ queryKey: ['rules'] });
-      queryClient.invalidateQueries({ queryKey: ['facilities'] });
-      queryClient.invalidateQueries({ queryKey: ['polls'] });
-      queryClient.invalidateQueries({ queryKey: ['pollVotes'] });
-      queryClient.invalidateQueries({ queryKey: ['activePoll'] });
+      // Clear all cached data to ensure fresh load based on access key
+      queryClient.clear();
     }
   }, [currentUser?.id, queryClient]);
 

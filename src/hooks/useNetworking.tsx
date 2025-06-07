@@ -47,10 +47,51 @@ export const useNetworking = () => {
 
   const fetchProfiles = async () => {
     try {
+      if (!currentUser || currentUser.role !== 'attendee') {
+        setProfiles([]);
+        return;
+      }
+
+      // First, get the events the current user has joined
+      const { data: userEvents, error: userEventsError } = await supabase
+        .from('event_participants')
+        .select('event_id')
+        .eq('user_id', currentUser.id);
+
+      if (userEventsError) {
+        throw userEventsError;
+      }
+
+      const eventIds = userEvents?.map(ep => ep.event_id) || [];
+
+      if (eventIds.length === 0) {
+        setProfiles([]);
+        return;
+      }
+
+      // Get other participants from the same events
+      const { data: sameEventParticipants, error: participantsError } = await supabase
+        .from('event_participants')
+        .select('user_id')
+        .in('event_id', eventIds)
+        .neq('user_id', currentUser.id);
+
+      if (participantsError) {
+        throw participantsError;
+      }
+
+      const participantUserIds = sameEventParticipants?.map(p => p.user_id) || [];
+
+      if (participantUserIds.length === 0) {
+        setProfiles([]);
+        return;
+      }
+
+      // Get profiles for these users only
       const { data, error } = await supabase
         .from('public_profiles')
         .select('*')
-        .neq('id', currentUser?.id); // Exclude current user
+        .in('id', participantUserIds);
 
       if (error) throw error;
 
@@ -95,7 +136,6 @@ export const useNetworking = () => {
 
       if (error) throw error;
 
-      // Type assertion to ensure proper typing
       const typedConnections: ConnectionRequest[] = (data || []).map(conn => ({
         id: conn.id,
         requester_id: conn.requester_id || '',

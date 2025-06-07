@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { QrScanner } from '@yudiel/react-qr-scanner';
+import { Scanner } from '@yudiel/react-qr-scanner';
 import { AlertCircle, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -86,8 +86,8 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
         style={{ width, height }} 
         className="relative rounded-lg overflow-hidden border"
       >
-        <QrScanner
-          onDecode={handleScan}
+        <Scanner
+          onScan={handleScan}
           onError={handleError}
           constraints={{
             facingMode: 'environment'

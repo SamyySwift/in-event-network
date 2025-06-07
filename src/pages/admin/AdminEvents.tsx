@@ -8,7 +8,7 @@ import { Plus, Pencil, Trash2, Loader, Calendar, MapPin } from 'lucide-react';
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { Badge } from '@/components/ui/badge';
-import { useEvents } from '@/hooks/useEvents';
+import { useAdminEvents } from '@/hooks/useAdminEvents';
 import { useAuth } from '@/contexts/AuthContext';
 import { ImageUpload } from '@/components/ui/image-upload';
 
@@ -25,7 +25,7 @@ const AdminEvents = () => {
   const [editingEvent, setEditingEvent] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const { currentUser } = useAuth();
-  const { events, isLoading, createEvent, updateEvent, deleteEvent, isCreating, isUpdating, isDeleting } = useEvents();
+  const { events, isLoading, createEvent, updateEvent, deleteEvent, isCreating, isUpdating, isDeleting } = useAdminEvents();
 
   const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm<EventFormData>({
     defaultValues: {
@@ -208,7 +208,7 @@ const AdminEvents = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Scheduled Events</CardTitle>
+            <CardTitle>Your Events</CardTitle>
             <CardDescription>
               {events.length} events in your schedule
             </CardDescription>

@@ -710,6 +710,92 @@ export type Database = {
           },
         ]
       }
+      question_feedback: {
+        Row: {
+          created_at: string | null
+          feedback_text: string | null
+          id: string
+          question_id: string | null
+          satisfaction_level: number | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          feedback_text?: string | null
+          id?: string
+          question_id?: string | null
+          satisfaction_level?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          feedback_text?: string | null
+          id?: string
+          question_id?: string | null
+          satisfaction_level?: number | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_feedback_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      questions: {
+        Row: {
+          answered_at: string | null
+          answered_by: string | null
+          content: string
+          created_at: string | null
+          event_id: string | null
+          id: string
+          is_anonymous: boolean | null
+          is_answered: boolean | null
+          response: string | null
+          response_created_at: string | null
+          session_id: string | null
+          updated_at: string | null
+          upvotes: number | null
+          user_id: string | null
+        }
+        Insert: {
+          answered_at?: string | null
+          answered_by?: string | null
+          content: string
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          is_answered?: boolean | null
+          response?: string | null
+          response_created_at?: string | null
+          session_id?: string | null
+          updated_at?: string | null
+          upvotes?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          answered_at?: string | null
+          answered_by?: string | null
+          content?: string
+          created_at?: string | null
+          event_id?: string | null
+          id?: string
+          is_anonymous?: boolean | null
+          is_answered?: boolean | null
+          response?: string | null
+          response_created_at?: string | null
+          session_id?: string | null
+          updated_at?: string | null
+          upvotes?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       rules: {
         Row: {
           category: string | null

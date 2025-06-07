@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Users, MapPin, MessageSquare, Clock, Star, BookOpen, Wifi, WifiOff } from 'lucide-react';
@@ -17,9 +18,9 @@ const AttendeeDashboard = () => {
   const { dashboardData, isLoading, error } = useDashboard();
   const queryClient = useQueryClient();
 
-  // Reset dashboard data when current_event_id changes (new access key entered)
+  // Reset dashboard data when user changes or new access key entered
   useEffect(() => {
-    if (currentUser?.current_event_id) {
+    if (currentUser?.id) {
       // Invalidate all attendee-related queries to force fresh data
       queryClient.invalidateQueries({ queryKey: ['attendeeDashboard'] });
       queryClient.invalidateQueries({ queryKey: ['announcements'] });
@@ -29,7 +30,7 @@ const AttendeeDashboard = () => {
       queryClient.invalidateQueries({ queryKey: ['pollVotes'] });
       queryClient.invalidateQueries({ queryKey: ['activePoll'] });
     }
-  }, [currentUser?.current_event_id, queryClient]);
+  }, [currentUser?.id, queryClient]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {

@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -78,7 +77,7 @@ export const usePolls = () => {
       // Transform the data to match our Poll interface
       return (data || []).map(poll => ({
         ...poll,
-        options: Array.isArray(poll.options) ? poll.options as PollOption[] : []
+        options: Array.isArray(poll.options) ? (poll.options as unknown as PollOption[]) : []
       })) as Poll[];
     },
     enabled: !!currentUser,
@@ -113,16 +112,16 @@ export const usePolls = () => {
         .in('event_id', eventIds)
         .eq('is_active', true)
         .eq('display_as_banner', true)
-        .single();
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error) {
         console.error('Error fetching active poll:', error);
         return null;
       }
 
       return poll ? {
         ...poll,
-        options: Array.isArray(poll.options) ? poll.options as PollOption[] : []
+        options: Array.isArray(poll.options) ? (poll.options as unknown as PollOption[]) : []
       } as Poll : null;
     },
     enabled: !!currentUser,

@@ -52,7 +52,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
           setHasEventAccess(false);
         }
       } else {
-        // Hosts or non-attendee-specific routes don't need event access
+        // Hosts don't need event access check - they can access admin routes directly
         setHasEventAccess(true);
       }
     };
@@ -85,7 +85,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     console.log(`Access denied: User role ${currentUser.role} != required ${requiredRole}`);
     
     // Redirect based on user's actual role
-    const redirectPath = currentUser.role === 'host' ? '/admin' : '/attendee';
+    const redirectPath = currentUser.role === 'host' ? '/admin' : '/join';
     return <Navigate to={redirectPath} replace />;
   }
 

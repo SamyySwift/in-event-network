@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { supabase } from "@/integrations/supabase/client";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -35,41 +33,14 @@ const Login = () => {
       console.log("User authenticated, checking redirect...", currentUser);
       
       if (currentUser.role === "host") {
+        // Hosts go directly to admin dashboard
         navigate("/admin", { replace: true });
       } else if (currentUser.role === "attendee") {
-        // Check if attendee has joined an event
-        checkEventAccessAndRedirect();
+        // Attendees need to join an event first
+        navigate("/join", { replace: true });
       }
     }
   }, [currentUser, isLoading, navigate]);
-
-  const checkEventAccessAndRedirect = async () => {
-    if (!currentUser) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('event_participants')
-        .select('id')
-        .eq('user_id', currentUser.id)
-        .limit(1);
-
-      if (error) {
-        console.error('Error checking event participation:', error);
-        navigate("/join", { replace: true });
-        return;
-      }
-
-      const hasAccess = data && data.length > 0;
-      if (hasAccess) {
-        navigate("/attendee", { replace: true });
-      } else {
-        navigate("/join", { replace: true });
-      }
-    } catch (error) {
-      console.error('Error in event access check:', error);
-      navigate("/join", { replace: true });
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

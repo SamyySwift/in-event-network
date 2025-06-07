@@ -1,7 +1,7 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Event {
   id: string;
@@ -14,7 +14,6 @@ interface Event {
   logo_url?: string;
   website?: string;
   host_id?: string;
-  event_key?: string;
   created_at: string;
   updated_at: string;
 }
@@ -22,14 +21,27 @@ interface Event {
 export const useEvents = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentUser } = useAuth();
 
   const { data: events = [], isLoading, error } = useQuery({
-    queryKey: ['events'],
+    queryKey: ['events', currentUser?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Only fetch events for authenticated users
+      if (!currentUser) {
+        return [];
+      }
+
+      let query = supabase
         .from('events')
         .select('*')
         .order('start_time', { ascending: true });
+
+      // If user is a host, only show their events
+      if (currentUser.role === 'host') {
+        query = query.eq('host_id', currentUser.id);
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error fetching events:', error);
@@ -37,6 +49,7 @@ export const useEvents = () => {
       }
       return data as Event[];
     },
+    enabled: !!currentUser, // Only run query when user is authenticated
   });
 
   const uploadImage = async (file: File): Promise<string> => {
@@ -76,6 +89,10 @@ export const useEvents = () => {
       try {
         console.log('Creating event with data:', eventData);
         
+        if (!currentUser || currentUser.role !== 'host') {
+          throw new Error('Only hosts can create events');
+        }
+        
         let bannerUrl = eventData.banner_url;
         if (eventData.image) {
           bannerUrl = await uploadImage(eventData.image);
@@ -91,13 +108,12 @@ export const useEvents = () => {
         const finalData = {
           ...dataWithoutImage,
           banner_url: bannerUrl,
+          host_id: currentUser.id, // Always set to current user
           // Convert empty strings to null for optional fields
           description: dataWithoutImage.description || null,
           location: dataWithoutImage.location || null,
           logo_url: dataWithoutImage.logo_url || null,
           website: dataWithoutImage.website || null,
-          host_id: dataWithoutImage.host_id || null,
-          event_key: dataWithoutImage.event_key || null,
         };
 
         console.log('Final event data:', finalData);
@@ -142,6 +158,10 @@ export const useEvents = () => {
       try {
         console.log('Updating event:', id, eventData);
         
+        if (!currentUser || currentUser.role !== 'host') {
+          throw new Error('Only hosts can update events');
+        }
+        
         let bannerUrl = eventData.banner_url;
         if (image) {
           bannerUrl = await uploadImage(image);
@@ -156,7 +176,6 @@ export const useEvents = () => {
           logo_url: eventData.logo_url || null,
           website: eventData.website || null,
           host_id: eventData.host_id || null,
-          event_key: eventData.event_key || null,
         };
 
         console.log('Final update data:', finalData);
@@ -165,6 +184,7 @@ export const useEvents = () => {
           .from('events')
           .update(finalData)
           .eq('id', id)
+          .eq('host_id', currentUser.id) // Ensure only host can update their events
           .select()
           .single();
 
@@ -200,10 +220,16 @@ export const useEvents = () => {
   const deleteEventMutation = useMutation({
     mutationFn: async (id: string) => {
       console.log('Deleting event:', id);
+      
+      if (!currentUser || currentUser.role !== 'host') {
+        throw new Error('Only hosts can delete events');
+      }
+
       const { error } = await supabase
         .from('events')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('host_id', currentUser.id); // Ensure only host can delete their events
 
       if (error) {
         console.error('Delete error:', error);

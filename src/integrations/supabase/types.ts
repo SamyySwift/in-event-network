@@ -273,6 +273,27 @@ export type Database = {
             referencedRelation: "events"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_event_participants_event_id"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_event_participants_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_event_participants_user_id"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       events: {
@@ -281,7 +302,6 @@ export type Database = {
           created_at: string
           description: string | null
           end_time: string
-          event_key: string | null
           host_id: string | null
           id: string
           location: string | null
@@ -296,7 +316,6 @@ export type Database = {
           created_at?: string
           description?: string | null
           end_time: string
-          event_key?: string | null
           host_id?: string | null
           id?: string
           location?: string | null
@@ -311,7 +330,6 @@ export type Database = {
           created_at?: string
           description?: string | null
           end_time?: string
-          event_key?: string | null
           host_id?: string | null
           id?: string
           location?: string | null
@@ -575,6 +593,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          access_key: string | null
           bio: string | null
           company: string | null
           created_at: string
@@ -597,6 +616,7 @@ export type Database = {
           website_link: string | null
         }
         Insert: {
+          access_key?: string | null
           bio?: string | null
           company?: string | null
           created_at?: string
@@ -619,6 +639,7 @@ export type Database = {
           website_link?: string | null
         }
         Update: {
+          access_key?: string | null
           bio?: string | null
           company?: string | null
           created_at?: string
@@ -766,6 +787,7 @@ export type Database = {
           bio: string
           company: string | null
           created_at: string
+          created_by: string | null
           id: string
           linkedin_link: string | null
           name: string
@@ -781,6 +803,7 @@ export type Database = {
           bio: string
           company?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
           linkedin_link?: string | null
           name: string
@@ -796,6 +819,7 @@ export type Database = {
           bio?: string
           company?: string | null
           created_at?: string
+          created_by?: string | null
           id?: string
           linkedin_link?: string | null
           name?: string
@@ -807,7 +831,22 @@ export type Database = {
           updated_at?: string
           website_link?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "speakers_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "speakers_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       suggestions: {
         Row: {
@@ -915,6 +954,10 @@ export type Database = {
     }
     Functions: {
       generate_unique_event_key: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      generate_unique_host_access_key: {
         Args: Record<PropertyKey, never>
         Returns: string
       }

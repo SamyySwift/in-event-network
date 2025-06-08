@@ -66,6 +66,10 @@ export const useAdminSpeakers = (eventId?: string) => {
         throw new Error('User not authenticated');
       }
 
+      if (!speakerData.event_id) {
+        throw new Error('Event must be selected to create a speaker');
+      }
+
       console.log('Creating speaker:', speakerData);
 
       // Verify the event belongs to the current admin
@@ -112,11 +116,78 @@ export const useAdminSpeakers = (eventId?: string) => {
     },
   });
 
+  const updateSpeakerMutation = useMutation({
+    mutationFn: async ({ id, ...speakerData }: Partial<Speaker> & { id: string }) => {
+      console.log('Updating speaker:', id, speakerData);
+      
+      const { data, error } = await supabase
+        .from('speakers')
+        .update(speakerData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error updating speaker:', error);
+        throw error;
+      }
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-speakers'] });
+      toast({
+        title: 'Speaker Updated',
+        description: 'The speaker has been updated successfully.',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: `Failed to update speaker: ${error.message}`,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const deleteSpeakerMutation = useMutation({
+    mutationFn: async (id: string) => {
+      console.log('Deleting speaker:', id);
+      const { error } = await supabase
+        .from('speakers')
+        .delete()
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting speaker:', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-speakers'] });
+      toast({
+        title: 'Speaker Deleted',
+        description: 'The speaker has been removed successfully.',
+        variant: 'destructive',
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: `Failed to delete speaker: ${error.message}`,
+        variant: 'destructive',
+      });
+    },
+  });
+
   return {
     speakers,
     isLoading,
     error,
     createSpeaker: createSpeakerMutation.mutate,
+    updateSpeaker: updateSpeakerMutation.mutate,
+    deleteSpeaker: deleteSpeakerMutation.mutate,
     isCreating: createSpeakerMutation.isPending,
+    isUpdating: updateSpeakerMutation.isPending,
+    isDeleting: deleteSpeakerMutation.isPending,
   };
 };

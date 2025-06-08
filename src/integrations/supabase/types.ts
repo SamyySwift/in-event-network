@@ -994,6 +994,10 @@ export type Database = {
       }
     }
     Functions: {
+      can_access_event_data: {
+        Args: { event_uuid: string }
+        Returns: boolean
+      }
       generate_unique_event_key: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1010,7 +1014,15 @@ export type Database = {
         Args: { poll_uuid: string }
         Returns: Json
       }
+      get_user_role: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       is_event_host: {
+        Args: { event_uuid: string }
+        Returns: boolean
+      }
+      is_event_owner: {
         Args: { event_uuid: string }
         Returns: boolean
       }

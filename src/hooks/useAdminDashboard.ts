@@ -26,16 +26,29 @@ export const useAdminDashboard = () => {
 
       const now = new Date().toISOString();
 
-      // Get admin's events
-      const { data: events, error: eventsError } = await supabase
+      // Get admin's events with efficient count queries
+      const { count: eventsCount, error: eventsError } = await supabase
+        .from('events')
+        .select('*', { count: 'exact', head: true })
+        .eq('host_id', currentUser.id);
+
+      if (eventsError) {
+        console.error('Error fetching events count:', eventsError);
+        throw eventsError;
+      }
+
+      // Get events for other calculations
+      const { data: events, error: eventsDataError } = await supabase
         .from('events')
         .select('id, start_time, end_time')
         .eq('host_id', currentUser.id);
 
-      if (eventsError) {
-        console.error('Error fetching events:', eventsError);
-        throw eventsError;
+      if (eventsDataError) {
+        console.error('Error fetching events data:', eventsDataError);
+        throw eventsDataError;
       }
+
+      const eventIds = events?.map(e => e.id) || [];
 
       // Calculate live and upcoming events
       const liveEvents = events?.filter(event => {
@@ -51,41 +64,39 @@ export const useAdminDashboard = () => {
         return current < start;
       }) || [];
 
-      // Get attendees count for admin's events
-      const { data: attendees, error: attendeesError } = await supabase
-        .from('event_participants')
-        .select('id', { count: 'exact' })
-        .in('event_id', events?.map(e => e.id) || []);
-      
-      if (attendeesError) {
-        console.error('Error fetching attendees:', attendeesError);
+      // Get efficient count queries for related data
+      const [attendeesResult, speakersResult, questionsResult] = await Promise.all([
+        eventIds.length > 0 ? supabase
+          .from('event_participants')
+          .select('*', { count: 'exact', head: true })
+          .in('event_id', eventIds) : { count: 0, error: null },
+        
+        eventIds.length > 0 ? supabase
+          .from('speakers')
+          .select('*', { count: 'exact', head: true })
+          .in('event_id', eventIds) : { count: 0, error: null },
+        
+        eventIds.length > 0 ? supabase
+          .from('questions')
+          .select('*', { count: 'exact', head: true })
+          .in('event_id', eventIds) : { count: 0, error: null }
+      ]);
+
+      if (attendeesResult.error) {
+        console.error('Error fetching attendees:', attendeesResult.error);
       }
-
-      // Get speakers count for admin's events
-      const { data: speakers, error: speakersError } = await supabase
-        .from('speakers')
-        .select('id', { count: 'exact' })
-        .in('event_id', events?.map(e => e.id) || []);
-
-      if (speakersError) {
-        console.error('Error fetching speakers:', speakersError);
+      if (speakersResult.error) {
+        console.error('Error fetching speakers:', speakersResult.error);
       }
-
-      // Get questions count for admin's events
-      const { data: questions, error: questionsError } = await supabase
-        .from('questions')
-        .select('id', { count: 'exact' })
-        .in('event_id', events?.map(e => e.id) || []);
-
-      if (questionsError) {
-        console.error('Error fetching questions:', questionsError);
+      if (questionsResult.error) {
+        console.error('Error fetching questions:', questionsResult.error);
       }
 
       return {
-        eventsCount: events?.length || 0,
-        attendeesCount: (attendees as any)?.length || 0,
-        speakersCount: (speakers as any)?.length || 0,
-        questionsCount: (questions as any)?.length || 0,
+        eventsCount: eventsCount || 0,
+        attendeesCount: attendeesResult.count || 0,
+        speakersCount: speakersResult.count || 0,
+        questionsCount: questionsResult.count || 0,
         liveEventsCount: liveEvents.length,
         upcomingEventsCount: upcomingEvents.length,
       };

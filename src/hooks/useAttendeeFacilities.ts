@@ -73,7 +73,11 @@ export const useAttendeeFacilities = () => {
         throw error;
       }
 
-      return facilities || [];
+      // Type cast and validate the contact_type field
+      return (facilities || []).map(facility => ({
+        ...facility,
+        contact_type: (facility.contact_type as 'none' | 'phone' | 'whatsapp') || 'none'
+      }));
     },
     enabled: !!currentUser?.id,
   });

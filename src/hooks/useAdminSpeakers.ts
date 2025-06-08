@@ -61,12 +61,24 @@ export const useAdminSpeakers = (eventId?: string) => {
   });
 
   const createSpeakerMutation = useMutation({
-    mutationFn: async (speakerData: Omit<Speaker, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (speakerData: Omit<Speaker, 'id' | 'created_at' | 'updated_at'> & { event_id: string }) => {
       if (!currentUser?.id) {
         throw new Error('User not authenticated');
       }
 
       console.log('Creating speaker:', speakerData);
+
+      // Verify the event belongs to the current admin
+      const { data: event, error: eventError } = await supabase
+        .from('events')
+        .select('host_id')
+        .eq('id', speakerData.event_id)
+        .eq('host_id', currentUser.id)
+        .single();
+
+      if (eventError || !event) {
+        throw new Error('Event not found or access denied');
+      }
 
       const { data, error } = await supabase
         .from('speakers')

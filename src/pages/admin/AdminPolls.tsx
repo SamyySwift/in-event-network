@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -24,7 +23,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { usePolls, Poll } from '@/hooks/usePolls';
+import { useAdminPolls, Poll } from '@/hooks/useAdminPolls';
 import { useToast } from '@/hooks/use-toast';
 import {
   Tooltip,
@@ -49,7 +48,7 @@ const AdminPolls = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const isMobile = useIsMobile();
   const { toast } = useToast();
-  const { polls, isLoading, updatePoll, deletePoll, isDeleting } = usePolls();
+  const { polls, isLoading, updatePoll, deletePoll, isDeleting } = useAdminPolls();
   
   // Filter polls based on tab and search query
   const filteredPolls = polls.filter(poll => {

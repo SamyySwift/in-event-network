@@ -19,12 +19,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle, XCircle, ArrowUpCircle, MessageSquare, Reply } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAdminQuestions } from '@/hooks/useAdminQuestions';
+import { useAdminEventContext, AdminEventProvider } from '@/hooks/useAdminEventContext';
 
-const AdminQuestions = () => {
+const AdminQuestionsContent = () => {
   const [activeTab, setActiveTab] = useState<string>('all');
-  const [selectedEventId, setSelectedEventId] = useState<string>('');
   const [respondingTo, setRespondingTo] = useState<string | null>(null);
   const [responseText, setResponseText] = useState('');
+
+  const { selectedEventId } = useAdminEventContext();
 
   const { 
     questions, 
@@ -36,7 +38,7 @@ const AdminQuestions = () => {
     isMarkingAnswered,
     isDeleting,
     isResponding
-  } = useAdminQuestions(selectedEventId);
+  } = useAdminQuestions(selectedEventId || '');
 
   // Filter questions based on active tab
   const getFilteredQuestions = () => {
@@ -93,11 +95,7 @@ const AdminQuestions = () => {
               Review and moderate questions from attendees
             </p>
           </div>
-          <EventSelector 
-            selectedEventId={selectedEventId}
-            onEventSelect={setSelectedEventId}
-            placeholder="Select an event to view questions"
-          />
+          <EventSelector />
         </div>
       </AdminLayout>
     );
@@ -119,10 +117,7 @@ const AdminQuestions = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <EventSelector 
-          selectedEventId={selectedEventId}
-          onEventSelect={setSelectedEventId}
-        />
+        <EventSelector />
         
         <AdminPageHeader
           title="Attendee Questions"
@@ -274,6 +269,14 @@ const AdminQuestions = () => {
         </AdminPageHeader>
       </div>
     </AdminLayout>
+  );
+};
+
+const AdminQuestions = () => {
+  return (
+    <AdminEventProvider>
+      <AdminQuestionsContent />
+    </AdminEventProvider>
   );
 };
 

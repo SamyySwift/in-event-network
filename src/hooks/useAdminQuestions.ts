@@ -17,6 +17,7 @@ export interface QuestionWithProfile {
   answered_at: string | null;
   answered_by: string | null;
   response: string | null;
+  response_created_at: string | null;
   profiles: {
     name: string;
     photo_url: string | null;

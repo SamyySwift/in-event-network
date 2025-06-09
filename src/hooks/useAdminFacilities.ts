@@ -14,7 +14,7 @@ export interface Facility {
   contact_info?: string;
   image_url?: string;
   icon_type?: string;
-  event_id?: string;
+  event_id: string; // Now required
   created_by?: string;
   created_at: string;
   updated_at?: string;
@@ -34,20 +34,17 @@ export const useAdminFacilities = (eventId?: string) => {
 
       console.log('Fetching facilities for admin:', currentUser.id, 'event:', eventId);
 
-      // Get facilities for admin's events only
       let query = supabase
         .from('facilities')
-        .select(`
-          *,
-          events!inner(host_id)
-        `)
-        .eq('events.host_id', currentUser.id);
+        .select('*')
+        .order('created_at', { ascending: false });
 
+      // Filter by specific event if provided
       if (eventId) {
         query = query.eq('event_id', eventId);
       }
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const { data, error } = await query;
 
       if (error) {
         console.error('Error fetching admin facilities:', error);
@@ -57,13 +54,17 @@ export const useAdminFacilities = (eventId?: string) => {
       console.log('Admin facilities fetched:', data?.length || 0);
       return data as Facility[];
     },
-    enabled: !!currentUser?.id,
+    enabled: !!currentUser?.id && !!eventId, // Only run if we have both user and event
   });
 
   const createFacilityMutation = useMutation({
-    mutationFn: async (facilityData: Omit<Facility, 'id' | 'created_at' | 'updated_at'> & { event_id: string }) => {
+    mutationFn: async (facilityData: Omit<Facility, 'id' | 'created_at' | 'updated_at'>) => {
       if (!currentUser?.id) {
         throw new Error('User not authenticated');
+      }
+
+      if (!facilityData.event_id) {
+        throw new Error('Event ID is required');
       }
 
       console.log('Creating facility:', facilityData);
@@ -132,6 +133,25 @@ export const useAdminFacilities = (eventId?: string) => {
     mutationFn: async ({ id, ...facilityData }: Partial<Facility> & { id: string }) => {
       console.log('Updating facility:', id, facilityData);
       
+      if (!currentUser?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      // Verify the facility belongs to an event owned by the current admin
+      const { data: facility, error: facilityError } = await supabase
+        .from('facilities')
+        .select(`
+          id,
+          events!inner(host_id)
+        `)
+        .eq('id', id)
+        .eq('events.host_id', currentUser.id)
+        .single();
+
+      if (facilityError || !facility) {
+        throw new Error('Facility not found or access denied');
+      }
+      
       // Clean the data - remove empty strings and undefined values
       const cleanData: any = {};
       if (facilityData.name?.trim()) cleanData.name = facilityData.name.trim();
@@ -145,6 +165,7 @@ export const useAdminFacilities = (eventId?: string) => {
         cleanData.contact_info = null;
       }
       if (facilityData.icon_type) cleanData.icon_type = facilityData.icon_type;
+      if (facilityData.event_id) cleanData.event_id = facilityData.event_id;
 
       const { data, error } = await supabase
         .from('facilities')
@@ -179,6 +200,12 @@ export const useAdminFacilities = (eventId?: string) => {
   const deleteFacilityMutation = useMutation({
     mutationFn: async (id: string) => {
       console.log('Deleting facility:', id);
+      
+      if (!currentUser?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      // The RLS policies will ensure only facilities from admin's events can be deleted
       const { error } = await supabase
         .from('facilities')
         .delete()

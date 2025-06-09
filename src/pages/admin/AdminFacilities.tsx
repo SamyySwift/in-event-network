@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,7 +33,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useFacilities, Facility } from "@/hooks/useFacilities";
+import { useAdminFacilities, Facility } from "@/hooks/useAdminFacilities";
+import { useAdminEvents } from "@/hooks/useAdminEvents";
 import { format } from 'date-fns';
 import {
   AlertDialog,
@@ -59,10 +59,14 @@ const formSchema = z.object({
   contactType: z.enum(["none", "phone", "whatsapp"]).default("none"),
   contactInfo: z.string().optional(),
   iconType: z.string().optional(),
+  eventId: z.string().min(1, {
+    message: "Please select an event for this facility.",
+  }),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
+// ... keep existing code (facilityIcons array)
 const facilityIcons = [
   { value: 'building', label: 'Building', icon: Building },
   { value: 'wifi', label: 'WiFi', icon: Wifi },
@@ -82,7 +86,10 @@ const facilityIcons = [
 
 const AdminFacilities = () => {
   const [editingFacility, setEditingFacility] = useState<Facility | null>(null);
-  const { facilities, isLoading, error, createFacility, updateFacility, deleteFacility, isCreating, isUpdating, isDeleting } = useFacilities();
+  const [selectedEventId, setSelectedEventId] = useState<string>('');
+  
+  const { events, isLoading: eventsLoading } = useAdminEvents();
+  const { facilities, isLoading, error, createFacility, updateFacility, deleteFacility, isCreating, isUpdating, isDeleting } = useAdminFacilities(selectedEventId || undefined);
 
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -94,11 +101,22 @@ const AdminFacilities = () => {
       contactType: "none",
       contactInfo: "",
       iconType: "building",
+      eventId: "",
     },
   });
 
+  // Set default event when events load
+  React.useEffect(() => {
+    if (events.length > 0 && !selectedEventId) {
+      const defaultEvent = events[0];
+      setSelectedEventId(defaultEvent.id);
+      setValue("eventId", defaultEvent.id);
+    }
+  }, [events, selectedEventId, setValue]);
+
   const contactType = watch("contactType");
   const selectedIcon = watch("iconType");
+  const selectedFormEventId = watch("eventId");
 
   const onSubmit = (values: FormData) => {
     console.log('Form submitted with values:', values);
@@ -111,6 +129,7 @@ const AdminFacilities = () => {
       contact_type: values.contactType,
       contact_info: values.contactInfo,
       icon_type: values.iconType,
+      event_id: values.eventId,
     };
 
     if (editingFacility) {
@@ -131,11 +150,17 @@ const AdminFacilities = () => {
     setValue("contactType", facility.contact_type || "none");
     setValue("contactInfo", facility.contact_info || "");
     setValue("iconType", facility.icon_type || "building");
+    setValue("eventId", facility.event_id || "");
   };
 
   const handleCancelEdit = () => {
     setEditingFacility(null);
     reset();
+  };
+
+  const handleEventChange = (eventId: string) => {
+    setSelectedEventId(eventId);
+    setValue("eventId", eventId);
   };
 
   const getContactIcon = (contactType?: string) => {
@@ -158,7 +183,7 @@ const AdminFacilities = () => {
     return <Building className="h-5 w-5 text-primary" />;
   };
 
-  if (isLoading) {
+  if (eventsLoading || isLoading) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-64">
@@ -194,6 +219,28 @@ const AdminFacilities = () => {
     );
   }
 
+  if (events.length === 0) {
+    return (
+      <AdminLayout>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Facilities</h1>
+            <p className="text-muted-foreground">
+              Manage facilities and their details.
+            </p>
+          </div>
+          
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              You need to create an event first before adding facilities.
+            </AlertDescription>
+          </Alert>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -203,6 +250,30 @@ const AdminFacilities = () => {
             Manage facilities and their details.
           </p>
         </div>
+
+        {/* Event Selector */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Select Event</CardTitle>
+            <CardDescription>
+              Choose which event to manage facilities for
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Select value={selectedEventId} onValueChange={handleEventChange}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select an event" />
+              </SelectTrigger>
+              <SelectContent>
+                {events.map((event) => (
+                  <SelectItem key={event.id} value={event.id}>
+                    {event.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <Card className="h-fit">
@@ -214,6 +285,25 @@ const AdminFacilities = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="eventId">Event *</Label>
+                  <Select value={selectedFormEventId} onValueChange={(value) => setValue("eventId", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select event" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {events.map((event) => (
+                        <SelectItem key={event.id} value={event.id}>
+                          {event.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.eventId?.message && (
+                    <p className="text-sm text-destructive">{errors.eventId.message}</p>
+                  )}
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="name">Facility Name *</Label>
                   <Input
@@ -318,7 +408,7 @@ const AdminFacilities = () => {
                   <Button 
                     type="submit" 
                     className="flex-1"
-                    disabled={isCreating || isUpdating}
+                    disabled={isCreating || isUpdating || !selectedFormEventId}
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     {editingFacility ? (isUpdating ? 'Updating...' : 'Update Facility') : (isCreating ? 'Creating...' : 'Add Facility')}
@@ -333,6 +423,11 @@ const AdminFacilities = () => {
               <CardTitle>Facilities List ({facilities.length})</CardTitle>
               <CardDescription>
                 View and manage existing facilities
+                {selectedEventId && events.find(e => e.id === selectedEventId) && (
+                  <span className="block mt-1 text-primary">
+                    for {events.find(e => e.id === selectedEventId)?.name}
+                  </span>
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent>

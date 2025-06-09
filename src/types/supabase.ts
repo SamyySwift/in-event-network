@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -10,6 +9,53 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      facilities: {
+        Row: {
+          id: string;
+          name: string;
+          description?: string;
+          location?: string;
+          rules?: string;
+          contact_type?: 'none' | 'phone' | 'whatsapp';
+          contact_info?: string;
+          image_url?: string;
+          icon_type?: string;
+          event_id: string; // Now required, not nullable
+          created_by?: string;
+          created_at: string;
+          updated_at?: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string;
+          location?: string;
+          rules?: string;
+          contact_type?: 'none' | 'phone' | 'whatsapp';
+          contact_info?: string;
+          image_url?: string;
+          icon_type?: string;
+          event_id: string; // Required for inserts
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          description?: string;
+          location?: string;
+          rules?: string;
+          contact_type?: 'none' | 'phone' | 'whatsapp';
+          contact_info?: string;
+          image_url?: string;
+          icon_type?: string;
+          event_id?: string;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       profiles: {
         Row: {
           id: string;

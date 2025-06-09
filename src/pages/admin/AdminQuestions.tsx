@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -16,7 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle, XCircle, ArrowUpCircle, MessageSquare, Reply } from 'lucide-react';
+import { CheckCircle, XCircle, ArrowUpCircle, MessageSquare, Reply, Calendar, User2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAdminQuestions } from '@/hooks/useAdminQuestions';
 import { useAdminEventContext, AdminEventProvider } from '@/hooks/useAdminEventContext';
@@ -164,10 +163,45 @@ const AdminQuestionsContent = () => {
                               </CardDescription>
                             </div>
                           </div>
-                          <Badge variant={question.is_answered ? 'outline' : 'default'}>
-                            {question.is_answered ? 'Answered' : 'Pending'}
-                          </Badge>
+                          <div className="flex flex-col items-end gap-2">
+                            <Badge variant={question.is_answered ? 'outline' : 'default'}>
+                              {question.is_answered ? 'Answered' : 'Pending'}
+                            </Badge>
+                            {question.session_info ? (
+                              <Badge variant="secondary" className="flex items-center gap-1">
+                                <User2 size={12} />
+                                {question.session_info.session_title || `${question.session_info.speaker_name}'s Session`}
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="flex items-center gap-1">
+                                <MessageSquare size={12} />
+                                General Question
+                              </Badge>
+                            )}
+                          </div>
                         </div>
+
+                        {/* Session Information Display */}
+                        {question.session_info && (
+                          <div className="mt-2 p-2 bg-blue-50 border-l-4 border-blue-200 rounded">
+                            <div className="flex items-center gap-2 text-sm">
+                              <Calendar size={14} className="text-blue-600" />
+                              <div>
+                                <span className="font-medium text-blue-800">
+                                  {question.session_info.session_title || `${question.session_info.speaker_name}'s Session`}
+                                </span>
+                                <span className="text-blue-600 ml-2">
+                                  by {question.session_info.speaker_name}
+                                </span>
+                                {question.session_info.session_time && (
+                                  <span className="text-blue-600 ml-2">
+                                    • {format(new Date(question.session_info.session_time), 'MMM d, h:mm a')}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </CardHeader>
                       <CardContent>
                         <p className="text-base mb-3">{question.content}</p>

@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -21,6 +20,11 @@ export interface QuestionWithProfile {
   profiles: {
     name: string;
     photo_url: string | null;
+  } | null;
+  session_info: {
+    session_title: string | null;
+    speaker_name: string;
+    session_time: string | null;
   } | null;
 }
 
@@ -67,14 +71,37 @@ export const useAdminQuestions = (eventId?: string) => {
         return [];
       }
 
-      // Transform the data to match our expected structure
-      const transformedQuestions = questionsData.map((question: any) => ({
-        ...question,
-        profiles: question.is_anonymous ? null : question.profiles
-      }));
+      // Fetch session information for questions that have a session_id
+      const questionsWithSessionInfo = await Promise.all(
+        questionsData.map(async (question: any) => {
+          let sessionInfo = null;
+          
+          if (question.session_id) {
+            const { data: speakerData } = await supabase
+              .from('speakers')
+              .select('name, session_title, session_time')
+              .eq('id', question.session_id)
+              .single();
+            
+            if (speakerData) {
+              sessionInfo = {
+                session_title: speakerData.session_title,
+                speaker_name: speakerData.name,
+                session_time: speakerData.session_time
+              };
+            }
+          }
 
-      console.log('Admin questions with profiles:', transformedQuestions);
-      return transformedQuestions;
+          return {
+            ...question,
+            profiles: question.is_anonymous ? null : question.profiles,
+            session_info: sessionInfo
+          };
+        })
+      );
+
+      console.log('Admin questions with profiles and session info:', questionsWithSessionInfo);
+      return questionsWithSessionInfo;
     },
     enabled: !!currentUser?.id && !!eventId,
   });

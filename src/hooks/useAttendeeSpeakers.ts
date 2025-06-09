@@ -24,34 +24,11 @@ export const useAttendeeSpeakers = () => {
         return [];
       }
 
-      // Get the current event to find the host
-      const { data: currentEvent } = await supabase
-        .from('events')
-        .select('host_id')
-        .eq('id', userProfile.current_event_id)
-        .single();
-
-      if (!currentEvent?.host_id) {
-        return [];
-      }
-
-      // Get all events from the same host
-      const { data: hostEvents } = await supabase
-        .from('events')
-        .select('id')
-        .eq('host_id', currentEvent.host_id);
-
-      const eventIds = hostEvents?.map(e => e.id) || [];
-
-      if (eventIds.length === 0) {
-        return [];
-      }
-
-      // Get speakers for events from this host only
+      // Get speakers for the current event only
       const { data: speakers, error } = await supabase
         .from('speakers')
         .select('*')
-        .in('event_id', eventIds)
+        .eq('event_id', userProfile.current_event_id)
         .order('created_at', { ascending: false });
 
       if (error) {

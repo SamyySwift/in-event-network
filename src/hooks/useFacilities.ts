@@ -1,6 +1,6 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
 export interface Facility {
@@ -13,59 +13,80 @@ export interface Facility {
   contact_info?: string;
   image_url?: string;
   icon_type?: string;
+  event_id: string;
   created_by?: string;
   created_at: string;
   updated_at?: string;
 }
 
 export const useFacilities = () => {
+  const { currentUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: facilities = [], isLoading, error } = useQuery({
-    queryKey: ['facilities'],
-    queryFn: async () => {
-      console.log('Fetching facilities...');
+    queryKey: ['facilities', currentUser?.id],
+    queryFn: async (): Promise<Facility[]> => {
+      if (!currentUser?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      console.log('Fetching facilities for user:', currentUser.id);
+
+      // Get user's current event
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('current_event_id')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (!profile?.current_event_id) {
+        console.log('User has no current event');
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('facilities')
         .select('*')
+        .eq('event_id', profile.current_event_id)
         .order('created_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching facilities:', error);
         throw error;
       }
-      console.log('Facilities fetched successfully:', data);
+
+      console.log('Facilities fetched:', data?.length || 0);
       return data as Facility[];
     },
+    enabled: !!currentUser?.id,
   });
 
   const createFacilityMutation = useMutation({
     mutationFn: async (facilityData: Omit<Facility, 'id' | 'created_at' | 'updated_at'>) => {
-      console.log('Creating facility with data:', facilityData);
-      
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error('User not authenticated');
+      if (!currentUser?.id) {
+        throw new Error('User not authenticated');
+      }
 
-      // Clean the data - remove empty strings and undefined values
-      const cleanData = {
-        name: facilityData.name?.trim(),
-        description: facilityData.description?.trim() || null,
-        location: facilityData.location?.trim() || null,
-        rules: facilityData.rules?.trim() || null,
-        contact_type: facilityData.contact_type || 'none',
-        contact_info: (facilityData.contact_type !== 'none' && facilityData.contact_info?.trim()) 
-          ? facilityData.contact_info.trim() 
-          : null,
-        icon_type: facilityData.icon_type || 'building',
-        created_by: user.user.id
-      };
+      if (!facilityData.event_id) {
+        throw new Error('Event ID is required');
+      }
 
-      console.log('Cleaned facility data:', cleanData);
+      console.log('Creating facility:', facilityData);
 
       const { data, error } = await supabase
         .from('facilities')
-        .insert(cleanData)
+        .insert({
+          name: facilityData.name,
+          description: facilityData.description,
+          location: facilityData.location,
+          rules: facilityData.rules,
+          contact_type: facilityData.contact_type || 'none',
+          contact_info: facilityData.contact_info,
+          icon_type: facilityData.icon_type || 'building',
+          event_id: facilityData.event_id,
+          created_by: currentUser.id
+        })
         .select()
         .single();
 
@@ -98,23 +119,13 @@ export const useFacilities = () => {
     mutationFn: async ({ id, ...facilityData }: Partial<Facility> & { id: string }) => {
       console.log('Updating facility:', id, facilityData);
       
-      // Clean the data - remove empty strings and undefined values
-      const cleanData: any = {};
-      if (facilityData.name?.trim()) cleanData.name = facilityData.name.trim();
-      if (facilityData.description?.trim()) cleanData.description = facilityData.description.trim();
-      if (facilityData.location?.trim()) cleanData.location = facilityData.location.trim();
-      if (facilityData.rules?.trim()) cleanData.rules = facilityData.rules.trim();
-      if (facilityData.contact_type) cleanData.contact_type = facilityData.contact_type;
-      if (facilityData.contact_type !== 'none' && facilityData.contact_info?.trim()) {
-        cleanData.contact_info = facilityData.contact_info.trim();
-      } else if (facilityData.contact_type === 'none') {
-        cleanData.contact_info = null;
+      if (!currentUser?.id) {
+        throw new Error('User not authenticated');
       }
-      if (facilityData.icon_type) cleanData.icon_type = facilityData.icon_type;
 
       const { data, error } = await supabase
         .from('facilities')
-        .update(cleanData)
+        .update({ ...facilityData })
         .eq('id', id)
         .select()
         .single();
@@ -145,6 +156,11 @@ export const useFacilities = () => {
   const deleteFacilityMutation = useMutation({
     mutationFn: async (id: string) => {
       console.log('Deleting facility:', id);
+      
+      if (!currentUser?.id) {
+        throw new Error('User not authenticated');
+      }
+
       const { error } = await supabase
         .from('facilities')
         .delete()

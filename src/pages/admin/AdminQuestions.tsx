@@ -1,7 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import EventSelector from '@/components/admin/EventSelector';
 import { TabsContent } from '@/components/ui/tabs';
 import { 
   Card, 
@@ -14,112 +15,28 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { CheckCircle, XCircle, ArrowUpCircle, MessageSquare } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { CheckCircle, XCircle, ArrowUpCircle, MessageSquare, Reply } from 'lucide-react';
 import { format } from 'date-fns';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-
-interface QuestionWithProfile {
-  id: string;
-  content: string;
-  created_at: string;
-  upvotes: number;
-  is_answered: boolean;
-  user_id: string;
-  session_id: string | null;
-  event_id: string | null;
-  is_anonymous: boolean;
-  profiles: {
-    name: string;
-    photo_url: string | null;
-  } | null;
-}
+import { useAdminQuestions } from '@/hooks/useAdminQuestions';
 
 const AdminQuestions = () => {
   const [activeTab, setActiveTab] = useState<string>('all');
-  const [questions, setQuestions] = useState<QuestionWithProfile[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
+  const [selectedEventId, setSelectedEventId] = useState<string>('');
+  const [respondingTo, setRespondingTo] = useState<string | null>(null);
+  const [responseText, setResponseText] = useState('');
 
-  useEffect(() => {
-    fetchQuestions();
-  }, []);
-
-  const fetchQuestions = async () => {
-    try {
-      console.log('Fetching questions...');
-      
-      // First get all questions
-      const { data: questionsData, error: questionsError } = await supabase
-        .from('questions')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (questionsError) {
-        console.error('Questions error:', questionsError);
-        throw questionsError;
-      }
-
-      console.log('Questions data:', questionsData);
-
-      if (!questionsData || questionsData.length === 0) {
-        setQuestions([]);
-        setLoading(false);
-        return;
-      }
-
-      // Then get profiles for non-anonymous questions
-      const questionsWithProfiles = await Promise.all(
-        questionsData.map(async (question) => {
-          if (question.is_anonymous) {
-            return {
-              ...question,
-              profiles: null
-            };
-          }
-
-          try {
-            const { data: profileData, error: profileError } = await supabase
-              .from('profiles')
-              .select('name, photo_url')
-              .eq('id', question.user_id)
-              .single();
-
-            if (profileError) {
-              console.warn('Profile error for user:', question.user_id, profileError);
-              return {
-                ...question,
-                profiles: null
-              };
-            }
-
-            return {
-              ...question,
-              profiles: profileData
-            };
-          } catch (error) {
-            console.warn('Error fetching profile for user:', question.user_id, error);
-            return {
-              ...question,
-              profiles: null
-            };
-          }
-        })
-      );
-
-      console.log('Questions with profiles:', questionsWithProfiles);
-      setQuestions(questionsWithProfiles);
-    } catch (error) {
-      console.error('Error fetching questions:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch questions. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { 
+    questions, 
+    isLoading, 
+    error, 
+    markAsAnswered, 
+    deleteQuestion, 
+    respondToQuestion,
+    isMarkingAnswered,
+    isDeleting,
+    isResponding
+  } = useAdminQuestions(selectedEventId);
 
   // Filter questions based on active tab
   const getFilteredQuestions = () => {
@@ -135,65 +52,58 @@ const AdminQuestions = () => {
     }
   };
 
-  const handleMarkAsAnswered = async (question: QuestionWithProfile) => {
-    try {
-      const { data: user } = await supabase.auth.getUser();
-      
-      const { error } = await supabase
-        .from('questions')
-        .update({ 
-          is_answered: true,
-          answered_at: new Date().toISOString(),
-          answered_by: user.user?.id
-        })
-        .eq('id', question.id);
+  const handleMarkAsAnswered = (questionId: string) => {
+    markAsAnswered(questionId);
+  };
 
-      if (error) throw error;
+  const handleDeleteQuestion = (questionId: string) => {
+    deleteQuestion(questionId);
+  };
 
-      toast({
-        title: "Success",
-        description: "Question marked as answered",
+  const handleStartResponse = (questionId: string) => {
+    setRespondingTo(questionId);
+    setResponseText('');
+  };
+
+  const handleSubmitResponse = () => {
+    if (respondingTo && responseText.trim()) {
+      respondToQuestion({ 
+        questionId: respondingTo, 
+        response: responseText.trim() 
       });
-
-      fetchQuestions();
-    } catch (error) {
-      console.error('Error updating question:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update question",
-        variant: "destructive",
-      });
+      setRespondingTo(null);
+      setResponseText('');
     }
   };
 
-  const handleDeleteQuestion = async (question: QuestionWithProfile) => {
-    try {
-      const { error } = await supabase
-        .from('questions')
-        .delete()
-        .eq('id', question.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Question deleted successfully",
-      });
-
-      fetchQuestions();
-    } catch (error) {
-      console.error('Error deleting question:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete question",
-        variant: "destructive",
-      });
-    }
+  const handleCancelResponse = () => {
+    setRespondingTo(null);
+    setResponseText('');
   };
 
   const filteredQuestions = getFilteredQuestions();
 
-  if (loading) {
+  if (!selectedEventId) {
+    return (
+      <AdminLayout>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Attendee Questions</h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              Review and moderate questions from attendees
+            </p>
+          </div>
+          <EventSelector 
+            selectedEventId={selectedEventId}
+            onEventSelect={setSelectedEventId}
+            placeholder="Select an event to view questions"
+          />
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (isLoading) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-64">
@@ -208,101 +118,161 @@ const AdminQuestions = () => {
 
   return (
     <AdminLayout>
-      <AdminPageHeader
-        title="Attendee Questions"
-        description="Review and moderate questions from attendees"
-        tabs={[
-          { id: 'all', label: 'All Questions' },
-          { id: 'unanswered', label: 'Unanswered' },
-          { id: 'answered', label: 'Answered' },
-          { id: 'trending', label: 'Trending' }
-        ]}
-        defaultTab="all"
-        onTabChange={setActiveTab}
-      >
-        {['all', 'unanswered', 'answered', 'trending'].map(tabId => (
-          <TabsContent key={tabId} value={tabId} className="space-y-4">
-            {filteredQuestions.length === 0 ? (
-              <Card>
-                <CardContent className="py-10 text-center text-muted-foreground">
-                  <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No questions found in this category.</p>
-                  {activeTab === 'all' && (
-                    <p className="text-sm mt-2">Questions submitted by attendees will appear here.</p>
-                  )}
-                </CardContent>
-              </Card>
-            ) : (
-              filteredQuestions.map(question => {
-                const userName = question.profiles?.name || 'Anonymous User';
-                const userPhoto = question.profiles?.photo_url;
-                
-                return (
-                  <Card key={question.id} className={question.is_answered ? 'border-green-100' : ''}>
-                    <CardHeader className="pb-2">
-                      <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-3">
-                          <Avatar>
-                            <AvatarImage src={userPhoto || ''} />
-                            <AvatarFallback>{userName.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <CardTitle className="text-base">{userName}</CardTitle>
-                            <CardDescription>
-                              {format(new Date(question.created_at), 'MMM d, yyyy h:mm a')}
-                            </CardDescription>
+      <div className="space-y-6">
+        <EventSelector 
+          selectedEventId={selectedEventId}
+          onEventSelect={setSelectedEventId}
+        />
+        
+        <AdminPageHeader
+          title="Attendee Questions"
+          description="Review and moderate questions from attendees"
+          tabs={[
+            { id: 'all', label: 'All Questions' },
+            { id: 'unanswered', label: 'Unanswered' },
+            { id: 'answered', label: 'Answered' },
+            { id: 'trending', label: 'Trending' }
+          ]}
+          defaultTab="all"
+          onTabChange={setActiveTab}
+        >
+          {['all', 'unanswered', 'answered', 'trending'].map(tabId => (
+            <TabsContent key={tabId} value={tabId} className="space-y-4">
+              {filteredQuestions.length === 0 ? (
+                <Card>
+                  <CardContent className="py-10 text-center text-muted-foreground">
+                    <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No questions found in this category.</p>
+                    {activeTab === 'all' && (
+                      <p className="text-sm mt-2">Questions submitted by attendees will appear here.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              ) : (
+                filteredQuestions.map(question => {
+                  const userName = question.profiles?.name || 'Anonymous User';
+                  const userPhoto = question.profiles?.photo_url;
+                  
+                  return (
+                    <Card key={question.id} className={question.is_answered ? 'border-green-100' : ''}>
+                      <CardHeader className="pb-2">
+                        <div className="flex justify-between items-start">
+                          <div className="flex items-center gap-3">
+                            <Avatar>
+                              <AvatarImage src={userPhoto || ''} />
+                              <AvatarFallback>{userName.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <CardTitle className="text-base">{userName}</CardTitle>
+                              <CardDescription>
+                                {format(new Date(question.created_at), 'MMM d, yyyy h:mm a')}
+                              </CardDescription>
+                            </div>
                           </div>
+                          <Badge variant={question.is_answered ? 'outline' : 'default'}>
+                            {question.is_answered ? 'Answered' : 'Pending'}
+                          </Badge>
                         </div>
-                        <Badge variant={question.is_answered ? 'outline' : 'default'}>
-                          {question.is_answered ? 'Answered' : 'Pending'}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-base mb-3">{question.content}</p>
-                      <div className="flex flex-wrap gap-2 text-sm">
-                        <Badge variant="outline" className="flex items-center gap-1">
-                          <ArrowUpCircle size={14} /> {question.upvotes} upvotes
-                        </Badge>
-                        {question.is_anonymous && (
-                          <Badge variant="secondary">Anonymous</Badge>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-base mb-3">{question.content}</p>
+                        
+                        {question.response && (
+                          <div className="mt-4 p-3 bg-blue-50 border-l-4 border-blue-200 rounded">
+                            <p className="text-sm font-medium text-blue-800 mb-1">Admin Response:</p>
+                            <p className="text-blue-700">{question.response}</p>
+                            {question.response_created_at && (
+                              <p className="text-xs text-blue-600 mt-1">
+                                Responded on {format(new Date(question.response_created_at), 'MMM d, yyyy h:mm a')}
+                              </p>
+                            )}
+                          </div>
                         )}
-                      </div>
-                    </CardContent>
-                    <CardFooter className="border-t pt-3 flex justify-between">
-                      <div className="text-sm text-muted-foreground">
-                        Question ID: {question.id}
-                      </div>
-                      <div className="flex gap-2">
-                        {!question.is_answered && (
+                        
+                        {respondingTo === question.id && (
+                          <div className="mt-4 space-y-3">
+                            <Textarea
+                              placeholder="Type your response here..."
+                              value={responseText}
+                              onChange={(e) => setResponseText(e.target.value)}
+                              rows={3}
+                            />
+                            <div className="flex gap-2">
+                              <Button 
+                                size="sm" 
+                                onClick={handleSubmitResponse}
+                                disabled={!responseText.trim() || isResponding}
+                              >
+                                {isResponding ? 'Submitting...' : 'Submit Response'}
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="outline" 
+                                onClick={handleCancelResponse}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                        
+                        <div className="flex flex-wrap gap-2 text-sm mt-3">
+                          <Badge variant="outline" className="flex items-center gap-1">
+                            <ArrowUpCircle size={14} /> {question.upvotes} upvotes
+                          </Badge>
+                          {question.is_anonymous && (
+                            <Badge variant="secondary">Anonymous</Badge>
+                          )}
+                        </div>
+                      </CardContent>
+                      <CardFooter className="border-t pt-3 flex justify-between">
+                        <div className="text-sm text-muted-foreground">
+                          Question ID: {question.id}
+                        </div>
+                        <div className="flex gap-2">
+                          {!question.response && respondingTo !== question.id && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="text-blue-600 border-blue-200 hover:bg-blue-50"
+                              onClick={() => handleStartResponse(question.id)}
+                            >
+                              <Reply size={16} className="mr-1" />
+                              Respond
+                            </Button>
+                          )}
+                          {!question.is_answered && (
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              className="text-green-600 border-green-200 hover:bg-green-50"
+                              onClick={() => handleMarkAsAnswered(question.id)}
+                              disabled={isMarkingAnswered}
+                            >
+                              <CheckCircle size={16} className="mr-1" />
+                              Mark Answered
+                            </Button>
+                          )}
                           <Button 
                             size="sm" 
-                            variant="outline"
-                            className="text-green-600 border-green-200 hover:bg-green-50"
-                            onClick={() => handleMarkAsAnswered(question)}
+                            variant="outline" 
+                            className="text-destructive border-destructive/20 hover:bg-destructive/10"
+                            onClick={() => handleDeleteQuestion(question.id)}
+                            disabled={isDeleting}
                           >
-                            <CheckCircle size={16} className="mr-1" />
-                            Mark Answered
+                            <XCircle size={16} className="mr-1" />
+                            Remove
                           </Button>
-                        )}
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="text-destructive border-destructive/20 hover:bg-destructive/10"
-                          onClick={() => handleDeleteQuestion(question)}
-                        >
-                          <XCircle size={16} className="mr-1" />
-                          Remove
-                        </Button>
-                      </div>
-                    </CardFooter>
-                  </Card>
-                );
-              })
-            )}
-          </TabsContent>
-        ))}
-      </AdminPageHeader>
+                        </div>
+                      </CardFooter>
+                    </Card>
+                  );
+                })
+              )}
+            </TabsContent>
+          ))}
+        </AdminPageHeader>
+      </div>
     </AdminLayout>
   );
 };

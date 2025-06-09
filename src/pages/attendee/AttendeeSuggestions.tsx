@@ -15,6 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
@@ -27,6 +28,7 @@ interface Suggestion {
   status: 'new' | 'reviewed' | 'implemented';
   created_at: string;
   user_id: string;
+  event_id: string | null;
 }
 
 interface SuggestionStats {
@@ -39,6 +41,7 @@ interface SuggestionStats {
 
 const AttendeeSuggestions = () => {
   const { currentUser } = useAuth();
+  const { currentEventId } = useAttendeeEventContext();
   const { toast } = useToast();
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [stats, setStats] = useState<SuggestionStats>({
@@ -68,6 +71,8 @@ const AttendeeSuggestions = () => {
       const user = await supabase.auth.getUser();
       if (!user.data.user) return;
 
+      console.log('Fetching suggestions for user:', user.data.user.id);
+
       const { data, error } = await supabase
         .from('suggestions')
         .select('*')
@@ -75,6 +80,8 @@ const AttendeeSuggestions = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      
+      console.log('Fetched suggestions:', data);
       
       // Transform the data to match our interface
       const transformedData: Suggestion[] = (data || []).map(item => ({
@@ -84,7 +91,8 @@ const AttendeeSuggestions = () => {
         rating: item.rating,
         status: item.status as 'new' | 'reviewed' | 'implemented',
         created_at: item.created_at,
-        user_id: item.user_id
+        user_id: item.user_id,
+        event_id: item.event_id
       }));
       
       setSuggestions(transformedData);
@@ -140,10 +148,21 @@ const AttendeeSuggestions = () => {
   const handleSubmitSuggestion = async () => {
     if (!currentUser || !newSuggestion.trim()) return;
 
+    if (!currentEventId) {
+      toast({
+        title: "Error",
+        description: "You must be part of an event to submit suggestions",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSubmitting(true);
     try {
       const user = await supabase.auth.getUser();
       if (!user.data.user) throw new Error('User not authenticated');
+
+      console.log('Submitting suggestion for event:', currentEventId);
 
       const { error } = await supabase
         .from('suggestions')
@@ -151,6 +170,7 @@ const AttendeeSuggestions = () => {
           content: newSuggestion.trim(),
           type: 'suggestion',
           user_id: user.data.user.id,
+          event_id: currentEventId,
           status: 'new',
           rating: null
         }]);
@@ -180,10 +200,21 @@ const AttendeeSuggestions = () => {
   const handleSubmitRating = async () => {
     if (!currentUser || rating === 0) return;
 
+    if (!currentEventId) {
+      toast({
+        title: "Error",
+        description: "You must be part of an event to submit ratings",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSubmitting(true);
     try {
       const user = await supabase.auth.getUser();
       if (!user.data.user) throw new Error('User not authenticated');
+
+      console.log('Submitting rating for event:', currentEventId);
 
       const { error } = await supabase
         .from('suggestions')
@@ -191,6 +222,7 @@ const AttendeeSuggestions = () => {
           content: ratingFeedback.trim() || `Rated the event ${rating} stars`,
           type: 'rating',
           user_id: user.data.user.id,
+          event_id: currentEventId,
           status: 'new',
           rating: rating
         }]);
@@ -243,6 +275,22 @@ const AttendeeSuggestions = () => {
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
             <p className="mt-2 text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!currentEventId) {
+    return (
+      <AppLayout>
+        <div className="animate-fade-in max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center py-12">
+            <MessageSquare className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <h2 className="text-xl font-semibold mb-2">Join an Event First</h2>
+            <p className="text-muted-foreground">
+              You need to join an event before you can submit suggestions and ratings.
+            </p>
           </div>
         </div>
       </AppLayout>

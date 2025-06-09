@@ -2,6 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 
 interface AdminAttendee {
   id: string;
@@ -17,17 +18,19 @@ interface AdminAttendee {
 
 export const useAdminAttendees = () => {
   const { currentUser } = useAuth();
+  const { selectedEventId, selectedEvent } = useAdminEventContext();
 
   const { data: attendees = [], isLoading, error } = useQuery({
-    queryKey: ['admin-attendees', currentUser?.id],
+    queryKey: ['admin-attendees', currentUser?.id, selectedEventId],
     queryFn: async (): Promise<AdminAttendee[]> => {
-      if (!currentUser?.id) {
-        throw new Error('User not authenticated');
+      if (!currentUser?.id || !selectedEventId) {
+        console.log('Missing user or selected event:', { userId: currentUser?.id, eventId: selectedEventId });
+        return [];
       }
 
-      console.log('Fetching attendees for admin:', currentUser.id);
+      console.log('Fetching attendees for selected event:', selectedEventId);
 
-      // Get attendees only for events hosted by the current admin
+      // Get attendees only for the selected event
       const { data, error } = await supabase
         .from('event_participants')
         .select(`
@@ -40,20 +43,18 @@ export const useAdminAttendees = () => {
             photo_url,
             bio,
             company
-          ),
-          events:event_id (
-            name,
-            host_id
           )
         `)
-        .eq('events.host_id', currentUser.id);
+        .eq('event_id', selectedEventId);
 
       if (error) {
         console.error('Error fetching admin attendees:', error);
         throw error;
       }
 
-      // Transform and filter data to ensure only current admin's attendees
+      console.log('Raw event participants data:', data);
+
+      // Transform the data
       const transformedData = data?.map((item: any) => ({
         id: item.profiles?.id || '',
         name: item.profiles?.name || 'Unknown',
@@ -62,14 +63,14 @@ export const useAdminAttendees = () => {
         photo_url: item.profiles?.photo_url,
         bio: item.profiles?.bio,
         company: item.profiles?.company,
-        event_name: item.events?.name || '',
+        event_name: selectedEvent?.name || '',
         joined_at: item.joined_at
-      })).filter(item => item.id && item.event_name) || [];
+      })).filter(item => item.id) || [];
 
-      console.log('Admin attendees fetched:', transformedData.length);
+      console.log('Admin attendees fetched for event:', transformedData.length);
       return transformedData as AdminAttendee[];
     },
-    enabled: !!currentUser?.id,
+    enabled: !!currentUser?.id && !!selectedEventId,
   });
 
   return {

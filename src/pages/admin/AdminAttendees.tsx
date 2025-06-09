@@ -17,18 +17,11 @@ const AdminAttendeesContent = () => {
   const { selectedEvent } = useAdminEventContext();
   const { toast } = useToast();
 
-  // Filter attendees based on tab and selected event
+  // Filter attendees based on tab (all attendees are already from the selected event)
   const getFilteredAttendees = () => {
-    let filtered = attendees;
+    if (activeTab === 'all') return attendees;
     
-    // Filter by selected event
-    if (selectedEvent) {
-      filtered = attendees.filter(attendee => attendee.event_name === selectedEvent.name);
-    }
-    
-    // Filter by tab
-    if (activeTab === 'all') return filtered;
-    return filtered.filter(attendee => {
+    return attendees.filter(attendee => {
       switch (activeTab) {
         case 'technical':
           return attendee.bio?.toLowerCase().includes('tech') || 
@@ -66,16 +59,18 @@ const AdminAttendeesContent = () => {
       ),
     },
     {
-      header: 'Event',
-      accessorKey: 'event_name',
-      cell: (value: string) => (
-        <Badge variant="outline">{value}</Badge>
-      ),
-    },
-    {
       header: 'Company',
       accessorKey: 'company',
       cell: (value: string) => value || 'Not specified',
+    },
+    {
+      header: 'Bio',
+      accessorKey: 'bio',
+      cell: (value: string) => value ? (
+        <div className="max-w-xs truncate" title={value}>
+          {value}
+        </div>
+      ) : 'Not provided',
     },
     {
       header: 'Joined',
@@ -136,9 +131,9 @@ const AdminAttendeesContent = () => {
 
       <AdminPageHeader
         title="Event Attendees"
-        description={`Manage attendees for ${selectedEvent.name} (${filteredAttendees.length} total)`}
+        description={`Scanned attendees for ${selectedEvent.name} (${filteredAttendees.length} total)`}
         tabs={[
-          { id: 'all', label: `All Attendees (${filteredAttendees.length})` },
+          { id: 'all', label: `All Attendees (${attendees.length})` },
           { id: 'technical', label: 'Technical' },
           { id: 'design', label: 'Design' },
           { id: 'business', label: 'Business' },
@@ -148,12 +143,18 @@ const AdminAttendeesContent = () => {
       >
         {['all', 'technical', 'design', 'business'].map(tabId => (
           <TabsContent key={tabId} value={tabId} className="space-y-4">
-            <AdminDataTable
-              columns={columns}
-              data={filteredAttendees}
-              onEdit={handleEditAttendee}
-              onDelete={handleDeleteAttendee}
-            />
+            {filteredAttendees.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No attendees have scanned into this event yet.</p>
+              </div>
+            ) : (
+              <AdminDataTable
+                columns={columns}
+                data={filteredAttendees}
+                onEdit={handleEditAttendee}
+                onDelete={handleDeleteAttendee}
+              />
+            )}
           </TabsContent>
         ))}
       </AdminPageHeader>

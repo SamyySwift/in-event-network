@@ -26,6 +26,7 @@ export interface QuestionWithProfile {
     speaker_name: string;
     session_time: string | null;
   } | null;
+  event_name?: string; // Add event name to show which event the question belongs to
 }
 
 export const useAdminQuestions = (eventId?: string) => {
@@ -40,24 +41,64 @@ export const useAdminQuestions = (eventId?: string) => {
         throw new Error('User not authenticated');
       }
 
-      if (!eventId) {
-        return [];
-      }
-
       console.log('Fetching questions for admin:', currentUser.id, 'event:', eventId);
 
-      // Simplified query - just get questions for this specific event
-      const { data: questionsData, error: questionsError } = await supabase
-        .from('questions')
-        .select(`
-          *,
-          profiles:user_id (
-            name,
-            photo_url
-          )
-        `)
-        .eq('event_id', eventId)
-        .order('created_at', { ascending: false });
+      let questionsData;
+      let questionsError;
+
+      if (eventId) {
+        // Get questions for specific event
+        const { data, error } = await supabase
+          .from('questions')
+          .select(`
+            *,
+            profiles:user_id (
+              name,
+              photo_url
+            )
+          `)
+          .eq('event_id', eventId)
+          .order('created_at', { ascending: false });
+
+        questionsData = data;
+        questionsError = error;
+      } else {
+        // Get all admin's events first
+        const { data: adminEvents, error: eventsError } = await supabase
+          .from('events')
+          .select('id')
+          .eq('host_id', currentUser.id);
+
+        if (eventsError) {
+          console.error('Error fetching admin events:', eventsError);
+          throw eventsError;
+        }
+
+        if (!adminEvents || adminEvents.length === 0) {
+          return [];
+        }
+
+        const eventIds = adminEvents.map(event => event.id);
+
+        // Get questions from all admin events
+        const { data, error } = await supabase
+          .from('questions')
+          .select(`
+            *,
+            profiles:user_id (
+              name,
+              photo_url
+            ),
+            events:event_id (
+              name
+            )
+          `)
+          .in('event_id', eventIds)
+          .order('created_at', { ascending: false });
+
+        questionsData = data;
+        questionsError = error;
+      }
 
       if (questionsError) {
         console.error('Questions error:', questionsError);
@@ -94,7 +135,8 @@ export const useAdminQuestions = (eventId?: string) => {
           return {
             ...question,
             profiles: question.is_anonymous ? null : question.profiles,
-            session_info: sessionInfo
+            session_info: sessionInfo,
+            event_name: question.events?.name || 'Unknown Event'
           };
         })
       );
@@ -102,7 +144,7 @@ export const useAdminQuestions = (eventId?: string) => {
       console.log('Admin questions with profiles and session info:', questionsWithSessionInfo);
       return questionsWithSessionInfo;
     },
-    enabled: !!currentUser?.id && !!eventId,
+    enabled: !!currentUser?.id,
   });
 
   const markAsAnsweredMutation = useMutation({

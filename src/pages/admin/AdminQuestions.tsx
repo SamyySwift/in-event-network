@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -15,7 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle, XCircle, ArrowUpCircle, MessageSquare, Reply, Calendar, User2 } from 'lucide-react';
+import { CheckCircle, XCircle, ArrowUpCircle, MessageSquare, Reply, Calendar, User2, Building } from 'lucide-react';
 import { format } from 'date-fns';
 import { useAdminQuestions } from '@/hooks/useAdminQuestions';
 import { useAdminEventContext, AdminEventProvider } from '@/hooks/useAdminEventContext';
@@ -25,7 +26,7 @@ const AdminQuestionsContent = () => {
   const [respondingTo, setRespondingTo] = useState<string | null>(null);
   const [responseText, setResponseText] = useState('');
 
-  const { selectedEventId } = useAdminEventContext();
+  const { selectedEventId, selectedEvent } = useAdminEventContext();
 
   const { 
     questions, 
@@ -37,7 +38,7 @@ const AdminQuestionsContent = () => {
     isMarkingAnswered,
     isDeleting,
     isResponding
-  } = useAdminQuestions(selectedEventId || '');
+  } = useAdminQuestions(selectedEventId || undefined);
 
   // Filter questions based on active tab
   const getFilteredQuestions = () => {
@@ -84,21 +85,19 @@ const AdminQuestionsContent = () => {
 
   const filteredQuestions = getFilteredQuestions();
 
-  if (!selectedEventId) {
-    return (
-      <AdminLayout>
-        <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Attendee Questions</h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Review and moderate questions from attendees
-            </p>
-          </div>
-          <EventSelector />
-        </div>
-      </AdminLayout>
-    );
-  }
+  const getPageTitle = () => {
+    if (selectedEvent) {
+      return `Questions for ${selectedEvent.name}`;
+    }
+    return 'All Questions from Your Events';
+  };
+
+  const getPageDescription = () => {
+    if (selectedEvent) {
+      return `Review and moderate questions from ${selectedEvent.name} attendees`;
+    }
+    return 'Review and moderate questions from all your event attendees';
+  };
 
   if (isLoading) {
     return (
@@ -118,9 +117,23 @@ const AdminQuestionsContent = () => {
       <div className="space-y-6">
         <EventSelector />
         
+        {/* Context Information */}
+        {!selectedEventId && (
+          <Card className="border-blue-200 bg-blue-50">
+            <CardContent className="py-4">
+              <div className="flex items-center gap-2 text-blue-800">
+                <Building className="h-5 w-5" />
+                <span className="font-medium">
+                  Showing questions from all your events. Select a specific event above to filter.
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        
         <AdminPageHeader
-          title="Attendee Questions"
-          description="Review and moderate questions from attendees"
+          title={getPageTitle()}
+          description={getPageDescription()}
           tabs={[
             { id: 'all', label: 'All Questions' },
             { id: 'unanswered', label: 'Unanswered' },
@@ -176,6 +189,13 @@ const AdminQuestionsContent = () => {
                               <Badge variant="outline" className="flex items-center gap-1">
                                 <MessageSquare size={12} />
                                 General Question
+                              </Badge>
+                            )}
+                            {/* Show event name when viewing all events */}
+                            {!selectedEventId && question.event_name && (
+                              <Badge variant="secondary" className="flex items-center gap-1">
+                                <Building size={12} />
+                                {question.event_name}
                               </Badge>
                             )}
                           </div>

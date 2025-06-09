@@ -1,12 +1,17 @@
 
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import Index from '@/pages/Index';
+import { Routes, Route } from 'react-router-dom';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
+
+// Public pages
 import Landing from '@/pages/Landing';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
 import NotFound from '@/pages/NotFound';
 import ScanQR from '@/pages/ScanQR';
+
+// Host pages
+import HostDashboard from '@/pages/host/HostDashboard';
 
 // Admin pages
 import AdminDashboard from '@/pages/admin/AdminDashboard';
@@ -28,207 +33,261 @@ import AdminSettings from '@/pages/admin/AdminSettings';
 import AttendeeDashboard from '@/pages/attendee/AttendeeDashboard';
 import AttendeeProfile from '@/pages/attendee/AttendeeProfile';
 import AttendeeNetworking from '@/pages/attendee/AttendeeNetworking';
-import AttendeeSchedule from '@/pages/attendee/AttendeeSchedule';
-import AttendeeQuestions from '@/pages/attendee/AttendeeQuestions';
-import AttendeeMap from '@/pages/attendee/AttendeeMap';
-import AttendeePolls from '@/pages/attendee/AttendeePolls';
-import AttendeeSuggestions from '@/pages/attendee/AttendeeSuggestions';
 import AttendeeAnnouncements from '@/pages/attendee/AttendeeAnnouncements';
+import AttendeeSchedule from '@/pages/attendee/AttendeeSchedule';
+import AttendeePolls from '@/pages/attendee/AttendeePolls';
+import AttendeeQuestions from '@/pages/attendee/AttendeeQuestions';
+import AttendeeSuggestions from '@/pages/attendee/AttendeeSuggestions';
 import AttendeeRules from '@/pages/attendee/AttendeeRules';
 import AttendeeNotifications from '@/pages/attendee/AttendeeNotifications';
 import AttendeeOnboarding from '@/pages/attendee/AttendeeOnboarding';
+import AttendeeMap from '@/pages/attendee/AttendeeMap';
 import AttendeeSearch from '@/pages/attendee/AttendeeSearch';
 
-// Host pages
-import HostDashboard from '@/pages/host/HostDashboard';
-
-// Auth components
-import ProtectedRoute from '@/components/auth/ProtectedRoute';
-import AttendeeRouteGuard from '@/components/attendee/AttendeeRouteGuard';
+import Index from '@/pages/Index';
 
 const AppRoutes = () => {
   return (
     <Routes>
       {/* Public routes */}
-      <Route path="/" element={<Index />} />
-      <Route path="/landing" element={<Landing />} />
+      <Route path="/" element={<Landing />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/scan" element={<ScanQR />} />
+      <Route path="/join/:eventKey" element={<Index />} />
 
       {/* Admin routes */}
-      <Route path="/admin" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <AdminDashboard />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/events" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <AdminEvents />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/attendees" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <AdminAttendees />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/speakers" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <AdminSpeakers />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/announcements" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <AdminAnnouncements />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/schedule" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <AdminSchedule />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/polls" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <AdminPolls />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/facilities" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <AdminFacilities />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/rules" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <AdminRules />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/questions" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <AdminQuestions />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/suggestions" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <AdminSuggestions />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/team" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <AdminTeam />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/notifications" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <AdminNotifications />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin/settings" element={
-        <ProtectedRoute allowedRoles={['admin']}>
-          <AdminSettings />
-        </ProtectedRoute>
-      } />
-
-      {/* Attendee routes */}
-      <Route path="/attendee" element={
-        <ProtectedRoute allowedRoles={['attendee']}>
-          <AttendeeRouteGuard>
-            <AttendeeDashboard />
-          </AttendeeRouteGuard>
-        </ProtectedRoute>
-      } />
-      <Route path="/attendee/profile" element={
-        <ProtectedRoute allowedRoles={['attendee']}>
-          <AttendeeRouteGuard>
-            <AttendeeProfile />
-          </AttendeeRouteGuard>
-        </ProtectedRoute>
-      } />
-      <Route path="/attendee/networking" element={
-        <ProtectedRoute allowedRoles={['attendee']}>
-          <AttendeeRouteGuard>
-            <AttendeeNetworking />
-          </AttendeeRouteGuard>
-        </ProtectedRoute>
-      } />
-      <Route path="/attendee/schedule" element={
-        <ProtectedRoute allowedRoles={['attendee']}>
-          <AttendeeRouteGuard>
-            <AttendeeSchedule />
-          </AttendeeRouteGuard>
-        </ProtectedRoute>
-      } />
-      <Route path="/attendee/questions" element={
-        <ProtectedRoute allowedRoles={['attendee']}>
-          <AttendeeRouteGuard>
-            <AttendeeQuestions />
-          </AttendeeRouteGuard>
-        </ProtectedRoute>
-      } />
-      <Route path="/attendee/map" element={
-        <ProtectedRoute allowedRoles={['attendee']}>
-          <AttendeeRouteGuard>
-            <AttendeeMap />
-          </AttendeeRouteGuard>
-        </ProtectedRoute>
-      } />
-      <Route path="/attendee/polls" element={
-        <ProtectedRoute allowedRoles={['attendee']}>
-          <AttendeeRouteGuard>
-            <AttendeePolls />
-          </AttendeeRouteGuard>
-        </ProtectedRoute>
-      } />
-      <Route path="/attendee/suggestions" element={
-        <ProtectedRoute allowedRoles={['attendee']}>
-          <AttendeeRouteGuard>
-            <AttendeeSuggestions />
-          </AttendeeRouteGuard>
-        </ProtectedRoute>
-      } />
-      <Route path="/attendee/announcements" element={
-        <ProtectedRoute allowedRoles={['attendee']}>
-          <AttendeeRouteGuard>
-            <AttendeeAnnouncements />
-          </AttendeeRouteGuard>
-        </ProtectedRoute>
-      } />
-      <Route path="/attendee/rules" element={
-        <ProtectedRoute allowedRoles={['attendee']}>
-          <AttendeeRouteGuard>
-            <AttendeeRules />
-          </AttendeeRouteGuard>
-        </ProtectedRoute>
-      } />
-      <Route path="/attendee/notifications" element={
-        <ProtectedRoute allowedRoles={['attendee']}>
-          <AttendeeRouteGuard>
-            <AttendeeNotifications />
-          </AttendeeRouteGuard>
-        </ProtectedRoute>
-      } />
-      <Route path="/attendee/onboarding" element={
-        <ProtectedRoute allowedRoles={['attendee']}>
-          <AttendeeOnboarding />
-        </ProtectedRoute>
-      } />
-      <Route path="/attendee/search" element={
-        <ProtectedRoute allowedRoles={['attendee']}>
-          <AttendeeRouteGuard>
-            <AttendeeSearch />
-          </AttendeeRouteGuard>
-        </ProtectedRoute>
-      } />
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute requiredRole="host">
+            <AdminDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/events"
+        element={
+          <ProtectedRoute requiredRole="host">
+            <AdminEvents />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/attendees"
+        element={
+          <ProtectedRoute requiredRole="host">
+            <AdminAttendees />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/speakers"
+        element={
+          <ProtectedRoute requiredRole="host">
+            <AdminSpeakers />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/announcements"
+        element={
+          <ProtectedRoute requiredRole="host">
+            <AdminAnnouncements />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/schedule"
+        element={
+          <ProtectedRoute requiredRole="host">
+            <AdminSchedule />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/polls"
+        element={
+          <ProtectedRoute requiredRole="host">
+            <AdminPolls />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/facilities"
+        element={
+          <ProtectedRoute requiredRole="host">
+            <AdminFacilities />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/rules"
+        element={
+          <ProtectedRoute requiredRole="host">
+            <AdminRules />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/questions"
+        element={
+          <ProtectedRoute requiredRole="host">
+            <AdminQuestions />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/suggestions"
+        element={
+          <ProtectedRoute requiredRole="host">
+            <AdminSuggestions />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/team"
+        element={
+          <ProtectedRoute requiredRole="host">
+            <AdminTeam />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/notifications"
+        element={
+          <ProtectedRoute requiredRole="host">
+            <AdminNotifications />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/settings"
+        element={
+          <ProtectedRoute requiredRole="host">
+            <AdminSettings />
+          </ProtectedRoute>
+        }
+      />
 
       {/* Host routes */}
-      <Route path="/host" element={
-        <ProtectedRoute allowedRoles={['host']}>
-          <HostDashboard />
-        </ProtectedRoute>
-      } />
+      <Route
+        path="/host"
+        element={
+          <ProtectedRoute requiredRole="host">
+            <HostDashboard />
+          </ProtectedRoute>
+        }
+      />
 
-      {/* Fallback routes */}
-      <Route path="/404" element={<NotFound />} />
-      <Route path="*" element={<Navigate to="/404" replace />} />
+      {/* Attendee routes */}
+      <Route
+        path="/attendee"
+        element={
+          <ProtectedRoute requiredRole="attendee">
+            <AttendeeDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/attendee/profile"
+        element={
+          <ProtectedRoute requiredRole="attendee">
+            <AttendeeProfile />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/attendee/networking"
+        element={
+          <ProtectedRoute requiredRole="attendee">
+            <AttendeeNetworking />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/attendee/announcements"
+        element={
+          <ProtectedRoute requiredRole="attendee">
+            <AttendeeAnnouncements />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/attendee/schedule"
+        element={
+          <ProtectedRoute requiredRole="attendee">
+            <AttendeeSchedule />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/attendee/polls"
+        element={
+          <ProtectedRoute requiredRole="attendee">
+            <AttendeePolls />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/attendee/questions"
+        element={
+          <ProtectedRoute requiredRole="attendee">
+            <AttendeeQuestions />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/attendee/suggestions"
+        element={
+          <ProtectedRoute requiredRole="attendee">
+            <AttendeeSuggestions />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/attendee/rules"
+        element={
+          <ProtectedRoute requiredRole="attendee">
+            <AttendeeRules />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/attendee/notifications"
+        element={
+          <ProtectedRoute requiredRole="attendee">
+            <AttendeeNotifications />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/attendee/onboarding"
+        element={
+          <ProtectedRoute requiredRole="attendee">
+            <AttendeeOnboarding />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/attendee/map"
+        element={
+          <ProtectedRoute requiredRole="attendee">
+            <AttendeeMap />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/attendee/search"
+        element={
+          <ProtectedRoute requiredRole="attendee">
+            <AttendeeSearch />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Catch all route */}
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };

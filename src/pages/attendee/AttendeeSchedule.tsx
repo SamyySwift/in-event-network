@@ -10,9 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAttendeeSpeakers } from '@/hooks/useAttendeeSpeakers';
+import { useAttendeeContext } from '@/hooks/useAttendeeContext';
 import { format, isToday, isTomorrow, isYesterday, parseISO } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface ScheduleItem {
   id: string;
@@ -48,18 +48,18 @@ const AttendeeSchedule = () => {
   const [combinedItems, setCombinedItems] = useState<CombinedScheduleItem[]>([]);
   
   const { speakers, isLoading: speakersLoading, error } = useAttendeeSpeakers();
-  const { currentUser } = useAuth();
+  const { context } = useAttendeeContext();
 
   // Fetch schedule items from database
   useEffect(() => {
     const fetchScheduleItems = async () => {
-      if (!currentUser?.currentEventId) return;
+      if (!context?.currentEventId) return;
 
       try {
         const { data, error } = await supabase
           .from('schedule_items')
           .select('*')
-          .eq('event_id', currentUser.currentEventId)
+          .eq('event_id', context.currentEventId)
           .order('start_time', { ascending: true });
 
         if (error) {
@@ -76,26 +76,28 @@ const AttendeeSchedule = () => {
     fetchScheduleItems();
 
     // Set up real-time subscription for schedule items
-    const channel = supabase
-      .channel('attendee-schedule-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'schedule_items'
-        },
-        () => {
-          console.log('Schedule items updated, refetching...');
-          fetchScheduleItems();
-        }
-      )
-      .subscribe();
+    if (context?.currentEventId) {
+      const channel = supabase
+        .channel('attendee-schedule-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'schedule_items'
+          },
+          () => {
+            console.log('Schedule items updated, refetching...');
+            fetchScheduleItems();
+          }
+        )
+        .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [currentUser?.currentEventId]);
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [context?.currentEventId]);
 
   // Combine speakers and schedule items
   useEffect(() => {

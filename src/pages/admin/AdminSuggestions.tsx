@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -108,7 +109,7 @@ const AdminSuggestionsContent = () => {
           return;
         }
 
-        const eventIds = adminEvents.map(event => event.id);
+        const eventIds = adminEvents.map(event => event.id) as string[];
 
         // Get suggestions from all admin events
         suggestionsQuery = supabase

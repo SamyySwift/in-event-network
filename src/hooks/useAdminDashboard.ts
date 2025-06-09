@@ -26,7 +26,7 @@ export const useAdminDashboard = () => {
 
       const now = new Date().toISOString();
 
-      // Get admin's events with efficient count queries
+      // Get only events hosted by the current admin
       const { count: eventsCount, error: eventsError } = await supabase
         .from('events')
         .select('*', { count: 'exact', head: true })
@@ -37,7 +37,7 @@ export const useAdminDashboard = () => {
         throw eventsError;
       }
 
-      // Get events for other calculations
+      // Get admin's events for other calculations
       const { data: events, error: eventsDataError } = await supabase
         .from('events')
         .select('id, start_time, end_time')
@@ -64,7 +64,7 @@ export const useAdminDashboard = () => {
         return current < start;
       }) || [];
 
-      // Get efficient count queries for related data
+      // Get counts only for the current admin's events
       const [attendeesResult, speakersResult, questionsResult] = await Promise.all([
         eventIds.length > 0 ? supabase
           .from('event_participants')

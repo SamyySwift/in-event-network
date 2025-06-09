@@ -141,7 +141,7 @@ export const useAdminPolls = (eventId?: string) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-polls'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-polls', currentUser?.id] });
       toast({
         title: 'Poll Created',
         description: 'The poll has been created successfully.',
@@ -173,7 +173,7 @@ export const useAdminPolls = (eventId?: string) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-polls'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-polls', currentUser?.id] });
       toast({
         title: 'Poll Updated',
         description: 'The poll has been updated successfully.',
@@ -202,7 +202,7 @@ export const useAdminPolls = (eventId?: string) => {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-polls'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-polls', currentUser?.id] });
       toast({
         title: 'Poll Deleted',
         description: 'The poll has been removed successfully.',
@@ -229,81 +229,5 @@ export const useAdminPolls = (eventId?: string) => {
     isCreating: createPollMutation.isPending,
     isUpdating: updatePollMutation.isPending,
     isDeleting: deletePollMutation.isPending,
-  };
-};
-
-export const useAdminPollVotes = () => {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  const { data: userVotes = [], isLoading } = useQuery({
-    queryKey: ['admin-poll-votes'],
-    queryFn: async () => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) return [];
-
-      const { data, error } = await supabase
-        .from('poll_votes')
-        .select('*')
-        .eq('user_id', user.user.id);
-
-      if (error) throw error;
-      return data as PollVote[];
-    },
-  });
-
-  const voteMutation = useMutation({
-    mutationFn: async ({ pollId, optionId }: { pollId: string; optionId: string }) => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error('User not authenticated');
-
-      // First check if user already voted
-      const { data: existingVote } = await supabase
-        .from('poll_votes')
-        .select('id')
-        .eq('poll_id', pollId)
-        .eq('user_id', user.user.id)
-        .single();
-
-      if (existingVote) {
-        throw new Error('You have already voted on this poll');
-      }
-
-      const { data, error } = await supabase
-        .from('poll_votes')
-        .insert([{
-          poll_id: pollId,
-          user_id: user.user.id,
-          option_id: optionId
-        }])
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-poll-votes'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-polls'] });
-      toast({
-        title: 'Vote Submitted',
-        description: 'Thank you for your feedback!',
-      });
-    },
-    onError: (error) => {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to submit vote. Please try again.',
-        variant: 'destructive',
-      });
-      console.error('Error submitting vote:', error);
-    },
-  });
-
-  return {
-    userVotes,
-    isLoading,
-    submitVote: voteMutation.mutate,
-    isSubmitting: voteMutation.isPending,
   };
 };

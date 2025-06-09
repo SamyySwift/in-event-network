@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface Rule {
   id: string;
@@ -17,16 +18,23 @@ export interface Rule {
 export const useRules = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentUser } = useAuth();
 
   const { data: rules = [], isLoading, error } = useQuery({
-    queryKey: ['rules'],
+    queryKey: ['rules', currentUser?.id],
     queryFn: async () => {
+      if (!currentUser?.id) {
+        throw new Error('User not authenticated');
+      }
+
       try {
-        console.log('Fetching rules...');
+        console.log('Fetching rules for admin:', currentUser.id);
         
+        // Only fetch rules created by the current admin
         const { data, error } = await supabase
           .from('rules')
           .select('*')
+          .eq('created_by', currentUser.id)
           .order('created_at', { ascending: false });
         
         if (error) {
@@ -34,19 +42,21 @@ export const useRules = () => {
           throw error;
         }
         
-        console.log('Rules fetched successfully:', data);
+        console.log('Rules fetched successfully:', data?.length || 0);
         return (data || []) as Rule[];
       } catch (err) {
         console.error('Unexpected error fetching rules:', err);
         throw err;
       }
     },
+    enabled: !!currentUser?.id,
   });
 
   const createRuleMutation = useMutation({
     mutationFn: async (ruleData: { title: string; content: string; category?: string; priority?: 'high' | 'medium' | 'low' }) => {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) throw new Error('User not authenticated');
+      if (!currentUser?.id) {
+        throw new Error('User not authenticated');
+      }
 
       const { data, error } = await supabase
         .from('rules')
@@ -55,7 +65,7 @@ export const useRules = () => {
           content: ruleData.content,
           category: ruleData.category,
           priority: ruleData.priority || 'medium',
-          created_by: user.user.id
+          created_by: currentUser.id
         })
         .select()
         .single();
@@ -64,7 +74,7 @@ export const useRules = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rules'] });
+      queryClient.invalidateQueries({ queryKey: ['rules', currentUser?.id] });
       toast({
         title: 'Rule Created',
         description: 'The rule has been created successfully.',
@@ -86,6 +96,7 @@ export const useRules = () => {
         .from('rules')
         .update(ruleData)
         .eq('id', id)
+        .eq('created_by', currentUser?.id) // Ensure user can only update their own rules
         .select()
         .single();
 
@@ -93,7 +104,7 @@ export const useRules = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rules'] });
+      queryClient.invalidateQueries({ queryKey: ['rules', currentUser?.id] });
       toast({
         title: 'Rule Updated',
         description: 'The rule has been updated successfully.',
@@ -114,12 +125,13 @@ export const useRules = () => {
       const { error } = await supabase
         .from('rules')
         .delete()
-        .eq('id', id);
+        .eq('id', id)
+        .eq('created_by', currentUser?.id); // Ensure user can only delete their own rules
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rules'] });
+      queryClient.invalidateQueries({ queryKey: ['rules', currentUser?.id] });
       toast({
         title: 'Rule Deleted',
         description: 'The rule has been removed successfully.',

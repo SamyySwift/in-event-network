@@ -27,7 +27,7 @@ export const useAdminAttendees = () => {
 
       console.log('Fetching attendees for admin:', currentUser.id);
 
-      // Get attendees through event participants joined with profiles and events
+      // Get attendees only for events hosted by the current admin
       const { data, error } = await supabase
         .from('event_participants')
         .select(`
@@ -53,7 +53,7 @@ export const useAdminAttendees = () => {
         throw error;
       }
 
-      // Transform the data to match AdminAttendee interface
+      // Transform and filter data to ensure only current admin's attendees
       const transformedData = data?.map((item: any) => ({
         id: item.profiles?.id || '',
         name: item.profiles?.name || 'Unknown',
@@ -64,7 +64,7 @@ export const useAdminAttendees = () => {
         company: item.profiles?.company,
         event_name: item.events?.name || '',
         joined_at: item.joined_at
-      })).filter(item => item.id) || [];
+      })).filter(item => item.id && item.event_name) || [];
 
       console.log('Admin attendees fetched:', transformedData.length);
       return transformedData as AdminAttendee[];

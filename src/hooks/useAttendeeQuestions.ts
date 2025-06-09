@@ -1,0 +1,279 @@
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+
+interface QuestionWithProfile {
+  id: string;
+  content: string;
+  created_at: string;
+  upvotes: number;
+  is_answered: boolean;
+  user_id: string;
+  session_id: string | null;
+  event_id: string | null;
+  is_anonymous: boolean;
+  profiles: {
+    name: string;
+    photo_url: string | null;
+  } | null;
+}
+
+interface Session {
+  id: string;
+  name: string;
+  session_title: string | null;
+  session_time: string | null;
+}
+
+export const useAttendeeQuestions = () => {
+  const { currentUser } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: questions = [], isLoading: questionsLoading, error: questionsError } = useQuery({
+    queryKey: ['attendee-questions', currentUser?.id],
+    queryFn: async (): Promise<QuestionWithProfile[]> => {
+      if (!currentUser?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get the user's current event from their profile
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('current_event_id')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (!userProfile?.current_event_id) {
+        return [];
+      }
+
+      // Get the current event to find the host
+      const { data: currentEvent } = await supabase
+        .from('events')
+        .select('host_id')
+        .eq('id', userProfile.current_event_id)
+        .single();
+
+      if (!currentEvent?.host_id) {
+        return [];
+      }
+
+      // Get all events from the same host
+      const { data: hostEvents } = await supabase
+        .from('events')
+        .select('id')
+        .eq('host_id', currentEvent.host_id);
+
+      const eventIds = hostEvents?.map(e => e.id) || [];
+
+      if (eventIds.length === 0) {
+        return [];
+      }
+
+      // Get questions from users who have joined events from this host
+      const { data: eventParticipants } = await supabase
+        .from('event_participants')
+        .select('user_id')
+        .in('event_id', eventIds);
+
+      const participantIds = eventParticipants?.map(p => p.user_id) || [];
+
+      if (participantIds.length === 0) {
+        return [];
+      }
+
+      // Get questions from these participants
+      const { data: questionsData, error } = await supabase
+        .from('questions')
+        .select('*')
+        .in('user_id', participantIds)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching attendee questions:', error);
+        throw error;
+      }
+
+      // Fetch profiles for each question
+      const questionsWithProfiles = await Promise.all(
+        (questionsData || []).map(async (question) => {
+          if (question.is_anonymous) {
+            return {
+              ...question,
+              profiles: null
+            };
+          }
+
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('name, photo_url')
+            .eq('id', question.user_id)
+            .single();
+
+          return {
+            ...question,
+            profiles: profile
+          };
+        })
+      );
+
+      return questionsWithProfiles;
+    },
+    enabled: !!currentUser?.id,
+  });
+
+  const { data: sessions = [], isLoading: sessionsLoading } = useQuery({
+    queryKey: ['attendee-sessions', currentUser?.id],
+    queryFn: async (): Promise<Session[]> => {
+      if (!currentUser?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get the user's current event from their profile
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('current_event_id')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (!userProfile?.current_event_id) {
+        return [];
+      }
+
+      // Get the current event to find the host
+      const { data: currentEvent } = await supabase
+        .from('events')
+        .select('host_id')
+        .eq('id', userProfile.current_event_id)
+        .single();
+
+      if (!currentEvent?.host_id) {
+        return [];
+      }
+
+      // Get all events from the same host
+      const { data: hostEvents } = await supabase
+        .from('events')
+        .select('id')
+        .eq('host_id', currentEvent.host_id);
+
+      const eventIds = hostEvents?.map(e => e.id) || [];
+
+      if (eventIds.length === 0) {
+        return [];
+      }
+
+      // Get speakers/sessions for events from this host
+      const { data: sessionsData, error } = await supabase
+        .from('speakers')
+        .select('id, name, session_title, session_time')
+        .in('event_id', eventIds)
+        .not('session_time', 'is', null)
+        .not('session_title', 'is', null)
+        .order('session_time', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching attendee sessions:', error);
+        throw error;
+      }
+
+      return sessionsData || [];
+    },
+    enabled: !!currentUser?.id,
+  });
+
+  const submitQuestionMutation = useMutation({
+    mutationFn: async (questionData: {
+      content: string;
+      isAnonymous: boolean;
+      selectedSessionId: string;
+    }) => {
+      if (!currentUser?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      const { error } = await supabase
+        .from('questions')
+        .insert([{
+          content: questionData.content.trim(),
+          user_id: currentUser.id,
+          is_anonymous: questionData.isAnonymous,
+          session_id: questionData.selectedSessionId === 'general' ? null : questionData.selectedSessionId || null,
+          event_id: null,
+          upvotes: 0,
+          is_answered: false
+        }]);
+
+      if (error) {
+        console.error('Error submitting question:', error);
+        throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['attendee-questions'] });
+      toast({
+        title: "Success",
+        description: "Your question has been submitted!",
+      });
+    },
+    onError: (error: any) => {
+      console.error('Error submitting question:', error);
+      toast({
+        title: "Error",
+        description: "Failed to submit question",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const upvoteQuestionMutation = useMutation({
+    mutationFn: async (questionId: string) => {
+      // Get current upvotes
+      const { data: question, error: fetchError } = await supabase
+        .from('questions')
+        .select('upvotes')
+        .eq('id', questionId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Update upvotes
+      const { error } = await supabase
+        .from('questions')
+        .update({ upvotes: question.upvotes + 1 })
+        .eq('id', questionId);
+
+      if (error) throw error;
+
+      return questionId;
+    },
+    onSuccess: (questionId) => {
+      queryClient.invalidateQueries({ queryKey: ['attendee-questions'] });
+      toast({
+        title: "Success",
+        description: "Question upvoted!",
+      });
+    },
+    onError: (error: any) => {
+      console.error('Error upvoting question:', error);
+      toast({
+        title: "Error",
+        description: "Failed to upvote question",
+        variant: "destructive",
+      });
+    },
+  });
+
+  return {
+    questions,
+    sessions,
+    isLoading: questionsLoading || sessionsLoading,
+    error: questionsError,
+    submitQuestion: submitQuestionMutation.mutate,
+    upvoteQuestion: upvoteQuestionMutation.mutate,
+    isSubmitting: submitQuestionMutation.isPending,
+  };
+};

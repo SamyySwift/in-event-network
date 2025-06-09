@@ -1,25 +1,27 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotificationCount } from '@/hooks/useNotificationCount';
 import { Calendar, Users, Bell, Settings, MessageSquare, Star, MapPin, BarChart4, User, PanelLeft, Megaphone, Landmark, BookText, MessageCircle, ChevronRight, LogOut, Menu, Search, Sun, Moon, BarChart, Clock } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
-const AdminLayout: React.FC<AdminLayoutProps> = ({
-  children
-}) => {
-  const {
-    currentUser,
-    logout
-  } = useAuth();
+
+const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
+  const { currentUser, logout } = useAuth();
+  const { unreadCount } = useNotificationCount();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -29,6 +31,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
     setTheme(newTheme);
     document.documentElement.classList.toggle('dark');
   };
+
   const isActive = (path: string) => {
     if (path === '/admin') {
       return location.pathname === '/admin';
@@ -39,7 +42,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
   // Generate breadcrumbs based on current path
   const generateBreadcrumbs = () => {
     const pathnames = location.pathname.split('/').filter(x => x);
-    return <Breadcrumb className="mb-6">
+    return (
+      <Breadcrumb className="mb-6">
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink href="/admin">
@@ -50,94 +54,194 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
             </BreadcrumbLink>
           </BreadcrumbItem>
           {pathnames.slice(1).map((name, index) => {
-          const routeTo = `/${pathnames.slice(0, index + 2).join('/')}`;
-          const isLast = index === pathnames.slice(1).length - 1;
-          return isLast ? <BreadcrumbItem key={name}>
+            const routeTo = `/${pathnames.slice(0, index + 2).join('/')}`;
+            const isLast = index === pathnames.slice(1).length - 1;
+            return isLast ? (
+              <BreadcrumbItem key={name}>
                 <BreadcrumbSeparator />
                 <BreadcrumbPage className="font-semibold">
                   {name.charAt(0).toUpperCase() + name.slice(1)}
                 </BreadcrumbPage>
-              </BreadcrumbItem> : <BreadcrumbItem key={name}>
+              </BreadcrumbItem>
+            ) : (
+              <BreadcrumbItem key={name}>
                 <BreadcrumbSeparator />
                 <BreadcrumbLink href={routeTo} className="text-primary hover:text-primary-600 transition-colors">
                   {name.charAt(0).toUpperCase() + name.slice(1)}
                 </BreadcrumbLink>
-              </BreadcrumbItem>;
-        })}
+              </BreadcrumbItem>
+            );
+          })}
         </BreadcrumbList>
-      </Breadcrumb>;
+      </Breadcrumb>
+    );
   };
-  const adminNavigation = [{
-    name: 'Dashboard',
-    href: '/admin',
-    icon: <BarChart4 size={20} />
-  }, {
-    name: 'Events',
-    href: '/admin/events',
-    icon: <Calendar size={20} />
-  }, {
-    name: 'Attendees',
-    href: '/admin/attendees',
-    icon: <Users size={20} />
-  }, {
-    name: 'Speakers',
-    href: '/admin/speakers',
-    icon: <User size={20} />
-  }, {
-    name: 'Announcements',
-    href: '/admin/announcements',
-    icon: <Megaphone size={20} />
-  }, {
-    name: 'Schedule',
-    href: '/admin/schedule',
-    icon: <Clock size={20} />
-  }, {
-    name: 'Polls & Surveys',
-    href: '/admin/polls',
-    icon: <BarChart size={20} />
-  }, {
-    name: 'Facilities',
-    href: '/admin/facilities',
-    icon: <MapPin size={20} />
-  }, {
-    name: 'Event Rules',
-    href: '/admin/rules',
-    icon: <BookText size={20} />
-  }, {
-    name: 'Questions',
-    href: '/admin/questions',
-    icon: <MessageSquare size={20} />
-  }, {
-    name: 'Suggestions',
-    href: '/admin/suggestions',
-    icon: <MessageCircle size={20} />
-  }, {
-    name: 'Team Management',
-    href: '/admin/team',
-    icon: <Landmark size={20} />
-  }, {
-    name: 'Notifications',
-    href: '/admin/notifications',
-    icon: <Bell size={20} />
-  }, {
-    name: 'Settings',
-    href: '/admin/settings',
-    icon: <Settings size={20} />
-  }];
-  return <div className="min-h-screen bg-background flex flex-col md:flex-row">
+
+  const adminNavigation = [
+    { name: 'Dashboard', href: '/admin', icon: <BarChart4 size={20} /> },
+    { name: 'Events', href: '/admin/events', icon: <Calendar size={20} /> },
+    { name: 'Attendees', href: '/admin/attendees', icon: <Users size={20} /> },
+    { name: 'Speakers', href: '/admin/speakers', icon: <User size={20} /> },
+    { name: 'Announcements', href: '/admin/announcements', icon: <Megaphone size={20} /> },
+    { name: 'Schedule', href: '/admin/schedule', icon: <Clock size={20} /> },
+    { name: 'Polls & Surveys', href: '/admin/polls', icon: <BarChart size={20} /> },
+    { name: 'Facilities', href: '/admin/facilities', icon: <MapPin size={20} /> },
+    { name: 'Event Rules', href: '/admin/rules', icon: <BookText size={20} /> },
+    { name: 'Questions', href: '/admin/questions', icon: <MessageSquare size={20} /> },
+    { name: 'Suggestions', href: '/admin/suggestions', icon: <MessageCircle size={20} /> },
+    { name: 'Team Management', href: '/admin/team', icon: <Landmark size={20} /> },
+    { name: 'Notifications', href: '/admin/notifications', icon: <Bell size={20} /> },
+    { name: 'Settings', href: '/admin/settings', icon: <Settings size={20} /> },
+  ];
+
+  const NavigationContent = ({ isMobile = false }) => (
+    <>
+      {currentUser && (
+        <div className={`${isMobile ? 'px-4' : sidebarOpen ? 'px-4' : 'px-2'} py-4 border-b border-sidebar-border`}>
+          <div className={`flex ${isMobile || sidebarOpen ? 'items-center' : 'justify-center'} space-x-3`}>
+            <Avatar className="h-10 w-10 ring-2 ring-primary/20">
+              {currentUser.photoUrl ? (
+                <AvatarImage src={currentUser.photoUrl} alt={currentUser.name} />
+              ) : (
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {currentUser.name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              )}
+            </Avatar>
+            
+            {(isMobile || sidebarOpen) && (
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-sidebar-foreground truncate">
+                  {currentUser.name}
+                </p>
+                <Badge variant="outline" className="text-[10px] font-normal px-1.5 bg-primary/10 hover:bg-primary/20 text-primary border-primary/20">
+                  Administrator
+                </Badge>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      
+      <div className={`${isMobile ? 'px-3' : sidebarOpen ? 'px-3' : 'px-2'} py-2`}>
+        {(isMobile || sidebarOpen) && (
+          <div className="relative mb-3">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search..." 
+              className="pl-8 bg-sidebar-accent border-sidebar-border text-sm h-9"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+          </div>
+        )}
+      </div>
+      
+      <nav className="flex-1 py-2 px-2 space-y-1 overflow-y-auto scrollbar-hide">
+        {adminNavigation.map(item => (
+          <Button
+            key={item.name}
+            variant={isActive(item.href) ? "secondary" : "ghost"}
+            className={`w-full ${isMobile || sidebarOpen ? 'justify-start' : 'justify-center'} ${
+              isActive(item.href) 
+                ? 'bg-primary/10 text-primary hover:bg-primary/20' 
+                : 'text-sidebar-foreground hover:bg-sidebar-accent/50'
+            }`}
+            onClick={() => {
+              navigate(item.href);
+              if (isMobile) setMobileSheetOpen(false);
+            }}
+            title={isMobile || sidebarOpen ? '' : item.name}
+          >
+            <span className={`${isMobile || sidebarOpen ? 'mr-3' : ''} ${
+              isActive(item.href) ? 'text-primary-700' : 'text-muted-foreground'
+            }`}>
+              {item.icon}
+            </span>
+            {(isMobile || sidebarOpen) && <span className="flex-1 text-left">{item.name}</span>}
+            {(isMobile || sidebarOpen) && isActive(item.href) && <ChevronRight size={16} className="ml-auto opacity-70" />}
+          </Button>
+        ))}
+        
+        {currentUser && (
+          <Button
+            variant="ghost"
+            className={`w-full ${isMobile || sidebarOpen ? 'justify-start' : 'justify-center'} text-sidebar-foreground mt-4 hover:text-destructive hover:bg-destructive/10`}
+            onClick={() => {
+              logout();
+              navigate('/');
+              if (isMobile) setMobileSheetOpen(false);
+            }}
+            title={isMobile || sidebarOpen ? '' : 'Logout'}
+          >
+            <span className={isMobile || sidebarOpen ? 'mr-3' : ''}>
+              <LogOut size={20} />
+            </span>
+            {(isMobile || sidebarOpen) && 'Logout'}
+          </Button>
+        )}
+      </nav>
+      
+      {(isMobile || sidebarOpen) && (
+        <div className="mt-auto p-4 border-t border-sidebar-border">
+          <Button variant="ghost" size="sm" className="w-full justify-start text-sidebar-foreground" onClick={toggleTheme}>
+            {theme === 'light' ? (
+              <>
+                <Moon size={16} className="mr-2" />
+                <span>Dark Mode</span>
+              </>
+            ) : (
+              <>
+                <Sun size={16} className="mr-2" />
+                <span>Light Mode</span>
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+    </>
+  );
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Mobile Header */}
       <header className="md:hidden bg-card glass-effect border-b py-4 px-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
         <div className="flex items-center">
-          <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(!sidebarOpen)} className="mr-2">
-            <Menu size={20} className="text-primary" />
-          </Button>
+          <Sheet open={mobileSheetOpen} onOpenChange={setMobileSheetOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="mr-2">
+                <Menu size={20} className="text-primary" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-80 p-0 bg-sidebar">
+              <div className="flex flex-col h-full">
+                <div className="p-4 border-b border-sidebar-border flex justify-between items-center">
+                  <div className="flex items-center">
+                    <img src="/logo-placeholder.svg" alt="Connect Logo" className="h-8 w-auto" />
+                    <span className="ml-2 font-semibold text-xl text-gradient">Admin</span>
+                  </div>
+                </div>
+                <NavigationContent isMobile={true} />
+              </div>
+            </SheetContent>
+          </Sheet>
+          
           <img src="/logo-placeholder.svg" alt="Connect Logo" className="h-8 w-auto" />
           <span className="ml-2 font-semibold text-gradient">Kconect Admin</span>
         </div>
         
-        <Button variant="ghost" size="icon" onClick={() => navigate('/admin/notifications')} className="relative">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => navigate('/admin/notifications')} 
+          className="relative"
+        >
           <Bell size={20} className="text-primary" />
-          <span className="absolute top-0 right-0 h-2 w-2 bg-primary rounded-full animate-pulse"></span>
+          {unreadCount > 0 && (
+            <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-primary text-white text-xs">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </Badge>
+          )}
         </Button>
       </header>
       
@@ -149,68 +253,17 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
             {sidebarOpen && <span className="ml-2 font-semibold text-xl text-gradient">Admin</span>}
           </div>
           
-          <Button variant="ghost" size="sm" className="text-sidebar-foreground hover:bg-sidebar-accent" onClick={() => setSidebarOpen(!sidebarOpen)}>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="text-sidebar-foreground hover:bg-sidebar-accent" 
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
             <PanelLeft size={18} className={`transition-transform duration-300 ${sidebarOpen ? '' : 'rotate-180'}`} />
           </Button>
         </div>
         
-        {currentUser && <div className={`${sidebarOpen ? 'px-4' : 'px-2'} py-4 border-b border-sidebar-border`}>
-            <div className={`flex ${sidebarOpen ? 'items-center' : 'justify-center'} space-x-3`}>
-              <Avatar className="h-10 w-10 ring-2 ring-primary/20">
-                {currentUser.photoUrl ? <AvatarImage src={currentUser.photoUrl} alt={currentUser.name} /> : <AvatarFallback className="bg-primary text-primary-foreground">
-                    {currentUser.name.charAt(0).toUpperCase()}
-                  </AvatarFallback>}
-              </Avatar>
-              
-              {sidebarOpen && <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-sidebar-foreground truncate">
-                    {currentUser.name}
-                  </p>
-                  <Badge variant="outline" className="text-[10px] font-normal px-1.5 bg-primary/10 hover:bg-primary/20 text-primary border-primary/20">
-                    Administrator
-                  </Badge>
-                </div>}
-            </div>
-          </div>}
-        
-        <div className={`${sidebarOpen ? 'px-3' : 'px-2'} py-2`}>
-          {sidebarOpen && <div className="relative mb-3">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search..." className="pl-8 bg-sidebar-accent border-sidebar-border text-sm h-9" value={searchQuery} onChange={e => setSearchQuery(e.target.value)} />
-            </div>}
-        </div>
-        
-        <nav className="flex-1 py-2 px-2 space-y-1 overflow-y-auto scrollbar-hide">
-          {adminNavigation.map(item => <Button key={item.name} variant={isActive(item.href) ? "secondary" : "ghost"} className={`w-full ${sidebarOpen ? 'justify-start' : 'justify-center'} ${isActive(item.href) ? 'bg-primary/10 text-primary hover:bg-primary/20' : 'text-sidebar-foreground hover:bg-sidebar-accent/50'}`} onClick={() => navigate(item.href)} title={sidebarOpen ? '' : item.name}>
-              <span className={`${sidebarOpen ? 'mr-3' : ''} ${isActive(item.href) ? 'text-primary-700' : 'text-muted-foreground'}`}>
-                {item.icon}
-              </span>
-              {sidebarOpen && <span className="flex-1 text-left">{item.name}</span>}
-              {sidebarOpen && isActive(item.href) && <ChevronRight size={16} className="ml-auto opacity-70" />}
-            </Button>)}
-          
-          {currentUser && <Button variant="ghost" className={`w-full ${sidebarOpen ? 'justify-start' : 'justify-center'} text-sidebar-foreground mt-4 hover:text-destructive hover:bg-destructive/10`} onClick={() => {
-          logout();
-          navigate('/');
-        }} title={sidebarOpen ? '' : 'Logout'}>
-              <span className={sidebarOpen ? 'mr-3' : ''}>
-                <LogOut size={20} />
-              </span>
-              {sidebarOpen && 'Logout'}
-            </Button>}
-        </nav>
-        
-        {sidebarOpen && <div className="mt-auto p-4 border-t border-sidebar-border">
-            <Button variant="ghost" size="sm" className="w-full justify-start text-sidebar-foreground" onClick={toggleTheme}>
-              {theme === 'light' ? <>
-                  <Moon size={16} className="mr-2" />
-                  <span>Dark Mode</span>
-                </> : <>
-                  <Sun size={16} className="mr-2" />
-                  <span>Light Mode</span>
-                </>}
-            </Button>
-          </div>}
+        <NavigationContent />
       </aside>
       
       {/* Main Content */}
@@ -226,19 +279,41 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
               {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
             </Button>
             
-            <Button variant="outline" size="icon" onClick={() => navigate('/admin/notifications')} className={`relative bg-card ${isActive('/admin/notifications') ? 'border-primary/30 ring-1 ring-primary/30' : 'border-primary/20'} hover:bg-accent`}>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={() => navigate('/admin/notifications')} 
+              className={`relative bg-card ${
+                isActive('/admin/notifications') ? 'border-primary/30 ring-1 ring-primary/30' : 'border-primary/20'
+              } hover:bg-accent`}
+            >
               <Bell size={18} className={isActive('/admin/notifications') ? 'text-primary' : ''} />
-              <span className="absolute top-0 right-0 h-2 w-2 bg-primary rounded-full animate-pulse"></span>
+              {unreadCount > 0 && (
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center bg-primary text-white text-xs">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </Badge>
+              )}
             </Button>
             
-            <Button variant="outline" size="icon" onClick={() => navigate('/admin/settings')} className={`bg-card ${isActive('/admin/settings') ? 'border-primary/30 ring-1 ring-primary/30' : 'border-primary/20'} hover:bg-accent`}>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              onClick={() => navigate('/admin/settings')} 
+              className={`bg-card ${
+                isActive('/admin/settings') ? 'border-primary/30 ring-1 ring-primary/30' : 'border-primary/20'
+              } hover:bg-accent`}
+            >
               <Settings size={18} className={isActive('/admin/settings') ? 'text-primary' : ''} />
             </Button>
             
             <Avatar className="h-9 w-9 cursor-pointer ring-2 ring-primary/20 hover:ring-primary/40 transition-all" onClick={() => navigate('/admin/profile')}>
-              {currentUser?.photoUrl ? <AvatarImage src={currentUser.photoUrl} alt={currentUser.name} /> : <AvatarFallback className="bg-primary text-white">
+              {currentUser?.photoUrl ? (
+                <AvatarImage src={currentUser.photoUrl} alt={currentUser.name} />
+              ) : (
+                <AvatarFallback className="bg-primary text-white">
                   {currentUser?.name.charAt(0).toUpperCase()}
-                </AvatarFallback>}
+                </AvatarFallback>
+                )}
             </Avatar>
           </div>
         </header>
@@ -247,6 +322,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
           {children}
         </div>
       </main>
-    </div>;
+    </div>
+  );
 };
+
 export default AdminLayout;

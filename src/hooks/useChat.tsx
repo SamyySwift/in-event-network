@@ -3,12 +3,14 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
 
 export interface ChatMessage {
   id: string;
   user_id: string;
   content: string;
   quoted_message_id: string | null;
+  event_id: string | null;
   created_at: string;
   updated_at: string;
   user_profile?: {
@@ -20,25 +22,33 @@ export interface ChatMessage {
 
 export const useChat = () => {
   const { currentUser } = useAuth();
+  const { currentEventId } = useAttendeeEventContext();
   const { toast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser && currentEventId) {
       fetchMessages();
       setupRealtimeSubscription();
     }
-  }, [currentUser]);
+  }, [currentUser, currentEventId]);
 
   const fetchMessages = async () => {
+    if (!currentEventId) {
+      setMessages([]);
+      setLoading(false);
+      return;
+    }
+
     try {
-      console.log('Fetching chat messages...');
+      console.log('Fetching chat messages for event:', currentEventId);
       
-      // First get the messages
+      // First get the messages for the current event only
       const { data: messagesData, error: messagesError } = await supabase
         .from('chat_messages')
         .select('*')
+        .eq('event_id', currentEventId)
         .order('created_at', { ascending: true })
         .limit(100);
 
@@ -87,16 +97,21 @@ export const useChat = () => {
   };
 
   const setupRealtimeSubscription = () => {
-    console.log('Setting up realtime subscription...');
+    if (!currentEventId) {
+      return;
+    }
+
+    console.log('Setting up realtime subscription for event:', currentEventId);
     
     const channel = supabase
-      .channel('chat-messages')
+      .channel(`chat-messages-${currentEventId}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'chat_messages'
+          table: 'chat_messages',
+          filter: `event_id=eq.${currentEventId}`
         },
         async (payload) => {
           console.log('New message received:', payload);
@@ -141,8 +156,17 @@ export const useChat = () => {
       return;
     }
 
+    if (!currentEventId) {
+      toast({
+        title: "Error",
+        description: "You must be in an event to send messages",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
-      console.log('Sending message:', { content, quotedMessageId, userId: currentUser.id });
+      console.log('Sending message:', { content, quotedMessageId, userId: currentUser.id, eventId: currentEventId });
       
       const { error } = await supabase
         .from('chat_messages')
@@ -150,6 +174,7 @@ export const useChat = () => {
           user_id: currentUser.id,
           content: content.trim(),
           quoted_message_id: quotedMessageId || null,
+          event_id: currentEventId,
         });
 
       if (error) {

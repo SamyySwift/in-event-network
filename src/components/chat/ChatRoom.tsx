@@ -1,18 +1,21 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Quote, User } from 'lucide-react';
+import { Send, Quote, User, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useChat } from '@/hooks/useChat';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
 import { ChatMessage } from './ChatMessage';
 import { QuotedMessage } from './QuotedMessage';
 
 const ChatRoom = () => {
   const { currentUser } = useAuth();
+  const { currentEventId, hasJoinedEvent } = useAttendeeEventContext();
   const { messages, loading, sendMessage } = useChat();
   const [newMessage, setNewMessage] = useState('');
   const [quotedMessage, setQuotedMessage] = useState<any>(null);
@@ -45,6 +48,22 @@ const ChatRoom = () => {
     }
   };
 
+  // Show message if user hasn't joined an event
+  if (!hasJoinedEvent || !currentEventId) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              You need to scan into an event to access the chat room. Please scan the QR code provided by the event organizer.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
   if (loading) {
     return (
       <Card>
@@ -62,7 +81,7 @@ const ChatRoom = () => {
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2">
           <User className="h-5 w-5 text-connect-600" />
-          Global Chat Room
+          Event Chat Room
           <Badge variant="secondary" className="ml-auto">
             {messages.length} messages
           </Badge>
@@ -75,7 +94,7 @@ const ChatRoom = () => {
           {messages.length === 0 ? (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No messages yet. Start the conversation!</p>
+              <p>No messages yet. Start the conversation with your fellow attendees!</p>
             </div>
           ) : (
             messages.map((message) => (

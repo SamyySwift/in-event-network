@@ -108,6 +108,7 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          event_id: string | null
           id: string
           quoted_message_id: string | null
           updated_at: string
@@ -116,6 +117,7 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          event_id?: string | null
           id?: string
           quoted_message_id?: string | null
           updated_at?: string
@@ -124,12 +126,20 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          event_id?: string | null
           id?: string
           quoted_message_id?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "chat_messages_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "chat_messages_quoted_message_id_fkey"
             columns: ["quoted_message_id"]

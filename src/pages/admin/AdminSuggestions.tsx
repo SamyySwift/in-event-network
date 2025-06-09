@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -134,8 +133,8 @@ const AdminSuggestionsContent = () => {
         return;
       }
 
-      // Get unique user IDs
-      const userIds = [...new Set(suggestionsData.map(s => s.user_id).filter(Boolean))];
+      // Get unique user IDs and filter out null/undefined values
+      const userIds = [...new Set(suggestionsData.map(s => s.user_id).filter(Boolean))] as string[];
       
       // Fetch profiles for these users
       const { data: profilesData, error: profilesError } = await supabase

@@ -1,3 +1,4 @@
+
 export type Json =
   | string
   | number
@@ -9,6 +10,50 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      schedule_items: {
+        Row: {
+          id: string;
+          title: string;
+          description?: string;
+          start_time: string;
+          end_time: string;
+          location?: string;
+          type: string;
+          priority: string;
+          event_id: string;
+          created_by?: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          description?: string;
+          start_time: string;
+          end_time: string;
+          location?: string;
+          type?: string;
+          priority?: string;
+          event_id: string;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          description?: string;
+          start_time?: string;
+          end_time?: string;
+          location?: string;
+          type?: string;
+          priority?: string;
+          event_id?: string;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       facilities: {
         Row: {
           id: string;

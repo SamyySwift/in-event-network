@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Calendar, Users, Bell, Settings, MessageSquare, Star, MapPin, BarChart4, User, PanelLeft, Megaphone, Landmark, BookText, MessageCircle, ChevronRight, LogOut, Menu, Search, Sun, Moon, BarChart } from 'lucide-react';
+import { Calendar, Users, Bell, Settings, MessageSquare, Star, MapPin, BarChart4, User, PanelLeft, Megaphone, Landmark, BookText, MessageCircle, ChevronRight, LogOut, Menu, Search, Sun, Moon, BarChart, Clock } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
@@ -88,9 +88,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
     href: '/admin/announcements',
     icon: <Megaphone size={20} />
   }, {
-    name: 'Advertisements',
-    href: '/admin/advertisements',
-    icon: <Star size={20} />
+    name: 'Schedule',
+    href: '/admin/schedule',
+    icon: <Clock size={20} />
   }, {
     name: 'Polls & Surveys',
     href: '/admin/polls',

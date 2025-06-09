@@ -813,6 +813,51 @@ export type Database = {
           },
         ]
       }
+      schedule_items: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_time: string
+          event_id: string
+          id: string
+          location: string | null
+          priority: string | null
+          start_time: string
+          title: string
+          type: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time: string
+          event_id: string
+          id?: string
+          location?: string | null
+          priority?: string | null
+          start_time: string
+          title: string
+          type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_time?: string
+          event_id?: string
+          id?: string
+          location?: string | null
+          priority?: string | null
+          start_time?: string
+          title?: string
+          type?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       speakers: {
         Row: {
           bio: string

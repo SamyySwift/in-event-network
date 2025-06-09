@@ -11,58 +11,165 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAttendeeSpeakers } from '@/hooks/useAttendeeSpeakers';
 import { format, isToday, isTomorrow, isYesterday, parseISO } from 'date-fns';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+
+interface ScheduleItem {
+  id: string;
+  title: string;
+  description: string | null;
+  start_time: string;
+  end_time: string;
+  location: string | null;
+  type: string;
+  priority: string;
+  event_id: string;
+}
+
+interface CombinedScheduleItem {
+  id: string;
+  title: string;
+  description?: string | null;
+  start_time: string;
+  end_time?: string;
+  location?: string | null;
+  type: 'speaker' | 'schedule';
+  speaker_name?: string;
+  speaker_photo?: string;
+  speaker_company?: string;
+  speaker_bio?: string;
+  priority?: string;
+}
 
 const AttendeeSchedule = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState<string>('all');
+  const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
+  const [combinedItems, setCombinedItems] = useState<CombinedScheduleItem[]>([]);
   
-  const { speakers, isLoading, error } = useAttendeeSpeakers();
+  const { speakers, isLoading: speakersLoading, error } = useAttendeeSpeakers();
+  const { currentUser } = useAuth();
 
-  // Filter speakers with sessions
-  const speakersWithSessions = speakers.filter(speaker => 
-    speaker.session_time && speaker.session_title
-  );
+  // Fetch schedule items from database
+  useEffect(() => {
+    const fetchScheduleItems = async () => {
+      if (!currentUser?.currentEventId) return;
 
-  // Filter based on search and date
-  const filteredSpeakers = speakersWithSessions.filter(speaker => {
+      try {
+        const { data, error } = await supabase
+          .from('schedule_items')
+          .select('*')
+          .eq('event_id', currentUser.currentEventId)
+          .order('start_time', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching schedule items:', error);
+          return;
+        }
+
+        setScheduleItems(data || []);
+      } catch (error) {
+        console.error('Error fetching schedule items:', error);
+      }
+    };
+
+    fetchScheduleItems();
+
+    // Set up real-time subscription for schedule items
+    const channel = supabase
+      .channel('attendee-schedule-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'schedule_items'
+        },
+        () => {
+          console.log('Schedule items updated, refetching...');
+          fetchScheduleItems();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser?.currentEventId]);
+
+  // Combine speakers and schedule items
+  useEffect(() => {
+    const combined: CombinedScheduleItem[] = [];
+
+    // Add speaker sessions
+    const speakersWithSessions = speakers.filter(speaker => 
+      speaker.session_time && speaker.session_title
+    );
+
+    speakersWithSessions.forEach(speaker => {
+      combined.push({
+        id: `speaker-${speaker.id}`,
+        title: speaker.session_title!,
+        description: speaker.bio,
+        start_time: speaker.session_time!,
+        location: undefined,
+        type: 'speaker',
+        speaker_name: speaker.name,
+        speaker_photo: speaker.photo_url,
+        speaker_company: speaker.company,
+        speaker_bio: speaker.bio
+      });
+    });
+
+    // Add schedule items
+    scheduleItems.forEach(item => {
+      combined.push({
+        id: `schedule-${item.id}`,
+        title: item.title,
+        description: item.description,
+        start_time: item.start_time,
+        end_time: item.end_time,
+        location: item.location,
+        type: 'schedule',
+        priority: item.priority
+      });
+    });
+
+    // Sort by start time
+    combined.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+
+    setCombinedItems(combined);
+  }, [speakers, scheduleItems]);
+
+  // Filter items based on search and date
+  const filteredItems = combinedItems.filter(item => {
     const matchesSearch = 
-      speaker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      speaker.session_title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      speaker.company?.toLowerCase().includes(searchTerm.toLowerCase());
+      item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.speaker_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.speaker_company?.toLowerCase().includes(searchTerm.toLowerCase());
 
     if (!matchesSearch) return false;
 
     if (selectedDate === 'all') return true;
 
-    if (speaker.session_time) {
-      const sessionDate = parseISO(speaker.session_time);
-      if (selectedDate === 'today') return isToday(sessionDate);
-      if (selectedDate === 'tomorrow') return isTomorrow(sessionDate);
-      if (selectedDate === 'yesterday') return isYesterday(sessionDate);
-    }
+    const sessionDate = parseISO(item.start_time);
+    if (selectedDate === 'today') return isToday(sessionDate);
+    if (selectedDate === 'tomorrow') return isTomorrow(sessionDate);
+    if (selectedDate === 'yesterday') return isYesterday(sessionDate);
 
     return true;
   });
 
-  // Group speakers by date
-  const groupedByDate = filteredSpeakers.reduce((groups, speaker) => {
-    if (!speaker.session_time) return groups;
-    
-    const date = format(parseISO(speaker.session_time), 'yyyy-MM-dd');
+  // Group items by date
+  const groupedByDate = filteredItems.reduce((groups, item) => {
+    const date = format(parseISO(item.start_time), 'yyyy-MM-dd');
     if (!groups[date]) {
       groups[date] = [];
     }
-    groups[date].push(speaker);
+    groups[date].push(item);
     return groups;
-  }, {} as Record<string, typeof filteredSpeakers>);
-
-  // Sort each group by time
-  Object.keys(groupedByDate).forEach(date => {
-    groupedByDate[date].sort((a, b) => {
-      if (!a.session_time || !b.session_time) return 0;
-      return new Date(a.session_time).getTime() - new Date(b.session_time).getTime();
-    });
-  });
+  }, {} as Record<string, typeof filteredItems>);
 
   const formatDateHeader = (dateStr: string) => {
     const date = parseISO(dateStr);
@@ -72,7 +179,32 @@ const AttendeeSchedule = () => {
     return format(date, 'EEEE, MMMM d');
   };
 
-  if (isLoading) {
+  const getTypeBadge = (type: string) => {
+    switch (type) {
+      case 'speaker':
+        return <Badge variant="default">Speaker Session</Badge>;
+      case 'schedule':
+        return <Badge variant="secondary">Event Item</Badge>;
+      default:
+        return <Badge variant="outline">{type}</Badge>;
+    }
+  };
+
+  const getPriorityBadge = (priority?: string) => {
+    if (!priority) return null;
+    switch (priority) {
+      case 'high':
+        return <Badge className="bg-red-100 text-red-800">High Priority</Badge>;
+      case 'medium':
+        return <Badge className="bg-yellow-100 text-yellow-800">Medium Priority</Badge>;
+      case 'low':
+        return <Badge className="bg-green-100 text-green-800">Low Priority</Badge>;
+      default:
+        return <Badge variant="outline">{priority}</Badge>;
+    }
+  };
+
+  if (speakersLoading) {
     return (
       <AppLayout>
         <AttendeeRouteGuard>
@@ -105,7 +237,7 @@ const AttendeeSchedule = () => {
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
-                    placeholder="Search sessions, speakers, or companies..."
+                    placeholder="Search sessions, speakers, or events..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10"
@@ -123,11 +255,11 @@ const AttendeeSchedule = () => {
           </Card>
 
           {/* Schedule Content */}
-          {filteredSpeakers.length === 0 ? (
+          {filteredItems.length === 0 ? (
             <Card>
               <CardContent className="py-10 text-center text-muted-foreground">
                 <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium mb-2">No sessions found</h3>
+                <h3 className="text-lg font-medium mb-2">No schedule items found</h3>
                 <p>Try adjusting your search or filter criteria</p>
               </CardContent>
             </Card>
@@ -141,30 +273,34 @@ const AttendeeSchedule = () => {
                       {formatDateHeader(date)}
                     </h2>
                     <div className="space-y-4">
-                      {groupedByDate[date].map(speaker => (
-                        <Card key={speaker.id} className="hover:shadow-md transition-shadow">
+                      {groupedByDate[date].map(item => (
+                        <Card key={item.id} className="hover:shadow-md transition-shadow">
                           <CardContent className="pt-6">
                             <div className="flex items-start gap-4">
-                              <Avatar className="flex-shrink-0">
-                                {speaker.photo_url ? (
-                                  <AvatarImage src={speaker.photo_url} alt={speaker.name} />
-                                ) : (
-                                  <AvatarFallback>
-                                    {speaker.name.split(' ').map(n => n[0]).join('')}
-                                  </AvatarFallback>
-                                )}
-                              </Avatar>
+                              {item.type === 'speaker' && (
+                                <Avatar className="flex-shrink-0">
+                                  {item.speaker_photo ? (
+                                    <AvatarImage src={item.speaker_photo} alt={item.speaker_name} />
+                                  ) : (
+                                    <AvatarFallback>
+                                      {item.speaker_name?.split(' ').map(n => n[0]).join('')}
+                                    </AvatarFallback>
+                                  )}
+                                </Avatar>
+                              )}
                               
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between mb-2">
                                   <div>
                                     <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
-                                      {speaker.session_title}
+                                      {item.title}
                                     </h3>
-                                    <p className="text-gray-600 dark:text-gray-400">
-                                      by {speaker.name}
-                                      {speaker.company && ` • ${speaker.company}`}
-                                    </p>
+                                    {item.type === 'speaker' && (
+                                      <p className="text-gray-600 dark:text-gray-400">
+                                        by {item.speaker_name}
+                                        {item.speaker_company && ` • ${item.speaker_company}`}
+                                      </p>
+                                    )}
                                   </div>
                                   <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
                                 </div>
@@ -172,23 +308,31 @@ const AttendeeSchedule = () => {
                                 <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-3">
                                   <div className="flex items-center gap-1">
                                     <Clock className="h-4 w-4" />
-                                    {speaker.session_time && format(parseISO(speaker.session_time), 'h:mm a')}
+                                    {format(parseISO(item.start_time), 'h:mm a')}
+                                    {item.end_time && ` - ${format(parseISO(item.end_time), 'h:mm a')}`}
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <Calendar className="h-4 w-4" />
-                                    {speaker.session_time && format(parseISO(speaker.session_time), 'MMM d')}
+                                    {format(parseISO(item.start_time), 'MMM d')}
                                   </div>
+                                  {item.location && (
+                                    <div className="flex items-center gap-1">
+                                      <MapPin className="h-4 w-4" />
+                                      {item.location}
+                                    </div>
+                                  )}
                                 </div>
                                 
-                                <p className="text-gray-700 dark:text-gray-300 text-sm mb-4">
-                                  {speaker.bio}
-                                </p>
+                                {item.description && (
+                                  <p className="text-gray-700 dark:text-gray-300 text-sm mb-4">
+                                    {item.description}
+                                  </p>
+                                )}
                                 
                                 <div className="flex items-center justify-between">
                                   <div className="flex gap-2">
-                                    {speaker.title && (
-                                      <Badge variant="secondary">{speaker.title}</Badge>
-                                    )}
+                                    {getTypeBadge(item.type)}
+                                    {getPriorityBadge(item.priority)}
                                   </div>
                                   <Button variant="outline" size="sm">
                                     View Details

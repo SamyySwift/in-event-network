@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -153,7 +152,7 @@ const AdminSuggestionsContent = () => {
       // Get event names if showing all events
       let eventsData = null;
       if (!selectedEventId) {
-        const eventIds = [...new Set(suggestionsData.map(s => s.event_id).filter(Boolean))];
+        const eventIds = [...new Set(suggestionsData.map(s => s.event_id).filter(Boolean))] as string[];
         const { data, error } = await supabase
           .from('events')
           .select('id, name')

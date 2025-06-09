@@ -48,14 +48,22 @@ const AttendeeSchedule = () => {
   const [combinedItems, setCombinedItems] = useState<CombinedScheduleItem[]>([]);
   
   const { speakers, isLoading: speakersLoading, error } = useAttendeeSpeakers();
-  const { context } = useAttendeeContext();
+  const { context, isLoading: contextLoading } = useAttendeeContext();
+
+  console.log('Attendee context:', context);
+  console.log('Current event ID:', context?.currentEventId);
 
   // Fetch schedule items from database
   useEffect(() => {
     const fetchScheduleItems = async () => {
-      if (!context?.currentEventId) return;
+      if (!context?.currentEventId) {
+        console.log('No current event ID, skipping schedule fetch');
+        return;
+      }
 
       try {
+        console.log('Fetching schedule items for event:', context.currentEventId);
+        
         const { data, error } = await supabase
           .from('schedule_items')
           .select('*')
@@ -67,13 +75,16 @@ const AttendeeSchedule = () => {
           return;
         }
 
+        console.log('Schedule items fetched:', data);
         setScheduleItems(data || []);
       } catch (error) {
         console.error('Error fetching schedule items:', error);
       }
     };
 
-    fetchScheduleItems();
+    if (context?.currentEventId) {
+      fetchScheduleItems();
+    }
 
     // Set up real-time subscription for schedule items
     if (context?.currentEventId) {
@@ -84,7 +95,8 @@ const AttendeeSchedule = () => {
           {
             event: '*',
             schema: 'public',
-            table: 'schedule_items'
+            table: 'schedule_items',
+            filter: `event_id=eq.${context.currentEventId}`
           },
           () => {
             console.log('Schedule items updated, refetching...');
@@ -101,12 +113,18 @@ const AttendeeSchedule = () => {
 
   // Combine speakers and schedule items
   useEffect(() => {
+    console.log('Combining speakers and schedule items');
+    console.log('Speakers:', speakers);
+    console.log('Schedule items:', scheduleItems);
+    
     const combined: CombinedScheduleItem[] = [];
 
     // Add speaker sessions
     const speakersWithSessions = speakers.filter(speaker => 
       speaker.session_time && speaker.session_title
     );
+
+    console.log('Speakers with sessions:', speakersWithSessions);
 
     speakersWithSessions.forEach(speaker => {
       combined.push({
@@ -140,6 +158,7 @@ const AttendeeSchedule = () => {
     // Sort by start time
     combined.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
 
+    console.log('Combined items:', combined);
     setCombinedItems(combined);
   }, [speakers, scheduleItems]);
 
@@ -155,30 +174,44 @@ const AttendeeSchedule = () => {
 
     if (selectedDate === 'all') return true;
 
-    const sessionDate = parseISO(item.start_time);
-    if (selectedDate === 'today') return isToday(sessionDate);
-    if (selectedDate === 'tomorrow') return isTomorrow(sessionDate);
-    if (selectedDate === 'yesterday') return isYesterday(sessionDate);
+    try {
+      const sessionDate = parseISO(item.start_time);
+      if (selectedDate === 'today') return isToday(sessionDate);
+      if (selectedDate === 'tomorrow') return isTomorrow(sessionDate);
+      if (selectedDate === 'yesterday') return isYesterday(sessionDate);
+    } catch (error) {
+      console.error('Error parsing date:', item.start_time, error);
+      return false;
+    }
 
     return true;
   });
 
   // Group items by date
   const groupedByDate = filteredItems.reduce((groups, item) => {
-    const date = format(parseISO(item.start_time), 'yyyy-MM-dd');
-    if (!groups[date]) {
-      groups[date] = [];
+    try {
+      const date = format(parseISO(item.start_time), 'yyyy-MM-dd');
+      if (!groups[date]) {
+        groups[date] = [];
+      }
+      groups[date].push(item);
+    } catch (error) {
+      console.error('Error formatting date:', item.start_time, error);
     }
-    groups[date].push(item);
     return groups;
   }, {} as Record<string, typeof filteredItems>);
 
   const formatDateHeader = (dateStr: string) => {
-    const date = parseISO(dateStr);
-    if (isToday(date)) return 'Today';
-    if (isTomorrow(date)) return 'Tomorrow';
-    if (isYesterday(date)) return 'Yesterday';
-    return format(date, 'EEEE, MMMM d');
+    try {
+      const date = parseISO(dateStr);
+      if (isToday(date)) return 'Today';
+      if (isTomorrow(date)) return 'Tomorrow';
+      if (isYesterday(date)) return 'Yesterday';
+      return format(date, 'EEEE, MMMM d');
+    } catch (error) {
+      console.error('Error formatting date header:', dateStr, error);
+      return dateStr;
+    }
   };
 
   const getTypeBadge = (type: string) => {
@@ -206,7 +239,7 @@ const AttendeeSchedule = () => {
     }
   };
 
-  if (speakersLoading) {
+  if (speakersLoading || contextLoading) {
     return (
       <AppLayout>
         <AttendeeRouteGuard>
@@ -214,6 +247,22 @@ const AttendeeSchedule = () => {
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
               <p className="mt-2 text-muted-foreground">Loading schedule...</p>
+            </div>
+          </div>
+        </AttendeeRouteGuard>
+      </AppLayout>
+    );
+  }
+
+  if (!context?.currentEventId) {
+    return (
+      <AppLayout>
+        <AttendeeRouteGuard>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <h3 className="text-lg font-medium mb-2">No Event Selected</h3>
+              <p className="text-muted-foreground">You need to join an event to view its schedule.</p>
             </div>
           </div>
         </AttendeeRouteGuard>
@@ -230,6 +279,11 @@ const AttendeeSchedule = () => {
             <p className="text-gray-600 dark:text-gray-400">
               View sessions, speakers, and timing for the event
             </p>
+            {context?.currentEventId && (
+              <p className="text-sm text-muted-foreground mt-1">
+                Event ID: {context.currentEventId}
+              </p>
+            )}
           </div>
 
           {/* Search and Filter */}
@@ -256,13 +310,31 @@ const AttendeeSchedule = () => {
             </CardContent>
           </Card>
 
+          {/* Debug Information */}
+          <Card className="mb-6 bg-gray-50">
+            <CardContent className="pt-6">
+              <h3 className="font-semibold mb-2">Debug Information:</h3>
+              <div className="text-sm space-y-1">
+                <p>Total speakers: {speakers.length}</p>
+                <p>Total schedule items: {scheduleItems.length}</p>
+                <p>Combined items: {combinedItems.length}</p>
+                <p>Filtered items: {filteredItems.length}</p>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Schedule Content */}
           {filteredItems.length === 0 ? (
             <Card>
               <CardContent className="py-10 text-center text-muted-foreground">
                 <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <h3 className="text-lg font-medium mb-2">No schedule items found</h3>
-                <p>Try adjusting your search or filter criteria</p>
+                <p>
+                  {combinedItems.length === 0 
+                    ? "No schedule items have been created yet"
+                    : "Try adjusting your search or filter criteria"
+                  }
+                </p>
               </CardContent>
             </Card>
           ) : (
@@ -310,12 +382,27 @@ const AttendeeSchedule = () => {
                                 <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-3">
                                   <div className="flex items-center gap-1">
                                     <Clock className="h-4 w-4" />
-                                    {format(parseISO(item.start_time), 'h:mm a')}
-                                    {item.end_time && ` - ${format(parseISO(item.end_time), 'h:mm a')}`}
+                                    {(() => {
+                                      try {
+                                        const startTime = format(parseISO(item.start_time), 'h:mm a');
+                                        const endTime = item.end_time ? ` - ${format(parseISO(item.end_time), 'h:mm a')}` : '';
+                                        return startTime + endTime;
+                                      } catch (error) {
+                                        console.error('Error formatting time:', error);
+                                        return item.start_time;
+                                      }
+                                    })()}
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <Calendar className="h-4 w-4" />
-                                    {format(parseISO(item.start_time), 'MMM d')}
+                                    {(() => {
+                                      try {
+                                        return format(parseISO(item.start_time), 'MMM d');
+                                      } catch (error) {
+                                        console.error('Error formatting date:', error);
+                                        return item.start_time;
+                                      }
+                                    })()}
                                   </div>
                                   {item.location && (
                                     <div className="flex items-center gap-1">

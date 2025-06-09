@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -13,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Calendar, Clock, MapPin, Plus, Edit, Trash2, Building } from 'lucide-react';
 import { format } from 'date-fns';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -53,7 +52,17 @@ const AdminScheduleContent = () => {
   const { currentUser } = useAuth();
   const { selectedEventId, selectedEvent } = useAdminEventContext();
 
-  const { register, handleSubmit, setValue, watch, reset, formState: { errors } } = useForm<ScheduleFormData>();
+  const { register, handleSubmit, control, reset, formState: { errors } } = useForm<ScheduleFormData>({
+    defaultValues: {
+      title: '',
+      description: '',
+      start_time: '',
+      end_time: '',
+      location: '',
+      type: 'general',
+      priority: 'medium'
+    }
+  });
 
   useEffect(() => {
     if (selectedEventId) {
@@ -128,12 +137,16 @@ const AdminScheduleContent = () => {
       return;
     }
 
+    console.log('Form data being submitted:', data);
+
     try {
       const scheduleData = {
         ...data,
         event_id: selectedEventId,
         created_by: currentUser?.id,
       };
+
+      console.log('Schedule data to be inserted/updated:', scheduleData);
 
       let result;
       if (editingItem) {
@@ -147,6 +160,8 @@ const AdminScheduleContent = () => {
           .insert([scheduleData]);
       }
 
+      console.log('Database operation result:', result);
+
       if (result.error) {
         console.error('Error saving schedule item:', result.error);
         throw result.error;
@@ -157,7 +172,15 @@ const AdminScheduleContent = () => {
         description: `Schedule item ${editingItem ? 'updated' : 'created'} successfully`,
       });
 
-      reset();
+      reset({
+        title: '',
+        description: '',
+        start_time: '',
+        end_time: '',
+        location: '',
+        type: 'general',
+        priority: 'medium'
+      });
       setEditingItem(null);
       setActiveTab('view');
       fetchScheduleItems();
@@ -173,13 +196,15 @@ const AdminScheduleContent = () => {
 
   const handleEdit = (item: ScheduleItem) => {
     setEditingItem(item);
-    setValue('title', item.title);
-    setValue('description', item.description || '');
-    setValue('start_time', item.start_time.slice(0, 16)); // Format for datetime-local input
-    setValue('end_time', item.end_time.slice(0, 16));
-    setValue('location', item.location || '');
-    setValue('type', item.type);
-    setValue('priority', item.priority);
+    reset({
+      title: item.title,
+      description: item.description || '',
+      start_time: item.start_time.slice(0, 16),
+      end_time: item.end_time.slice(0, 16),
+      location: item.location || '',
+      type: item.type,
+      priority: item.priority
+    });
     setActiveTab('add');
   };
 
@@ -280,7 +305,15 @@ const AdminScheduleContent = () => {
             onTabChange={(tab) => {
               setActiveTab(tab);
               if (tab === 'add' && !editingItem) {
-                reset();
+                reset({
+                  title: '',
+                  description: '',
+                  start_time: '',
+                  end_time: '',
+                  location: '',
+                  type: 'general',
+                  priority: 'medium'
+                });
               }
             }}
           >
@@ -425,32 +458,52 @@ const AdminScheduleContent = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="type">Type</Label>
-                        <Select onValueChange={(value) => setValue("type", value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select type" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="general">General</SelectItem>
-                            <SelectItem value="session">Session</SelectItem>
-                            <SelectItem value="break">Break</SelectItem>
-                            <SelectItem value="networking">Networking</SelectItem>
-                            <SelectItem value="meal">Meal</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Controller
+                          name="type"
+                          control={control}
+                          rules={{ required: "Type is required" }}
+                          render={({ field }) => (
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="general">General</SelectItem>
+                                <SelectItem value="session">Session</SelectItem>
+                                <SelectItem value="break">Break</SelectItem>
+                                <SelectItem value="networking">Networking</SelectItem>
+                                <SelectItem value="meal">Meal</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                        {errors.type?.message && (
+                          <p className="text-sm text-destructive">{errors.type.message}</p>
+                        )}
                       </div>
 
                       <div className="space-y-2">
                         <Label htmlFor="priority">Priority</Label>
-                        <Select onValueChange={(value) => setValue("priority", value)}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select priority" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="high">High</SelectItem>
-                            <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="low">Low</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <Controller
+                          name="priority"
+                          control={control}
+                          rules={{ required: "Priority is required" }}
+                          render={({ field }) => (
+                            <Select value={field.value} onValueChange={field.onChange}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select priority" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="high">High</SelectItem>
+                                <SelectItem value="medium">Medium</SelectItem>
+                                <SelectItem value="low">Low</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          )}
+                        />
+                        {errors.priority?.message && (
+                          <p className="text-sm text-destructive">{errors.priority.message}</p>
+                        )}
                       </div>
                     </div>
 
@@ -465,7 +518,15 @@ const AdminScheduleContent = () => {
                           variant="outline" 
                           onClick={() => {
                             setEditingItem(null);
-                            reset();
+                            reset({
+                              title: '',
+                              description: '',
+                              start_time: '',
+                              end_time: '',
+                              location: '',
+                              type: 'general',
+                              priority: 'medium'
+                            });
                             setActiveTab('view');
                           }}
                         >

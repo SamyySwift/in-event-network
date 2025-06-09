@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
 
 export interface Poll {
   id: string;
@@ -30,45 +31,12 @@ export const useAttendeePolls = () => {
   const { currentUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { hostEvents, hasJoinedEvent } = useAttendeeEventContext();
 
   const { data: polls = [], isLoading, error } = useQuery({
-    queryKey: ['attendee-polls', currentUser?.id],
+    queryKey: ['attendee-polls', currentUser?.id, hostEvents],
     queryFn: async (): Promise<Poll[]> => {
-      if (!currentUser?.id) {
-        throw new Error('User not authenticated');
-      }
-
-      // Get the user's current event from their profile
-      const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('current_event_id')
-        .eq('id', currentUser.id)
-        .single();
-
-      if (!userProfile?.current_event_id) {
-        return [];
-      }
-
-      // Get the current event to find the host
-      const { data: currentEvent } = await supabase
-        .from('events')
-        .select('host_id')
-        .eq('id', userProfile.current_event_id)
-        .single();
-
-      if (!currentEvent?.host_id) {
-        return [];
-      }
-
-      // Get all events from the same host
-      const { data: hostEvents } = await supabase
-        .from('events')
-        .select('id')
-        .eq('host_id', currentEvent.host_id);
-
-      const eventIds = hostEvents?.map(e => e.id) || [];
-
-      if (eventIds.length === 0) {
+      if (!currentUser?.id || !hasJoinedEvent || hostEvents.length === 0) {
         return [];
       }
 
@@ -76,7 +44,7 @@ export const useAttendeePolls = () => {
       const { data: polls, error } = await supabase
         .from('polls')
         .select('*')
-        .in('event_id', eventIds)
+        .in('event_id', hostEvents)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -112,7 +80,7 @@ export const useAttendeePolls = () => {
 
       return pollsWithVotes as Poll[];
     },
-    enabled: !!currentUser?.id,
+    enabled: !!currentUser?.id && hasJoinedEvent && hostEvents.length > 0,
   });
 
   const { data: userVotes = [], isLoading: votesLoading } = useQuery({

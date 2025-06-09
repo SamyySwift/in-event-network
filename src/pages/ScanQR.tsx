@@ -6,13 +6,15 @@ import { useToast } from '@/hooks/use-toast';
 import { useJoinEvent } from '@/hooks/useJoinEvent';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, QrCode } from 'lucide-react';
+import { ArrowLeft, QrCode, CheckCircle } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
 
 const ScanQR = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { joinEvent, isJoining } = useJoinEvent();
+  const [scanSuccess, setScanSuccess] = useState(false);
+  const [eventName, setEventName] = useState('');
 
   const handleScanSuccess = (decodedText: string) => {
     console.log('QR Code decoded:', decodedText);
@@ -45,7 +47,28 @@ const ScanQR = () => {
 
       if (accessCode && /^\d{6}$/.test(accessCode)) {
         console.log('Extracted access code:', accessCode);
-        joinEvent(accessCode);
+        
+        // Use a promise-based approach to handle the join event result
+        joinEvent(accessCode, {
+          onSuccess: (data: any) => {
+            console.log('Join event success:', data);
+            setScanSuccess(true);
+            setEventName(data?.event_name || 'Event');
+            
+            // Navigate to dashboard after a short delay
+            setTimeout(() => {
+              navigate('/attendee/dashboard', { replace: true });
+            }, 2000);
+          },
+          onError: (error: any) => {
+            console.error('Join event error:', error);
+            toast({
+              title: "Failed to Join Event",
+              description: error?.message || "Could not join the event. Please try again.",
+              variant: "destructive"
+            });
+          }
+        });
       } else {
         toast({
           title: "Invalid QR Code",
@@ -73,6 +96,28 @@ const ScanQR = () => {
       });
     }
   };
+
+  // Show success state
+  if (scanSuccess) {
+    return (
+      <AppLayout>
+        <div className="max-w-2xl mx-auto py-8">
+          <Card>
+            <CardContent className="py-16 text-center">
+              <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-green-700 mb-2">Successfully Joined!</h2>
+              <p className="text-muted-foreground mb-4">
+                You've joined <span className="font-semibold">{eventName}</span>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Redirecting to your dashboard...
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

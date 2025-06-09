@@ -42,30 +42,7 @@ export const useAttendeeNetworking = () => {
         return [];
       }
 
-      // Get the current event to find the host
-      const { data: currentEvent } = await supabase
-        .from('events')
-        .select('host_id')
-        .eq('id', userProfile.current_event_id)
-        .single();
-
-      if (!currentEvent?.host_id) {
-        return [];
-      }
-
-      // Get all events from the same host
-      const { data: hostEvents } = await supabase
-        .from('events')
-        .select('id')
-        .eq('host_id', currentEvent.host_id);
-
-      const eventIds = hostEvents?.map(e => e.id) || [];
-
-      if (eventIds.length === 0) {
-        return [];
-      }
-
-      // Get attendees from events by the same host (excluding current user)
+      // Get attendees from the current event only (excluding current user)
       const { data: eventParticipants, error } = await supabase
         .from('event_participants')
         .select(`
@@ -88,7 +65,7 @@ export const useAttendeeNetworking = () => {
             created_at
           )
         `)
-        .in('event_id', eventIds)
+        .eq('event_id', userProfile.current_event_id)
         .neq('user_id', currentUser.id);
 
       if (error) {

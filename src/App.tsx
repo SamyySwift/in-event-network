@@ -3,6 +3,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { AttendeeEventProvider } from '@/contexts/AttendeeEventContext';
 import { Toaster } from '@/components/ui/toaster';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
@@ -189,109 +190,135 @@ function App() {
                 }
               />
 
-              {/* Attendee routes */}
+              {/* Attendee routes - wrapped with AttendeeEventProvider */}
               <Route
                 path="/attendee"
                 element={
-                  <ProtectedRoute requiredRole="attendee">
-                    <AttendeeDashboard />
-                  </ProtectedRoute>
+                  <AttendeeEventProvider>
+                    <ProtectedRoute requiredRole="attendee">
+                      <AttendeeDashboard />
+                    </ProtectedRoute>
+                  </AttendeeEventProvider>
                 }
               />
               <Route
                 path="/attendee/profile"
                 element={
-                  <ProtectedRoute requiredRole="attendee">
-                    <AttendeeProfile />
-                  </ProtectedRoute>
+                  <AttendeeEventProvider>
+                    <ProtectedRoute requiredRole="attendee">
+                      <AttendeeProfile />
+                    </ProtectedRoute>
+                  </AttendeeEventProvider>
                 }
               />
               <Route
                 path="/attendee/networking"
                 element={
-                  <ProtectedRoute requiredRole="attendee">
-                    <AttendeeNetworking />
-                  </ProtectedRoute>
+                  <AttendeeEventProvider>
+                    <ProtectedRoute requiredRole="attendee">
+                      <AttendeeNetworking />
+                    </ProtectedRoute>
+                  </AttendeeEventProvider>
                 }
               />
               <Route
                 path="/attendee/announcements"
                 element={
-                  <ProtectedRoute requiredRole="attendee">
-                    <AttendeeAnnouncements />
-                  </ProtectedRoute>
+                  <AttendeeEventProvider>
+                    <ProtectedRoute requiredRole="attendee">
+                      <AttendeeAnnouncements />
+                    </ProtectedRoute>
+                  </AttendeeEventProvider>
                 }
               />
               <Route
                 path="/attendee/schedule"
                 element={
-                  <ProtectedRoute requiredRole="attendee">
-                    <AttendeeSchedule />
-                  </ProtectedRoute>
+                  <AttendeeEventProvider>
+                    <ProtectedRoute requiredRole="attendee">
+                      <AttendeeSchedule />
+                    </ProtectedRoute>
+                  </AttendeeEventProvider>
                 }
               />
               <Route
                 path="/attendee/polls"
                 element={
-                  <ProtectedRoute requiredRole="attendee">
-                    <AttendeePolls />
-                  </ProtectedRoute>
+                  <AttendeeEventProvider>
+                    <ProtectedRoute requiredRole="attendee">
+                      <AttendeePolls />
+                    </ProtectedRoute>
+                  </AttendeeEventProvider>
                 }
               />
               <Route
                 path="/attendee/questions"
                 element={
-                  <ProtectedRoute requiredRole="attendee">
-                    <AttendeeQuestions />
-                  </ProtectedRoute>
+                  <AttendeeEventProvider>
+                    <ProtectedRoute requiredRole="attendee">
+                      <AttendeeQuestions />
+                    </ProtectedRoute>
+                  </AttendeeEventProvider>
                 }
               />
               <Route
                 path="/attendee/suggestions"
                 element={
-                  <ProtectedRoute requiredRole="attendee">
-                    <AttendeeSuggestions />
-                  </ProtectedRoute>
+                  <AttendeeEventProvider>
+                    <ProtectedRoute requiredRole="attendee">
+                      <AttendeeSuggestions />
+                    </ProtectedRoute>
+                  </AttendeeEventProvider>
                 }
               />
               <Route
                 path="/attendee/rules"
                 element={
-                  <ProtectedRoute requiredRole="attendee">
-                    <AttendeeRules />
-                  </ProtectedRoute>
+                  <AttendeeEventProvider>
+                    <ProtectedRoute requiredRole="attendee">
+                      <AttendeeRules />
+                    </ProtectedRoute>
+                  </AttendeeEventProvider>
                 }
               />
               <Route
                 path="/attendee/notifications"
                 element={
-                  <ProtectedRoute requiredRole="attendee">
-                    <AttendeeNotifications />
-                  </ProtectedRoute>
+                  <AttendeeEventProvider>
+                    <ProtectedRoute requiredRole="attendee">
+                      <AttendeeNotifications />
+                    </ProtectedRoute>
+                  </AttendeeEventProvider>
                 }
               />
               <Route
                 path="/attendee/onboarding"
                 element={
-                  <ProtectedRoute requiredRole="attendee">
-                    <AttendeeOnboarding />
-                  </ProtectedRoute>
+                  <AttendeeEventProvider>
+                    <ProtectedRoute requiredRole="attendee">
+                      <AttendeeOnboarding />
+                    </ProtectedRoute>
+                  </AttendeeEventProvider>
                 }
               />
               <Route
                 path="/attendee/map"
                 element={
-                  <ProtectedRoute requiredRole="attendee">
-                    <AttendeeMap />
-                  </ProtectedRoute>
+                  <AttendeeEventProvider>
+                    <ProtectedRoute requiredRole="attendee">
+                      <AttendeeMap />
+                    </ProtectedRoute>
+                  </AttendeeEventProvider>
                 }
               />
               <Route
                 path="/attendee/search"
                 element={
-                  <ProtectedRoute requiredRole="attendee">
-                    <AttendeeSearch />
-                  </ProtectedRoute>
+                  <AttendeeEventProvider>
+                    <ProtectedRoute requiredRole="attendee">
+                      <AttendeeSearch />
+                    </ProtectedRoute>
+                  </AttendeeEventProvider>
                 }
               />
 

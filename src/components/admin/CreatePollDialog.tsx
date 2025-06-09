@@ -12,7 +12,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Trash2, Plus } from 'lucide-react';
-import { usePolls } from '@/hooks/usePolls';
+import { useAdminPolls } from '@/hooks/useAdminPolls';
+import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 import { useToast } from '@/hooks/use-toast';
 
 interface CreatePollDialogProps {
@@ -26,7 +27,8 @@ const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
   const [isActive, setIsActive] = useState(true);
   const [showResults, setShowResults] = useState(false);
   
-  const { createPoll, isCreating } = usePolls();
+  const { selectedEventId } = useAdminEventContext();
+  const { createPoll, isCreating } = useAdminPolls(selectedEventId || undefined);
   const { toast } = useToast();
 
   const addOption = () => {
@@ -46,6 +48,15 @@ const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
   };
 
   const handleSubmit = () => {
+    if (!selectedEventId) {
+      toast({
+        title: "No Event Selected",
+        description: "Please select an event before creating a poll",
+        variant: "destructive"
+      });
+      return;
+    }
+
     if (!question.trim()) {
       toast({
         title: "Question required",
@@ -72,7 +83,8 @@ const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
         text: text.trim()
       })),
       is_active: isActive,
-      show_results: showResults
+      show_results: showResults,
+      event_id: selectedEventId
     };
 
     createPoll(pollData);
@@ -164,7 +176,11 @@ const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
             <Button variant="outline" onClick={() => setOpen(false)} className="flex-1">
               Cancel
             </Button>
-            <Button onClick={handleSubmit} disabled={isCreating} className="flex-1">
+            <Button 
+              onClick={handleSubmit} 
+              disabled={isCreating || !selectedEventId} 
+              className="flex-1"
+            >
               {isCreating ? 'Creating...' : 'Create Poll'}
             </Button>
           </div>

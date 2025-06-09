@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import CreatePollDialog from '@/components/admin/CreatePollDialog';
+import EventSelector from '@/components/admin/EventSelector';
 import { 
   Card, 
   CardContent, 
@@ -24,6 +25,7 @@ import {
 import { format } from 'date-fns';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAdminPolls, Poll } from '@/hooks/useAdminPolls';
+import { useAdminEventContext, AdminEventProvider } from '@/hooks/useAdminEventContext';
 import { useToast } from '@/hooks/use-toast';
 import {
   Tooltip,
@@ -43,12 +45,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-const AdminPolls = () => {
+const AdminPollsContent = () => {
   const [activeTab, setActiveTab] = useState<string>('active');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const isMobile = useIsMobile();
   const { toast } = useToast();
-  const { polls, isLoading, updatePoll, deletePoll, isDeleting } = useAdminPolls();
+  const { selectedEventId, selectedEvent } = useAdminEventContext();
+  const { polls, isLoading, updatePoll, deletePoll, isDeleting } = useAdminPolls(selectedEventId || undefined);
   
   // Filter polls based on tab and search query
   const filteredPolls = polls.filter(poll => {
@@ -232,59 +235,87 @@ const AdminPolls = () => {
 
   if (isLoading) {
     return (
-      <AdminLayout>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <BarChart4 className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
+          <p className="mt-2 text-muted-foreground">Loading polls...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!selectedEvent) {
+    return (
+      <div className="flex flex-col gap-5">
+        <div className="border rounded-lg p-4 bg-card">
+          <EventSelector />
+        </div>
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <BarChart4 className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
-            <p className="mt-2 text-muted-foreground">Loading polls...</p>
+            <p className="mt-2 text-muted-foreground">Please select an event to manage polls</p>
           </div>
         </div>
-      </AdminLayout>
+      </div>
     );
   }
 
   return (
-    <AdminLayout>
-      <div className="flex flex-col gap-5">
-        <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row items-center justify-between'}`}>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Polls</h1>
-            <p className="text-muted-foreground mt-1">Create and manage polls for attendees</p>
-          </div>
-          
-          <CreatePollDialog>
-            <Button>
-              <Plus size={16} className="mr-1" />
-              Create Poll
-            </Button>
-          </CreatePollDialog>
-        </div>
-
-        <AdminPageHeader
-          title=""
-          tabs={[
-            { id: 'all', label: 'All Polls' },
-            { id: 'active', label: 'Active' },
-            { id: 'inactive', label: 'Inactive' },
-          ]}
-          defaultTab="active"
-          onTabChange={setActiveTab}
-        >
-          <div className="space-y-4">
-            <div className="flex justify-between mb-4">
-              <Input 
-                placeholder="Search polls..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="max-w-sm"
-              />
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              {renderPollsList(filteredPolls)}
-            </div>
-          </div>
-        </AdminPageHeader>
+    <div className="flex flex-col gap-5">
+      <div className="border rounded-lg p-4 bg-card">
+        <EventSelector />
       </div>
+
+      <div className={`flex ${isMobile ? 'flex-col gap-4' : 'flex-row items-center justify-between'}`}>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Polls</h1>
+          <p className="text-muted-foreground mt-1">
+            Create and manage polls for {selectedEvent.name}
+          </p>
+        </div>
+        
+        <CreatePollDialog>
+          <Button>
+            <Plus size={16} className="mr-1" />
+            Create Poll
+          </Button>
+        </CreatePollDialog>
+      </div>
+
+      <AdminPageHeader
+        title=""
+        tabs={[
+          { id: 'all', label: 'All Polls' },
+          { id: 'active', label: 'Active' },
+          { id: 'inactive', label: 'Inactive' },
+        ]}
+        defaultTab="active"
+        onTabChange={setActiveTab}
+      >
+        <div className="space-y-4">
+          <div className="flex justify-between mb-4">
+            <Input 
+              placeholder="Search polls..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="max-w-sm"
+            />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {renderPollsList(filteredPolls)}
+          </div>
+        </div>
+      </AdminPageHeader>
+    </div>
+  );
+};
+
+const AdminPolls = () => {
+  return (
+    <AdminLayout>
+      <AdminEventProvider>
+        <AdminPollsContent />
+      </AdminEventProvider>
     </AdminLayout>
   );
 };

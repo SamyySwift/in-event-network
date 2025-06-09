@@ -1,55 +1,56 @@
 
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import AdminDataTable from '@/components/admin/AdminDataTable';
+import EventSelector from '@/components/admin/EventSelector';
 import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Plus, Pencil, Trash2, Loader } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import { useSpeakers } from '@/hooks/useSpeakers';
-import { ImageUpload } from '@/components/ui/image-upload';
+import { useAdminSpeakers } from '@/hooks/useAdminSpeakers';
+import { useAdminEventContext, AdminEventProvider } from '@/hooks/useAdminEventContext';
+import { useToast } from '@/hooks/use-toast';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 type SpeakerFormData = {
   name: string;
-  bio: string;
   title?: string;
   company?: string;
+  bio: string;
   session_title?: string;
   session_time?: string;
   twitter_link?: string;
   linkedin_link?: string;
   website_link?: string;
-  image?: File;
 };
 
-const AdminSpeakers = () => {
+const AdminSpeakersContent = () => {
+  const [isCreating, setIsCreating] = useState(false);
   const [editingSpeaker, setEditingSpeaker] = useState<string | null>(null);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const { speakers, isLoading, createSpeaker, updateSpeaker, deleteSpeaker, isCreating, isUpdating, isDeleting } = useSpeakers();
+  const { selectedEventId, selectedEvent } = useAdminEventContext();
+  const { speakers, isLoading, createSpeaker, updateSpeaker, deleteSpeaker } = useAdminSpeakers(selectedEventId || undefined);
+  const { toast } = useToast();
 
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<SpeakerFormData>({
-    defaultValues: {
-      name: '',
-      bio: '',
-      title: '',
-      company: '',
-      session_title: '',
-      session_time: '',
-      twitter_link: '',
-      linkedin_link: '',
-      website_link: '',
-    }
-  });
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<SpeakerFormData>();
 
   const onSubmit = (data: SpeakerFormData) => {
+    if (!selectedEventId) {
+      toast({
+        title: "No Event Selected",
+        description: "Please select an event before adding a speaker",
+        variant: "destructive"
+      });
+      return;
+    }
+
     const speakerData = {
       ...data,
-      session_time: data.session_time || undefined,
-      image: selectedImage,
+      event_id: selectedEventId,
+      session_time: data.session_time ? new Date(data.session_time).toISOString() : undefined,
     };
 
     if (editingSpeaker) {
@@ -58,258 +59,247 @@ const AdminSpeakers = () => {
     } else {
       createSpeaker(speakerData);
     }
+    
     reset();
-    setSelectedImage(null);
+    setIsCreating(false);
   };
 
   const handleEdit = (speaker: any) => {
     setEditingSpeaker(speaker.id);
+    setIsCreating(true);
     setValue('name', speaker.name);
-    setValue('bio', speaker.bio);
     setValue('title', speaker.title || '');
     setValue('company', speaker.company || '');
+    setValue('bio', speaker.bio);
     setValue('session_title', speaker.session_title || '');
     setValue('session_time', speaker.session_time ? new Date(speaker.session_time).toISOString().slice(0, 16) : '');
     setValue('twitter_link', speaker.twitter_link || '');
     setValue('linkedin_link', speaker.linkedin_link || '');
     setValue('website_link', speaker.website_link || '');
-    setSelectedImage(null);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (speaker: any) => {
     if (confirm('Are you sure you want to delete this speaker?')) {
-      deleteSpeaker(id);
+      deleteSpeaker(speaker.id);
     }
   };
 
   const handleCancel = () => {
+    setIsCreating(false);
     setEditingSpeaker(null);
-    setSelectedImage(null);
     reset();
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-  };
+  const columns = [
+    {
+      header: 'Speaker',
+      accessorKey: 'name',
+      cell: (value: string, row: any) => (
+        <div className="flex items-center gap-3">
+          <Avatar>
+            <AvatarImage src={row.photo_url} alt={row.name} />
+            <AvatarFallback>{row.name?.charAt(0) || 'S'}</AvatarFallback>
+          </Avatar>
+          <div>
+            <div className="font-medium">{row.name}</div>
+            <div className="text-sm text-muted-foreground">
+              {row.title && row.company ? `${row.title} at ${row.company}` : (row.title || row.company || 'Speaker')}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      header: 'Session',
+      accessorKey: 'session_title',
+      cell: (value: string, row: any) => (
+        <div>
+          <div className="font-medium">{value || 'No session assigned'}</div>
+          {row.session_time && (
+            <div className="text-sm text-muted-foreground">
+              {new Date(row.session_time).toLocaleDateString()} at {new Date(row.session_time).toLocaleTimeString()}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      header: 'Bio',
+      accessorKey: 'bio',
+      cell: (value: string) => (
+        <div className="max-w-xs truncate" title={value}>
+          {value}
+        </div>
+      ),
+    },
+  ];
 
   if (isLoading) {
     return (
-      <AdminLayout>
-        <div className="flex items-center justify-center h-64">
-          <Loader className="h-8 w-8 animate-spin" />
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading speakers...</p>
         </div>
-      </AdminLayout>
+      </div>
+    );
+  }
+
+  if (!selectedEvent) {
+    return (
+      <div className="flex flex-col gap-5">
+        <div className="border rounded-lg p-4 bg-card">
+          <EventSelector />
+        </div>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="mt-2 text-muted-foreground">Please select an event to manage speakers</p>
+          </div>
+        </div>
+      </div>
     );
   }
 
   return (
+    <div className="flex flex-col gap-5">
+      <div className="border rounded-lg p-4 bg-card">
+        <EventSelector />
+      </div>
+
+      <AdminPageHeader
+        title="Speakers"
+        description={`Manage speakers for ${selectedEvent.name}`}
+        actionLabel="Add Speaker"
+        onAction={() => setIsCreating(true)}
+      >
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {isCreating && (
+            <Card className="lg:col-span-1">
+              <CardHeader>
+                <CardTitle>{editingSpeaker ? 'Edit Speaker' : 'Add New Speaker'}</CardTitle>
+                <CardDescription>
+                  {editingSpeaker ? 'Update speaker information' : 'Add a speaker to the event'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Name *</Label>
+                    <Input
+                      id="name"
+                      {...register("name", { required: "Name is required" })}
+                      placeholder="Speaker name"
+                    />
+                    {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Title</Label>
+                    <Input
+                      id="title"
+                      {...register("title")}
+                      placeholder="Job title"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="company">Company</Label>
+                    <Input
+                      id="company"
+                      {...register("company")}
+                      placeholder="Company name"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="bio">Bio *</Label>
+                    <Textarea
+                      id="bio"
+                      {...register("bio", { required: "Bio is required" })}
+                      placeholder="Speaker biography"
+                      rows={3}
+                    />
+                    {errors.bio && <p className="text-sm text-destructive">{errors.bio.message}</p>}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="session_title">Session Title</Label>
+                    <Input
+                      id="session_title"
+                      {...register("session_title")}
+                      placeholder="Session or talk title"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="session_time">Session Time</Label>
+                    <Input
+                      id="session_time"
+                      type="datetime-local"
+                      {...register("session_time")}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="twitter_link">Twitter</Label>
+                    <Input
+                      id="twitter_link"
+                      {...register("twitter_link")}
+                      placeholder="https://twitter.com/username"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="linkedin_link">LinkedIn</Label>
+                    <Input
+                      id="linkedin_link"
+                      {...register("linkedin_link")}
+                      placeholder="https://linkedin.com/in/username"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="website_link">Website</Label>
+                    <Input
+                      id="website_link"
+                      {...register("website_link")}
+                      placeholder="https://website.com"
+                    />
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button type="submit" className="flex-1">
+                      {editingSpeaker ? 'Update Speaker' : 'Add Speaker'}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={handleCancel}>
+                      Cancel
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+          
+          <div className={isCreating ? "lg:col-span-2" : "lg:col-span-3"}>
+            <AdminDataTable
+              columns={columns}
+              data={speakers}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+            />
+          </div>
+        </div>
+      </AdminPageHeader>
+    </div>
+  );
+};
+
+const AdminSpeakers = () => {
+  return (
     <AdminLayout>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Speakers</h1>
-          <p className="text-muted-foreground">
-            Manage speakers and their sessions for your event
-          </p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>{editingSpeaker ? 'Edit Speaker' : 'Add New Speaker'}</CardTitle>
-            <CardDescription>
-              {editingSpeaker ? 'Update speaker information' : 'Add speakers and their session information'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Speaker Name</Label>
-                <Input
-                  id="name"
-                  {...register("name", { required: "Speaker name is required" })}
-                  placeholder="Enter speaker name"
-                />
-                {errors.name?.message && (
-                  <p className="text-sm text-destructive">{errors.name.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bio">Biography</Label>
-                <Textarea
-                  id="bio"
-                  {...register("bio", { required: "Biography is required" })}
-                  placeholder="Enter speaker biography"
-                  rows={3}
-                />
-                {errors.bio?.message && (
-                  <p className="text-sm text-destructive">{errors.bio.message}</p>
-                )}
-              </div>
-
-              <ImageUpload
-                onImageSelect={setSelectedImage}
-                label="Speaker Photo (Optional)"
-              />
-
-              <div className="space-y-2">
-                <Label htmlFor="title">Title/Position</Label>
-                <Input
-                  id="title"
-                  {...register("title")}
-                  placeholder="Enter speaker title or position"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="company">Company</Label>
-                <Input
-                  id="company"
-                  {...register("company")}
-                  placeholder="Enter speaker company"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="session_title">Session Title</Label>
-                <Input
-                  id="session_title"
-                  {...register("session_title")}
-                  placeholder="Enter session title"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="session_time">Session Time</Label>
-                <Input
-                  id="session_time"
-                  type="datetime-local"
-                  {...register("session_time")}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="twitter_link">Twitter Link</Label>
-                <Input
-                  id="twitter_link"
-                  {...register("twitter_link")}
-                  placeholder="https://twitter.com/username"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="linkedin_link">LinkedIn Link</Label>
-                <Input
-                  id="linkedin_link"
-                  {...register("linkedin_link")}
-                  placeholder="https://linkedin.com/in/username"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="website_link">Website Link</Label>
-                <Input
-                  id="website_link"
-                  {...register("website_link")}
-                  placeholder="https://website.com"
-                />
-              </div>
-
-              <div className="flex gap-2">
-                <Button type="submit" className="flex-1" disabled={isCreating || isUpdating}>
-                  {(isCreating || isUpdating) && <Loader className="h-4 w-4 mr-2 animate-spin" />}
-                  <Plus className="h-4 w-4 mr-2" />
-                  {editingSpeaker ? 'Update Speaker' : 'Add Speaker'}
-                </Button>
-                {editingSpeaker && (
-                  <Button type="button" variant="outline" onClick={handleCancel}>
-                    Cancel
-                  </Button>
-                )}
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Current Speakers</CardTitle>
-              <CardDescription>
-                {speakers.length} speakers scheduled for your event
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {speakers.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
-                    No speakers added yet. Add your first speaker using the form.
-                  </p>
-                ) : (
-                  speakers.map((speaker) => (
-                    <div key={speaker.id} className="flex items-start space-x-4 p-3 rounded-lg border">
-                      <Avatar className="h-12 w-12">
-                        {speaker.photo_url ? (
-                          <AvatarImage src={speaker.photo_url} alt={speaker.name} />
-                        ) : (
-                          <AvatarFallback className="bg-primary/10 text-primary">
-                            {speaker.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
-                      <div className="flex-1 space-y-1">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-medium">{speaker.name}</h4>
-                          <div className="flex space-x-2">
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              onClick={() => handleEdit(speaker)}
-                              disabled={isUpdating}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon" 
-                              onClick={() => handleDelete(speaker.id)}
-                              disabled={isDeleting}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {speaker.title} {speaker.company && `at ${speaker.company}`}
-                        </p>
-                        <div className="pt-2">
-                          {speaker.session_title && (
-                            <Badge variant="outline" className="mr-2">
-                              {speaker.session_title}
-                            </Badge>
-                          )}
-                          {speaker.session_time && (
-                            <Badge variant="secondary">
-                              {formatDate(speaker.session_time)}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+      <AdminEventProvider>
+        <AdminSpeakersContent />
+      </AdminEventProvider>
     </AdminLayout>
   );
 };

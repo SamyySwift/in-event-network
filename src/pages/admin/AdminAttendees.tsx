@@ -3,21 +3,32 @@ import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import AdminDataTable from '@/components/admin/AdminDataTable';
+import EventSelector from '@/components/admin/EventSelector';
 import { TabsContent } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAdminAttendees } from '@/hooks/useAdminAttendees';
+import { useAdminEventContext, AdminEventProvider } from '@/hooks/useAdminEventContext';
 import { useToast } from '@/hooks/use-toast';
 
-const AdminAttendees = () => {
+const AdminAttendeesContent = () => {
   const [activeTab, setActiveTab] = useState<string>('all');
   const { attendees, isLoading } = useAdminAttendees();
+  const { selectedEvent } = useAdminEventContext();
   const { toast } = useToast();
 
-  // Filter attendees based on tab
+  // Filter attendees based on tab and selected event
   const getFilteredAttendees = () => {
-    if (activeTab === 'all') return attendees;
-    return attendees.filter(attendee => {
+    let filtered = attendees;
+    
+    // Filter by selected event
+    if (selectedEvent) {
+      filtered = attendees.filter(attendee => attendee.event_name === selectedEvent.name);
+    }
+    
+    // Filter by tab
+    if (activeTab === 'all') return filtered;
+    return filtered.filter(attendee => {
       switch (activeTab) {
         case 'technical':
           return attendee.bio?.toLowerCase().includes('tech') || 
@@ -89,26 +100,45 @@ const AdminAttendees = () => {
     });
   };
 
+  const filteredAttendees = getFilteredAttendees();
+
   if (isLoading) {
     return (
-      <AdminLayout>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading attendees...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!selectedEvent) {
+    return (
+      <div className="flex flex-col gap-5">
+        <div className="border rounded-lg p-4 bg-card">
+          <EventSelector />
+        </div>
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-2 text-muted-foreground">Loading attendees...</p>
+            <p className="mt-2 text-muted-foreground">Please select an event to view attendees</p>
           </div>
         </div>
-      </AdminLayout>
+      </div>
     );
   }
 
   return (
-    <AdminLayout>
+    <div className="flex flex-col gap-5">
+      <div className="border rounded-lg p-4 bg-card">
+        <EventSelector />
+      </div>
+
       <AdminPageHeader
-        title="Your Event Attendees"
-        description={`Manage attendees registered for your events (${attendees.length} total)`}
+        title="Event Attendees"
+        description={`Manage attendees for ${selectedEvent.name} (${filteredAttendees.length} total)`}
         tabs={[
-          { id: 'all', label: `All Attendees (${attendees.length})` },
+          { id: 'all', label: `All Attendees (${filteredAttendees.length})` },
           { id: 'technical', label: 'Technical' },
           { id: 'design', label: 'Design' },
           { id: 'business', label: 'Business' },
@@ -120,13 +150,23 @@ const AdminAttendees = () => {
           <TabsContent key={tabId} value={tabId} className="space-y-4">
             <AdminDataTable
               columns={columns}
-              data={getFilteredAttendees()}
+              data={filteredAttendees}
               onEdit={handleEditAttendee}
               onDelete={handleDeleteAttendee}
             />
           </TabsContent>
         ))}
       </AdminPageHeader>
+    </div>
+  );
+};
+
+const AdminAttendees = () => {
+  return (
+    <AdminLayout>
+      <AdminEventProvider>
+        <AdminAttendeesContent />
+      </AdminEventProvider>
     </AdminLayout>
   );
 };

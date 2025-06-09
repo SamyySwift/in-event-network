@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,11 +39,22 @@ const AdminEvents = () => {
   });
 
   const onSubmit = (data: EventFormData) => {
+    console.log('Submitting event data:', data);
+    console.log('Current user:', currentUser?.id);
+    
+    // Ensure we have the required data
+    if (!data.name || !data.start_time || !data.end_time) {
+      console.error('Missing required fields:', { name: data.name, start_time: data.start_time, end_time: data.end_time });
+      return;
+    }
+
     const eventData = {
       ...data,
       host_id: currentUser?.id,
       image: selectedImage,
     };
+
+    console.log('Final event data being sent:', eventData);
 
     if (editingEvent) {
       updateEvent({ id: editingEvent, ...eventData });
@@ -129,7 +141,7 @@ const AdminEvents = () => {
           <CardContent>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Event Name</Label>
+                <Label htmlFor="name">Event Name *</Label>
                 <Input
                   id="name"
                   {...register("name", { required: "Event name is required" })}
@@ -152,7 +164,7 @@ const AdminEvents = () => {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="start_time">Start Time</Label>
+                  <Label htmlFor="start_time">Start Time *</Label>
                   <Input
                     id="start_time"
                     type="datetime-local"
@@ -164,7 +176,7 @@ const AdminEvents = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="end_time">End Time</Label>
+                  <Label htmlFor="end_time">End Time *</Label>
                   <Input
                     id="end_time"
                     type="datetime-local"

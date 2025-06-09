@@ -20,7 +20,6 @@ import { useToast } from '@/hooks/use-toast';
 import { useAttendeePolls, Poll } from '@/hooks/useAttendeePolls';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { BarChart, Loader } from 'lucide-react';
-import { AttendeeEventProvider } from '@/contexts/AttendeeEventContext';
 import AttendeeRouteGuard from '@/components/attendee/AttendeeRouteGuard';
 
 const AttendeePolls = () => {
@@ -184,109 +183,105 @@ const AttendeePolls = () => {
   if (isLoading) {
     return (
       <AppLayout>
-        <AttendeeEventProvider>
-          <div className="container mx-auto px-4 py-6">
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <Loader className="mx-auto h-12 w-12 animate-spin text-muted-foreground" />
-                <p className="mt-2 text-muted-foreground">Loading polls...</p>
-              </div>
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <Loader className="mx-auto h-12 w-12 animate-spin text-muted-foreground" />
+              <p className="mt-2 text-muted-foreground">Loading polls...</p>
             </div>
           </div>
-        </AttendeeEventProvider>
+        </div>
       </AppLayout>
     );
   }
 
   return (
     <AppLayout>
-      <AttendeeEventProvider>
-        <AttendeeRouteGuard>
-          <div className="container mx-auto px-4 py-6">
-            <div className="flex flex-col items-start justify-between mb-6 md:flex-row md:items-center">
-              <div>
-                <h1 className="text-2xl font-bold">Polls</h1>
-                <p className="text-muted-foreground mt-1">
-                  Share your feedback and see what others think
-                </p>
-              </div>
+      <AttendeeRouteGuard>
+        <div className="container mx-auto px-4 py-6">
+          <div className="flex flex-col items-start justify-between mb-6 md:flex-row md:items-center">
+            <div>
+              <h1 className="text-2xl font-bold">Polls</h1>
+              <p className="text-muted-foreground mt-1">
+                Share your feedback and see what others think
+              </p>
             </div>
-
-            <Tabs defaultValue="active" onValueChange={setActiveTab} className="w-full">
-              <TabsList className="mb-6">
-                <TabsTrigger value="active">Active Polls</TabsTrigger>
-                <TabsTrigger value="voted">Your Votes</TabsTrigger>
-                <TabsTrigger value="all">All Polls</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="active" className="space-y-6">
-                {filteredPolls.length > 0 ? (
-                  <div className="grid gap-6 md:grid-cols-2">
-                    {filteredPolls.map(poll => renderPollCard(poll))}
-                  </div>
-                ) : (
-                  <Card className="py-16">
-                    <CardContent className="flex flex-col items-center justify-center text-center">
-                      <BarChart className="w-16 h-16 text-muted-foreground opacity-20" />
-                      <h3 className="text-xl font-medium mt-4">No active polls</h3>
-                      <p className="text-muted-foreground text-sm mt-1">
-                        Check back soon for new polls from the event organizers
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
-              
-              <TabsContent value="voted" className="space-y-6">
-                {filteredPolls.length > 0 ? (
-                  <div className="grid gap-6 md:grid-cols-2">
-                    {filteredPolls.map(poll => renderPollCard(poll))}
-                  </div>
-                ) : (
-                  <Card className="py-16">
-                    <CardContent className="flex flex-col items-center justify-center text-center">
-                      <BarChart className="w-16 h-16 text-muted-foreground opacity-20" />
-                      <h3 className="text-xl font-medium mt-4">No votes yet</h3>
-                      <p className="text-muted-foreground text-sm mt-1">
-                        You haven't voted on any polls yet
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
-              
-              <TabsContent value="all" className="space-y-6">
-                {filteredPolls.length > 0 ? (
-                  <div className="grid gap-6 md:grid-cols-2">
-                    {filteredPolls.map(poll => renderPollCard(poll))}
-                  </div>
-                ) : (
-                  <Card className="py-16">
-                    <CardContent className="flex flex-col items-center justify-center text-center">
-                      <BarChart className="w-16 h-16 text-muted-foreground opacity-20" />
-                      <h3 className="text-xl font-medium mt-4">No polls available</h3>
-                      <p className="text-muted-foreground text-sm mt-1">
-                        There are no polls available at this time
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
-            </Tabs>
-
-            {/* Floating Poll Banner */}
-            {activeBannerPoll && (
-              <FloatingPollBanner
-                poll={activeBannerPoll}
-                onVote={handleVote}
-                onClose={() => setActiveBannerPoll(null)}
-                hasUserVoted={hasUserVotedForPoll(activeBannerPoll.id)}
-                userVote={getUserVoteForPoll(activeBannerPoll.id)}
-              />
-            )}
           </div>
-        </AttendeeRouteGuard>
-      </AttendeeEventProvider>
+
+          <Tabs defaultValue="active" onValueChange={setActiveTab} className="w-full">
+            <TabsList className="mb-6">
+              <TabsTrigger value="active">Active Polls</TabsTrigger>
+              <TabsTrigger value="voted">Your Votes</TabsTrigger>
+              <TabsTrigger value="all">All Polls</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="active" className="space-y-6">
+              {filteredPolls.length > 0 ? (
+                <div className="grid gap-6 md:grid-cols-2">
+                  {filteredPolls.map(poll => renderPollCard(poll))}
+                </div>
+              ) : (
+                <Card className="py-16">
+                  <CardContent className="flex flex-col items-center justify-center text-center">
+                    <BarChart className="w-16 h-16 text-muted-foreground opacity-20" />
+                    <h3 className="text-xl font-medium mt-4">No active polls</h3>
+                    <p className="text-muted-foreground text-sm mt-1">
+                      Check back soon for new polls from the event organizers
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="voted" className="space-y-6">
+              {filteredPolls.length > 0 ? (
+                <div className="grid gap-6 md:grid-cols-2">
+                  {filteredPolls.map(poll => renderPollCard(poll))}
+                </div>
+              ) : (
+                <Card className="py-16">
+                  <CardContent className="flex flex-col items-center justify-center text-center">
+                    <BarChart className="w-16 h-16 text-muted-foreground opacity-20" />
+                    <h3 className="text-xl font-medium mt-4">No votes yet</h3>
+                    <p className="text-muted-foreground text-sm mt-1">
+                      You haven't voted on any polls yet
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+            
+            <TabsContent value="all" className="space-y-6">
+              {filteredPolls.length > 0 ? (
+                <div className="grid gap-6 md:grid-cols-2">
+                  {filteredPolls.map(poll => renderPollCard(poll))}
+                </div>
+              ) : (
+                <Card className="py-16">
+                  <CardContent className="flex flex-col items-center justify-center text-center">
+                    <BarChart className="w-16 h-16 text-muted-foreground opacity-20" />
+                    <h3 className="text-xl font-medium mt-4">No polls available</h3>
+                    <p className="text-muted-foreground text-sm mt-1">
+                      There are no polls available at this time
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+          </Tabs>
+
+          {/* Floating Poll Banner */}
+          {activeBannerPoll && (
+            <FloatingPollBanner
+              poll={activeBannerPoll}
+              onVote={handleVote}
+              onClose={() => setActiveBannerPoll(null)}
+              hasUserVoted={hasUserVotedForPoll(activeBannerPoll.id)}
+              userVote={getUserVoteForPoll(activeBannerPoll.id)}
+            />
+          )}
+        </div>
+      </AttendeeRouteGuard>
     </AppLayout>
   );
 };

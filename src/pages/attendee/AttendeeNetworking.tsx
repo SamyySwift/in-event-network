@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Send, Filter, UserPlus, MessageSquare, Twitter, Linkedin, Github, Instagram, Globe } from 'lucide-react';
@@ -16,11 +17,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { useNetworking } from '@/hooks/useNetworking';
+import { useAttendeeNetworking } from '@/hooks/useAttendeeNetworking';
 import { NetworkingFilter } from '@/components/networking/NetworkingFilter';
 import ChatRoom from '@/components/chat/ChatRoom';
 import { ConversationsList } from '@/components/messaging/ConversationsList';
 import { DirectMessageThread } from '@/components/messaging/DirectMessageThread';
+import { useNetworking } from '@/hooks/useNetworking';
 
 const AttendeeNetworking = () => {
   const navigate = useNavigate();
@@ -34,7 +36,12 @@ const AttendeeNetworking = () => {
     userName: string;
     userPhoto?: string;
   } | null>(null);
-  const { profiles, loading, sendConnectionRequest, getConnectionStatus } = useNetworking();
+  
+  // Use the correct hook for attendee networking
+  const { attendees: profiles, isLoading: loading, error } = useAttendeeNetworking();
+  
+  // Still need useNetworking for connection requests functionality
+  const { sendConnectionRequest, getConnectionStatus } = useNetworking();
   
   // Get unique filter options from all profiles
   const { availableNiches, availableNetworkingPrefs, availableTags } = useMemo(() => {
@@ -64,11 +71,11 @@ const AttendeeNetworking = () => {
     return profiles.filter(profile => {
       // Text search
       const matchesSearch = !searchTerm || (
-        profile.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        profile.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        profile.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        profile.bio.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        profile.niche.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        profile.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        profile.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        profile.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        profile.bio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        profile.niche?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (profile.tags && profile.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))) ||
         (profile.networking_preferences && profile.networking_preferences.some(pref => pref.toLowerCase().includes(searchTerm.toLowerCase())))
       );
@@ -169,7 +176,7 @@ const AttendeeNetworking = () => {
           <div className="flex justify-center items-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-connect-600 mx-auto"></div>
-              <p className="mt-2 text-gray-600 dark:text-gray-400">Loading profiles...</p>
+              <p className="mt-2 text-gray-600 dark:text-gray-400">Loading attendees...</p>
             </div>
           </div>
         </div>
@@ -232,10 +239,10 @@ const AttendeeNetworking = () => {
                         <div className="flex justify-between">
                           <Avatar className="h-12 w-12">
                             {profile.photo_url ? (
-                              <AvatarImage src={profile.photo_url} alt={profile.name} />
+                              <AvatarImage src={profile.photo_url} alt={profile.name || ''} />
                             ) : (
                               <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300">
-                                {profile.name.split(' ').map(n => n[0]).join('')}
+                                {profile.name?.split(' ').map(n => n[0]).join('') || '?'}
                               </AvatarFallback>
                             )}
                           </Avatar>
@@ -243,7 +250,7 @@ const AttendeeNetworking = () => {
                             <Button 
                               size="sm" 
                               variant="outline"
-                              onClick={() => handleMessage(profile.id, profile.name, profile.photo_url)}
+                              onClick={() => handleMessage(profile.id, profile.name || '', profile.photo_url || undefined)}
                               className="h-8"
                               disabled={!isConnected}
                             >
@@ -261,9 +268,9 @@ const AttendeeNetworking = () => {
                             </Button>
                           </div>
                         </div>
-                        <CardTitle className="mt-3 text-xl text-gray-900 dark:text-white">{profile.name}</CardTitle>
+                        <CardTitle className="mt-3 text-xl text-gray-900 dark:text-white">{profile.name || 'Unknown'}</CardTitle>
                         <CardDescription className="text-sm flex flex-col">
-                          <span className="text-gray-700 dark:text-gray-300">{profile.role}</span>
+                          <span className="text-gray-700 dark:text-gray-300">{profile.role || 'No role specified'}</span>
                           {profile.company && (
                             <span className="text-gray-500 dark:text-gray-400">{profile.company}</span>
                           )}
@@ -313,25 +320,65 @@ const AttendeeNetworking = () => {
                         )}
                         
                         {/* Social Links with Icons */}
-                        {profile.links && Object.keys(profile.links).length > 0 && (
+                        {(profile.twitter_link || profile.linkedin_link || profile.github_link || profile.instagram_link || profile.website_link) && (
                           <div className="mt-4">
                             <div className="text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Connect on:</div>
                             <div className="flex flex-wrap gap-2">
-                              {Object.entries(profile.links).map(([platform, handle]) => {
-                                if (!handle) return null;
-                                return (
-                                  <a 
-                                    key={platform} 
-                                    href={getSocialUrl(platform, handle)}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center text-sm bg-gray-100 dark:bg-gray-700 rounded-full py-1 px-3 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                                  >
-                                    {getSocialIcon(platform)}
-                                    <span className="ml-1 capitalize">{platform === 'website' ? 'Website' : platform}</span>
-                                  </a>
-                                );
-                              })}
+                              {profile.twitter_link && (
+                                <a 
+                                  href={getSocialUrl('twitter', profile.twitter_link)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center text-sm bg-gray-100 dark:bg-gray-700 rounded-full py-1 px-3 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                >
+                                  {getSocialIcon('twitter')}
+                                  <span className="ml-1">Twitter</span>
+                                </a>
+                              )}
+                              {profile.linkedin_link && (
+                                <a 
+                                  href={getSocialUrl('linkedin', profile.linkedin_link)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center text-sm bg-gray-100 dark:bg-gray-700 rounded-full py-1 px-3 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                >
+                                  {getSocialIcon('linkedin')}
+                                  <span className="ml-1">LinkedIn</span>
+                                </a>
+                              )}
+                              {profile.github_link && (
+                                <a 
+                                  href={getSocialUrl('github', profile.github_link)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center text-sm bg-gray-100 dark:bg-gray-700 rounded-full py-1 px-3 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                >
+                                  {getSocialIcon('github')}
+                                  <span className="ml-1">GitHub</span>
+                                </a>
+                              )}
+                              {profile.instagram_link && (
+                                <a 
+                                  href={getSocialUrl('instagram', profile.instagram_link)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center text-sm bg-gray-100 dark:bg-gray-700 rounded-full py-1 px-3 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                >
+                                  {getSocialIcon('instagram')}
+                                  <span className="ml-1">Instagram</span>
+                                </a>
+                              )}
+                              {profile.website_link && (
+                                <a 
+                                  href={getSocialUrl('website', profile.website_link)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center text-sm bg-gray-100 dark:bg-gray-700 rounded-full py-1 px-3 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                                >
+                                  {getSocialIcon('website')}
+                                  <span className="ml-1">Website</span>
+                                </a>
+                              )}
                             </div>
                           </div>
                         )}
@@ -346,7 +393,7 @@ const AttendeeNetworking = () => {
                 <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">No matches found</h3>
                 <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
                   {profiles.length === 0 
-                    ? "No other users have registered yet. Check back soon!"
+                    ? "No other attendees have joined this event yet. Check back soon!"
                     : "Try adjusting your search or filters to find more people"
                   }
                 </p>

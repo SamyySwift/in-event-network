@@ -2,6 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
 
 interface AttendeeProfile {
   id: string;
@@ -23,24 +24,17 @@ interface AttendeeProfile {
 
 export const useAttendeeNetworking = () => {
   const { currentUser } = useAuth();
+  const { currentEventId } = useAttendeeEventContext();
 
   const { data: attendees = [], isLoading, error } = useQuery({
-    queryKey: ['attendee-networking', currentUser?.id],
+    queryKey: ['attendee-networking', currentUser?.id, currentEventId],
     queryFn: async (): Promise<AttendeeProfile[]> => {
-      if (!currentUser?.id) {
-        throw new Error('User not authenticated');
-      }
-
-      // Get the user's current event from their profile
-      const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('current_event_id')
-        .eq('id', currentUser.id)
-        .single();
-
-      if (!userProfile?.current_event_id) {
+      if (!currentUser?.id || !currentEventId) {
+        console.log('Missing user or event:', { userId: currentUser?.id, eventId: currentEventId });
         return [];
       }
+
+      console.log('Fetching attendees for event:', currentEventId, 'excluding user:', currentUser.id);
 
       // Get attendees from the current event only (excluding current user)
       const { data: eventParticipants, error } = await supabase
@@ -65,7 +59,7 @@ export const useAttendeeNetworking = () => {
             created_at
           )
         `)
-        .eq('event_id', userProfile.current_event_id)
+        .eq('event_id', currentEventId)
         .neq('user_id', currentUser.id);
 
       if (error) {
@@ -73,12 +67,15 @@ export const useAttendeeNetworking = () => {
         throw error;
       }
 
+      console.log('Raw event participants data:', eventParticipants);
+
       // Transform and filter the data
       const attendees = eventParticipants?.map((participant: any) => participant.profiles).filter(Boolean) || [];
 
+      console.log('Processed attendees:', attendees);
       return attendees as AttendeeProfile[];
     },
-    enabled: !!currentUser?.id,
+    enabled: !!currentUser?.id && !!currentEventId,
   });
 
   return {

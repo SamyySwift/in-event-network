@@ -42,11 +42,18 @@ export const useAdminQuestions = (eventId?: string) => {
 
       console.log('Fetching questions for admin:', currentUser.id, 'event:', eventId);
 
-      // Get questions from participants of the admin's event
+      // Get questions from the specific event AND questions from participants of this event
+      // This will catch both new questions (with event_id) and legacy questions (without event_id)
       const { data: questionsData, error: questionsError } = await supabase
         .from('questions')
-        .select('*')
-        .eq('event_id', eventId)
+        .select(`
+          *,
+          profiles:user_id (
+            name,
+            photo_url
+          )
+        `)
+        .or(`event_id.eq.${eventId},and(event_id.is.null,user_id.in.(select user_id from event_participants where event_id.eq.${eventId}))`)
         .order('created_at', { ascending: false });
 
       if (questionsError) {
@@ -60,47 +67,14 @@ export const useAdminQuestions = (eventId?: string) => {
         return [];
       }
 
-      // Get profiles for non-anonymous questions
-      const questionsWithProfiles = await Promise.all(
-        questionsData.map(async (question) => {
-          if (question.is_anonymous) {
-            return {
-              ...question,
-              profiles: null
-            };
-          }
+      // Transform the data to match our expected structure
+      const transformedQuestions = questionsData.map((question: any) => ({
+        ...question,
+        profiles: question.is_anonymous ? null : question.profiles
+      }));
 
-          try {
-            const { data: profileData, error: profileError } = await supabase
-              .from('profiles')
-              .select('name, photo_url')
-              .eq('id', question.user_id)
-              .single();
-
-            if (profileError) {
-              console.warn('Profile error for user:', question.user_id, profileError);
-              return {
-                ...question,
-                profiles: null
-              };
-            }
-
-            return {
-              ...question,
-              profiles: profileData
-            };
-          } catch (error) {
-            console.warn('Error fetching profile for user:', question.user_id, error);
-            return {
-              ...question,
-              profiles: null
-            };
-          }
-        })
-      );
-
-      console.log('Admin questions with profiles:', questionsWithProfiles);
-      return questionsWithProfiles;
+      console.log('Admin questions with profiles:', transformedQuestions);
+      return transformedQuestions;
     },
     enabled: !!currentUser?.id && !!eventId,
   });
@@ -129,6 +103,7 @@ export const useAdminQuestions = (eventId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['attendee-questions'] });
       toast({
         title: 'Success',
         description: 'Question marked as answered',
@@ -164,6 +139,7 @@ export const useAdminQuestions = (eventId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['attendee-questions'] });
       toast({
         title: 'Success',
         description: 'Question deleted successfully',
@@ -205,6 +181,7 @@ export const useAdminQuestions = (eventId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['attendee-questions'] });
       toast({
         title: 'Success',
         description: 'Response submitted successfully',

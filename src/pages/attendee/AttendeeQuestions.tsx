@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { ArrowUp, MessageSquare, Send, User } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
@@ -39,6 +38,7 @@ const AttendeeQuestions = () => {
   const { 
     questions, 
     sessions, 
+    currentEventId,
     isLoading, 
     error, 
     submitQuestion, 
@@ -48,6 +48,10 @@ const AttendeeQuestions = () => {
 
   const handleSubmitQuestion = async () => {
     if (!newQuestion.trim()) return;
+
+    if (!currentEventId) {
+      return;
+    }
 
     submitQuestion({
       content: newQuestion,
@@ -80,6 +84,23 @@ const AttendeeQuestions = () => {
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
               <p className="mt-2 text-muted-foreground">Loading questions...</p>
+            </div>
+          </div>
+        </AttendeeRouteGuard>
+      </AppLayout>
+    );
+  }
+
+  if (!currentEventId) {
+    return (
+      <AppLayout>
+        <AttendeeRouteGuard>
+          <div className="animate-fade-in max-w-4xl mx-auto">
+            <div className="mb-6">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Q&A Session</h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                You need to join an event first to ask questions
+              </p>
             </div>
           </div>
         </AttendeeRouteGuard>

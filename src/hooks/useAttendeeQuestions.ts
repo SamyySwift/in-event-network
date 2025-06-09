@@ -32,21 +32,26 @@ export const useAttendeeQuestions = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: questions = [], isLoading: questionsLoading, error: questionsError } = useQuery({
-    queryKey: ['attendee-questions', currentUser?.id],
-    queryFn: async (): Promise<QuestionWithProfile[]> => {
-      if (!currentUser?.id) {
-        throw new Error('User not authenticated');
-      }
+  const { data: currentEventId } = useQuery({
+    queryKey: ['current-event-id', currentUser?.id],
+    queryFn: async (): Promise<string | null> => {
+      if (!currentUser?.id) return null;
 
-      // Get the user's current event from their profile
       const { data: userProfile } = await supabase
         .from('profiles')
         .select('current_event_id')
         .eq('id', currentUser.id)
         .single();
 
-      if (!userProfile?.current_event_id) {
+      return userProfile?.current_event_id || null;
+    },
+    enabled: !!currentUser?.id,
+  });
+
+  const { data: questions = [], isLoading: questionsLoading, error: questionsError } = useQuery({
+    queryKey: ['attendee-questions', currentUser?.id, currentEventId],
+    queryFn: async (): Promise<QuestionWithProfile[]> => {
+      if (!currentUser?.id || !currentEventId) {
         return [];
       }
 
@@ -54,7 +59,7 @@ export const useAttendeeQuestions = () => {
       const { data: currentEvent } = await supabase
         .from('events')
         .select('host_id')
-        .eq('id', userProfile.current_event_id)
+        .eq('id', currentEventId)
         .single();
 
       if (!currentEvent?.host_id) {
@@ -85,11 +90,12 @@ export const useAttendeeQuestions = () => {
         return [];
       }
 
-      // Get questions from these participants
+      // Get questions from these participants for the current event
       const { data: questionsData, error } = await supabase
         .from('questions')
         .select('*')
         .in('user_id', participantIds)
+        .eq('event_id', currentEventId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -122,55 +128,21 @@ export const useAttendeeQuestions = () => {
 
       return questionsWithProfiles;
     },
-    enabled: !!currentUser?.id,
+    enabled: !!currentUser?.id && !!currentEventId,
   });
 
   const { data: sessions = [], isLoading: sessionsLoading } = useQuery({
-    queryKey: ['attendee-sessions', currentUser?.id],
+    queryKey: ['attendee-sessions', currentUser?.id, currentEventId],
     queryFn: async (): Promise<Session[]> => {
-      if (!currentUser?.id) {
-        throw new Error('User not authenticated');
-      }
-
-      // Get the user's current event from their profile
-      const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('current_event_id')
-        .eq('id', currentUser.id)
-        .single();
-
-      if (!userProfile?.current_event_id) {
+      if (!currentUser?.id || !currentEventId) {
         return [];
       }
 
-      // Get the current event to find the host
-      const { data: currentEvent } = await supabase
-        .from('events')
-        .select('host_id')
-        .eq('id', userProfile.current_event_id)
-        .single();
-
-      if (!currentEvent?.host_id) {
-        return [];
-      }
-
-      // Get all events from the same host
-      const { data: hostEvents } = await supabase
-        .from('events')
-        .select('id')
-        .eq('host_id', currentEvent.host_id);
-
-      const eventIds = hostEvents?.map(e => e.id) || [];
-
-      if (eventIds.length === 0) {
-        return [];
-      }
-
-      // Get speakers/sessions for events from this host
+      // Get speakers/sessions for the current event
       const { data: sessionsData, error } = await supabase
         .from('speakers')
         .select('id, name, session_title, session_time')
-        .in('event_id', eventIds)
+        .eq('event_id', currentEventId)
         .not('session_time', 'is', null)
         .not('session_title', 'is', null)
         .order('session_time', { ascending: true });
@@ -182,7 +154,7 @@ export const useAttendeeQuestions = () => {
 
       return sessionsData || [];
     },
-    enabled: !!currentUser?.id,
+    enabled: !!currentUser?.id && !!currentEventId,
   });
 
   const submitQuestionMutation = useMutation({
@@ -195,6 +167,10 @@ export const useAttendeeQuestions = () => {
         throw new Error('User not authenticated');
       }
 
+      if (!currentEventId) {
+        throw new Error('No current event found');
+      }
+
       const { error } = await supabase
         .from('questions')
         .insert([{
@@ -202,7 +178,7 @@ export const useAttendeeQuestions = () => {
           user_id: currentUser.id,
           is_anonymous: questionData.isAnonymous,
           session_id: questionData.selectedSessionId === 'general' ? null : questionData.selectedSessionId || null,
-          event_id: null,
+          event_id: currentEventId, // Now properly setting the event_id
           upvotes: 0,
           is_answered: false
         }]);
@@ -214,6 +190,7 @@ export const useAttendeeQuestions = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attendee-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-questions'] }); // Also invalidate admin questions
       toast({
         title: "Success",
         description: "Your question has been submitted!",
@@ -252,6 +229,7 @@ export const useAttendeeQuestions = () => {
     },
     onSuccess: (questionId) => {
       queryClient.invalidateQueries({ queryKey: ['attendee-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-questions'] }); // Also invalidate admin questions
       toast({
         title: "Success",
         description: "Question upvoted!",
@@ -270,6 +248,7 @@ export const useAttendeeQuestions = () => {
   return {
     questions,
     sessions,
+    currentEventId,
     isLoading: questionsLoading || sessionsLoading,
     error: questionsError,
     submitQuestion: submitQuestionMutation.mutate,

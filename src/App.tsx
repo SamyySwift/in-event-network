@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -193,6 +192,16 @@ function App() {
               {/* Attendee routes - wrapped with AttendeeEventProvider */}
               <Route
                 path="/attendee"
+                element={
+                  <AttendeeEventProvider>
+                    <ProtectedRoute requiredRole="attendee">
+                      <AttendeeDashboard />
+                    </ProtectedRoute>
+                  </AttendeeEventProvider>
+                }
+              />
+              <Route
+                path="/attendee/dashboard"
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">

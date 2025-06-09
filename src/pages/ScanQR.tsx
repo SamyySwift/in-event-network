@@ -22,6 +22,7 @@ const ScanQR = () => {
     try {
       // Handle different QR code formats
       let accessCode = '';
+      let eventId = '';
 
       // Check if it's a URL with access code parameter
       if (decodedText.includes('code=')) {
@@ -37,9 +38,10 @@ const ScanQR = () => {
         const url = new URL(decodedText);
         const pathParts = url.pathname.split('/');
         if (pathParts.length >= 2 && pathParts[1] === 'event') {
-          const eventId = pathParts[2];
+          eventId = pathParts[2];
           if (eventId) {
-            navigate(`/join/${eventId}`);
+            // Navigate to the join route with the event ID
+            navigate(`/join/${eventId}`, { replace: true });
             return;
           }
         }
@@ -48,7 +50,6 @@ const ScanQR = () => {
       if (accessCode && /^\d{6}$/.test(accessCode)) {
         console.log('Extracted access code:', accessCode);
         
-        // Use a promise-based approach to handle the join event result
         joinEvent(accessCode, {
           onSuccess: (data: any) => {
             console.log('Join event success:', data);

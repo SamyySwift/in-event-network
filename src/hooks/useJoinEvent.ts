@@ -37,8 +37,8 @@ export const useJoinEvent = () => {
           title: 'Successfully Joined Event!',
           description: `Welcome to ${data.event_name}`,
         });
-        // Navigate to attendee dashboard
-        navigate('/attendee');
+        // Navigate to attendee dashboard instead of just /attendee
+        navigate('/attendee/dashboard');
       } else {
         toast({
           title: 'Failed to Join Event',
@@ -58,7 +58,12 @@ export const useJoinEvent = () => {
   });
 
   return {
-    joinEvent: joinEventMutation.mutate,
+    joinEvent: (accessCode: string, options?: { onSuccess?: (data: any) => void; onError?: (error: any) => void }) => {
+      return joinEventMutation.mutate(accessCode, {
+        onSuccess: options?.onSuccess,
+        onError: options?.onError,
+      });
+    },
     isJoining: joinEventMutation.isPending,
   };
 };

@@ -46,8 +46,7 @@ export const useAdminQuestions = (eventId?: string) => {
 
       console.log('Fetching questions for admin:', currentUser.id, 'event:', eventId);
 
-      // Get questions from the specific event AND questions from participants of this event
-      // This will catch both new questions (with event_id) and legacy questions (without event_id)
+      // Simplified query - just get questions for this specific event
       const { data: questionsData, error: questionsError } = await supabase
         .from('questions')
         .select(`
@@ -57,7 +56,7 @@ export const useAdminQuestions = (eventId?: string) => {
             photo_url
           )
         `)
-        .or(`event_id.eq.${eventId},and(event_id.is.null,user_id.in.(select user_id from event_participants where event_id.eq.${eventId}))`)
+        .eq('event_id', eventId)
         .order('created_at', { ascending: false });
 
       if (questionsError) {

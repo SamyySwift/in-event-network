@@ -12,6 +12,7 @@ interface Announcement {
   send_immediately: boolean;
   image_url?: string;
   created_by?: string;
+  event_id?: string;
   created_at: string;
   updated_at: string;
 }
@@ -30,10 +31,28 @@ export const useAnnouncements = () => {
 
       console.log('Fetching announcements for admin:', currentUser.id);
 
-      // Only fetch announcements created by the current admin
+      // Get the admin's current event first
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('current_event_id')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching admin profile:', profileError);
+        throw profileError;
+      }
+
+      if (!profile?.current_event_id) {
+        console.log('No current event found for admin');
+        return [];
+      }
+
+      // Fetch announcements for the admin's current event
       const { data, error } = await supabase
         .from('announcements')
         .select('*')
+        .eq('event_id', profile.current_event_id)
         .eq('created_by', currentUser.id)
         .order('created_at', { ascending: false });
 
@@ -72,6 +91,17 @@ export const useAnnouncements = () => {
         throw new Error('User not authenticated');
       }
 
+      // Get the admin's current event_id
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('current_event_id')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (profileError || !profile?.current_event_id) {
+        throw new Error('No current event found. Please select an event first.');
+      }
+
       let imageUrl;
       if (announcementData.image) {
         imageUrl = await uploadImage(announcementData.image);
@@ -81,8 +111,11 @@ export const useAnnouncements = () => {
       const finalData = {
         ...dataWithoutImage,
         image_url: imageUrl || announcementData.image_url,
-        created_by: currentUser.id
+        created_by: currentUser.id,
+        event_id: profile.current_event_id // Ensure event_id is set
       };
+
+      console.log('Creating announcement with data:', finalData);
 
       const { data, error } = await supabase
         .from('announcements')
@@ -95,6 +128,7 @@ export const useAnnouncements = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['announcements', currentUser?.id] });
+      queryClient.invalidateQueries({ queryKey: ['attendee-announcements'] });
       toast({
         title: 'Announcement Created',
         description: 'The announcement has been published successfully.',
@@ -103,7 +137,7 @@ export const useAnnouncements = () => {
     onError: (error) => {
       toast({
         title: 'Error',
-        description: 'Failed to create announcement. Please try again.',
+        description: error.message || 'Failed to create announcement. Please try again.',
         variant: 'destructive',
       });
       console.error('Error creating announcement:', error);
@@ -135,6 +169,7 @@ export const useAnnouncements = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['announcements', currentUser?.id] });
+      queryClient.invalidateQueries({ queryKey: ['attendee-announcements'] });
       toast({
         title: 'Announcement Updated',
         description: 'The announcement has been updated successfully.',
@@ -162,6 +197,7 @@ export const useAnnouncements = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['announcements', currentUser?.id] });
+      queryClient.invalidateQueries({ queryKey: ['attendee-announcements'] });
       toast({
         title: 'Announcement Deleted',
         description: 'The announcement has been removed successfully.',

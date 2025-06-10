@@ -2,7 +2,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
 
 interface AttendeeProfile {
   id: string;
@@ -24,17 +23,33 @@ interface AttendeeProfile {
 
 export const useAttendeeNetworking = () => {
   const { currentUser } = useAuth();
-  const { currentEventId } = useAttendeeEventContext();
 
   const { data: attendees = [], isLoading, error } = useQuery({
-    queryKey: ['attendee-networking', currentUser?.id, currentEventId],
+    queryKey: ['attendee-networking', currentUser?.id],
     queryFn: async (): Promise<AttendeeProfile[]> => {
-      if (!currentUser?.id || !currentEventId) {
-        console.log('Missing user or event:', { userId: currentUser?.id, eventId: currentEventId });
+      if (!currentUser?.id) {
+        console.log('No current user found');
         return [];
       }
 
-      console.log('Fetching attendees for event:', currentEventId, 'excluding user:', currentUser.id);
+      // Get the user's current event ID from their profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('current_event_id')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching user profile:', profileError);
+        return [];
+      }
+
+      if (!profile?.current_event_id) {
+        console.log('No current event found for user');
+        return [];
+      }
+
+      console.log('Fetching attendees for event:', profile.current_event_id, 'excluding user:', currentUser.id);
 
       // Get attendees from the current event only (excluding current user)
       const { data: eventParticipants, error } = await supabase
@@ -59,7 +74,7 @@ export const useAttendeeNetworking = () => {
             created_at
           )
         `)
-        .eq('event_id', currentEventId)
+        .eq('event_id', profile.current_event_id)
         .neq('user_id', currentUser.id);
 
       if (error) {
@@ -75,7 +90,7 @@ export const useAttendeeNetworking = () => {
       console.log('Processed attendees:', attendees);
       return attendees as AttendeeProfile[];
     },
-    enabled: !!currentUser?.id && !!currentEventId,
+    enabled: !!currentUser?.id,
   });
 
   return {

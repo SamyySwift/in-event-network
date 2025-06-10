@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Calendar, Users, Bell, Settings, MessageSquare, Star, MapPin, BarChart4, User, PanelLeft, Megaphone, Landmark, BookText, MessageCircle, ChevronRight, LogOut, Menu, Search, Sun, Moon, BarChart, Clock } from 'lucide-react';
+import { useNotificationCount } from '@/hooks/useNotificationCount';
+import { Calendar, Users, Bell, Settings, MessageSquare, Star, MapPin, BarChart4, User, PanelLeft, Megaphone, BookText, MessageCircle, ChevronRight, LogOut, Menu, Search, Sun, Moon, BarChart, Clock } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
@@ -17,6 +18,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
     currentUser,
     logout
   } = useAuth();
+  const { unreadCount } = useNotificationCount();
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -112,10 +114,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
     href: '/admin/suggestions',
     icon: <MessageCircle size={20} />
   }, {
-    name: 'Team Management',
-    href: '/admin/team',
-    icon: <Landmark size={20} />
-  }, {
     name: 'Notifications',
     href: '/admin/notifications',
     icon: <Bell size={20} />
@@ -137,7 +135,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
         
         <Button variant="ghost" size="icon" onClick={() => navigate('/admin/notifications')} className="relative">
           <Bell size={20} className="text-primary" />
-          <span className="absolute top-0 right-0 h-2 w-2 bg-primary rounded-full animate-pulse"></span>
+          {unreadCount > 0 && (
+            <span className="absolute -top-1 -right-1 h-5 w-5 bg-primary text-primary-foreground rounded-full text-xs flex items-center justify-center">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
         </Button>
       </header>
       
@@ -228,7 +230,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
             
             <Button variant="outline" size="icon" onClick={() => navigate('/admin/notifications')} className={`relative bg-card ${isActive('/admin/notifications') ? 'border-primary/30 ring-1 ring-primary/30' : 'border-primary/20'} hover:bg-accent`}>
               <Bell size={18} className={isActive('/admin/notifications') ? 'text-primary' : ''} />
-              <span className="absolute top-0 right-0 h-2 w-2 bg-primary rounded-full animate-pulse"></span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 h-5 w-5 bg-primary text-primary-foreground rounded-full text-xs flex items-center justify-center">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
             </Button>
             
             <Button variant="outline" size="icon" onClick={() => navigate('/admin/settings')} className={`bg-card ${isActive('/admin/settings') ? 'border-primary/30 ring-1 ring-primary/30' : 'border-primary/20'} hover:bg-accent`}>

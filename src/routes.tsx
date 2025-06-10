@@ -25,7 +25,6 @@ import AdminFacilities from '@/pages/admin/AdminFacilities';
 import AdminRules from '@/pages/admin/AdminRules';
 import AdminQuestions from '@/pages/admin/AdminQuestions';
 import AdminSuggestions from '@/pages/admin/AdminSuggestions';
-import AdminTeam from '@/pages/admin/AdminTeam';
 import AdminNotifications from '@/pages/admin/AdminNotifications';
 import AdminSettings from '@/pages/admin/AdminSettings';
 
@@ -142,14 +141,6 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute requiredRole="host">
             <AdminSuggestions />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/team"
-        element={
-          <ProtectedRoute requiredRole="host">
-            <AdminTeam />
           </ProtectedRoute>
         }
       />

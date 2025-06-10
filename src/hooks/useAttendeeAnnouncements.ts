@@ -23,6 +23,7 @@ export const useAttendeeAnnouncements = () => {
     queryKey: ['attendee-announcements', currentUser?.id],
     queryFn: async () => {
       if (!currentUser?.id) {
+        console.log('No current user found');
         return [];
       }
 
@@ -33,8 +34,13 @@ export const useAttendeeAnnouncements = () => {
         .eq('id', currentUser.id)
         .single();
 
-      if (profileError || !profile?.current_event_id) {
-        console.log('No current event found for user:', profileError);
+      if (profileError) {
+        console.error('Error fetching user profile:', profileError);
+        return [];
+      }
+
+      if (!profile?.current_event_id) {
+        console.log('No current event found for user');
         return [];
       }
 
@@ -52,10 +58,11 @@ export const useAttendeeAnnouncements = () => {
         throw error;
       }
 
-      console.log('Attendee announcements fetched:', data?.length || 0);
+      console.log('Attendee announcements fetched:', data?.length || 0, data);
       return data as Announcement[];
     },
     enabled: !!currentUser?.id,
+    refetchInterval: 30000, // Refetch every 30 seconds for near real-time updates
   });
 
   return {

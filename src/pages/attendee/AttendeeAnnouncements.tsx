@@ -3,13 +3,14 @@ import React from 'react';
 import AppLayout from '@/components/layouts/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Megaphone, Clock, Loader } from 'lucide-react';
+import { Megaphone, Clock, Loader, AlertCircle } from 'lucide-react';
 import { useAttendeeAnnouncements } from '@/hooks/useAttendeeAnnouncements';
 import { AttendeeEventProvider } from '@/contexts/AttendeeEventContext';
 import AttendeeRouteGuard from '@/components/attendee/AttendeeRouteGuard';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const AttendeeAnnouncementsContent = () => {
-  const { announcements, isLoading } = useAttendeeAnnouncements();
+  const { announcements, isLoading, error } = useAttendeeAnnouncements();
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -35,6 +36,17 @@ const AttendeeAnnouncementsContent = () => {
       <div className="flex items-center justify-center h-64">
         <Loader className="h-8 w-8 animate-spin" />
       </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Alert className="mb-6">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Error loading announcements: {error.message}
+        </AlertDescription>
+      </Alert>
     );
   }
 

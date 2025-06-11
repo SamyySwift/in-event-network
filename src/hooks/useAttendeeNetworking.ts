@@ -32,24 +32,26 @@ export const useAttendeeNetworking = () => {
         return [];
       }
 
-      // Get the user's current event ID from their profile
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('current_event_id')
-        .eq('id', currentUser.id)
-        .single();
+      // First, get the most recent event this user has joined from event_participants
+      const { data: userEvents, error: userEventsError } = await supabase
+        .from('event_participants')
+        .select('event_id, joined_at')
+        .eq('user_id', currentUser.id)
+        .order('joined_at', { ascending: false })
+        .limit(1);
 
-      if (profileError) {
-        console.error('Error fetching user profile:', profileError);
+      if (userEventsError) {
+        console.error('Error fetching user events:', userEventsError);
         return [];
       }
 
-      if (!profile?.current_event_id) {
-        console.log('No current event found for user');
+      if (!userEvents || userEvents.length === 0) {
+        console.log('User has not joined any events');
         return [];
       }
 
-      console.log('Fetching attendees for event:', profile.current_event_id, 'excluding user:', currentUser.id);
+      const currentEventId = userEvents[0].event_id;
+      console.log('Fetching attendees for event:', currentEventId, 'excluding user:', currentUser.id);
 
       // Get attendees from the current event only (excluding current user)
       const { data: eventParticipants, error } = await supabase
@@ -74,7 +76,7 @@ export const useAttendeeNetworking = () => {
             created_at
           )
         `)
-        .eq('event_id', profile.current_event_id)
+        .eq('event_id', currentEventId)
         .neq('user_id', currentUser.id);
 
       if (error) {

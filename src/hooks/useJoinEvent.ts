@@ -1,5 +1,5 @@
 
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
@@ -14,6 +14,7 @@ interface JoinEventResponse {
 export const useJoinEvent = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const joinEventMutation = useMutation({
     mutationFn: async (accessCode: string) => {
@@ -33,6 +34,9 @@ export const useJoinEvent = () => {
     },
     onSuccess: (data) => {
       if (data?.success) {
+        // Invalidate networking queries to refresh attendee list
+        queryClient.invalidateQueries({ queryKey: ['attendee-networking'] });
+        
         toast({
           title: 'Successfully Joined Event!',
           description: `Welcome to ${data.event_name}`,

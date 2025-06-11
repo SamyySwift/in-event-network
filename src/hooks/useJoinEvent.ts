@@ -34,16 +34,25 @@ export const useJoinEvent = () => {
     },
     onSuccess: (data) => {
       if (data?.success) {
-        // Invalidate networking queries to refresh attendee list
+        console.log('Successfully joined event, invalidating caches...');
+        
+        // Invalidate all networking-related queries to refresh data
         queryClient.invalidateQueries({ queryKey: ['attendee-networking'] });
+        queryClient.invalidateQueries({ queryKey: ['attendee-context'] });
+        queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+        
+        // Force a refetch of networking data
+        queryClient.refetchQueries({ queryKey: ['attendee-networking'] });
         
         toast({
           title: 'Successfully Joined Event!',
-          description: `Welcome to ${data.event_name}`,
+          description: `Welcome to ${data.event_name}. You can now connect with other attendees.`,
         });
-        // Navigate to attendee dashboard instead of just /attendee
+        
+        // Navigate to attendee dashboard
         navigate('/attendee/dashboard');
       } else {
+        console.error('Join event failed:', data?.message);
         toast({
           title: 'Failed to Join Event',
           description: data?.message || 'Invalid access code',

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
+import EventSelector from '@/components/admin/EventSelector';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -10,8 +11,9 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Send, Pencil, Trash2, Loader, Plus, Upload, Phone, AlertTriangle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
-import { useAnnouncements } from '@/hooks/useAnnouncements';
+import { useAdminAnnouncements } from '@/hooks/useAdminAnnouncements';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAdminEventContext, AdminEventProvider } from '@/hooks/useAdminEventContext';
 import { ImageUpload } from '@/components/ui/image-upload';
 
 type AnnouncementFormData = {
@@ -22,11 +24,12 @@ type AnnouncementFormData = {
   image?: File;
 };
 
-const AdminAnnouncements = () => {
+const AdminAnnouncementsContent = () => {
   const [editingAnnouncement, setEditingAnnouncement] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const { currentUser } = useAuth();
-  const { announcements, isLoading, createAnnouncement, updateAnnouncement, deleteAnnouncement, isCreating, isUpdating, isDeleting } = useAnnouncements();
+  const { selectedEvent } = useAdminEventContext();
+  const { announcements, isLoading, createAnnouncement, updateAnnouncement, deleteAnnouncement, isCreating, isUpdating, isDeleting } = useAdminAnnouncements();
 
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<AnnouncementFormData>({
     defaultValues: {
@@ -84,23 +87,68 @@ const AdminAnnouncements = () => {
     }
   };
 
+  if (!selectedEvent) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Announcements</h1>
+          <p className="text-muted-foreground">
+            Create and manage event announcements.
+          </p>
+        </div>
+
+        {/* Event Selector */}
+        <div className="border rounded-lg p-4 bg-card">
+          <EventSelector />
+        </div>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="text-center text-muted-foreground">
+              <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <h3 className="text-lg font-semibold mb-2">No Event Selected</h3>
+              <p>Please select an event above to manage announcements.</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   if (isLoading) {
     return (
-      <AdminLayout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Announcements</h1>
+          <p className="text-muted-foreground">
+            Create and manage event announcements.
+          </p>
+        </div>
+
+        {/* Event Selector */}
+        <div className="border rounded-lg p-4 bg-card">
+          <EventSelector />
+        </div>
+
         <div className="flex items-center justify-center h-64">
           <Loader className="h-8 w-8 animate-spin" />
         </div>
-      </AdminLayout>
+      </div>
     );
   }
 
   return (
-    <AdminLayout>
+    <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Announcements</h1>
         <p className="text-muted-foreground">
-          Create and manage event announcements.
+          Create and manage announcements for {selectedEvent.name}.
         </p>
+      </div>
+
+      {/* Event Selector */}
+      <div className="border rounded-lg p-4 bg-card">
+        <EventSelector />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -193,13 +241,13 @@ const AdminAnnouncements = () => {
             <CardHeader>
               <CardTitle>Current Announcements</CardTitle>
               <CardDescription>
-                {announcements.length} announcements published
+                {announcements.length} announcements published for {selectedEvent.name}
               </CardDescription>
             </CardHeader>
             <CardContent>
               {announcements.length === 0 ? (
                 <p className="text-center text-muted-foreground py-8">
-                  No announcements published yet. Create your first announcement using the form.
+                  No announcements published yet for this event. Create your first announcement using the form.
                 </p>
               ) : (
                 <div className="space-y-4">
@@ -259,6 +307,16 @@ const AdminAnnouncements = () => {
           </Card>
         </div>
       </div>
+    </div>
+  );
+};
+
+const AdminAnnouncements = () => {
+  return (
+    <AdminLayout>
+      <AdminEventProvider>
+        <AdminAnnouncementsContent />
+      </AdminEventProvider>
     </AdminLayout>
   );
 };

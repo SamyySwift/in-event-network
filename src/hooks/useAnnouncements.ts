@@ -17,42 +17,49 @@ interface Announcement {
   updated_at: string;
 }
 
-export const useAnnouncements = () => {
+export const useAnnouncements = (eventId?: string) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { currentUser } = useAuth();
 
   const { data: announcements = [], isLoading, error } = useQuery({
-    queryKey: ['announcements', currentUser?.id],
+    queryKey: ['announcements', currentUser?.id, eventId],
     queryFn: async () => {
       if (!currentUser?.id) {
         throw new Error('User not authenticated');
       }
 
-      console.log('Fetching announcements for admin:', currentUser.id);
+      // Use provided eventId or fall back to user's current event
+      let targetEventId = eventId;
+      
+      if (!targetEventId) {
+        console.log('Fetching announcements for admin:', currentUser.id);
 
-      // Get the admin's current event first
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('current_event_id')
-        .eq('id', currentUser.id)
-        .single();
+        // Get the admin's current event first
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('current_event_id')
+          .eq('id', currentUser.id)
+          .single();
 
-      if (profileError) {
-        console.error('Error fetching admin profile:', profileError);
-        throw profileError;
+        if (profileError) {
+          console.error('Error fetching admin profile:', profileError);
+          throw profileError;
+        }
+
+        if (!profile?.current_event_id) {
+          console.log('No current event found for admin');
+          return [];
+        }
+
+        targetEventId = profile.current_event_id;
       }
 
-      if (!profile?.current_event_id) {
-        console.log('No current event found for admin');
-        return [];
-      }
-
-      // Fetch announcements for the admin's current event
+      // Fetch announcements for the target event
       const { data, error } = await supabase
         .from('announcements')
         .select('*')
-        .eq('event_id', profile.current_event_id)
+        .eq('event_id', targetEventId)
         .eq('created_by', currentUser.id)
         .order('created_at', { ascending: false });
 
@@ -64,7 +71,7 @@ export const useAnnouncements = () => {
       console.log('Announcements fetched:', data?.length || 0);
       return data as Announcement[];
     },
-    enabled: !!currentUser?.id,
+    enabled: !!currentUser?.id && (!!eventId || true), // Enable if eventId is provided or always if no eventId
   });
 
   const uploadImage = async (file: File): Promise<string> => {
@@ -91,15 +98,22 @@ export const useAnnouncements = () => {
         throw new Error('User not authenticated');
       }
 
-      // Get the admin's current event_id
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('current_event_id')
-        .eq('id', currentUser.id)
-        .single();
+      // Use provided eventId or get from user's profile
+      let targetEventId = eventId;
+      
+      if (!targetEventId) {
+        // Get the admin's current event_id
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('current_event_id')
+          .eq('id', currentUser.id)
+          .single();
 
-      if (profileError || !profile?.current_event_id) {
-        throw new Error('No current event found. Please select an event first.');
+        if (profileError || !profile?.current_event_id) {
+          throw new Error('No current event found. Please select an event first.');
+        }
+
+        targetEventId = profile.current_event_id;
       }
 
       let imageUrl;
@@ -112,7 +126,7 @@ export const useAnnouncements = () => {
         ...dataWithoutImage,
         image_url: imageUrl || announcementData.image_url,
         created_by: currentUser.id,
-        event_id: profile.current_event_id // Ensure event_id is set
+        event_id: targetEventId // Use the target event ID
       };
 
       console.log('Creating announcement with data:', finalData);
@@ -127,7 +141,7 @@ export const useAnnouncements = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['announcements', currentUser?.id] });
+      queryClient.invalidateQueries({ queryKey: ['announcements', currentUser?.id, eventId] });
       queryClient.invalidateQueries({ queryKey: ['attendee-announcements'] });
       toast({
         title: 'Announcement Created',
@@ -168,7 +182,7 @@ export const useAnnouncements = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['announcements', currentUser?.id] });
+      queryClient.invalidateQueries({ queryKey: ['announcements', currentUser?.id, eventId] });
       queryClient.invalidateQueries({ queryKey: ['attendee-announcements'] });
       toast({
         title: 'Announcement Updated',
@@ -196,7 +210,7 @@ export const useAnnouncements = () => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['announcements', currentUser?.id] });
+      queryClient.invalidateQueries({ queryKey: ['announcements', currentUser?.id, eventId] });
       queryClient.invalidateQueries({ queryKey: ['attendee-announcements'] });
       toast({
         title: 'Announcement Deleted',

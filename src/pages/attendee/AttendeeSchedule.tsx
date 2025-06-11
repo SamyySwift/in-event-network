@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, User, ChevronRight, Search, Filter } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
@@ -12,6 +13,7 @@ import { useAttendeeSpeakers } from '@/hooks/useAttendeeSpeakers';
 import { useAttendeeContext } from '@/hooks/useAttendeeContext';
 import { format, isToday, isTomorrow, isYesterday, parseISO } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+
 interface ScheduleItem {
   id: string;
   title: string;
@@ -23,6 +25,7 @@ interface ScheduleItem {
   priority: string;
   event_id: string;
 }
+
 interface CombinedScheduleItem {
   id: string;
   title: string;
@@ -37,20 +40,16 @@ interface CombinedScheduleItem {
   speaker_bio?: string;
   priority?: string;
 }
+
 const AttendeeSchedule = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState<string>('all');
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
   const [combinedItems, setCombinedItems] = useState<CombinedScheduleItem[]>([]);
-  const {
-    speakers,
-    isLoading: speakersLoading,
-    error
-  } = useAttendeeSpeakers();
-  const {
-    context,
-    isLoading: contextLoading
-  } = useAttendeeContext();
+  
+  const { speakers, isLoading: speakersLoading, error } = useAttendeeSpeakers();
+  const { context, isLoading: contextLoading } = useAttendeeContext();
+
   console.log('Attendee context:', context);
   console.log('Current event ID:', context?.currentEventId);
 
@@ -61,39 +60,51 @@ const AttendeeSchedule = () => {
         console.log('No current event ID, skipping schedule fetch');
         return;
       }
+
       try {
         console.log('Fetching schedule items for event:', context.currentEventId);
-        const {
-          data,
-          error
-        } = await supabase.from('schedule_items').select('*').eq('event_id', context.currentEventId).order('start_time', {
-          ascending: true
-        });
+        
+        const { data, error } = await supabase
+          .from('schedule_items')
+          .select('*')
+          .eq('event_id', context.currentEventId)
+          .order('start_time', { ascending: true });
+
         if (error) {
           console.error('Error fetching schedule items:', error);
           return;
         }
+
         console.log('Schedule items fetched:', data);
         setScheduleItems(data || []);
       } catch (error) {
         console.error('Error fetching schedule items:', error);
       }
     };
+
     if (context?.currentEventId) {
       fetchScheduleItems();
     }
 
     // Set up real-time subscription for schedule items
     if (context?.currentEventId) {
-      const channel = supabase.channel('attendee-schedule-changes').on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'schedule_items',
-        filter: `event_id=eq.${context.currentEventId}`
-      }, () => {
-        console.log('Schedule items updated, refetching...');
-        fetchScheduleItems();
-      }).subscribe();
+      const channel = supabase
+        .channel('attendee-schedule-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'schedule_items',
+            filter: `event_id=eq.${context.currentEventId}`
+          },
+          () => {
+            console.log('Schedule items updated, refetching...');
+            fetchScheduleItems();
+          }
+        )
+        .subscribe();
+
       return () => {
         supabase.removeChannel(channel);
       };
@@ -105,11 +116,16 @@ const AttendeeSchedule = () => {
     console.log('Combining speakers and schedule items');
     console.log('Speakers:', speakers);
     console.log('Schedule items:', scheduleItems);
+    
     const combined: CombinedScheduleItem[] = [];
 
     // Add speaker sessions
-    const speakersWithSessions = speakers.filter(speaker => speaker.session_time && speaker.session_title);
+    const speakersWithSessions = speakers.filter(speaker => 
+      speaker.session_time && speaker.session_title
+    );
+
     console.log('Speakers with sessions:', speakersWithSessions);
+
     speakersWithSessions.forEach(speaker => {
       combined.push({
         id: `speaker-${speaker.id}`,
@@ -141,15 +157,23 @@ const AttendeeSchedule = () => {
 
     // Sort by start time
     combined.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+
     console.log('Combined items:', combined);
     setCombinedItems(combined);
   }, [speakers, scheduleItems]);
 
   // Filter items based on search and date
   const filteredItems = combinedItems.filter(item => {
-    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) || item.description?.toLowerCase().includes(searchTerm.toLowerCase()) || item.speaker_name?.toLowerCase().includes(searchTerm.toLowerCase()) || item.speaker_company?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = 
+      item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.speaker_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.speaker_company?.toLowerCase().includes(searchTerm.toLowerCase());
+
     if (!matchesSearch) return false;
+
     if (selectedDate === 'all') return true;
+
     try {
       const sessionDate = parseISO(item.start_time);
       if (selectedDate === 'today') return isToday(sessionDate);
@@ -159,6 +183,7 @@ const AttendeeSchedule = () => {
       console.error('Error parsing date:', item.start_time, error);
       return false;
     }
+
     return true;
   });
 
@@ -175,6 +200,7 @@ const AttendeeSchedule = () => {
     }
     return groups;
   }, {} as Record<string, typeof filteredItems>);
+
   const formatDateHeader = (dateStr: string) => {
     try {
       const date = parseISO(dateStr);
@@ -187,6 +213,7 @@ const AttendeeSchedule = () => {
       return dateStr;
     }
   };
+
   const getTypeBadge = (type: string) => {
     switch (type) {
       case 'speaker':
@@ -197,6 +224,7 @@ const AttendeeSchedule = () => {
         return <Badge variant="outline">{type}</Badge>;
     }
   };
+
   const getPriorityBadge = (priority?: string) => {
     if (!priority) return null;
     switch (priority) {
@@ -210,8 +238,10 @@ const AttendeeSchedule = () => {
         return <Badge variant="outline">{priority}</Badge>;
     }
   };
+
   if (speakersLoading || contextLoading) {
-    return <AppLayout>
+    return (
+      <AppLayout>
         <AttendeeRouteGuard>
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
@@ -220,10 +250,13 @@ const AttendeeSchedule = () => {
             </div>
           </div>
         </AttendeeRouteGuard>
-      </AppLayout>;
+      </AppLayout>
+    );
   }
+
   if (!context?.currentEventId) {
-    return <AppLayout>
+    return (
+      <AppLayout>
         <AttendeeRouteGuard>
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
@@ -233,9 +266,12 @@ const AttendeeSchedule = () => {
             </div>
           </div>
         </AttendeeRouteGuard>
-      </AppLayout>;
+      </AppLayout>
+    );
   }
-  return <AppLayout>
+
+  return (
+    <AppLayout>
       <AttendeeRouteGuard>
         <div className="animate-fade-in max-w-4xl mx-auto">
           <div className="mb-6">
@@ -243,9 +279,11 @@ const AttendeeSchedule = () => {
             <p className="text-gray-600 dark:text-gray-400">
               View sessions, speakers, and timing for the event
             </p>
-            {context?.currentEventId && <p className="text-sm text-muted-foreground mt-1">
+            {context?.currentEventId && (
+              <p className="text-sm text-muted-foreground mt-1">
                 Event ID: {context.currentEventId}
-              </p>}
+              </p>
+            )}
           </div>
 
           {/* Search and Filter */}
@@ -254,7 +292,12 @@ const AttendeeSchedule = () => {
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1 relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input placeholder="Search sessions, speakers, or events..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
+                  <Input
+                    placeholder="Search sessions, speakers, or events..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
                 </div>
                 <Tabs value={selectedDate} onValueChange={setSelectedDate} className="w-auto">
                   <TabsList>
@@ -269,32 +312,56 @@ const AttendeeSchedule = () => {
 
           {/* Debug Information */}
           <Card className="mb-6 bg-gray-50">
-            
+            <CardContent className="pt-6">
+              <h3 className="font-semibold mb-2">Debug Information:</h3>
+              <div className="text-sm space-y-1">
+                <p>Total speakers: {speakers.length}</p>
+                <p>Total schedule items: {scheduleItems.length}</p>
+                <p>Combined items: {combinedItems.length}</p>
+                <p>Filtered items: {filteredItems.length}</p>
+              </div>
+            </CardContent>
           </Card>
 
           {/* Schedule Content */}
-          {filteredItems.length === 0 ? <Card>
+          {filteredItems.length === 0 ? (
+            <Card>
               <CardContent className="py-10 text-center text-muted-foreground">
                 <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <h3 className="text-lg font-medium mb-2">No schedule items found</h3>
                 <p>
-                  {combinedItems.length === 0 ? "No schedule items have been created yet" : "Try adjusting your search or filter criteria"}
+                  {combinedItems.length === 0 
+                    ? "No schedule items have been created yet"
+                    : "Try adjusting your search or filter criteria"
+                  }
                 </p>
               </CardContent>
-            </Card> : <div className="space-y-8">
-              {Object.keys(groupedByDate).sort().map(date => <div key={date}>
+            </Card>
+          ) : (
+            <div className="space-y-8">
+              {Object.keys(groupedByDate)
+                .sort()
+                .map(date => (
+                  <div key={date}>
                     <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
                       {formatDateHeader(date)}
                     </h2>
                     <div className="space-y-4">
-                      {groupedByDate[date].map(item => <Card key={item.id} className="hover:shadow-md transition-shadow">
+                      {groupedByDate[date].map(item => (
+                        <Card key={item.id} className="hover:shadow-md transition-shadow">
                           <CardContent className="pt-6">
                             <div className="flex items-start gap-4">
-                              {item.type === 'speaker' && <Avatar className="flex-shrink-0">
-                                  {item.speaker_photo ? <AvatarImage src={item.speaker_photo} alt={item.speaker_name} /> : <AvatarFallback>
+                              {item.type === 'speaker' && (
+                                <Avatar className="flex-shrink-0">
+                                  {item.speaker_photo ? (
+                                    <AvatarImage src={item.speaker_photo} alt={item.speaker_name} />
+                                  ) : (
+                                    <AvatarFallback>
                                       {item.speaker_name?.split(' ').map(n => n[0]).join('')}
-                                    </AvatarFallback>}
-                                </Avatar>}
+                                    </AvatarFallback>
+                                  )}
+                                </Avatar>
+                              )}
                               
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between mb-2">
@@ -302,10 +369,12 @@ const AttendeeSchedule = () => {
                                     <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
                                       {item.title}
                                     </h3>
-                                    {item.type === 'speaker' && <p className="text-gray-600 dark:text-gray-400">
+                                    {item.type === 'speaker' && (
+                                      <p className="text-gray-600 dark:text-gray-400">
                                         by {item.speaker_name}
                                         {item.speaker_company && ` • ${item.speaker_company}`}
-                                      </p>}
+                                      </p>
+                                    )}
                                   </div>
                                   <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
                                 </div>
@@ -314,36 +383,40 @@ const AttendeeSchedule = () => {
                                   <div className="flex items-center gap-1">
                                     <Clock className="h-4 w-4" />
                                     {(() => {
-                            try {
-                              const startTime = format(parseISO(item.start_time), 'h:mm a');
-                              const endTime = item.end_time ? ` - ${format(parseISO(item.end_time), 'h:mm a')}` : '';
-                              return startTime + endTime;
-                            } catch (error) {
-                              console.error('Error formatting time:', error);
-                              return item.start_time;
-                            }
-                          })()}
+                                      try {
+                                        const startTime = format(parseISO(item.start_time), 'h:mm a');
+                                        const endTime = item.end_time ? ` - ${format(parseISO(item.end_time), 'h:mm a')}` : '';
+                                        return startTime + endTime;
+                                      } catch (error) {
+                                        console.error('Error formatting time:', error);
+                                        return item.start_time;
+                                      }
+                                    })()}
                                   </div>
                                   <div className="flex items-center gap-1">
                                     <Calendar className="h-4 w-4" />
                                     {(() => {
-                            try {
-                              return format(parseISO(item.start_time), 'MMM d');
-                            } catch (error) {
-                              console.error('Error formatting date:', error);
-                              return item.start_time;
-                            }
-                          })()}
+                                      try {
+                                        return format(parseISO(item.start_time), 'MMM d');
+                                      } catch (error) {
+                                        console.error('Error formatting date:', error);
+                                        return item.start_time;
+                                      }
+                                    })()}
                                   </div>
-                                  {item.location && <div className="flex items-center gap-1">
+                                  {item.location && (
+                                    <div className="flex items-center gap-1">
                                       <MapPin className="h-4 w-4" />
                                       {item.location}
-                                    </div>}
+                                    </div>
+                                  )}
                                 </div>
                                 
-                                {item.description && <p className="text-gray-700 dark:text-gray-300 text-sm mb-4">
+                                {item.description && (
+                                  <p className="text-gray-700 dark:text-gray-300 text-sm mb-4">
                                     {item.description}
-                                  </p>}
+                                  </p>
+                                )}
                                 
                                 <div className="flex items-center justify-between">
                                   <div className="flex gap-2">
@@ -357,12 +430,17 @@ const AttendeeSchedule = () => {
                               </div>
                             </div>
                           </CardContent>
-                        </Card>)}
+                        </Card>
+                      ))}
                     </div>
-                  </div>)}
-            </div>}
+                  </div>
+                ))}
+            </div>
+          )}
         </div>
       </AttendeeRouteGuard>
-    </AppLayout>;
+    </AppLayout>
+  );
 };
+
 export default AttendeeSchedule;

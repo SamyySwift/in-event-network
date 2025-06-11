@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Network } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Register = () => {
@@ -39,9 +38,12 @@ const Register = () => {
   // Handle redirect when user becomes authenticated after registration
   useEffect(() => {
     console.log("Register component - Auth state:", { currentUser, isLoading });
-    
+
     if (currentUser && !isLoading) {
-      console.log("User authenticated after registration, redirecting...", currentUser);
+      console.log(
+        "User authenticated after registration, redirecting...",
+        currentUser
+      );
       const redirectPath = currentUser.role === "host" ? "/admin" : "/attendee";
       navigate(redirectPath, { replace: true });
     }
@@ -70,7 +72,7 @@ const Register = () => {
     try {
       setIsSubmitting(true);
       console.log("Attempting registration for:", email, "with role:", role);
-      
+
       const { error } = await register(name, email, password, role);
 
       if (error) {
@@ -131,13 +133,11 @@ const Register = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="flex justify-center mb-8">
         <Link to="/" className="flex items-center">
-          <img
-            src="/logo-placeholder.svg"
-            alt="Connect Logo"
-            className="h-10 w-auto"
-          />
-          <span className="ml-2 font-semibold text-2xl text-connect-800">
-            Connect
+          <div className="w-10 h-10 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-lg flex items-center justify-center">
+            <Network className="h-6 w-6 text-white" />
+          </div>
+          <span className="ml-2 font-semibold text-2xl bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
+            Kconnect
           </span>
         </Link>
       </div>
@@ -241,7 +241,7 @@ const Register = () => {
             <CardFooter className="flex flex-col space-y-4">
               <Button
                 type="submit"
-                className="w-full bg-connect-600 hover:bg-connect-700"
+                className="w-full bg-gradient-to-r from-cyan-400 to-purple-500"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Creating account..." : "Create Account"}

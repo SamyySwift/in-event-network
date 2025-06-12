@@ -42,7 +42,7 @@ export const useAttendeeNetworking = () => {
       const { data: eventParticipants, error } = await supabase
         .from('event_participants')
         .select(`
-          user_id,
+          joined_at,
           profiles:user_id (
             id,
             name,

@@ -235,14 +235,13 @@ const AttendeeNetworking = () => {
 
   return (
     <AppLayout>
-      // Add this inside the return statement, before the main content
       <div className="p-4 mb-4 bg-yellow-50 border border-yellow-200 rounded-md">
         <h3 className="font-medium">Debug Info</h3>
         <p>Current Event ID: {currentEventId || "None"}</p>
         <p>Raw Attendee Count: {profiles.length}</p>
         <p>Filtered Attendee Count: {filteredProfiles.length}</p>
       </div>
-      ;
+
       <div className="animate-fade-in max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <div>

@@ -60,7 +60,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
             name,
             photo_url
           ),
-          quoted_message:quoted_message_id (
+          quoted_message:chat_messages!chat_messages_quoted_message_id_fkey (
             id,
             content,
             profiles!chat_messages_user_id_fkey (

@@ -1,8 +1,9 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
+import { useAttendeeContext } from '@/hooks/useAttendeeContext';
 import { useToast } from '@/hooks/use-toast';
 
 interface ChatMessage {
@@ -38,9 +39,11 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { currentUser } = useAuth();
-  const { currentEventId } = useAttendeeEventContext(); // Now uses standardized event context
+  const { context } = useAttendeeContext();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  const currentEventId = context?.currentEventId;
 
   const { data: messages = [], isLoading, error } = useQuery({
     queryKey: ['chat-messages', currentEventId],
@@ -53,14 +56,14 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('chat_messages')
         .select(`
           *,
-          profiles:user_id (
+          profiles!chat_messages_user_id_fkey (
             name,
             photo_url
           ),
           quoted_message:quoted_message_id (
             id,
             content,
-            profiles:user_id (
+            profiles!chat_messages_user_id_fkey (
               name
             )
           )

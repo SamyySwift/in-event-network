@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { AttendeeEventProvider } from '@/contexts/AttendeeEventContext';
+import { ChatProvider } from '@/hooks/useChat';
 import { Toaster } from '@/components/ui/toaster';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
@@ -181,14 +182,16 @@ function App() {
                 }
               />
 
-              {/* Attendee routes - wrapped with AttendeeEventProvider */}
+              {/* Attendee routes - wrapped with AttendeeEventProvider and ChatProvider */}
               <Route
                 path="/attendee"
                 element={
                   <AttendeeEventProvider>
-                    <ProtectedRoute requiredRole="attendee">
-                      <AttendeeDashboard />
-                    </ProtectedRoute>
+                    <ChatProvider>
+                      <ProtectedRoute requiredRole="attendee">
+                        <AttendeeDashboard />
+                      </ProtectedRoute>
+                    </ChatProvider>
                   </AttendeeEventProvider>
                 }
               />
@@ -196,9 +199,11 @@ function App() {
                 path="/attendee/dashboard"
                 element={
                   <AttendeeEventProvider>
-                    <ProtectedRoute requiredRole="attendee">
-                      <AttendeeDashboard />
-                    </ProtectedRoute>
+                    <ChatProvider>
+                      <ProtectedRoute requiredRole="attendee">
+                        <AttendeeDashboard />
+                      </ProtectedRoute>
+                    </ChatProvider>
                   </AttendeeEventProvider>
                 }
               />
@@ -206,9 +211,11 @@ function App() {
                 path="/attendee/profile"
                 element={
                   <AttendeeEventProvider>
-                    <ProtectedRoute requiredRole="attendee">
-                      <AttendeeProfile />
-                    </ProtectedRoute>
+                    <ChatProvider>
+                      <ProtectedRoute requiredRole="attendee">
+                        <AttendeeProfile />
+                      </ProtectedRoute>
+                    </ChatProvider>
                   </AttendeeEventProvider>
                 }
               />
@@ -216,9 +223,11 @@ function App() {
                 path="/attendee/networking"
                 element={
                   <AttendeeEventProvider>
-                    <ProtectedRoute requiredRole="attendee">
-                      <AttendeeNetworking />
-                    </ProtectedRoute>
+                    <ChatProvider>
+                      <ProtectedRoute requiredRole="attendee">
+                        <AttendeeNetworking />
+                      </ProtectedRoute>
+                    </ChatProvider>
                   </AttendeeEventProvider>
                 }
               />
@@ -226,9 +235,11 @@ function App() {
                 path="/attendee/announcements"
                 element={
                   <AttendeeEventProvider>
-                    <ProtectedRoute requiredRole="attendee">
-                      <AttendeeAnnouncements />
-                    </ProtectedRoute>
+                    <ChatProvider>
+                      <ProtectedRoute requiredRole="attendee">
+                        <AttendeeAnnouncements />
+                      </ProtectedRoute>
+                    </ChatProvider>
                   </AttendeeEventProvider>
                 }
               />
@@ -236,9 +247,11 @@ function App() {
                 path="/attendee/schedule"
                 element={
                   <AttendeeEventProvider>
-                    <ProtectedRoute requiredRole="attendee">
-                      <AttendeeSchedule />
-                    </ProtectedRoute>
+                    <ChatProvider>
+                      <ProtectedRoute requiredRole="attendee">
+                        <AttendeeSchedule />
+                      </ProtectedRoute>
+                    </ChatProvider>
                   </AttendeeEventProvider>
                 }
               />
@@ -246,9 +259,11 @@ function App() {
                 path="/attendee/polls"
                 element={
                   <AttendeeEventProvider>
-                    <ProtectedRoute requiredRole="attendee">
-                      <AttendeePolls />
-                    </ProtectedRoute>
+                    <ChatProvider>
+                      <ProtectedRoute requiredRole="attendee">
+                        <AttendeePolls />
+                      </ProtectedRoute>
+                    </ChatProvider>
                   </AttendeeEventProvider>
                 }
               />
@@ -256,9 +271,11 @@ function App() {
                 path="/attendee/questions"
                 element={
                   <AttendeeEventProvider>
-                    <ProtectedRoute requiredRole="attendee">
-                      <AttendeeQuestions />
-                    </ProtectedRoute>
+                    <ChatProvider>
+                      <ProtectedRoute requiredRole="attendee">
+                        <AttendeeQuestions />
+                      </ProtectedRoute>
+                    </ChatProvider>
                   </AttendeeEventProvider>
                 }
               />
@@ -266,9 +283,11 @@ function App() {
                 path="/attendee/suggestions"
                 element={
                   <AttendeeEventProvider>
-                    <ProtectedRoute requiredRole="attendee">
-                      <AttendeeSuggestions />
-                    </ProtectedRoute>
+                    <ChatProvider>
+                      <ProtectedRoute requiredRole="attendee">
+                        <AttendeeSuggestions />
+                      </ProtectedRoute>
+                    </ChatProvider>
                   </AttendeeEventProvider>
                 }
               />
@@ -276,9 +295,11 @@ function App() {
                 path="/attendee/rules"
                 element={
                   <AttendeeEventProvider>
-                    <ProtectedRoute requiredRole="attendee">
-                      <AttendeeRules />
-                    </ProtectedRoute>
+                    <ChatProvider>
+                      <ProtectedRoute requiredRole="attendee">
+                        <AttendeeRules />
+                      </ProtectedRoute>
+                    </ChatProvider>
                   </AttendeeEventProvider>
                 }
               />
@@ -286,9 +307,11 @@ function App() {
                 path="/attendee/notifications"
                 element={
                   <AttendeeEventProvider>
-                    <ProtectedRoute requiredRole="attendee">
-                      <AttendeeNotifications />
-                    </ProtectedRoute>
+                    <ChatProvider>
+                      <ProtectedRoute requiredRole="attendee">
+                        <AttendeeNotifications />
+                      </ProtectedRoute>
+                    </ChatProvider>
                   </AttendeeEventProvider>
                 }
               />
@@ -296,9 +319,11 @@ function App() {
                 path="/attendee/onboarding"
                 element={
                   <AttendeeEventProvider>
-                    <ProtectedRoute requiredRole="attendee">
-                      <AttendeeOnboarding />
-                    </ProtectedRoute>
+                    <ChatProvider>
+                      <ProtectedRoute requiredRole="attendee">
+                        <AttendeeOnboarding />
+                      </ProtectedRoute>
+                    </ChatProvider>
                   </AttendeeEventProvider>
                 }
               />
@@ -306,9 +331,11 @@ function App() {
                 path="/attendee/map"
                 element={
                   <AttendeeEventProvider>
-                    <ProtectedRoute requiredRole="attendee">
-                      <AttendeeMap />
-                    </ProtectedRoute>
+                    <ChatProvider>
+                      <ProtectedRoute requiredRole="attendee">
+                        <AttendeeMap />
+                      </ProtectedRoute>
+                    </ChatProvider>
                   </AttendeeEventProvider>
                 }
               />
@@ -316,9 +343,11 @@ function App() {
                 path="/attendee/search"
                 element={
                   <AttendeeEventProvider>
-                    <ProtectedRoute requiredRole="attendee">
-                      <AttendeeSearch />
-                    </ProtectedRoute>
+                    <ChatProvider>
+                      <ProtectedRoute requiredRole="attendee">
+                        <AttendeeSearch />
+                      </ProtectedRoute>
+                    </ChatProvider>
                   </AttendeeEventProvider>
                 }
               />

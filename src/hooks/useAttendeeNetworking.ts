@@ -34,32 +34,35 @@ export const useAttendeeNetworking = () => {
 
       console.log('Starting attendee networking fetch for user:', currentUser.id);
 
-      // Get the current user's profile to find their current event
-      const { data: userProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('current_event_id')
-        .eq('id', currentUser.id)
-        .single();
+      // First, get the most recent event this user has joined from event_participants
+      const { data: userEvents, error: userEventsError } = await supabase
+        .from('event_participants')
+        .select('event_id, joined_at')
+        .eq('user_id', currentUser.id)
+        .order('joined_at', { ascending: false })
+        .limit(1);
 
-      if (profileError) {
-        console.error('Error fetching user profile:', profileError);
-        throw profileError;
-      }
-
-      if (!userProfile?.current_event_id) {
-        console.log('User has no current event');
+      if (userEventsError) {
+        console.error('Error fetching user events:', userEventsError);
         return [];
       }
 
-      const currentEventId = userProfile.current_event_id;
-      console.log('Current event ID:', currentEventId);
+      console.log('User events data:', userEvents);
 
-      // Get all participants from the current event (excluding current user)
-      const { data: eventParticipants, error: participantsError } = await supabase
+      if (!userEvents || userEvents.length === 0) {
+        console.log('User has not joined any events');
+        return [];
+      }
+
+      const currentEventId = userEvents[0].event_id;
+      console.log('Current event ID:', currentEventId, 'User ID:', currentUser.id);
+
+      // Get all attendees from the current event (excluding current user)
+      const { data: eventParticipants, error } = await supabase
         .from('event_participants')
         .select(`
           user_id,
-          profiles!event_participants_user_id_fkey (
+          profiles:user_id (
             id,
             name,
             role,
@@ -80,50 +83,36 @@ export const useAttendeeNetworking = () => {
         .eq('event_id', currentEventId)
         .neq('user_id', currentUser.id);
 
-      if (participantsError) {
-        console.error('Error fetching event participants:', participantsError);
-        throw participantsError;
+      if (error) {
+        console.error('Error fetching event participants:', error);
+        throw error;
       }
 
       console.log('Raw event participants data:', eventParticipants);
       console.log('Number of participants (excluding current user):', eventParticipants?.length || 0);
 
-      // Transform the data to match our interface
+      // Transform and filter the data
       const attendees = eventParticipants
         ?.map((participant: any) => {
-          const profile = participant.profiles;
-          if (!profile || !profile.id) {
-            console.log('Filtered out participant with invalid profile:', participant);
-            return null;
-          }
-          return {
-            id: profile.id,
-            name: profile.name || 'Unknown',
-            role: profile.role || '',
-            company: profile.company || '',
-            bio: profile.bio || '',
-            niche: profile.niche || '',
-            photo_url: profile.photo_url || '',
-            networking_preferences: profile.networking_preferences || [],
-            tags: profile.tags || [],
-            twitter_link: profile.twitter_link || '',
-            linkedin_link: profile.linkedin_link || '',
-            github_link: profile.github_link || '',
-            instagram_link: profile.instagram_link || '',
-            website_link: profile.website_link || '',
-            created_at: profile.created_at || '',
-          } as AttendeeProfile;
+          console.log('Processing participant:', participant);
+          return participant.profiles;
         })
-        .filter((attendee): attendee is AttendeeProfile => attendee !== null) || [];
+        .filter((profile) => {
+          const isValid = profile && profile.id;
+          if (!isValid) {
+            console.log('Filtered out invalid profile:', profile);
+          }
+          return isValid;
+        }) || [];
 
       console.log('Final attendees list:', attendees);
       console.log('Number of valid attendees:', attendees.length);
       
-      return attendees;
+      return attendees as AttendeeProfile[];
     },
     enabled: !!currentUser?.id,
-    refetchInterval: 30000, // Refetch every 30 seconds to get latest data
-    staleTime: 10000, // Consider data stale after 10 seconds
+    refetchInterval: 5000, // Refetch every 5 seconds to get latest data
+    staleTime: 0, // Always consider data stale to force refetch
   });
 
   console.log('Hook returning:', { attendees, isLoading, error });

@@ -301,7 +301,7 @@ function HeroGeometric({
           )}
         </div>
         <div className="relative py-6 mt-24">
-          <InfiniteSlider durationOnHover={20} duration={40} gap={112}>
+          <InfiniteSlider speedOnHover={20} speed={40} gap={112}>
             <div className="flex">
               <img
                 className="mx-auto h-5 w-fit invert"

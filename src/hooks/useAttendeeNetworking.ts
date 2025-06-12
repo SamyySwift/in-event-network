@@ -38,31 +38,15 @@ export const useAttendeeNetworking = () => {
 
       console.log('Starting attendee networking fetch for user:', currentUser.id, 'in event:', currentEventId);
 
-      // Get all attendees from the current event (excluding current user)
+      // Get all attendees from the current event
+      // Using the same approach as in useAdminAttendees.ts
       const { data: eventParticipants, error } = await supabase
         .from('event_participants')
         .select(`
-          joined_at,
-          profiles:user_id (
-            id,
-            name,
-            role,
-            company,
-            bio,
-            niche,
-            photo_url,
-            networking_preferences,
-            tags,
-            twitter_link,
-            linkedin_link,
-            github_link,
-            instagram_link,
-            website_link,
-            created_at
-          )
+          *,
+          profiles:user_id (*)
         `)
-        .eq('event_id', currentEventId)
-        .neq('user_id', currentUser.id);
+        .eq('event_id', currentEventId);
 
       if (error) {
         console.error('Error fetching event participants:', error);
@@ -70,7 +54,7 @@ export const useAttendeeNetworking = () => {
       }
 
       console.log('Raw event participants data:', eventParticipants);
-      console.log('Number of participants (excluding current user):', eventParticipants?.length || 0);
+      console.log('Number of participants:', eventParticipants?.length || 0);
 
       // Transform and filter the data
       const attendees = eventParticipants

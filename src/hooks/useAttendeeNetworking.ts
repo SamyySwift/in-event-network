@@ -31,6 +31,8 @@ export const useAttendeeNetworking = () => {
     queryFn: async (): Promise<AttendeeProfile[]> => {
       if (!currentUser?.id || !currentEventId) {
         console.log('No current user or event found');
+        console.log('Current user ID:', currentUser?.id);
+        console.log('Current event ID:', currentEventId);
         return [];
       }
 

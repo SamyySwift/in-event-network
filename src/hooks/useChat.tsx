@@ -56,14 +56,14 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .from('chat_messages')
         .select(`
           *,
-          profiles!chat_messages_user_id_fkey (
+          profiles!user_id (
             name,
             photo_url
           ),
           quoted_message:chat_messages!chat_messages_quoted_message_id_fkey (
             id,
             content,
-            profiles!chat_messages_user_id_fkey (
+            profiles!user_id (
               name
             )
           )

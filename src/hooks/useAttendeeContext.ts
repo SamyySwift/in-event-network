@@ -19,50 +19,31 @@ export const useAttendeeContext = () => {
         throw new Error('User not authenticated');
       }
 
-      console.log('Starting attendee context fetch for user:', currentUser.id);
+      // Get the user's current event from their profile
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('current_event_id')
+        .eq('id', currentUser.id)
+        .single();
 
-      // Get the most recent event this user has joined from event_participants
-      // This is now the single source of truth for current event
-      const { data: userEvents, error: userEventsError } = await supabase
-        .from('event_participants')
-        .select('event_id, joined_at')
-        .eq('user_id', currentUser.id)
-        .order('joined_at', { ascending: false })
-        .limit(1);
-
-      if (userEventsError) {
-        console.error('Error fetching user events:', userEventsError);
+      if (!userProfile?.current_event_id) {
         return {
           currentEventId: null,
           hostId: null,
           hostEvents: [],
         };
       }
-
-      console.log('User events from event_participants:', userEvents);
-
-      if (!userEvents || userEvents.length === 0) {
-        console.log('User has not joined any events');
-        return {
-          currentEventId: null,
-          hostId: null,
-          hostEvents: [],
-        };
-      }
-
-      const currentEventId = userEvents[0].event_id;
-      console.log('Current event ID from event_participants:', currentEventId);
 
       // Get the current event to find the host
       const { data: currentEvent } = await supabase
         .from('events')
         .select('host_id')
-        .eq('id', currentEventId)
+        .eq('id', userProfile.current_event_id)
         .single();
 
       if (!currentEvent?.host_id) {
         return {
-          currentEventId: currentEventId,
+          currentEventId: userProfile.current_event_id,
           hostId: null,
           hostEvents: [],
         };
@@ -74,21 +55,14 @@ export const useAttendeeContext = () => {
         .select('id')
         .eq('host_id', currentEvent.host_id);
 
-      console.log('Final context:', {
-        currentEventId,
-        hostId: currentEvent.host_id,
-        hostEvents: hostEvents?.map(e => e.id) || []
-      });
-
       return {
-        currentEventId: currentEventId,
+        currentEventId: userProfile.current_event_id,
         hostId: currentEvent.host_id,
         hostEvents: hostEvents?.map(e => e.id) || [],
       };
     },
     enabled: !!currentUser?.id,
-    refetchInterval: 30000, // Refetch every 30 seconds for real-time updates
-    staleTime: 10000, // Consider data stale after 10 seconds
+    refetchInterval: 60000, // Refetch every minute
   });
 
   return {

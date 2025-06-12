@@ -1,7 +1,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AttendeeProfile {
   id: string;
@@ -22,17 +22,40 @@ interface AttendeeProfile {
 }
 
 export const useAttendeeNetworking = () => {
-  const { currentEventId, isLoading: contextLoading } = useAttendeeEventContext();
+  const { currentUser } = useAuth();
 
   const { data: attendees = [], isLoading, error } = useQuery({
-    queryKey: ['attendee-networking', currentEventId],
+    queryKey: ['attendee-networking', currentUser?.id],
     queryFn: async (): Promise<AttendeeProfile[]> => {
-      if (!currentEventId) {
-        console.log('No current event ID available');
+      if (!currentUser?.id) {
+        console.log('No current user found');
         return [];
       }
 
-      console.log('Fetching attendees for event:', currentEventId);
+      console.log('Starting attendee networking fetch for user:', currentUser.id);
+
+      // First, get the most recent event this user has joined from event_participants
+      const { data: userEvents, error: userEventsError } = await supabase
+        .from('event_participants')
+        .select('event_id, joined_at')
+        .eq('user_id', currentUser.id)
+        .order('joined_at', { ascending: false })
+        .limit(1);
+
+      if (userEventsError) {
+        console.error('Error fetching user events:', userEventsError);
+        return [];
+      }
+
+      console.log('User events data:', userEvents);
+
+      if (!userEvents || userEvents.length === 0) {
+        console.log('User has not joined any events');
+        return [];
+      }
+
+      const currentEventId = userEvents[0].event_id;
+      console.log('Current event ID:', currentEventId, 'User ID:', currentUser.id);
 
       // Get all attendees from the current event (excluding current user)
       const { data: eventParticipants, error } = await supabase
@@ -58,7 +81,7 @@ export const useAttendeeNetworking = () => {
           )
         `)
         .eq('event_id', currentEventId)
-        .neq('user_id', (await supabase.auth.getUser()).data.user?.id || '');
+        .neq('user_id', currentUser.id);
 
       if (error) {
         console.error('Error fetching event participants:', error);
@@ -87,16 +110,16 @@ export const useAttendeeNetworking = () => {
       
       return attendees as AttendeeProfile[];
     },
-    enabled: !!currentEventId && !contextLoading,
+    enabled: !!currentUser?.id,
     refetchInterval: 5000, // Refetch every 5 seconds to get latest data
     staleTime: 0, // Always consider data stale to force refetch
   });
 
-  console.log('Hook returning:', { attendees, isLoading: isLoading || contextLoading, error });
+  console.log('Hook returning:', { attendees, isLoading, error });
 
   return {
     attendees,
-    isLoading: isLoading || contextLoading,
+    isLoading,
     error,
   };
 };

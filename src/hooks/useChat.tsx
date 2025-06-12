@@ -1,123 +1,110 @@
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAttendeeContext } from '@/hooks/useAttendeeContext';
 import { useToast } from '@/hooks/use-toast';
+import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
 
-interface ChatMessage {
+export interface ChatMessage {
   id: string;
-  content: string;
   user_id: string;
-  event_id: string;
+  content: string;
+  quoted_message_id: string | null;
+  event_id: string | null;
   created_at: string;
   updated_at: string;
-  quoted_message_id?: string;
-  profiles?: {
+  user_profile?: {
     name: string;
     photo_url?: string;
   };
-  quoted_message?: {
-    id: string;
-    content: string;
-    profiles?: {
-      name: string;
-    };
-  };
+  quoted_message?: ChatMessage;
 }
 
-interface ChatContextType {
-  messages: ChatMessage[];
-  isLoading: boolean;
-  error: any;
-  sendMessage: (content: string, quotedMessageId?: string) => void;
-  isSending: boolean;
-}
-
-const ChatContext = createContext<ChatContextType | undefined>(undefined);
-
-export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const useChat = () => {
   const { currentUser } = useAuth();
-  const { context } = useAttendeeContext();
+  const { currentEventId } = useAttendeeEventContext();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const currentEventId = context?.currentEventId;
+  useEffect(() => {
+    if (currentUser && currentEventId) {
+      fetchMessages();
+      setupRealtimeSubscription();
+    }
+  }, [currentUser, currentEventId]);
 
-  const { data: messages = [], isLoading, error } = useQuery({
-    queryKey: ['chat-messages', currentEventId],
-    queryFn: async (): Promise<ChatMessage[]> => {
-      if (!currentEventId) {
-        return [];
-      }
+  const fetchMessages = async () => {
+    if (!currentEventId) {
+      setMessages([]);
+      setLoading(false);
+      return;
+    }
 
-      const { data, error } = await supabase
+    try {
+      console.log('Fetching chat messages for event:', currentEventId);
+      
+      // First get the messages for the current event only
+      const { data: messagesData, error: messagesError } = await supabase
         .from('chat_messages')
-        .select(`
-          *,
-          profiles!user_id (
-            name,
-            photo_url
-          ),
-          quoted_message:chat_messages!chat_messages_quoted_message_id_fkey (
-            id,
-            content,
-            profiles!user_id (
-              name
-            )
-          )
-        `)
+        .select('*')
         .eq('event_id', currentEventId)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true })
+        .limit(100);
 
-      if (error) {
-        console.error('Error fetching messages:', error);
-        throw error;
+      if (messagesError) {
+        console.error('Error fetching messages:', messagesError);
+        throw messagesError;
       }
 
-      return data || [];
-    },
-    enabled: !!currentEventId && !!currentUser,
-    refetchInterval: 2000,
-  });
+      console.log('Messages fetched:', messagesData);
 
-  const sendMessageMutation = useMutation({
-    mutationFn: async ({ content, quotedMessageId }: { content: string; quotedMessageId?: string }) => {
-      if (!currentUser || !currentEventId) {
-        throw new Error('User not authenticated or no event selected');
+      // Then get user profiles for all unique user IDs
+      const userIds = [...new Set(messagesData?.map(msg => msg.user_id) || [])];
+      const { data: profilesData, error: profilesError } = await supabase
+        .from('profiles')
+        .select('id, name, photo_url')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
       }
 
-      const { error } = await supabase
-        .from('chat_messages')
-        .insert([{
-          content,
-          user_id: currentUser.id,
-          event_id: currentEventId,
-          quoted_message_id: quotedMessageId || null,
-        }]);
+      // Create a map of user profiles
+      const profilesMap = new Map();
+      profilesData?.forEach(profile => {
+        profilesMap.set(profile.id, profile);
+      });
 
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['chat-messages', currentEventId] });
-    },
-    onError: (error) => {
-      console.error('Error sending message:', error);
+      // Combine messages with user profiles
+      const messagesWithProfiles = messagesData?.map(message => ({
+        ...message,
+        user_profile: profilesMap.get(message.user_id) || { name: 'Unknown User' }
+      })) || [];
+
+      console.log('Messages with profiles:', messagesWithProfiles);
+      setMessages(messagesWithProfiles);
+    } catch (error) {
+      console.error('Error in fetchMessages:', error);
       toast({
         title: "Error",
-        description: "Failed to send message. Please try again.",
+        description: "Failed to load chat messages",
         variant: "destructive",
       });
-    },
-  });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Set up real-time subscription
-  useEffect(() => {
-    if (!currentEventId) return;
+  const setupRealtimeSubscription = () => {
+    if (!currentEventId) {
+      return;
+    }
 
+    console.log('Setting up realtime subscription for event:', currentEventId);
+    
     const channel = supabase
-      .channel('chat-messages')
+      .channel(`chat-messages-${currentEventId}`)
       .on(
         'postgres_changes',
         {
@@ -126,40 +113,89 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
           table: 'chat_messages',
           filter: `event_id=eq.${currentEventId}`
         },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['chat-messages', currentEventId] });
+        async (payload) => {
+          console.log('New message received:', payload);
+          
+          // Get the user profile for the new message
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('id, name, photo_url')
+            .eq('id', payload.new.user_id)
+            .single();
+
+          if (profileError) {
+            console.error('Error fetching profile for new message:', profileError);
+          }
+
+          const newMessage = {
+            ...payload.new,
+            user_profile: profileData || { name: 'Unknown User' }
+          } as ChatMessage;
+
+          console.log('Adding new message to state:', newMessage);
+          setMessages(prev => [...prev, newMessage]);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Realtime subscription status:', status);
+      });
 
     return () => {
+      console.log('Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
-  }, [currentEventId, queryClient]);
-
-  const sendMessage = (content: string, quotedMessageId?: string) => {
-    sendMessageMutation.mutate({ content, quotedMessageId });
   };
 
-  const value: ChatContextType = {
+  const sendMessage = async (content: string, quotedMessageId?: string) => {
+    if (!currentUser) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to send messages",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!currentEventId) {
+      toast({
+        title: "Error",
+        description: "You must be in an event to send messages",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      console.log('Sending message:', { content, quotedMessageId, userId: currentUser.id, eventId: currentEventId });
+      
+      const { error } = await supabase
+        .from('chat_messages')
+        .insert({
+          user_id: currentUser.id,
+          content: content.trim(),
+          quoted_message_id: quotedMessageId || null,
+          event_id: currentEventId,
+        });
+
+      if (error) {
+        console.error('Error sending message:', error);
+        throw error;
+      }
+
+      console.log('Message sent successfully');
+    } catch (error) {
+      console.error('Error in sendMessage:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send message",
+        variant: "destructive",
+      });
+    }
+  };
+
+  return {
     messages,
-    isLoading,
-    error,
+    loading,
     sendMessage,
-    isSending: sendMessageMutation.isPending,
   };
-
-  return (
-    <ChatContext.Provider value={value}>
-      {children}
-    </ChatContext.Provider>
-  );
-};
-
-export const useChat = () => {
-  const context = useContext(ChatContext);
-  if (context === undefined) {
-    throw new Error('useChat must be used within a ChatProvider');
-  }
-  return context;
 };

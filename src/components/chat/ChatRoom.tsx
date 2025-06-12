@@ -9,20 +9,17 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useChat } from '@/hooks/useChat';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAttendeeContext } from '@/hooks/useAttendeeContext';
+import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
 import { ChatMessage } from './ChatMessage';
 import { QuotedMessage } from './QuotedMessage';
 
 const ChatRoom = () => {
   const { currentUser } = useAuth();
-  const { context } = useAttendeeContext();
-  const { messages, isLoading, sendMessage } = useChat();
+  const { currentEventId, hasJoinedEvent } = useAttendeeEventContext();
+  const { messages, loading, sendMessage } = useChat();
   const [newMessage, setNewMessage] = useState('');
   const [quotedMessage, setQuotedMessage] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const currentEventId = context?.currentEventId;
-  const hasJoinedEvent = !!currentEventId;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -67,7 +64,7 @@ const ChatRoom = () => {
     );
   }
 
-  if (isLoading) {
+  if (loading) {
     return (
       <Card>
         <CardContent className="p-6">

@@ -209,8 +209,8 @@ function HeroGeometric({
         />
       </div>
 
-      <div className="relative z-10 container mx-auto px-4 md:px-6">
-        <div className="max-w-7xl mx-auto text-center">
+      <div className="relative z-10 container mx-auto px-4 md:px-6 max-w-6xl">
+        <div className="mx-auto text-center">
           <motion.div
             custom={0}
             variants={fadeUpVariants}
@@ -300,83 +300,97 @@ function HeroGeometric({
             </div>
           )}
         </div>
-        <div className="relative py-6 mt-24">
-          <InfiniteSlider speedOnHover={20} speed={40} gap={112}>
-            <div className="flex">
-              <img
-                className="mx-auto h-5 w-fit invert"
-                src="https://html.tailus.io/blocks/customers/nvidia.svg"
-                alt="Nvidia Logo"
-                height="20"
-                width="auto"
-              />
+        {/* SLider section */}
+        <div className="w-full mt-28">
+          <div className="flex items-center">
+            <div className="relative z-10 min-w-[200px]">
+              <div className="bg-gradient-to-r from-white/10 via-white/20 backdrop-blur-xl to-transparent pr-10 py-2">
+                <p className="text-sm text-white/80 text-end">
+                  Powering the best
+                  <br />
+                  events
+                </p>
+              </div>
             </div>
+            <div className="flex-1 overflow-hidden">
+              <InfiniteSlider speedOnHover={20} speed={40} gap={112}>
+                <div className="flex">
+                  <img
+                    className="mx-auto h-5 w-fit invert"
+                    src="https://html.tailus.io/blocks/customers/nvidia.svg"
+                    alt="Nvidia Logo"
+                    height="20"
+                    width="auto"
+                  />
+                </div>
 
-            <div className="flex">
-              <img
-                className="mx-auto h-4 w-fit invert"
-                src="https://html.tailus.io/blocks/customers/column.svg"
-                alt="Column Logo"
-                height="16"
-                width="auto"
-              />
-            </div>
-            <div className="flex">
-              <img
-                className="mx-auto h-4 w-fit invert"
-                src="https://html.tailus.io/blocks/customers/github.svg"
-                alt="GitHub Logo"
-                height="16"
-                width="auto"
-              />
-            </div>
-            <div className="flex">
-              <img
-                className="mx-auto h-5 w-fit invert"
-                src="https://html.tailus.io/blocks/customers/nike.svg"
-                alt="Nike Logo"
-                height="20"
-                width="auto"
-              />
-            </div>
-            <div className="flex">
-              <img
-                className="mx-auto h-5 w-fit invert"
-                src="https://html.tailus.io/blocks/customers/lemonsqueezy.svg"
-                alt="Lemon Squeezy Logo"
-                height="20"
-                width="auto"
-              />
-            </div>
-            <div className="flex">
-              <img
-                className="mx-auto h-4 w-fit invert"
-                src="https://html.tailus.io/blocks/customers/laravel.svg"
-                alt="Laravel Logo"
-                height="16"
-                width="auto"
-              />
-            </div>
-            <div className="flex">
-              <img
-                className="mx-auto h-7 w-fit invert"
-                src="https://html.tailus.io/blocks/customers/lilly.svg"
-                alt="Lilly Logo"
-                height="28"
-                width="auto"
-              />
-            </div>
+                <div className="flex">
+                  <img
+                    className="mx-auto h-4 w-fit invert"
+                    src="https://html.tailus.io/blocks/customers/column.svg"
+                    alt="Column Logo"
+                    height="16"
+                    width="auto"
+                  />
+                </div>
+                <div className="flex">
+                  <img
+                    className="mx-auto h-4 w-fit invert"
+                    src="https://html.tailus.io/blocks/customers/github.svg"
+                    alt="GitHub Logo"
+                    height="16"
+                    width="auto"
+                  />
+                </div>
+                <div className="flex">
+                  <img
+                    className="mx-auto h-5 w-fit invert"
+                    src="https://html.tailus.io/blocks/customers/nike.svg"
+                    alt="Nike Logo"
+                    height="20"
+                    width="auto"
+                  />
+                </div>
+                <div className="flex">
+                  <img
+                    className="mx-auto h-5 w-fit invert"
+                    src="https://html.tailus.io/blocks/customers/lemonsqueezy.svg"
+                    alt="Lemon Squeezy Logo"
+                    height="20"
+                    width="auto"
+                  />
+                </div>
+                <div className="flex">
+                  <img
+                    className="mx-auto h-4 w-fit invert"
+                    src="https://html.tailus.io/blocks/customers/laravel.svg"
+                    alt="Laravel Logo"
+                    height="16"
+                    width="auto"
+                  />
+                </div>
+                <div className="flex">
+                  <img
+                    className="mx-auto h-7 w-fit invert"
+                    src="https://html.tailus.io/blocks/customers/lilly.svg"
+                    alt="Lilly Logo"
+                    height="28"
+                    width="auto"
+                  />
+                </div>
 
-            <div className="flex">
-              <img
-                className="mx-auto h-6 w-fit invert"
-                src="https://html.tailus.io/blocks/customers/openai.svg"
-                alt="OpenAI Logo"
-                height="24"
-                width="auto"
-              />
+                <div className="flex">
+                  <img
+                    className="mx-auto h-6 w-fit invert"
+                    src="https://html.tailus.io/blocks/customers/openai.svg"
+                    alt="OpenAI Logo"
+                    height="24"
+                    width="auto"
+                  />
+                </div>
+              </InfiniteSlider>
             </div>
-          </InfiniteSlider>
+          </div>
         </div>
       </div>
 

@@ -43,7 +43,7 @@ export const useAttendeeNetworking = () => {
 
       if (profileError) {
         console.error('Error fetching user profile:', profileError);
-        return [];
+        throw profileError;
       }
 
       if (!userProfile?.current_event_id) {

@@ -1,8 +1,7 @@
-
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAttendeeEventContext } from "@/contexts/AttendeeEventContext";
 
 interface AttendeeProfile {
   id: string;
@@ -26,53 +25,90 @@ export const useAttendeeNetworking = () => {
   const { currentUser } = useAuth();
   const { currentEventId } = useAttendeeEventContext();
 
-  const { data: attendees = [], isLoading, error } = useQuery({
-    queryKey: ['attendee-networking', currentUser?.id, currentEventId],
+  const {
+    data: attendees = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["attendee-networking", currentUser?.id, currentEventId],
     queryFn: async (): Promise<AttendeeProfile[]> => {
       if (!currentUser?.id || !currentEventId) {
-        console.log('No current user or event found');
-        console.log('Current user ID:', currentUser?.id);
-        console.log('Current event ID:', currentEventId);
+        console.log("No current user or event found");
+        console.log("Current user ID:", currentUser?.id);
+        console.log("Current event ID:", currentEventId);
         return [];
       }
 
-      console.log('Starting attendee networking fetch for user:', currentUser.id, 'in event:', currentEventId);
+      console.log(
+        "Starting attendee networking fetch for user:",
+        currentUser.id,
+        "in event:",
+        currentEventId
+      );
 
       // Get all attendees from the current event
-      // Using the same approach as in useAdminAttendees.ts
       const { data: eventParticipants, error } = await supabase
-        .from('event_participants')
-        .select(`
-          *,
-          profiles:user_id (*)
-        `)
-        .eq('event_id', currentEventId);
+        .from("event_participants")
+        .select(
+          `
+          joined_at,
+          profiles:user_id (
+            id,
+            name,
+            role,
+            company,
+            bio,
+            niche,
+            photo_url,
+            networking_preferences,
+            tags,
+            twitter_link,
+            linkedin_link,
+            github_link,
+            instagram_link,
+            website_link,
+            created_at
+          )
+        `
+        )
+        .eq("event_id", currentEventId);
 
       if (error) {
-        console.error('Error fetching event participants:', error);
+        console.error("Error fetching event participants:", error);
         throw error;
       }
 
-      console.log('Raw event participants data:', eventParticipants);
-      console.log('Number of participants:', eventParticipants?.length || 0);
+      console.log("Raw event participants data:", eventParticipants);
+      console.log("Number of participants:", eventParticipants?.length || 0);
 
       // Transform and filter the data
-      const attendees = eventParticipants
-        ?.map((participant: any) => {
-          console.log('Processing participant:', participant);
-          return participant.profiles;
-        })
-        .filter((profile) => {
-          const isValid = profile && profile.id;
-          if (!isValid) {
-            console.log('Filtered out invalid profile:', profile);
-          }
-          return isValid;
-        }) || [];
+      const attendees =
+        eventParticipants
+          ?.map((participant: any) => {
+            console.log("Processing participant:", participant);
+            return participant.profiles;
+          })
+          .filter((profile) => {
+            // Filter out invalid profiles
+            const isValid = profile && profile.id;
+            if (!isValid) {
+              console.log("Filtered out invalid profile:", profile);
+              return false;
+            }
+            
+            // Filter out the current user
+            const isCurrentUser = profile.id === currentUser.id;
+            if (isCurrentUser) {
+              console.log("Filtered out current user's profile");
+              return false;
+            }
+            
+            return true;
+          }) || [];
 
-      console.log('Final attendees list:', attendees);
-      console.log('Number of valid attendees:', attendees.length);
-      
+      console.log("Final attendees list:", attendees);
+      console.log("Number of valid attendees:", attendees.length);
+
       return attendees as AttendeeProfile[];
     },
     enabled: !!currentUser?.id && !!currentEventId,

@@ -1,9 +1,7 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Search,
   Send,
-  Filter,
   UserPlus,
   MessageSquare,
   Twitter,
@@ -13,22 +11,18 @@ import {
   Globe,
 } from "lucide-react";
 import AppLayout from "@/components/layouts/AppLayout";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { useAttendeeNetworking } from "@/hooks/useAttendeeNetworking";
-import { NetworkingFilter } from "@/components/networking/NetworkingFilter";
 import ChatRoom from "@/components/chat/ChatRoom";
 import { ConversationsList } from "@/components/messaging/ConversationsList";
 import { DirectMessageThread } from "@/components/messaging/DirectMessageThread";
@@ -37,122 +31,22 @@ import { useAttendeeEventContext } from "@/contexts/AttendeeEventContext";
 
 const AttendeeNetworking = () => {
   const navigate = useNavigate();
-
-  // Add near the top of the component
   const { currentEventId } = useAttendeeEventContext();
-  const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("people");
-  const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
-  const [selectedNetworkingPrefs, setSelectedNetworkingPrefs] = useState<
-    string[]
-  >([]);
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<{
     userId: string;
     userName: string;
     userPhoto?: string;
   } | null>(null);
 
-  // Use the correct hook for attendee networking
-  const {
-    attendees: profiles,
-    isLoading: loading,
-    error,
-  } = useAttendeeNetworking();
+  const { attendees: profiles, isLoading: loading } = useAttendeeNetworking();
 
-  // Still need useNetworking for connection requests functionality
   const { sendConnectionRequest, getConnectionStatus } = useNetworking();
 
-  // Get unique filter options from all profiles
-  const { availableNiches, availableNetworkingPrefs, availableTags } =
-    useMemo(() => {
-      const niches = new Set<string>();
-      const networkingPrefs = new Set<string>();
-      const tags = new Set<string>();
-
-      profiles.forEach((profile) => {
-        if (profile.niche) niches.add(profile.niche);
-        if (profile.networking_preferences) {
-          profile.networking_preferences.forEach((pref) =>
-            networkingPrefs.add(pref)
-          );
-        }
-        if (profile.tags) {
-          profile.tags.forEach((tag) => tags.add(tag));
-        }
-      });
-
-      return {
-        availableNiches: Array.from(niches).sort(),
-        availableNetworkingPrefs: Array.from(networkingPrefs).sort(),
-        availableTags: Array.from(tags).sort(),
-      };
-    }, [profiles]);
-
-  // Filter profiles based on search term and selected filters
-  const filteredProfiles = useMemo(() => {
-    return profiles.filter((profile) => {
-      // Text search
-      const matchesSearch =
-        !searchTerm ||
-        profile.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        profile.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        profile.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        profile.bio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        profile.niche?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (profile.tags &&
-          profile.tags.some((tag) =>
-            tag.toLowerCase().includes(searchTerm.toLowerCase())
-          )) ||
-        (profile.networking_preferences &&
-          profile.networking_preferences.some((pref) =>
-            pref.toLowerCase().includes(searchTerm.toLowerCase())
-          ));
-
-      // Niche filter
-      const matchesNiche =
-        selectedNiches.length === 0 ||
-        (profile.niche && selectedNiches.includes(profile.niche));
-
-      // Networking preferences filter
-      const matchesNetworkingPref =
-        selectedNetworkingPrefs.length === 0 ||
-        (profile.networking_preferences &&
-          profile.networking_preferences.some((pref) =>
-            selectedNetworkingPrefs.includes(pref)
-          ));
-
-      // Tags filter
-      const matchesTags =
-        selectedTags.length === 0 ||
-        (profile.tags &&
-          profile.tags.some((tag) => selectedTags.includes(tag)));
-
-      return (
-        matchesSearch && matchesNiche && matchesNetworkingPref && matchesTags
-      );
-    });
-  }, [
-    profiles,
-    searchTerm,
-    selectedNiches,
-    selectedNetworkingPrefs,
-    selectedTags,
-  ]);
-
-  const handleClearFilters = () => {
-    setSelectedNiches([]);
-    setSelectedNetworkingPrefs([]);
-    setSelectedTags([]);
-    setSearchTerm("");
-  };
-
-  // Function to handle connection request
   const handleConnect = (profileId: string) => {
     sendConnectionRequest(profileId);
   };
 
-  // Function to handle message sending - now opens direct message
   const handleMessage = (
     profileId: string,
     profileName: string,
@@ -238,8 +132,7 @@ const AttendeeNetworking = () => {
       <div className="p-4 mb-4 bg-yellow-50 border border-yellow-200 rounded-md">
         <h3 className="font-medium">Debug Info</h3>
         <p>Current Event ID: {currentEventId || "None"}</p>
-        <p>Raw Attendee Count: {profiles.length}</p>
-        <p>Filtered Attendee Count: {filteredProfiles.length}</p>
+        <p>Total Attendee Count: {profiles.length}</p>
       </div>
 
       <div className="animate-fade-in max-w-6xl mx-auto">
@@ -271,292 +164,119 @@ const AttendeeNetworking = () => {
           </TabsList>
 
           <TabsContent value="people" className="space-y-6">
-            <NetworkingFilter
-              searchTerm={searchTerm}
-              onSearchChange={setSearchTerm}
-              selectedNiches={selectedNiches}
-              onNicheChange={setSelectedNiches}
-              selectedNetworkingPrefs={selectedNetworkingPrefs}
-              onNetworkingPrefChange={setSelectedNetworkingPrefs}
-              selectedTags={selectedTags}
-              onTagChange={setSelectedTags}
-              availableNiches={availableNiches}
-              availableNetworkingPrefs={availableNetworkingPrefs}
-              availableTags={availableTags}
-              onClearFilters={handleClearFilters}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {profiles.map((profile) => {
+                const connectionStatus = getConnectionStatus(profile.id);
+                const isConnected = connectionStatus?.status === "accepted";
+                const isPending = connectionStatus?.status === "pending";
 
-            {filteredProfiles.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {filteredProfiles.map((profile) => {
-                  const connectionStatus = getConnectionStatus(profile.id);
-                  const isConnected = connectionStatus?.status === "accepted";
-                  const isPending = connectionStatus?.status === "pending";
-
-                  return (
-                    <Card
-                      key={profile.id}
-                      className="hover-lift bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
-                    >
-                      <CardHeader className="pb-2">
-                        <div className="flex justify-between">
-                          <Avatar className="h-12 w-12">
-                            {profile.photo_url ? (
-                              <AvatarImage
-                                src={profile.photo_url}
-                                alt={profile.name || ""}
-                              />
-                            ) : (
-                              <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300">
-                                {profile.name
-                                  ?.split(" ")
-                                  .map((n) => n[0])
-                                  .join("") || "?"}
-                              </AvatarFallback>
-                            )}
-                          </Avatar>
-                          <div className="flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                handleMessage(
-                                  profile.id,
-                                  profile.name || "",
-                                  profile.photo_url || undefined
-                                )
-                              }
-                              className="h-8"
-                              disabled={!isConnected}
-                            >
-                              <MessageSquare size={16} className="mr-1" />
-                              Message
-                            </Button>
-                            <Button
-                              size="sm"
-                              onClick={() => handleConnect(profile.id)}
-                              className="h-8 bg-connect-600 hover:bg-connect-700"
-                              disabled={isConnected || isPending}
-                            >
-                              <UserPlus size={16} className="mr-1" />
-                              {isPending
-                                ? "Pending"
-                                : isConnected
-                                ? "Connected"
-                                : "Connect"}
-                            </Button>
-                          </div>
-                        </div>
-                        <CardTitle className="mt-3 text-xl text-gray-900 dark:text-white">
-                          {profile.name || "Unknown"}
-                        </CardTitle>
-                        <CardDescription className="text-sm flex flex-col">
-                          <span className="text-gray-700 dark:text-gray-300">
-                            {profile.role || "No role specified"}
-                          </span>
-                          {profile.company && (
-                            <span className="text-gray-500 dark:text-gray-400">
-                              {profile.company}
-                            </span>
-                          )}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        {profile.bio && (
-                          <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                            {profile.bio}
-                          </p>
-                        )}
-
-                        {/* Professional Niche */}
-                        {profile.niche && (
-                          <div className="mb-4">
-                            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                              Professional Niche
-                            </h4>
-                            <Badge
-                              variant="outline"
-                              className="bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-700"
-                            >
-                              {profile.niche}
-                            </Badge>
-                          </div>
-                        )}
-
-                        {/* Networking Preferences */}
-                        {profile.networking_preferences &&
-                          profile.networking_preferences.length > 0 && (
-                            <div className="mb-4">
-                              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                Looking to connect with
-                              </h4>
-                              <div className="flex flex-wrap gap-1">
-                                {profile.networking_preferences.map(
-                                  (pref, index) => (
-                                    <Badge
-                                      key={index}
-                                      variant="secondary"
-                                      className="bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                                    >
-                                      {pref}
-                                    </Badge>
-                                  )
-                                )}
-                              </div>
-                            </div>
-                          )}
-
-                        {/* Custom Tags */}
-                        {profile.tags && profile.tags.length > 0 && (
-                          <div className="mb-4">
-                            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                              Skills & Interests
-                            </h4>
-                            <div className="flex flex-wrap gap-2">
-                              {profile.tags.map((tag, index) => (
-                                <Badge
-                                  key={index}
-                                  variant="secondary"
-                                  className="bg-connect-50 text-connect-600 dark:bg-connect-900/30 dark:text-connect-300"
-                                >
-                                  {tag}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Social Links with Icons */}
-                        {(profile.twitter_link ||
-                          profile.linkedin_link ||
-                          profile.github_link ||
-                          profile.instagram_link ||
-                          profile.website_link) && (
-                          <div className="mt-4">
-                            <div className="text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                              Connect on:
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {profile.twitter_link && (
-                                <a
-                                  href={getSocialUrl(
-                                    "twitter",
-                                    profile.twitter_link
-                                  )}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center text-sm bg-gray-100 dark:bg-gray-700 rounded-full py-1 px-3 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                                >
-                                  {getSocialIcon("twitter")}
-                                  <span className="ml-1">Twitter</span>
-                                </a>
-                              )}
-                              {profile.linkedin_link && (
-                                <a
-                                  href={getSocialUrl(
-                                    "linkedin",
-                                    profile.linkedin_link
-                                  )}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center text-sm bg-gray-100 dark:bg-gray-700 rounded-full py-1 px-3 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                                >
-                                  {getSocialIcon("linkedin")}
-                                  <span className="ml-1">LinkedIn</span>
-                                </a>
-                              )}
-                              {profile.github_link && (
-                                <a
-                                  href={getSocialUrl(
-                                    "github",
-                                    profile.github_link
-                                  )}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center text-sm bg-gray-100 dark:bg-gray-700 rounded-full py-1 px-3 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                                >
-                                  {getSocialIcon("github")}
-                                  <span className="ml-1">GitHub</span>
-                                </a>
-                              )}
-                              {profile.instagram_link && (
-                                <a
-                                  href={getSocialUrl(
-                                    "instagram",
-                                    profile.instagram_link
-                                  )}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center text-sm bg-gray-100 dark:bg-gray-700 rounded-full py-1 px-3 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                                >
-                                  {getSocialIcon("instagram")}
-                                  <span className="ml-1">Instagram</span>
-                                </a>
-                              )}
-                              {profile.website_link && (
-                                <a
-                                  href={getSocialUrl(
-                                    "website",
-                                    profile.website_link
-                                  )}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center text-sm bg-gray-100 dark:bg-gray-700 rounded-full py-1 px-3 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                                >
-                                  {getSocialIcon("website")}
-                                  <span className="ml-1">Website</span>
-                                </a>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <Search className="h-12 w-12 mx-auto text-gray-400" />
-                <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">
-                  No matches found
-                </h3>
-                <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
-                  {profiles.length === 0
-                    ? "No other attendees have joined this event yet. Check back soon!"
-                    : "Try adjusting your search or filters to find more people"}
-                </p>
-                {(selectedNiches.length > 0 ||
-                  selectedNetworkingPrefs.length > 0 ||
-                  selectedTags.length > 0) && (
-                  <Button
-                    variant="outline"
-                    onClick={handleClearFilters}
-                    className="mt-4"
+                return (
+                  <Card
+                    key={profile.id}
+                    className="hover-lift bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
                   >
-                    Clear All Filters
-                  </Button>
-                )}
-              </div>
-            )}
+                    <CardHeader className="pb-2">
+                      <div className="flex justify-between">
+                        <Avatar className="h-12 w-12">
+                          {profile.photo_url ? (
+                            <AvatarImage
+                              src={profile.photo_url}
+                              alt={profile.name || ""}
+                            />
+                          ) : (
+                            <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300">
+                              {profile.name
+                                ?.split(" ")
+                                .map((n) => n[0])
+                                .join("") || "?"}
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              handleMessage(
+                                profile.id,
+                                profile.name || "",
+                                profile.photo_url || undefined
+                              )
+                            }
+                            className="h-8"
+                            disabled={!isConnected}
+                          >
+                            <MessageSquare size={16} className="mr-1" />
+                            Message
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => handleConnect(profile.id)}
+                            className="h-8 bg-connect-600 hover:bg-connect-700"
+                            disabled={isConnected || isPending}
+                          >
+                            <UserPlus size={16} className="mr-1" />
+                            {isPending
+                              ? "Pending"
+                              : isConnected
+                              ? "Connected"
+                              : "Connect"}
+                          </Button>
+                        </div>
+                      </div>
+                      <CardTitle className="mt-3 text-xl text-gray-900 dark:text-white">
+                        {profile.name || "Unknown"}
+                      </CardTitle>
+                      <CardDescription className="text-sm flex flex-col">
+                        <span className="text-gray-700 dark:text-gray-300">
+                          {profile.role || "No role specified"}
+                        </span>
+                        {profile.company && (
+                          <span className="text-gray-500 dark:text-gray-400">
+                            {profile.company}
+                          </span>
+                        )}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {profile.bio && (
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
+                          {profile.bio}
+                        </p>
+                      )}
+
+                      {profile.niche && (
+                        <div className="mb-4">
+                          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Professional Niche
+                          </h4>
+                          <Badge
+                            variant="outline"
+                            className="bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-700"
+                          >
+                            {profile.niche}
+                          </Badge>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           </TabsContent>
 
-          <TabsContent value="chats" className="space-y-4">
+          <TabsContent value="chats">
             <ChatRoom />
           </TabsContent>
 
-          <TabsContent value="messages" className="space-y-4">
+          <TabsContent value="messages">
             {selectedConversation ? (
               <DirectMessageThread
-                recipientId={selectedConversation.userId}
-                recipientName={selectedConversation.userName}
-                recipientPhoto={selectedConversation.userPhoto}
+                conversation={selectedConversation}
                 onBack={handleBackToConversations}
               />
             ) : (
-              <ConversationsList
-                onSelectConversation={handleSelectConversation}
-              />
+              <ConversationsList onSelect={handleSelectConversation} />
             )}
           </TabsContent>
         </Tabs>

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
@@ -12,6 +11,9 @@ import { Button } from "@/components/ui/button";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { Rocket, Zap } from "lucide-react";
 import { InfiniteSlider } from "./infinite-slider";
+import { AnimatedBeam } from "@/components/ui/animated-beam";
+import { BorderBeam } from "@/components/ui/border-beam";
+import { InfiniteSliderHero } from "@/components/ui/infinite-slider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 function ElegantShape({
@@ -302,7 +304,7 @@ function HeroGeometric({
             </div>
           )}
         </div>
-        {/* Slider section */}
+        {/* SLider section */}
         <div className="w-full mt-28">
           <div className="flex items-center">
             <div className="relative z-10 min-w-[200px]">
@@ -315,20 +317,7 @@ function HeroGeometric({
               </div>
             </div>
             <div className="flex-1 overflow-hidden">
-              <InfiniteSlider duration={30000} durationOnHover={50000} gap={24}>
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src="/placeholder.svg" alt="Event" />
-                  <AvatarFallback>E1</AvatarFallback>
-                </Avatar>
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src="/placeholder.svg" alt="Event" />
-                  <AvatarFallback>E2</AvatarFallback>
-                </Avatar>
-                <Avatar className="h-12 w-12">
-                  <AvatarImage src="/placeholder.svg" alt="Event" />
-                  <AvatarFallback>E3</AvatarFallback>
-                </Avatar>
-              </InfiniteSlider>
+              <InfiniteSliderHero />
             </div>
           </div>
         </div>

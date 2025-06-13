@@ -233,6 +233,24 @@ const AttendeeNetworking = () => {
     );
   }
 
+  if (error) {
+    return (
+      <AppLayout>
+        <div className="animate-fade-in max-w-6xl mx-auto">
+          <div className="p-4 mb-4 bg-red-50 border border-red-200 rounded-md">
+            <h3 className="font-medium text-red-800">Error Loading Attendees</h3>
+            <p className="text-red-600">
+              There was an error loading the attendees. Please try refreshing the page.
+            </p>
+            <p className="text-sm text-red-500 mt-2">
+              Error: {error?.message || 'Unknown error'}
+            </p>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
   return (
     <AppLayout>
       <div className="p-4 mb-4 bg-yellow-50 border border-yellow-200 rounded-md">
@@ -240,6 +258,7 @@ const AttendeeNetworking = () => {
         <p>Current Event ID: {currentEventId || "None"}</p>
         <p>Raw Attendee Count: {profiles.length}</p>
         <p>Filtered Attendee Count: {filteredProfiles.length}</p>
+        {error && <p className="text-red-600">Error: {error.message}</p>}
       </div>
 
       <div className="animate-fade-in max-w-6xl mx-auto">

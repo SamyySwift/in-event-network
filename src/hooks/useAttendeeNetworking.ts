@@ -38,37 +38,69 @@ export const useAttendeeNetworking = () => {
 
       console.log('Starting attendee networking fetch for user:', currentUser.id, 'in event:', currentEventId);
 
-      // Get all attendees from the current event, excluding the current user
-      const { data: eventParticipants, error } = await supabase
+      // First, get all event participants for this event excluding current user
+      const { data: eventParticipants, error: participantsError } = await supabase
         .from('event_participants')
-        .select(`
-          *,
-          profiles!user_id (*)
-        `)
+        .select('user_id')
         .eq('event_id', currentEventId)
-        .neq('user_id', currentUser.id); // Exclude current user
+        .neq('user_id', currentUser.id);
 
-      if (error) {
-        console.error('Error fetching event participants:', error);
-        throw error;
+      if (participantsError) {
+        console.error('Error fetching event participants:', participantsError);
+        throw participantsError;
       }
 
-      console.log('Raw event participants data:', eventParticipants);
-      console.log('Number of participants (excluding current user):', eventParticipants?.length || 0);
+      console.log('Event participants (excluding current user):', eventParticipants);
 
-      // Transform and filter the data
-      const attendees = eventParticipants
-        ?.map((participant: any) => {
-          console.log('Processing participant:', participant);
-          return participant.profiles;
-        })
-        .filter((profile) => {
+      if (!eventParticipants || eventParticipants.length === 0) {
+        console.log('No other participants found');
+        return [];
+      }
+
+      // Get the user IDs
+      const userIds = eventParticipants.map(p => p.user_id);
+      console.log('User IDs to fetch profiles for:', userIds);
+
+      // Now fetch the profiles for these users
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+        throw profilesError;
+      }
+
+      console.log('Raw profiles data:', profiles);
+      console.log('Number of profiles found:', profiles?.length || 0);
+
+      // Filter and transform the profiles
+      const attendees = profiles
+        ?.filter((profile) => {
           const isValid = profile && profile.id && profile.id !== currentUser.id;
           if (!isValid) {
             console.log('Filtered out invalid or current user profile:', profile);
           }
           return isValid;
-        }) || [];
+        })
+        .map((profile) => ({
+          id: profile.id,
+          name: profile.name || 'Unknown',
+          role: profile.role || 'No role specified',
+          company: profile.company,
+          bio: profile.bio,
+          niche: profile.niche,
+          photo_url: profile.photo_url,
+          networking_preferences: profile.networking_preferences,
+          tags: profile.tags,
+          twitter_link: profile.twitter_link,
+          linkedin_link: profile.linkedin_link,
+          github_link: profile.github_link,
+          instagram_link: profile.instagram_link,
+          website_link: profile.website_link,
+          created_at: profile.created_at,
+        })) || [];
 
       console.log('Final attendees list (excluding current user):', attendees);
       console.log('Number of valid attendees:', attendees.length);

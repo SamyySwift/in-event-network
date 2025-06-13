@@ -5,8 +5,8 @@ import { useAttendeeEventContext } from "@/contexts/AttendeeEventContext";
 
 interface AttendeeProfile {
   id: string;
-  name: string;
-  role: string;
+  name?: string;
+  role?: string;
   company?: string;
   bio?: string;
   niche?: string;
@@ -18,7 +18,7 @@ interface AttendeeProfile {
   github_link?: string;
   instagram_link?: string;
   website_link?: string;
-  created_at: string;
+  created_at?: string;
 }
 
 export const useAttendeeNetworking = () => {
@@ -31,94 +31,65 @@ export const useAttendeeNetworking = () => {
     error,
   } = useQuery({
     queryKey: ["attendee-networking", currentUser?.id, currentEventId],
+    enabled: !!currentUser?.id && !!currentEventId,
+    refetchInterval: 5_000,
+    staleTime: 0,
     queryFn: async (): Promise<AttendeeProfile[]> => {
-      if (!currentUser?.id || !currentEventId) {
-        console.log("No current user or event found");
-        console.log("Current user ID:", currentUser?.id);
-        console.log("Current event ID:", currentEventId);
-        return [];
-      }
+      if (!currentUser?.id || !currentEventId) return [];
 
-      console.log(
-        "Starting attendee networking fetch for user:",
-        currentUser.id,
-        "in event:",
-        currentEventId
-      );
-
-      // Get all attendees from the current event
-      const { data: eventParticipants, error } = await supabase
+      const { data, error } = await supabase
         .from("event_participants")
         .select(
           `
-          joined_at,
-          profiles:user_id (
-            id,
-            name,
-            role,
-            company,
-            bio,
-            niche,
-            photo_url,
-            networking_preferences,
-            tags,
-            twitter_link,
-            linkedin_link,
-            github_link,
-            instagram_link,
-            website_link,
-            created_at
-          )
-        `
+        user_id,
+        joined_at,
+        profiles:user_id (
+          id,
+          name,
+          role,
+          company,
+          bio,
+          niche,
+          photo_url,
+          networking_preferences,
+          tags,
+          twitter_link,
+          linkedin_link,
+          github_link,
+          instagram_link,
+          website_link,
+          created_at
+        )
+      `
         )
         .eq("event_id", currentEventId);
 
-      if (error) {
-        console.error("Error fetching event participants:", error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log("Raw event participants data:", eventParticipants);
-      console.log("Number of participants:", eventParticipants?.length || 0);
+      const everyone = (data ?? []).map((row: any) => {
+        const p = row.profiles;
+        return {
+          id: p?.id ?? row.user_id,
+          name: p?.name ?? "Unknown",
+          role: p?.role,
+          company: p?.company,
+          bio: p?.bio,
+          niche: p?.niche,
+          photo_url: p?.photo_url,
+          networking_preferences: p?.networking_preferences,
+          tags: p?.tags,
+          twitter_link: p?.twitter_link,
+          linkedin_link: p?.linkedin_link,
+          github_link: p?.github_link,
+          instagram_link: p?.instagram_link,
+          website_link: p?.website_link,
+          created_at: p?.created_at ?? row.joined_at,
+        } as AttendeeProfile;
+      });
 
-      // Transform and filter the data
-      const attendees =
-        eventParticipants
-          ?.map((participant: any) => {
-            console.log("Processing participant:", participant);
-            return participant.profiles;
-          })
-          .filter((profile) => {
-            // Filter out invalid profiles
-            const isValid = profile && profile.id;
-            if (!isValid) {
-              console.log("Filtered out invalid profile:", profile);
-              return false;
-            }
-            
-            // Filter out the current user
-            const isCurrentUser = profile.id === currentUser.id;
-            if (isCurrentUser) {
-              console.log("Filtered out current user's profile");
-              return false;
-            }
-            
-            return true;
-          }) || [];
-
-      console.log("Final attendees list:", attendees);
-      console.log("Number of valid attendees:", attendees.length);
-
-      return attendees as AttendeeProfile[];
+      return everyone.filter((a) => a.id !== currentUser.id);
     },
-    enabled: !!currentUser?.id && !!currentEventId,
-    refetchInterval: 5000, // Refetch every 5 seconds to get latest data
-    staleTime: 0, // Always consider data stale to force refetch
   });
 
-  return {
-    attendees,
-    isLoading,
-    error,
-  };
+  return { attendees, isLoading, error };
 };

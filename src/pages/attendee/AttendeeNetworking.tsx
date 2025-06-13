@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -35,11 +34,9 @@ import { ConversationsList } from "@/components/messaging/ConversationsList";
 import { DirectMessageThread } from "@/components/messaging/DirectMessageThread";
 import { useNetworking } from "@/hooks/useNetworking";
 import { useAttendeeEventContext } from "@/contexts/AttendeeEventContext";
-import { useAuth } from "@/contexts/AuthContext";
 
 const AttendeeNetworking = () => {
   const navigate = useNavigate();
-  const { currentUser } = useAuth();
 
   // Add near the top of the component
   const { currentEventId } = useAttendeeEventContext();
@@ -240,11 +237,9 @@ const AttendeeNetworking = () => {
     <AppLayout>
       <div className="p-4 mb-4 bg-yellow-50 border border-yellow-200 rounded-md">
         <h3 className="font-medium">Debug Info</h3>
-        <p>Current User ID: {currentUser?.id || "None"}</p>
         <p>Current Event ID: {currentEventId || "None"}</p>
-        <p>Other Attendee Count: {profiles.length}</p>
+        <p>Raw Attendee Count: {profiles.length}</p>
         <p>Filtered Attendee Count: {filteredProfiles.length}</p>
-        {error && <p className="text-red-600">Error: {error.message}</p>}
       </div>
 
       <div className="animate-fade-in max-w-6xl mx-auto">
@@ -524,7 +519,7 @@ const AttendeeNetworking = () => {
               <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
                 <Search className="h-12 w-12 mx-auto text-gray-400" />
                 <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">
-                  No other attendees found
+                  No matches found
                 </h3>
                 <p className="mt-2 text-gray-500 dark:text-gray-400 max-w-sm mx-auto">
                   {profiles.length === 0

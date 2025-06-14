@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import FacilityStatsCards from "./components/FacilityStatsCards";
@@ -183,7 +182,7 @@ const AdminFacilitiesContent = () => {
                 facility={facility}
                 isDeleting={isDeleting}
                 onEdit={() => {/* can implement edit modal later */}}
-                onDelete={deleteFacility}
+                onDelete={(facility) => deleteFacility(facility.id)}
               />
             ))
           ) : (

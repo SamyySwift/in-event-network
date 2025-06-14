@@ -1,102 +1,86 @@
 
-import React, { useState } from 'react';
-import AdminLayout from '@/components/layouts/AdminLayout';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import EventSelector from '@/components/admin/EventSelector';
-import { TabsContent } from '@/components/ui/tabs';
-import { 
-  Card, 
-  CardContent,
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Textarea } from '@/components/ui/textarea';
-import { CheckCircle, XCircle, ArrowUpCircle, MessageSquare, Reply, Calendar, User2, Building } from 'lucide-react';
-import { format } from 'date-fns';
-import { useAdminQuestions } from '@/hooks/useAdminQuestions';
-import { useAdminEventContext, AdminEventProvider } from '@/hooks/useAdminEventContext';
+import React, { useState, useMemo } from "react";
+import AdminLayout from "@/components/layouts/AdminLayout";
+import QuestionStatsCards from "./components/QuestionStatsCards";
+import QuestionCard from "./components/QuestionCard";
+import EventSelector from "@/components/admin/EventSelector";
+import { Input } from "@/components/ui/input";
+import { useAdminQuestions } from "@/hooks/useAdminQuestions";
+import { useAdminEventContext, AdminEventProvider } from "@/hooks/useAdminEventContext";
+import { Plus } from "lucide-react";
 
-const AdminQuestionsContent = () => {
-  const [activeTab, setActiveTab] = useState<string>('all');
+const TABS = [
+  { id: "all", label: "All" },
+  { id: "unanswered", label: "Unanswered" },
+  { id: "answered", label: "Answered" },
+  { id: "trending", label: "Trending" },
+];
+
+const QuestionsContent = () => {
+  const [activeTab, setActiveTab] = useState<string>("all");
   const [respondingTo, setRespondingTo] = useState<string | null>(null);
-  const [responseText, setResponseText] = useState('');
+  const [responseText, setResponseText] = useState("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   const { selectedEventId, selectedEvent } = useAdminEventContext();
-
-  const { 
-    questions, 
-    isLoading, 
-    error, 
-    markAsAnswered, 
-    deleteQuestion, 
+  const {
+    questions,
+    isLoading,
+    error,
+    markAsAnswered,
+    deleteQuestion,
     respondToQuestion,
     isMarkingAnswered,
     isDeleting,
     isResponding
   } = useAdminQuestions(selectedEventId || undefined);
 
-  // Filter questions based on active tab
-  const getFilteredQuestions = () => {
-    switch(activeTab) {
-      case 'answered':
-        return questions.filter(q => q.is_answered);
-      case 'unanswered':
-        return questions.filter(q => !q.is_answered);
-      case 'trending':
-        return [...questions].sort((a, b) => b.upvotes - a.upvotes);
-      default:
-        return questions;
+  // Stats for cards
+  const total = questions.length;
+  const answered = questions.filter((q) => q.is_answered).length;
+  const trending = useMemo(() => {
+    return questions.filter((q) => q.upvotes >= 2).length;
+  }, [questions]);
+
+  // Filter questions based on active tab and search
+  const filteredQuestions = useMemo(() => {
+    let filtered = questions;
+    if (activeTab === "answered") filtered = filtered.filter((q) => q.is_answered);
+    else if (activeTab === "unanswered") filtered = filtered.filter((q) => !q.is_answered);
+    else if (activeTab === "trending") filtered = [...questions].sort((a, b) => b.upvotes - a.upvotes);
+    if (searchQuery.trim().length > 0) {
+      filtered = filtered.filter((question) =>
+        question.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (question.profiles?.name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (question.event_name || "").toLowerCase().includes(searchQuery.toLowerCase())
+      );
     }
+    return filtered;
+  }, [questions, activeTab, searchQuery]);
+
+  const handleStartResponse = (id: string) => {
+    setRespondingTo(id);
+    setResponseText("");
   };
 
-  const handleMarkAsAnswered = (questionId: string) => {
-    markAsAnswered(questionId);
-  };
-
-  const handleDeleteQuestion = (questionId: string) => {
-    deleteQuestion(questionId);
-  };
-
-  const handleStartResponse = (questionId: string) => {
-    setRespondingTo(questionId);
-    setResponseText('');
-  };
-
-  const handleSubmitResponse = () => {
-    if (respondingTo && responseText.trim()) {
-      respondToQuestion({ 
-        questionId: respondingTo, 
-        response: responseText.trim() 
-      });
-      setRespondingTo(null);
-      setResponseText('');
-    }
+  const handleSubmitResponse = (id: string, response: string) => {
+    if (!response.trim()) return;
+    respondToQuestion({ questionId: id, response: response.trim() });
+    setRespondingTo(null);
+    setResponseText("");
   };
 
   const handleCancelResponse = () => {
     setRespondingTo(null);
-    setResponseText('');
+    setResponseText("");
   };
 
-  const filteredQuestions = getFilteredQuestions();
-
-  const getPageTitle = () => {
-    if (selectedEvent) {
-      return `Questions for ${selectedEvent.name}`;
-    }
-    return 'All Questions from Your Events';
+  const handleMarkAsAnswered = (id: string) => {
+    markAsAnswered(id);
   };
 
-  const getPageDescription = () => {
-    if (selectedEvent) {
-      return `Review and moderate questions from ${selectedEvent.name} attendees`;
-    }
-    return 'Review and moderate questions from all your event attendees';
+  const handleDelete = (id: string) => {
+    deleteQuestion(id);
   };
 
   if (isLoading) {
@@ -112,215 +96,118 @@ const AdminQuestionsContent = () => {
     );
   }
 
+  if (!selectedEvent) {
+    return (
+      <div className="flex flex-col gap-5">
+        <div className="border rounded-lg p-4 bg-card">
+          <EventSelector />
+        </div>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <Plus className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
+            <p className="mt-2 text-muted-foreground">Please select an event to manage Q&amp;A</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <EventSelector />
-        
-        {/* Context Information */}
-        {!selectedEventId && (
-          <Card className="border-blue-200 bg-blue-50">
-            <CardContent className="py-4">
-              <div className="flex items-center gap-2 text-blue-800">
-                <Building className="h-5 w-5" />
-                <span className="font-medium">
-                  Showing questions from all your events. Select a specific event above to filter.
-                </span>
+      <div className="space-y-8 animate-fade-in">
+        {/* Gradient Hero Section */}
+        <div className="p-8 rounded-2xl bg-gradient-to-br from-primary-100 via-blue-100 to-indigo-50 text-primary-900 dark:text-white shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
+          <div className="absolute -top-12 -right-10 w-56 h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
+          <div className="absolute -bottom-14 -left-14 w-36 h-36 bg-white/20 rounded-full opacity-30 pointer-events-none"></div>
+          <div className="relative z-10">
+            <div className="flex items-center gap-6">
+              <h1 className="text-4xl font-bold tracking-tight flex items-center gap-2">
+                Q&amp;A Management
+              </h1>
+              <div className="flex-1">
+                <EventSelector />
               </div>
-            </CardContent>
-          </Card>
-        )}
-        
-        <AdminPageHeader
-          title={getPageTitle()}
-          description={getPageDescription()}
-          tabs={[
-            { id: 'all', label: 'All Questions' },
-            { id: 'unanswered', label: 'Unanswered' },
-            { id: 'answered', label: 'Answered' },
-            { id: 'trending', label: 'Trending' }
-          ]}
-          defaultTab="all"
-          onTabChange={setActiveTab}
-        >
-          {['all', 'unanswered', 'answered', 'trending'].map(tabId => (
-            <TabsContent key={tabId} value={tabId} className="space-y-4">
-              {filteredQuestions.length === 0 ? (
-                <Card>
-                  <CardContent className="py-10 text-center text-muted-foreground">
-                    <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No questions found in this category.</p>
-                    {activeTab === 'all' && (
-                      <p className="text-sm mt-2">Questions submitted by attendees will appear here.</p>
-                    )}
-                  </CardContent>
-                </Card>
-              ) : (
-                filteredQuestions.map(question => {
-                  const userName = question.profiles?.name || 'Anonymous User';
-                  const userPhoto = question.profiles?.photo_url;
-                  
-                  return (
-                    <Card key={question.id} className={question.is_answered ? 'border-green-100' : ''}>
-                      <CardHeader className="pb-2">
-                        <div className="flex justify-between items-start">
-                          <div className="flex items-center gap-3">
-                            <Avatar>
-                              <AvatarImage src={userPhoto || ''} />
-                              <AvatarFallback>{userName.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <CardTitle className="text-base">{userName}</CardTitle>
-                              <CardDescription>
-                                {format(new Date(question.created_at), 'MMM d, yyyy h:mm a')}
-                              </CardDescription>
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-end gap-2">
-                            <Badge variant={question.is_answered ? 'outline' : 'default'}>
-                              {question.is_answered ? 'Answered' : 'Pending'}
-                            </Badge>
-                            {question.session_info ? (
-                              <Badge variant="secondary" className="flex items-center gap-1">
-                                <User2 size={12} />
-                                {question.session_info.session_title || `${question.session_info.speaker_name}'s Session`}
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="flex items-center gap-1">
-                                <MessageSquare size={12} />
-                                General Question
-                              </Badge>
-                            )}
-                            {/* Show event name when viewing all events */}
-                            {!selectedEventId && question.event_name && (
-                              <Badge variant="secondary" className="flex items-center gap-1">
-                                <Building size={12} />
-                                {question.event_name}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
+            </div>
+            <p className="mt-2 max-w-2xl text-primary-700 dark:text-primary-100">
+              Manage attendee questions and answers for <span className="font-semibold">{selectedEvent?.name}</span>.
+            </p>
+            <div className="mt-6">
+              <QuestionStatsCards total={total} answered={answered} trending={trending} loading={isLoading} />
+            </div>
+          </div>
+        </div>
 
-                        {/* Session Information Display */}
-                        {question.session_info && (
-                          <div className="mt-2 p-2 bg-blue-50 border-l-4 border-blue-200 rounded">
-                            <div className="flex items-center gap-2 text-sm">
-                              <Calendar size={14} className="text-blue-600" />
-                              <div>
-                                <span className="font-medium text-blue-800">
-                                  {question.session_info.session_title || `${question.session_info.speaker_name}'s Session`}
-                                </span>
-                                <span className="text-blue-600 ml-2">
-                                  by {question.session_info.speaker_name}
-                                </span>
-                                {question.session_info.session_time && (
-                                  <span className="text-blue-600 ml-2">
-                                    • {format(new Date(question.session_info.session_time), 'MMM d, h:mm a')}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-base mb-3">{question.content}</p>
-                        
-                        {question.response && (
-                          <div className="mt-4 p-3 bg-blue-50 border-l-4 border-blue-200 rounded">
-                            <p className="text-sm font-medium text-blue-800 mb-1">Admin Response:</p>
-                            <p className="text-blue-700">{question.response}</p>
-                            {question.response_created_at && (
-                              <p className="text-xs text-blue-600 mt-1">
-                                Responded on {format(new Date(question.response_created_at), 'MMM d, yyyy h:mm a')}
-                              </p>
-                            )}
-                          </div>
-                        )}
-                        
-                        {respondingTo === question.id && (
-                          <div className="mt-4 space-y-3">
-                            <Textarea
-                              placeholder="Type your response here..."
-                              value={responseText}
-                              onChange={(e) => setResponseText(e.target.value)}
-                              rows={3}
-                            />
-                            <div className="flex gap-2">
-                              <Button 
-                                size="sm" 
-                                onClick={handleSubmitResponse}
-                                disabled={!responseText.trim() || isResponding}
-                              >
-                                {isResponding ? 'Submitting...' : 'Submit Response'}
-                              </Button>
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                onClick={handleCancelResponse}
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          </div>
-                        )}
-                        
-                        <div className="flex flex-wrap gap-2 text-sm mt-3">
-                          <Badge variant="outline" className="flex items-center gap-1">
-                            <ArrowUpCircle size={14} /> {question.upvotes} upvotes
-                          </Badge>
-                          {question.is_anonymous && (
-                            <Badge variant="secondary">Anonymous</Badge>
-                          )}
-                        </div>
-                      </CardContent>
-                      <CardFooter className="border-t pt-3 flex justify-between">
-                        <div className="text-sm text-muted-foreground">
-                          Question ID: {question.id}
-                        </div>
-                        <div className="flex gap-2">
-                          {!question.response && respondingTo !== question.id && (
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              className="text-blue-600 border-blue-200 hover:bg-blue-50"
-                              onClick={() => handleStartResponse(question.id)}
-                            >
-                              <Reply size={16} className="mr-1" />
-                              Respond
-                            </Button>
-                          )}
-                          {!question.is_answered && (
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              className="text-green-600 border-green-200 hover:bg-green-50"
-                              onClick={() => handleMarkAsAnswered(question.id)}
-                              disabled={isMarkingAnswered}
-                            >
-                              <CheckCircle size={16} className="mr-1" />
-                              Mark Answered
-                            </Button>
-                          )}
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="text-destructive border-destructive/20 hover:bg-destructive/10"
-                            onClick={() => handleDeleteQuestion(question.id)}
-                            disabled={isDeleting}
-                          >
-                            <XCircle size={16} className="mr-1" />
-                            Remove
-                          </Button>
-                        </div>
-                      </CardFooter>
-                    </Card>
-                  );
-                })
-              )}
-            </TabsContent>
-          ))}
-        </AdminPageHeader>
+        {/* Quick Actions: Title, Tabs */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold">Questions & Answers</h2>
+            <p className="text-muted-foreground mt-1">
+              Review, moderate and respond to attendee questions.
+            </p>
+          </div>
+          <div className="flex gap-2 mt-2 sm:mt-0">
+            {TABS.map(tab => (
+              <button
+                key={tab.id}
+                className={`px-3 py-1.5 rounded-full font-medium transition ${
+                  activeTab === tab.id
+                    ? "bg-primary text-primary-foreground shadow"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+                onClick={() => setActiveTab(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="flex justify-between mb-4">
+          <Input
+            placeholder="Search questions..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="max-w-sm"
+          />
+        </div>
+
+        {/* Questions List */}
+        <div className="space-y-4">
+          {filteredQuestions.length > 0 ? (
+            filteredQuestions.map((question) => (
+              <QuestionCard
+                key={question.id}
+                question={question}
+                isMarkingAnswered={isMarkingAnswered}
+                isDeleting={isDeleting}
+                isResponding={isResponding}
+                respondingTo={respondingTo}
+                responseText={responseText}
+                onStartResponse={handleStartResponse}
+                onSubmitResponse={handleSubmitResponse}
+                onCancelResponse={handleCancelResponse}
+                onMarkAsAnswered={handleMarkAsAnswered}
+                onDelete={handleDelete}
+                setResponseText={setResponseText}
+                selectedEventId={selectedEventId}
+              />
+            ))
+          ) : (
+            <div className="col-span-2 text-center py-8">
+              <Plus className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
+              <h3 className="mt-4 text-lg font-medium">No questions found</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                No questions match your search criteria.
+              </p>
+            </div>
+          )}
+        </div>
+        {error && (
+          <div className="bg-destructive/10 text-destructive p-3 rounded-lg text-sm">
+            Error loading questions: {error.message}
+          </div>
+        )}
       </div>
     </AdminLayout>
   );
@@ -329,7 +216,7 @@ const AdminQuestionsContent = () => {
 const AdminQuestions = () => {
   return (
     <AdminEventProvider>
-      <AdminQuestionsContent />
+      <QuestionsContent />
     </AdminEventProvider>
   );
 };

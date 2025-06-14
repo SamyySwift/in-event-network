@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -268,527 +269,562 @@ const AttendeeProfile = () => {
   
   return (
     <AppLayout>
-      <div className="max-w-3xl mx-auto mt-8 px-2">
-        {/* ULTRA MODERN HEADER CARD */}
-        <div className="relative mb-8">
-          <div className="glass-card shadow-2xl bg-gradient-to-tr from-primary-100/70 via-white/70 to-primary-50/40 dark:from-primary-900/70 dark:via-gray-900/60 dark:to-primary-900/40 border-0 px-7 pt-12 pb-10 flex flex-col sm:flex-row items-center gap-8 animate-fade-in">
-            {/* Avatar ultra modern */}
-            <div className="flex flex-col items-center">
-              <div className="relative group transition-transform duration-300 hover:scale-105">
-                <div className="absolute -inset-1.5 rounded-full bg-gradient-to-tr from-primary-400 via-primary-200 to-primary-600 blur-md opacity-65 group-hover:opacity-90 group-hover:blur-lg transition-all" />
-                <ProfilePictureUpload
-                  currentImageUrl={profileData.photoUrl}
-                  userId={currentUser.id}
-                  userName={profileData.name || "User"}
-                  onImageUpdate={handleProfilePictureUpdate}
-                  isEditing={isEditing}
-                />
-              </div>
+      <div className="max-w-4xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold">Your Profile</h1>
+          
+          {isEditing ? (
+            <div className="flex space-x-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setIsEditing(false)}
+                disabled={isSubmitting}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSave}
+                disabled={isSubmitting}
+                className="bg-connect-600 hover:bg-connect-700"
+              >
+                {isSubmitting ? "Saving..." : "Save Changes"}
+              </Button>
             </div>
-            {/* Profile Info */}
-            <div className="flex-1 flex flex-col items-center sm:items-start text-center sm:text-left">
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 dark:text-white mb-2 tracking-tight">
-                {profileData.name || <span className="opacity-50">Add your name</span>}
-              </h2>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {profileData.niche && (
-                  <Badge variant="secondary" className="bg-gradient-to-r from-primary-100 to-primary-300 text-primary-700 px-4 py-1.5 rounded-2xl text-base font-semibold shadow hover-scale border-0">
-                    {profileData.niche}
-                  </Badge>
+          ) : (
+            <Button 
+              onClick={() => setIsEditing(true)}
+              variant="outline"
+            >
+              Edit Profile
+            </Button>
+          )}
+        </div>
+        
+        <Card>
+          {/* Profile Header */}
+          <CardHeader className="bg-connect-50 dark:bg-connect-900/20 border-b dark:border-gray-700">
+            <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+              <ProfilePictureUpload
+                currentImageUrl={profileData.photoUrl}
+                userId={currentUser.id}
+                userName={profileData.name || 'User'}
+                onImageUpdate={handleProfilePictureUpdate}
+                isEditing={isEditing}
+              />
+              
+              <div className="flex-1">
+                {isEditing ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="name" className="text-gray-900 dark:text-white">Full Name</Label>
+                    <Input
+                      id="name"
+                      value={profileData.name}
+                      onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{profileData.name || 'Add your name'}</h2>
+                    {profileData.niche && (
+                      <Badge variant="secondary" className="mt-1 bg-connect-100 text-connect-800 hover:bg-connect-200 dark:bg-connect-900/50 dark:text-connect-300">
+                        {profileData.niche}
+                      </Badge>
+                    )}
+                    {profileData.company && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{profileData.company}</p>
+                    )}
+                  </div>
                 )}
               </div>
-              {profileData.company && (
-                <div className="text-lg text-gray-700 dark:text-gray-300 font-semibold">{profileData.company}</div>
-              )}
             </div>
-            {/* Edit Profile Button */}
-            <div className="sm:absolute sm:top-8 sm:right-8 w-full sm:w-auto flex justify-end sm:static">
+          </CardHeader>
+          
+          <CardContent className="pt-6 space-y-8">
+            {/* Bio Section */}
+            <div>
+              <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">About</h3>
               {isEditing ? (
-                <div className="flex space-x-2 w-full sm:w-auto">
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsEditing(false)}
-                    disabled={isSubmitting}
-                    className="hover:scale-105"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleSave}
-                    disabled={isSubmitting}
-                    className="bg-gradient-to-r from-primary-600 to-primary-400 text-white font-bold shadow-xl rounded-xl px-6 py-2 transform transition-transform duration-200 hover:scale-105"
-                  >
-                    {isSubmitting ? "Saving..." : "Save Changes"}
-                  </Button>
-                </div>
+                <Textarea
+                  placeholder="Tell others about yourself..."
+                  value={profileData.bio}
+                  onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
+                  className="min-h-[120px]"
+                />
               ) : (
-                <Button
-                  onClick={() => setIsEditing(true)}
-                  variant="default"
-                  className="bg-gradient-to-r from-primary-600 to-primary-400 text-white font-semibold shadow-lg hover:scale-105 px-7 py-2 rounded-xl transition-transform duration-200"
-                >
-                  Edit Profile
-                </Button>
+                <p className="text-gray-700 dark:text-gray-300">
+                  {profileData.bio || "No bio added yet."}
+                </p>
               )}
             </div>
-          </div>
-        </div>
+            
+            <Separator />
 
-        {/* MODERN PROFILE SECTIONS */}
-        <div className="space-y-7">
-          {/* About */}
-          <section className="glass-card rounded-2xl border-0 backdrop-blur-md shadow-lg p-7 animate-fade-in">
-            <h3 className="font-bold mb-2 text-primary-600 dark:text-primary-300 text-2xl tracking-tight">
-              About
-            </h3>
-            {isEditing ? (
-              <Textarea
-                value={profileData.bio}
-                onChange={e => setProfileData({ ...profileData, bio: e.target.value })}
-                placeholder="Tell others about yourself..."
-                className="min-h-[90px] text-lg bg-white/90 dark:bg-black/20 backdrop-blur border-none shadow-inner rounded-xl"
-              />
-            ) : (
-              <p className="text-gray-700 dark:text-gray-200 text-lg">{profileData.bio || <span className="opacity-60 italic">No bio added yet.</span>}</p>
-            )}
-          </section>
-          {/* Company */}
-          <section className="glass-card rounded-2xl border-0 backdrop-blur-md shadow-lg p-7 animate-fade-in">
-            <h3 className="font-bold mb-2 text-primary-600 dark:text-primary-300 text-2xl tracking-tight">
-              Company
-            </h3>
-            {isEditing ? (
-              <Input
-                value={profileData.company}
-                onChange={e => setProfileData({ ...profileData, company: e.target.value })}
-                placeholder="Your company or organization"
-                className="text-lg bg-white/90 dark:bg-black/20 border-none shadow-inner rounded-xl"
-              />
-            ) : (
-              <p className="text-gray-700 dark:text-gray-200 text-lg">{profileData.company || <span className="opacity-60 italic">No company added yet.</span>}</p>
-            )}
-          </section>
-          {/* Niche */}
-          <section className="glass-card rounded-2xl border-0 backdrop-blur-md shadow-lg p-7 animate-fade-in">
-            <h3 className="font-bold mb-2 text-primary-600 dark:text-primary-300 text-2xl tracking-tight">
-              Professional Niche
-            </h3>
-            {isEditing ? (
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {nicheOptions.map((niche) => (
-                    <div key={niche} className="flex items-center">
-                      <input
-                        type="radio"
-                        id={`niche-${niche}`}
-                        name="niche"
-                        className="peer sr-only"
-                        checked={selectedNiche === niche}
-                        onChange={() => setSelectedNiche(niche)}
+            {/* Company Section */}
+            <div>
+              <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">Company</h3>
+              {isEditing ? (
+                <Input
+                  placeholder="Your company or organization"
+                  value={profileData.company}
+                  onChange={(e) => setProfileData({ ...profileData, company: e.target.value })}
+                />
+              ) : (
+                <p className="text-gray-700 dark:text-gray-300">
+                  {profileData.company || "No company added yet."}
+                </p>
+              )}
+            </div>
+            
+            <Separator />
+            
+            {/* Professional Niche */}
+            <div>
+              <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">Professional Niche</h3>
+              
+              {isEditing ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {nicheOptions.map((niche) => (
+                      <div key={niche} className="flex items-center">
+                        <input
+                          type="radio"
+                          id={`niche-${niche}`}
+                          name="niche"
+                          className="peer sr-only"
+                          checked={selectedNiche === niche}
+                          onChange={() => setSelectedNiche(niche)}
+                        />
+                        <label
+                          htmlFor={`niche-${niche}`}
+                          className={`flex w-full cursor-pointer rounded-lg border ${
+                            selectedNiche === niche
+                              ? 'bg-connect-50 border-connect-500 dark:bg-connect-900/50 dark:border-connect-400'
+                              : 'bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-600'
+                          } p-2 text-sm font-medium text-gray-900 dark:text-white`}
+                        >
+                          {niche}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="custom-niche" className="text-gray-900 dark:text-white">Other (specify)</Label>
+                    <div className="mt-1 flex">
+                      <Input
+                        type="text"
+                        id="custom-niche"
+                        value={selectedNiche !== '' && !nicheOptions.includes(selectedNiche) ? selectedNiche : ''}
+                        placeholder="Enter your niche"
+                        onChange={(e) => setSelectedNiche(e.target.value)}
+                        className="rounded-r-none"
                       />
-                      <label
-                        htmlFor={`niche-${niche}`}
-                        className={`flex w-full cursor-pointer rounded-lg border ${
-                          selectedNiche === niche
-                            ? 'bg-connect-50 border-connect-500 dark:bg-connect-900/50 dark:border-connect-400'
-                            : 'bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-600'
-                        } p-2 text-sm font-medium text-gray-900 dark:text-white`}
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        className="rounded-l-none"
+                        onClick={() => setSelectedNiche('')}
                       >
-                        {niche}
-                      </label>
+                        Clear
+                      </Button>
                     </div>
-                  ))}
-                </div>
-                
-                <div>
-                  <Label htmlFor="custom-niche" className="text-gray-900 dark:text-white">Other (specify)</Label>
-                  <div className="mt-1 flex">
-                    <Input
-                      type="text"
-                      id="custom-niche"
-                      value={selectedNiche !== '' && !nicheOptions.includes(selectedNiche) ? selectedNiche : ''}
-                      placeholder="Enter your niche"
-                      onChange={(e) => setSelectedNiche(e.target.value)}
-                      className="rounded-r-none"
-                    />
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      className="rounded-l-none"
-                      onClick={() => setSelectedNiche('')}
-                    >
-                      Clear
-                    </Button>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div>
-                {selectedNiche ? (
-                  <Badge variant="secondary" className="bg-gradient-to-r from-primary-100 to-primary-300 text-primary-700 px-4 py-1.5 rounded-2xl text-lg font-semibold shadow border-0 hover-scale">
-                    {selectedNiche}
-                  </Badge>
-                ) : (
-                  <span className="text-gray-500 text-base italic opacity-70">No niche selected</span>
-                )}
-              </div>
-            )}
-          </section>
-          {/* Networking Preferences */}
-          <section className="glass-card rounded-2xl border-0 backdrop-blur-md shadow-lg p-7 animate-fade-in">
-            <h3 className="font-bold mb-2 text-primary-600 dark:text-primary-300 text-2xl tracking-tight">
-              Networking Preferences
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Who are you interested in meeting?</p>
-            {isEditing ? (
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {networkingOptions.map((pref) => (
-                    <div key={pref} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={`pref-${pref}`}
-                        className="peer sr-only"
-                        checked={selectedNetworking.includes(pref)}
-                        onChange={() => toggleNetworkingPreference(pref)}
-                      />
-                      <label
-                        htmlFor={`pref-${pref}`}
-                        className={`flex w-full cursor-pointer rounded-lg border ${
-                          selectedNetworking.includes(pref)
-                            ? 'bg-connect-50 border-connect-300 dark:bg-connect-900/50 dark:border-connect-400'
-                            : 'bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-600'
-                        } p-2 text-sm font-medium text-gray-900 dark:text-white`}
-                      >
-                        {pref}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-                
-                {/* Custom networking preference input */}
+              ) : (
                 <div>
-                  <Label htmlFor="custom-networking" className="text-gray-900 dark:text-white">Add custom preference</Label>
-                  <div className="mt-1 flex">
+                  {selectedNiche ? (
+                    <Badge variant="outline" className="bg-connect-50 border-connect-200 text-connect-800 dark:bg-connect-900/50 dark:border-connect-400 dark:text-connect-300">
+                      {selectedNiche}
+                    </Badge>
+                  ) : (
+                    <p className="text-gray-500 text-sm italic dark:text-gray-400">No niche selected</p>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            <Separator />
+            
+            {/* Networking Preferences */}
+            <div>
+              <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">Networking Preferences</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Who are you interested in meeting?</p>
+              
+              {isEditing ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {networkingOptions.map((pref) => (
+                      <div key={pref} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id={`pref-${pref}`}
+                          className="peer sr-only"
+                          checked={selectedNetworking.includes(pref)}
+                          onChange={() => toggleNetworkingPreference(pref)}
+                        />
+                        <label
+                          htmlFor={`pref-${pref}`}
+                          className={`flex w-full cursor-pointer rounded-lg border ${
+                            selectedNetworking.includes(pref)
+                              ? 'bg-connect-50 border-connect-300 dark:bg-connect-900/50 dark:border-connect-400'
+                              : 'bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-600'
+                          } p-2 text-sm font-medium text-gray-900 dark:text-white`}
+                        >
+                          {pref}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Custom networking preference input */}
+                  <div>
+                    <Label htmlFor="custom-networking" className="text-gray-900 dark:text-white">Add custom preference</Label>
+                    <div className="mt-1 flex">
+                      <Input
+                        type="text"
+                        id="custom-networking"
+                        value={customNetworkingPref}
+                        placeholder="Enter custom networking preference"
+                        onChange={(e) => setCustomNetworkingPref(e.target.value)}
+                        className="rounded-r-none"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddCustomNetworkingPref();
+                          }
+                        }}
+                      />
+                      <Button
+                        type="button"
+                        onClick={handleAddCustomNetworkingPref}
+                        className="rounded-l-none bg-connect-600 hover:bg-connect-700"
+                      >
+                        Add
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {/* Display selected preferences with remove option */}
+                  {selectedNetworking.length > 0 && (
+                    <div className="mt-3">
+                      <Label className="text-gray-900 dark:text-white mb-2 block">Selected preferences:</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedNetworking.map((pref) => (
+                          <Badge 
+                            key={pref}
+                            variant="secondary"
+                            className="flex items-center space-x-1 bg-connect-50 text-connect-700 dark:bg-connect-900/50 dark:text-connect-300"
+                          >
+                            <span>{pref}</span>
+                            <button 
+                              className="ml-1 h-4 w-4 rounded-full inline-flex items-center justify-center text-connect-700 hover:text-connect-900 hover:bg-connect-200 dark:text-connect-300 dark:hover:text-connect-100 dark:hover:bg-connect-700"
+                              onClick={() => handleRemoveNetworkingPref(pref)}
+                            >
+                              <span className="sr-only">Remove preference</span>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                              </svg>
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {selectedNetworking.length > 0 ? (
+                    selectedNetworking.map((pref) => (
+                      <Badge key={pref} variant="outline" className="bg-gray-50 dark:bg-gray-800 dark:text-gray-300">
+                        {pref}
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-sm italic dark:text-gray-400">No preferences selected</p>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            <Separator />
+            
+            {/* Custom Tags */}
+            <div>
+              <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">Custom Tags</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Add tags that represent your interests</p>
+              
+              {isEditing ? (
+                <div>
+                  <div className="flex mb-3">
                     <Input
-                      type="text"
-                      id="custom-networking"
-                      value={customNetworkingPref}
-                      placeholder="Enter custom networking preference"
-                      onChange={(e) => setCustomNetworkingPref(e.target.value)}
+                      value={newTag}
+                      onChange={(e) => setNewTag(e.target.value)}
+                      placeholder="Add a tag"
                       className="rounded-r-none"
                       onKeyPress={(e) => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
-                          handleAddCustomNetworkingPref();
+                          handleAddTag();
                         }
                       }}
                     />
                     <Button
                       type="button"
-                      onClick={handleAddCustomNetworkingPref}
+                      onClick={handleAddTag}
                       className="rounded-l-none bg-connect-600 hover:bg-connect-700"
                     >
                       Add
                     </Button>
                   </div>
-                </div>
-                
-                {/* Display selected preferences with remove option */}
-                {selectedNetworking.length > 0 && (
-                  <div className="mt-3">
-                    <Label className="text-gray-900 dark:text-white mb-2 block">Selected preferences:</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedNetworking.map((pref) => (
-                        <Badge 
-                          key={pref}
-                          variant="secondary"
-                          className="flex items-center space-x-1 bg-connect-50 text-connect-700 dark:bg-connect-900/50 dark:text-connect-300"
-                        >
-                          <span>{pref}</span>
-                          <button 
-                            className="ml-1 h-4 w-4 rounded-full inline-flex items-center justify-center text-connect-700 hover:text-connect-900 hover:bg-connect-200 dark:text-connect-300 dark:hover:text-connect-100 dark:hover:bg-connect-700"
-                            onClick={() => handleRemoveNetworkingPref(pref)}
-                          >
-                            <span className="sr-only">Remove preference</span>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <line x1="18" y1="6" x2="6" y2="18"></line>
-                              <line x1="6" y1="6" x2="18" y2="18"></line>
-                            </svg>
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {selectedNetworking.length > 0 ? (
-                  selectedNetworking.map((pref) => (
-                    <Badge key={pref} variant="outline" className="bg-gray-50 dark:bg-gray-800 dark:text-gray-300">
-                      {pref}
-                    </Badge>
-                  ))
-                ) : (
-                  <p className="text-gray-500 text-sm italic dark:text-gray-400">No preferences selected</p>
-                )}
-              </div>
-            )}
-          </section>
-          {/* Custom Tags */}
-          <section className="glass-card rounded-2xl border-0 backdrop-blur-md shadow-lg p-7 animate-fade-in">
-            <h3 className="font-bold mb-2 text-primary-600 dark:text-primary-300 text-2xl tracking-tight">
-              Custom Tags
-            </h3>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Add tags that represent your interests</p>
-            {isEditing ? (
-              <div>
-                <div className="flex mb-3">
-                  <Input
-                    value={newTag}
-                    onChange={(e) => setNewTag(e.target.value)}
-                    placeholder="Add a tag"
-                    className="rounded-r-none"
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
-                        e.preventDefault();
-                        handleAddTag();
-                      }
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    onClick={handleAddTag}
-                    className="rounded-l-none bg-connect-600 hover:bg-connect-700"
-                  >
-                    Add
-                  </Button>
-                </div>
-                
-                <div className="flex flex-wrap gap-2 mt-3">
-                  {profileData.customTags.map((tag) => (
-                    <Badge 
-                      key={tag}
-                      variant="secondary"
-                      className="flex items-center space-x-1 bg-connect-50 text-connect-700 dark:bg-connect-900/50 dark:text-connect-300"
-                    >
-                      <span>{tag}</span>
-                      <button 
-                        className="ml-1 h-4 w-4 rounded-full inline-flex items-center justify-center text-connect-700 hover:text-connect-900 hover:bg-connect-200 dark:text-connect-300 dark:hover:text-connect-100 dark:hover:bg-connect-700"
-                        onClick={() => handleRemoveTag(tag)}
+                  
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {profileData.customTags.map((tag) => (
+                      <Badge 
+                        key={tag}
+                        variant="secondary"
+                        className="flex items-center space-x-1 bg-connect-50 text-connect-700 dark:bg-connect-900/50 dark:text-connect-300"
                       >
-                        <span className="sr-only">Remove tag</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <line x1="18" y1="6" x2="6" y2="18"></line>
-                          <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                      </button>
-                    </Badge>
-                  ))}
+                        <span>{tag}</span>
+                        <button 
+                          className="ml-1 h-4 w-4 rounded-full inline-flex items-center justify-center text-connect-700 hover:text-connect-900 hover:bg-connect-200 dark:text-connect-300 dark:hover:text-connect-100 dark:hover:bg-connect-700"
+                          onClick={() => handleRemoveTag(tag)}
+                        >
+                          <span className="sr-only">Remove tag</span>
+                          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                          </svg>
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {profileData.customTags.length > 0 ? (
+                    profileData.customTags.map((tag) => (
+                      <Badge key={tag} variant="secondary" className="bg-connect-50 text-connect-700 dark:bg-connect-900/50 dark:text-connect-300">
+                        {tag}
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 text-sm italic dark:text-gray-400">No tags added</p>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            <Separator />
+            
+            {/* Social Media Links */}
+            <div>
+              <h3 className="font-semibold mb-4 text-gray-900 dark:text-white">Connect With Me</h3>
+              
+              {isEditing ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="twitter" className="flex items-center text-gray-900 dark:text-white">
+                      <XIcon size={16} className="mr-2" />
+                      X (Twitter)
+                    </Label>
+                    <Input
+                      id="twitter"
+                      value={profileData.links.twitter}
+                      onChange={(e) => setProfileData({
+                        ...profileData,
+                        links: { ...profileData.links, twitter: e.target.value }
+                      })}
+                      placeholder="https://x.com/username"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="linkedin" className="flex items-center text-gray-900 dark:text-white">
+                      <Linkedin size={16} className="mr-2" />
+                      LinkedIn
+                    </Label>
+                    <Input
+                      id="linkedin"
+                      value={profileData.links.linkedin}
+                      onChange={(e) => setProfileData({
+                        ...profileData,
+                        links: { ...profileData.links, linkedin: e.target.value }
+                      })}
+                      placeholder="https://linkedin.com/in/username"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="github" className="flex items-center text-gray-900 dark:text-white">
+                      <Github size={16} className="mr-2" />
+                      GitHub
+                    </Label>
+                    <Input
+                      id="github"
+                      value={profileData.links.github}
+                      onChange={(e) => setProfileData({
+                        ...profileData,
+                        links: { ...profileData.links, github: e.target.value }
+                      })}
+                      placeholder="https://github.com/username"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="website" className="flex items-center text-gray-900 dark:text-white">
+                      <Globe size={16} className="mr-2" />
+                      Website
+                    </Label>
+                    <Input
+                      id="website"
+                      value={profileData.links.website}
+                      onChange={(e) => setProfileData({
+                        ...profileData,
+                        links: { ...profileData.links, website: e.target.value }
+                      })}
+                      placeholder="https://yourwebsite.com"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="facebook" className="flex items-center text-gray-900 dark:text-white">
+                      <Facebook size={16} className="mr-2" />
+                      Facebook
+                    </Label>
+                    <Input
+                      id="facebook"
+                      value={profileData.links.facebook}
+                      onChange={(e) => setProfileData({
+                        ...profileData,
+                        links: { ...profileData.links, facebook: e.target.value }
+                      })}
+                      placeholder="https://facebook.com/username"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="instagram" className="flex items-center text-gray-900 dark:text-white">
+                      <Instagram size={16} className="mr-2" />
+                      Instagram
+                    </Label>
+                    <Input
+                      id="instagram"
+                      value={profileData.links.instagram}
+                      onChange={(e) => setProfileData({
+                        ...profileData,
+                        links: { ...profileData.links, instagram: e.target.value }
+                      })}
+                      placeholder="https://instagram.com/username"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+                  {profileData.links.twitter && (
+                    <a 
+                      href={profileData.links.twitter} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <XIcon size={24} className="text-black dark:text-white mb-2" />
+                      <span className="text-xs text-gray-900 dark:text-white">X</span>
+                    </a>
+                  )}
+                  
+                  {profileData.links.linkedin && (
+                    <a 
+                      href={profileData.links.linkedin} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <Linkedin size={24} className="text-[#0A66C2] mb-2" />
+                      <span className="text-xs text-gray-900 dark:text-white">LinkedIn</span>
+                    </a>
+                  )}
+                  
+                  {profileData.links.github && (
+                    <a 
+                      href={profileData.links.github} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <Github size={24} className="text-[#333] dark:text-white mb-2" />
+                      <span className="text-xs text-gray-900 dark:text-white">GitHub</span>
+                    </a>
+                  )}
+                  
+                  {profileData.links.website && (
+                    <a 
+                      href={profileData.links.website} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <Globe size={24} className="text-gray-700 dark:text-gray-300 mb-2" />
+                      <span className="text-xs text-gray-900 dark:text-white">Website</span>
+                    </a>
+                  )}
+                  
+                  {profileData.links.facebook && (
+                    <a 
+                      href={profileData.links.facebook} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <Facebook size={24} className="text-[#1877F2] mb-2" />
+                      <span className="text-xs text-gray-900 dark:text-white">Facebook</span>
+                    </a>
+                  )}
+                  
+                  {profileData.links.instagram && (
+                    <a 
+                      href={profileData.links.instagram} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <Instagram size={24} className="text-[#E4405F] mb-2" />
+                      <span className="text-xs text-gray-900 dark:text-white">Instagram</span>
+                    </a>
+                  )}
+                  
+                  {!Object.values(profileData.links).some(link => link) && (
+                    <p className="text-gray-500 text-sm italic col-span-full dark:text-gray-400">No social media links added</p>
+                  )}
+                </div>
+              )}
+            </div>
+          </CardContent>
+          
+          {isEditing && (
+            <CardFooter className="bg-gray-50 dark:bg-gray-800 border-t dark:border-gray-700 flex justify-end">
+              <div className="flex space-x-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsEditing(false)}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleSave}
+                  disabled={isSubmitting}
+                  className="bg-connect-600 hover:bg-connect-700"
+                >
+                  {isSubmitting ? "Saving..." : "Save Changes"}
+                </Button>
               </div>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                {profileData.customTags.length > 0 ? (
-                  profileData.customTags.map((tag) => (
-                    <Badge key={tag} variant="secondary" className="bg-connect-50 text-connect-700 dark:bg-connect-900/50 dark:text-connect-300">
-                      {tag}
-                    </Badge>
-                  ))
-                ) : (
-                  <p className="text-gray-500 text-sm italic dark:text-gray-400">No tags added</p>
-                )}
-              </div>
-            )}
-          </section>
-          {/* Social Links */}
-          <section className="glass-card rounded-2xl border-0 backdrop-blur-md shadow-lg p-7 animate-fade-in">
-            <h3 className="font-bold mb-2 text-primary-600 dark:text-primary-300 text-2xl tracking-tight">
-              Connect With Me
-            </h3>
-            {isEditing ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="twitter" className="flex items-center text-gray-900 dark:text-white">
-                    <XIcon size={16} className="mr-2" />
-                    X (Twitter)
-                  </Label>
-                  <Input
-                    id="twitter"
-                    value={profileData.links.twitter}
-                    onChange={(e) => setProfileData({
-                      ...profileData,
-                      links: { ...profileData.links, twitter: e.target.value }
-                    })}
-                    placeholder="https://x.com/username"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="linkedin" className="flex items-center text-gray-900 dark:text-white">
-                    <Linkedin size={16} className="mr-2" />
-                    LinkedIn
-                  </Label>
-                  <Input
-                    id="linkedin"
-                    value={profileData.links.linkedin}
-                    onChange={(e) => setProfileData({
-                      ...profileData,
-                      links: { ...profileData.links, linkedin: e.target.value }
-                    })}
-                    placeholder="https://linkedin.com/in/username"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="github" className="flex items-center text-gray-900 dark:text-white">
-                    <Github size={16} className="mr-2" />
-                    GitHub
-                  </Label>
-                  <Input
-                    id="github"
-                    value={profileData.links.github}
-                    onChange={(e) => setProfileData({
-                      ...profileData,
-                      links: { ...profileData.links, github: e.target.value }
-                    })}
-                    placeholder="https://github.com/username"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="website" className="flex items-center text-gray-900 dark:text-white">
-                    <Globe size={16} className="mr-2" />
-                    Website
-                  </Label>
-                  <Input
-                    id="website"
-                    value={profileData.links.website}
-                    onChange={(e) => setProfileData({
-                      ...profileData,
-                      links: { ...profileData.links, website: e.target.value }
-                    })}
-                    placeholder="https://yourwebsite.com"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="facebook" className="flex items-center text-gray-900 dark:text-white">
-                    <Facebook size={16} className="mr-2" />
-                    Facebook
-                  </Label>
-                  <Input
-                    id="facebook"
-                    value={profileData.links.facebook}
-                    onChange={(e) => setProfileData({
-                      ...profileData,
-                      links: { ...profileData.links, facebook: e.target.value }
-                    })}
-                    placeholder="https://facebook.com/username"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="instagram" className="flex items-center text-gray-900 dark:text-white">
-                    <Instagram size={16} className="mr-2" />
-                    Instagram
-                  </Label>
-                  <Input
-                    id="instagram"
-                    value={profileData.links.instagram}
-                    onChange={(e) => setProfileData({
-                      ...profileData,
-                      links: { ...profileData.links, instagram: e.target.value }
-                    })}
-                    placeholder="https://instagram.com/username"
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
-                {profileData.links.twitter && (
-                  <a 
-                    href={profileData.links.twitter} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <XIcon size={24} className="text-black dark:text-white mb-2" />
-                    <span className="text-xs text-gray-900 dark:text-white">X</span>
-                  </a>
-                )}
-                
-                {profileData.links.linkedin && (
-                  <a 
-                    href={profileData.links.linkedin} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <Linkedin size={24} className="text-[#0A66C2] mb-2" />
-                    <span className="text-xs text-gray-900 dark:text-white">LinkedIn</span>
-                  </a>
-                )}
-                
-                {profileData.links.github && (
-                  <a 
-                    href={profileData.links.github} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <Github size={24} className="text-[#333] dark:text-white mb-2" />
-                    <span className="text-xs text-gray-900 dark:text-white">GitHub</span>
-                  </a>
-                )}
-                
-                {profileData.links.website && (
-                  <a 
-                    href={profileData.links.website} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <Globe size={24} className="text-gray-700 dark:text-gray-300 mb-2" />
-                    <span className="text-xs text-gray-900 dark:text-white">Website</span>
-                  </a>
-                )}
-                
-                {profileData.links.facebook && (
-                  <a 
-                    href={profileData.links.facebook} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <Facebook size={24} className="text-[#1877F2] mb-2" />
-                    <span className="text-xs text-gray-900 dark:text-white">Facebook</span>
-                  </a>
-                )}
-                
-                {profileData.links.instagram && (
-                  <a 
-                    href={profileData.links.instagram} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex flex-col items-center justify-center p-3 rounded-lg bg-gray-50 hover:bg-gray-100 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    <Instagram size={24} className="text-[#E4405F] mb-2" />
-                    <span className="text-xs text-gray-900 dark:text-white">Instagram</span>
-                  </a>
-                )}
-                
-                {!Object.values(profileData.links).some(link => link) && (
-                  <p className="text-gray-500 text-sm italic col-span-full dark:text-gray-400">No social media links added</p>
-                )}
-              </div>
-            )}
-          </section>
-        </div>
+            </CardFooter>
+          )}
+        </Card>
 
-        {/* Account Management Section (unchanged, but with glass effect added) */}
-        <div className="glass-card rounded-2xl shadow-lg bg-white/95 dark:bg-gray-900/60 border-0 mt-12 backdrop-blur-md animate-fade-in">
+        {/* Account Management Section */}
+        <Card className="mt-6">
           <CardHeader>
             <CardTitle className="text-destructive">Account Management</CardTitle>
             <CardDescription>
@@ -806,7 +842,7 @@ const AttendeeProfile = () => {
               </div>
             </div>
           </CardContent>
-        </div>
+        </Card>
       </div>
     </AppLayout>
   );

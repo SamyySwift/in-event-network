@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Send,
@@ -38,7 +38,6 @@ import { DirectMessageThread } from "@/components/messaging/DirectMessageThread"
 import { useNetworking } from "@/hooks/useNetworking";
 import { useAttendeeEventContext } from "@/contexts/AttendeeEventContext";
 import XLogo from "@/components/icons/XLogo";
-import { useAINetworkingSearch } from "@/hooks/useAINetworkingSearch";
 
 const AttendeeNetworking = () => {
   const navigate = useNavigate();
@@ -53,8 +52,6 @@ const AttendeeNetworking = () => {
 
   const { attendees: profiles, isLoading: loading } = useAttendeeNetworking();
   const { sendConnectionRequest, getConnectionStatus, connections } = useNetworking();
-
-  const { aiResults, loading: aiLoading, runAISearch } = useAINetworkingSearch();
 
   // Filter profiles based on search term
   const filteredProfiles = profiles.filter(profile =>
@@ -353,31 +350,6 @@ const AttendeeNetworking = () => {
     );
   }
 
-  useEffect(() => {
-    if (searchTerm.length > 2) {
-      // We pass all current profiles for AI to filter/suggest from
-      runAISearch(searchTerm, profiles);
-    }
-    // Optionally, you can debounce this for less API usage
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchTerm]);
-
-  // Derive AI-filtered attendees based on AI API response
-  let aiFilteredProfiles = filteredProfiles;
-  if (aiResults) {
-    try {
-      // Expecting a JSON list of matching IDs or search hints from AI
-      const result = JSON.parse(aiResults);
-
-      if (Array.isArray(result) && result.length && typeof result[0] === "string") {
-        aiFilteredProfiles = profiles.filter((p) => result.includes(p.id));
-      }
-      // If just a message/hint, you can show it below as a suggestion
-    } catch {
-      // If result can't be parsed as array, treat as a generic suggestion
-    }
-  }
-
   return (
     <AppLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -454,30 +426,8 @@ const AttendeeNetworking = () => {
           </div>
 
           <TabsContent value="people" className="space-y-8">
-            {/* Show AI-powered suggestions if available */}
-            {aiResults && (() => {
-              try {
-                const parsed = JSON.parse(aiResults);
-                if (!Array.isArray(parsed)) {
-                  return (
-                    <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/50 border-l-4 border-blue-300 text-blue-900 dark:text-blue-100 rounded">
-                      {aiResults}
-                    </div>
-                  );
-                }
-              } catch {
-                // Not JSON array, just show as text
-                return (
-                  <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/50 border-l-4 border-blue-300 text-blue-900 dark:text-blue-100 rounded">
-                    {aiResults}
-                  </div>
-                );
-              }
-              return null;
-            })()}
-
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-              {aiFilteredProfiles.map((profile) => renderUserCard(profile, true))}
+              {filteredProfiles.map((profile) => renderUserCard(profile, true))}
             </div>
             {filteredProfiles.length === 0 && searchTerm && (
               <div className="text-center py-16">

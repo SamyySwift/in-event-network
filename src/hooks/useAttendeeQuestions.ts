@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -163,6 +162,8 @@ export const useAttendeeQuestions = () => {
       isAnonymous: boolean;
       selectedSessionId: string;
     }) => {
+      console.log('Submitting question with data:', questionData);
+      
       if (!currentUser?.id) {
         throw new Error('User not authenticated');
       }
@@ -171,26 +172,35 @@ export const useAttendeeQuestions = () => {
         throw new Error('No current event found');
       }
 
-      const { error } = await supabase
+      // Prepare the question data
+      const questionToInsert = {
+        content: questionData.content.trim(),
+        user_id: currentUser.id,
+        is_anonymous: questionData.isAnonymous,
+        session_id: questionData.selectedSessionId === 'general' ? null : questionData.selectedSessionId || null,
+        event_id: currentEventId,
+        upvotes: 0,
+        is_answered: false
+      };
+
+      console.log('Inserting question:', questionToInsert);
+
+      const { data, error } = await supabase
         .from('questions')
-        .insert([{
-          content: questionData.content.trim(),
-          user_id: currentUser.id,
-          is_anonymous: questionData.isAnonymous,
-          session_id: questionData.selectedSessionId === 'general' ? null : questionData.selectedSessionId || null,
-          event_id: currentEventId, // Now properly setting the event_id
-          upvotes: 0,
-          is_answered: false
-        }]);
+        .insert([questionToInsert])
+        .select();
 
       if (error) {
         console.error('Error submitting question:', error);
         throw error;
       }
+
+      console.log('Question submitted successfully:', data);
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attendee-questions'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-questions'] }); // Also invalidate admin questions
+      queryClient.invalidateQueries({ queryKey: ['admin-questions'] });
       toast({
         title: "Success",
         description: "Your question has been submitted!",
@@ -200,7 +210,7 @@ export const useAttendeeQuestions = () => {
       console.error('Error submitting question:', error);
       toast({
         title: "Error",
-        description: "Failed to submit question",
+        description: error.message || "Failed to submit question",
         variant: "destructive",
       });
     },
@@ -229,7 +239,7 @@ export const useAttendeeQuestions = () => {
     },
     onSuccess: (questionId) => {
       queryClient.invalidateQueries({ queryKey: ['attendee-questions'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-questions'] }); // Also invalidate admin questions
+      queryClient.invalidateQueries({ queryKey: ['admin-questions'] });
       toast({
         title: "Success",
         description: "Question upvoted!",

@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import AppLayout from '@/components/layouts/AppLayout';
 import RulesHero from './components/RulesHero';
@@ -6,21 +7,53 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Check, X, BadgeInfo } from 'lucide-react';
 import { useAttendeeRules } from '@/hooks/useAttendeeRules';
+
 const dosAndDonts = {
-  dos: ['Wear your badge visibly at all times', 'Arrive early for sessions to secure seating', 'Use the Q&A function in the app for questions', 'Network respectfully with other attendees', 'Keep your phone on silent during sessions', 'Follow staff directions during emergencies', 'Share feedback through official channels', 'Respect other attendees\' privacy and personal space'],
-  donts: ['Record sessions without explicit permission', 'Enter restricted areas without proper access', 'Leave personal items unattended', 'Engage in disruptive behavior during sessions', 'Share other attendees\' contact info without permission', 'Block pathways or emergency exits', 'Bring outside food or drinks into session rooms', 'Use the event Wi-Fi for large downloads or streaming']
+  dos: [
+    'Wear your badge visibly at all times',
+    'Arrive early for sessions to secure seating',
+    'Use the Q&A function in the app for questions',
+    'Network respectfully with other attendees',
+    'Keep your phone on silent during sessions',
+    'Follow staff directions during emergencies',
+    'Share feedback through official channels',
+    'Respect other attendees\' privacy and personal space'
+  ],
+  donts: [
+    'Record sessions without explicit permission',
+    'Enter restricted areas without proper access',
+    'Leave personal items unattended',
+    'Engage in disruptive behavior during sessions',
+    'Share other attendees\' contact info without permission',
+    'Block pathways or emergency exits',
+    'Bring outside food or drinks into session rooms',
+    'Use the event Wi-Fi for large downloads or streaming'
+  ]
 };
+
 const AttendeeRules = () => {
-  const {
-    rules,
-    isLoading,
-    error
-  } = useAttendeeRules();
+  const { rules, isLoading, error } = useAttendeeRules();
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
-  const categories = useMemo(() => [...new Set(rules.map(r => r.category || 'General'))].sort((a, b) => a.localeCompare(b)), [rules]);
-  const filteredRules = useMemo(() => rules.filter(rule => (category === "" || (rule.category || 'General') === category) && (search === "" || rule.title.toLowerCase().includes(search.toLowerCase()) || rule.content.toLowerCase().includes(search.toLowerCase()))), [rules, search, category]);
-  return <AppLayout>
+
+  const categories = useMemo(
+    () => [...new Set(rules.map(r => r.category || 'General'))].sort((a, b) => a.localeCompare(b)),
+    [rules]
+  );
+
+  const filteredRules = useMemo(() =>
+    rules.filter(rule =>
+      (category === "" || (rule.category || 'General') === category) &&
+      (search === "" ||
+        rule.title.toLowerCase().includes(search.toLowerCase()) ||
+        rule.content.toLowerCase().includes(search.toLowerCase())
+      )
+    ),
+    [rules, search, category]
+  );
+
+  return (
+    <AppLayout>
       {/* HERO Gradient Card Header */}
       <div className="max-w-5xl mx-auto px-0 sm:px-6 pb-8 animate-fade-in">
         <Card className="mb-8 p-0 overflow-visible rounded-3xl border-0 shadow-xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 text-white relative">
@@ -49,23 +82,44 @@ const AttendeeRules = () => {
 
         {/* SEARCH + CATEGORY */}
         <Card className="mb-8 rounded-2xl shadow-lg bg-white/95 backdrop-blur-sm border-0">
-          
+          <CardContent className="pt-6 pb-6 px-5">
+            <RulesHero
+              total={rules.length}
+              value={search}
+              onChange={setSearch}
+              categories={categories}
+              selectedCategory={category}
+              onCategoryChange={setCategory}
+            />
+          </CardContent>
         </Card>
 
         {/* Rules List */}
         <Card className="rounded-2xl shadow-lg bg-white/95 backdrop-blur-sm border-0 mb-8">
           <CardContent className="p-5">
-            {isLoading ? <div className="flex items-center justify-center my-24">
+            {isLoading ? (
+              <div className="flex items-center justify-center my-24">
                 <div className="w-10 h-10 rounded-full border-4 border-primary border-t-transparent animate-spin" />
-              </div> : error ? <div className="text-center my-24 text-red-500 font-medium">Error loading rules. Please try again later.</div> : <>
-                {filteredRules.length === 0 ? <div className="text-center py-14 opacity-70 animate-fade-in">
+              </div>
+            ) : error ? (
+              <div className="text-center my-24 text-red-500 font-medium">Error loading rules. Please try again later.</div>
+            ) : (
+              <>
+                {filteredRules.length === 0 ? (
+                  <div className="text-center py-14 opacity-70 animate-fade-in">
                     <span role="img" aria-label="info" className="text-5xl mb-6 block">📄</span>
                     <div className="font-semibold text-xl mb-2">No rules found</div>
                     <div className="text-muted-foreground text-base">Try a different search or category.</div>
-                  </div> : <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                    {filteredRules.map(rule => <RuleCard key={rule.id} {...rule} />)}
-                  </div>}
-              </>}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    {filteredRules.map((rule) => (
+                      <RuleCard key={rule.id} {...rule} />
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -84,10 +138,12 @@ const AttendeeRules = () => {
                   Do's
                 </h3>
                 <ul className="space-y-2">
-                  {dosAndDonts.dos.map((item, idx) => <li key={idx} className="flex items-center gap-2 text-sm hover:scale-105 transition-all">
+                  {dosAndDonts.dos.map((item, idx) => (
+                    <li key={idx} className="flex items-center gap-2 text-sm hover:scale-105 transition-all">
                       <Check className="h-4 w-4 text-green-600" />
                       <span>{item}</span>
-                    </li>)}
+                    </li>
+                  ))}
                 </ul>
               </div>
               <Separator orientation="vertical" className="hidden md:block h-40 mx-3" />
@@ -97,10 +153,12 @@ const AttendeeRules = () => {
                   Don'ts
                 </h3>
                 <ul className="space-y-2">
-                  {dosAndDonts.donts.map((item, idx) => <li key={idx} className="flex items-center gap-2 text-sm hover:scale-105 transition-all">
+                  {dosAndDonts.donts.map((item, idx) => (
+                    <li key={idx} className="flex items-center gap-2 text-sm hover:scale-105 transition-all">
                       <X className="h-4 w-4 text-red-600" />
                       <span>{item}</span>
-                    </li>)}
+                    </li>
+                  ))}
                 </ul>
               </div>
             </div>
@@ -111,6 +169,8 @@ const AttendeeRules = () => {
           </CardContent>
         </Card>
       </div>
-    </AppLayout>;
+    </AppLayout>
+  );
 };
+
 export default AttendeeRules;

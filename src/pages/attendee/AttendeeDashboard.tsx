@@ -380,7 +380,7 @@ const AttendeeDashboardContent = () => {
                 <p className="text-gray-500">Expand your network with these connections</p>
               </div>
             </div>
-            <Button variant="outline" onClick={() => navigate('/attendee/search')} className="hover:bg-gray-50">
+            <Button variant="outline" onClick={() => navigate('/attendee/networking')} className="hover:bg-gray-50">
               View All
               <ChevronRight className="ml-2 h-4 w-4" />
             </Button>

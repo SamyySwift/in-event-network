@@ -193,7 +193,7 @@ const AdminRules = () => {
                         <SelectTrigger>
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-50 bg-white dark:bg-popover sm:min-w-[180px] min-w-full">
                           <SelectItem value="general">General</SelectItem>
                           <SelectItem value="conduct">Conduct</SelectItem>
                           <SelectItem value="safety">Safety</SelectItem>
@@ -207,7 +207,7 @@ const AdminRules = () => {
                         <SelectTrigger>
                           <SelectValue placeholder="Select priority" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-50 bg-white dark:bg-popover sm:min-w-[160px] min-w-full">
                           <SelectItem value="high">High</SelectItem>
                           <SelectItem value="medium">Medium</SelectItem>
                           <SelectItem value="low">Low</SelectItem>

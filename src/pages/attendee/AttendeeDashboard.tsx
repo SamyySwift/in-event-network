@@ -436,7 +436,7 @@ const AttendeeDashboardContent = () => {
               <Button 
                 size="lg"
                 className="bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white font-semibold px-8 py-4" 
-                onClick={() => navigate('/attendee/rate')}
+                onClick={() => navigate('/attendee/suggestions')}
               >
                 <Star className="mr-2 h-5 w-5" />
                 Rate This Event

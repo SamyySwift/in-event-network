@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Bell, Check, ChevronDown, ChevronUp, Filter, Search, Info, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import AdminLayout from '@/components/layouts/AdminLayout';
@@ -67,6 +66,10 @@ const AdminNotifications = () => {
         return <Badge>Default</Badge>;
     }
   };
+
+  const handleMarkAllAsRead = () => {
+    markAllAsRead();
+  };
   
   const filteredNotifications = filterNotifications();
   const unreadCount = notifications.filter(n => !n.is_read).length;
@@ -114,7 +117,7 @@ const AdminNotifications = () => {
           <div className="flex space-x-2">
             <Button 
               variant="outline" 
-              onClick={markAllAsRead}
+              onClick={handleMarkAllAsRead}
               disabled={!notifications.some(n => !n.is_read) || isMarkingAllRead}
               className="bg-card border-primary/20 hover:bg-accent flex items-center"
             >
@@ -303,6 +306,10 @@ const NotificationItem = ({
 }: NotificationItemProps) => {
   const timeAgo = formatDistanceToNow(new Date(notification.created_at), { addSuffix: true });
 
+  const handleMarkAsRead = () => {
+    onMarkAsRead(notification.id);
+  };
+
   return (
     <Card className={`transition-all duration-200 hover:shadow-md ${
       !notification.is_read 
@@ -338,7 +345,7 @@ const NotificationItem = ({
               <Button 
                 variant="ghost" 
                 size="sm" 
-                onClick={() => onMarkAsRead(notification.id)}
+                onClick={handleMarkAsRead}
                 disabled={isMarking}
                 className="h-8 bg-accent/30 hover:bg-accent"
               >

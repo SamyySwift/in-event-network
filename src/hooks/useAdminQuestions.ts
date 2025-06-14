@@ -52,13 +52,7 @@ export const useAdminQuestions = (eventId?: string) => {
           console.log('Fetching questions for specific event:', eventId);
           const { data, error } = await supabase
             .from('questions')
-            .select(`
-              *,
-              profiles:user_id (
-                name,
-                photo_url
-              )
-            `)
+            .select('*')
             .eq('event_id', eventId)
             .order('created_at', { ascending: false });
 
@@ -91,16 +85,7 @@ export const useAdminQuestions = (eventId?: string) => {
           // Get questions from all admin events
           const { data, error } = await supabase
             .from('questions')
-            .select(`
-              *,
-              profiles:user_id (
-                name,
-                photo_url
-              ),
-              events:event_id (
-                name
-              )
-            `)
+            .select('*')
             .in('event_id', eventIds)
             .order('created_at', { ascending: false });
 
@@ -121,7 +106,33 @@ export const useAdminQuestions = (eventId?: string) => {
           return [];
         }
 
-        // Fetch session information for questions that have a session_id
+        // Manually fetch user profiles for the questions
+        const userIds = questionsData.map((q: any) => q.user_id).filter(Boolean);
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, name, photo_url')
+          .in('id', userIds);
+
+        console.log('Fetched profiles:', profiles);
+
+        // Manually fetch event names if needed
+        let eventsMap: Record<string, string> = {};
+        if (!eventId) {
+          const eventIds = questionsData.map((q: any) => q.event_id).filter(Boolean);
+          const { data: events } = await supabase
+            .from('events')
+            .select('id, name')
+            .in('id', eventIds);
+
+          if (events) {
+            eventsMap = events.reduce((acc, event) => {
+              acc[event.id] = event.name;
+              return acc;
+            }, {} as Record<string, string>);
+          }
+        }
+
+        // Process questions with session information and user profiles
         const questionsWithSessionInfo = await Promise.all(
           questionsData.map(async (question: any) => {
             let sessionInfo = null;
@@ -145,11 +156,17 @@ export const useAdminQuestions = (eventId?: string) => {
               }
             }
 
+            // Find the user profile for this question
+            const userProfile = profiles?.find(p => p.id === question.user_id);
+
             const processedQuestion = {
               ...question,
-              profiles: question.is_anonymous ? null : question.profiles,
+              profiles: question.is_anonymous ? null : (userProfile ? {
+                name: userProfile.name || 'Unknown User',
+                photo_url: userProfile.photo_url
+              } : null),
               session_info: sessionInfo,
-              event_name: question.events?.name || 'Unknown Event'
+              event_name: eventsMap[question.event_id] || 'Unknown Event'
             };
 
             console.log('Processed question:', processedQuestion);

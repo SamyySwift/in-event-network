@@ -1,99 +1,26 @@
 
 import React, { useState } from 'react';
-import { Bell, Check, ChevronDown, ChevronUp, Filter, Search, X, Info, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
+import { Bell, Check, ChevronDown, ChevronUp, Filter, Search, Info, AlertTriangle, CheckCircle, Clock } from 'lucide-react';
 import AdminLayout from '@/components/layouts/AdminLayout';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
-// Mock data for notifications
-const mockNotifications = [
-  {
-    id: 1,
-    title: 'New Registration',
-    description: 'Jane Cooper has registered for the event.',
-    timestamp: '10 minutes ago',
-    type: 'info',
-    read: false,
-  },
-  {
-    id: 2,
-    title: 'Event Update Required',
-    description: 'Main Hall capacity needs to be updated due to safety regulations.',
-    timestamp: '1 hour ago',
-    type: 'warning',
-    read: false,
-  },
-  {
-    id: 3,
-    title: 'Speaker Confirmed',
-    description: 'Alex Richardson has confirmed their participation as a keynote speaker.',
-    timestamp: '3 hours ago',
-    type: 'success',
-    read: true,
-  },
-  {
-    id: 4,
-    title: 'System Maintenance',
-    description: 'System will be down for maintenance on June 15th from 2AM to 4AM.',
-    timestamp: '5 hours ago',
-    type: 'info',
-    read: true,
-  },
-  {
-    id: 5,
-    title: 'Schedule Conflict',
-    description: 'Two events are scheduled for the same time in Room 302.',
-    timestamp: '1 day ago',
-    type: 'warning',
-    read: false,
-  },
-  {
-    id: 6,
-    title: 'New Question',
-    description: 'Michael Scott has posted a new question about the schedule.',
-    timestamp: '1 day ago',
-    type: 'info',
-    read: true,
-  },
-  {
-    id: 7,
-    title: 'Registration Goal Reached',
-    description: 'You have reached 500 registrations for the main event!',
-    timestamp: '2 days ago',
-    type: 'success',
-    read: true,
-  },
-  {
-    id: 8,
-    title: 'New Feature Available',
-    description: 'Check out the new audience polling feature for live sessions.',
-    timestamp: '2 days ago',
-    type: 'info',
-    read: true,
-  },
-  {
-    id: 9,
-    title: 'Low Attendance Warning',
-    description: 'Workshop B has fewer than 10 registered attendees.',
-    timestamp: '3 days ago',
-    type: 'warning',
-    read: true,
-  },
-  {
-    id: 10,
-    title: 'Payment Processed',
-    description: 'Payment for venue rental has been processed successfully.',
-    timestamp: '4 days ago',
-    type: 'success',
-    read: true,
-  }
-];
+import { useAdminNotifications } from '@/hooks/useAdminNotifications';
+import { formatDistanceToNow } from 'date-fns';
 
 const AdminNotifications = () => {
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const { 
+    notifications, 
+    isLoading, 
+    error, 
+    markAsRead, 
+    markAllAsRead, 
+    isMarkingRead, 
+    isMarkingAllRead 
+  } = useAdminNotifications();
+  
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedFilter, setExpandedFilter] = useState(false);
   const [typeFilters, setTypeFilters] = useState({
@@ -101,33 +28,17 @@ const AdminNotifications = () => {
     warning: true,
     success: true
   });
-  const [readFilter, setReadFilter] = useState('all'); // all, read, unread
-  
-  const markAsRead = (id: number) => {
-    setNotifications(notifications.map(notification => 
-      notification.id === id ? { ...notification, read: true } : notification
-    ));
-  };
-  
-  const markAllAsRead = () => {
-    setNotifications(notifications.map(notification => ({ ...notification, read: true })));
-  };
   
   const filterNotifications = () => {
     return notifications.filter(notification => {
       // Search filter
       const matchesSearch = notification.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                           notification.description.toLowerCase().includes(searchQuery.toLowerCase());
+                           notification.message.toLowerCase().includes(searchQuery.toLowerCase());
       
       // Type filter
-      const matchesType = typeFilters[notification.type as keyof typeof typeFilters];
+      const matchesType = typeFilters[notification.type as keyof typeof typeFilters] !== false;
       
-      // Read status filter
-      const matchesReadStatus = readFilter === 'all' || 
-                               (readFilter === 'read' && notification.read) ||
-                               (readFilter === 'unread' && !notification.read);
-      
-      return matchesSearch && matchesType && matchesReadStatus;
+      return matchesSearch && matchesType;
     });
   };
   
@@ -158,7 +69,32 @@ const AdminNotifications = () => {
   };
   
   const filteredNotifications = filterNotifications();
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter(n => !n.is_read).length;
+
+  if (isLoading) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-muted-foreground">Loading notifications...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="text-center py-10">
+          <AlertTriangle className="h-12 w-12 mx-auto text-destructive opacity-50" />
+          <h3 className="mt-4 text-lg font-medium">Error loading notifications</h3>
+          <p className="text-muted-foreground">Please try refreshing the page</p>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   return (
     <AdminLayout>
@@ -172,18 +108,18 @@ const AdminNotifications = () => {
                 <Badge className="ml-3 bg-primary hover:bg-primary-600">{unreadCount} new</Badge>
               )}
             </h1>
-            <p className="text-muted-foreground mt-1">Manage and respond to system notifications.</p>
+            <p className="text-muted-foreground mt-1">Real-time updates about your events and attendees.</p>
           </div>
           
           <div className="flex space-x-2">
             <Button 
               variant="outline" 
               onClick={markAllAsRead}
-              disabled={!notifications.some(n => !n.read)}
+              disabled={!notifications.some(n => !n.is_read) || isMarkingAllRead}
               className="bg-card border-primary/20 hover:bg-accent flex items-center"
             >
               <Check size={16} className="mr-1" />
-              Mark all read
+              {isMarkingAllRead ? 'Marking...' : 'Mark all read'}
             </Button>
           </div>
         </div>
@@ -192,8 +128,8 @@ const AdminNotifications = () => {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
             <TabsList className="bg-muted/50">
               <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="unread">Unread</TabsTrigger>
-              <TabsTrigger value="read">Read</TabsTrigger>
+              <TabsTrigger value="unread">Unread ({notifications.filter(n => !n.is_read).length})</TabsTrigger>
+              <TabsTrigger value="read">Read ({notifications.filter(n => n.is_read).length})</TabsTrigger>
             </TabsList>
             
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
@@ -273,13 +209,16 @@ const AdminNotifications = () => {
                     onMarkAsRead={markAsRead}
                     getNotificationIcon={getNotificationIcon}
                     getNotificationBadge={getNotificationBadge}
+                    isMarking={isMarkingRead}
                   />
                 ))
               ) : (
                 <div className="text-center py-10">
                   <Bell className="h-12 w-12 mx-auto text-muted-foreground opacity-20" />
                   <h3 className="mt-4 text-lg font-medium">No notifications found</h3>
-                  <p className="text-muted-foreground">Try adjusting your search or filter criteria</p>
+                  <p className="text-muted-foreground">
+                    {searchQuery ? 'Try adjusting your search criteria' : 'New notifications will appear here as events happen'}
+                  </p>
                 </div>
               )}
             </div>
@@ -287,9 +226,9 @@ const AdminNotifications = () => {
           
           <TabsContent value="unread">
             <div className="space-y-4">
-              {filteredNotifications.filter(n => !n.read).length > 0 ? (
+              {filteredNotifications.filter(n => !n.is_read).length > 0 ? (
                 filteredNotifications
-                  .filter(notification => !notification.read)
+                  .filter(notification => !notification.is_read)
                   .map((notification) => (
                     <NotificationItem 
                       key={notification.id} 
@@ -297,6 +236,7 @@ const AdminNotifications = () => {
                       onMarkAsRead={markAsRead}
                       getNotificationIcon={getNotificationIcon}
                       getNotificationBadge={getNotificationBadge}
+                      isMarking={isMarkingRead}
                     />
                   ))
               ) : (
@@ -311,9 +251,9 @@ const AdminNotifications = () => {
           
           <TabsContent value="read">
             <div className="space-y-4">
-              {filteredNotifications.filter(n => n.read).length > 0 ? (
+              {filteredNotifications.filter(n => n.is_read).length > 0 ? (
                 filteredNotifications
-                  .filter(notification => notification.read)
+                  .filter(notification => notification.is_read)
                   .map((notification) => (
                     <NotificationItem 
                       key={notification.id} 
@@ -321,6 +261,7 @@ const AdminNotifications = () => {
                       onMarkAsRead={markAsRead}
                       getNotificationIcon={getNotificationIcon}
                       getNotificationBadge={getNotificationBadge}
+                      isMarking={isMarkingRead}
                     />
                   ))
               ) : (
@@ -340,27 +281,31 @@ const AdminNotifications = () => {
 
 interface NotificationItemProps {
   notification: {
-    id: number;
+    id: string;
     title: string;
-    description: string;
-    timestamp: string;
+    message: string;
     type: string;
-    read: boolean;
+    is_read: boolean;
+    created_at: string;
   };
-  onMarkAsRead: (id: number) => void;
+  onMarkAsRead: (id: string) => void;
   getNotificationIcon: (type: string) => JSX.Element;
   getNotificationBadge: (type: string) => JSX.Element;
+  isMarking: boolean;
 }
 
 const NotificationItem = ({ 
   notification, 
   onMarkAsRead,
   getNotificationIcon,
-  getNotificationBadge
+  getNotificationBadge,
+  isMarking
 }: NotificationItemProps) => {
+  const timeAgo = formatDistanceToNow(new Date(notification.created_at), { addSuffix: true });
+
   return (
     <Card className={`transition-all duration-200 hover:shadow-md ${
-      !notification.read 
+      !notification.is_read 
         ? 'gradient-card border-l-4 border-l-primary shadow-md' 
         : 'bg-card border hover:bg-accent/10'
     }`}>
@@ -381,26 +326,26 @@ const NotificationItem = ({
                 {getNotificationBadge(notification.type)}
                 <div className="ml-2 flex items-center text-muted-foreground text-xs">
                   <Clock size={14} className="mr-1" />
-                  {notification.timestamp}
+                  {timeAgo}
                 </div>
               </div>
             </div>
-            <p className="text-muted-foreground">{notification.description}</p>
+            <p className="text-muted-foreground">{notification.message}</p>
           </div>
           
           <div className="flex items-center justify-end sm:flex-col gap-2">
-            {!notification.read && (
+            {!notification.is_read && (
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => onMarkAsRead(notification.id)}
+                disabled={isMarking}
                 className="h-8 bg-accent/30 hover:bg-accent"
               >
                 <Check size={14} className="mr-1" />
-                Mark read
+                {isMarking ? 'Marking...' : 'Mark read'}
               </Button>
             )}
-            <Button variant="outline" size="sm" className="h-8 hover:bg-accent">View details</Button>
           </div>
         </div>
       </CardContent>

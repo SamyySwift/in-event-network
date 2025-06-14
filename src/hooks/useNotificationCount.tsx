@@ -13,7 +13,7 @@ export const useNotificationCount = () => {
       
       // Set up real-time subscription for notifications
       const channel = supabase
-        .channel('notifications-changes')
+        .channel('notifications-count-changes')
         .on(
           'postgres_changes',
           {
@@ -36,14 +36,14 @@ export const useNotificationCount = () => {
 
   const fetchUnreadCount = async () => {
     try {
-      const { data, error } = await supabase
+      const { count, error } = await supabase
         .from('notifications')
-        .select('id')
+        .select('*', { count: 'exact', head: true })
         .eq('user_id', currentUser?.id)
         .eq('is_read', false);
 
       if (error) throw error;
-      setUnreadCount(data?.length || 0);
+      setUnreadCount(count || 0);
     } catch (error) {
       console.error('Error fetching unread count:', error);
     }

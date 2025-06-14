@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -9,6 +10,7 @@ import {
   Github,
   Instagram,
   Globe,
+  ExternalLink,
 } from "lucide-react";
 import AppLayout from "@/components/layouts/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -110,6 +112,26 @@ const AttendeeNetworking = () => {
     }
   };
 
+  const getSocialLinks = (profile: any) => {
+    const links = [];
+    if (profile.twitter_link) {
+      links.push({ platform: "twitter", url: profile.twitter_link });
+    }
+    if (profile.linkedin_link) {
+      links.push({ platform: "linkedin", url: profile.linkedin_link });
+    }
+    if (profile.github_link) {
+      links.push({ platform: "github", url: profile.github_link });
+    }
+    if (profile.instagram_link) {
+      links.push({ platform: "instagram", url: profile.instagram_link });
+    }
+    if (profile.website_link) {
+      links.push({ platform: "website", url: profile.website_link });
+    }
+    return links;
+  };
+
   if (loading) {
     return (
       <AppLayout>
@@ -169,6 +191,7 @@ const AttendeeNetworking = () => {
                 const connectionStatus = getConnectionStatus(profile.id);
                 const isConnected = connectionStatus?.status === "accepted";
                 const isPending = connectionStatus?.status === "pending";
+                const socialLinks = getSocialLinks(profile);
 
                 return (
                   <Card
@@ -231,20 +254,34 @@ const AttendeeNetworking = () => {
                         <span className="text-gray-700 dark:text-gray-300">
                           {profile.role || "No role specified"}
                         </span>
-                        {profile.company && (
-                          <span className="text-gray-500 dark:text-gray-400">
-                            {profile.company}
-                          </span>
-                        )}
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      {profile.bio && (
-                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                          {profile.bio}
-                        </p>
+                      {/* Company Section */}
+                      {profile.company && (
+                        <div className="mb-4">
+                          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Company
+                          </h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {profile.company}
+                          </p>
+                        </div>
                       )}
 
+                      {/* About Section */}
+                      {profile.bio && (
+                        <div className="mb-4">
+                          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            About
+                          </h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-300">
+                            {profile.bio}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Professional Niche Section */}
                       {profile.niche && (
                         <div className="mb-4">
                           <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -256,6 +293,67 @@ const AttendeeNetworking = () => {
                           >
                             {profile.niche}
                           </Badge>
+                        </div>
+                      )}
+
+                      {/* Interests Section */}
+                      {profile.tags && profile.tags.length > 0 && (
+                        <div className="mb-4">
+                          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Interests
+                          </h4>
+                          <div className="flex flex-wrap gap-1">
+                            {profile.tags.map((tag: string, index: number) => (
+                              <Badge
+                                key={index}
+                                variant="outline"
+                                className="bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-200 dark:border-green-700 text-xs"
+                              >
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Networking Preferences Section */}
+                      {profile.networking_preferences && profile.networking_preferences.length > 0 && (
+                        <div className="mb-4">
+                          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Networking Preferences
+                          </h4>
+                          <div className="flex flex-wrap gap-1">
+                            {profile.networking_preferences.map((pref: string, index: number) => (
+                              <Badge
+                                key={index}
+                                variant="outline"
+                                className="bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200 dark:border-purple-700 text-xs"
+                              >
+                                {pref}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Social Links Section */}
+                      {socialLinks.length > 0 && (
+                        <div>
+                          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Connect
+                          </h4>
+                          <div className="flex gap-2">
+                            {socialLinks.map((link, index) => (
+                              <button
+                                key={index}
+                                onClick={() => window.open(link.url, '_blank')}
+                                className="p-2 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-gray-100"
+                                title={`Follow on ${link.platform}`}
+                              >
+                                {getSocialIcon(link.platform)}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </CardContent>

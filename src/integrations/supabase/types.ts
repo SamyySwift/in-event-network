@@ -1085,6 +1085,10 @@ export type Database = {
         Args: { event_uuid: string }
         Returns: boolean
       }
+      is_same_event_participant: {
+        Args: { target_event_id: string }
+        Returns: boolean
+      }
       join_event_by_access_key: {
         Args: { access_code: string }
         Returns: Json

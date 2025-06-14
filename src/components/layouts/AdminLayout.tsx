@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -110,7 +111,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     );
   };
 
-  // Admin navigation links (removed Settings)
+  // Admin navigation links
   const adminNavigation = [
     {
       name: "Dashboard",

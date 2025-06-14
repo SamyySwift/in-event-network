@@ -1093,6 +1093,10 @@ export type Database = {
         Args: { access_code: string }
         Returns: Json
       }
+      user_can_see_profile: {
+        Args: { profile_user_id: string }
+        Returns: boolean
+      }
       user_has_joined_event: {
         Args: { user_uuid: string; event_uuid: string }
         Returns: boolean

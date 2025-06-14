@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Users, MapPin, MessageSquare, Clock, Star, BookOpen, Wifi, WifiOff, ChevronRight, Zap, TrendingUp } from 'lucide-react';
@@ -12,7 +11,6 @@ import { useDashboard } from '@/hooks/useDashboard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AttendeeEventProvider, useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
 import AttendeeRouteGuard from '@/components/attendee/AttendeeRouteGuard';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 const AttendeeDashboardContent = () => {
   const navigate = useNavigate();
@@ -107,7 +105,7 @@ const AttendeeDashboardContent = () => {
   const { currentEvent, upcomingEvents, nextSession, recentAnnouncements, suggestedConnections } = dashboardData;
 
   return (
-    <ScrollArea className="h-screen">
+    <div className="min-h-screen overflow-y-auto scroll-smooth">
       <div className="animate-fade-in max-w-7xl mx-auto p-6 pb-20">
         {/* Hero Header */}
         <div className="mb-8 relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-6 sm:p-8 text-white z-10">
@@ -447,7 +445,7 @@ const AttendeeDashboardContent = () => {
           </Card>
         )}
       </div>
-    </ScrollArea>
+    </div>
   );
 };
 

@@ -18,9 +18,11 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
 }) => {
   const [qrUrl, setQrUrl] = useState(eventUrl);
   const [qrSize, setQrSize] = useState(256);
+  const [isGenerating, setIsGenerating] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  const generateQRCode = () => {
+  const generateQRCode = async () => {
+    setIsGenerating(true);
     // Using QR Server API for QR code generation
     const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(qrUrl)}`;
     
@@ -32,30 +34,60 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         canvasRef.current!.width = qrSize;
         canvasRef.current!.height = qrSize;
         ctx?.drawImage(img, 0, 0, qrSize, qrSize);
+        setIsGenerating(false);
         toast.success("QR Code generated successfully!");
       };
       
       img.onerror = () => {
+        setIsGenerating(false);
         toast.error("Failed to generate QR code");
       };
       
+      // Enable CORS for cross-origin image loading
+      img.crossOrigin = 'anonymous';
       img.src = qrApiUrl;
     }
   };
 
   const downloadQRCode = () => {
     if (canvasRef.current) {
-      const link = document.createElement('a');
-      link.download = `${eventName.replace(/\s+/g, '_')}_QR_Code.png`;
-      link.href = canvasRef.current.toDataURL();
-      link.click();
-      toast.success("QR Code downloaded!");
+      try {
+        // Create download link
+        const link = document.createElement('a');
+        const fileName = `${eventName.replace(/\s+/g, '_')}_QR_Code.png`;
+        
+        // Convert canvas to blob and create download URL
+        canvasRef.current.toBlob((blob) => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            toast.success("QR Code downloaded successfully!");
+          } else {
+            toast.error("Failed to create download file");
+          }
+        }, 'image/png', 1.0);
+      } catch (error) {
+        console.error('Download error:', error);
+        toast.error("Failed to download QR code");
+      }
+    } else {
+      toast.error("No QR code available to download");
     }
   };
 
-  const copyQRCodeUrl = () => {
-    navigator.clipboard.writeText(qrUrl);
-    toast.success("URL copied to clipboard!");
+  const copyQRCodeUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(qrUrl);
+      toast.success("URL copied to clipboard!");
+    } catch (error) {
+      console.error('Copy error:', error);
+      toast.error("Failed to copy URL");
+    }
   };
 
   React.useEffect(() => {
@@ -102,18 +134,33 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
         </div>
         
         <div className="flex flex-col items-center space-y-4">
-          <canvas 
-            ref={canvasRef}
-            className="border rounded-lg shadow-sm"
-            style={{ maxWidth: '100%', height: 'auto' }}
-          />
+          <div className="relative">
+            <canvas 
+              ref={canvasRef}
+              className={`border rounded-lg shadow-sm ${isGenerating ? 'opacity-50' : ''}`}
+              style={{ maxWidth: '100%', height: 'auto' }}
+            />
+            {isGenerating && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              </div>
+            )}
+          </div>
           
           <div className="flex gap-2">
-            <Button onClick={generateQRCode} variant="outline">
+            <Button 
+              onClick={generateQRCode} 
+              variant="outline"
+              disabled={isGenerating}
+            >
               <QrCode className="h-4 w-4 mr-2" />
-              Regenerate
+              {isGenerating ? 'Generating...' : 'Regenerate'}
             </Button>
-            <Button onClick={downloadQRCode}>
+            <Button 
+              onClick={downloadQRCode}
+              disabled={isGenerating}
+              className="bg-primary hover:bg-primary/90"
+            >
               <Download className="h-4 w-4 mr-2" />
               Download
             </Button>

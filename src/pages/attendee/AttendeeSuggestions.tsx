@@ -333,7 +333,7 @@ const AttendeeSuggestions = () => {
         </div>
 
         {/* Stats Overview */}
-        <div className="relative mb-8 z-0 -mt-12">
+        <div className="relative mb-8 z-0 mt-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <Card className="p-3 sm:p-4 shadow-md hover:shadow-xl transition-all duration-200 rounded-2xl bg-white/90 backdrop-blur-sm border-0">
               <CardContent className="p-0">

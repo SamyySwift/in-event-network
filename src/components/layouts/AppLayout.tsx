@@ -149,7 +149,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col md:flex-row">
       {/* Mobile Header */}
-      <header className="md:hidden bg-white dark:bg-gray-800 border-b dark:border-gray-700 py-4 px-4 flex items-center justify-between sticky top-0 z-10 shadow-sm">
+      <header className="md:hidden bg-white dark:bg-gray-800 border-b dark:border-gray-700 py-4 px-4 flex items-center justify-between sticky top-0 z-50 shadow-sm">
         <div className="flex items-center">
           <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
             <SheetTrigger asChild>
@@ -369,7 +369,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
       {/* Bottom Navigation Bar for Mobile */}
       {currentUser && (
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t dark:border-gray-700 flex items-center justify-around p-2 z-10 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t dark:border-gray-700 flex items-center justify-around p-2 z-40 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
           {navigation.slice(0, 4).map((item) => (
             <button
               key={item.name}

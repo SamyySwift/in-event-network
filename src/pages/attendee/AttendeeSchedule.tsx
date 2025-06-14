@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, User, ChevronRight, Search, Filter } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, ChevronRight, Search, Filter, Star, Users } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
 import AttendeeRouteGuard from '@/components/attendee/AttendeeRouteGuard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,7 +24,9 @@ interface ScheduleItem {
   type: string;
   priority: string;
   event_id: string;
+  image_url?: string;
 }
+
 interface CombinedScheduleItem {
   id: string;
   title: string;
@@ -38,6 +40,7 @@ interface CombinedScheduleItem {
   speaker_company?: string;
   speaker_bio?: string;
   priority?: string;
+  image_url?: string;
 }
 
 const AttendeeSchedule = () => {
@@ -57,8 +60,6 @@ const AttendeeSchedule = () => {
     context,
     isLoading: contextLoading
   } = useAttendeeContext();
-  console.log('Attendee context:', context);
-  console.log('Current event ID:', context?.currentEventId);
 
   // Fetch schedule items from database
   useEffect(() => {
@@ -153,7 +154,10 @@ const AttendeeSchedule = () => {
 
   // Filter items based on search and date
   const filteredItems = combinedItems.filter(item => {
-    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) || item.description?.toLowerCase().includes(searchTerm.toLowerCase()) || item.speaker_name?.toLowerCase().includes(searchTerm.toLowerCase()) || item.speaker_company?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         item.description?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         item.speaker_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         item.speaker_company?.toLowerCase().includes(searchTerm.toLowerCase());
     if (!matchesSearch) return false;
     if (selectedDate === 'all') return true;
     try {
@@ -196,9 +200,15 @@ const AttendeeSchedule = () => {
   const getTypeBadge = (type: string) => {
     switch (type) {
       case 'speaker':
-        return <Badge variant="default">Speaker Session</Badge>;
+        return <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
+          <User className="w-3 h-3 mr-1" />
+          Speaker Session
+        </Badge>;
       case 'schedule':
-        return <Badge variant="secondary">Event Item</Badge>;
+        return <Badge className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white border-0">
+          <Calendar className="w-3 h-3 mr-1" />
+          Event Item
+        </Badge>;
       default:
         return <Badge variant="outline">{type}</Badge>;
     }
@@ -207,11 +217,18 @@ const AttendeeSchedule = () => {
     if (!priority) return null;
     switch (priority) {
       case 'high':
-        return <Badge className="bg-red-100 text-red-800">High Priority</Badge>;
+        return <Badge className="bg-gradient-to-r from-red-500 to-orange-500 text-white border-0">
+          <Star className="w-3 h-3 mr-1" />
+          High Priority
+        </Badge>;
       case 'medium':
-        return <Badge className="bg-yellow-100 text-yellow-800">Medium Priority</Badge>;
+        return <Badge className="bg-gradient-to-r from-yellow-500 to-amber-500 text-white border-0">
+          Medium Priority
+        </Badge>;
       case 'low':
-        return <Badge className="bg-green-100 text-green-800">Low Priority</Badge>;
+        return <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0">
+          Low Priority
+        </Badge>;
       default:
         return <Badge variant="outline">{priority}</Badge>;
     }
@@ -228,7 +245,8 @@ const AttendeeSchedule = () => {
   };
 
   if (speakersLoading || contextLoading) {
-    return <AppLayout>
+    return (
+      <AppLayout>
         <AttendeeRouteGuard>
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
@@ -237,10 +255,12 @@ const AttendeeSchedule = () => {
             </div>
           </div>
         </AttendeeRouteGuard>
-      </AppLayout>;
+      </AppLayout>
+    );
   }
   if (!context?.currentEventId) {
-    return <AppLayout>
+    return (
+      <AppLayout>
         <AttendeeRouteGuard>
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
@@ -250,146 +270,206 @@ const AttendeeSchedule = () => {
             </div>
           </div>
         </AttendeeRouteGuard>
-      </AppLayout>;
+      </AppLayout>
+    );
   }
-  return <AppLayout>
+  return (
+    <AppLayout>
       <AttendeeRouteGuard>
-        <div className="animate-fade-in max-w-4xl mx-auto">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Event Schedule</h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              View sessions, speakers, and timing for the event
-            </p>
-            {context?.currentEventId && <p className="text-sm text-muted-foreground mt-1">
-                Event ID: {context.currentEventId}
-              </p>}
+        <div className="animate-fade-in max-w-6xl mx-auto p-6">
+          {/* Hero Section */}
+          <div className="mb-8 relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-8 text-white">
+            <div className="absolute inset-0 bg-black/20"></div>
+            <div className="relative z-10">
+              <h1 className="text-4xl font-bold mb-2">Event Schedule</h1>
+              <p className="text-lg opacity-90 mb-4">
+                Discover amazing sessions, speakers, and activities
+              </p>
+              <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  <span>{filteredItems.length} Events</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  <span>{Object.keys(groupedByDate).length} Days</span>
+                </div>
+              </div>
+            </div>
+            <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-white/10 rounded-full"></div>
+            <div className="absolute -top-8 -left-8 w-24 h-24 bg-white/5 rounded-full"></div>
           </div>
 
-          {/* Search and Filter */}
-          <Card className="mb-6">
-            <CardContent className="pt-6">
-              <div className="flex flex-col md:flex-row gap-4">
+          {/* Search and Filter Section */}
+          <Card className="mb-8 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+            <CardContent className="p-6">
+              <div className="flex flex-col lg:flex-row gap-4">
                 <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input placeholder="Search sessions, speakers, or events..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search sessions, speakers, or events..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-12 h-12 border-0 bg-gray-50 focus:bg-white transition-colors"
+                  />
                 </div>
                 <Tabs value={selectedDate} onValueChange={setSelectedDate} className="w-auto">
-                  <TabsList>
-                    <TabsTrigger value="all">All Days</TabsTrigger>
-                    <TabsTrigger value="today">Today</TabsTrigger>
-                    <TabsTrigger value="tomorrow">Tomorrow</TabsTrigger>
+                  <TabsList className="bg-gray-100 p-1">
+                    <TabsTrigger value="all" className="px-6">All Days</TabsTrigger>
+                    <TabsTrigger value="today" className="px-6">Today</TabsTrigger>
+                    <TabsTrigger value="tomorrow" className="px-6">Tomorrow</TabsTrigger>
                   </TabsList>
                 </Tabs>
               </div>
             </CardContent>
           </Card>
 
-          {/* Debug Information */}
-          <Card className="mb-6 bg-gray-50">
-            
-          </Card>
-
           {/* Schedule Content */}
-          {filteredItems.length === 0 ? <Card>
-              <CardContent className="py-10 text-center text-muted-foreground">
-                <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium mb-2">No schedule items found</h3>
-                <p>
-                  {combinedItems.length === 0 ? "No schedule items have been created yet" : "Try adjusting your search or filter criteria"}
+          {filteredItems.length === 0 ? (
+            <Card className="border-0 shadow-lg">
+              <CardContent className="py-16 text-center">
+                <Calendar className="h-16 w-16 mx-auto mb-6 text-gray-300" />
+                <h3 className="text-2xl font-semibold mb-3 text-gray-900">No schedule items found</h3>
+                <p className="text-gray-500 max-w-md mx-auto">
+                  {combinedItems.length === 0 
+                    ? "No schedule items have been created yet" 
+                    : "Try adjusting your search or filter criteria"
+                  }
                 </p>
               </CardContent>
-            </Card> : <div className="space-y-8">
-              {Object.keys(groupedByDate).sort().map(date => <div key={date}>
-                    <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
-                      {formatDateHeader(date)}
-                    </h2>
-                    <div className="space-y-4">
-                      {groupedByDate[date].map(item => <Card key={item.id} className="hover:shadow-md transition-shadow">
-                          <CardContent className="pt-6">
-                            <div className="flex items-start gap-4">
-                              {item.type === 'speaker' && <Avatar className="flex-shrink-0">
-                                  {item.speaker_photo ? <AvatarImage src={item.speaker_photo} alt={item.speaker_name} /> : <AvatarFallback>
-                                      {item.speaker_name?.split(' ').map(n => n[0]).join('')}
-                                    </AvatarFallback>}
-                                </Avatar>}
-                              
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-start justify-between mb-2">
-                                  <div>
-                                    <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
-                                      {item.title}
-                                    </h3>
-                                    {item.type === 'speaker' && <p className="text-gray-600 dark:text-gray-400">
-                                        by {item.speaker_name}
-                                        {item.speaker_company && ` • ${item.speaker_company}`}
-                                      </p>}
-                                  </div>
-                                  <ChevronRight className="h-5 w-5 text-gray-400 flex-shrink-0" />
+            </Card>
+          ) : (
+            <div className="space-y-8">
+              {Object.keys(groupedByDate).sort().map((date) => (
+                <div key={date} className="space-y-4">
+                  <div className="flex items-center gap-4 mb-6">
+                    <div className="flex-shrink-0">
+                      <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                        <Calendar className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-900">
+                        {formatDateHeader(date)}
+                      </h2>
+                      <p className="text-gray-500">{groupedByDate[date].length} events scheduled</p>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:gap-6">
+                    {groupedByDate[date].map((item) => (
+                      <Card 
+                        key={item.id} 
+                        className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md hover:-translate-y-1 cursor-pointer overflow-hidden"
+                        onClick={() => handleViewDetails(item)}
+                      >
+                        <CardContent className="p-0">
+                          <div className="flex">
+                            {/* Time Column */}
+                            <div className="w-24 bg-gradient-to-b from-gray-50 to-gray-100 p-4 flex flex-col items-center justify-center border-r">
+                              <div className="text-lg font-bold text-gray-900">
+                                {(() => {
+                                  try {
+                                    return format(parseISO(item.start_time), 'HH:mm');
+                                  } catch (error) {
+                                    return '00:00';
+                                  }
+                                })()}
+                              </div>
+                              {item.end_time && (
+                                <div className="text-sm text-gray-500">
+                                  {(() => {
+                                    try {
+                                      return format(parseISO(item.end_time), 'HH:mm');
+                                    } catch (error) {
+                                      return '';
+                                    }
+                                  })()}
                                 </div>
-                                
-                                <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400 mb-3">
-                                  <div className="flex items-center gap-1">
-                                    <Clock className="h-4 w-4" />
-                                    {(() => {
-                            try {
-                              const startTime = format(parseISO(item.start_time), 'h:mm a');
-                              const endTime = item.end_time ? ` - ${format(parseISO(item.end_time), 'h:mm a')}` : '';
-                              return startTime + endTime;
-                            } catch (error) {
-                              console.error('Error formatting time:', error);
-                              return item.start_time;
-                            }
-                          })()}
+                              )}
+                            </div>
+
+                            {/* Content Column */}
+                            <div className="flex-1 p-4">
+                              <div className="flex items-start gap-4">
+                                {/* Image or Avatar */}
+                                <div className="flex-shrink-0">
+                                  {item.type === 'speaker' ? (
+                                    <Avatar className="w-12 h-12 border-2 border-white shadow-md">
+                                      <AvatarImage src={item.speaker_photo} alt={item.speaker_name} />
+                                      <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
+                                        {item.speaker_name?.split(' ').map(n => n[0]).join('') || 'S'}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                  ) : item.image_url ? (
+                                    <img 
+                                      src={item.image_url} 
+                                      alt={item.title}
+                                      className="w-12 h-12 rounded-xl object-cover border-2 border-white shadow-md"
+                                    />
+                                  ) : (
+                                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                                      <Calendar className="w-6 h-6 text-white" />
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Content */}
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between mb-2">
+                                    <div>
+                                      <h3 className="font-semibold text-lg text-gray-900 group-hover:text-indigo-600 transition-colors">
+                                        {item.title}
+                                      </h3>
+                                      {item.type === 'speaker' && (
+                                        <p className="text-gray-600 text-sm">
+                                          by <span className="font-medium">{item.speaker_name}</span>
+                                          {item.speaker_company && ` • ${item.speaker_company}`}
+                                        </p>
+                                      )}
+                                    </div>
+                                    <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-indigo-500 transition-colors" />
                                   </div>
-                                  <div className="flex items-center gap-1">
-                                    <Calendar className="h-4 w-4" />
-                                    {(() => {
-                            try {
-                              return format(parseISO(item.start_time), 'MMM d');
-                            } catch (error) {
-                              console.error('Error formatting date:', error);
-                              return item.start_time;
-                            }
-                          })()}
-                                  </div>
-                                  {item.location && <div className="flex items-center gap-1">
+
+                                  {item.location && (
+                                    <div className="flex items-center gap-1 text-sm text-gray-500 mb-2">
                                       <MapPin className="h-4 w-4" />
                                       {item.location}
-                                    </div>}
-                                </div>
-                                
-                                {item.description && <p className="text-gray-700 dark:text-gray-300 text-sm mb-4">
-                                    {item.description}
-                                  </p>}
-                                
-                                <div className="flex items-center justify-between">
-                                  <div className="flex gap-2">
+                                    </div>
+                                  )}
+
+                                  {item.description && (
+                                    <p className="text-gray-700 text-sm mb-3 line-clamp-2">
+                                      {item.description}
+                                    </p>
+                                  )}
+
+                                  <div className="flex items-center gap-2 flex-wrap">
                                     {getTypeBadge(item.type)}
                                     {getPriorityBadge(item.priority)}
                                   </div>
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => handleViewDetails(item)}
-                                  >
-                                    View Details
-                                  </Button>
                                 </div>
                               </div>
                             </div>
-                          </CardContent>
-                        </Card>)}
-                    </div>
-                  </div>)}
-            </div>}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </AttendeeRouteGuard>
+      
       <ScheduleItemModal
         item={selectedItem}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
       />
-    </AppLayout>;
+    </AppLayout>
+  );
 };
 
 export default AttendeeSchedule;

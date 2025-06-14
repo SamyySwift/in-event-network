@@ -24,19 +24,24 @@ export default function RuleCard({ title, content, category, priority, created_a
     }
   };
 
-  const getPriorityColor = () => {
+  // Return strong contrasting colors for badge based on priority
+  const getPriorityBadgeStyle = () => {
     switch (priority) {
-      case "high": return "bg-red-100/80 border-red-400";
-      case "medium": return "bg-yellow-100/80 border-yellow-400";
-      case "low": return "bg-blue-100/80 border-blue-400";
-      default: return "bg-gray-100/80 border-gray-300";
+      case "high":
+        return "bg-red-600 text-white border-red-700 dark:bg-red-500 dark:text-white";
+      case "medium":
+        return "bg-amber-500 text-white border-amber-600 dark:bg-amber-400 dark:text-black";
+      case "low":
+        return "bg-blue-600 text-white border-blue-700 dark:bg-blue-400 dark:text-black";
+      default:
+        return "bg-gray-200 text-gray-900 border-gray-300 dark:bg-gray-700 dark:text-white";
     }
   };
 
   return (
     <article
       role="button"
-      className={`group rounded-xl border shadow-soft transition-all cursor-pointer glass-card overflow-hidden hover:shadow-lg ${getPriorityColor()}`}
+      className={`group rounded-xl border shadow-soft transition-all cursor-pointer glass-card overflow-hidden hover:shadow-lg ${getPriorityBadgeStyle()}-shadow`}
       tabIndex={0}
       aria-expanded={open}
       onClick={() => setOpen(!open)}
@@ -46,9 +51,9 @@ export default function RuleCard({ title, content, category, priority, created_a
       <div className="flex flex-col gap-2 p-5 animate-fade-in">
         <div className="flex items-center gap-2 mb-1">
           {priority && (
-            <Badge className={`flex items-center gap-1 capitalize ${getPriorityColor()} px-2`}>
+            <Badge className={`flex items-center gap-1 capitalize border ${getPriorityBadgeStyle()} px-2`}>
               {getPriorityIcon()}
-              <span className="text-xs">{priority}</span>
+              <span className="text-xs font-semibold">{priority}</span>
             </Badge>
           )}
           {category && (
@@ -71,3 +76,4 @@ export default function RuleCard({ title, content, category, priority, created_a
     </article>
   );
 }
+

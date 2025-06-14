@@ -163,13 +163,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             >
               <SheetHeader>
                 <SheetTitle className="flex items-center">
-                  <img
-                    src="/logo-placeholder.svg"
-                    alt="Connect Logo"
-                    className="h-8 w-auto mr-2"
-                  />
-                  <span className="font-semibold text-connect-800 dark:text-connect-300">
-                    kconect
+                  <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                    Kconect
                   </span>
                 </SheetTitle>
               </SheetHeader>
@@ -239,12 +234,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             </SheetContent>
           </Sheet>
 
-          <img
-            src="/logo-placeholder.svg"
-            alt="Connect Logo"
-            className="h-8 w-auto"
-          />
-          <span className="ml-2 font-semibold text-connect-800 dark:text-white">
+          <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
             Kconect
           </span>
         </div>
@@ -290,13 +280,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         <div className="p-4 border-b dark:border-gray-700">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center">
-              <img
-                src="/logo-placeholder.svg"
-                alt="Connect Logo"
-                className="h-8 w-auto"
-              />
-              <span className="ml-2 font-semibold text-xl text-connect-800 dark:text-white">
-                Connect
+              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                Kconect
               </span>
             </div>
             <ThemeToggle />

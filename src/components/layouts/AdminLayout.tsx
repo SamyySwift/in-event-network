@@ -7,7 +7,6 @@ import {
   Calendar,
   Users,
   Bell,
-  Settings,
   MessageSquare,
   Star,
   MapPin,
@@ -111,7 +110,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     );
   };
 
-  // Admin navigation links
+  // Admin navigation links (removed Settings)
   const adminNavigation = [
     {
       name: "Dashboard",
@@ -173,11 +172,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       href: "/admin/notifications",
       icon: <Bell size={20} />,
     },
-    {
-      name: "Settings",
-      href: "/admin/settings",
-      icon: <Settings size={20} />,
-    },
   ];
 
   // Mobile sidebar content
@@ -186,14 +180,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       <div className="p-4 border-b border-sidebar-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <img
-              src="/logo-placeholder.svg"
-              alt="Connect Logo"
-              className="h-8 w-auto"
-            />
-            <span className="ml-2 font-semibold text-xl text-gradient">
-              Admin
+            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+              Kconect
             </span>
+            <span className="ml-2 text-sm text-muted-foreground">Admin</span>
           </div>
         </div>
       </div>
@@ -284,14 +274,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               <MobileSidebarContent />
             </SheetContent>
           </Sheet>
-          <img
-            src="/logo-placeholder.svg"
-            alt="Connect Logo"
-            className="h-8 w-auto"
-          />
-          <span className="ml-2 font-semibold text-gradient">
-            Kconect Admin
+          <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+            Kconect
           </span>
+          <span className="ml-2 text-sm text-muted-foreground">Admin</span>
         </div>
 
         <Button
@@ -315,7 +301,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           sidebarOpen ? "w-64" : "w-20"
         } hidden md:flex flex-col bg-sidebar glass shadow-lg shadow-primary/5 fixed h-full transition-all duration-300 ease-in-out z-30`}
       >
-        {/* ... keep existing code (desktop sidebar content) */}
         <div
           className={`p-4 border-b border-sidebar-border flex ${
             sidebarOpen ? "justify-between" : "justify-center"
@@ -326,14 +311,17 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               sidebarOpen ? "" : "justify-center"
             }`}
           >
-            <img
-              src="/logo-placeholder.svg"
-              alt="Connect Logo"
-              className="h-8 w-auto"
-            />
             {sidebarOpen && (
-              <span className="ml-2 font-semibold text-xl text-gradient">
-                Admin
+              <>
+                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                  Kconect
+                </span>
+                <span className="ml-2 text-sm text-muted-foreground">Admin</span>
+              </>
+            )}
+            {!sidebarOpen && (
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                K
               </span>
             )}
           </div>
@@ -526,22 +514,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   {unreadCount > 99 ? "99+" : unreadCount}
                 </span>
               )}
-            </Button>
-
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => navigate("/admin/settings")}
-              className={`bg-card ${
-                isActive("/admin/settings")
-                  ? "border-primary/30 ring-1 ring-primary/30"
-                  : "border-primary/20"
-              } hover:bg-accent`}
-            >
-              <Settings
-                size={18}
-                className={isActive("/admin/settings") ? "text-primary" : ""}
-              />
             </Button>
 
             <Avatar

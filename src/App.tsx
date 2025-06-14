@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -48,6 +47,7 @@ import AttendeeMap from '@/pages/attendee/AttendeeMap';
 import AttendeeSearch from '@/pages/attendee/AttendeeSearch';
 
 import Index from '@/pages/Index';
+import { AdminEventProvider } from '@/hooks/useAdminEventContext';
 
 const queryClient = new QueryClient();
 
@@ -65,108 +65,28 @@ function App() {
               <Route path="/scan" element={<ScanQR />} />
               <Route path="/join/:eventKey" element={<Index />} />
 
-              {/* Admin routes */}
+              {/* Admin routes - now wrapped in AdminEventProvider */}
               <Route
-                path="/admin"
+                path="/admin/*"
                 element={
                   <ProtectedRoute requiredRole="host">
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/events"
-                element={
-                  <ProtectedRoute requiredRole="host">
-                    <AdminEvents />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/attendees"
-                element={
-                  <ProtectedRoute requiredRole="host">
-                    <AdminAttendees />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/speakers"
-                element={
-                  <ProtectedRoute requiredRole="host">
-                    <AdminSpeakers />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/announcements"
-                element={
-                  <ProtectedRoute requiredRole="host">
-                    <AdminAnnouncements />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/schedule"
-                element={
-                  <ProtectedRoute requiredRole="host">
-                    <AdminSchedule />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/polls"
-                element={
-                  <ProtectedRoute requiredRole="host">
-                    <AdminPolls />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/facilities"
-                element={
-                  <ProtectedRoute requiredRole="host">
-                    <AdminFacilities />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/rules"
-                element={
-                  <ProtectedRoute requiredRole="host">
-                    <AdminRules />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/questions"
-                element={
-                  <ProtectedRoute requiredRole="host">
-                    <AdminQuestions />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/suggestions"
-                element={
-                  <ProtectedRoute requiredRole="host">
-                    <AdminSuggestions />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/notifications"
-                element={
-                  <ProtectedRoute requiredRole="host">
-                    <AdminNotifications />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/settings"
-                element={
-                  <ProtectedRoute requiredRole="host">
-                    <AdminSettings />
+                    <AdminEventProvider>
+                      <Routes>
+                        <Route path="" element={<AdminDashboard />} />
+                        <Route path="events" element={<AdminEvents />} />
+                        <Route path="attendees" element={<AdminAttendees />} />
+                        <Route path="speakers" element={<AdminSpeakers />} />
+                        <Route path="announcements" element={<AdminAnnouncements />} />
+                        <Route path="schedule" element={<AdminSchedule />} />
+                        <Route path="polls" element={<AdminPolls />} />
+                        <Route path="facilities" element={<AdminFacilities />} />
+                        <Route path="rules" element={<AdminRules />} />
+                        <Route path="questions" element={<AdminQuestions />} />
+                        <Route path="suggestions" element={<AdminSuggestions />} />
+                        <Route path="notifications" element={<AdminNotifications />} />
+                        <Route path="settings" element={<AdminSettings />} />
+                      </Routes>
+                    </AdminEventProvider>
                   </ProtectedRoute>
                 }
               />

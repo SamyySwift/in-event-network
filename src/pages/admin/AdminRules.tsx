@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRules, Rule } from "@/hooks/useRules";
 import { format } from 'date-fns';
 import { useAdminEventContext } from "@/hooks/useAdminEventContext";
+import EventSelector from '@/components/admin/EventSelector'; // Import EventSelector
 import {
   AlertDialog,
   AlertDialogAction,
@@ -126,17 +126,20 @@ const AdminRules = () => {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div>
+        {/* Event Selector */}
+        <div className="flex items-center gap-6">
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             Event Rules
-            {selectedEvent && (
-              <Badge className="bg-blue-100 text-blue-800 capitalize px-3 ml-2">{selectedEvent.name}</Badge>
-            )}
           </h1>
-          <p className="text-muted-foreground">
-            Manage rules and guidelines for the event: <b>{selectedEvent?.name || "N/A"}</b>.
-          </p>
+          <div className="flex-1">
+            <EventSelector />
+          </div>
         </div>
+        <p className="text-muted-foreground">
+          {selectedEvent
+            ? <>Manage rules and guidelines for the event: <b>{selectedEvent.name}</b>.</>
+            : <>Please select an event from the selector above to start managing rules.</>}
+        </p>
         {rulesError && (
           <div className="bg-destructive/10 text-destructive p-3 rounded-lg text-sm">
             Error loading rules: {rulesError.message}
@@ -151,95 +154,107 @@ const AdminRules = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Rule Title *</Label>
-                  <Input
-                    id="title"
-                    {...register("title")}
-                    placeholder="Enter rule title"
-                  />
-                  {errors.title?.message && (
-                    <p className="text-sm text-destructive">{errors.title.message}</p>
-                  )}
+              {/* Disable form if no event is selected */}
+              {!selectedEventId ? (
+                <div className="text-center text-muted-foreground my-10">
+                  <Info className="h-8 w-8 mx-auto mb-3" />
+                  <p className="text-base">Please select an event before adding or editing rules.</p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="content">Rule Content *</Label>
-                  <Textarea
-                    id="content"
-                    {...register("content")}
-                    placeholder="Enter detailed rule description"
-                    rows={4}
-                  />
-                  {errors.content?.message && (
-                    <p className="text-sm text-destructive">{errors.content.message}</p>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              ) : (
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Category</Label>
-                    <Select value={selectedCategory} onValueChange={(value) => setValue("category", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="general">General</SelectItem>
-                        <SelectItem value="conduct">Conduct</SelectItem>
-                        <SelectItem value="safety">Safety</SelectItem>
-                        <SelectItem value="networking">Networking</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="title">Rule Title *</Label>
+                    <Input
+                      id="title"
+                      {...register("title")}
+                      placeholder="Enter rule title"
+                    />
+                    {errors.title?.message && (
+                      <p className="text-sm text-destructive">{errors.title.message}</p>
+                    )}
                   </div>
                   <div className="space-y-2">
-                    <Label>Priority</Label>
-                    <Select value={selectedPriority} onValueChange={(value) => setValue("priority", value as "high" | "medium" | "low")}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select priority" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="high">High</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="low">Low</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Label htmlFor="content">Rule Content *</Label>
+                    <Textarea
+                      id="content"
+                      {...register("content")}
+                      placeholder="Enter detailed rule description"
+                      rows={4}
+                    />
+                    {errors.content?.message && (
+                      <p className="text-sm text-destructive">{errors.content.message}</p>
+                    )}
                   </div>
-                </div>
 
-                <div className="flex gap-2">
-                  {editingRule && (
-                    <Button type="button" variant="outline" onClick={handleCancelEdit} className="flex-1">
-                      Cancel
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Category</Label>
+                      <Select value={selectedCategory} onValueChange={(value) => setValue("category", value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="general">General</SelectItem>
+                          <SelectItem value="conduct">Conduct</SelectItem>
+                          <SelectItem value="safety">Safety</SelectItem>
+                          <SelectItem value="networking">Networking</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Priority</Label>
+                      <Select value={selectedPriority} onValueChange={(value) => setValue("priority", value as "high" | "medium" | "low")}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select priority" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="high">High</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="low">Low</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2">
+                    {editingRule && (
+                      <Button type="button" variant="outline" onClick={handleCancelEdit} className="flex-1">
+                        Cancel
+                      </Button>
+                    )}
+                    <Button
+                      type="submit"
+                      className="flex-1"
+                      disabled={isCreating || isUpdating || !selectedEventId}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      {editingRule
+                        ? (isUpdating ? 'Updating...' : 'Update Rule')
+                        : (isCreating ? 'Creating...' : 'Add Rule')}
                     </Button>
-                  )}
-                  <Button
-                    type="submit"
-                    className="flex-1"
-                    disabled={isCreating || isUpdating || !selectedEventId}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    {editingRule
-                      ? (isUpdating ? 'Updating...' : 'Update Rule')
-                      : (isCreating ? 'Creating...' : 'Add Rule')}
-                  </Button>
-                </div>
-                {!selectedEventId && (
-                  <p className="text-xs text-destructive mt-2">
-                    Please select an event at the top before adding or editing rules.
-                  </p>
-                )}
-              </form>
+                  </div>
+                </form>
+              )}
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
               <CardTitle>Current Rules ({rules.length})</CardTitle>
               <CardDescription>
-                Rules are visible to attendees of: <b>{selectedEvent?.name || "N/A"}</b>
+                {selectedEvent
+                  ? <>Rules are visible to attendees of: <b>{selectedEvent.name}</b></>
+                  : <>Please select an event to view its rules.</>
+                }
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {rules.length === 0 ? (
+              {!selectedEventId ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Info className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No event selected.</p>
+                  <p className="text-sm mt-2">Please select an event above to see rules.</p>
+                </div>
+              ) : rules.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Info className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No rules added yet for this event.</p>

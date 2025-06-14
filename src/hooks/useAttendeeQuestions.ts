@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -31,6 +30,24 @@ export const useAttendeeQuestions = () => {
   const { currentUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Add a helper to check event participation
+  const isParticipantQuery = useQuery({
+    queryKey: ['is-participant', currentUser?.id, currentEventId],
+    queryFn: async (): Promise<boolean> => {
+      if (!currentUser?.id || !currentEventId) return false;
+
+      const { data, error } = await supabase
+        .from('event_participants')
+        .select('id')
+        .eq('user_id', currentUser.id)
+        .eq('event_id', currentEventId)
+        .maybeSingle();
+
+      return !!data;
+    },
+    enabled: !!currentUser?.id && !!currentEventId,
+  });
 
   const { data: currentEventId } = useQuery({
     queryKey: ['current-event-id', currentUser?.id],
@@ -171,6 +188,24 @@ export const useAttendeeQuestions = () => {
         throw new Error('No current event found');
       }
 
+      // Check if attendee is actually part of the event
+      const { data: participant, error: participantError } = await supabase
+        .from('event_participants')
+        .select('id')
+        .eq('user_id', currentUser.id)
+        .eq('event_id', currentEventId)
+        .maybeSingle();
+
+      if (participantError) {
+        // log and throw for debug
+        console.error('Error checking event participant:', participantError);
+        throw new Error('Could not check event participation');
+      }
+
+      if (!participant) {
+        throw new Error('You must join the event to submit questions.');
+      }
+
       const { error } = await supabase
         .from('questions')
         .insert([{
@@ -178,29 +213,33 @@ export const useAttendeeQuestions = () => {
           user_id: currentUser.id,
           is_anonymous: questionData.isAnonymous,
           session_id: questionData.selectedSessionId === 'general' ? null : questionData.selectedSessionId || null,
-          event_id: currentEventId, // Now properly setting the event_id
+          event_id: currentEventId,
           upvotes: 0,
           is_answered: false
         }]);
 
       if (error) {
-        console.error('Error submitting question:', error);
+        // Enhanced debug: output all supabase error fields
+        console.error('Error submitting question:');
+        console.error('Message:', error.message);
+        if (error.details) console.error('Details:', error.details);
+        if (error.hint) console.error('Hint:', error.hint);
         throw error;
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attendee-questions'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-questions'] }); // Also invalidate admin questions
+      queryClient.invalidateQueries({ queryKey: ['admin-questions'] });
       toast({
         title: "Success",
         description: "Your question has been submitted!",
       });
     },
     onError: (error: any) => {
-      console.error('Error submitting question:', error);
+      console.error('Failed to submit question:', error);
       toast({
         title: "Error",
-        description: "Failed to submit question",
+        description: error?.message || "Failed to submit question",
         variant: "destructive",
       });
     },
@@ -229,7 +268,7 @@ export const useAttendeeQuestions = () => {
     },
     onSuccess: (questionId) => {
       queryClient.invalidateQueries({ queryKey: ['attendee-questions'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-questions'] }); // Also invalidate admin questions
+      queryClient.invalidateQueries({ queryKey: ['admin-questions'] });
       toast({
         title: "Success",
         description: "Question upvoted!",
@@ -254,5 +293,7 @@ export const useAttendeeQuestions = () => {
     submitQuestion: submitQuestionMutation.mutate,
     upvoteQuestion: upvoteQuestionMutation.mutate,
     isSubmitting: submitQuestionMutation.isPending,
+    isParticipant: isParticipantQuery.data,
+    isParticipantLoading: isParticipantQuery.isLoading,
   };
 };

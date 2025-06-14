@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from "@/components/ui/label";
@@ -37,6 +37,8 @@ import * as z from "zod";
 import { useAdminFacilities, Facility } from "@/hooks/useAdminFacilities";
 import { useAdminEvents } from "@/hooks/useAdminEvents";
 import { format } from 'date-fns';
+import FacilityStatsCards from "./components/FacilityStatsCards";
+import FacilityCard from "./components/FacilityCard";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -186,6 +188,14 @@ const AdminFacilities = () => {
     return <Building className="h-5 w-5 text-primary" />;
   };
 
+  // --- New: Compute stats for the hero section ---
+  const stats = React.useMemo(() => {
+    let total = facilities.length;
+    let locations = facilities.filter((f) => f.location && f.location.trim() !== "").length;
+    let withContact = facilities.filter((f) => f.contact_type && f.contact_type !== "none" && f.contact_info && f.contact_info.trim() !== "").length;
+    return { total, locations, withContact };
+  }, [facilities]);
+
   if (eventsLoading || isLoading) {
     return (
       <AdminLayout>
@@ -246,53 +256,26 @@ const AdminFacilities = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Facilities</h1>
-          <p className="text-muted-foreground">
-            Manage facilities and their details.
-          </p>
-        </div>
-
-        {/* Event Selector */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Select Event</CardTitle>
-            <CardDescription>
-              Choose which event to manage facilities for
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Select value={selectedEventId} onValueChange={handleEventChange}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select an event" />
-              </SelectTrigger>
-              <SelectContent>
-                {events.map((event) => (
-                  <SelectItem key={event.id} value={event.id}>
-                    {event.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </CardContent>
-        </Card>
-
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <Card className="h-fit">
-            <CardHeader>
-              <CardTitle>{editingFacility ? 'Edit Facility' : 'Add New Facility'}</CardTitle>
-              <CardDescription>
-                {editingFacility ? 'Update the facility details' : 'Add facilities with contact options and rules'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="eventId">Event *</Label>
-                  <Select value={selectedFormEventId} onValueChange={(value) => setValue("eventId", value)}>
+      {/* Gradient Hero Section */}
+      <section className="py-8 bg-gradient-to-br from-primary via-secondary/20 to-background mb-10 rounded-b-2xl shadow-soft transition-all">
+        <div className="max-w-screen-xl mx-auto px-4">
+          <div className="flex flex-col gap-4">
+            <h1 className="text-4xl font-black tracking-tight text-white drop-shadow">Facilities Management</h1>
+            <div className="text-lg text-white/70 mb-2">
+              Create, view, and manage event facilities in a beautiful modern experience.
+            </div>
+            {/* Event Selector */}
+            <div className="max-w-md mt-2">
+              <Card className="glass-effect bg-white/30 border-white/10">
+                <CardHeader>
+                  <CardTitle asChild>
+                    <span className="text-base font-bold text-primary">Manage Facilities for Event</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Select value={selectedEventId} onValueChange={handleEventChange}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select event" />
+                      <SelectValue placeholder="Select an event" />
                     </SelectTrigger>
                     <SelectContent>
                       {events.map((event) => (
@@ -302,233 +285,205 @@ const AdminFacilities = () => {
                       ))}
                     </SelectContent>
                   </Select>
-                  {errors.eventId?.message && (
-                    <p className="text-sm text-destructive">{errors.eventId.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="name">Facility Name *</Label>
-                  <Input
-                    id="name"
-                    {...register("name")}
-                    placeholder="Enter facility name"
-                  />
-                  {errors.name?.message && (
-                    <p className="text-sm text-destructive">{errors.name.message}</p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description</Label>
-                  <Textarea
-                    id="description"
-                    {...register("description")}
-                    placeholder="Enter facility description"
-                    rows={3}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="location">Location</Label>
-                    <Input
-                      id="location"
-                      {...register("location")}
-                      placeholder="Enter facility location"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Icon</Label>
-                    <Select value={selectedIcon} onValueChange={(value) => setValue("iconType", value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select icon" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {facilityIcons.map((icon) => {
-                          const IconComponent = icon.icon;
-                          return (
-                            <SelectItem key={icon.value} value={icon.value}>
-                              <div className="flex items-center gap-2">
-                                <IconComponent className="h-4 w-4" />
-                                {icon.label}
-                              </div>
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="rules">Rules (Optional)</Label>
-                  <Textarea
-                    id="rules"
-                    {...register("rules")}
-                    placeholder="Enter facility rules and guidelines"
-                    rows={2}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Contact Type</Label>
-                    <Select value={contactType} onValueChange={(value) => setValue("contactType", value as "none" | "phone" | "whatsapp")}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select contact type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No Contact</SelectItem>
-                        <SelectItem value="phone">Phone Call</SelectItem>
-                        <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {(contactType === "phone" || contactType === "whatsapp") && (
-                    <div className="space-y-2">
-                      <Label htmlFor="contactInfo">Contact Number</Label>
-                      <Input
-                        id="contactInfo"
-                        {...register("contactInfo")}
-                        placeholder="Enter phone number"
-                      />
-                      {errors.contactInfo?.message && (
-                        <p className="text-sm text-destructive">{errors.contactInfo.message}</p>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex gap-2">
-                  {editingFacility && (
-                    <Button type="button" variant="outline" onClick={handleCancelEdit} className="flex-1">
-                      Cancel
-                    </Button>
-                  )}
-                  <Button 
-                    type="submit" 
-                    className="flex-1"
-                    disabled={isCreating || isUpdating || !selectedFormEventId}
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    {editingFacility ? (isUpdating ? 'Updating...' : 'Update Facility') : (isCreating ? 'Creating...' : 'Add Facility')}
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Facilities List ({facilities.length})</CardTitle>
-              <CardDescription>
-                View and manage existing facilities
-                {selectedEventId && events.find(e => e.id === selectedEventId) && (
-                  <span className="block mt-1 text-primary">
-                    for {events.find(e => e.id === selectedEventId)?.name}
-                  </span>
-                )}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {facilities.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <Building className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No facilities added yet.</p>
-                  <p className="text-sm mt-2">Create your first facility using the form on the left.</p>
-                </div>
-              ) : (
-                <div className="space-y-4 max-h-[600px] overflow-y-auto">
-                  {facilities.map((facility) => (
-                    <div key={facility.id} className="border rounded-lg p-4 space-y-3 hover:shadow-sm transition-shadow">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2">
-                            {getFacilityIcon(facility.icon_type)}
-                            <h4 className="font-medium text-sm sm:text-base break-words">{facility.name}</h4>
-                          </div>
-                          {facility.description && (
-                            <p className="text-sm text-muted-foreground break-words">{facility.description}</p>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleEdit(facility)}
-                            disabled={isUpdating}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-destructive hover:text-destructive"
-                                disabled={isDeleting}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Facility</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete this facility? This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => deleteFacility(facility.id)}>
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        {facility.location && (
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <MapPin className="h-4 w-4 flex-shrink-0" />
-                            <span className="break-words">{facility.location}</span>
-                          </div>
-                        )}
-                        
-                        {facility.contact_type !== 'none' && facility.contact_info && (
-                          <div className="flex items-center gap-2 text-sm">
-                            {getContactIcon(facility.contact_type)}
-                            <span className="text-muted-foreground capitalize">{facility.contact_type}:</span>
-                            <span className="font-medium break-words">{facility.contact_info}</span>
-                          </div>
-                        )}
-                        
-                        {facility.rules && (
-                          <div className="text-sm">
-                            <span className="text-muted-foreground">Rules:</span>
-                            <p className="text-sm mt-1 p-2 bg-muted rounded break-words">{facility.rules}</p>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="flex justify-between items-center pt-2 border-t">
-                        <span className="text-xs text-muted-foreground">
-                          Created {format(new Date(facility.created_at), 'MMM d, yyyy')}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </div>
+            {/* Stats Cards */}
+            <div className="mt-4">
+              <FacilityStatsCards {...stats} />
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
+
+      <main className="max-w-screen-xl mx-auto px-2 py-8 space-y-10">
+        {/* Facility Form */}
+        <Card className="glass-effect shadow-soft max-w-xl mx-auto z-10 mb-8 border border-white/10">
+          <CardHeader>
+            <CardTitle>
+              {editingFacility ? "Edit Facility" : "Add New Facility"}
+            </CardTitle>
+            <CardDescription>
+              {editingFacility
+                ? "Update the facility details for your event."
+                : "Add a new event facility with rich details."}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="eventId">Event *</Label>
+                <Select value={selectedFormEventId} onValueChange={(value) => setValue("eventId", value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select event" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {events.map((event) => (
+                      <SelectItem key={event.id} value={event.id}>
+                        {event.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.eventId?.message && (
+                  <p className="text-sm text-destructive">{errors.eventId.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="name">Facility Name *</Label>
+                <Input
+                  id="name"
+                  {...register("name")}
+                  placeholder="Enter facility name"
+                />
+                {errors.name?.message && (
+                  <p className="text-sm text-destructive">{errors.name.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="description">Description</Label>
+                <Textarea
+                  id="description"
+                  {...register("description")}
+                  placeholder="Enter facility description"
+                  rows={3}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="location">Location</Label>
+                  <Input
+                    id="location"
+                    {...register("location")}
+                    placeholder="Enter facility location"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Icon</Label>
+                  <Select value={selectedIcon} onValueChange={(value) => setValue("iconType", value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select icon" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {facilityIcons.map((icon) => {
+                        const IconComponent = icon.icon;
+                        return (
+                          <SelectItem key={icon.value} value={icon.value}>
+                            <div className="flex items-center gap-2">
+                              <IconComponent className="h-4 w-4" />
+                              {icon.label}
+                            </div>
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="rules">Rules (Optional)</Label>
+                <Textarea
+                  id="rules"
+                  {...register("rules")}
+                  placeholder="Enter facility rules and guidelines"
+                  rows={2}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Contact Type</Label>
+                  <Select value={contactType} onValueChange={(value) => setValue("contactType", value as "none" | "phone" | "whatsapp")}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select contact type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Contact</SelectItem>
+                      <SelectItem value="phone">Phone Call</SelectItem>
+                      <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {(contactType === "phone" || contactType === "whatsapp") && (
+                  <div className="space-y-2">
+                    <Label htmlFor="contactInfo">Contact Number</Label>
+                    <Input
+                      id="contactInfo"
+                      {...register("contactInfo")}
+                      placeholder="Enter phone number"
+                    />
+                    {errors.contactInfo?.message && (
+                      <p className="text-sm text-destructive">{errors.contactInfo.message}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                {editingFacility && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCancelEdit}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                )}
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={isCreating || isUpdating || !selectedFormEventId}
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  {editingFacility
+                    ? isUpdating
+                      ? "Updating..."
+                      : "Update Facility"
+                    : isCreating
+                    ? "Creating..."
+                    : "Add Facility"}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Facilities Grid */}
+        <section>
+          <h2 className="text-2xl font-bold mb-6 text-primary">Existing Facilities</h2>
+          {facilities.length === 0 ? (
+            <div className="text-center py-10">
+              <Building className="h-12 w-12 mx-auto opacity-40 mb-4" />
+              <div className="text-lg text-muted-foreground font-medium">
+                No facilities added yet
+              </div>
+              <div className="mt-2 text-xs text-muted-foreground">
+                Add your first facility to this event!
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {facilities.map((facility) => (
+                <FacilityCard
+                  key={facility.id}
+                  facility={facility}
+                  onEdit={handleEdit}
+                  onDelete={deleteFacility}
+                  isUpdating={isUpdating}
+                  isDeleting={isDeleting}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      </main>
     </AdminLayout>
   );
 };

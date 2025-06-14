@@ -211,14 +211,14 @@ const AttendeeDashboardContent = () => {
             </CardContent>
             
             {(currentEvent || upcomingEvents?.[0]) && (
-              <CardFooter className="relative z-10 flex gap-3 bg-gray-50/50 backdrop-blur-sm">
-                <Button variant="outline" onClick={() => navigate('/attendee/map')} className="flex-1">
+              <CardFooter className="relative z-10 flex flex-col sm:flex-row gap-3 bg-gray-50/50 backdrop-blur-sm">
+                <Button variant="outline" onClick={() => navigate('/attendee/map')} className="flex-1 w-full sm:w-auto">
                   <MapPin className="mr-2 h-4 w-4" />
-                  Find Your Way
+                  <span className="truncate">Find Your Way</span>
                 </Button>
-                <Button onClick={() => navigate('/attendee/schedule')} className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
+                <Button onClick={() => navigate('/attendee/schedule')} className="flex-1 w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700">
                   <Calendar className="mr-2 h-4 w-4" />
-                  View Schedule
+                  <span className="truncate">View Schedule</span>
                 </Button>
               </CardFooter>
             )}

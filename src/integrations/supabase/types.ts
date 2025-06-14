@@ -1073,6 +1073,10 @@ export type Database = {
         Args: { poll_uuid: string }
         Returns: Json
       }
+      get_user_current_event: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       get_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -1083,10 +1087,6 @@ export type Database = {
       }
       is_event_owner: {
         Args: { event_uuid: string }
-        Returns: boolean
-      }
-      is_same_event_participant: {
-        Args: { target_event_id: string }
         Returns: boolean
       }
       join_event_by_access_key: {

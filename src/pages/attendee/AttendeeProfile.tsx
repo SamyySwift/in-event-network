@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -269,118 +268,104 @@ const AttendeeProfile = () => {
   
   return (
     <AppLayout>
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl sm:text-3xl font-bold">Your Profile</h1>
-          
-          {isEditing ? (
-            <div className="flex space-x-2">
-              <Button 
-                variant="outline" 
-                onClick={() => setIsEditing(false)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleSave}
-                disabled={isSubmitting}
-                className="bg-connect-600 hover:bg-connect-700"
-              >
-                {isSubmitting ? "Saving..." : "Save Changes"}
-              </Button>
-            </div>
-          ) : (
-            <Button 
-              onClick={() => setIsEditing(true)}
-              variant="outline"
-            >
-              Edit Profile
-            </Button>
-          )}
-        </div>
-        
-        <Card>
-          {/* Profile Header */}
-          <CardHeader className="bg-connect-50 dark:bg-connect-900/20 border-b dark:border-gray-700">
-            <div className="flex flex-col sm:flex-row gap-4 sm:items-center">
+      <div className="max-w-3xl mx-auto">
+        {/* Profile Card Header */}
+        <div className="relative mb-6">
+          <div className="rounded-3xl shadow-xl bg-gradient-to-tr from-violet-100/80 via-blue-50/50 to-pink-50/60 border border-gray-100 dark:from-gray-900/70 dark:via-gray-900/40 dark:to-gray-700/30 px-6 pt-8 pb-7 flex flex-col sm:flex-row items-center gap-8">
+            {/* Avatar */}
+            <div className="flex flex-col items-center">
               <ProfilePictureUpload
                 currentImageUrl={profileData.photoUrl}
                 userId={currentUser.id}
-                userName={profileData.name || 'User'}
+                userName={profileData.name || "User"}
                 onImageUpdate={handleProfilePictureUpdate}
                 isEditing={isEditing}
               />
-              
-              <div className="flex-1">
-                {isEditing ? (
-                  <div className="space-y-2">
-                    <Label htmlFor="name" className="text-gray-900 dark:text-white">Full Name</Label>
-                    <Input
-                      id="name"
-                      value={profileData.name}
-                      onChange={(e) => setProfileData({ ...profileData, name: e.target.value })}
-                    />
-                  </div>
-                ) : (
-                  <div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{profileData.name || 'Add your name'}</h2>
-                    {profileData.niche && (
-                      <Badge variant="secondary" className="mt-1 bg-connect-100 text-connect-800 hover:bg-connect-200 dark:bg-connect-900/50 dark:text-connect-300">
-                        {profileData.niche}
-                      </Badge>
-                    )}
-                    {profileData.company && (
-                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{profileData.company}</p>
-                    )}
-                  </div>
+            </div>
+            {/* Profile Info */}
+            <div className="flex-1 flex flex-col items-center sm:items-start">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2 text-center sm:text-left">
+                {profileData.name || "Add your name"}
+              </h2>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {profileData.niche && (
+                  <Badge variant="secondary" className="bg-violet-100 text-violet-700 px-3 py-1 rounded-xl text-base font-semibold shadow-sm">
+                    {profileData.niche}
+                  </Badge>
                 )}
               </div>
+              {profileData.company && (
+                <div className="text-md text-gray-600 dark:text-gray-300 font-medium">
+                  {profileData.company}
+                </div>
+              )}
             </div>
-          </CardHeader>
-          
-          <CardContent className="pt-6 space-y-8">
-            {/* Bio Section */}
+            {/* Edit Profile Button (mobile: above card, desktop: inline) */}
+            <div className="sm:absolute sm:top-6 sm:right-8 w-full sm:w-auto flex justify-end sm:static sm:justify-end">
+              {isEditing ? (
+                <div className="flex space-x-2 w-full sm:w-auto">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsEditing(false)}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSave}
+                    disabled={isSubmitting}
+                    className="bg-connect-600 hover:bg-connect-700"
+                  >
+                    {isSubmitting ? "Saving..." : "Save Changes"}
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  onClick={() => setIsEditing(true)}
+                  variant="outline"
+                  className="w-full sm:w-auto font-medium"
+                >
+                  Edit Profile
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Main Profile Details Card */}
+        <div className="rounded-2xl shadow-lg bg-white/90 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 mb-8 divide-y divide-gray-100 dark:divide-gray-800">
+          <div className="p-6">
             <div>
-              <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">About</h3>
+              <h3 className="font-semibold mb-1 text-gray-900 dark:text-white text-lg">About</h3>
               {isEditing ? (
                 <Textarea
                   placeholder="Tell others about yourself..."
                   value={profileData.bio}
-                  onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
-                  className="min-h-[120px]"
+                  onChange={e => setProfileData({ ...profileData, bio: e.target.value })}
+                  className="min-h-[80px]"
                 />
               ) : (
-                <p className="text-gray-700 dark:text-gray-300">
-                  {profileData.bio || "No bio added yet."}
-                </p>
+                <p className="text-gray-700 dark:text-gray-200">{profileData.bio || "No bio added yet."}</p>
               )}
             </div>
-            
-            <Separator />
-
-            {/* Company Section */}
+          </div>
+          <div className="p-6">
             <div>
-              <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">Company</h3>
+              <h3 className="font-semibold mb-1 text-gray-900 dark:text-white text-lg">Company</h3>
               {isEditing ? (
                 <Input
                   placeholder="Your company or organization"
                   value={profileData.company}
-                  onChange={(e) => setProfileData({ ...profileData, company: e.target.value })}
+                  onChange={e => setProfileData({ ...profileData, company: e.target.value })}
                 />
               ) : (
-                <p className="text-gray-700 dark:text-gray-300">
-                  {profileData.company || "No company added yet."}
-                </p>
+                <p className="text-gray-700 dark:text-gray-200">{profileData.company || "No company added yet."}</p>
               )}
             </div>
-            
-            <Separator />
-            
-            {/* Professional Niche */}
+          </div>
+          <div className="p-6">
             <div>
-              <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">Professional Niche</h3>
-              
+              <h3 className="font-semibold mb-1 text-gray-900 dark:text-white text-lg">Professional Niche</h3>
               {isEditing ? (
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -433,7 +418,7 @@ const AttendeeProfile = () => {
               ) : (
                 <div>
                   {selectedNiche ? (
-                    <Badge variant="outline" className="bg-connect-50 border-connect-200 text-connect-800 dark:bg-connect-900/50 dark:border-connect-400 dark:text-connect-300">
+                    <Badge variant="outline" className="bg-violet-50 border-violet-200 text-violet-700 dark:bg-connect-900/50 dark:border-connect-400 dark:text-connect-300">
                       {selectedNiche}
                     </Badge>
                   ) : (
@@ -442,10 +427,9 @@ const AttendeeProfile = () => {
                 </div>
               )}
             </div>
-            
-            <Separator />
-            
-            {/* Networking Preferences */}
+          </div>
+          <div className="p-6">
+            {/* Networking preferences */}
             <div>
               <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">Networking Preferences</h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Who are you interested in meeting?</p>
@@ -546,10 +530,9 @@ const AttendeeProfile = () => {
                 </div>
               )}
             </div>
-            
-            <Separator />
-            
-            {/* Custom Tags */}
+          </div>
+          <div className="p-6">
+            {/* Custom tags */}
             <div>
               <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">Custom Tags</h3>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Add tags that represent your interests</p>
@@ -614,10 +597,9 @@ const AttendeeProfile = () => {
                 </div>
               )}
             </div>
-            
-            <Separator />
-            
-            {/* Social Media Links */}
+          </div>
+          <div className="p-6">
+            {/* Social media links */}
             <div>
               <h3 className="font-semibold mb-4 text-gray-900 dark:text-white">Connect With Me</h3>
               
@@ -799,32 +781,11 @@ const AttendeeProfile = () => {
                 </div>
               )}
             </div>
-          </CardContent>
-          
-          {isEditing && (
-            <CardFooter className="bg-gray-50 dark:bg-gray-800 border-t dark:border-gray-700 flex justify-end">
-              <div className="flex space-x-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsEditing(false)}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={handleSave}
-                  disabled={isSubmitting}
-                  className="bg-connect-600 hover:bg-connect-700"
-                >
-                  {isSubmitting ? "Saving..." : "Save Changes"}
-                </Button>
-              </div>
-            </CardFooter>
-          )}
-        </Card>
+          </div>
+        </div>
 
         {/* Account Management Section */}
-        <Card className="mt-6">
+        <div className="rounded-2xl shadow-lg bg-white/90 dark:bg-gray-900/60 border border-gray-100 dark:border-gray-800 mt-10">
           <CardHeader>
             <CardTitle className="text-destructive">Account Management</CardTitle>
             <CardDescription>
@@ -842,7 +803,7 @@ const AttendeeProfile = () => {
               </div>
             </div>
           </CardContent>
-        </Card>
+        </div>
       </div>
     </AppLayout>
   );

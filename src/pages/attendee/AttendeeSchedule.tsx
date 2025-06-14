@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, User, ChevronRight, Search, Filter, Star, Users } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, ChevronRight, Search, Filter, Star, Users, ExternalLink, Twitter, Linkedin, Globe } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
 import AttendeeRouteGuard from '@/components/attendee/AttendeeRouteGuard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -39,6 +39,9 @@ interface CombinedScheduleItem {
   speaker_photo?: string;
   speaker_company?: string;
   speaker_bio?: string;
+  speaker_twitter?: string;
+  speaker_linkedin?: string;
+  speaker_website?: string;
   priority?: string;
   image_url?: string;
 }
@@ -128,7 +131,10 @@ const AttendeeSchedule = () => {
         speaker_name: speaker.name,
         speaker_photo: speaker.photo_url,
         speaker_company: speaker.company,
-        speaker_bio: speaker.bio
+        speaker_bio: speaker.bio,
+        speaker_twitter: speaker.twitter_link,
+        speaker_linkedin: speaker.linkedin_link,
+        speaker_website: speaker.website_link
       });
     });
 
@@ -232,6 +238,52 @@ const AttendeeSchedule = () => {
       default:
         return <Badge variant="outline">{priority}</Badge>;
     }
+  };
+
+  const getSocialIcon = (platform: string) => {
+    switch (platform) {
+      case 'twitter':
+        return <Twitter className="w-3 h-3" />;
+      case 'linkedin':
+        return <Linkedin className="w-3 h-3" />;
+      case 'website':
+        return <Globe className="w-3 h-3" />;
+      default:
+        return <ExternalLink className="w-3 h-3" />;
+    }
+  };
+
+  const renderSocialLinks = (item: CombinedScheduleItem) => {
+    if (item.type !== 'speaker') return null;
+    
+    const socialLinks = [];
+    if (item.speaker_twitter) socialLinks.push({ platform: 'twitter', url: item.speaker_twitter });
+    if (item.speaker_linkedin) socialLinks.push({ platform: 'linkedin', url: item.speaker_linkedin });
+    if (item.speaker_website) socialLinks.push({ platform: 'website', url: item.speaker_website });
+    
+    if (socialLinks.length === 0) return null;
+    
+    return (
+      <div className="flex items-center gap-2 mt-2">
+        <span className="text-xs text-gray-500">Connect:</span>
+        <div className="flex gap-1">
+          {socialLinks.map((link, index) => (
+            <Button
+              key={index}
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 hover:bg-gray-100"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(link.url, '_blank');
+              }}
+            >
+              {getSocialIcon(link.platform)}
+            </Button>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   const handleViewDetails = (item: CombinedScheduleItem) => {
@@ -444,9 +496,12 @@ const AttendeeSchedule = () => {
                                     </p>
                                   )}
 
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    {getTypeBadge(item.type)}
-                                    {getPriorityBadge(item.priority)}
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      {getTypeBadge(item.type)}
+                                      {getPriorityBadge(item.priority)}
+                                    </div>
+                                    {renderSocialLinks(item)}
                                   </div>
                                 </div>
                               </div>

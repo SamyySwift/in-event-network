@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotificationCount } from "@/hooks/useNotificationCount";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Calendar,
   Users,
@@ -24,6 +25,7 @@ import {
   Moon,
   BarChart,
   Clock,
+  X,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -37,15 +39,20 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
+
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const { currentUser, logout } = useAuth();
   const { unreadCount } = useNotificationCount();
   const navigate = useNavigate();
   const location = useLocation();
+  const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -55,6 +62,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     setTheme(newTheme);
     document.documentElement.classList.toggle("dark");
   };
+
   const isActive = (path: string) => {
     if (path === "/admin") {
       return location.pathname === "/admin";
@@ -102,6 +110,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       </Breadcrumb>
     );
   };
+
+  // Admin navigation links
   const adminNavigation = [
     {
       name: "Dashboard",
@@ -169,19 +179,111 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       icon: <Settings size={20} />,
     },
   ];
+
+  // Mobile sidebar content
+  const MobileSidebarContent = () => (
+    <div className="flex flex-col h-full">
+      <div className="p-4 border-b border-sidebar-border">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <img
+              src="/logo-placeholder.svg"
+              alt="Connect Logo"
+              className="h-8 w-auto"
+            />
+            <span className="ml-2 font-semibold text-xl text-gradient">
+              Admin
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {currentUser && (
+        <div className="px-4 py-4 border-b border-sidebar-border">
+          <div className="flex items-center space-x-3">
+            <Avatar className="h-10 w-10 ring-2 ring-primary/20">
+              {currentUser.photoUrl ? (
+                <AvatarImage
+                  src={currentUser.photoUrl}
+                  alt={currentUser.name}
+                />
+              ) : (
+                <AvatarFallback className="bg-primary text-primary-foreground">
+                  {currentUser.name.charAt(0).toUpperCase()}
+                </AvatarFallback>
+              )}
+            </Avatar>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-sidebar-foreground truncate">
+                {currentUser.name}
+              </p>
+              <Badge
+                variant="outline"
+                className="text-[10px] font-normal px-1.5 bg-primary/10 hover:bg-primary/20 text-primary border-primary/20"
+              >
+                Administrator
+              </Badge>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <nav className="flex-1 py-2 px-2 space-y-1 overflow-y-auto">
+        {adminNavigation.map((item) => (
+          <Button
+            key={item.name}
+            variant={isActive(item.href) ? "secondary" : "ghost"}
+            className={`w-full justify-start ${
+              isActive(item.href)
+                ? "bg-primary/10 text-primary hover:bg-primary/20"
+                : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+            }`}
+            onClick={() => {
+              navigate(item.href);
+              setMobileMenuOpen(false);
+            }}
+          >
+            <span className="mr-3">{item.icon}</span>
+            <span className="flex-1 text-left">{item.name}</span>
+            {isActive(item.href) && (
+              <ChevronRight size={16} className="ml-auto opacity-70" />
+            )}
+          </Button>
+        ))}
+
+        {currentUser && (
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-sidebar-foreground mt-4 hover:text-destructive hover:bg-destructive/10"
+            onClick={() => {
+              logout();
+              navigate("/");
+              setMobileMenuOpen(false);
+            }}
+          >
+            <LogOut size={20} className="mr-3" />
+            Logout
+          </Button>
+        )}
+      </nav>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Mobile Header */}
       <header className="md:hidden bg-card glass-effect border-b py-4 px-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
         <div className="flex items-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="mr-2"
-          >
-            <Menu size={20} className="text-primary" />
-          </Button>
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="mr-2">
+                <Menu size={20} className="text-primary" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-80 p-0">
+              <MobileSidebarContent />
+            </SheetContent>
+          </Sheet>
           <img
             src="/logo-placeholder.svg"
             alt="Connect Logo"
@@ -213,6 +315,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           sidebarOpen ? "w-64" : "w-20"
         } hidden md:flex flex-col bg-sidebar glass shadow-lg shadow-primary/5 fixed h-full transition-all duration-300 ease-in-out z-30`}
       >
+        {/* ... keep existing code (desktop sidebar content) */}
         <div
           className={`p-4 border-b border-sidebar-border flex ${
             sidebarOpen ? "justify-between" : "justify-center"
@@ -464,4 +567,5 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     </div>
   );
 };
+
 export default AdminLayout;

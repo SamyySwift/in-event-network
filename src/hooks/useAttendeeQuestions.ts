@@ -31,7 +31,24 @@ export const useAttendeeQuestions = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Add a helper to check event participation
+  // Get currentEventId first, before any queries that depend on it
+  const { data: currentEventId } = useQuery({
+    queryKey: ['current-event-id', currentUser?.id],
+    queryFn: async (): Promise<string | null> => {
+      if (!currentUser?.id) return null;
+
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('current_event_id')
+        .eq('id', currentUser.id)
+        .single();
+
+      return userProfile?.current_event_id || null;
+    },
+    enabled: !!currentUser?.id,
+  });
+
+  // Add a helper to check event participation (now after currentEventId is available)
   const isParticipantQuery = useQuery({
     queryKey: ['is-participant', currentUser?.id, currentEventId],
     queryFn: async (): Promise<boolean> => {
@@ -47,22 +64,6 @@ export const useAttendeeQuestions = () => {
       return !!data;
     },
     enabled: !!currentUser?.id && !!currentEventId,
-  });
-
-  const { data: currentEventId } = useQuery({
-    queryKey: ['current-event-id', currentUser?.id],
-    queryFn: async (): Promise<string | null> => {
-      if (!currentUser?.id) return null;
-
-      const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('current_event_id')
-        .eq('id', currentUser.id)
-        .single();
-
-      return userProfile?.current_event_id || null;
-    },
-    enabled: !!currentUser?.id,
   });
 
   const { data: questions = [], isLoading: questionsLoading, error: questionsError } = useQuery({

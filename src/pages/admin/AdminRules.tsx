@@ -193,7 +193,18 @@ const AdminRules = () => {
                         <SelectTrigger>
                           <SelectValue placeholder="Select category" />
                         </SelectTrigger>
-                        <SelectContent className="z-50 bg-white dark:bg-popover sm:min-w-[180px] min-w-full">
+                        <SelectContent
+                          className="
+                            z-50 
+                            bg-white dark:bg-popover 
+                            w-full sm:min-w-[180px] max-w-[96vw] 
+                            mx-2 sm:mx-0 
+                            rounded-md 
+                            shadow-lg
+                            border
+                          "
+                          align="start"
+                        >
                           <SelectItem value="general">General</SelectItem>
                           <SelectItem value="conduct">Conduct</SelectItem>
                           <SelectItem value="safety">Safety</SelectItem>
@@ -207,7 +218,18 @@ const AdminRules = () => {
                         <SelectTrigger>
                           <SelectValue placeholder="Select priority" />
                         </SelectTrigger>
-                        <SelectContent className="z-50 bg-white dark:bg-popover sm:min-w-[160px] min-w-full">
+                        <SelectContent
+                          className="
+                            z-50 
+                            bg-white dark:bg-popover 
+                            w-full sm:min-w-[160px] max-w-[96vw] 
+                            mx-2 sm:mx-0 
+                            rounded-md 
+                            shadow-lg
+                            border
+                          "
+                          align="start"
+                        >
                           <SelectItem value="high">High</SelectItem>
                           <SelectItem value="medium">Medium</SelectItem>
                           <SelectItem value="low">Low</SelectItem>

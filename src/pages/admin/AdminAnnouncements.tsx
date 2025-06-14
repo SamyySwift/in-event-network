@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import EventSelector from '@/components/admin/EventSelector';
@@ -15,6 +16,8 @@ import { useAdminAnnouncements } from '@/hooks/useAdminAnnouncements';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminEventContext, AdminEventProvider } from '@/hooks/useAdminEventContext';
 import { ImageUpload } from '@/components/ui/image-upload';
+import AnnouncementStatsCards from './components/AnnouncementStatsCards';
+import AnnouncementCard from './components/AnnouncementCard';
 
 type AnnouncementFormData = {
   title: string;
@@ -39,6 +42,10 @@ const AdminAnnouncementsContent = () => {
       send_immediately: false,
     },
   });
+
+  // Metrics for stats cards
+  const total = announcements.length;
+  const highPriority = announcements.filter(a => a.priority === 'high').length;
 
   const onSubmit = (data: AnnouncementFormData) => {
     const announcementData = {
@@ -78,15 +85,6 @@ const AdminAnnouncementsContent = () => {
     reset();
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800 hover:bg-red-200';
-      case 'normal': return 'bg-blue-100 text-blue-800 hover:bg-blue-200';
-      case 'low': return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
-      default: return 'bg-gray-100 text-gray-800 hover:bg-gray-200';
-    }
-  };
-
   if (!selectedEvent) {
     return (
       <div className="space-y-6">
@@ -96,12 +94,9 @@ const AdminAnnouncementsContent = () => {
             Create and manage event announcements.
           </p>
         </div>
-
-        {/* Event Selector */}
         <div className="border rounded-lg p-4 bg-card">
           <EventSelector />
         </div>
-
         <Card>
           <CardContent className="pt-6">
             <div className="text-center text-muted-foreground">
@@ -117,42 +112,60 @@ const AdminAnnouncementsContent = () => {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Announcements</h1>
-          <p className="text-muted-foreground">
-            Create and manage event announcements.
-          </p>
+      <div className="flex flex-col gap-10">
+        <div className="p-8 rounded-2xl bg-gradient-to-br from-primary-100 via-purple-100 to-blue-50 text-primary-900 dark:text-white shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
+          <div className="absolute -top-12 -right-10 w-56 h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
+          <div className="absolute -bottom-14 -left-14 w-36 h-36 bg-white/20 rounded-full opacity-30 pointer-events-none"></div>
+          <div className="relative z-10">
+            <h1 className="text-4xl font-bold tracking-tight">Announcements</h1>
+            <p className="mt-2 max-w-2xl text-primary-700 dark:text-primary-100">
+              Manage announcements for <span className="font-semibold">{selectedEvent?.name ?? "your event"}</span>.
+            </p>
+            <div className="mt-6">
+              <AnnouncementStatsCards total={0} highPriority={0} loading />
+            </div>
+          </div>
         </div>
-
-        {/* Event Selector */}
-        <div className="border rounded-lg p-4 bg-card">
-          <EventSelector />
-        </div>
-
-        <div className="flex items-center justify-center h-64">
-          <Loader className="h-8 w-8 animate-spin" />
-        </div>
+        <div className="h-24 flex items-center justify-center"><Loader className="animate-spin" /></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Announcements</h1>
-        <p className="text-muted-foreground">
-          Create and manage announcements for {selectedEvent.name}.
-        </p>
+    <div className="space-y-8 animate-fade-in">
+      {/* Gradient Hero Section */}
+      <div className="p-8 rounded-2xl bg-gradient-to-br from-primary-100 via-purple-100 to-blue-50 text-primary-900 dark:text-white shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
+        <div className="absolute -top-12 -right-10 w-56 h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none" />
+        <div className="absolute -bottom-14 -left-14 w-36 h-36 bg-white/20 rounded-full opacity-30 pointer-events-none" />
+        <div className="relative z-10">
+          <h1 className="text-4xl font-bold tracking-tight">Announcements</h1>
+          <p className="mt-2 max-w-2xl text-primary-700 dark:text-primary-100">
+            Manage announcements for <span className="font-semibold">{selectedEvent.name}</span>.
+          </p>
+          <div className="mt-6">
+            <AnnouncementStatsCards total={total} highPriority={highPriority} loading={isLoading} />
+          </div>
+        </div>
       </div>
 
-      {/* Event Selector */}
-      <div className="border rounded-lg p-4 bg-card">
-        <EventSelector />
-      </div>
+      <div className="glass-card p-6 rounded-xl space-y-8 shadow-xl">
+        {/* Section Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-600 shadow-md">
+              <AlertTriangle className="w-6 h-6 text-white" />
+            </span>
+            <div>
+              <div className="uppercase text-xs font-bold text-primary-600 tracking-wide">Announcements</div>
+              <div className="text-lg font-semibold text-primary-900 dark:text-primary-100">
+                {selectedEvent.name}
+              </div>
+            </div>
+          </div>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        {/* Add/Edit Announcement Form */}
+        <Card className="mb-6 glass-card bg-gradient-to-br from-white/90 via-primary-50/70 to-primary-100/60 transition-all animate-fade-in shadow-lg">
           <CardHeader>
             <CardTitle>{editingAnnouncement ? 'Edit Announcement' : 'Create Announcement'}</CardTitle>
             <CardDescription>
@@ -160,39 +173,40 @@ const AdminAnnouncementsContent = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  {...register("title", { required: "Title is required" })}
-                  placeholder="Enter announcement title"
+            <form onSubmit={handleSubmit(onSubmit)} className="grid md:grid-cols-2 gap-6">
+              <div className="flex flex-col space-y-5">
+                <div>
+                  <Label htmlFor="title">Title</Label>
+                  <Input
+                    id="title"
+                    {...register("title", { required: "Title is required" })}
+                    placeholder="Enter announcement title"
+                    className="mt-1"
+                  />
+                  {errors.title?.message && (
+                    <p className="text-sm text-destructive">{errors.title.message}</p>
+                  )}
+                </div>
+                <div>
+                  <Label htmlFor="content">Content</Label>
+                  <Textarea
+                    id="content"
+                    {...register("content", { required: "Content is required" })}
+                    placeholder="Enter announcement content"
+                    rows={4}
+                    className="mt-1"
+                  />
+                  {errors.content?.message && (
+                    <p className="text-sm text-destructive">{errors.content.message}</p>
+                  )}
+                </div>
+                <ImageUpload
+                  onImageSelect={setSelectedImage}
+                  label="Announcement Image (Optional)"
                 />
-                {errors.title?.message && (
-                  <p className="text-sm text-destructive">{errors.title.message}</p>
-                )}
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="content">Content</Label>
-                <Textarea
-                  id="content"
-                  {...register("content", { required: "Content is required" })}
-                  placeholder="Enter announcement content"
-                  rows={4}
-                />
-                {errors.content?.message && (
-                  <p className="text-sm text-destructive">{errors.content.message}</p>
-                )}
-              </div>
-
-              <ImageUpload
-                onImageSelect={setSelectedImage}
-                label="Announcement Image (Optional)"
-              />
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
+              <div className="flex flex-col space-y-5">
+                <div>
                   <Label htmlFor="priority">Priority</Label>
                   <Select onValueChange={(value) => setValue("priority", value as "high" | "normal" | "low")}>
                     <SelectTrigger>
@@ -205,8 +219,7 @@ const AdminAnnouncementsContent = () => {
                     </SelectContent>
                   </Select>
                 </div>
-
-                <div className="space-y-2">
+                <div>
                   <Label>Send Immediately</Label>
                   <div className="flex items-center space-x-2">
                     <Switch
@@ -218,24 +231,24 @@ const AdminAnnouncementsContent = () => {
                     </span>
                   </div>
                 </div>
-              </div>
-
-              <div className="flex gap-2">
-                <Button type="submit" className="flex-1" disabled={isCreating || isUpdating}>
-                  {(isCreating || isUpdating) && <Loader className="h-4 w-4 mr-2 animate-spin" />}
-                  <Send className="h-4 w-4 mr-2" />
-                  {editingAnnouncement ? 'Update Announcement' : 'Create Announcement'}
-                </Button>
-                {editingAnnouncement && (
-                  <Button type="button" variant="outline" onClick={handleCancel}>
-                    Cancel
+                <div className="flex gap-2 pt-4">
+                  <Button type="submit" className="flex-1" disabled={isCreating || isUpdating}>
+                    {(isCreating || isUpdating) && <Loader className="h-4 w-4 mr-2 animate-spin" />}
+                    <Send className="h-4 w-4 mr-2" />
+                    {editingAnnouncement ? 'Update Announcement' : 'Create Announcement'}
                   </Button>
-                )}
+                  {!!editingAnnouncement && (
+                    <Button type="button" variant="outline" onClick={handleCancel}>
+                      Cancel
+                    </Button>
+                  )}
+                </div>
               </div>
             </form>
           </CardContent>
         </Card>
 
+        {/* Announcements List */}
         <div>
           <Card>
             <CardHeader>
@@ -252,54 +265,14 @@ const AdminAnnouncementsContent = () => {
               ) : (
                 <div className="space-y-4">
                   {announcements.map((announcement) => (
-                    <div key={announcement.id} className="border rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="font-semibold">{announcement.title}</h3>
-                            <Badge className={getPriorityColor(announcement.priority)}>
-                              {announcement.priority}
-                            </Badge>
-                            {announcement.send_immediately && (
-                              <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
-                                Immediate
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {announcement.content}
-                          </p>
-                          {announcement.image_url && (
-                            <img 
-                              src={announcement.image_url} 
-                              alt="Announcement" 
-                              className="w-full h-32 object-cover rounded mb-2"
-                            />
-                          )}
-                          <div className="text-xs text-muted-foreground">
-                            Created: {new Date(announcement.created_at).toLocaleString()}
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => handleEdit(announcement)}
-                            disabled={isUpdating}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            onClick={() => handleDelete(announcement.id)}
-                            disabled={isDeleting}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
+                    <AnnouncementCard
+                      key={announcement.id}
+                      announcement={announcement}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      isUpdating={isUpdating}
+                      isDeleting={isDeleting}
+                    />
                   ))}
                 </div>
               )}
@@ -322,3 +295,4 @@ const AdminAnnouncements = () => {
 };
 
 export default AdminAnnouncements;
+

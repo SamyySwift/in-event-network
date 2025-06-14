@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,10 +28,7 @@ import {
   ShoppingBag,
   Bath,
   Bed,
-  AlertCircle,
-  Sparkles,
-  Grid3X3,
-  ChevronRight
+  AlertCircle
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
@@ -74,6 +70,7 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
+// ... keep existing code (facilityIcons array)
 const facilityIcons = [
   { value: 'building', label: 'Building', icon: Building },
   { value: 'wifi', label: 'WiFi', icon: Wifi },
@@ -250,10 +247,10 @@ const AdminFacilities = () => {
   if (eventsLoading || isLoading) {
     return (
       <AdminLayout>
-        <div className="animate-fade-in flex items-center justify-center h-64">
+        <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-lg text-muted-foreground">Loading facilities...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-2 text-muted-foreground">Loading facilities...</p>
           </div>
         </div>
       </AdminLayout>
@@ -263,28 +260,17 @@ const AdminFacilities = () => {
   if (error) {
     return (
       <AdminLayout>
-        <div className="animate-fade-in space-y-6">
-          {/* Hero Header */}
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-red-600 via-pink-600 to-purple-500 p-8 text-white">
-            <div className="absolute inset-0 bg-black/20"></div>
-            <div className="relative z-10">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
-                  <AlertCircle className="h-8 w-8" />
-                </div>
-                <div>
-                  <h1 className="text-4xl font-bold">Facilities Management</h1>
-                  <p className="text-xl opacity-90">Unable to load facilities</p>
-                </div>
-              </div>
-            </div>
-            <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-white/10 rounded-full"></div>
-            <div className="absolute -top-16 -left-16 w-40 h-40 bg-white/5 rounded-full"></div>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Facilities</h1>
+            <p className="text-muted-foreground">
+              Manage facilities and their details.
+            </p>
           </div>
           
-          <Alert variant="destructive" className="border-0 bg-red-50 border-l-4 border-l-red-500">
+          <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="text-red-800">
+            <AlertDescription>
               Failed to load facilities. Please check your connection and try again.
               Error: {error.message}
             </AlertDescription>
@@ -297,28 +283,17 @@ const AdminFacilities = () => {
   if (events.length === 0) {
     return (
       <AdminLayout>
-        <div className="animate-fade-in space-y-6">
-          {/* Hero Header */}
-          <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-8 text-white">
-            <div className="absolute inset-0 bg-black/20"></div>
-            <div className="relative z-10">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
-                  <Building className="h-8 w-8" />
-                </div>
-                <div>
-                  <h1 className="text-4xl font-bold">Facilities Management</h1>
-                  <p className="text-xl opacity-90">Create events first to add facilities</p>
-                </div>
-              </div>
-            </div>
-            <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-white/10 rounded-full"></div>
-            <div className="absolute -top-16 -left-16 w-40 h-40 bg-white/5 rounded-full"></div>
+        <div className="space-y-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Facilities</h1>
+            <p className="text-muted-foreground">
+              Manage facilities and their details.
+            </p>
           </div>
           
-          <Alert className="border-0 bg-blue-50 border-l-4 border-l-blue-500">
-            <AlertCircle className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-blue-800">
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
               You need to create an event first before adding facilities.
             </AlertDescription>
           </Alert>
@@ -329,63 +304,31 @@ const AdminFacilities = () => {
 
   return (
     <AdminLayout>
-      <div className="animate-fade-in space-y-8">
-        {/* Hero Header */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-8 text-white">
-          <div className="absolute inset-0 bg-black/20"></div>
-          <div className="relative z-10">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
-                  <Building className="h-8 w-8" />
-                </div>
-                <div>
-                  <h1 className="text-4xl font-bold mb-2">Facilities Management</h1>
-                  <p className="text-xl opacity-90">Create and manage event facilities</p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                    <span className="text-sm uppercase tracking-wider opacity-80">Live Dashboard</span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-4">
-                <Badge className="bg-white/20 text-white border-white/30 px-4 py-2 text-sm font-medium">
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  {facilities.length} Facilities
-                </Badge>
-              </div>
-            </div>
-          </div>
-          <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-white/10 rounded-full"></div>
-          <div className="absolute -top-16 -left-16 w-40 h-40 bg-white/5 rounded-full"></div>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Facilities</h1>
+          <p className="text-muted-foreground">
+            Manage facilities and their details.
+          </p>
         </div>
 
         {/* Event Selector */}
-        <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-50/80 to-indigo-50/80"></div>
-          <CardHeader className="relative z-10">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                <Grid3X3 className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <CardTitle className="text-2xl">Event Selection</CardTitle>
-                <CardDescription className="text-base">Choose which event to manage facilities for</CardDescription>
-              </div>
-            </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Select Event</CardTitle>
+            <CardDescription>
+              Choose which event to manage facilities for
+            </CardDescription>
           </CardHeader>
-          <CardContent className="relative z-10">
+          <CardContent>
             <Select value={selectedEventId} onValueChange={handleEventChange}>
-              <SelectTrigger className="w-full h-12 bg-white/80 border-0 shadow-sm">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select an event" />
               </SelectTrigger>
               <SelectContent>
                 {events.map((event) => (
-                  <SelectItem key={event.id} value={event.id} className="py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="w-3 h-3 bg-primary rounded-full"></div>
-                      <span className="font-medium">{event.name}</span>
-                    </div>
+                  <SelectItem key={event.id} value={event.id}>
+                    {event.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -393,28 +336,17 @@ const AdminFacilities = () => {
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-          {/* Add/Edit Facility Form */}
-          <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden group hover:shadow-2xl transition-all duration-300">
-            <div className="absolute inset-0 bg-gradient-to-br from-green-50/80 to-emerald-50/80"></div>
-            <CardHeader className="relative z-10">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                  <Plus className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-2xl">
-                    {editingFacility ? 'Edit Facility' : 'Create New Facility'}
-                  </CardTitle>
-                  <CardDescription className="text-base">
-                    {editingFacility ? 'Update facility details and settings' : 'Add facilities with contact options and rules'}
-                  </CardDescription>
-                </div>
-              </div>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <Card className="h-fit">
+            <CardHeader>
+              <CardTitle>{editingFacility ? 'Edit Facility' : 'Add New Facility'}</CardTitle>
+              <CardDescription>
+                {editingFacility ? 'Update the facility details' : 'Add facilities with contact options and rules'}
+              </CardDescription>
             </CardHeader>
-            <CardContent className="relative z-10">
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                <div className="space-y-3">
+            <CardContent>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                <div className="space-y-2">
                   <ImageUpload
                     onImageSelect={handleImageSelect}
                     currentImageUrl={imagePreview}
@@ -422,10 +354,10 @@ const AdminFacilities = () => {
                   />
                 </div>
 
-                <div className="space-y-3">
-                  <Label htmlFor="eventId" className="text-sm font-semibold">Event *</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="eventId">Event *</Label>
                   <Select value={selectedFormEventId} onValueChange={(value) => setValue("eventId", value)}>
-                    <SelectTrigger className="h-12 bg-white/80 border-0 shadow-sm">
+                    <SelectTrigger>
                       <SelectValue placeholder="Select event" />
                     </SelectTrigger>
                     <SelectContent>
@@ -437,49 +369,46 @@ const AdminFacilities = () => {
                     </SelectContent>
                   </Select>
                   {errors.eventId?.message && (
-                    <p className="text-sm text-destructive font-medium">{errors.eventId.message}</p>
+                    <p className="text-sm text-destructive">{errors.eventId.message}</p>
                   )}
                 </div>
 
-                <div className="space-y-3">
-                  <Label htmlFor="name" className="text-sm font-semibold">Facility Name *</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Facility Name *</Label>
                   <Input
                     id="name"
                     {...register("name")}
                     placeholder="Enter facility name"
-                    className="h-12 bg-white/80 border-0 shadow-sm"
                   />
                   {errors.name?.message && (
-                    <p className="text-sm text-destructive font-medium">{errors.name.message}</p>
+                    <p className="text-sm text-destructive">{errors.name.message}</p>
                   )}
                 </div>
 
-                <div className="space-y-3">
-                  <Label htmlFor="description" className="text-sm font-semibold">Description</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
                     {...register("description")}
                     placeholder="Enter facility description"
                     rows={3}
-                    className="bg-white/80 border-0 shadow-sm resize-none"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-3">
-                    <Label htmlFor="location" className="text-sm font-semibold">Location</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="location">Location</Label>
                     <Input
                       id="location"
                       {...register("location")}
                       placeholder="Enter facility location"
-                      className="h-12 bg-white/80 border-0 shadow-sm"
                     />
                   </div>
 
-                  <div className="space-y-3">
-                    <Label className="text-sm font-semibold">Icon</Label>
+                  <div className="space-y-2">
+                    <Label>Icon</Label>
                     <Select value={selectedIcon} onValueChange={(value) => setValue("iconType", value)}>
-                      <SelectTrigger className="h-12 bg-white/80 border-0 shadow-sm">
+                      <SelectTrigger>
                         <SelectValue placeholder="Select icon" />
                       </SelectTrigger>
                       <SelectContent>
@@ -499,22 +428,21 @@ const AdminFacilities = () => {
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <Label htmlFor="rules" className="text-sm font-semibold">Rules (Optional)</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="rules">Rules (Optional)</Label>
                   <Textarea
                     id="rules"
                     {...register("rules")}
                     placeholder="Enter facility rules and guidelines"
                     rows={2}
-                    className="bg-white/80 border-0 shadow-sm resize-none"
                   />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-3">
-                    <Label className="text-sm font-semibold">Contact Type</Label>
+                  <div className="space-y-2">
+                    <Label>Contact Type</Label>
                     <Select value={contactType} onValueChange={(value) => setValue("contactType", value as "none" | "phone" | "whatsapp")}>
-                      <SelectTrigger className="h-12 bg-white/80 border-0 shadow-sm">
+                      <SelectTrigger>
                         <SelectValue placeholder="Select contact type" />
                       </SelectTrigger>
                       <SelectContent>
@@ -526,112 +454,78 @@ const AdminFacilities = () => {
                   </div>
 
                   {(contactType === "phone" || contactType === "whatsapp") && (
-                    <div className="space-y-3">
-                      <Label htmlFor="contactInfo" className="text-sm font-semibold">Contact Number</Label>
+                    <div className="space-y-2">
+                      <Label htmlFor="contactInfo">Contact Number</Label>
                       <Input
                         id="contactInfo"
                         {...register("contactInfo")}
                         placeholder="Enter phone number"
-                        className="h-12 bg-white/80 border-0 shadow-sm"
                       />
                       {errors.contactInfo?.message && (
-                        <p className="text-sm text-destructive font-medium">{errors.contactInfo.message}</p>
+                        <p className="text-sm text-destructive">{errors.contactInfo.message}</p>
                       )}
                     </div>
                   )}
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                <div className="flex gap-2">
                   {editingFacility && (
-                    <Button type="button" variant="outline" onClick={handleCancelEdit} className="flex-1 h-12 bg-white/80 border-0 shadow-sm hover:bg-gray-50">
+                    <Button type="button" variant="outline" onClick={handleCancelEdit} className="flex-1">
                       Cancel
                     </Button>
                   )}
                   <Button 
                     type="submit" 
-                    className="flex-1 h-12 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 shadow-lg"
+                    className="flex-1"
                     disabled={isCreating || isUpdating || !selectedFormEventId}
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    {editingFacility ? (isUpdating ? 'Updating...' : 'Update Facility') : (isCreating ? 'Creating...' : 'Create Facility')}
+                    {editingFacility ? (isUpdating ? 'Updating...' : 'Update Facility') : (isCreating ? 'Creating...' : 'Add Facility')}
                   </Button>
                 </div>
               </form>
             </CardContent>
           </Card>
 
-          {/* Facilities List */}
-          <Card className="border-0 shadow-xl bg-white/80 backdrop-blur-sm overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-50/80 to-pink-50/80"></div>
-            <CardHeader className="relative z-10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
-                    <Building className="h-6 w-6 text-white" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-2xl">Facilities List ({facilities.length})</CardTitle>
-                    <CardDescription className="text-base">
-                      View and manage existing facilities
-                      {selectedEventId && events.find(e => e.id === selectedEventId) && (
-                        <span className="block mt-1 text-primary font-medium">
-                          for {events.find(e => e.id === selectedEventId)?.name}
-                        </span>
-                      )}
-                    </CardDescription>
-                  </div>
-                </div>
-              </div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Facilities List ({facilities.length})</CardTitle>
+              <CardDescription>
+                View and manage existing facilities
+                {selectedEventId && events.find(e => e.id === selectedEventId) && (
+                  <span className="block mt-1 text-primary">
+                    for {events.find(e => e.id === selectedEventId)?.name}
+                  </span>
+                )}
+              </CardDescription>
             </CardHeader>
-            <CardContent className="relative z-10">
+            <CardContent>
               {facilities.length === 0 ? (
-                <div className="text-center py-16 px-6">
-                  <div className="w-20 h-20 bg-gray-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                    <Building className="h-10 w-10 text-gray-400" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No facilities yet</h3>
-                  <p className="text-gray-500 mb-6">Create your first facility using the form on the left.</p>
-                  <div className="flex items-center justify-center gap-2 text-sm text-gray-400">
-                    <Sparkles className="w-4 h-4" />
-                    <span>Get started by adding facilities to your event</span>
-                  </div>
+                <div className="text-center py-8 text-muted-foreground">
+                  <Building className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No facilities added yet.</p>
+                  <p className="text-sm mt-2">Create your first facility using the form on the left.</p>
                 </div>
               ) : (
-                <div className="space-y-4 max-h-[700px] overflow-y-auto pr-2">
-                  {facilities.map((facility, index) => (
-                    <div 
-                      key={facility.id} 
-                      className="group border-0 bg-white/60 backdrop-blur-sm rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
-                      style={{ 
-                        animationDelay: `${index * 100}ms`,
-                        animation: 'fade-in 0.5s ease-out forwards'
-                      }}
-                    >
-                      <div className="flex items-start justify-between gap-4 mb-4">
+                <div className="space-y-4 max-h-[600px] overflow-y-auto">
+                  {facilities.map((facility) => (
+                    <div key={facility.id} className="border rounded-lg p-4 space-y-3 hover:shadow-sm transition-shadow">
+                      <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-4 mb-3">
+                          <div className="flex items-center gap-2 mb-2">
                             {facility.image_url && (
-                              <div className="relative">
-                                <img 
-                                  src={facility.image_url} 
-                                  alt={facility.name}
-                                  className="w-16 h-16 object-cover rounded-xl shadow-md"
-                                />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent rounded-xl"></div>
-                              </div>
+                              <img 
+                                src={facility.image_url} 
+                                alt={facility.name}
+                                className="w-12 h-12 object-cover rounded"
+                              />
                             )}
-                            <div className="flex-1">
-                              <div className="flex items-center gap-3 mb-2">
-                                <div className="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-                                  {getFacilityIcon(facility.icon_type)}
-                                </div>
-                                <h4 className="font-bold text-lg text-gray-900 break-words">{facility.name}</h4>
-                              </div>
-                              {facility.description && (
-                                <p className="text-sm text-gray-600 break-words leading-relaxed">{facility.description}</p>
-                              )}
-                            </div>
+                            {getFacilityIcon(facility.icon_type)}
+                            <h4 className="font-medium text-sm sm:text-base break-words">{facility.name}</h4>
                           </div>
+                          {facility.description && (
+                            <p className="text-sm text-muted-foreground break-words">{facility.description}</p>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 flex-shrink-0">
                           <Button
@@ -639,7 +533,6 @@ const AdminFacilities = () => {
                             variant="ghost"
                             onClick={() => handleEdit(facility)}
                             disabled={isUpdating}
-                            className="h-10 w-10 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-colors"
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -648,13 +541,13 @@ const AdminFacilities = () => {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="h-10 w-10 rounded-xl hover:bg-red-50 hover:text-red-600 transition-colors"
+                                className="text-destructive hover:text-destructive"
                                 disabled={isDeleting}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </AlertDialogTrigger>
-                            <AlertDialogContent className="rounded-2xl">
+                            <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>Delete Facility</AlertDialogTitle>
                                 <AlertDialogDescription>
@@ -662,11 +555,8 @@ const AdminFacilities = () => {
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel className="rounded-xl">Cancel</AlertDialogCancel>
-                                <AlertDialogAction 
-                                  onClick={() => deleteFacility(facility.id)}
-                                  className="rounded-xl bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700"
-                                >
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => deleteFacility(facility.id)}>
                                   Delete
                                 </AlertDialogAction>
                               </AlertDialogFooter>
@@ -675,48 +565,34 @@ const AdminFacilities = () => {
                         </div>
                       </div>
                       
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         {facility.location && (
-                          <div className="flex items-center gap-3 text-sm">
-                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                              <MapPin className="h-4 w-4 text-gray-600" />
-                            </div>
-                            <span className="text-gray-700 font-medium break-words">{facility.location}</span>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <MapPin className="h-4 w-4 flex-shrink-0" />
+                            <span className="break-words">{facility.location}</span>
                           </div>
                         )}
                         
                         {facility.contact_type !== 'none' && facility.contact_info && (
-                          <div className="flex items-center gap-3 text-sm">
-                            <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                              {getContactIcon(facility.contact_type)}
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-gray-600 capitalize">{facility.contact_type}:</span>
-                              <span className="font-semibold text-gray-900 break-words">{facility.contact_info}</span>
-                            </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            {getContactIcon(facility.contact_type)}
+                            <span className="text-muted-foreground capitalize">{facility.contact_type}:</span>
+                            <span className="font-medium break-words">{facility.contact_info}</span>
                           </div>
                         )}
                         
                         {facility.rules && (
-                          <div className="mt-4">
-                            <div className="flex items-center gap-2 mb-2">
-                              <div className="w-6 h-6 bg-yellow-100 rounded-lg flex items-center justify-center">
-                                <AlertCircle className="h-3 w-3 text-yellow-600" />
-                              </div>
-                              <span className="text-sm font-semibold text-gray-700">Rules:</span>
-                            </div>
-                            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4">
-                              <p className="text-sm text-gray-700 leading-relaxed break-words">{facility.rules}</p>
-                            </div>
+                          <div className="text-sm">
+                            <span className="text-muted-foreground">Rules:</span>
+                            <p className="text-sm mt-1 p-2 bg-muted rounded break-words">{facility.rules}</p>
                           </div>
                         )}
                       </div>
                       
-                      <div className="flex justify-between items-center pt-4 mt-4 border-t border-gray-200/50">
-                        <span className="text-xs text-gray-500 font-medium">
+                      <div className="flex justify-between items-center pt-2 border-t">
+                        <span className="text-xs text-muted-foreground">
                           Created {format(new Date(facility.created_at), 'MMM d, yyyy')}
                         </span>
-                        <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-gray-400 transition-colors" />
                       </div>
                     </div>
                   ))}

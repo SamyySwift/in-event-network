@@ -499,13 +499,21 @@ const AttendeeSchedule = () => {
                                     </p>
                                   )}
 
-                                  <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-2 flex-wrap">
+                                  {/* --- BADGES AND SOCIAL LINKS: vertical layout --- */}
+                                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                    <div className="flex items-center gap-2 flex-wrap mb-2 sm:mb-0">
                                       {getTypeBadge(item.type)}
                                       {getPriorityBadge(item.priority)}
                                     </div>
-                                    {renderSocialLinks(item)}
+                                    {/* Only show on non-speakers for spacing - mobile safe */}
+                                    {/* For speaker, show social links right under badges */}
                                   </div>
+                                  {/* Move social links directly below badges, full width, for vertical stacking on mobile */}
+                                  {item.type === 'speaker' && (
+                                    <div className="mt-2 mb-1">
+                                      {renderSocialLinks(item)}
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             </div>

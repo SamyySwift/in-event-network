@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import AppLayout from '@/components/layouts/AppLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -236,56 +235,53 @@ const AttendeeAnnouncementsContent = () => {
                 className={`group border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden bg-gradient-to-r ${getPriorityGradient(announcement.priority)} backdrop-blur-sm hover:-translate-y-1 animate-fade-in`}
                 style={{ animationDelay: `${index * 100}ms` }}
               >
-                <CardHeader className="bg-white/80 backdrop-blur-sm">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 bg-gradient-to-r from-green-400 to-emerald-500 rounded-full animate-pulse"></div>
-                          <CardTitle className="text-xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                            {announcement.title}
-                          </CardTitle>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Badge className={`${getPriorityColor(announcement.priority)} font-semibold px-3 py-1 shadow-md`}>
-                            {announcement.priority} priority
-                          </Badge>
-                          {announcement.send_immediately && (
-                            <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700 font-semibold px-3 py-1 shadow-md animate-pulse">
-                              <BellRing className="h-3 w-3 mr-1" />
-                              Urgent
-                            </Badge>
-                          )}
-                        </div>
+                {/* Organized Card Header */}
+                <CardHeader className="bg-white/90 backdrop-blur-lg pb-2">
+                  <div className="flex justify-between items-start gap-4">
+                    {/* Left: Title + Priority */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-xs font-bold px-2 py-1 rounded-lg uppercase tracking-wide shadow-sm ${getPriorityColor(announcement.priority)}`}>
+                          {announcement.priority}
+                        </span>
+                        {announcement.send_immediately && (
+                          <span className="inline-flex items-center bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs font-semibold rounded-lg px-2 py-1 ml-1 shadow-sm animate-pulse">
+                            <BellRing className="h-3 w-3 mr-1" /> Urgent
+                          </span>
+                        )}
                       </div>
-                      
-                      <div className="flex items-center gap-4 text-sm text-gray-600">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-indigo-500" />
-                          <span className="font-medium">{formatDate(announcement.created_at)}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <User className="h-4 w-4 text-indigo-500" />
-                          <span>Event Organizer</span>
-                        </div>
-                      </div>
+                      <h2 className="text-xl font-bold text-gray-900 group-hover:text-indigo-700 truncate transition-colors mb-0">
+                        {announcement.title}
+                      </h2>
                     </div>
-                    
+                    {/* Right: More/Less Button */}
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => toggleExpanded(announcement.id)}
-                      className="ml-4 opacity-70 hover:opacity-100 transition-opacity"
+                      className="ml-2 shrink-0 h-8 w-18 px-2 text-indigo-600/80 font-medium hover:text-indigo-800"
                     >
                       <Eye className="h-4 w-4 mr-1" />
                       {expandedAnnouncement === announcement.id ? 'Less' : 'More'}
                       <ChevronRight className={`h-4 w-4 ml-1 transition-transform ${expandedAnnouncement === announcement.id ? 'rotate-90' : ''}`} />
                     </Button>
                   </div>
+                  {/* Meta info row */}
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mt-2">
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5 text-indigo-400" />
+                      <span>{formatDate(announcement.created_at)}</span>
+                    </div>
+                    <span className="hidden sm:inline-block">•</span>
+                    <div className="flex items-center gap-1">
+                      <User className="h-3.5 w-3.5 text-indigo-400" />
+                      <span>Event Organizer</span>
+                    </div>
+                  </div>
                 </CardHeader>
                 
-                <CardContent className="bg-white/90 backdrop-blur-sm">
-                  <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed">
+                <CardContent className="bg-white/95 backdrop-blur-md">
+                  <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed mt-0">
                     {expandedAnnouncement === announcement.id ? (
                       announcement.content.split('\n').map((paragraph, index) => (
                         <p key={index} className="mb-3 last:mb-0">
@@ -293,14 +289,16 @@ const AttendeeAnnouncementsContent = () => {
                         </p>
                       ))
                     ) : (
-                      <p className="mb-0 line-clamp-2">
-                        {announcement.content.split('\n')[0]}
-                        {announcement.content.length > 150 && '...'}
+                      <p className="line-clamp-2 mb-0">
+                        {announcement.content.length > 150
+                          ? `${announcement.content.substring(0, 150)}...`
+                          : announcement.content}
                       </p>
                     )}
                   </div>
                   
-                  {announcement.image_url && (expandedAnnouncement === announcement.id) && (
+                  {/* Announcement image shows only when expanded */}
+                  {announcement.image_url && expandedAnnouncement === announcement.id && (
                     <div className="mt-6">
                       <img 
                         src={announcement.image_url} 
@@ -309,12 +307,13 @@ const AttendeeAnnouncementsContent = () => {
                       />
                     </div>
                   )}
-                  
+
+                  {/* "Read more" button if not expanded */}
                   {announcement.content.length > 150 && expandedAnnouncement !== announcement.id && (
                     <Button
                       variant="link"
                       onClick={() => toggleExpanded(announcement.id)}
-                      className="mt-2 p-0 h-auto text-indigo-600 hover:text-indigo-700 font-medium"
+                      className="mt-2 p-0 h-auto text-indigo-600 hover:text-indigo-800 font-medium"
                     >
                       Read more <ChevronRight className="h-4 w-4 ml-1" />
                     </Button>

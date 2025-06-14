@@ -14,6 +14,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRules, Rule } from "@/hooks/useRules";
 import { format } from 'date-fns';
+import { useAdminEventContext } from "@/hooks/useAdminEventContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,8 +38,19 @@ type RuleSchemaType = z.infer<typeof ruleSchema>;
 
 const AdminRules = () => {
   const [editingRule, setEditingRule] = useState<Rule | null>(null);
-  const { rules, isLoading, createRule, updateRule, deleteRule, isCreating, isUpdating, isDeleting } = useRules();
-  
+  const { selectedEvent, selectedEventId } = useAdminEventContext();
+  const {
+    rules,
+    isLoading,
+    createRule,
+    updateRule,
+    deleteRule,
+    isCreating,
+    isUpdating,
+    isDeleting,
+    error: rulesError,
+  } = useRules(selectedEventId);
+
   const { register, handleSubmit, setValue, reset, watch, formState: { errors } } = useForm<RuleSchemaType>({
     resolver: zodResolver(ruleSchema),
     defaultValues: {
@@ -53,12 +65,8 @@ const AdminRules = () => {
   const selectedPriority = watch("priority");
 
   const onSubmit = (data: RuleSchemaType) => {
-    console.log('Form submitted with data:', data);
-    
-    if (!data.title || !data.content) {
-      return;
-    }
-
+    if (!selectedEventId) return;
+    if (!data.title || !data.content) return;
     const ruleData = {
       title: data.title,
       content: data.content,
@@ -88,13 +96,27 @@ const AdminRules = () => {
     reset();
   };
 
+  if (!selectedEventId) {
+    return (
+      <AdminLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh]">
+          <Info className="h-12 w-12 text-blue-500 mb-4" />
+          <h2 className="text-2xl font-bold mb-2">No Event Selected</h2>
+          <p className="mb-4 text-muted-foreground text-center">
+            Please select an event from the event selector at the top to manage rules. Rules are associated with each event.
+          </p>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   if (isLoading) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-2 text-muted-foreground">Loading rules...</p>
+            <p className="mt-2 text-muted-foreground">Loading rules for <span className="font-semibold">{selectedEvent?.name}</span>...</p>
           </div>
         </div>
       </AdminLayout>
@@ -105,18 +127,27 @@ const AdminRules = () => {
     <AdminLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Event Rules</h1>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            Event Rules
+            {selectedEvent && (
+              <Badge className="bg-blue-100 text-blue-800 capitalize px-3 ml-2">{selectedEvent.name}</Badge>
+            )}
+          </h1>
           <p className="text-muted-foreground">
-            Manage rules and guidelines for event attendees.
+            Manage rules and guidelines for the event: <b>{selectedEvent?.name || "N/A"}</b>.
           </p>
         </div>
-
+        {rulesError && (
+          <div className="bg-destructive/10 text-destructive p-3 rounded-lg text-sm">
+            Error loading rules: {rulesError.message}
+          </div>
+        )}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <Card className="h-fit">
             <CardHeader>
               <CardTitle>{editingRule ? 'Edit Rule' : 'Add New Rule'}</CardTitle>
               <CardDescription>
-                {editingRule ? 'Update the rule details' : 'Create rules and guidelines for event attendees'}
+                {editingRule ? 'Update the rule details for this event' : 'Create rules and guidelines for event attendees'}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -132,7 +163,6 @@ const AdminRules = () => {
                     <p className="text-sm text-destructive">{errors.title.message}</p>
                   )}
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="content">Rule Content *</Label>
                   <Textarea
@@ -161,7 +191,6 @@ const AdminRules = () => {
                       </SelectContent>
                     </Select>
                   </div>
-
                   <div className="space-y-2">
                     <Label>Priority</Label>
                     <Select value={selectedPriority} onValueChange={(value) => setValue("priority", value as "high" | "medium" | "low")}>
@@ -183,31 +212,37 @@ const AdminRules = () => {
                       Cancel
                     </Button>
                   )}
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="flex-1"
-                    disabled={isCreating || isUpdating}
+                    disabled={isCreating || isUpdating || !selectedEventId}
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    {editingRule ? (isUpdating ? 'Updating...' : 'Update Rule') : (isCreating ? 'Creating...' : 'Add Rule')}
+                    {editingRule
+                      ? (isUpdating ? 'Updating...' : 'Update Rule')
+                      : (isCreating ? 'Creating...' : 'Add Rule')}
                   </Button>
                 </div>
+                {!selectedEventId && (
+                  <p className="text-xs text-destructive mt-2">
+                    Please select an event at the top before adding or editing rules.
+                  </p>
+                )}
               </form>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader>
               <CardTitle>Current Rules ({rules.length})</CardTitle>
               <CardDescription>
-                List of all event rules and guidelines
+                Rules are visible to attendees of: <b>{selectedEvent?.name || "N/A"}</b>
               </CardDescription>
             </CardHeader>
             <CardContent>
               {rules.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Info className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No rules added yet.</p>
+                  <p>No rules added yet for this event.</p>
                   <p className="text-sm mt-2">Create your first rule using the form on the left.</p>
                 </div>
               ) : (
@@ -256,7 +291,6 @@ const AdminRules = () => {
                           </AlertDialog>
                         </div>
                       </div>
-                      
                       <div className="flex items-center gap-2 flex-wrap">
                         {rule.category && (
                           <Badge variant="outline" className="text-xs">

@@ -9,19 +9,30 @@ import { useDirectMessages, DirectMessage } from '@/hooks/useDirectMessages';
 import { formatDistanceToNow } from 'date-fns';
 
 interface DirectMessageThreadProps {
-  recipientId: string;
-  recipientName: string;
+  recipientId?: string;
+  recipientName?: string;
   recipientPhoto?: string;
   onBack: () => void;
+  conversation?: {
+    userId: string;
+    userName: string;
+    userPhoto?: string;
+  };
 }
 
 export const DirectMessageThread: React.FC<DirectMessageThreadProps> = ({
   recipientId,
   recipientName,
   recipientPhoto,
-  onBack
+  onBack,
+  conversation
 }) => {
-  const { messages, loading, sendMessage } = useDirectMessages(recipientId);
+  // Use conversation props if available, otherwise use direct props
+  const actualRecipientId = conversation?.userId || recipientId;
+  const actualRecipientName = conversation?.userName || recipientName || 'Unknown User';
+  const actualRecipientPhoto = conversation?.userPhoto || recipientPhoto;
+
+  const { messages, loading, sendMessage } = useDirectMessages(actualRecipientId);
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -34,9 +45,9 @@ export const DirectMessageThread: React.FC<DirectMessageThreadProps> = ({
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !actualRecipientId) return;
 
-    await sendMessage(recipientId, newMessage);
+    await sendMessage(actualRecipientId, newMessage);
     setNewMessage('');
   };
 
@@ -46,6 +57,20 @@ export const DirectMessageThread: React.FC<DirectMessageThreadProps> = ({
       handleSendMessage();
     }
   };
+
+  // Add safety check for required props
+  if (!actualRecipientId) {
+    return (
+      <Card className="h-[600px] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-500 dark:text-gray-400">No conversation selected</p>
+          <Button variant="outline" onClick={onBack} className="mt-4">
+            Back to Conversations
+          </Button>
+        </div>
+      </Card>
+    );
+  }
 
   if (loading) {
     return (
@@ -63,15 +88,15 @@ export const DirectMessageThread: React.FC<DirectMessageThreadProps> = ({
             <ArrowLeft className="h-4 w-4" />
           </Button>
           <Avatar className="h-8 w-8">
-            {recipientPhoto ? (
-              <AvatarImage src={recipientPhoto} alt={recipientName} />
+            {actualRecipientPhoto ? (
+              <AvatarImage src={actualRecipientPhoto} alt={actualRecipientName} />
             ) : (
               <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300">
-                {recipientName.charAt(0)}
+                {actualRecipientName.charAt(0).toUpperCase()}
               </AvatarFallback>
             )}
           </Avatar>
-          <h3 className="font-medium text-gray-900 dark:text-white">{recipientName}</h3>
+          <h3 className="font-medium text-gray-900 dark:text-white">{actualRecipientName}</h3>
         </div>
       </CardHeader>
       
@@ -87,7 +112,7 @@ export const DirectMessageThread: React.FC<DirectMessageThreadProps> = ({
               <DirectMessageBubble
                 key={message.id}
                 message={message}
-                isOwn={message.sender_id === recipientId ? false : true}
+                isOwn={message.sender_id === actualRecipientId ? false : true}
               />
             ))
           )}
@@ -127,15 +152,16 @@ interface DirectMessageBubbleProps {
 const DirectMessageBubble: React.FC<DirectMessageBubbleProps> = ({ message, isOwn }) => {
   const timeAgo = formatDistanceToNow(new Date(message.created_at), { addSuffix: true });
   const profile = isOwn ? message.sender_profile : message.recipient_profile;
+  const profileName = profile?.name || 'Unknown User';
 
   return (
     <div className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>
       <Avatar className="h-8 w-8 flex-shrink-0">
         {profile?.photo_url ? (
-          <AvatarImage src={profile.photo_url} alt={profile?.name} />
+          <AvatarImage src={profile.photo_url} alt={profileName} />
         ) : (
           <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300 text-sm">
-            {profile?.name?.charAt(0) || 'U'}
+            {profileName.charAt(0).toUpperCase()}
           </AvatarFallback>
         )}
       </Avatar>

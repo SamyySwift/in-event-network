@@ -8,10 +8,10 @@ import { useDirectMessages, Conversation } from '@/hooks/useDirectMessages';
 import { formatDistanceToNow } from 'date-fns';
 
 interface ConversationsListProps {
-  onSelectConversation: (userId: string, userName: string, userPhoto?: string) => void;
+  onSelect: (userId: string, userName: string, userPhoto?: string) => void;
 }
 
-export const ConversationsList: React.FC<ConversationsListProps> = ({ onSelectConversation }) => {
+export const ConversationsList: React.FC<ConversationsListProps> = ({ onSelect }) => {
   const { conversations, loading } = useDirectMessages();
 
   if (loading) {
@@ -47,7 +47,7 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({ onSelectCo
               <ConversationItem
                 key={conversation.conversation_id}
                 conversation={conversation}
-                onClick={() => onSelectConversation(
+                onClick={() => onSelect(
                   conversation.other_user_id,
                   conversation.other_user_profile?.name || 'Unknown User',
                   conversation.other_user_profile?.photo_url
@@ -83,7 +83,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({ conversation, onCli
             />
           ) : (
             <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300">
-              {conversation.other_user_profile?.name?.charAt(0) || 'U'}
+              {(conversation.other_user_profile?.name || 'U').charAt(0).toUpperCase()}
             </AvatarFallback>
           )}
         </Avatar>

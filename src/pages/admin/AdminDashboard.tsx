@@ -11,7 +11,7 @@ import {
   MessageSquare, 
   QrCode,
   User,
-  TrendingUp
+  BarChart4
 } from 'lucide-react';
 import { useAdminDashboard } from '@/hooks/useAdminDashboard';
 import { useAuth } from '@/contexts/AuthContext';
@@ -47,125 +47,138 @@ const AdminDashboardContent = () => {
 
   const metrics = [
     {
-      title: 'Your Events',
-      value: dashboardData?.eventsCount?.toString() || '0',
-      change: 'Total created',
+      title: 'Total Events',
+      value: dashboardData?.eventsCount,
       icon: Calendar,
-      color: 'text-blue-600',
+      gradient: 'from-blue-500 to-cyan-400',
     },
     {
-      title: 'Your Attendees',
-      value: dashboardData?.attendeesCount?.toString() || '0',
-      change: 'Registered',
+      title: 'Total Attendees',
+      value: dashboardData?.attendeesCount,
       icon: Users,
-      color: 'text-green-600',
+      gradient: 'from-green-500 to-emerald-400',
     },
     {
-      title: 'Your Speakers',
-      value: dashboardData?.speakersCount?.toString() || '0',
-      change: 'Added',
+      title: 'Total Speakers',
+      value: dashboardData?.speakersCount,
       icon: User,
-      color: 'text-purple-600',
+      gradient: 'from-purple-500 to-violet-400',
     },
     {
-      title: 'Questions Received',
-      value: dashboardData?.questionsCount?.toString() || '0',
-      change: 'Total submitted',
+      title: 'Total Questions',
+      value: dashboardData?.questionsCount,
       icon: MessageSquare,
-      color: 'text-orange-600',
+      gradient: 'from-orange-500 to-amber-400',
     },
   ];
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Your Admin Dashboard</h1>
-        <p className="text-muted-foreground">
-          Welcome back, {currentUser?.name || currentUser?.email}! Here's what's happening with your events.
-        </p>
-      </div>
+    <div className="space-y-8 animate-fade-in">
+      {/* Hero Section */}
+      <div className="p-8 rounded-2xl bg-gradient-to-br from-primary via-indigo-600 to-purple-600 text-white shadow-2xl shadow-primary/20 relative overflow-hidden">
+        <div className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full opacity-50"></div>
+        <div className="absolute -bottom-12 -left-12 w-36 h-36 bg-white/5 rounded-full opacity-50"></div>
 
-      {/* Event Selector */}
-      <div className="border rounded-lg p-4 bg-card">
-        <EventSelector />
+        <div className="relative">
+          <h1 className="text-4xl font-bold tracking-tight">Admin Dashboard</h1>
+          <p className="text-primary-200 mt-2 max-w-2xl">
+            Welcome back, {currentUser?.name || currentUser?.email}! Here's a comprehensive overview of your events.
+          </p>
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/10">
+              <p className="text-sm text-primary-200">Live Events</p>
+              {isLoading ? (
+                <Skeleton className="h-8 w-12 mt-1 bg-white/20" />
+              ) : (
+                <p className="text-3xl font-bold text-green-300">{dashboardData?.liveEventsCount || 0}</p>
+              )}
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/10">
+              <p className="text-sm text-primary-200">Upcoming Events</p>
+              {isLoading ? (
+                <Skeleton className="h-8 w-12 mt-1 bg-white/20" />
+              ) : (
+                <p className="text-3xl font-bold text-blue-300">{dashboardData?.upcomingEventsCount || 0}</p>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Metrics Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {metrics.map((metric) => (
-          <Card key={metric.title}>
+          <Card key={metric.title} className="glass-card hover:-translate-y-1 hover:shadow-primary/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
                 {metric.title}
               </CardTitle>
-              <metric.icon className={`h-4 w-4 ${metric.color}`} />
+              <div className={`p-2 rounded-lg bg-gradient-to-br ${metric.gradient} shadow-md shadow-black/20`}>
+                <metric.icon className="h-5 w-5 text-white" />
+              </div>
             </CardHeader>
             <CardContent>
               {isLoading ? (
-                <Skeleton className="h-8 w-16 mb-2" />
+                <Skeleton className="h-8 w-20" />
               ) : (
-                <div className="text-2xl font-bold">{metric.value}</div>
+                <div className="text-3xl font-bold">{metric.value?.toString() || '0'}</div>
               )}
-              <p className="text-xs text-muted-foreground">
-                {metric.change}
-              </p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* QR Code Generator Section */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold flex items-center gap-2">
-            <QrCode className="h-5 w-5" />
-            Event Registration QR Code
-          </h2>
-          {userProfile?.access_key ? (
-            <QRCodeGenerator 
-              eventName="Join Event" 
-              eventUrl={`${window.location.origin}/register?code=${userProfile.access_key}`}
-            />
-          ) : (
-            <div className="text-muted-foreground">
-              Access key not available. Please contact support.
-            </div>
-          )}
+      <div className="grid gap-6 lg:grid-cols-5">
+        <div className="lg:col-span-3 space-y-6">
+          {/* Event Selector */}
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart4 className="h-5 w-5 text-primary" />
+                Event Focus
+              </CardTitle>
+              <CardDescription>
+                Select an event to see detailed stats and manage it.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <EventSelector />
+            </CardContent>
+          </Card>
         </div>
-
-        {/* Quick Stats */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Event Overview
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="text-center">
-                {isLoading ? (
-                  <Skeleton className="h-8 w-16 mx-auto mb-2" />
-                ) : (
-                  <div className="text-2xl font-bold text-blue-600">
-                    {dashboardData?.upcomingEventsCount || 0}
-                  </div>
-                )}
-                <p className="text-sm text-muted-foreground">Upcoming Events</p>
-              </div>
-              <div className="text-center">
-                {isLoading ? (
-                  <Skeleton className="h-8 w-16 mx-auto mb-2" />
-                ) : (
-                  <div className="text-2xl font-bold text-green-600">
-                    {dashboardData?.liveEventsCount || 0}
-                  </div>
-                )}
-                <p className="text-sm text-muted-foreground">Live Events</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        
+        <div className="lg:col-span-2 space-y-6">
+          {/* QR Code Generator Section */}
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <QrCode className="h-5 w-5 text-primary" />
+                Event Registration QR
+              </CardTitle>
+              <CardDescription>
+                Share this QR code for easy event registration.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center">
+              {userProfile?.access_key ? (
+                <QRCodeGenerator 
+                  eventName="Join Event" 
+                  eventUrl={`${window.location.origin}/register?code=${userProfile.access_key}`}
+                />
+              ) : (
+                isLoading ? 
+                <div className="flex flex-col items-center justify-center h-48">
+                  <Skeleton className="h-32 w-32" />
+                  <Skeleton className="h-4 w-40 mt-4" />
+                </div>
+                :
+                <div className="text-muted-foreground text-center p-4">
+                  Access key not available. Please contact support.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

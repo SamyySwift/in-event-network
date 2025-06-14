@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ArrowUp, MessageSquare, Send, User } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
@@ -26,6 +27,7 @@ import { Separator } from '@/components/ui/separator';
 import FeedbackModal from '@/components/FeedbackModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAttendeeQuestions } from '@/hooks/useAttendeeQuestions';
+import { format } from 'date-fns';
 
 const AttendeeQuestions = () => {
   const { currentUser } = useAuth();
@@ -107,6 +109,89 @@ const AttendeeQuestions = () => {
       </AppLayout>
     );
   }
+
+  const renderQuestionCard = (question: any) => {
+    const userName = question.profiles?.name || 'Anonymous';
+    const userPhoto = question.profiles?.photo_url;
+    
+    return (
+      <Card key={question.id} className={question.is_answered ? 'border-green-200 bg-green-50/50' : ''}>
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-4">
+            <Avatar className="flex-shrink-0">
+              {!question.is_anonymous && userPhoto ? (
+                <AvatarImage src={userPhoto} />
+              ) : (
+                <AvatarFallback>
+                  {question.is_anonymous ? <User className="h-4 w-4" /> : userName.charAt(0)}
+                </AvatarFallback>
+              )}
+            </Avatar>
+            
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="font-medium text-sm">
+                  {question.is_anonymous ? 'Anonymous' : userName}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {new Date(question.created_at).toLocaleDateString()}
+                </span>
+                {question.is_answered && (
+                  <Badge className="bg-green-100 text-green-800">
+                    Answered
+                  </Badge>
+                )}
+              </div>
+              
+              <p className="text-gray-800 dark:text-gray-200 mb-3">
+                {question.content}
+              </p>
+
+              {/* Admin Response */}
+              {question.response && (
+                <div className="mt-4 p-4 bg-blue-50 border-l-4 border-blue-200 rounded">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
+                      <span className="text-xs font-semibold text-white">A</span>
+                    </div>
+                    <span className="text-sm font-medium text-blue-800">Admin Response</span>
+                    {question.response_created_at && (
+                      <span className="text-xs text-blue-600">
+                        • {format(new Date(question.response_created_at), 'MMM d, h:mm a')}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-blue-700 pl-8">{question.response}</p>
+                </div>
+              )}
+              
+              <div className="flex items-center gap-4 mt-3">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleUpvote(question.id)}
+                  className="text-gray-600 hover:text-connect-600"
+                >
+                  <ArrowUp className="h-4 w-4 mr-1" />
+                  {question.upvotes}
+                </Button>
+                
+                {question.is_answered && question.user_id === currentUser?.id && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleFeedback(question.id)}
+                  >
+                    Rate Answer
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  };
 
   return (
     <AppLayout>
@@ -215,70 +300,7 @@ const AttendeeQuestions = () => {
                 <h2 className="text-xl font-semibold">My Questions</h2>
               </div>
               <div className="space-y-4 mb-6">
-                {myQuestions.map(question => {
-                  const userName = question.profiles?.name || 'Anonymous';
-                  const userPhoto = question.profiles?.photo_url;
-                  
-                  return (
-                    <Card key={question.id} className={question.is_answered ? 'border-green-200 bg-green-50/50' : ''}>
-                      <CardContent className="pt-6">
-                        <div className="flex items-start gap-4">
-                          <Avatar className="flex-shrink-0">
-                            {!question.is_anonymous && userPhoto ? (
-                              <AvatarImage src={userPhoto} />
-                            ) : (
-                              <AvatarFallback>
-                                {question.is_anonymous ? <User className="h-4 w-4" /> : userName.charAt(0)}
-                              </AvatarFallback>
-                            )}
-                          </Avatar>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-2">
-                              <span className="font-medium text-sm">
-                                {question.is_anonymous ? 'Anonymous' : userName}
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                {new Date(question.created_at).toLocaleDateString()}
-                              </span>
-                              {question.is_answered && (
-                                <Badge className="bg-green-100 text-green-800">
-                                  Answered
-                                </Badge>
-                              )}
-                            </div>
-                            
-                            <p className="text-gray-800 dark:text-gray-200 mb-3">
-                              {question.content}
-                            </p>
-                            
-                            <div className="flex items-center gap-4">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleUpvote(question.id)}
-                                className="text-gray-600 hover:text-connect-600"
-                              >
-                                <ArrowUp className="h-4 w-4 mr-1" />
-                                {question.upvotes}
-                              </Button>
-                              
-                              {question.is_answered && (
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleFeedback(question.id)}
-                                >
-                                  Rate Answer
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
+                {myQuestions.map(question => renderQuestionCard(question))}
               </div>
               <Separator className="my-6" />
             </>
@@ -291,60 +313,7 @@ const AttendeeQuestions = () => {
           
           <div className="space-y-4">
             {otherQuestions.length > 0 ? (
-              otherQuestions.map(question => {
-                const userName = question.profiles?.name || 'Anonymous';
-                const userPhoto = question.profiles?.photo_url;
-                
-                return (
-                  <Card key={question.id} className={question.is_answered ? 'border-green-200 bg-green-50/50' : ''}>
-                    <CardContent className="pt-6">
-                      <div className="flex items-start gap-4">
-                        <Avatar className="flex-shrink-0">
-                          {!question.is_anonymous && userPhoto ? (
-                            <AvatarImage src={userPhoto} />
-                          ) : (
-                            <AvatarFallback>
-                              {question.is_anonymous ? <User className="h-4 w-4" /> : userName.charAt(0)}
-                            </AvatarFallback>
-                          )}
-                        </Avatar>
-                        
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-medium text-sm">
-                              {question.is_anonymous ? 'Anonymous' : userName}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {new Date(question.created_at).toLocaleDateString()}
-                            </span>
-                            {question.is_answered && (
-                              <Badge className="bg-green-100 text-green-800">
-                                Answered
-                              </Badge>
-                            )}
-                          </div>
-                          
-                          <p className="text-gray-800 dark:text-gray-200 mb-3">
-                            {question.content}
-                          </p>
-                          
-                          <div className="flex items-center gap-4">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleUpvote(question.id)}
-                              className="text-gray-600 hover:text-connect-600"
-                            >
-                              <ArrowUp className="h-4 w-4 mr-1" />
-                              {question.upvotes}
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })
+              otherQuestions.map(question => renderQuestionCard(question))
             ) : (
               <Card>
                 <CardContent className="py-10 text-center text-muted-foreground">

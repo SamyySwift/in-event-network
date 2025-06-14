@@ -1,10 +1,9 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Quote, User, AlertCircle } from 'lucide-react';
+import { Send, MessageCircle, AlertCircle } from 'lucide-react'; // swapped User for MessageCircle
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useChat } from '@/hooks/useChat';
@@ -78,22 +77,23 @@ const ChatRoom = () => {
 
   return (
     <Card className="h-[600px] flex flex-col">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2">
-          <User className="h-5 w-5 text-connect-600" />
-          Event Chat Room
-          <Badge variant="secondary" className="ml-auto">
-            {messages.length} messages
-          </Badge>
-        </CardTitle>
-      </CardHeader>
-      
+      {/* New Stylish Header */}
+      <div className="flex flex-col items-center p-4 border-b bg-gradient-to-r from-primary-50 via-white to-primary-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 rounded-t-md">
+        <div className="flex items-center gap-3">
+          <MessageCircle className="h-7 w-7 text-connect-600 dark:text-connect-300" />
+          <span className="font-bold text-lg md:text-xl text-gray-900 dark:text-white">Event Chat</span>
+        </div>
+        <div className="mt-2">
+          <Badge variant="secondary" className="text-xs font-medium">{messages.length} messages</Badge>
+        </div>
+      </div>
+
       <CardContent className="flex-1 flex flex-col p-0">
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-gray-900">
           {messages.length === 0 ? (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              <User className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No messages yet. Start the conversation with your fellow attendees!</p>
             </div>
           ) : (

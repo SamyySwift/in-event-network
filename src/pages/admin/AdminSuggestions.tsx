@@ -1,32 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import AdminLayout from '@/components/layouts/AdminLayout';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import EventSelector from '@/components/admin/EventSelector';
-import { TabsContent } from '@/components/ui/tabs';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardFooter, 
-  CardHeader, 
-  CardTitle 
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Star, CheckCircle, XCircle, Clock, Lightbulb, Building } from 'lucide-react';
-import { format } from 'date-fns';
-import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAdminEventContext, AdminEventProvider } from '@/hooks/useAdminEventContext';
+
+import React, { useState, useEffect } from "react";
+import AdminLayout from "@/components/layouts/AdminLayout";
+import SuggestionStatsCards from "./components/SuggestionStatsCards";
+import SuggestionCard from "./components/SuggestionCard";
+import EventSelector from "@/components/admin/EventSelector";
+import { Input } from "@/components/ui/input";
+import { Plus, Lightbulb } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useAdminEventContext, AdminEventProvider } from "@/hooks/useAdminEventContext";
 
 interface Suggestion {
   id: string;
   content: string;
-  type: 'suggestion' | 'rating';
+  type: "suggestion" | "rating";
   rating: number | null;
-  status: 'new' | 'reviewed' | 'implemented';
+  status: "new" | "reviewed" | "implemented";
   created_at: string;
   user_id: string;
   event_id: string | null;
@@ -43,29 +33,31 @@ interface SuggestionWithProfile extends Suggestion {
   event_name?: string;
 }
 
+// --- Main Content ---
 const AdminSuggestionsContent = () => {
-  const [activeTab, setActiveTab] = useState<string>('all');
+  const [activeTab, setActiveTab] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [suggestions, setSuggestions] = useState<SuggestionWithProfile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const { currentUser } = useAuth();
-  const { selectedEventId, selectedEvent } = useAdminEventContext();
+  const { selectedEventId, selectedEvent, adminEvents } = useAdminEventContext();
 
   useEffect(() => {
     fetchSuggestions();
-    
-    // Set up real-time subscription for suggestions
+
+    // Real-time updates
     const channel = supabase
-      .channel('admin-suggestions-changes')
+      .channel("admin-suggestions-changes")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: '*',
-          schema: 'public',
-          table: 'suggestions'
+          event: "*",
+          schema: "public",
+          table: "suggestions",
         },
         () => {
-          console.log('Suggestions updated, refetching...');
           fetchSuggestions();
         }
       )
@@ -74,122 +66,92 @@ const AdminSuggestionsContent = () => {
     return () => {
       supabase.removeChannel(channel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, selectedEventId]);
 
   const fetchSuggestions = async () => {
     if (!currentUser?.id) return;
 
+    setLoading(true);
     try {
-      console.log('Fetching suggestions for admin:', currentUser.id, 'event:', selectedEventId);
-      
       let suggestionsQuery;
-      
-      if (selectedEventId) {
-        // Get suggestions for specific event
-        suggestionsQuery = supabase
-          .from('suggestions')
-          .select('*')
-          .eq('event_id', selectedEventId);
-      } else {
-        // Get all admin's events first
-        const { data: adminEvents, error: eventsError } = await supabase
-          .from('events')
-          .select('id')
-          .eq('host_id', currentUser.id);
 
-        if (eventsError) {
-          console.error('Error fetching admin events:', eventsError);
-          throw eventsError;
-        }
+      if (selectedEventId) {
+        suggestionsQuery = supabase
+          .from("suggestions")
+          .select("*")
+          .eq("event_id", selectedEventId);
+      } else {
+        const { data: adminEvents, error: eventsError } = await supabase
+          .from("events")
+          .select("id")
+          .eq("host_id", currentUser.id);
+
+        if (eventsError) throw eventsError;
 
         if (!adminEvents || adminEvents.length === 0) {
           setSuggestions([]);
           setLoading(false);
           return;
         }
-
-        const eventIds = adminEvents.map(event => event.id) as string[];
-
-        // Get suggestions from all admin events
+        const eventIds = adminEvents.map((event) => event.id) as string[];
         suggestionsQuery = supabase
-          .from('suggestions')
-          .select('*')
-          .in('event_id', eventIds);
+          .from("suggestions")
+          .select("*")
+          .in("event_id", eventIds);
       }
 
       const { data: suggestionsData, error: suggestionsError } = await suggestionsQuery
-        .order('created_at', { ascending: false });
+        .order("created_at", { ascending: false });
 
-      if (suggestionsError) {
-        console.error('Error fetching suggestions:', suggestionsError);
-        throw suggestionsError;
-      }
-      
-      console.log('Suggestions data:', suggestionsData);
-      
+      if (suggestionsError) throw suggestionsError;
+
       if (!suggestionsData || suggestionsData.length === 0) {
         setSuggestions([]);
         setLoading(false);
         return;
       }
 
-      // Get unique user IDs and filter out null/undefined values
-      const userIds = [...new Set(suggestionsData.map(s => s.user_id).filter(Boolean))] as string[];
-      
-      // Fetch profiles for these users
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, name, photo_url')
-        .in('id', userIds);
+      const userIds = [...new Set(suggestionsData.map((s) => s.user_id).filter(Boolean))] as string[];
+      const { data: profilesData } = await supabase
+        .from("profiles")
+        .select("id, name, photo_url")
+        .in("id", userIds);
 
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-        // Continue without profiles rather than failing completely
-      }
-
-      console.log('Profiles data:', profilesData);
-
-      // Get event names if showing all events
       let eventsData = null;
       if (!selectedEventId) {
-        const eventIds = [...new Set(suggestionsData.map(s => s.event_id).filter(Boolean))] as string[];
-        const { data, error } = await supabase
-          .from('events')
-          .select('id, name')
-          .in('id', eventIds);
-        
-        if (!error) {
-          eventsData = data;
-        }
+        const eventIds = [...new Set(suggestionsData.map((s) => s.event_id).filter(Boolean))] as string[];
+        const { data } = await supabase
+          .from("events")
+          .select("id, name")
+          .in("id", eventIds);
+
+        eventsData = data;
       }
 
-      // Map profiles by ID for easy lookup
       const profilesMap = new Map();
       if (profilesData) {
-        profilesData.forEach(profile => {
+        profilesData.forEach((profile) => {
           profilesMap.set(profile.id, profile);
         });
       }
-
       const eventsMap = new Map();
       if (eventsData) {
-        eventsData.forEach(event => {
+        eventsData.forEach((event) => {
           eventsMap.set(event.id, event);
         });
       }
 
-      // Combine suggestions with profiles and event names
-      const suggestionsWithProfiles: SuggestionWithProfile[] = suggestionsData.map(suggestion => ({
+      const suggestionsWithProfiles: SuggestionWithProfile[] = suggestionsData.map((suggestion) => ({
         ...suggestion,
-        type: suggestion.type as 'suggestion' | 'rating',
-        status: suggestion.status as 'new' | 'reviewed' | 'implemented',
+        type: suggestion.type as "suggestion" | "rating",
+        status: suggestion.status as "new" | "reviewed" | "implemented",
         profile: suggestion.user_id ? profilesMap.get(suggestion.user_id) || null : null,
-        event_name: suggestion.event_id ? eventsMap.get(suggestion.event_id)?.name || 'Unknown Event' : undefined
+        event_name: suggestion.event_id ? eventsMap.get(suggestion.event_id)?.name || "Unknown Event" : undefined,
       }));
-      
+
       setSuggestions(suggestionsWithProfiles);
-    } catch (error) {
-      console.error('Error fetching suggestions:', error);
+    } catch (error: any) {
       toast({
         title: "Error",
         description: "Failed to fetch suggestions. Please try again.",
@@ -200,34 +162,44 @@ const AdminSuggestionsContent = () => {
     }
   };
 
-  const getFilteredSuggestions = () => {
-    switch(activeTab) {
-      case 'suggestions':
-        return suggestions.filter(s => s.type === 'suggestion');
-      case 'ratings':
-        return suggestions.filter(s => s.type === 'rating');
-      case 'new':
-        return suggestions.filter(s => s.status === 'new');
-      case 'reviewed':
-        return suggestions.filter(s => s.status === 'reviewed');
-      default:
-        return suggestions;
-    }
+  // Suggestion stats
+  const getStats = () => {
+    const total = suggestions.length;
+    const newCount = suggestions.filter((s) => s.status === "new").length;
+    const implemented = suggestions.filter((s) => s.status === "implemented").length;
+    return { total, newCount, implemented };
   };
 
-  const handleUpdateStatus = async (suggestion: SuggestionWithProfile, newStatus: 'new' | 'reviewed' | 'implemented') => {
-    try {
-      console.log('Updating suggestion status:', suggestion.id, 'to:', newStatus);
-      
-      const { error } = await supabase
-        .from('suggestions')
-        .update({ status: newStatus })
-        .eq('id', suggestion.id);
+  // Filtering logic
+  const getFilteredSuggestions = () => {
+    let filtered = suggestions;
+    if (activeTab === "suggestions") filtered = filtered.filter((s) => s.type === "suggestion");
+    if (activeTab === "ratings") filtered = filtered.filter((s) => s.type === "rating");
+    if (activeTab === "new") filtered = filtered.filter((s) => s.status === "new");
+    if (activeTab === "reviewed") filtered = filtered.filter((s) => s.status === "reviewed");
+    // Search bar filter
+    if (searchQuery) {
+      filtered = filtered.filter(
+        (s) =>
+          s.content?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          s.profile?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+    return filtered;
+  };
 
-      if (error) {
-        console.error('Error updating suggestion status:', error);
-        throw error;
-      }
+  // --- Actions ---
+  const handleUpdateStatus = async (
+    suggestion: SuggestionWithProfile,
+    newStatus: "new" | "reviewed" | "implemented"
+  ) => {
+    try {
+      const { error } = await supabase
+        .from("suggestions")
+        .update({ status: newStatus })
+        .eq("id", suggestion.id);
+
+      if (error) throw error;
 
       toast({
         title: "Success",
@@ -235,8 +207,7 @@ const AdminSuggestionsContent = () => {
       });
 
       fetchSuggestions();
-    } catch (error) {
-      console.error('Error updating suggestion:', error);
+    } catch (error: any) {
       toast({
         title: "Error",
         description: "Failed to update suggestion",
@@ -246,18 +217,14 @@ const AdminSuggestionsContent = () => {
   };
 
   const handleDeleteSuggestion = async (suggestion: SuggestionWithProfile) => {
+    setIsDeleting(true);
     try {
-      console.log('Deleting suggestion:', suggestion.id);
-      
       const { error } = await supabase
-        .from('suggestions')
+        .from("suggestions")
         .delete()
-        .eq('id', suggestion.id);
+        .eq("id", suggestion.id);
 
-      if (error) {
-        console.error('Error deleting suggestion:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
         title: "Success",
@@ -265,45 +232,38 @@ const AdminSuggestionsContent = () => {
       });
 
       fetchSuggestions();
-    } catch (error) {
-      console.error('Error deleting suggestion:', error);
+    } catch (error: any) {
       toast({
         title: "Error",
         description: "Failed to delete suggestion",
         variant: "destructive",
       });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch(status) {
-      case 'new':
-        return <Badge className="bg-blue-100 text-blue-800">New</Badge>;
-      case 'reviewed':
-        return <Badge className="bg-yellow-100 text-yellow-800">Reviewed</Badge>;
-      case 'implemented':
-        return <Badge className="bg-green-100 text-green-800">Implemented</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
-
-  const getPageTitle = () => {
-    if (selectedEvent) {
-      return `Suggestions for ${selectedEvent.name}`;
-    }
-    return 'All Suggestions from Your Events';
-  };
-
-  const getPageDescription = () => {
-    if (selectedEvent) {
-      return `Review suggestions and ratings from ${selectedEvent.name} attendees`;
-    }
-    return 'Review suggestions and ratings from all your event attendees';
-  };
-
+  const stats = getStats();
   const filteredSuggestions = getFilteredSuggestions();
 
+  // Event must be selected!
+  if (adminEvents.length > 0 && !selectedEventId) {
+    return (
+      <div className="flex flex-col gap-5">
+        <div className="border rounded-lg p-4 bg-card">
+          <EventSelector />
+        </div>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <Plus className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
+            <p className="mt-2 text-muted-foreground">Please select an event to view suggestions.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading
   if (loading) {
     return (
       <AdminLayout>
@@ -319,157 +279,127 @@ const AdminSuggestionsContent = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <EventSelector />
-        
-        {/* Context Information */}
-        {!selectedEventId && (
-          <Card className="border-blue-200 bg-blue-50">
-            <CardContent className="py-4">
-              <div className="flex items-center gap-2 text-blue-800">
-                <Building className="h-5 w-5" />
-                <span className="font-medium">
-                  Showing suggestions from all your events. Select a specific event above to filter.
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+      <div className="space-y-8 animate-fade-in">
+        {/* Gradient Hero Section */}
+        <div className="p-8 rounded-2xl bg-gradient-to-br from-primary-100 via-blue-100 to-indigo-50 text-primary-900 dark:text-white shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
+          <div className="absolute -top-12 -right-10 w-56 h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
+          <div className="absolute -bottom-14 -left-14 w-36 h-36 bg-white/20 rounded-full opacity-30 pointer-events-none"></div>
+          <div className="relative z-10">
+            <h1 className="text-4xl font-bold tracking-tight">Suggestions & Feedback</h1>
+            <p className="mt-2 max-w-2xl text-primary-700 dark:text-primary-100">
+              Manage suggestions and feedback for{" "}
+              <span className="font-semibold">{selectedEvent?.name}</span>.
+            </p>
+            <div className="mt-6">
+              <SuggestionStatsCards {...stats} loading={loading} />
+            </div>
+          </div>
+        </div>
 
-        <AdminPageHeader
-          title={getPageTitle()}
-          description={getPageDescription()}
-          tabs={[
-            { id: 'all', label: 'All' },
-            { id: 'suggestions', label: 'Suggestions' },
-            { id: 'ratings', label: 'Ratings' },
-            { id: 'new', label: 'New' },
-            { id: 'reviewed', label: 'Reviewed' }
-          ]}
-          defaultTab="all"
-          onTabChange={setActiveTab}
-        >
-          {['all', 'suggestions', 'ratings', 'new', 'reviewed'].map(tabId => (
-            <TabsContent key={tabId} value={tabId} className="space-y-4">
-              {filteredSuggestions.length === 0 ? (
-                <Card>
-                  <CardContent className="py-10 text-center text-muted-foreground">
-                    <Lightbulb className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No {tabId === 'all' ? 'suggestions' : tabId} found.</p>
-                    {activeTab === 'all' && (
-                      <p className="text-sm mt-2">Suggestions and feedback from attendees will appear here.</p>
-                    )}
-                  </CardContent>
-                </Card>
-              ) : (
-                filteredSuggestions.map(suggestion => {
-                  const userName = suggestion.profile?.name || 'Anonymous User';
-                  const userPhoto = suggestion.profile?.photo_url;
-                  
-                  return (
-                    <Card key={suggestion.id} className="hover:shadow-md transition-shadow">
-                      <CardHeader className="pb-2">
-                        <div className="flex justify-between items-start">
-                          <div className="flex items-center gap-3">
-                            <Avatar>
-                              <AvatarImage src={userPhoto || ''} />
-                              <AvatarFallback>{userName.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <CardTitle className="text-base">{userName}</CardTitle>
-                              <CardDescription>
-                                {format(new Date(suggestion.created_at), 'MMM d, yyyy h:mm a')}
-                              </CardDescription>
-                            </div>
-                          </div>
-                          <div className="flex flex-col items-end gap-2">
-                            {getStatusBadge(suggestion.status)}
-                            <Badge variant={suggestion.type === 'rating' ? 'default' : 'outline'}>
-                              {suggestion.type === 'rating' ? 'Rating' : 'Suggestion'}
-                            </Badge>
-                            {/* Show event name when viewing all events */}
-                            {!selectedEventId && suggestion.event_name && (
-                              <Badge variant="secondary" className="flex items-center gap-1">
-                                <Building size={12} />
-                                {suggestion.event_name}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-base mb-3">{suggestion.content}</p>
-                        {suggestion.type === 'rating' && suggestion.rating && (
-                          <div className="flex items-center gap-1 mb-2">
-                            {[...Array(5)].map((_, i) => (
-                              <Star 
-                                key={i} 
-                                size={16} 
-                                className={i < suggestion.rating! ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'} 
-                              />
-                            ))}
-                            <span className="ml-2 text-sm text-muted-foreground">
-                              {suggestion.rating}/5 stars
-                            </span>
-                          </div>
-                        )}
-                      </CardContent>
-                      <CardFooter className="border-t pt-3 flex justify-between">
-                        <div className="text-sm text-muted-foreground">
-                          ID: {suggestion.id.slice(0, 8)}...
-                        </div>
-                        <div className="flex gap-2">
-                          {suggestion.status === 'new' && (
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              className="text-yellow-600 border-yellow-200 hover:bg-yellow-50"
-                              onClick={() => handleUpdateStatus(suggestion, 'reviewed')}
-                            >
-                              <Clock size={16} className="mr-1" />
-                              Mark Reviewed
-                            </Button>
-                          )}
-                          {suggestion.status !== 'implemented' && (
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              className="text-green-600 border-green-200 hover:bg-green-50"
-                              onClick={() => handleUpdateStatus(suggestion, 'implemented')}
-                            >
-                              <CheckCircle size={16} className="mr-1" />
-                              Mark Implemented
-                            </Button>
-                          )}
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="text-destructive border-destructive/20 hover:bg-destructive/10"
-                            onClick={() => handleDeleteSuggestion(suggestion)}
-                          >
-                            <XCircle size={16} className="mr-1" />
-                            Delete
-                          </Button>
-                        </div>
-                      </CardFooter>
-                    </Card>
-                  );
-                })
-              )}
-            </TabsContent>
-          ))}
-        </AdminPageHeader>
+        {/* Quick Actions Section (title, tabs, search) */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold">Suggestions</h2>
+            <p className="text-muted-foreground mt-1">
+              Review, filter, and manage suggestions and feedback.
+            </p>
+          </div>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => setActiveTab("all")}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                activeTab === "all"
+                  ? "bg-primary text-white"
+                  : "bg-muted text-muted-foreground hover:bg-primary-50"
+              } transition`}
+            >
+              All
+            </button>
+            <button
+              onClick={() => setActiveTab("suggestions")}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                activeTab === "suggestions"
+                  ? "bg-primary text-white"
+                  : "bg-muted text-muted-foreground hover:bg-primary-50"
+              } transition`}
+            >
+              Suggestions
+            </button>
+            <button
+              onClick={() => setActiveTab("ratings")}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                activeTab === "ratings"
+                  ? "bg-primary text-white"
+                  : "bg-muted text-muted-foreground hover:bg-primary-50"
+              } transition`}
+            >
+              Ratings
+            </button>
+            <button
+              onClick={() => setActiveTab("new")}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                activeTab === "new"
+                  ? "bg-primary text-white"
+                  : "bg-muted text-muted-foreground hover:bg-primary-50"
+              } transition`}
+            >
+              New
+            </button>
+            <button
+              onClick={() => setActiveTab("reviewed")}
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                activeTab === "reviewed"
+                  ? "bg-primary text-white"
+                  : "bg-muted text-muted-foreground hover:bg-primary-50"
+              } transition`}
+            >
+              Reviewed
+            </button>
+          </div>
+        </div>
+        {/* Search */}
+        <div className="flex justify-between mb-4">
+          <Input
+            placeholder="Search suggestions..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="max-w-sm"
+          />
+        </div>
+        {/* Suggestions List */}
+        <div className="space-y-4">
+          {filteredSuggestions.length > 0 ? (
+            filteredSuggestions.map((suggestion) => (
+              <SuggestionCard
+                key={suggestion.id}
+                suggestion={suggestion}
+                onUpdateStatus={handleUpdateStatus}
+                onDelete={handleDeleteSuggestion}
+                selectedEventId={selectedEventId}
+                isDeleting={isDeleting}
+              />
+            ))
+          ) : (
+            <div className="text-center py-8">
+              <Lightbulb className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
+              <h3 className="mt-4 text-lg font-medium">
+                No suggestions found
+              </h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                No suggestions match your filter or search criteria.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </AdminLayout>
   );
 };
 
-const AdminSuggestions = () => {
-  return (
-    <AdminEventProvider>
-      <AdminSuggestionsContent />
-    </AdminEventProvider>
-  );
-};
+const AdminSuggestions = () => (
+  <AdminEventProvider>
+    <AdminSuggestionsContent />
+  </AdminEventProvider>
+);
 
 export default AdminSuggestions;

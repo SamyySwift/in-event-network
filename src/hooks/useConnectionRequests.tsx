@@ -57,9 +57,16 @@ export const useConnectionRequests = () => {
 
       console.log('Notifications data:', notificationsData);
 
-      // Then get connection details for each notification
+      // Remove duplicates based on related_id (connection_id)
+      const uniqueNotifications = notificationsData?.filter((notification, index, self) => 
+        index === self.findIndex(n => n.related_id === notification.related_id)
+      ) || [];
+
+      console.log('Unique notifications:', uniqueNotifications);
+
+      // Then get connection details for each unique notification
       const notificationsWithConnections = await Promise.all(
-        (notificationsData || []).map(async (notification) => {
+        uniqueNotifications.map(async (notification) => {
           if (notification.related_id) {
             const { data: connectionData, error: connectionError } = await supabase
               .from('connections')

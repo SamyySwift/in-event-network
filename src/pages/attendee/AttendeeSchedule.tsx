@@ -8,10 +8,12 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import ScheduleItemModal from '@/components/schedule/ScheduleItemModal';
 import { useAttendeeSpeakers } from '@/hooks/useAttendeeSpeakers';
 import { useAttendeeContext } from '@/hooks/useAttendeeContext';
 import { format, isToday, isTomorrow, isYesterday, parseISO } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+
 interface ScheduleItem {
   id: string;
   title: string;
@@ -37,11 +39,15 @@ interface CombinedScheduleItem {
   speaker_bio?: string;
   priority?: string;
 }
+
 const AttendeeSchedule = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDate, setSelectedDate] = useState<string>('all');
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
   const [combinedItems, setCombinedItems] = useState<CombinedScheduleItem[]>([]);
+  const [selectedItem, setSelectedItem] = useState<CombinedScheduleItem | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
   const {
     speakers,
     isLoading: speakersLoading,
@@ -210,6 +216,17 @@ const AttendeeSchedule = () => {
         return <Badge variant="outline">{priority}</Badge>;
     }
   };
+
+  const handleViewDetails = (item: CombinedScheduleItem) => {
+    setSelectedItem(item);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedItem(null);
+  };
+
   if (speakersLoading || contextLoading) {
     return <AppLayout>
         <AttendeeRouteGuard>
@@ -350,7 +367,11 @@ const AttendeeSchedule = () => {
                                     {getTypeBadge(item.type)}
                                     {getPriorityBadge(item.priority)}
                                   </div>
-                                  <Button variant="outline" size="sm">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => handleViewDetails(item)}
+                                  >
                                     View Details
                                   </Button>
                                 </div>
@@ -363,6 +384,12 @@ const AttendeeSchedule = () => {
             </div>}
         </div>
       </AttendeeRouteGuard>
+      <ScheduleItemModal
+        item={selectedItem}
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      />
     </AppLayout>;
 };
+
 export default AttendeeSchedule;

@@ -1,11 +1,10 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Send,
   UserPlus,
   MessageSquare,
-  Twitter,
+  X,
   Linkedin,
   Github,
   Instagram,
@@ -102,8 +101,8 @@ const AttendeeNetworking = () => {
 
   const getSocialIcon = (platform: string) => {
     switch (platform) {
-      case "twitter":
-        return <Twitter size={16} />;
+      case "x":
+        return <X size={16} />;
       case "linkedin":
         return <Linkedin size={16} />;
       case "github":
@@ -120,7 +119,7 @@ const AttendeeNetworking = () => {
   const getSocialLinks = (profile: any) => {
     const links = [];
     if (profile.twitter_link) {
-      links.push({ platform: "twitter", url: profile.twitter_link });
+      links.push({ platform: "x", url: profile.twitter_link });
     }
     if (profile.linkedin_link) {
       links.push({ platform: "linkedin", url: profile.linkedin_link });

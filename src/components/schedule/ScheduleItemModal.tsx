@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Calendar, Clock, MapPin, User, Building, Globe, Twitter, Linkedin, ExternalLink } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, Building, Globe, Linkedin, ExternalLink, X } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
 interface ScheduleItemModalProps {
@@ -77,8 +76,8 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
 
   const getSocialIcon = (platform: string) => {
     switch (platform) {
-      case 'twitter':
-        return <Twitter className="w-4 h-4" />;
+      case 'x':
+        return <X className="w-4 h-4" />;
       case 'linkedin':
         return <Linkedin className="w-4 h-4" />;
       case 'website':
@@ -90,14 +89,14 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
 
   const renderSocialLinks = () => {
     if (item.type !== 'speaker') return null;
-    
+
     const socialLinks = [];
-    if (item.speaker_twitter) socialLinks.push({ platform: 'twitter', url: item.speaker_twitter, label: 'Twitter' });
+    if (item.speaker_twitter) socialLinks.push({ platform: 'x', url: item.speaker_twitter, label: 'X' });
     if (item.speaker_linkedin) socialLinks.push({ platform: 'linkedin', url: item.speaker_linkedin, label: 'LinkedIn' });
     if (item.speaker_website) socialLinks.push({ platform: 'website', url: item.speaker_website, label: 'Website' });
-    
+
     if (socialLinks.length === 0) return null;
-    
+
     return (
       <div className="space-y-2">
         <h3 className="font-medium text-sm text-gray-600 dark:text-gray-400">Connect with Speaker</h3>
@@ -109,6 +108,8 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
               size="sm"
               className="flex items-center gap-2"
               onClick={() => window.open(link.url, '_blank')}
+              aria-label={link.label}
+              title={link.label}
             >
               {getSocialIcon(link.platform)}
               {link.label}

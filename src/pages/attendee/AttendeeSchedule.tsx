@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, User, ChevronRight, Search, Filter, Star, Users, ExternalLink, Twitter, Linkedin, Globe } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, ChevronRight, Search, Filter, Star, Users, ExternalLink, Linkedin, Globe, X } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
 import AttendeeRouteGuard from '@/components/attendee/AttendeeRouteGuard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -242,8 +242,8 @@ const AttendeeSchedule = () => {
 
   const getSocialIcon = (platform: string) => {
     switch (platform) {
-      case 'twitter':
-        return <Twitter className="w-3 h-3" />;
+      case 'x':
+        return <X className="w-3 h-3" />;
       case 'linkedin':
         return <Linkedin className="w-3 h-3" />;
       case 'website':
@@ -255,14 +255,14 @@ const AttendeeSchedule = () => {
 
   const renderSocialLinks = (item: CombinedScheduleItem) => {
     if (item.type !== 'speaker') return null;
-    
+
     const socialLinks = [];
-    if (item.speaker_twitter) socialLinks.push({ platform: 'twitter', url: item.speaker_twitter });
+    if (item.speaker_twitter) socialLinks.push({ platform: 'x', url: item.speaker_twitter });
     if (item.speaker_linkedin) socialLinks.push({ platform: 'linkedin', url: item.speaker_linkedin });
     if (item.speaker_website) socialLinks.push({ platform: 'website', url: item.speaker_website });
-    
+
     if (socialLinks.length === 0) return null;
-    
+
     return (
       <div className="flex items-center gap-2 mt-2">
         <span className="text-xs text-gray-500">Connect:</span>
@@ -277,6 +277,8 @@ const AttendeeSchedule = () => {
                 e.stopPropagation();
                 window.open(link.url, '_blank');
               }}
+              aria-label={link.platform === 'x' ? 'X' : link.platform.charAt(0).toUpperCase() + link.platform.slice(1)}
+              title={link.platform === 'x' ? 'X' : link.platform.charAt(0).toUpperCase() + link.platform.slice(1)}
             >
               {getSocialIcon(link.platform)}
             </Button>

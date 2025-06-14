@@ -69,7 +69,7 @@ const AttendeeAnnouncementsContent = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+      <div className="flex items-center justify-center h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 pt-20 md:pt-6">
         <div className="text-center">
           <div className="relative">
             <div className="w-20 h-20 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
@@ -90,7 +90,7 @@ const AttendeeAnnouncementsContent = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-gradient-to-br from-red-50 via-white to-orange-50 flex items-center justify-center p-6 pt-20 md:pt-6">
         <Alert className="max-w-md border-red-200 bg-white shadow-xl">
           <AlertCircle className="h-5 w-5 text-red-500" />
           <AlertDescription className="text-red-700 font-medium">
@@ -109,7 +109,7 @@ const AttendeeAnnouncementsContent = () => {
   }
 
   return (
-    <div className="min-h-screen overflow-y-auto scroll-smooth bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+    <div className="min-h-screen overflow-y-auto scroll-smooth bg-gradient-to-br from-indigo-50 via-white to-purple-50 pt-20 md:pt-6">
       {/* Hero Header */}
       <div className="relative overflow-hidden bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white">
         <div className="absolute inset-0 bg-black/10"></div>

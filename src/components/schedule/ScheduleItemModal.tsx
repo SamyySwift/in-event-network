@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Calendar, Clock, MapPin, User, Building, Globe, Linkedin, ExternalLink, X } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
+import XLogo from "@/components/icons/XLogo";
 
 interface ScheduleItemModalProps {
   item: {
@@ -77,7 +78,7 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
   const getSocialIcon = (platform: string) => {
     switch (platform) {
       case 'x':
-        return <X className="w-4 h-4" />;
+        return <XLogo size={16} />;
       case 'linkedin':
         return <Linkedin className="w-4 h-4" />;
       case 'website':

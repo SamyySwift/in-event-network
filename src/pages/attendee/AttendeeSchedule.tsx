@@ -13,6 +13,7 @@ import { useAttendeeSpeakers } from '@/hooks/useAttendeeSpeakers';
 import { useAttendeeContext } from '@/hooks/useAttendeeContext';
 import { format, isToday, isTomorrow, isYesterday, parseISO } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
+import XLogo from "@/components/icons/XLogo";
 
 interface ScheduleItem {
   id: string;
@@ -243,7 +244,7 @@ const AttendeeSchedule = () => {
   const getSocialIcon = (platform: string) => {
     switch (platform) {
       case 'x':
-        return <X className="w-3 h-3" />;
+        return <XLogo size={12} />;
       case 'linkedin':
         return <Linkedin className="w-3 h-3" />;
       case 'website':

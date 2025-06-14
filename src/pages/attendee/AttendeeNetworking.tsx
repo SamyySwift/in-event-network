@@ -37,6 +37,7 @@ import { ConversationsList } from "@/components/messaging/ConversationsList";
 import { DirectMessageThread } from "@/components/messaging/DirectMessageThread";
 import { useNetworking } from "@/hooks/useNetworking";
 import { useAttendeeEventContext } from "@/contexts/AttendeeEventContext";
+import XLogo from "@/components/icons/XLogo";
 
 const AttendeeNetworking = () => {
   const navigate = useNavigate();
@@ -102,7 +103,7 @@ const AttendeeNetworking = () => {
   const getSocialIcon = (platform: string) => {
     switch (platform) {
       case "x":
-        return <X size={16} />;
+        return <XLogo size={16} />;
       case "linkedin":
         return <Linkedin size={16} />;
       case "github":

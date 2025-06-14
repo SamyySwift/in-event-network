@@ -313,7 +313,7 @@ function HeroGeometric({
               </div>
             </div>
             <div className="flex-1 overflow-hidden">
-              <InfiniteSlider speedOnHover={20} speed={40} gap={112}>
+              <InfiniteSlider durationOnHover={20} duration={40} gap={112}>
                 <div className="flex">
                   <img
                     className="mx-auto h-5 w-fit invert"

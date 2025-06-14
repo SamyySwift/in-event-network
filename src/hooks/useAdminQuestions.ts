@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -52,7 +53,7 @@ export const useAdminQuestions = (eventId?: string) => {
           .from('questions')
           .select(`
             *,
-            profiles:user_id (
+            profiles!user_id (
               name,
               photo_url
             )
@@ -85,11 +86,11 @@ export const useAdminQuestions = (eventId?: string) => {
           .from('questions')
           .select(`
             *,
-            profiles:user_id (
+            profiles!user_id (
               name,
               photo_url
             ),
-            events:event_id (
+            events!event_id (
               name
             )
           `)

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Users, MapPin, MessageSquare, Clock, Star, BookOpen, Wifi, WifiOff, ChevronRight, Zap, TrendingUp } from 'lucide-react';
@@ -77,23 +76,23 @@ const AttendeeDashboardContent = () => {
     return (
       <div className="animate-fade-in max-w-7xl mx-auto p-6">
         {/* Hero Section */}
-        <div className="mb-8 relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-12 text-white">
+        <div className="mb-8 relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-8 sm:p-12 text-white">
           <div className="absolute inset-0 bg-black/20"></div>
           <div className="relative z-10 text-center">
             <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
               <Calendar className="h-10 w-10" />
             </div>
-            <h1 className="text-4xl font-bold mb-4">Welcome to Kconect</h1>
-            <p className="text-xl opacity-90 mb-8 max-w-2xl mx-auto">
+            <h1 className="text-3xl sm:text-4xl font-bold mb-4">Welcome to Kconect</h1>
+            <p className="text-lg sm:text-xl opacity-90 mb-8 max-w-2xl mx-auto">
               Join amazing events, connect with people, and create memorable experiences
             </p>
             <Button 
               onClick={() => navigate('/scan')} 
               size="lg"
-              className="bg-white/20 hover:bg-white/30 border-2 border-white/30 backdrop-blur-sm text-white font-semibold px-8 py-4 text-lg"
+              className="bg-white/20 hover:bg-white/30 border-2 border-white/30 backdrop-blur-sm text-white font-semibold px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-lg w-full sm:w-auto"
             >
-              <Zap className="mr-2 h-5 w-5" />
-              Scan QR Code to Join Event
+              <Zap className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="truncate">Scan QR Code to Join Event</span>
             </Button>
           </div>
           <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-white/10 rounded-full"></div>
@@ -108,28 +107,28 @@ const AttendeeDashboardContent = () => {
   return (
     <div className="animate-fade-in max-w-7xl mx-auto p-6">
       {/* Hero Header */}
-      <div className="mb-8 relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-8 text-white">
+      <div className="mb-8 relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-6 sm:p-8 text-white">
         <div className="absolute inset-0 bg-black/20"></div>
         <div className="relative z-10">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
                 <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
                 <span className="text-sm font-medium uppercase tracking-wider opacity-90">Live Dashboard</span>
               </div>
-              <h1 className="text-4xl font-bold mb-2">
+              <h1 className="text-3xl sm:text-4xl font-bold mb-2">
                 Welcome back, {currentUser?.name?.split(' ')[0]}!
               </h1>
-              <p className="text-lg opacity-90">
+              <p className="text-base sm:text-lg opacity-90">
                 Your event experience, updated in real-time
               </p>
             </div>
             <Button 
               onClick={() => navigate('/scan')} 
-              className="bg-white/20 hover:bg-white/30 border border-white/30 backdrop-blur-sm"
+              className="bg-white/20 hover:bg-white/30 border border-white/30 backdrop-blur-sm w-full sm:w-auto"
             >
               <Zap className="mr-2 h-4 w-4" />
-              Scan New Event
+              <span className="truncate">Scan New Event</span>
             </Button>
           </div>
         </div>

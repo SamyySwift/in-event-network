@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { ArrowUp, MessageSquare, Send, User } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
@@ -31,7 +32,7 @@ import { format } from 'date-fns';
 const AttendeeQuestions = () => {
   const { currentUser } = useAuth();
   const [newQuestion, setNewQuestion] = useState('');
-  const [selectedSessionId, setSelectedSessionId] = useState('general');
+  const [selectedSessionId, setSelectedSessionId] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(null);
@@ -48,35 +49,21 @@ const AttendeeQuestions = () => {
   } = useAttendeeQuestions();
 
   const handleSubmitQuestion = async () => {
-    if (!newQuestion.trim()) {
-      return;
-    }
+    if (!newQuestion.trim()) return;
 
     if (!currentEventId) {
-      console.error('No current event ID available');
       return;
     }
 
-    try {
-      console.log('Submitting question:', {
-        content: newQuestion,
-        isAnonymous,
-        selectedSessionId
-      });
+    submitQuestion({
+      content: newQuestion,
+      isAnonymous,
+      selectedSessionId
+    });
 
-      submitQuestion({
-        content: newQuestion,
-        isAnonymous,
-        selectedSessionId
-      });
-
-      // Reset form after successful submission
-      setNewQuestion('');
-      setSelectedSessionId('general');
-      setIsAnonymous(false);
-    } catch (error) {
-      console.error('Failed to submit question:', error);
-    }
+    setNewQuestion('');
+    setSelectedSessionId('');
+    setIsAnonymous(false);
   };
 
   const handleUpvote = (questionId: string) => {
@@ -291,20 +278,12 @@ const AttendeeQuestions = () => {
               </div>
 
               <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  className="flex-1"
-                  onClick={() => {
-                    setNewQuestion('');
-                    setSelectedSessionId('general');
-                    setIsAnonymous(false);
-                  }}
-                >
+                <Button variant="outline" className="flex-1">
                   Cancel
                 </Button>
                 <Button 
                   onClick={handleSubmitQuestion} 
-                  disabled={!newQuestion.trim() || isSubmitting || !currentEventId}
+                  disabled={!newQuestion.trim() || isSubmitting}
                   className="flex-1"
                 >
                   <Send className="h-4 w-4 mr-2" />

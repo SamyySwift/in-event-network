@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { MapPin, Search, Info, Phone, Compass, Coffee, Home, Utensils, HeartPulse, Bath, Car, CircleHelp, Clock, Building, Wifi, Users, Camera, Music, Tv, Gamepad2, Heart, ShoppingBag, Bed, MessageCircle } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
@@ -225,12 +226,22 @@ const AttendeeMap = () => {
                           onClick={() => setSelectedFacility(facility)}
                         >
                           <div className="flex items-start gap-3">
-                            <div className={`p-2 rounded-full ${(facilityTypeColors[facility.icon_type] || facilityTypeColors.other).split(' ')[0]} ${(facilityTypeColors[facility.icon_type] || facilityTypeColors.other).split(' ')[1]}`}>
-                              {getFacilityIcon(facility.icon_type)}
-                            </div>
-                            <div>
-                              <h3 className="font-medium text-gray-900 dark:text-white">{facility.name}</h3>
-                              <p className="text-sm text-gray-500 dark:text-gray-400">{facility.location}</p>
+                            {facility.image_url ? (
+                              <div className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0">
+                                <img 
+                                  src={facility.image_url} 
+                                  alt={facility.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className={`p-2 rounded-full ${(facilityTypeColors[facility.icon_type] || facilityTypeColors.other).split(' ')[0]} ${(facilityTypeColors[facility.icon_type] || facilityTypeColors.other).split(' ')[1]}`}>
+                                {getFacilityIcon(facility.icon_type)}
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-gray-900 dark:text-white truncate">{facility.name}</h3>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{facility.location}</p>
                               <Badge
                                 className={`mt-1 text-xs ${facilityTypeColors[facility.icon_type] || facilityTypeColors.other}`}
                               >
@@ -286,7 +297,7 @@ const AttendeeMap = () => {
                     <Card>
                       <CardHeader className="pb-2">
                         <div className="flex justify-between items-start">
-                          <div>
+                          <div className="flex-1">
                             <CardTitle className="text-xl">{selectedFacility.name}</CardTitle>
                             <CardDescription>
                               <Badge
@@ -307,34 +318,45 @@ const AttendeeMap = () => {
                           </Button>
                         </div>
                       </CardHeader>
-                      <CardContent className="space-y-2">
-                        {selectedFacility.location && (
-                          <div className="flex items-start gap-2">
-                            <MapPin className="h-4 w-4 text-gray-500 mt-1" />
-                            <p>{selectedFacility.location}</p>
+                      <CardContent className="space-y-4">
+                        {selectedFacility.image_url && (
+                          <div className="w-full h-48 rounded-lg overflow-hidden">
+                            <img 
+                              src={selectedFacility.image_url} 
+                              alt={selectedFacility.name}
+                              className="w-full h-full object-cover"
+                            />
                           </div>
                         )}
-                        {selectedFacility.description && (
-                          <div className="flex items-start gap-2">
-                            <Info className="h-4 w-4 text-gray-500 mt-1" />
-                            <p>{selectedFacility.description}</p>
-                          </div>
-                        )}
-                        {selectedFacility.contact_info && selectedFacility.contact_type !== 'none' && (
-                          <div className="flex items-start gap-2">
-                            {getContactIcon(selectedFacility.contact_type)}
-                            <p>{selectedFacility.contact_info}</p>
-                          </div>
-                        )}
-                        {selectedFacility.rules && (
-                          <div className="flex items-start gap-2">
-                            <Info className="h-4 w-4 text-gray-500 mt-1" />
-                            <div>
-                              <p className="font-medium">Rules:</p>
-                              <p className="text-sm mt-1">{selectedFacility.rules}</p>
+                        <div className="space-y-2">
+                          {selectedFacility.location && (
+                            <div className="flex items-start gap-2">
+                              <MapPin className="h-4 w-4 text-gray-500 mt-1" />
+                              <p>{selectedFacility.location}</p>
                             </div>
-                          </div>
-                        )}
+                          )}
+                          {selectedFacility.description && (
+                            <div className="flex items-start gap-2">
+                              <Info className="h-4 w-4 text-gray-500 mt-1" />
+                              <p>{selectedFacility.description}</p>
+                            </div>
+                          )}
+                          {selectedFacility.contact_info && selectedFacility.contact_type !== 'none' && (
+                            <div className="flex items-start gap-2">
+                              {getContactIcon(selectedFacility.contact_type)}
+                              <p>{selectedFacility.contact_info}</p>
+                            </div>
+                          )}
+                          {selectedFacility.rules && (
+                            <div className="flex items-start gap-2">
+                              <Info className="h-4 w-4 text-gray-500 mt-1" />
+                              <div>
+                                <p className="font-medium">Rules:</p>
+                                <p className="text-sm mt-1">{selectedFacility.rules}</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                       </CardContent>
                     </Card>
                   )}
@@ -370,14 +392,24 @@ const AttendeeMap = () => {
                                   {typeFacilities.map(facility => (
                                     <div 
                                       key={facility.id}
-                                      className="border rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-800"
+                                      className="border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                                     >
-                                      <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-full ${(facilityTypeColors[facility.icon_type] || facilityTypeColors.other).split(' ')[0]} ${(facilityTypeColors[facility.icon_type] || facilityTypeColors.other).split(' ')[1]}`}>
-                                          {getFacilityIcon(facility.icon_type)}
-                                        </div>
-                                        <div>
-                                          <h4 className="font-medium">{facility.name}</h4>
+                                      <div className="flex items-start gap-3 mb-3">
+                                        {facility.image_url ? (
+                                          <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                                            <img 
+                                              src={facility.image_url} 
+                                              alt={facility.name}
+                                              className="w-full h-full object-cover"
+                                            />
+                                          </div>
+                                        ) : (
+                                          <div className={`p-3 rounded-full ${(facilityTypeColors[facility.icon_type] || facilityTypeColors.other).split(' ')[0]} ${(facilityTypeColors[facility.icon_type] || facilityTypeColors.other).split(' ')[1]}`}>
+                                            {getFacilityIcon(facility.icon_type)}
+                                          </div>
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                          <h4 className="font-medium text-lg">{facility.name}</h4>
                                           <p className="text-sm text-gray-500 dark:text-gray-400">
                                             {facility.location}
                                           </p>
@@ -385,17 +417,17 @@ const AttendeeMap = () => {
                                       </div>
                                       {(facility.contact_info || facility.description) && (
                                         <>
-                                          <Separator className="my-2" />
-                                          <div className="text-sm">
-                                            {facility.contact_info && facility.contact_type !== 'none' && (
-                                              <p className="flex items-center gap-1 text-gray-600 dark:text-gray-300">
-                                                {getContactIcon(facility.contact_type)}
-                                                {facility.contact_info}
+                                          <Separator className="my-3" />
+                                          <div className="text-sm space-y-2">
+                                            {facility.description && (
+                                              <p className="text-gray-600 dark:text-gray-300">
+                                                {facility.description}
                                               </p>
                                             )}
-                                            {facility.description && (
-                                              <p className="text-gray-600 dark:text-gray-300 mt-1">
-                                                {facility.description}
+                                            {facility.contact_info && facility.contact_type !== 'none' && (
+                                              <p className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
+                                                {getContactIcon(facility.contact_type)}
+                                                {facility.contact_info}
                                               </p>
                                             )}
                                           </div>

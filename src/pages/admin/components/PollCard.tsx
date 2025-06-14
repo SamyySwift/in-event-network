@@ -22,6 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
+  AlertDialogDescription, // <-- FIX: Added this missing import
 } from "@/components/ui/alert-dialog";
 import { Poll } from "@/hooks/useAdminPolls";
 

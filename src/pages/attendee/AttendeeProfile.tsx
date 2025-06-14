@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/layouts/AppLayout';
 import { ProfilePictureUpload } from '@/components/profile/ProfilePictureUpload';
+import { DeleteAccountDialog } from '@/components/profile/DeleteAccountDialog';
 import { Github, Instagram, Linkedin, Facebook, Globe } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -819,6 +821,27 @@ const AttendeeProfile = () => {
               </div>
             </CardFooter>
           )}
+        </Card>
+
+        {/* Account Management Section */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="text-destructive">Account Management</CardTitle>
+            <CardDescription>
+              Manage your account settings and data. These actions cannot be undone.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="p-4 border border-destructive/20 rounded-lg bg-destructive/5">
+                <h3 className="font-semibold text-destructive mb-2">Delete Account</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Permanently delete your account and all associated data. This action cannot be undone.
+                </p>
+                <DeleteAccountDialog userName={profileData.name || 'User'} />
+              </div>
+            </div>
+          </CardContent>
         </Card>
       </div>
     </AppLayout>

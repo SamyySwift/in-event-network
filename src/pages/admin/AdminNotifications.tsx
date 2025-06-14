@@ -101,94 +101,89 @@ const AdminNotifications = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
+      <div className="max-w-2xl mx-auto w-full px-2 sm:px-0 space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col gap-1 w-full">
             <h1 className="text-3xl font-bold tracking-tight flex items-center">
               <Bell className="mr-2 h-8 w-8 text-primary" />
-              Notifications
+              <span className="truncate">Notifications</span>
               {unreadCount > 0 && (
                 <Badge className="ml-3 bg-primary hover:bg-primary-600">{unreadCount} new</Badge>
               )}
             </h1>
-            <p className="text-muted-foreground mt-1">Real-time updates about your events and attendees.</p>
+            <p className="text-muted-foreground text-sm sm:mt-1">Real-time updates about your events and attendees.</p>
           </div>
-          
-          <div className="flex space-x-2">
-            <Button 
-              variant="outline" 
-              onClick={handleMarkAllAsRead}
-              disabled={!notifications.some(n => !n.is_read) || isMarkingAllRead}
-              className="bg-card border-primary/20 hover:bg-accent flex items-center"
-            >
-              <Check size={16} className="mr-1" />
-              {isMarkingAllRead ? 'Marking...' : 'Mark all read'}
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            onClick={handleMarkAllAsRead}
+            disabled={!notifications.some(n => !n.is_read) || isMarkingAllRead}
+            className="bg-card border-primary/20 hover:bg-accent flex items-center w-full sm:w-auto"
+          >
+            <Check size={16} className="mr-1" />
+            {isMarkingAllRead ? 'Marking...' : 'Mark all read'}
+          </Button>
         </div>
         
         <Tabs defaultValue="all" className="w-full">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
-            <TabsList className="bg-muted/50">
+          <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-4">
+            <TabsList className="bg-muted/50 flex-1">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="unread">Unread ({notifications.filter(n => !n.is_read).length})</TabsTrigger>
               <TabsTrigger value="read">Read ({notifications.filter(n => n.is_read).length})</TabsTrigger>
             </TabsList>
-            
             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input 
+                <Input
                   placeholder="Search notifications..."
                   className="pl-8"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              
-              <div className="relative">
-                <Button 
-                  variant="outline" 
-                  className="flex items-center bg-card border-primary/20 hover:bg-accent"
+              <div className="relative w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  className="flex items-center bg-card border-primary/20 hover:bg-accent w-full sm:w-auto"
                   onClick={() => setExpandedFilter(!expandedFilter)}
                 >
                   <Filter size={16} className="mr-1.5" />
                   Filter
-                  {expandedFilter ? 
-                    <ChevronUp size={16} className="ml-1.5" /> : 
+                  {expandedFilter ?
+                    <ChevronUp size={16} className="ml-1.5" /> :
                     <ChevronDown size={16} className="ml-1.5" />
                   }
                 </Button>
-                
+
                 {expandedFilter && (
-                  <Card className="absolute right-0 top-full mt-1 z-10 w-64 shadow-lg glass-card animate-fade-in">
+                  <Card className="absolute right-0 top-full mt-1 z-30 w-64 shadow-lg bg-white dark:bg-card animate-fade-in border">
                     <CardContent className="p-3 space-y-3">
                       <div>
                         <p className="text-sm font-medium mb-2">Type</p>
                         <div className="flex flex-wrap gap-2">
-                          <Button 
-                            size="sm" 
-                            variant={typeFilters.info ? "default" : "outline"} 
+                          <Button
+                            size="sm"
+                            variant={typeFilters.info ? "default" : "outline"}
                             className={`text-xs h-7 px-2 ${typeFilters.info ? 'bg-blue-500' : 'bg-card border-blue-300 text-blue-700'}`}
-                            onClick={() => setTypeFilters({...typeFilters, info: !typeFilters.info})}
+                            onClick={() => setTypeFilters({ ...typeFilters, info: !typeFilters.info })}
                           >
                             <Info size={14} className="mr-1" />
                             Info
                           </Button>
-                          <Button 
+                          <Button
                             size="sm"
                             variant={typeFilters.warning ? "default" : "outline"}
                             className={`text-xs h-7 px-2 ${typeFilters.warning ? 'bg-amber-500' : 'bg-card border-amber-300 text-amber-700'}`}
-                            onClick={() => setTypeFilters({...typeFilters, warning: !typeFilters.warning})}
+                            onClick={() => setTypeFilters({ ...typeFilters, warning: !typeFilters.warning })}
                           >
                             <AlertTriangle size={14} className="mr-1" />
                             Warning
                           </Button>
-                          <Button 
+                          <Button
                             size="sm"
                             variant={typeFilters.success ? "default" : "outline"}
                             className={`text-xs h-7 px-2 ${typeFilters.success ? 'bg-emerald-500' : 'bg-card border-emerald-300 text-emerald-700'}`}
-                            onClick={() => setTypeFilters({...typeFilters, success: !typeFilters.success})}
+                            onClick={() => setTypeFilters({ ...typeFilters, success: !typeFilters.success })}
                           >
                             <CheckCircle size={14} className="mr-1" />
                             Success
@@ -297,8 +292,8 @@ interface NotificationItemProps {
   isMarking: boolean;
 }
 
-const NotificationItem = ({ 
-  notification, 
+const NotificationItem = ({
+  notification,
   onMarkAsRead,
   getNotificationIcon,
   getNotificationBadge,
@@ -311,49 +306,49 @@ const NotificationItem = ({
   };
 
   return (
-    <Card className={`transition-all duration-200 hover:shadow-md ${
-      !notification.is_read 
-        ? 'gradient-card border-l-4 border-l-primary shadow-md' 
+    <Card className={`transition-all duration-200 hover:shadow-md overflow-x-auto ${
+      !notification.is_read
+        ? 'gradient-card border-l-4 border-l-primary shadow-md'
         : 'bg-card border hover:bg-accent/10'
     }`}>
       <CardContent className="p-0">
-        <div className="p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center gap-4">
-          <div className={`rounded-full p-3 ${
-            notification.type === 'info' ? 'bg-blue-100' :
-            notification.type === 'warning' ? 'bg-amber-100' :
-            notification.type === 'success' ? 'bg-emerald-100' : 'bg-gray-100'
-          }`}>
+        <div className="flex flex-col sm:flex-row gap-4 p-4 sm:p-6 items-start sm:items-center">
+          <div className={`rounded-full p-3 self-center sm:self-auto mb-2 sm:mb-0
+            ${notification.type === 'info' ? 'bg-blue-100'
+              : notification.type === 'warning' ? 'bg-amber-100'
+              : notification.type === 'success' ? 'bg-emerald-100'
+              : 'bg-gray-100'
+            }`
+          }>
             {getNotificationIcon(notification.type)}
           </div>
-          
-          <div className="flex-1">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1">
-              <h3 className="font-medium text-lg">{notification.title}</h3>
-              <div className="flex items-center mt-1 sm:mt-0">
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between mb-1">
+              <h3 className="font-medium text-lg truncate">{notification.title}</h3>
+              <div className="flex items-center mt-1 sm:mt-0 gap-2 flex-wrap">
                 {getNotificationBadge(notification.type)}
-                <div className="ml-2 flex items-center text-muted-foreground text-xs">
+                <div className="flex items-center text-muted-foreground text-xs">
                   <Clock size={14} className="mr-1" />
                   {timeAgo}
                 </div>
               </div>
             </div>
-            <p className="text-muted-foreground">{notification.message}</p>
+            <p className="text-muted-foreground text-sm break-words">{notification.message}</p>
           </div>
-          
-          <div className="flex items-center justify-end sm:flex-col gap-2">
-            {!notification.is_read && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
+          {!notification.is_read && (
+            <div className="flex-shrink-0 flex items-center justify-end w-full sm:w-auto">
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={handleMarkAsRead}
                 disabled={isMarking}
-                className="h-8 bg-accent/30 hover:bg-accent"
+                className="h-8 bg-accent/30 hover:bg-accent w-full sm:w-auto"
               >
                 <Check size={14} className="mr-1" />
                 {isMarking ? 'Marking...' : 'Mark read'}
               </Button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

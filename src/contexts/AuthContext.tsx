@@ -34,7 +34,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -58,15 +57,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           } else {
             console.log("No existing session found");
             setCurrentUser(null);
+            setIsLoading(false);
           }
-          setIsInitialized(true);
-          setIsLoading(false);
         }
       } catch (error) {
         console.error("Error initializing auth:", error);
         if (mounted) {
           setCurrentUser(null);
-          setIsInitialized(true);
           setIsLoading(false);
         }
       }
@@ -82,25 +79,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       
       if (!mounted) return;
 
-      try {
-        if (session?.user) {
-          // Set loading to true only if we don't have the user profile yet
-          if (!currentUser || currentUser.id !== session.user.id) {
-            setIsLoading(true);
-          }
-          
-          // Defer profile fetching to avoid potential deadlocks
-          setTimeout(async () => {
-            if (mounted) {
-              await getUserProfile(session.user);
-            }
-          }, 0);
-        } else {
-          setCurrentUser(null);
-          setIsLoading(false);
-        }
-      } catch (error) {
-        console.error("Error in auth state change:", error);
+      if (session?.user) {
+        console.log("User signed in, fetching profile...");
+        await getUserProfile(session.user);
+      } else {
+        console.log("User signed out, clearing state");
         setCurrentUser(null);
         setIsLoading(false);
       }
@@ -154,17 +137,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (error) {
       console.error("Error fetching user profile:", error);
       setIsLoading(false);
-      // Don't throw here, just log the error and continue
     }
   };
 
   const login = async (email: string, password: string) => {
     try {
-      setIsLoading(true);
       console.log("Attempting login for:", email);
-      
-      // Clear any existing session first
-      await supabase.auth.signOut();
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -173,15 +151,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (error) {
         console.error("Login error:", error);
-        setIsLoading(false);
         return { error };
       }
 
       console.log("Login successful for:", data.user?.id);
+      // Don't set loading here, let the auth state change handle it
       return { error: null };
     } catch (error) {
       console.error("Error logging in:", error);
-      setIsLoading(false);
       return { error: error as Error };
     }
   };
@@ -193,11 +170,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     role: "host" | "attendee"
   ) => {
     try {
-      setIsLoading(true);
       console.log("Attempting registration for:", email, "with role:", role);
-      
-      // Clear any existing session first
-      await supabase.auth.signOut();
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -212,7 +185,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (error) {
         console.error("Registration error:", error);
-        setIsLoading(false);
         return { error };
       }
 
@@ -231,7 +203,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (profileError) {
           console.error("Profile creation error:", profileError);
-          setIsLoading(false);
           return { error: profileError };
         }
 
@@ -245,7 +216,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
           if (loginError) {
             console.error("Auto-login error:", loginError);
-            setIsLoading(false);
             return { error: loginError };
           }
 
@@ -256,13 +226,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       return { error: null };
     } catch (error) {
       console.error("Error registering:", error);
-      setIsLoading(false);
       return { error: error as Error };
     }
   };
 
   const logout = async () => {
-    setIsLoading(true);
     try {
       console.log("Logging out...");
       await supabase.auth.signOut();
@@ -270,15 +238,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       console.log("Logout successful");
     } catch (error) {
       console.error("Error logging out:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const updateUser = async (userData: Partial<User>) => {
     if (!currentUser) return;
 
-    setIsLoading(true);
     try {
       const profileData: any = {
         name: userData.name,
@@ -318,8 +283,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setCurrentUser({ ...currentUser, ...userData });
     } catch (error) {
       console.error("Error updating profile:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 

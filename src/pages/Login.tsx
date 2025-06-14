@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -76,34 +77,20 @@ const Login = () => {
     }
   };
 
-  // Show loading only during initial auth check or login process
-  if ((isLoading && !currentUser) || isSubmitting) {
+  // Show loading only during initial auth check
+  if (isLoading && !currentUser) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-connect-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">
-            {isSubmitting ? "Signing you in..." : "Loading..."}
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Don't render login form if user is already authenticated
-  if (currentUser) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-connect-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Redirecting to dashboard...</p>
+          <p className="text-gray-600">Loading...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen  flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="flex justify-center mb-8">
         <Link to="/" className="flex items-center">
           <div className="w-10 h-10 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-lg flex items-center justify-center">

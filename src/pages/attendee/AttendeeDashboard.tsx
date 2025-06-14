@@ -12,6 +12,7 @@ import { useDashboard } from '@/hooks/useDashboard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AttendeeEventProvider, useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
 import AttendeeRouteGuard from '@/components/attendee/AttendeeRouteGuard';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const AttendeeDashboardContent = () => {
   const navigate = useNavigate();
@@ -39,7 +40,7 @@ const AttendeeDashboardContent = () => {
   // Show loading state while checking event context
   if (contextLoading || isLoading) {
     return (
-      <div className="animate-fade-in max-w-7xl mx-auto p-6 pt-20 md:pt-6">
+      <div className="animate-fade-in max-w-7xl mx-auto p-6">
         <div className="mb-8">
           <Skeleton className="h-12 w-80 mb-4" />
           <Skeleton className="h-6 w-64" />
@@ -57,7 +58,7 @@ const AttendeeDashboardContent = () => {
   // Show error state
   if (error) {
     return (
-      <div className="animate-fade-in max-w-7xl mx-auto p-6 pt-20 md:pt-6">
+      <div className="animate-fade-in max-w-7xl mx-auto p-6">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <WifiOff className="h-16 w-16 text-gray-300 mx-auto mb-6" />
@@ -75,7 +76,7 @@ const AttendeeDashboardContent = () => {
   // Show message if user hasn't joined any event
   if (!hasJoinedEvent || !dashboardData) {
     return (
-      <div className="animate-fade-in max-w-7xl mx-auto p-6 pt-20 md:pt-6">
+      <div className="animate-fade-in max-w-7xl mx-auto p-6">
         {/* Hero Section */}
         <div className="mb-8 relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-8 sm:p-12 text-white">
           <div className="absolute inset-0 bg-black/20 z-0"></div>
@@ -106,8 +107,8 @@ const AttendeeDashboardContent = () => {
   const { currentEvent, upcomingEvents, nextSession, recentAnnouncements, suggestedConnections } = dashboardData;
 
   return (
-    <div className="min-h-screen overflow-y-auto scroll-smooth">
-      <div className="animate-fade-in max-w-7xl mx-auto p-6 pt-20 md:pt-6 pb-20">
+    <ScrollArea className="h-screen">
+      <div className="animate-fade-in max-w-7xl mx-auto p-6 pb-20">
         {/* Hero Header */}
         <div className="mb-8 relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-6 sm:p-8 text-white z-10">
           <div className="absolute inset-0 bg-black/20 z-0"></div>
@@ -446,7 +447,7 @@ const AttendeeDashboardContent = () => {
           </Card>
         )}
       </div>
-    </div>
+    </ScrollArea>
   );
 };
 

@@ -19,6 +19,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   const [qrUrl, setQrUrl] = useState(eventUrl);
   const [qrSize, setQrSize] = useState(256);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [qrImageUrl, setQrImageUrl] = useState<string | null>(null); // add state
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const generateQRCode = async () => {
@@ -29,21 +30,24 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
     if (canvasRef.current) {
       const ctx = canvasRef.current.getContext('2d');
       const img = new Image();
-      
+
       img.onload = () => {
         canvasRef.current!.width = qrSize;
         canvasRef.current!.height = qrSize;
+        ctx?.clearRect(0, 0, qrSize, qrSize);
         ctx?.drawImage(img, 0, 0, qrSize, qrSize);
         setIsGenerating(false);
+        setQrImageUrl(qrApiUrl); // set the url for fallback download
         toast.success("QR Code generated successfully!");
       };
-      
-      img.onerror = () => {
+
+      img.onerror = (e) => {
         setIsGenerating(false);
+        setQrImageUrl(null);
         toast.error("Failed to generate QR code");
+        console.error("QR image error", e);
       };
-      
-      // Enable CORS for cross-origin image loading
+
       img.crossOrigin = 'anonymous';
       img.src = qrApiUrl;
     }
@@ -52,6 +56,13 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   const downloadQRCode = () => {
     if (canvasRef.current) {
       try {
+        // Only allow download if something's rendered in canvas
+        const ctx = canvasRef.current.getContext('2d');
+        const pixel = ctx?.getImageData(0, 0, 1, 1).data;
+        if (!pixel || pixel.every(x => x === 0)) {
+          toast.error("QR Code is not loaded yet. Please try again.");
+          return;
+        }
         // Create download link
         const link = document.createElement('a');
         const fileName = `${eventName.replace(/\s+/g, '_')}_QR_Code.png`;
@@ -68,12 +79,13 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
             URL.revokeObjectURL(url);
             toast.success("QR Code downloaded successfully!");
           } else {
-            toast.error("Failed to create download file");
+            toast.error("Failed to create download file from QR canvas.");
+            console.error("Canvas toBlob() returned null");
           }
         }, 'image/png', 1.0);
       } catch (error) {
         console.error('Download error:', error);
-        toast.error("Failed to download QR code");
+        toast.error("Failed to download QR code. Try the image download link below.");
       }
     } else {
       toast.error("No QR code available to download");
@@ -92,6 +104,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
 
   React.useEffect(() => {
     generateQRCode();
+    // eslint-disable-next-line
   }, [qrUrl, qrSize]);
 
   return (
@@ -111,6 +124,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
               value={qrUrl}
               onChange={(e) => setQrUrl(e.target.value)}
               placeholder="Enter event registration URL"
+              autoComplete="off"
             />
             <Button variant="outline" size="icon" onClick={copyQRCodeUrl}>
               <Copy className="h-4 w-4" />
@@ -146,6 +160,18 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
               </div>
             )}
           </div>
+
+          {/* Alternative direct-image download for users if canvas fails */}
+          {qrImageUrl && (
+            <a
+              href={qrImageUrl}
+              download={`${eventName.replace(/\s+/g, '_')}_QR_Code.png`}
+              className="text-xs text-blue-600 underline hover:text-blue-800 mt-2"
+              tabIndex={0}
+            >
+              Download as Image (alternative)
+            </a>
+          )}
           
           <div className="flex gap-2">
             <Button 
@@ -158,7 +184,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
             </Button>
             <Button 
               onClick={downloadQRCode}
-              disabled={isGenerating}
+              disabled={isGenerating || !qrImageUrl}
               className="bg-primary hover:bg-primary/90"
             >
               <Download className="h-4 w-4 mr-2" />
@@ -166,6 +192,9 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
             </Button>
           </div>
         </div>
+        <p className="text-xs text-muted-foreground text-center">
+          Having trouble downloading? Try the alternative download link above, or right click the QR image and "Save image as...".
+        </p>
       </CardContent>
     </Card>
   );

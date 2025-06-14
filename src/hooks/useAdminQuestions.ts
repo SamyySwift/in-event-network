@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,7 +26,7 @@ export interface QuestionWithProfile {
     speaker_name: string;
     session_time: string | null;
   } | null;
-  event_name?: string; // Add event name to show which event the question belongs to
+  event_name?: string;
 }
 
 export const useAdminQuestions = (eventId?: string) => {
@@ -44,106 +43,126 @@ export const useAdminQuestions = (eventId?: string) => {
 
       console.log('Fetching questions for admin:', currentUser.id, 'event:', eventId);
 
-      let questionsData;
-      let questionsError;
+      try {
+        let questionsData;
+        let questionsError;
 
-      if (eventId) {
-        // Get questions for specific event
-        const { data, error } = await supabase
-          .from('questions')
-          .select(`
-            *,
-            profiles!user_id (
-              name,
-              photo_url
-            )
-          `)
-          .eq('event_id', eventId)
-          .order('created_at', { ascending: false });
+        if (eventId) {
+          // Get questions for specific event
+          console.log('Fetching questions for specific event:', eventId);
+          const { data, error } = await supabase
+            .from('questions')
+            .select(`
+              *,
+              profiles:user_id (
+                name,
+                photo_url
+              )
+            `)
+            .eq('event_id', eventId)
+            .order('created_at', { ascending: false });
 
-        questionsData = data;
-        questionsError = error;
-      } else {
-        // Get all admin's events first
-        const { data: adminEvents, error: eventsError } = await supabase
-          .from('events')
-          .select('id')
-          .eq('host_id', currentUser.id);
+          questionsData = data;
+          questionsError = error;
+          console.log('Event-specific questions result:', { data, error });
+        } else {
+          // Get all admin's events first
+          console.log('Fetching all admin events for user:', currentUser.id);
+          const { data: adminEvents, error: eventsError } = await supabase
+            .from('events')
+            .select('id, name')
+            .eq('host_id', currentUser.id);
 
-        if (eventsError) {
-          console.error('Error fetching admin events:', eventsError);
-          throw eventsError;
+          console.log('Admin events result:', { adminEvents, eventsError });
+
+          if (eventsError) {
+            console.error('Error fetching admin events:', eventsError);
+            throw eventsError;
+          }
+
+          if (!adminEvents || adminEvents.length === 0) {
+            console.log('No events found for admin');
+            return [];
+          }
+
+          const eventIds = adminEvents.map(event => event.id);
+          console.log('Event IDs to fetch questions for:', eventIds);
+
+          // Get questions from all admin events
+          const { data, error } = await supabase
+            .from('questions')
+            .select(`
+              *,
+              profiles:user_id (
+                name,
+                photo_url
+              ),
+              events:event_id (
+                name
+              )
+            `)
+            .in('event_id', eventIds)
+            .order('created_at', { ascending: false });
+
+          questionsData = data;
+          questionsError = error;
+          console.log('All events questions result:', { data, error });
         }
 
-        if (!adminEvents || adminEvents.length === 0) {
+        if (questionsError) {
+          console.error('Questions error:', questionsError);
+          throw questionsError;
+        }
+
+        console.log('Raw questions data:', questionsData);
+
+        if (!questionsData || questionsData.length === 0) {
+          console.log('No questions found');
           return [];
         }
 
-        const eventIds = adminEvents.map(event => event.id);
-
-        // Get questions from all admin events
-        const { data, error } = await supabase
-          .from('questions')
-          .select(`
-            *,
-            profiles!user_id (
-              name,
-              photo_url
-            ),
-            events!event_id (
-              name
-            )
-          `)
-          .in('event_id', eventIds)
-          .order('created_at', { ascending: false });
-
-        questionsData = data;
-        questionsError = error;
-      }
-
-      if (questionsError) {
-        console.error('Questions error:', questionsError);
-        throw questionsError;
-      }
-
-      console.log('Admin questions data:', questionsData);
-
-      if (!questionsData || questionsData.length === 0) {
-        return [];
-      }
-
-      // Fetch session information for questions that have a session_id
-      const questionsWithSessionInfo = await Promise.all(
-        questionsData.map(async (question: any) => {
-          let sessionInfo = null;
-          
-          if (question.session_id) {
-            const { data: speakerData } = await supabase
-              .from('speakers')
-              .select('name, session_title, session_time')
-              .eq('id', question.session_id)
-              .single();
+        // Fetch session information for questions that have a session_id
+        const questionsWithSessionInfo = await Promise.all(
+          questionsData.map(async (question: any) => {
+            let sessionInfo = null;
             
-            if (speakerData) {
-              sessionInfo = {
-                session_title: speakerData.session_title,
-                speaker_name: speakerData.name,
-                session_time: speakerData.session_time
-              };
+            if (question.session_id) {
+              console.log('Fetching session info for session_id:', question.session_id);
+              const { data: speakerData, error: speakerError } = await supabase
+                .from('speakers')
+                .select('name, session_title, session_time')
+                .eq('id', question.session_id)
+                .single();
+              
+              if (speakerError) {
+                console.error('Error fetching speaker data:', speakerError);
+              } else if (speakerData) {
+                sessionInfo = {
+                  session_title: speakerData.session_title,
+                  speaker_name: speakerData.name,
+                  session_time: speakerData.session_time
+                };
+              }
             }
-          }
 
-          return {
-            ...question,
-            profiles: question.is_anonymous ? null : question.profiles,
-            session_info: sessionInfo,
-            event_name: question.events?.name || 'Unknown Event'
-          };
-        })
-      );
+            const processedQuestion = {
+              ...question,
+              profiles: question.is_anonymous ? null : question.profiles,
+              session_info: sessionInfo,
+              event_name: question.events?.name || 'Unknown Event'
+            };
 
-      console.log('Admin questions with profiles and session info:', questionsWithSessionInfo);
-      return questionsWithSessionInfo;
+            console.log('Processed question:', processedQuestion);
+            return processedQuestion;
+          })
+        );
+
+        console.log('Final questions with session info:', questionsWithSessionInfo);
+        return questionsWithSessionInfo;
+      } catch (error) {
+        console.error('Error in useAdminQuestions:', error);
+        throw error;
+      }
     },
     enabled: !!currentUser?.id,
   });

@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { ImageUpload } from '@/components/ui/image-upload';
 import { Calendar, Clock, MapPin, Plus, Edit, Trash2, Building } from 'lucide-react';
 import { format } from 'date-fns';
 import { useForm, Controller } from 'react-hook-form';
@@ -27,6 +28,7 @@ interface ScheduleItem {
   location: string | null;
   type: string;
   priority: string;
+  image_url: string | null;
   event_id: string;
   created_by: string | null;
   created_at: string;
@@ -48,6 +50,8 @@ const AdminScheduleContent = () => {
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingItem, setEditingItem] = useState<ScheduleItem | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
   const { toast } = useToast();
   const { currentUser } = useAuth();
   const { selectedEventId, selectedEvent } = useAdminEventContext();
@@ -63,6 +67,25 @@ const AdminScheduleContent = () => {
       priority: 'medium'
     }
   });
+
+  const uploadImage = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${currentUser?.id}/schedule/${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('event-images')
+      .upload(fileName, file);
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('event-images')
+      .getPublicUrl(fileName);
+
+    return publicUrl;
+  };
 
   useEffect(() => {
     if (selectedEventId) {
@@ -140,8 +163,15 @@ const AdminScheduleContent = () => {
     console.log('Form data being submitted:', data);
 
     try {
+      let imageUrl = imagePreview;
+      
+      if (selectedImage) {
+        imageUrl = await uploadImage(selectedImage);
+      }
+
       const scheduleData = {
         ...data,
+        image_url: imageUrl || null,
         event_id: selectedEventId,
         created_by: currentUser?.id,
       };
@@ -182,6 +212,8 @@ const AdminScheduleContent = () => {
         priority: 'medium'
       });
       setEditingItem(null);
+      setSelectedImage(null);
+      setImagePreview('');
       setActiveTab('view');
       fetchScheduleItems();
     } catch (error) {
@@ -196,6 +228,7 @@ const AdminScheduleContent = () => {
 
   const handleEdit = (item: ScheduleItem) => {
     setEditingItem(item);
+    setImagePreview(item.image_url || '');
     reset({
       title: item.title,
       description: item.description || '',
@@ -206,6 +239,19 @@ const AdminScheduleContent = () => {
       priority: item.priority
     });
     setActiveTab('add');
+  };
+
+  const handleImageSelect = (file: File | null) => {
+    setSelectedImage(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setImagePreview('');
+    }
   };
 
   const handleDelete = async (item: ScheduleItem) => {
@@ -314,6 +360,8 @@ const AdminScheduleContent = () => {
                   type: 'general',
                   priority: 'medium'
                 });
+                setSelectedImage(null);
+                setImagePreview('');
               }
             }}
           >
@@ -339,11 +387,22 @@ const AdminScheduleContent = () => {
                     <Card key={item.id} className="hover:shadow-md transition-shadow">
                       <CardHeader className="pb-2">
                         <div className="flex justify-between items-start">
-                          <div>
-                            <CardTitle className="text-lg">{item.title}</CardTitle>
-                            <CardDescription className="mt-1">
-                              {item.description}
-                            </CardDescription>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              {item.image_url && (
+                                <img 
+                                  src={item.image_url} 
+                                  alt={item.title}
+                                  className="w-12 h-12 object-cover rounded"
+                                />
+                              )}
+                              <div>
+                                <CardTitle className="text-lg">{item.title}</CardTitle>
+                                <CardDescription className="mt-1">
+                                  {item.description}
+                                </CardDescription>
+                              </div>
+                            </div>
                           </div>
                           <div className="flex gap-2">
                             <Button 
@@ -398,6 +457,14 @@ const AdminScheduleContent = () => {
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                    <div className="space-y-2">
+                      <ImageUpload
+                        onImageSelect={handleImageSelect}
+                        currentImageUrl={imagePreview}
+                        label="Schedule Item Image"
+                      />
+                    </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="title">Title</Label>
                       <Input
@@ -518,6 +585,8 @@ const AdminScheduleContent = () => {
                           variant="outline" 
                           onClick={() => {
                             setEditingItem(null);
+                            setSelectedImage(null);
+                            setImagePreview('');
                             reset({
                               title: '',
                               description: '',

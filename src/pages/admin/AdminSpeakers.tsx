@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -10,11 +9,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { ImageUpload } from '@/components/ui/image-upload';
 import { useForm } from 'react-hook-form';
 import { useAdminSpeakers } from '@/hooks/useAdminSpeakers';
 import { useAdminEventContext, AdminEventProvider } from '@/hooks/useAdminEventContext';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 type SpeakerFormData = {
   name: string;
@@ -31,13 +33,35 @@ type SpeakerFormData = {
 const AdminSpeakersContent = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [editingSpeaker, setEditingSpeaker] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
   const { selectedEventId, selectedEvent } = useAdminEventContext();
   const { speakers, isLoading, createSpeaker, updateSpeaker, deleteSpeaker } = useAdminSpeakers(selectedEventId || undefined);
   const { toast } = useToast();
+  const { currentUser } = useAuth();
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<SpeakerFormData>();
 
-  const onSubmit = (data: SpeakerFormData) => {
+  const uploadImage = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${currentUser?.id}/speakers/${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('event-images')
+      .upload(fileName, file);
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('event-images')
+      .getPublicUrl(fileName);
+
+    return publicUrl;
+  };
+
+  const onSubmit = async (data: SpeakerFormData) => {
     if (!selectedEventId) {
       toast({
         title: "No Event Selected",
@@ -47,26 +71,44 @@ const AdminSpeakersContent = () => {
       return;
     }
 
-    const speakerData = {
-      ...data,
-      event_id: selectedEventId,
-      session_time: data.session_time ? new Date(data.session_time).toISOString() : undefined,
-    };
+    try {
+      let photoUrl = imagePreview;
+      
+      if (selectedImage) {
+        photoUrl = await uploadImage(selectedImage);
+      }
 
-    if (editingSpeaker) {
-      updateSpeaker({ id: editingSpeaker, ...speakerData });
-      setEditingSpeaker(null);
-    } else {
-      createSpeaker(speakerData);
+      const speakerData = {
+        ...data,
+        event_id: selectedEventId,
+        photo_url: photoUrl,
+        session_time: data.session_time ? new Date(data.session_time).toISOString() : undefined,
+      };
+
+      if (editingSpeaker) {
+        updateSpeaker({ id: editingSpeaker, ...speakerData });
+        setEditingSpeaker(null);
+      } else {
+        createSpeaker(speakerData);
+      }
+      
+      reset();
+      setSelectedImage(null);
+      setImagePreview('');
+      setIsCreating(false);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive"
+      });
     }
-    
-    reset();
-    setIsCreating(false);
   };
 
   const handleEdit = (speaker: any) => {
     setEditingSpeaker(speaker.id);
     setIsCreating(true);
+    setImagePreview(speaker.photo_url || '');
     setValue('name', speaker.name);
     setValue('title', speaker.title || '');
     setValue('company', speaker.company || '');
@@ -87,7 +129,22 @@ const AdminSpeakersContent = () => {
   const handleCancel = () => {
     setIsCreating(false);
     setEditingSpeaker(null);
+    setSelectedImage(null);
+    setImagePreview('');
     reset();
+  };
+
+  const handleImageSelect = (file: File | null) => {
+    setSelectedImage(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setImagePreview('');
+    }
   };
 
   const columns = [
@@ -183,6 +240,14 @@ const AdminSpeakersContent = () => {
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                  <div className="space-y-2">
+                    <ImageUpload
+                      onImageSelect={handleImageSelect}
+                      currentImageUrl={imagePreview}
+                      label="Speaker Photo"
+                    />
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="name">Name *</Label>
                     <Input

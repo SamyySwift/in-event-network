@@ -831,6 +831,7 @@ export type Database = {
           end_time: string
           event_id: string
           id: string
+          image_url: string | null
           location: string | null
           priority: string | null
           start_time: string
@@ -845,6 +846,7 @@ export type Database = {
           end_time: string
           event_id: string
           id?: string
+          image_url?: string | null
           location?: string | null
           priority?: string | null
           start_time: string
@@ -859,6 +861,7 @@ export type Database = {
           end_time?: string
           event_id?: string
           id?: string
+          image_url?: string | null
           location?: string | null
           priority?: string | null
           start_time?: string

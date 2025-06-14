@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ImageUpload } from '@/components/ui/image-upload';
 import { 
   Plus, 
   Edit, 
@@ -48,6 +49,9 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -87,9 +91,13 @@ const facilityIcons = [
 const AdminFacilities = () => {
   const [editingFacility, setEditingFacility] = useState<Facility | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string>('');
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
   
   const { events, isLoading: eventsLoading } = useAdminEvents();
   const { facilities, isLoading, error, createFacility, updateFacility, deleteFacility, isCreating, isUpdating, isDeleting } = useAdminFacilities(selectedEventId || undefined);
+  const { currentUser } = useAuth();
+  const { toast } = useToast();
 
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -118,31 +126,69 @@ const AdminFacilities = () => {
   const selectedIcon = watch("iconType");
   const selectedFormEventId = watch("eventId");
 
-  const onSubmit = (values: FormData) => {
+  const uploadImage = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${currentUser?.id}/facilities/${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('event-images')
+      .upload(fileName, file);
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('event-images')
+      .getPublicUrl(fileName);
+
+    return publicUrl;
+  };
+
+  const onSubmit = async (values: FormData) => {
     console.log('Form submitted with values:', values);
     
-    const facilityData = {
-      name: values.name,
-      description: values.description,
-      location: values.location,
-      rules: values.rules,
-      contact_type: values.contactType,
-      contact_info: values.contactInfo,
-      icon_type: values.iconType,
-      event_id: values.eventId,
-    };
+    try {
+      let imageUrl = imagePreview;
+      
+      if (selectedImage) {
+        imageUrl = await uploadImage(selectedImage);
+      }
 
-    if (editingFacility) {
-      updateFacility({ id: editingFacility.id, ...facilityData });
-      setEditingFacility(null);
-    } else {
-      createFacility(facilityData);
+      const facilityData = {
+        name: values.name,
+        description: values.description,
+        location: values.location,
+        rules: values.rules,
+        contact_type: values.contactType,
+        contact_info: values.contactInfo,
+        icon_type: values.iconType,
+        image_url: imageUrl || null,
+        event_id: values.eventId,
+      };
+
+      if (editingFacility) {
+        updateFacility({ id: editingFacility.id, ...facilityData });
+        setEditingFacility(null);
+      } else {
+        createFacility(facilityData);
+      }
+      
+      reset();
+      setSelectedImage(null);
+      setImagePreview('');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive"
+      });
     }
-    reset();
   };
 
   const handleEdit = (facility: Facility) => {
     setEditingFacility(facility);
+    setImagePreview(facility.image_url || '');
     setValue("name", facility.name);
     setValue("description", facility.description || "");
     setValue("location", facility.location || "");
@@ -155,12 +201,27 @@ const AdminFacilities = () => {
 
   const handleCancelEdit = () => {
     setEditingFacility(null);
+    setSelectedImage(null);
+    setImagePreview('');
     reset();
   };
 
   const handleEventChange = (eventId: string) => {
     setSelectedEventId(eventId);
     setValue("eventId", eventId);
+  };
+
+  const handleImageSelect = (file: File | null) => {
+    setSelectedImage(file);
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setImagePreview('');
+    }
   };
 
   const getContactIcon = (contactType?: string) => {
@@ -285,6 +346,14 @@ const AdminFacilities = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                <div className="space-y-2">
+                  <ImageUpload
+                    onImageSelect={handleImageSelect}
+                    currentImageUrl={imagePreview}
+                    label="Facility Image"
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="eventId">Event *</Label>
                   <Select value={selectedFormEventId} onValueChange={(value) => setValue("eventId", value)}>
@@ -444,6 +513,13 @@ const AdminFacilities = () => {
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">
+                            {facility.image_url && (
+                              <img 
+                                src={facility.image_url} 
+                                alt={facility.name}
+                                className="w-12 h-12 object-cover rounded"
+                              />
+                            )}
                             {getFacilityIcon(facility.icon_type)}
                             <h4 className="font-medium text-sm sm:text-base break-words">{facility.name}</h4>
                           </div>

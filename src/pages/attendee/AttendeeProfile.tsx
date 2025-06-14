@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -86,6 +85,7 @@ const AttendeeProfile = () => {
   const [newTag, setNewTag] = useState('');
   const [selectedNiche, setSelectedNiche] = useState('');
   const [selectedNetworking, setSelectedNetworking] = useState<string[]>([]);
+  const [customNetworkingPref, setCustomNetworkingPref] = useState('');
 
   // Load profile data from Supabase on component mount
   useEffect(() => {
@@ -164,6 +164,17 @@ const AttendeeProfile = () => {
     } else {
       setSelectedNetworking([...selectedNetworking, pref]);
     }
+  };
+
+  const handleAddCustomNetworkingPref = () => {
+    if (customNetworkingPref.trim() && !selectedNetworking.includes(customNetworkingPref.trim())) {
+      setSelectedNetworking([...selectedNetworking, customNetworkingPref.trim()]);
+      setCustomNetworkingPref('');
+    }
+  };
+
+  const handleRemoveNetworkingPref = (pref: string) => {
+    setSelectedNetworking(selectedNetworking.filter(p => p !== pref));
   };
 
   const handleProfilePictureUpdate = (imageUrl: string) => {
@@ -438,28 +449,86 @@ const AttendeeProfile = () => {
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Who are you interested in meeting?</p>
               
               {isEditing ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {networkingOptions.map((pref) => (
-                    <div key={pref} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={`pref-${pref}`}
-                        className="peer sr-only"
-                        checked={selectedNetworking.includes(pref)}
-                        onChange={() => toggleNetworkingPreference(pref)}
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                    {networkingOptions.map((pref) => (
+                      <div key={pref} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          id={`pref-${pref}`}
+                          className="peer sr-only"
+                          checked={selectedNetworking.includes(pref)}
+                          onChange={() => toggleNetworkingPreference(pref)}
+                        />
+                        <label
+                          htmlFor={`pref-${pref}`}
+                          className={`flex w-full cursor-pointer rounded-lg border ${
+                            selectedNetworking.includes(pref)
+                              ? 'bg-connect-50 border-connect-300 dark:bg-connect-900/50 dark:border-connect-400'
+                              : 'bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-600'
+                          } p-2 text-sm font-medium text-gray-900 dark:text-white`}
+                        >
+                          {pref}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Custom networking preference input */}
+                  <div>
+                    <Label htmlFor="custom-networking" className="text-gray-900 dark:text-white">Add custom preference</Label>
+                    <div className="mt-1 flex">
+                      <Input
+                        type="text"
+                        id="custom-networking"
+                        value={customNetworkingPref}
+                        placeholder="Enter custom networking preference"
+                        onChange={(e) => setCustomNetworkingPref(e.target.value)}
+                        className="rounded-r-none"
+                        onKeyPress={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            handleAddCustomNetworkingPref();
+                          }
+                        }}
                       />
-                      <label
-                        htmlFor={`pref-${pref}`}
-                        className={`flex w-full cursor-pointer rounded-lg border ${
-                          selectedNetworking.includes(pref)
-                            ? 'bg-connect-50 border-connect-300 dark:bg-connect-900/50 dark:border-connect-400'
-                            : 'bg-white hover:bg-gray-50 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-600'
-                        } p-2 text-sm font-medium text-gray-900 dark:text-white`}
+                      <Button
+                        type="button"
+                        onClick={handleAddCustomNetworkingPref}
+                        className="rounded-l-none bg-connect-600 hover:bg-connect-700"
                       >
-                        {pref}
-                      </label>
+                        Add
+                      </Button>
                     </div>
-                  ))}
+                  </div>
+                  
+                  {/* Display selected preferences with remove option */}
+                  {selectedNetworking.length > 0 && (
+                    <div className="mt-3">
+                      <Label className="text-gray-900 dark:text-white mb-2 block">Selected preferences:</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {selectedNetworking.map((pref) => (
+                          <Badge 
+                            key={pref}
+                            variant="secondary"
+                            className="flex items-center space-x-1 bg-connect-50 text-connect-700 dark:bg-connect-900/50 dark:text-connect-300"
+                          >
+                            <span>{pref}</span>
+                            <button 
+                              className="ml-1 h-4 w-4 rounded-full inline-flex items-center justify-center text-connect-700 hover:text-connect-900 hover:bg-connect-200 dark:text-connect-300 dark:hover:text-connect-100 dark:hover:bg-connect-700"
+                              onClick={() => handleRemoveNetworkingPref(pref)}
+                            >
+                              <span className="sr-only">Remove preference</span>
+                              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                              </svg>
+                            </button>
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="flex flex-wrap gap-2">

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { PaystackButton } from 'react-paystack';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -68,18 +67,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     onClose: () => {
       console.log('Payment closed');
     },
-  };
-
-  const handlePaymentStart = () => {
-    // Record pending payment
-    const reference = `evt_${eventId}_${Date.now()}`;
-    recordPayment({
-      eventId,
-      amount: amount / 100,
-      currency: 'NGN',
-      reference,
-      status: 'pending',
-    });
   };
 
   if (isLoadingConfig) {
@@ -165,7 +152,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               {...paystackProps}
               className="w-full bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white py-3 px-6 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50"
               disabled={isProcessing || isRecordingPayment}
-              onCallback={handlePaymentStart}
             >
               {isProcessing || isRecordingPayment ? (
                 <div className="flex items-center justify-center gap-2">

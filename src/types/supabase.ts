@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -10,6 +9,41 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      event_payments: {
+        Row: {
+          id: string;
+          event_id: string;
+          user_id: string;
+          amount: number;
+          currency: string;
+          status: 'pending' | 'success' | 'failed';
+          paystack_reference: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          event_id: string;
+          user_id: string;
+          amount: number;
+          currency?: string;
+          status?: 'pending' | 'success' | 'failed';
+          paystack_reference: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          event_id?: string;
+          user_id?: string;
+          amount?: number;
+          currency?: string;
+          status?: 'pending' | 'success' | 'failed';
+          paystack_reference?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       schedule_items: {
         Row: {
           id: string;
@@ -65,7 +99,7 @@ export interface Database {
           contact_info?: string;
           image_url?: string;
           icon_type?: string;
-          event_id: string; // Now required, not nullable
+          event_id: string;
           created_by?: string;
           created_at: string;
           updated_at?: string;
@@ -80,7 +114,7 @@ export interface Database {
           contact_info?: string;
           image_url?: string;
           icon_type?: string;
-          event_id: string; // Required for inserts
+          event_id: string;
           created_by?: string;
           created_at?: string;
           updated_at?: string;

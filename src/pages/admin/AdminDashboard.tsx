@@ -1,53 +1,26 @@
+
 import React from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
-import QRCodeGenerator from '@/components/admin/QRCodeGenerator';
-import EventSelector from '@/components/admin/EventSelector';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { 
   Users, 
   Calendar, 
   MessageSquare, 
-  QrCode,
   User,
   BarChart4,
   TrendingUp,
 } from 'lucide-react';
 import { useAdminDashboard } from '@/hooks/useAdminDashboard';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
 import { AdminEventProvider } from '@/hooks/useAdminEventContext';
 import DashboardMetrics from "./components/DashboardMetrics";
 import EventPerformanceCard from "./components/EventPerformanceCard";
 import EventFocusCard from "./components/EventFocusCard";
-import RegistrationQRCodeCard from "./components/RegistrationQRCodeCard";
 
 const AdminDashboardContent = () => {
   const { currentUser } = useAuth();
   const { dashboardData, isLoading } = useAdminDashboard();
-
-  // Get the current user's profile data including access_key
-  const { data: userProfile } = useQuery({
-    queryKey: ['user-profile', currentUser?.id],
-    queryFn: async () => {
-      if (!currentUser?.id) return null;
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('access_key')
-        .eq('id', currentUser.id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching user profile:', error);
-        return null;
-      }
-
-      return data;
-    },
-    enabled: !!currentUser?.id,
-  });
 
   const metrics = [
     {
@@ -145,14 +118,10 @@ const AdminDashboardContent = () => {
         })}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-3 space-y-6">
+      <div className="grid gap-6 lg:grid-cols-1">
+        <div className="space-y-6">
           {/* Event Selector */}
           <EventFocusCard />
-        </div>
-        <div className="lg:col-span-2 space-y-6">
-          {/* QR Code Generator Section */}
-          <RegistrationQRCodeCard accessKey={userProfile?.access_key} isLoading={isLoading} />
         </div>
       </div>
     </div>

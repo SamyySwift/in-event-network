@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,8 +12,8 @@ import { Badge } from '@/components/ui/badge';
 import { useAdminEvents } from '@/hooks/useAdminEvents';
 import { useAuth } from '@/contexts/AuthContext';
 import { ImageUpload } from '@/components/ui/image-upload';
-import PaymentGuard from '@/components/payment/PaymentGuard';
 import { usePayment } from '@/hooks/usePayment';
+import EventQRCode from '@/components/admin/EventQRCode';
 
 type EventFormData = {
   name: string;
@@ -376,6 +377,9 @@ const AdminEvents = () => {
                               </div>
                             )}
                           </div>
+
+                          {/* QR Code / Payment Section */}
+                          <EventQRCode eventId={event.id} eventName={event.name} />
                         </div>
                         
                         <div className="flex gap-2 ml-4">

@@ -165,7 +165,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               {...paystackProps}
               className="w-full bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white py-3 px-6 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50"
               disabled={isProcessing || isRecordingPayment}
-              onClick={handlePaymentStart}
+              onCallback={handlePaymentStart}
             >
               {isProcessing || isRecordingPayment ? (
                 <div className="flex items-center justify-center gap-2">

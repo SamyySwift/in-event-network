@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Users, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAdminAttendees } from '@/hooks/useAdminAttendees';
-import { ClearAttendeesDialog } from './ClearAttendeesDialog';
+import ClearAttendeesDialog from './ClearAttendeesDialog';
 import { useToast } from '@/hooks/use-toast';
 
 type AttendeeManagementSectionProps = {
@@ -16,7 +16,7 @@ const AttendeeManagementSection: React.FC<AttendeeManagementSectionProps> = ({
   eventName,
   children,
 }) => {
-  const { attendees, clearAttendees, isClearing, clearError } = useAdminAttendees();
+  const { attendees, clearAttendees, isClearing } = useAdminAttendees();
   const { toast } = useToast();
   const [dialogOpen, setDialogOpen] = useState(false);
 

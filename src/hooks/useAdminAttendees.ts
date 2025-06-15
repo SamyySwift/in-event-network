@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -8,6 +9,14 @@ interface Attendee {
   event_id: string;
   user_id: string;
   created_at: string;
+}
+
+interface AttendeeWithProfile extends Attendee {
+  name: string | null;
+  email: string | null;
+  role: string | null;
+  event_name: string | null;
+  joined_at: string;
 }
 
 export const useAdminAttendees = () => {
@@ -40,10 +49,14 @@ export const useAdminAttendees = () => {
 
       const eventIds = events.map(event => event.id);
 
-      // Fetch attendees from user's events
+      // Fetch attendees from user's events with profile information
       const { data, error } = await supabase
         .from('event_participants')
-        .select('*')
+        .select(`
+          *,
+          profiles!inner(name, email, role),
+          events!inner(name)
+        `)
         .in('event_id', eventIds);
 
       if (error) {
@@ -51,7 +64,20 @@ export const useAdminAttendees = () => {
         throw error;
       }
 
-      return data as Attendee[];
+      // Transform the data to match the expected interface
+      const transformedData = data?.map((item: any) => ({
+        id: item.id,
+        event_id: item.event_id,
+        user_id: item.user_id,
+        created_at: item.created_at,
+        name: item.profiles?.name || null,
+        email: item.profiles?.email || null,
+        role: item.profiles?.role || null,
+        event_name: item.events?.name || null,
+        joined_at: item.joined_at || item.created_at,
+      })) as AttendeeWithProfile[];
+
+      return transformedData;
     },
     enabled: !!currentUser?.id,
   });
@@ -177,7 +203,7 @@ export const useAdminAttendees = () => {
     error,
     addAttendee: addAttendeeMutation.mutate,
     deleteAttendee: deleteAttendeeMutation.mutate,
-    clearAttendees: clearAttendeesMutation.mutate,
+    clearAttendees: clearAttendeesMutation.mutateAsync,
     isAdding: addAttendeeMutation.isPending,
     isDeleting: deleteAttendeeMutation.isPending,
     isClearing: clearAttendeesMutation.isPending,

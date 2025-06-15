@@ -1,99 +1,14 @@
+
 import React from "react";
 import {
   Card,
   CardHeader,
-  CardTitle,
-  CardDescription,
   CardContent,
-  CardFooter
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Ambulance,
-  Hospital,
-  Car,
-  MapPin,
-  Building,
-  Coffee,
-  Shield,
-  Wifi,
-  Phone,
-  User,
-  Bath,
-  ChefHat,
-  Utensils,
-  Home,
-  Dumbbell,
-  Music,
-  Gamepad2,
-  Archive,
-  ArchiveRestore,
-  Box,
-  Landmark,
-  Warehouse,
-  Siren,
-  AlertTriangle,
-  Presentation,
-  Monitor,
-  Sofa,
-  Wine,
-  ArrowUp,
-  Trash2,
-  Edit
-} from "lucide-react";
-import { format } from "date-fns";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from "@/components/ui/tooltip";
-import {
-  AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-} from "@/components/ui/alert-dialog";
+import FacilityHeader from "./FacilityHeader";
+import FacilityBadges from "./FacilityBadges";
+import FacilityDetails from "./FacilityDetails";
 import { Facility } from "@/hooks/useAdminFacilities";
-
-// Expanded iconMap with new icons
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  ambulance: Ambulance,
-  hospital: Hospital,
-  car: Car,
-  "map-pin": MapPin,
-  building: Building,
-  coffee: Coffee,
-  shield: Shield,
-  wifi: Wifi,
-  phone: Phone,
-  user: User,
-  bath: Bath,
-  "chef-hat": ChefHat,
-  utensils: Utensils,
-  home: Home,
-  dumbbell: Dumbbell,
-  music: Music,
-  "gamepad-2": Gamepad2,
-  archive: Archive,
-  "archive-restore": ArchiveRestore,
-  box: Box,
-  landmark: Landmark,
-  warehouse: Warehouse,
-  siren: Siren,
-  "alert-triangle": AlertTriangle,
-  presentation: Presentation,
-  monitor: Monitor,
-  sofa: Sofa,
-  wine: Wine,
-  "arrow-up": ArrowUp,
-};
 
 interface FacilityCardProps {
   facility: Facility;
@@ -108,105 +23,31 @@ const FacilityCard: React.FC<FacilityCardProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const getFacilityIcon = (icon: string) => {
-    const IconComp = iconMap[icon] || Ambulance;
-    return <IconComp className="h-5 w-5 text-primary" />;
-  };
-
   return (
     <Card className="glass-card overflow-hidden hover:shadow-xl transition-all">
-      <CardHeader className="pb-2 flex flex-row items-start justify-between">
-        <div>
-          <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            {getFacilityIcon(facility.icon_type || "ambulance")}
-            {facility.name}
-          </CardTitle>
-          <CardDescription className="text-xs mt-1">
-            Created: {format(new Date(facility.created_at), "MMM d, yyyy")}
-          </CardDescription>
-        </div>
-        <div className="flex space-x-1">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 w-8 p-0"
-                  onClick={() => onEdit(facility)}
-                >
-                  <Edit size={16} />
-                  <span className="sr-only">Edit</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Edit Facility</TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                disabled={isDeleting}
-              >
-                <Trash2 size={16} />
-                <span className="sr-only">Delete</span>
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Facility</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete this facility? This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={() => onDelete(facility)}>
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
+      <CardHeader>
+        <FacilityHeader
+          facility={facility}
+          isDeleting={isDeleting}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
       </CardHeader>
+      
       <CardContent>
-        <div className="flex flex-wrap gap-2 mt-2">
-          {facility.contact_type && facility.contact_type !== "none" && (
-            <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">
-              {facility.contact_type === "phone" ? "Phone" : "WhatsApp"}
-            </Badge>
-          )}
-        </div>
-        <div className="space-y-3 mt-4">
-          {facility.description && (
-            <div>
-              <span className="font-medium text-muted-foreground">Description: </span>
-              <span>{facility.description}</span>
-            </div>
-          )}
-          {facility.location && (
-            <div className="flex items-center gap-2 text-sm">
-              {getFacilityIcon(facility.icon_type || "ambulance")}
-              <span>{facility.location}</span>
-            </div>
-          )}
-          {facility.rules && (
-            <div>
-              <span className="text-muted-foreground">Rules:</span>
-              <div className="bg-muted rounded p-2 text-xs mt-1">{facility.rules}</div>
-            </div>
-          )}
-          {facility.contact_type && facility.contact_type !== "none" && facility.contact_info && (
-            <div className="flex items-center gap-2 text-sm">
-              <span>{facility.contact_type}:</span>
-              <span className="font-medium">{facility.contact_info}</span>
-            </div>
-          )}
-        </div>
+        <FacilityBadges contactType={facility.contact_type} />
+        
+        <FacilityDetails
+          description={facility.description}
+          location={facility.location}
+          rules={facility.rules}
+          contactType={facility.contact_type}
+          contactInfo={facility.contact_info}
+          iconType={facility.icon_type}
+        />
       </CardContent>
     </Card>
   );
 };
+
 export default FacilityCard;

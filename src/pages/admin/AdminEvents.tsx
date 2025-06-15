@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Plus, Pencil, Trash2, Loader, Calendar, MapPin, Users, Clock, Lock } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader, Calendar, MapPin, Users, Clock, Lock, QrCode } from 'lucide-react';
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ImageUpload } from '@/components/ui/image-upload';
 import PaymentGuard from '@/components/payment/PaymentGuard';
 import { usePayment } from '@/hooks/usePayment';
+import RegistrationQRCodeCard from './components/RegistrationQRCodeCard';
 
 type EventFormData = {
   name: string;
@@ -26,6 +27,7 @@ type EventFormData = {
 const AdminEvents = () => {
   const [editingEvent, setEditingEvent] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [selectedEventForQR, setSelectedEventForQR] = useState<string | null>(null);
   const { currentUser } = useAuth();
   const { events, isLoading, createEvent, updateEvent, deleteEvent, isCreating, isUpdating, isDeleting } = useAdminEvents();
   const { isEventPaid } = usePayment();
@@ -124,6 +126,8 @@ const AdminEvents = () => {
       </AdminLayout>
     );
   }
+
+  const selectedEvent = selectedEventForQR ? events.find(e => e.id === selectedEventForQR) : null;
 
   return (
     <AdminLayout>
@@ -379,6 +383,14 @@ const AdminEvents = () => {
                         </div>
                         
                         <div className="flex gap-2 ml-4">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setSelectedEventForQR(selectedEventForQR === event.id ? null : event.id)}
+                            className="hover:bg-primary/10 hover:text-primary transition-colors"
+                          >
+                            <QrCode className="h-4 w-4" />
+                          </Button>
                           <Button 
                             variant="ghost" 
                             size="icon" 
@@ -406,6 +418,18 @@ const AdminEvents = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* QR Code Section */}
+        {selectedEventForQR && selectedEvent && (
+          <div className="mt-8">
+            <RegistrationQRCodeCard
+              accessKey={currentUser?.access_key}
+              isLoading={false}
+              eventId={selectedEvent.id}
+              eventName={selectedEvent.name}
+            />
+          </div>
+        )}
       </div>
     </AdminLayout>
   );

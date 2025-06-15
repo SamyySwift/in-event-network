@@ -1,97 +1,60 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAdminAttendees } from '@/hooks/useAdminAttendees';
-import { ClearAttendeesDialog } from './ClearAttendeesDialog';
-import { useToast } from '@/hooks/use-toast';
+import ClearAttendeesDialog from './ClearAttendeesDialog';
 
-type AttendeeManagementSectionProps = {
-  eventName: string;
+interface AttendeeManagementSectionProps {
   children: React.ReactNode;
-};
+  eventName: string;
+}
 
-const AttendeeManagementSection: React.FC<AttendeeManagementSectionProps> = ({
-  eventName,
-  children,
-}) => {
-  const { attendees, clearAttendees, isClearing, clearError } = useAdminAttendees();
-  const { toast } = useToast();
-  const [dialogOpen, setDialogOpen] = useState(false);
-
-  const handleClearAttendees = async () => {
-    try {
-      await clearAttendees();
-      toast({
-        title: "Attendees Cleared",
-        description: "All attendee data for this event has been cleared.",
-        variant: "default",
-      });
-      setDialogOpen(false);
-    } catch (err: any) {
-      toast({
-        title: "Error",
-        description: err?.message || "Failed to clear attendees.",
-        variant: "destructive",
-      });
-    }
-  };
+const AttendeeManagementSection: React.FC<AttendeeManagementSectionProps> = ({ children, eventName }) => {
+  const { clearAttendees, isClearing } = useAdminAttendees();
 
   return (
-    <div className="glass-card p-6 rounded-xl space-y-8 shadow-xl">
-      {/* Section Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-3">
-          <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-600 shadow-md">
-            <Users className="w-6 h-6 text-white" />
-          </span>
-          <div>
-            <div className="uppercase text-xs font-bold text-primary-600 tracking-wide">Attendees</div>
-            <div className="text-lg font-semibold text-primary-900 dark:text-primary-100">
-              {eventName}
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      {/* Main Content */}
+      <div className="lg:col-span-2">
+        <Card className="glass-card hover:shadow-xl hover:shadow-primary/10 transition-all duration-300">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-gradient-to-br from-green-500 to-emerald-400 shadow-md shadow-green-500/20">
+                <Users className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <CardTitle className="text-xl">Attendee Management</CardTitle>
+                <CardDescription className="text-muted-foreground">
+                  Manage attendees for {eventName}
+                </CardDescription>
+              </div>
             </div>
-          </div>
-        </div>
-        {/* Clear All Attendees Button - destructive style */}
-        <div>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setDialogOpen(true)}
-            disabled={isClearing || attendees.length === 0}
-            className="flex gap-2"
-          >
-            <Trash2 className="h-4 w-4" />
-            Clear Attendee Data
-          </Button>
-          <ClearAttendeesDialog
-            open={dialogOpen}
-            onOpenChange={setDialogOpen}
-            onConfirm={handleClearAttendees}
-            isLoading={isClearing}
-            attendeeCount={attendees.length}
-            eventName={eventName}
-          />
-        </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {children}
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Add Attendee Form (disabled for now, as creation not implemented) */}
-      <Card className="mb-6 glass-card bg-gradient-to-br from-white/90 via-primary-50/70 to-primary-100/60 transition-all animate-fade-in shadow-lg">
-        <CardHeader>
-          <CardTitle>Add New Attendee (Coming soon)</CardTitle>
-          <CardDescription>
-            Manual addition of attendees is currently not available in this admin panel.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-muted-foreground">
-            Please use the event registration link to add attendees.
-          </div>
-        </CardContent>
-      </Card>
-
-      {children}
+      {/* Actions Sidebar */}
+      <div className="space-y-6">
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="text-lg">Quick Actions</CardTitle>
+            <CardDescription>
+              Manage all attendees at once
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ClearAttendeesDialog
+              onConfirm={clearAttendees}
+              isClearing={isClearing}
+            />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

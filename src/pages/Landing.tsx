@@ -122,11 +122,6 @@ const Landing = () => {
                 </NavigationMenuItem>
                 <NavigationMenuItem>
                   <Button variant="ghost" className="text-white/80 hover:text-white hover:bg-white/10">
-                    Solutions
-                  </Button>
-                </NavigationMenuItem>
-                <NavigationMenuItem>
-                  <Button variant="ghost" className="text-white/80 hover:text-white hover:bg-white/10">
                     Pricing
                   </Button>
                 </NavigationMenuItem>

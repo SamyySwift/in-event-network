@@ -3,7 +3,7 @@ import React from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, Building, MapPin, Phone } from "lucide-react";
+import { Edit, Trash2, Emergency, Toilet, Cafeteria, Building, MapPin, Phone } from "lucide-react";
 import { format } from "date-fns";
 import {
   Tooltip,
@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/tooltip";
 import {
   AlertDialog,
-  AlertDialogTrigger,   // <-- Add this import
+  AlertDialogTrigger,
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
@@ -23,6 +23,19 @@ import {
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
 import { Facility } from "@/hooks/useAdminFacilities";
+
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  emergency: Emergency,
+  toilet: Toilet,
+  cafeteria: Cafeteria,
+  building: Building,
+  "map-pin": MapPin,
+  phone: Phone,
+  parking: MapPin,
+  locker: Building,
+  exit: Emergency,
+  info: Cafeteria,
+};
 
 interface FacilityCardProps {
   facility: Facility;
@@ -38,15 +51,8 @@ const FacilityCard: React.FC<FacilityCardProps> = ({
   onDelete,
 }) => {
   const getFacilityIcon = (icon: string) => {
-    switch (icon) {
-      case "map-pin":
-        return <MapPin className="h-5 w-5 text-primary" />;
-      case "phone":
-        return <Phone className="h-5 w-5 text-primary" />;
-      case "building":
-      default:
-        return <Building className="h-5 w-5 text-primary" />;
-    }
+    const IconComp = iconMap[icon] || Building;
+    return <IconComp className="h-5 w-5 text-primary" />;
   };
 
   return (
@@ -151,3 +157,4 @@ const FacilityCard: React.FC<FacilityCardProps> = ({
   );
 };
 export default FacilityCard;
+

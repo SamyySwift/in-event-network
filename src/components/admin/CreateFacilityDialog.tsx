@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -15,6 +16,27 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Emergency,
+  Toilet,
+  Cafeteria,
+  Building,
+  MapPin,
+  Phone,
+} from "lucide-react";
+
+const ICON_OPTIONS = [
+  { value: "emergency", label: "Emergency", icon: Emergency },
+  { value: "toilet", label: "Toilet", icon: Toilet },
+  { value: "cafeteria", label: "Cafeteria", icon: Cafeteria },
+  { value: "building", label: "Building", icon: Building },
+  { value: "map-pin", label: "Map Pin", icon: MapPin },
+  { value: "phone", label: "Phone", icon: Phone },
+  { value: "parking", label: "Parking", icon: MapPin },
+  { value: "locker", label: "Locker", icon: Building },
+  { value: "exit", label: "Exit", icon: Emergency },
+  { value: "info", label: "Info", icon: Cafeteria },
+];
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Facility name must be at least 2 characters." }),
@@ -37,12 +59,6 @@ type CreateFacilityDialogProps = {
   children?: React.ReactNode;
 };
 
-const iconTypes = [
-  { value: "building", label: "Building" },
-  { value: "map-pin", label: "Location" },
-  { value: "phone", label: "Phone" },
-];
-
 const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
   children,
   onSubmit,
@@ -63,7 +79,7 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
       rules: "",
       contactType: "none",
       contactInfo: "",
-      iconType: "building",
+      iconType: ICON_OPTIONS[0].value,
       eventId: defaultEventId || "",
     },
   });
@@ -148,14 +164,35 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
                 disabled={isCreating}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select icon" />
+                  <SelectValue placeholder="Select icon">
+                    {/* Show the selected icon and its label */}
+                    {(() => {
+                      const iconObj = ICON_OPTIONS.find(icon => icon.value === selectedIcon);
+                      if (iconObj) {
+                        const IconComp = iconObj.icon;
+                        return (
+                          <span className="flex items-center gap-2">
+                            <IconComp className="w-4 h-4" />
+                            {iconObj.label}
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {iconTypes.map(icon => (
-                    <SelectItem key={icon.value} value={icon.value}>
-                      {icon.label}
-                    </SelectItem>
-                  ))}
+                  {ICON_OPTIONS.map(icon => {
+                    const IconComp = icon.icon;
+                    return (
+                      <SelectItem key={icon.value} value={icon.value}>
+                        <span className="flex items-center gap-2">
+                          <IconComp className="w-4 h-4" />
+                          {icon.label}
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -202,3 +239,5 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
 };
 
 export default CreateFacilityDialog;
+
+// NOTE: This file is getting long (over 200 lines). Please consider asking to refactor it into smaller components!

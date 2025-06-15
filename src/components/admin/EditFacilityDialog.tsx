@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -15,6 +16,27 @@ import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Facility } from "@/hooks/useAdminFacilities";
+import {
+  Emergency,
+  Toilet,
+  Cafeteria,
+  Building,
+  MapPin,
+  Phone,
+} from "lucide-react";
+
+const ICON_OPTIONS = [
+  { value: "emergency", label: "Emergency", icon: Emergency },
+  { value: "toilet", label: "Toilet", icon: Toilet },
+  { value: "cafeteria", label: "Cafeteria", icon: Cafeteria },
+  { value: "building", label: "Building", icon: Building },
+  { value: "map-pin", label: "Map Pin", icon: MapPin },
+  { value: "phone", label: "Phone", icon: Phone },
+  { value: "parking", label: "Parking", icon: MapPin },
+  { value: "locker", label: "Locker", icon: Building },
+  { value: "exit", label: "Exit", icon: Emergency },
+  { value: "info", label: "Info", icon: Cafeteria },
+];
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Facility name must be at least 2 characters." }),
@@ -38,12 +60,6 @@ type EditFacilityDialogProps = {
   open: boolean;
 };
 
-const iconTypes = [
-  { value: "building", label: "Building" },
-  { value: "map-pin", label: "Location" },
-  { value: "phone", label: "Phone" },
-];
-
 const EditFacilityDialog: React.FC<EditFacilityDialogProps> = ({
   facility,
   events,
@@ -63,7 +79,7 @@ const EditFacilityDialog: React.FC<EditFacilityDialogProps> = ({
       rules: "",
       contactType: "none",
       contactInfo: "",
-      iconType: "building",
+      iconType: ICON_OPTIONS[0].value,
       eventId: events[0]?.id || "",
     },
   });
@@ -78,7 +94,7 @@ const EditFacilityDialog: React.FC<EditFacilityDialogProps> = ({
         rules: facility.rules || "",
         contactType: facility.contact_type || "none",
         contactInfo: facility.contact_info || "",
-        iconType: facility.icon_type || "building",
+        iconType: facility.icon_type || ICON_OPTIONS[0].value,
         eventId: facility.event_id || events[0]?.id || ""
       });
     }
@@ -145,14 +161,34 @@ const EditFacilityDialog: React.FC<EditFacilityDialogProps> = ({
                 disabled={isUpdating}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select icon" />
+                  <SelectValue placeholder="Select icon">
+                    {(() => {
+                      const iconObj = ICON_OPTIONS.find(icon => icon.value === selectedIcon);
+                      if (iconObj) {
+                        const IconComp = iconObj.icon;
+                        return (
+                          <span className="flex items-center gap-2">
+                            <IconComp className="w-4 h-4" />
+                            {iconObj.label}
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
-                  {iconTypes.map(icon => (
-                    <SelectItem key={icon.value} value={icon.value}>
-                      {icon.label}
-                    </SelectItem>
-                  ))}
+                  {ICON_OPTIONS.map(icon => {
+                    const IconComp = icon.icon;
+                    return (
+                      <SelectItem key={icon.value} value={icon.value}>
+                        <span className="flex items-center gap-2">
+                          <IconComp className="w-4 h-4" />
+                          {icon.label}
+                        </span>
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -199,3 +235,5 @@ const EditFacilityDialog: React.FC<EditFacilityDialogProps> = ({
 };
 
 export default EditFacilityDialog;
+
+// NOTE: This file is getting long (over 200 lines). Please consider asking to refactor it into smaller components!

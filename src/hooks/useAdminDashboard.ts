@@ -1,6 +1,8 @@
-import { useQuery } from '@tanstack/react-query';
+
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffect } from 'react';
 
 interface DashboardData {
   eventsCount: number;
@@ -9,12 +11,12 @@ interface DashboardData {
   questionsCount: number;
   liveEventsCount: number;
   upcomingEventsCount: number;
-  // Removed connectionsCount
   performanceScore: number;
 }
 
 export const useAdminDashboard = () => {
   const { currentUser } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: dashboardData, isLoading, error } = useQuery({
     queryKey: ['admin-dashboard', currentUser?.id],
@@ -151,8 +153,49 @@ export const useAdminDashboard = () => {
       };
     },
     enabled: !!currentUser?.id,
-    refetchInterval: 30000,
+    // Remove refetchInterval, realtime makes it redundant
   });
+
+  useEffect(() => {
+    if (!currentUser?.id) return;
+    // These are the tables that affect the admin dashboard metrics
+    const tables = [
+      { table: 'events', filter: `host_id=eq.${currentUser.id}` },
+      { table: 'event_participants', filter: '' },
+      { table: 'speakers', filter: '' },
+      { table: 'questions', filter: '' },
+      { table: 'polls', filter: '' },
+      { table: 'poll_votes', filter: '' },
+      { table: 'suggestions', filter: '' },
+    ];
+
+    // We'll subscribe to INSERT/UPDATE/DELETE for each table
+    const channels = tables.map(({ table, filter }) =>
+      supabase.channel(`realtime:${table}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*', // all events
+            schema: 'public',
+            table,
+            ...(filter ? { filter } : {}),
+          },
+          (payload) => {
+            // To be efficient, only refetch when relevant admin's events are affected
+            // We do a broad refetch for simplicity (can be filtered further)
+            queryClient.invalidateQueries({ queryKey: ['admin-dashboard', currentUser.id] });
+          }
+        )
+        .subscribe()
+    );
+
+    return () => {
+      // Clean up: unsubscribe all channels on unmount/user change
+      channels.forEach((channel) => {
+        try { supabase.removeChannel(channel); } catch {}
+      });
+    };
+  }, [currentUser?.id, queryClient]);
 
   return {
     dashboardData,

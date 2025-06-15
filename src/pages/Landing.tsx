@@ -560,7 +560,7 @@ const Landing = () => {
               <ul className="space-y-2">
                 <li>
                   <a
-                    href="#"
+                    href="/privacy"
                     className="text-white/60 hover:text-cyan-400 transition-colors"
                   >
                     Data Privacy

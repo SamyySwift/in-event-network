@@ -64,6 +64,7 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/scan" element={<ScanQR />} />
               <Route path="/join/:eventKey" element={<Index />} />
+              <Route path="/privacy" element={<DataPrivacy />} />
 
               {/* Admin routes - now wrapped in AdminEventProvider */}
               <Route

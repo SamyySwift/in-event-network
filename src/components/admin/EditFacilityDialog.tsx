@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -94,7 +93,8 @@ const EditFacilityDialog: React.FC<EditFacilityDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={(open) => (!open ? onClose() : undefined)}>
-      <DialogContent>
+      {/* Added scroll and constrained height to DialogContent */}
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Facility</DialogTitle>
         </DialogHeader>

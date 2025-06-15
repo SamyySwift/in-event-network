@@ -96,7 +96,8 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent>
+      {/* Added scroll and constrained height to DialogContent */}
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add Facility</DialogTitle>
         </DialogHeader>

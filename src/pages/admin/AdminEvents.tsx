@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,20 +12,15 @@ import { usePayment } from '@/hooks/usePayment';
 
 const AdminEvents = () => {
   const { currentUser } = useAuth();
-  const { adminEvents, isLoading } = useAdminEvents();
+  const { events: adminEvents, isLoading } = useAdminEvents();
   const [showQRCode, setShowQRCode] = useState<{ [key: string]: boolean }>({});
-  const { checkPaymentStatus } = usePayment();
+  const { isEventPaid } = usePayment();
 
   const toggleQRCode = async (eventId: string) => {
     setShowQRCode(prev => ({
       ...prev,
       [eventId]: !prev[eventId]
     }));
-  };
-
-  const getPaymentStatus = async (eventId: string) => {
-    if (!currentUser?.id) return null;
-    return await checkPaymentStatus(eventId, currentUser.id);
   };
 
   if (isLoading) {

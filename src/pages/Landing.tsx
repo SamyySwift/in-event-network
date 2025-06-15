@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 import { Instagram, Mail } from "lucide-react";
 import XLogo from "@/components/icons/XLogo";
 import LandingFooter from "@/components/landing/LandingFooter";
+import FeatureCard from "@/components/landing/FeatureCard";
+import ListItem from "@/components/landing/ListItem";
 const Landing = () => {
   const [showScanner, setShowScanner] = useState(false);
   const navigate = useNavigate();

@@ -1,4 +1,3 @@
-
 import React from "react";
 import {
   Card,
@@ -174,10 +173,6 @@ const FacilityCard: React.FC<FacilityCardProps> = ({
       </CardHeader>
       <CardContent>
         <div className="flex flex-wrap gap-2 mt-2">
-          {/* Just example badges, you can add more based on your facility schema */}
-          {facility.location && (
-            <Badge className="bg-green-100 text-green-800 hover:bg-green-200">Has Location</Badge>
-          )}
           {facility.contact_type && facility.contact_type !== "none" && (
             <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200">
               {facility.contact_type === "phone" ? "Phone" : "WhatsApp"}
@@ -193,7 +188,6 @@ const FacilityCard: React.FC<FacilityCardProps> = ({
           )}
           {facility.location && (
             <div className="flex items-center gap-2 text-sm">
-              {/* Show matching icon for location if possible, ambiance fallback */}
               {getFacilityIcon(facility.icon_type || "ambulance")}
               <span>{facility.location}</span>
             </div>
@@ -206,7 +200,6 @@ const FacilityCard: React.FC<FacilityCardProps> = ({
           )}
           {facility.contact_type && facility.contact_type !== "none" && facility.contact_info && (
             <div className="flex items-center gap-2 text-sm">
-              {/* No Phone icon available in import, so omitting */}
               <span>{facility.contact_type}:</span>
               <span className="font-medium">{facility.contact_info}</span>
             </div>

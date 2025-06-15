@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/navigation-menu";
 import { HeroGeometric } from "@/components/ui/shape-landing-hero";
 import { cn } from "@/lib/utils";
+import { Instagram, Mail } from "lucide-react";
+import XLogo from "@/components/icons/XLogo";
 
 const Landing = () => {
   const [showScanner, setShowScanner] = useState(false);
@@ -586,16 +588,26 @@ const Landing = () => {
               <a
                 href="#"
                 className="text-white/40 hover:text-cyan-400 transition-colors"
+                aria-label="Instagram"
               >
-                <span className="sr-only">Social Network</span>
-                <Network className="h-5 w-5" />
+                <span className="sr-only">Instagram</span>
+                <Instagram className="h-5 w-5" />
               </a>
               <a
                 href="#"
                 className="text-white/40 hover:text-cyan-400 transition-colors"
+                aria-label="X (formerly Twitter)"
               >
-                <span className="sr-only">Website</span>
-                <Globe className="h-5 w-5" />
+                <span className="sr-only">X (formerly Twitter)</span>
+                <XLogo size={20} className="h-5 w-5" />
+              </a>
+              <a
+                href="mailto:support@kconnect.com"
+                className="text-white/40 hover:text-cyan-400 transition-colors"
+                aria-label="Mail"
+              >
+                <span className="sr-only">Mail</span>
+                <Mail className="h-5 w-5" />
               </a>
             </div>
           </div>

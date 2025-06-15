@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,45 +12,66 @@ import { Separator } from "@/components/ui/separator";
 import { Save, Upload, User, Mail, Building, Globe, Key } from "lucide-react";
 import { toast } from "sonner";
 
-const AdminProfile = () => {
-  const { currentUser, updateUser } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
+const defaultLinks = {
+  website: "",
+  linkedin: "",
+  twitter: "",
+};
 
-  // Defensive fallback: handle possibly missing/empty fields
+const AdminProfile = () => {
+  const { currentUser, isLoading: authIsLoading, updateUser } = useAuth();
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
-    name: currentUser?.name || "",
-    email: currentUser?.email || "",
-    bio: currentUser?.bio || "",
-    niche: currentUser?.niche || "",
-    links: {
-      website: currentUser?.links?.website || "",
-      linkedin: currentUser?.links?.linkedin || "",
-      twitter: currentUser?.links?.twitter || "",
-    },
+    name: "",
+    email: "",
+    bio: "",
+    niche: "",
+    links: defaultLinks,
   });
+
+  // Log state for debugging
+  useEffect(() => {
+    console.log("currentUser changed", currentUser);
+  }, [currentUser]);
+
+  // Initialize formData once currentUser loads
+  useEffect(() => {
+    if (currentUser) {
+      setFormData({
+        name: currentUser.name || "",
+        email: currentUser.email || "",
+        bio: currentUser.bio || "",
+        niche: currentUser.niche || "",
+        links: {
+          website: currentUser.links?.website || "",
+          linkedin: currentUser.links?.linkedin || "",
+          twitter: currentUser.links?.twitter || "",
+        },
+      });
+    }
+  }, [currentUser]);
 
   const handleInputChange = (field: string, value: string) => {
     if (field.startsWith("links.")) {
       const linkField = field.split(".")[1];
-      setFormData({
-        ...formData,
+      setFormData((prev) => ({
+        ...prev,
         links: {
-          ...formData.links,
+          ...prev.links,
           [linkField]: value,
         },
-      });
+      }));
     } else {
-      setFormData({
-        ...formData,
+      setFormData((prev) => ({
+        ...prev,
         [field]: value,
-      });
+      }));
     }
   };
 
   const handleSave = async () => {
-    setIsLoading(true);
+    setIsSaving(true);
     try {
-      // Submit only available fields
       await updateUser({
         name: formData.name,
         email: formData.email,
@@ -67,11 +88,12 @@ const AdminProfile = () => {
       toast.error("Failed to update profile");
       console.error("Error updating profile:", error);
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
-  if (!currentUser) {
+  // Show loading if auth context or profile is still loading, or initial formData not ready
+  if (authIsLoading || !currentUser || (!formData.email && !formData.name)) {
     return (
       <div className="flex items-center justify-center h-64">
         <p className="text-muted-foreground">Loading profile...</p>
@@ -118,7 +140,6 @@ const AdminProfile = () => {
                 <Upload className="h-4 w-4 mr-2" />
                 Change Photo
               </Button>
-              {/* Upload functionality not implemented in this version */}
             </div>
 
             <Separator />
@@ -231,9 +252,9 @@ const AdminProfile = () => {
             </div>
 
             <div className="flex justify-end pt-4">
-              <Button onClick={handleSave} disabled={isLoading}>
+              <Button onClick={handleSave} disabled={isSaving}>
                 <Save className="h-4 w-4 mr-2" />
-                {isLoading ? "Saving..." : "Save Changes"}
+                {isSaving ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           </CardContent>

@@ -14,6 +14,7 @@ import LandingFooter from "@/components/landing/LandingFooter";
 import FeatureCard from "@/components/landing/FeatureCard";
 import ListItem from "@/components/landing/ListItem";
 import { useDynamicPricing } from "@/hooks/useDynamicPricing";
+import CurrencySwitcher from "@/components/CurrencySwitcher";
 
 const Landing = () => {
   const [showScanner, setShowScanner] = useState(false);
@@ -375,17 +376,19 @@ const Landing = () => {
 
 /** Dynamic Pricing Card (component below main Landing definition) */
 function DynamicPricingCard() {
-  const { symbol, price, name, loading } = useDynamicPricing();
-  // Smooth animation/fade if desired, or just simple conditional rendering:
+  const { symbol, price, name, loading, selectedCurrency, setCurrency, allCurrencies } = useDynamicPricing();
+
   return (
     <div className="max-w-md mx-auto">
       <div className="relative group">
         <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-cyan-500/30 to-purple-500/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
         <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl p-8 rounded-2xl border border-white/20 hover:border-white/30 transition-all duration-300 hover:transform hover:scale-105 hover:shadow-2xl">
-          <div className="absolute top-4 right-4">
-            <div className="bg-gradient-to-r from-cyan-500 to-purple-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
-              Best Value
-            </div>
+          <div className="flex items-center justify-end mb-3">
+            <CurrencySwitcher
+              value={selectedCurrency || "USD"}
+              onChange={setCurrency}
+              availableCurrencies={allCurrencies}
+            />
           </div>
           <div className="text-center mb-8">
             <h3 className="text-2xl font-bold text-white mb-2">Premium Plan</h3>

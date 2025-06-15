@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { format } from "date-fns";
 import { AlertTriangle, Zap, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 
 interface RuleCardProps {
   title: string;
@@ -15,36 +16,40 @@ interface RuleCardProps {
 export default function RuleCard({ title, content, category, priority, created_at }: RuleCardProps) {
   const [open, setOpen] = useState(false);
 
-  // Use only subtle border/icon cues for priority
+  // Dashboard-style icon chips & border styling
   const getPriorityStyles = () => {
     switch (priority) {
       case "high":
         return {
-          border: "border-red-300 dark:border-red-600",
-          icon: <AlertTriangle className="text-red-400 dark:text-red-500" size={16} />,
+          border: "border-red-400",
+          grad: "from-red-400 to-rose-400",
+          icon: <AlertTriangle className="text-white" size={18} />
         };
       case "medium":
         return {
-          border: "border-yellow-200 dark:border-amber-400",
-          icon: <Zap className="text-amber-400 dark:text-yellow-300" size={16} />,
+          border: "border-yellow-300",
+          grad: "from-yellow-400 to-amber-400",
+          icon: <Zap className="text-white" size={18} />
         };
       case "low":
         return {
-          border: "border-blue-100 dark:border-blue-500",
-          icon: <Info className="text-blue-300 dark:text-blue-400" size={16} />,
+          border: "border-blue-300",
+          grad: "from-blue-300 to-blue-400",
+          icon: <Info className="text-white" size={18} />
         };
       default:
         return {
           border: "border-gray-200 dark:border-gray-700",
-          icon: <Info className="text-gray-400" size={16} />,
+          grad: "from-zinc-300 to-zinc-500",
+          icon: <Info className="text-white" size={18} />
         };
     }
   };
 
   return (
-    <article
+    <Card
       role="button"
-      className={`group rounded-xl glass-card border shadow-sm transition-all cursor-pointer overflow-hidden hover:shadow-lg hover:scale-[1.02] ${getPriorityStyles().border} bg-white/85 dark:bg-zinc-900/70 animate-fade-in`}
+      className={`group rounded-2xl border-0 bg-white/90 dark:bg-zinc-900/70 shadow-xl transition-all cursor-pointer overflow-hidden hover:shadow-2xl hover:scale-[1.02] ${getPriorityStyles().border} animate-fade-in relative`}
       tabIndex={0}
       aria-expanded={open}
       onClick={() => setOpen((o) => !o)}
@@ -53,20 +58,22 @@ export default function RuleCard({ title, content, category, priority, created_a
       }}
       title={title}
       style={{
-        boxShadow: open
-          ? "0 8px 32px 0 rgba(31, 41, 55, 0.10), 0 1.5px 5px 0 rgba(43,29,63,0.06)"
-          : undefined,
-        transition: "box-shadow .22s",
+        transition: "box-shadow .23s, transform .23s",
       }}
     >
-      <div className="flex flex-col gap-1.5 px-5 pt-5 pb-5">
-        <div className="flex items-center gap-2 mb-1">
+      {/* Dashboard-style icon chip */}
+      <div className="absolute top-4 right-4 z-10">
+        <span className={`w-9 h-9 bg-gradient-to-br ${getPriorityStyles().grad} rounded-xl flex items-center justify-center shadow-lg`}>
+          {getPriorityStyles().icon}
+        </span>
+      </div>
+      <div className="flex flex-col gap-2 px-6 pt-6 pb-5 relative z-10">
+        <div className="flex items-center gap-2">
           {priority && (
             <Badge
-              className="flex items-center gap-1 font-semibold px-2.5 py-1 text-xs bg-zinc-50 dark:bg-zinc-700/60 text-zinc-700 dark:text-zinc-100 border-0"
-              style={{ background: "rgba(255,255,255,0.45)" }}>
-              {getPriorityStyles().icon}
-              <span className="text-xs capitalize">{priority}</span>
+              className="flex items-center gap-1 font-semibold px-2.5 py-1 text-xs bg-zinc-50/90 dark:bg-zinc-800/70 text-zinc-800 dark:text-zinc-100 border-0"
+              style={{ background: "rgba(255,255,255,0.62)" }}>
+              <span className="capitalize">{priority}</span>
             </Badge>
           )}
           {category && (
@@ -75,10 +82,10 @@ export default function RuleCard({ title, content, category, priority, created_a
             </span>
           )}
         </div>
-        <h3 className="font-bold text-base md:text-lg group-hover:text-primary transition select-text mb-1 text-zinc-800 dark:text-zinc-100">{title}</h3>
+        <h3 className="font-bold text-lg group-hover:text-primary transition select-text mb-1 text-zinc-900 dark:text-zinc-100">{title}</h3>
         <div
-          className={`text-zinc-700/90 dark:text-zinc-100/90 text-sm mt-0.5 will-change-max-height transition-all duration-300 origin-top-left overflow-hidden
-          ${open ? "max-h-52 opacity-100 py-2 scale-y-100" : "max-h-0 opacity-0 scale-y-95"}
+          className={`text-zinc-700/90 dark:text-zinc-100/90 text-base mt-0.5 will-change-max-height transition-all duration-300 origin-top-left overflow-hidden
+          ${open ? "max-h-60 opacity-100 py-2 scale-y-100" : "max-h-0 opacity-0 scale-y-95"}
         `}
         >
           <p className="mb-2">{content}</p>
@@ -92,6 +99,6 @@ export default function RuleCard({ title, content, category, priority, created_a
           </span>
         )}
       </div>
-    </article>
+    </Card>
   );
 }

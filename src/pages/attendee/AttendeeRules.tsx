@@ -55,9 +55,8 @@ const AttendeeRules = () => {
 
   return (
     <AppLayout>
-      {/* Container with calmer, soft backgrounds */}
-      <div className="relative w-full max-w-3xl mx-auto px-3 sm:px-6 pb-10 animate-fade-in">
-        {/* Redesigned calm, minimal hero section */}
+      {/* Dashboard-style hero */}
+      <div className="relative w-full max-w-7xl mx-auto px-3 sm:px-6 pb-14 animate-fade-in">
         <RulesHero
           total={rules.length}
           value={search}
@@ -67,12 +66,12 @@ const AttendeeRules = () => {
           onCategoryChange={setCategory}
         />
 
-        {/* Rules List - minimalist glass cards, muted */}
-        <div className="mt-8 space-y-0">
-          <Card className="glass-card border border-gray-200 dark:border-gray-700 bg-white/90 dark:bg-zinc-800/60 shadow-md mb-10 ring-0 relative overflow-visible">
-            <CardContent className="p-6 sm:p-8">
+        <div className="mt-12">
+          <Card className="border-0 bg-white/90 dark:bg-zinc-900/70 shadow-xl mb-10 ring-0 relative overflow-visible group">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50/90 via-primary/5 to-indigo-50/90 dark:from-zinc-900/60 dark:to-zinc-800/80 z-0"></div>
+            <CardContent className="p-8 relative z-10">
               {isLoading ? (
-                <div className="flex items-center justify-center my-20">
+                <div className="flex items-center justify-center my-24">
                   <div className="w-12 h-12 rounded-full border-4 border-primary/20 border-t-primary/50 animate-spin" />
                 </div>
               ) : error ? (
@@ -80,15 +79,15 @@ const AttendeeRules = () => {
                   Error loading rules. Please try again later.
                 </div>
               ) : filteredRules.length === 0 ? (
-                <div className="text-center py-16 opacity-75 animate-fade-in">
-                  <span role="img" aria-label="no results" className="text-6xl mb-5 block">
+                <div className="text-center py-20 opacity-75 animate-fade-in">
+                  <span role="img" aria-label="no results" className="text-6xl mb-6 block">
                     📄
                   </span>
                   <div className="font-bold text-2xl mb-2">No rules found</div>
                   <div className="text-muted-foreground text-base">Try a different search or category.</div>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-fade-in">
                   {filteredRules.map((rule) => (
                     <RuleCard key={rule.id} {...rule} />
                   ))}
@@ -98,7 +97,7 @@ const AttendeeRules = () => {
           </Card>
         </div>
 
-        {/* Modern calm Do's and Don'ts card */}
+        {/* Dashboard-style Do's and Don'ts */}
         <DoDontCard dos={dosAndDonts.dos} donts={dosAndDonts.donts} />
       </div>
     </AppLayout>
@@ -106,4 +105,3 @@ const AttendeeRules = () => {
 };
 
 export default AttendeeRules;
-

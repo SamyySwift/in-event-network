@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -169,16 +168,27 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           )}
         </div>
       </CardContent>
-      <CardFooter className="border-t pt-3 flex justify-between">
-        <div className="text-sm text-muted-foreground">
+      <CardFooter
+        className="
+          flex flex-col gap-2
+          sm:flex-row sm:items-center sm:justify-between sm:gap-0
+          border-t pt-3
+        "
+      >
+        <div className="text-xs text-muted-foreground mb-2 sm:mb-0">
           Question ID: {question.id}
         </div>
-        <div className="flex gap-2">
+        <div
+          className="
+            flex flex-col gap-2 w-full
+            sm:flex-row sm:justify-end sm:w-auto sm:gap-2
+          "
+        >
           {!question.response && respondingTo !== question.id && (
             <Button
               size="sm"
               variant="outline"
-              className="text-blue-600 border-blue-200 hover:bg-blue-50"
+              className="text-blue-600 border-blue-200 hover:bg-blue-50 w-full sm:w-auto"
               onClick={() => onStartResponse(question.id)}
             >
               Respond
@@ -188,7 +198,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             <Button
               size="sm"
               variant="outline"
-              className="text-green-600 border-green-200 hover:bg-green-50"
+              className="text-green-600 border-green-200 hover:bg-green-50 w-full sm:w-auto"
               onClick={() => onMarkAsAnswered(question.id)}
               disabled={isMarkingAnswered}
             >
@@ -198,7 +208,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
           <Button
             size="sm"
             variant="outline"
-            className="text-destructive border-destructive/20 hover:bg-destructive/10"
+            className="text-destructive border-destructive/20 hover:bg-destructive/10 w-full sm:w-auto"
             onClick={() => onDelete(question.id)}
             disabled={isDeleting}
           >

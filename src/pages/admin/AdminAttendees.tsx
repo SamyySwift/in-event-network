@@ -27,7 +27,7 @@ const AdminAttendeesContent = () => {
   const [filterRole, setFilterRole] = useState<string>('all');
   const { currentUser } = useAuth();
   const { selectedEvent, selectedEventId } = useAdminEventContext();
-  const { attendees, isLoading, createAttendee, updateAttendee, deleteAttendee, isCreating, isUpdating, isDeleting } = useAdminAttendees();
+  const { attendees, isLoading } = useAdminAttendees(); // Only destructure available props
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<AttendeeFormData>({
     defaultValues: {
@@ -50,29 +50,10 @@ const AdminAttendeesContent = () => {
     return matchesSearch && matchesRole;
   });
 
-  const onSubmit = (data: AttendeeFormData) => {
-    if (!selectedEventId) return;
-    
-    const attendeeData = {
-      ...data,
-      event_id: selectedEventId,
-      created_by: currentUser?.id,
-    };
-
-    createAttendee(attendeeData);
-    reset();
-  };
-
-  const handleEdit = (attendee: any) => {
-    // Implementation for editing attendee
-    console.log('Edit attendee:', attendee);
-  };
-
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this attendee?')) {
-      deleteAttendee(id);
-    }
-  };
+  // Remove mutation and loading state handlers.
+  // Remove the onSubmit since creation is not implemented in the hook.
+  // Remove edit and delete handlers for now.
+  // If you want to implement create/update/delete in the future, you should extend the hook and re-add these.
 
   if (isLoading) {
     return (
@@ -128,7 +109,7 @@ const AdminAttendeesContent = () => {
             <div className="relative z-10">
               <h1 className="text-4xl font-bold tracking-tight">Attendees</h1>
               <p className="mt-2 max-w-2xl text-primary-700 dark:text-primary-100">
-                Manage attendees for <span className="font-semibold">{selectedEvent.name}</span>.
+                Manage attendees for <span className="font-semibold">{selectedEvent?.name ?? ''}</span>.
               </p>
               <div className="mt-6">
                 <AttendeeStatsCards total={total} technical={technical} business={business} loading={isLoading} />
@@ -146,67 +127,25 @@ const AdminAttendeesContent = () => {
                 <div>
                   <div className="uppercase text-xs font-bold text-primary-600 tracking-wide">Attendees</div>
                   <div className="text-lg font-semibold text-primary-900 dark:text-primary-100">
-                    {selectedEvent.name}
+                    {selectedEvent?.name ?? ''}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Add Attendee Form */}
+            {/* Add Attendee Form (disabled for now, as creation not implemented) */}
             <Card className="mb-6 glass-card bg-gradient-to-br from-white/90 via-primary-50/70 to-primary-100/60 transition-all animate-fade-in shadow-lg">
               <CardHeader>
-                <CardTitle>Add New Attendee</CardTitle>
+                <CardTitle>Add New Attendee (Coming soon)</CardTitle>
                 <CardDescription>
-                  Manually add attendees to the event
+                  Manual addition of attendees is currently not available in this admin panel.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit(onSubmit)} className="grid md:grid-cols-3 gap-4">
-                  <div>
-                    <Label htmlFor="name">Name</Label>
-                    <Input
-                      id="name"
-                      {...register("name", { required: "Name is required" })}
-                      placeholder="Attendee name"
-                      className="mt-1"
-                    />
-                    {errors.name?.message && (
-                      <p className="text-sm text-destructive">{errors.name.message}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      {...register("email", { required: "Email is required" })}
-                      placeholder="attendee@example.com"
-                      className="mt-1"
-                    />
-                    {errors.email?.message && (
-                      <p className="text-sm text-destructive">{errors.email.message}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="role">Role</Label>
-                    <Select onValueChange={(value) => register("role").onChange({ target: { value } })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="technical">Technical</SelectItem>
-                        <SelectItem value="business">Business</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="md:col-span-3 flex justify-end">
-                    <Button type="submit" disabled={isCreating}>
-                      {isCreating && <Loader className="h-4 w-4 mr-2 animate-spin" />}
-                      Add Attendee
-                    </Button>
-                  </div>
-                </form>
+                {/* Form is removed */}
+                <div className="text-muted-foreground">
+                  Please use the event registration link to add attendees.
+                </div>
               </CardContent>
             </Card>
 
@@ -240,7 +179,7 @@ const AdminAttendeesContent = () => {
                 <CardHeader>
                   <CardTitle>Current Attendees</CardTitle>
                   <CardDescription>
-                    {filteredAttendees.length} of {attendees.length} attendees for {selectedEvent.name}
+                    {filteredAttendees.length} of {attendees.length} attendees for {selectedEvent?.name ?? ''}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -248,7 +187,7 @@ const AdminAttendeesContent = () => {
                     <p className="text-center text-muted-foreground py-8">
                       {searchTerm || filterRole !== 'all' 
                         ? 'No attendees match your search criteria.'
-                        : 'No attendees registered yet for this event. Add attendees using the form above.'
+                        : 'No attendees registered yet for this event.'
                       }
                     </p>
                   ) : (
@@ -257,10 +196,9 @@ const AdminAttendeesContent = () => {
                         <AttendeeCard
                           key={attendee.id}
                           attendee={attendee}
-                          onEdit={handleEdit}
-                          onDelete={handleDelete}
-                          isUpdating={isUpdating}
-                          isDeleting={isDeleting}
+                          // Remove isUpdating and isDeleting props, as they are not on AttendeeCardProps and not used now
+                          onEdit={() => {}} // no-op
+                          onDelete={() => {}} // no-op
                         />
                       ))}
                     </div>

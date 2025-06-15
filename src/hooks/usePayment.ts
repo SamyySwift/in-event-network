@@ -1,3 +1,4 @@
+
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -41,24 +42,6 @@ export const usePayment = () => {
     },
     enabled: !!currentUser?.id,
   });
-
-  // Check payment status for a specific event and user
-  const checkPaymentStatus = async (eventId: string, userId: string) => {
-    const { data, error } = await supabase
-      .from('event_payments')
-      .select('*')
-      .eq('event_id', eventId)
-      .eq('user_id', userId)
-      .eq('status', 'success')
-      .single();
-
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error checking payment status:', error);
-      return null;
-    }
-
-    return data;
-  };
 
   // Record payment in database
   const recordPaymentMutation = useMutation({
@@ -149,6 +132,5 @@ export const usePayment = () => {
     isUpdatingPayment: updatePaymentStatusMutation.isPending,
     isEventPaid,
     getPaymentAmount,
-    checkPaymentStatus,
   };
 };

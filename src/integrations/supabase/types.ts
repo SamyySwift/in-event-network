@@ -317,50 +317,6 @@ export type Database = {
           },
         ]
       }
-      event_payments: {
-        Row: {
-          amount: number
-          created_at: string
-          currency: string
-          event_id: string
-          id: string
-          paystack_reference: string
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          created_at?: string
-          currency?: string
-          event_id: string
-          id?: string
-          paystack_reference: string
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          created_at?: string
-          currency?: string
-          event_id?: string
-          id?: string
-          paystack_reference?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "event_payments_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       events: {
         Row: {
           banner_url: string | null

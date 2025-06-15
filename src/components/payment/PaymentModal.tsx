@@ -32,36 +32,42 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const amount = getPaymentAmount(); // 30,000 NGN in kobo
 
-  const handlePaymentSuccess = (reference: any) => {
-    console.log('Payment successful:', reference);
-    setIsProcessing(true);
-    
-    // Record successful payment
-    recordPayment({
-      eventId,
-      amount: amount / 100, // Convert back from kobo to naira for storage
-      currency: 'NGN',
-      reference: reference.reference,
-      status: 'success',
-    });
+  const paystackProps = {
+    email: currentUser?.email || '',
+    amount,
+    currency: 'NGN',
+    publicKey,
+    text: 'Pay ₦30,000',
+    onSuccess: (reference: any) => {
+      console.log('Payment successful:', reference);
+      setIsProcessing(true);
+      
+      // Record successful payment
+      recordPayment({
+        eventId,
+        amount: amount / 100, // Convert back from kobo to naira for storage
+        currency: 'NGN',
+        reference: reference.reference,
+        status: 'success',
+      });
 
-    updatePaymentStatus({
-      reference: reference.reference,
-      status: 'success',
-    });
+      updatePaymentStatus({
+        reference: reference.reference,
+        status: 'success',
+      });
 
-    setIsProcessing(false);
-    onPaymentSuccess?.();
-    onClose();
+      setIsProcessing(false);
+      onPaymentSuccess?.();
+      onClose();
 
-    toast({
-      title: 'Payment Successful!',
-      description: `Payment for ${eventName} has been completed successfully.`,
-    });
-  };
-
-  const handlePaymentClose = () => {
-    console.log('Payment closed');
+      toast({
+        title: 'Payment Successful!',
+        description: `Payment for ${eventName} has been completed successfully.`,
+      });
+    },
+    onClose: () => {
+      console.log('Payment closed');
+    },
   };
 
   const handlePaymentStart = () => {
@@ -103,16 +109,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       </Dialog>
     );
   }
-
-  const paystackConfig = {
-    reference: `evt_${eventId}_${Date.now()}`,
-    email: currentUser?.email || '',
-    amount,
-    publicKey,
-    text: 'Pay ₦30,000',
-    onSuccess: handlePaymentSuccess,
-    onClose: handlePaymentClose,
-  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -166,9 +162,20 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           {/* Payment Button */}
           <div className="space-y-3">
             <PaystackButton
-              {...paystackConfig}
+              {...paystackProps}
               className="w-full bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white py-3 px-6 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50"
-            />
+              disabled={isProcessing || isRecordingPayment}
+              onClick={handlePaymentStart}
+            >
+              {isProcessing || isRecordingPayment ? (
+                <div className="flex items-center justify-center gap-2">
+                  <Loader className="h-4 w-4 animate-spin" />
+                  Processing...
+                </div>
+              ) : (
+                'Pay ₦30,000'
+              )}
+            </PaystackButton>
 
             <Button
               variant="outline"

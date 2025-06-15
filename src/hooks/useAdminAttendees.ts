@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -74,7 +75,7 @@ export const useAdminAttendees = () => {
   });
 
   // NEW: Mutation to clear all attendees for the current event
-  const { mutateAsync: clearAttendees, isPending: isClearing, error: clearError } = useMutation({
+  const { mutateAsync: clearAttendees, isLoading: isClearing, error: clearError } = useMutation({
     mutationFn: async () => {
       if (!selectedEventId) throw new Error('No event selected');
       const { error } = await supabase

@@ -126,18 +126,18 @@ const AdminEvents = () => {
     <AdminLayout>
       <div className="space-y-8 animate-fade-in">
         {/* Hero Section */}
-        <div className="p-8 rounded-2xl bg-gradient-to-br from-primary-50 to-primary-100 text-primary-900 shadow-2xl shadow-primary/20 relative overflow-hidden">
+        <div className="p-8 rounded-2xl bg-gradient-to-br from-blue-600 via-primary-500 to-blue-400 text-white shadow-2xl shadow-primary/20 relative overflow-hidden">
           <div className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full opacity-50"></div>
-          <div className="absolute -bottom-12 -left-12 w-36 h-36 bg-white/5 rounded-full opacity-50"></div>
+          <div className="absolute -bottom-12 -left-12 w-36 h-36 bg-white/10 rounded-full opacity-50"></div>
           
           <div className="relative">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 rounded-xl bg-white/40 backdrop-blur-sm">
-                <Calendar className="h-8 w-8 text-primary" />
+              <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
+                <Calendar className="h-8 w-8 text-white" />
               </div>
               <div>
-                <h1 className="text-4xl font-bold tracking-tight text-primary-900">Event Management</h1>
-                <p className="text-primary-700 mt-1">Create and manage your events</p>
+                <h1 className="text-4xl font-bold tracking-tight text-white">Event Management</h1>
+                <p className="text-white/80 mt-1">Create and manage your events</p>
               </div>
             </div>
             
@@ -145,11 +145,11 @@ const AdminEvents = () => {
               <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl border border-white/20">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-primary-200">Total Events</p>
+                    <p className="text-sm text-white/70">Total Events</p>
                     <p className="text-3xl font-bold text-white">{events.length}</p>
                   </div>
                   <div className="p-3 rounded-lg bg-green-500/20">
-                    <Calendar className="h-6 w-6 text-green-300" />
+                    <Calendar className="h-6 w-6 text-green-200" />
                   </div>
                 </div>
               </div>
@@ -157,11 +157,11 @@ const AdminEvents = () => {
               <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl border border-white/20">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-primary-200">Live Events</p>
-                    <p className="text-3xl font-bold text-green-300">{liveEvents.length}</p>
+                    <p className="text-sm text-white/70">Live Events</p>
+                    <p className="text-3xl font-bold text-green-200">{liveEvents.length}</p>
                   </div>
                   <div className="p-3 rounded-lg bg-green-500/20">
-                    <Clock className="h-6 w-6 text-green-300" />
+                    <Clock className="h-6 w-6 text-green-200" />
                   </div>
                 </div>
               </div>
@@ -169,11 +169,11 @@ const AdminEvents = () => {
               <div className="bg-white/10 backdrop-blur-sm p-6 rounded-xl border border-white/20">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-primary-200">Upcoming Events</p>
-                    <p className="text-3xl font-bold text-blue-300">{upcomingEvents.length}</p>
+                    <p className="text-sm text-white/70">Upcoming Events</p>
+                    <p className="text-3xl font-bold text-blue-200">{upcomingEvents.length}</p>
                   </div>
                   <div className="p-3 rounded-lg bg-blue-500/20">
-                    <Users className="h-6 w-6 text-blue-300" />
+                    <Users className="h-6 w-6 text-blue-200" />
                   </div>
                 </div>
               </div>

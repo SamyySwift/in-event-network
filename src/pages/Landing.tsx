@@ -407,9 +407,7 @@ const Landing = () => {
                 <div className="w-8 h-8 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-lg flex items-center justify-center">
                   <Network className="h-5 w-5 text-white" />
                 </div>
-                <span className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-                  Connect
-                </span>
+                <span className="text-xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">kconect</span>
               </div>
               <p className="text-white/60 text-sm">
                 Enhancing event networking through smart connections and

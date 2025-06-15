@@ -9,40 +9,40 @@ interface DoDontCardProps {
 }
 
 const DoDontCard: React.FC<DoDontCardProps> = ({ dos, donts }) => (
-  <div className="glass-card mt-1 mb-4 bg-gradient-to-br from-primary-100/60 via-white/80 to-pink-100/50 dark:from-gray-900 dark:via-primary-900/40 dark:to-indigo-900/30 rounded-2xl shadow-2xl px-6 py-8 animate-fade-in">
-    <div className="flex flex-col md:flex-row gap-10 md:gap-24 justify-center items-start">
+  <div className="glass-card mt-2 mb-2 bg-white/80 dark:bg-zinc-900/70 rounded-xl shadow-lg px-5 py-7 animate-fade-in border border-gray-200 dark:border-gray-700">
+    <div className="flex flex-col md:flex-row gap-7 md:gap-12 justify-center items-start">
       <div className="w-full md:w-1/2">
-        <h3 className="font-bold text-green-700 text-lg mb-3 flex items-center gap-2">
-          <Check className="h-6 w-6 text-green-500 bg-white/70 rounded-full p-1 shadow" />
+        <h3 className="font-semibold text-green-800/80 dark:text-green-200/80 text-base mb-2 flex items-center gap-2">
+          <Check className="h-5 w-5 text-emerald-400 bg-zinc-100/80 dark:bg-zinc-800/70 rounded-full p-0.5" />
           Do's
         </h3>
-        <ul className="space-y-2">
+        <ul className="space-y-1.5">
           {dos.map((item, idx) => (
-            <li key={idx} className="flex items-center gap-2 text-base hover:scale-105 transition-all">
-              <Check className="h-5 w-5 text-green-600 bg-green-100 rounded-full" />
-              <span>{item}</span>
+            <li key={idx} className="flex items-center gap-2 text-sm hover:scale-[1.03] transition-all">
+              <Check className="h-4 w-4 text-emerald-300 dark:text-emerald-400 bg-transparent" />
+              <span className="text-zinc-700 dark:text-zinc-100">{item}</span>
             </li>
           ))}
         </ul>
       </div>
-      <Separator orientation="vertical" className="hidden md:block h-44 mx-3" />
+      <Separator orientation="vertical" className="hidden md:block h-40 mx-2" />
       <div className="w-full md:w-1/2">
-        <h3 className="font-bold text-red-700 text-lg mb-3 flex items-center gap-2">
-          <X className="h-6 w-6 text-red-500 bg-white/70 rounded-full p-1 shadow" />
+        <h3 className="font-semibold text-rose-800/80 dark:text-rose-200/80 text-base mb-2 flex items-center gap-2">
+          <X className="h-5 w-5 text-rose-400 bg-zinc-100/80 dark:bg-zinc-800/70 rounded-full p-0.5" />
           Don'ts
         </h3>
-        <ul className="space-y-2">
+        <ul className="space-y-1.5">
           {donts.map((item, idx) => (
-            <li key={idx} className="flex items-center gap-2 text-base hover:scale-105 transition-all">
-              <X className="h-5 w-5 text-red-600 bg-red-100 rounded-full" />
-              <span>{item}</span>
+            <li key={idx} className="flex items-center gap-2 text-sm hover:scale-[1.03] transition-all">
+              <X className="h-4 w-4 text-rose-300 dark:text-rose-400 bg-transparent" />
+              <span className="text-zinc-700 dark:text-zinc-100">{item}</span>
             </li>
           ))}
         </ul>
       </div>
     </div>
-    <div className="mt-9 px-4 py-3 rounded-xl bg-primary-100/60 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-700 shadow text-primary-900 dark:text-primary-100 text-base text-center font-medium">
-      By attending this event, you acknowledge that you have read and agree to follow all rules and guidelines. Thank you for your cooperation!
+    <div className="mt-7 px-3 py-2 rounded-lg bg-zinc-50 dark:bg-zinc-800/70 border border-zinc-100 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 text-sm text-center font-medium">
+      By attending this event, you confirm you have reviewed and will follow all guidelines.
     </div>
   </div>
 );

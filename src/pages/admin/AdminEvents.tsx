@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -127,18 +126,18 @@ const AdminEvents = () => {
     <AdminLayout>
       <div className="space-y-8 animate-fade-in">
         {/* Hero Section */}
-        <div className="p-8 rounded-2xl bg-gradient-to-br from-primary via-indigo-600 to-purple-600 text-white shadow-2xl shadow-primary/20 relative overflow-hidden">
+        <div className="p-8 rounded-2xl bg-gradient-to-br from-primary-50 to-primary-100 text-primary-900 shadow-2xl shadow-primary/20 relative overflow-hidden">
           <div className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full opacity-50"></div>
           <div className="absolute -bottom-12 -left-12 w-36 h-36 bg-white/5 rounded-full opacity-50"></div>
           
           <div className="relative">
             <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
-                <Calendar className="h-8 w-8 text-white" />
+              <div className="p-3 rounded-xl bg-white/40 backdrop-blur-sm">
+                <Calendar className="h-8 w-8 text-primary" />
               </div>
               <div>
-                <h1 className="text-4xl font-bold tracking-tight">Event Management</h1>
-                <p className="text-primary-200 mt-1">Create and manage your events</p>
+                <h1 className="text-4xl font-bold tracking-tight text-primary-900">Event Management</h1>
+                <p className="text-primary-700 mt-1">Create and manage your events</p>
               </div>
             </div>
             

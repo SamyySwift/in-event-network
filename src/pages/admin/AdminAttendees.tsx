@@ -1,199 +1,288 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import EventSelector from '@/components/admin/EventSelector';
-import { AdminEventProvider, useAdminEventContext } from '@/hooks/useAdminEventContext';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Search, Users, Code, Briefcase, Loader, AlertTriangle } from 'lucide-react';
+import { useForm } from 'react-hook-form';
 import { useAdminAttendees } from '@/hooks/useAdminAttendees';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAdminEventContext, AdminEventProvider } from '@/hooks/useAdminEventContext';
 import AttendeeStatsCards from './components/AttendeeStatsCards';
 import AttendeeCard from './components/AttendeeCard';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Input } from '@/components/ui/input';
-import { Users } from "lucide-react";
-import { useToast } from '@/hooks/use-toast';
 
-const TABS = [
-  { id: 'all', label: 'All' },
-  { id: 'technical', label: 'Technical' },
-  { id: 'design', label: 'Design' },
-  { id: 'business', label: 'Business' },
-  { id: 'recent', label: 'Recent' },
-];
-
-function getCategory(attendee) {
-  const txt = attendee.bio?.toLowerCase() || "";
-  if (txt.includes("tech") || txt.includes("dev") || txt.includes("engineer")) return "technical";
-  if (txt.includes("design") || txt.includes("ux") || txt.includes("ui")) return "design";
-  if (txt.includes("business") || txt.includes("management") || txt.includes("marketing")) return "business";
-  return "other";
-}
+type AttendeeFormData = {
+  name: string;
+  email: string;
+  role: 'technical' | 'business' | 'other';
+};
 
 const AdminAttendeesContent = () => {
-  const { selectedEvent } = useAdminEventContext();
-  const { attendees, isLoading } = useAdminAttendees();
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<string>('all');
-  const [search, setSearch] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterRole, setFilterRole] = useState<string>('all');
+  const { currentUser } = useAuth();
+  const { selectedEvent, selectedEventId } = useAdminEventContext();
+  const { attendees, isLoading, createAttendee, updateAttendee, deleteAttendee, isCreating, isUpdating, isDeleting } = useAdminAttendees();
 
-  // Stats calculation
-  const stats = useMemo(() => {
-    let technical = 0, business = 0;
-    attendees.forEach(a => {
-      const cat = getCategory(a);
-      if (cat === "technical") technical++;
-      if (cat === "business") business++;
-    });
-    return {
-      total: attendees.length,
-      technical,
-      business,
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<AttendeeFormData>({
+    defaultValues: {
+      name: "",
+      email: "",
+      role: "technical",
+    },
+  });
+
+  // Calculate metrics for stats cards
+  const total = attendees.length;
+  const technical = attendees.filter(a => a.role === 'technical').length;
+  const business = attendees.filter(a => a.role === 'business').length;
+
+  // Filter attendees based on search and role
+  const filteredAttendees = attendees.filter(attendee => {
+    const matchesSearch = attendee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         attendee.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesRole = filterRole === 'all' || attendee.role === filterRole;
+    return matchesSearch && matchesRole;
+  });
+
+  const onSubmit = (data: AttendeeFormData) => {
+    if (!selectedEventId) return;
+    
+    const attendeeData = {
+      ...data,
+      event_id: selectedEventId,
+      created_by: currentUser?.id,
     };
-  }, [attendees]);
 
-  // Filtering by tab/category
-  const filteredAttendees = useMemo(() => {
-    let result = attendees;
-    if (activeTab !== 'all') {
-      if (activeTab === "recent") {
-        result = [...attendees].sort((a, b) => new Date(b.joined_at).getTime() - new Date(a.joined_at).getTime());
-      } else {
-        result = attendees.filter(a => getCategory(a) === activeTab);
-      }
-    }
-    if (search.trim()) {
-      const s = search.trim().toLowerCase();
-      result = result.filter(a =>
-        a.name.toLowerCase().includes(s) ||
-        a.email.toLowerCase().includes(s) ||
-        a.company?.toLowerCase().includes(s) ||
-        a.bio?.toLowerCase().includes(s)
-      );
-    }
-    return result;
-  }, [attendees, activeTab, search]);
-
-  // Actions
-  const handleEditAttendee = (attendee: any) => {
-    toast({
-      title: "Edit Attendee",
-      description: "Edit functionality will be implemented soon",
-    });
+    createAttendee(attendeeData);
+    reset();
   };
 
-  const handleDeleteAttendee = (attendee: any) => {
-    toast({
-      title: "Delete Attendee",
-      description: "Delete functionality will be implemented soon",
-    });
+  const handleEdit = (attendee: any) => {
+    // Implementation for editing attendee
+    console.log('Edit attendee:', attendee);
   };
 
-  // UI states
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this attendee?')) {
+      deleteAttendee(id);
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-28">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-2 text-muted-foreground">Loading attendees...</p>
-        </div>
-      </div>
-    );
-  }
-  if (!selectedEvent) {
-    return (
-      <div className="flex flex-col gap-5">
-        <div className="border rounded-lg p-4 bg-card">
+      <div className="flex flex-col gap-10">
+        <div className="flex justify-between items-center">
           <EventSelector />
         </div>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <p className="mt-2 text-muted-foreground">Please select an event to view attendees</p>
+        <div className="p-8 rounded-2xl bg-gradient-to-br from-primary-100 via-purple-100 to-blue-50 text-primary-900 dark:text-white shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
+          <div className="absolute -top-12 -right-10 w-56 h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
+          <div className="absolute -bottom-14 -left-14 w-36 h-36 bg-white/20 rounded-full opacity-30 pointer-events-none"></div>
+          <div className="relative z-10">
+            <h1 className="text-4xl font-bold tracking-tight">Attendees</h1>
+            <p className="mt-2 max-w-2xl text-primary-700 dark:text-primary-100">
+              Manage attendees for <span className="font-semibold">{selectedEvent?.name ?? "your event"}</span>.
+            </p>
+            <div className="mt-6">
+              <AttendeeStatsCards total={0} technical={0} business={0} loading />
+            </div>
           </div>
         </div>
+        <div className="h-24 flex items-center justify-center"><Loader className="animate-spin" /></div>
       </div>
     );
   }
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Gradient Hero Section */}
-      <div className="relative overflow-hidden rounded-2xl min-h-[178px] p-0 shadow-soft border bg-gradient-to-br from-primary-100 via-blue-100 to-indigo-50 flex flex-col">
-        {/* Floating orbs */}
-        <div className="absolute left-8 top-6 w-36 h-36 bg-blue-300/40 rounded-full blur-3xl animate-float hidden md:block" />
-        <div className="absolute right-2 -top-16 w-40 h-40 bg-indigo-300/40 rounded-full blur-2xl animate-float hidden md:block" />
-        <div className="p-6 z-10 relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-1 flex items-center gap-2">Event Attendees</h1>
-            <p className="max-w-2xl text-muted-foreground">
-              Manage registered attendees for <span className="font-semibold">{selectedEvent ? selectedEvent.name : '-'}</span>.  
-              View attendee details, filter by role, and manage access.
-            </p>
-            <div className="mt-2">
-              <EventSelector />
-            </div>
-          </div>
-          <div className=" shrink-0 w-full md:w-fit mt-2 md:mt-0">
-            <AttendeeStatsCards total={stats.total} technical={stats.technical} business={stats.business} loading={isLoading}/>
-          </div>
-        </div>
+      {/* Event Selector */}
+      <div className="flex justify-between items-center">
+        <EventSelector />
       </div>
 
-      {/* Quick actions section */}
-      <div className="flex flex-col gap-4 mt-2">
-        <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <h2 className="text-lg font-semibold">Attendees</h2>
-            <span className="text-muted-foreground text-sm">Browse and filter all registered attendees.</span>
+      {/* Show message when no event is selected */}
+      {!selectedEventId && (
+        <div className="text-center py-12">
+          <div className="p-4 rounded-full bg-primary/10 inline-block mb-4">
+            <svg className="h-8 w-8 text-primary" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z"/>
+            </svg>
           </div>
-          <div className="flex gap-2 items-center flex-wrap">
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="h-9 bg-muted/60">
-                {TABS.map(tab => (
-                  <TabsTrigger value={tab.id} key={tab.id} className="px-3">{tab.label}</TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-            <Input
-              type="text"
-              className="max-w-sm ml-2"
-              placeholder="Search attendees…"
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
+          <p className="text-muted-foreground text-lg mb-2">No event selected</p>
+          <p className="text-sm text-muted-foreground">Please select an event above to manage its attendees</p>
+        </div>
+      )}
+
+      {/* Only show content when an event is selected */}
+      {selectedEventId && (
+        <>
+          {/* Gradient Hero Section */}
+          <div className="p-8 rounded-2xl bg-gradient-to-br from-primary-100 via-purple-100 to-blue-50 text-primary-900 dark:text-white shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
+            <div className="absolute -top-12 -right-10 w-56 h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none" />
+            <div className="absolute -bottom-14 -left-14 w-36 h-36 bg-white/20 rounded-full opacity-30 pointer-events-none" />
+            <div className="relative z-10">
+              <h1 className="text-4xl font-bold tracking-tight">Attendees</h1>
+              <p className="mt-2 max-w-2xl text-primary-700 dark:text-primary-100">
+                Manage attendees for <span className="font-semibold">{selectedEvent.name}</span>.
+              </p>
+              <div className="mt-6">
+                <AttendeeStatsCards total={total} technical={technical} business={business} loading={isLoading} />
+              </div>
+            </div>
           </div>
-        </div>
-        <div>
-          {/* Cards */}
-          {
-            filteredAttendees.length === 0 ? (
-              <div className="w-full flex flex-col justify-center items-center py-16 text-muted-foreground">
-                <Users size={40} className="mb-3"/>
-                <div className="mb-1">No attendees found for this event!</div>
-                <div className="text-sm">Try changing your filters or search term.</div>
+
+          <div className="glass-card p-6 rounded-xl space-y-8 shadow-xl">
+            {/* Section Header */}
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-600 shadow-md">
+                  <Users className="w-6 h-6 text-white" />
+                </span>
+                <div>
+                  <div className="uppercase text-xs font-bold text-primary-600 tracking-wide">Attendees</div>
+                  <div className="text-lg font-semibold text-primary-900 dark:text-primary-100">
+                    {selectedEvent.name}
+                  </div>
+                </div>
               </div>
-            ) : (
-              <div className="flex flex-col gap-2">
-                {filteredAttendees.map(attendee => (
-                  <AttendeeCard
-                    key={attendee.id}
-                    attendee={attendee}
-                    onEdit={handleEditAttendee}
-                    onDelete={handleDeleteAttendee}
-                  />
-                ))}
+            </div>
+
+            {/* Add Attendee Form */}
+            <Card className="mb-6 glass-card bg-gradient-to-br from-white/90 via-primary-50/70 to-primary-100/60 transition-all animate-fade-in shadow-lg">
+              <CardHeader>
+                <CardTitle>Add New Attendee</CardTitle>
+                <CardDescription>
+                  Manually add attendees to the event
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit(onSubmit)} className="grid md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="name">Name</Label>
+                    <Input
+                      id="name"
+                      {...register("name", { required: "Name is required" })}
+                      placeholder="Attendee name"
+                      className="mt-1"
+                    />
+                    {errors.name?.message && (
+                      <p className="text-sm text-destructive">{errors.name.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      {...register("email", { required: "Email is required" })}
+                      placeholder="attendee@example.com"
+                      className="mt-1"
+                    />
+                    {errors.email?.message && (
+                      <p className="text-sm text-destructive">{errors.email.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <Label htmlFor="role">Role</Label>
+                    <Select onValueChange={(value) => register("role").onChange({ target: { value } })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="technical">Technical</SelectItem>
+                        <SelectItem value="business">Business</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="md:col-span-3 flex justify-end">
+                    <Button type="submit" disabled={isCreating}>
+                      {isCreating && <Loader className="h-4 w-4 mr-2 animate-spin" />}
+                      Add Attendee
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Search and Filter */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-6">
+              <div className="flex-1 relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Search attendees..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
               </div>
-            )
-          }
-        </div>
-      </div>
+              <Select value={filterRole} onValueChange={setFilterRole}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Filter by role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Roles</SelectItem>
+                  <SelectItem value="technical">Technical</SelectItem>
+                  <SelectItem value="business">Business</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Attendees List */}
+            <div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Current Attendees</CardTitle>
+                  <CardDescription>
+                    {filteredAttendees.length} of {attendees.length} attendees for {selectedEvent.name}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {filteredAttendees.length === 0 ? (
+                    <p className="text-center text-muted-foreground py-8">
+                      {searchTerm || filterRole !== 'all' 
+                        ? 'No attendees match your search criteria.'
+                        : 'No attendees registered yet for this event. Add attendees using the form above.'
+                      }
+                    </p>
+                  ) : (
+                    <div className="space-y-4">
+                      {filteredAttendees.map((attendee) => (
+                        <AttendeeCard
+                          key={attendee.id}
+                          attendee={attendee}
+                          onEdit={handleEdit}
+                          onDelete={handleDelete}
+                          isUpdating={isUpdating}
+                          isDeleting={isDeleting}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 };
 
-const AdminAttendees = () => (
-  <AdminLayout>
-    <AdminEventProvider>
-      <AdminAttendeesContent />
-    </AdminEventProvider>
-  </AdminLayout>
-);
+const AdminAttendees = () => {
+  return (
+    <AdminLayout>
+      <AdminEventProvider>
+        <AdminAttendeesContent />
+      </AdminEventProvider>
+    </AdminLayout>
+  );
+};
 
 export default AdminAttendees;

@@ -568,7 +568,7 @@ const Landing = () => {
                 </li>
                 <li>
                   <a
-                    href="#"
+                    href="/terms"
                     className="text-white/60 hover:text-cyan-400 transition-colors"
                   >
                     Terms of Service

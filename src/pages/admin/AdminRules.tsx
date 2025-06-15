@@ -57,122 +57,120 @@ const RulesContent = () => {
     setDialogOpen(open);
   };
 
-  if (!selectedEvent) {
-    return (
-      <div className="flex flex-col gap-5">
-        <div className="border rounded-lg p-4 bg-card">
-          <EventSelector />
-        </div>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <Plus className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
-            <p className="mt-2 text-muted-foreground">Please select an event to manage rules</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <AdminLayout>
-      <div className="space-y-8 animate-fade-in">
-        {/* Gradient Hero Section */}
-        <div className="p-8 rounded-2xl bg-gradient-to-br from-primary-100 via-blue-100 to-indigo-50 text-primary-900 dark:text-white shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
-          <div className="absolute -top-12 -right-10 w-56 h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
-          <div className="absolute -bottom-14 -left-14 w-36 h-36 bg-white/20 rounded-full opacity-30 pointer-events-none"></div>
-          <div className="relative z-10">
-            <div className="flex items-center gap-6">
-              <h1 className="text-4xl font-bold tracking-tight flex items-center gap-2">
-                Event Rules
-              </h1>
-              <div className="flex-1">
-                <EventSelector />
+    <div className="space-y-8 animate-fade-in">
+      {/* Event Selector */}
+      <div className="flex justify-between items-center">
+        <EventSelector />
+      </div>
+
+      {/* Show message when no event is selected */}
+      {!selectedEventId && (
+        <div className="text-center py-12">
+          <div className="p-4 rounded-full bg-primary/10 inline-block mb-4">
+            <Plus className="h-8 w-8 text-primary" />
+          </div>
+          <p className="text-muted-foreground text-lg mb-2">No event selected</p>
+          <p className="text-sm text-muted-foreground">Please select an event above to manage rules</p>
+        </div>
+      )}
+
+      {/* Only show content when an event is selected */}
+      {selectedEventId && (
+        <>
+          {/* Gradient Hero Section */}
+          <div className="p-8 rounded-2xl bg-gradient-to-br from-primary-100 via-blue-100 to-indigo-50 text-primary-900 dark:text-white shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
+            <div className="absolute -top-12 -right-10 w-56 h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
+            <div className="absolute -bottom-14 -left-14 w-36 h-36 bg-white/20 rounded-full opacity-30 pointer-events-none"></div>
+            <div className="relative z-10">
+              <h1 className="text-4xl font-bold tracking-tight">Event Rules</h1>
+              <p className="mt-2 max-w-2xl text-primary-700 dark:text-primary-100">
+                Manage rules and guidelines for <span className="font-semibold">{selectedEvent?.name}</span>.
+              </p>
+              <div className="mt-6">
+                <RuleStatsCards total={total} highPriority={highPriority} categories={categories} loading={isLoading} />
               </div>
             </div>
-            <p className="mt-2 max-w-2xl text-primary-700 dark:text-primary-100">
-              Manage rules and guidelines for <span className="font-semibold">{selectedEvent?.name}</span>.
-            </p>
-            <div className="mt-6">
-              <RuleStatsCards total={total} highPriority={highPriority} categories={categories} loading={isLoading} />
-            </div>
           </div>
-        </div>
 
-        {/* Quick Actions */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold">Rules</h2>
-            <p className="text-muted-foreground mt-1">
-              Define and manage event rules for your attendees.
-            </p>
-          </div>
-          <CreateRuleDialog
-            open={dialogOpen}
-            setOpen={handleDialogClose}
-            onSubmit={handleDialogSubmit}
-            isSubmitting={isCreating || isUpdating}
-            editingRule={editingRule ? {
-              title: editingRule.title,
-              content: editingRule.content,
-              category: editingRule.category,
-              priority: editingRule.priority
-            } : null}
-          />
-        </div>
-
-        {/* Search */}
-        <div className="flex justify-between mb-4">
-          <Input 
-            placeholder="Search rules..." 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="max-w-sm"
-          />
-        </div>
-
-        {/* Rules List */}
-        <div className="space-y-4">
-          {filteredRules.length > 0 ? (
-            filteredRules.map((rule) => (
-              <RuleCard
-                key={rule.id}
-                rule={rule}
-                isDeleting={isDeleting}
-                onEdit={handleEditRule}
-                onDelete={handleDeleteRule}
-              />
-            ))
-          ) : (
-            <div className="col-span-2 text-center py-8">
-              <Plus className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
-              <h3 className="mt-4 text-lg font-medium">No rules found</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                No rules match your search criteria.
+          {/* Quick Actions */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-bold">Rules</h2>
+              <p className="text-muted-foreground mt-1">
+                Define and manage event rules for your attendees.
               </p>
-              <CreateRuleDialog
-                open={dialogOpen}
-                setOpen={handleDialogClose}
-                onSubmit={handleDialogSubmit}
-                isSubmitting={isCreating || isUpdating}
-                editingRule={null}
-              />
+            </div>
+            <CreateRuleDialog
+              open={dialogOpen}
+              setOpen={handleDialogClose}
+              onSubmit={handleDialogSubmit}
+              isSubmitting={isCreating || isUpdating}
+              editingRule={editingRule ? {
+                title: editingRule.title,
+                content: editingRule.content,
+                category: editingRule.category,
+                priority: editingRule.priority
+              } : null}
+            />
+          </div>
+
+          {/* Search */}
+          <div className="flex justify-between mb-4">
+            <Input 
+              placeholder="Search rules..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="max-w-sm"
+            />
+          </div>
+
+          {/* Rules List */}
+          <div className="space-y-4">
+            {filteredRules.length > 0 ? (
+              filteredRules.map((rule) => (
+                <RuleCard
+                  key={rule.id}
+                  rule={rule}
+                  isDeleting={isDeleting}
+                  onEdit={handleEditRule}
+                  onDelete={handleDeleteRule}
+                />
+              ))
+            ) : (
+              <div className="col-span-2 text-center py-8">
+                <Plus className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
+                <h3 className="mt-4 text-lg font-medium">No rules found</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  No rules match your search criteria.
+                </p>
+                <CreateRuleDialog
+                  open={dialogOpen}
+                  setOpen={handleDialogClose}
+                  onSubmit={handleDialogSubmit}
+                  isSubmitting={isCreating || isUpdating}
+                  editingRule={null}
+                />
+              </div>
+            )}
+          </div>
+          {rulesError && (
+            <div className="bg-destructive/10 text-destructive p-3 rounded-lg text-sm">
+              Error loading rules: {rulesError.message}
             </div>
           )}
-        </div>
-        {rulesError && (
-          <div className="bg-destructive/10 text-destructive p-3 rounded-lg text-sm">
-            Error loading rules: {rulesError.message}
-          </div>
-        )}
-      </div>
-    </AdminLayout>
+        </>
+      )}
+    </div>
   );
 };
 
 const AdminRules = () => (
-  <AdminEventProvider>
-    <RulesContent />
-  </AdminEventProvider>
+  <AdminLayout>
+    <AdminEventProvider>
+      <RulesContent />
+    </AdminEventProvider>
+  </AdminLayout>
 );
 
 export default AdminRules;

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import SuggestionStatsCards from "./components/SuggestionStatsCards";
@@ -246,160 +245,169 @@ const AdminSuggestionsContent = () => {
   const stats = getStats();
   const filteredSuggestions = getFilteredSuggestions();
 
-  // Event must be selected!
-  if (adminEvents.length > 0 && !selectedEventId) {
-    return (
-      <div className="flex flex-col gap-5">
-        <div className="border rounded-lg p-4 bg-card">
-          <EventSelector />
-        </div>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <Plus className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
-            <p className="mt-2 text-muted-foreground">Please select an event to view suggestions.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   // Loading
   if (loading) {
     return (
-      <AdminLayout>
+      <div className="space-y-8 animate-fade-in">
+        <div className="flex justify-between items-center">
+          <EventSelector />
+        </div>
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
             <p className="mt-2 text-muted-foreground">Loading suggestions...</p>
           </div>
         </div>
-      </AdminLayout>
+      </div>
     );
   }
 
   return (
-    <AdminLayout>
-      <div className="space-y-8 animate-fade-in">
-        {/* Gradient Hero Section */}
-        <div className="p-8 rounded-2xl bg-gradient-to-br from-primary-100 via-blue-100 to-indigo-50 text-primary-900 dark:text-white shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
-          <div className="absolute -top-12 -right-10 w-56 h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
-          <div className="absolute -bottom-14 -left-14 w-36 h-36 bg-white/20 rounded-full opacity-30 pointer-events-none"></div>
-          <div className="relative z-10">
-            <h1 className="text-4xl font-bold tracking-tight">Suggestions & Feedback</h1>
-            <p className="mt-2 max-w-2xl text-primary-700 dark:text-primary-100">
-              Manage suggestions and feedback for{" "}
-              <span className="font-semibold">{selectedEvent?.name}</span>.
-            </p>
-            <div className="mt-6">
-              <SuggestionStatsCards {...stats} loading={loading} />
+    <div className="space-y-8 animate-fade-in">
+      {/* Event Selector */}
+      <div className="flex justify-between items-center">
+        <EventSelector />
+      </div>
+
+      {/* Show message when no event is selected */}
+      {adminEvents.length > 0 && !selectedEventId && (
+        <div className="text-center py-12">
+          <div className="p-4 rounded-full bg-primary/10 inline-block mb-4">
+            <Plus className="h-8 w-8 text-primary" />
+          </div>
+          <p className="text-muted-foreground text-lg mb-2">No event selected</p>
+          <p className="text-sm text-muted-foreground">Please select an event above to view suggestions</p>
+        </div>
+      )}
+
+      {/* Only show content when an event is selected */}
+      {selectedEventId && (
+        <>
+          {/* Gradient Hero Section */}
+          <div className="p-8 rounded-2xl bg-gradient-to-br from-primary-100 via-blue-100 to-indigo-50 text-primary-900 dark:text-white shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
+            <div className="absolute -top-12 -right-10 w-56 h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
+            <div className="absolute -bottom-14 -left-14 w-36 h-36 bg-white/20 rounded-full opacity-30 pointer-events-none"></div>
+            <div className="relative z-10">
+              <h1 className="text-4xl font-bold tracking-tight">Suggestions & Feedback</h1>
+              <p className="mt-2 max-w-2xl text-primary-700 dark:text-primary-100">
+                Manage suggestions and feedback for{" "}
+                <span className="font-semibold">{selectedEvent?.name}</span>.
+              </p>
+              <div className="mt-6">
+                <SuggestionStatsCards {...stats} loading={loading} />
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Quick Actions Section (title, tabs, search) */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-bold">Suggestions</h2>
-            <p className="text-muted-foreground mt-1">
-              Review, filter, and manage suggestions and feedback.
-            </p>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            <button
-              onClick={() => setActiveTab("all")}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-                activeTab === "all"
-                  ? "bg-primary text-white"
-                  : "bg-muted text-muted-foreground hover:bg-primary-50"
-              } transition`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setActiveTab("suggestions")}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-                activeTab === "suggestions"
-                  ? "bg-primary text-white"
-                  : "bg-muted text-muted-foreground hover:bg-primary-50"
-              } transition`}
-            >
-              Suggestions
-            </button>
-            <button
-              onClick={() => setActiveTab("ratings")}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-                activeTab === "ratings"
-                  ? "bg-primary text-white"
-                  : "bg-muted text-muted-foreground hover:bg-primary-50"
-              } transition`}
-            >
-              Ratings
-            </button>
-            <button
-              onClick={() => setActiveTab("new")}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-                activeTab === "new"
-                  ? "bg-primary text-white"
-                  : "bg-muted text-muted-foreground hover:bg-primary-50"
-              } transition`}
-            >
-              New
-            </button>
-            <button
-              onClick={() => setActiveTab("reviewed")}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
-                activeTab === "reviewed"
-                  ? "bg-primary text-white"
-                  : "bg-muted text-muted-foreground hover:bg-primary-50"
-              } transition`}
-            >
-              Reviewed
-            </button>
-          </div>
-        </div>
-        {/* Search */}
-        <div className="flex justify-between mb-4">
-          <Input
-            placeholder="Search suggestions..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="max-w-sm"
-          />
-        </div>
-        {/* Suggestions List */}
-        <div className="space-y-4">
-          {filteredSuggestions.length > 0 ? (
-            filteredSuggestions.map((suggestion) => (
-              <SuggestionCard
-                key={suggestion.id}
-                suggestion={suggestion}
-                onUpdateStatus={handleUpdateStatus}
-                onDelete={handleDeleteSuggestion}
-                selectedEventId={selectedEventId}
-                isDeleting={isDeleting}
-              />
-            ))
-          ) : (
-            <div className="text-center py-8">
-              <Lightbulb className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
-              <h3 className="mt-4 text-lg font-medium">
-                No suggestions found
-              </h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                No suggestions match your filter or search criteria.
+          {/* Quick Actions Section (title, tabs, search) */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-bold">Suggestions</h2>
+              <p className="text-muted-foreground mt-1">
+                Review, filter, and manage suggestions and feedback.
               </p>
             </div>
-          )}
-        </div>
-      </div>
-    </AdminLayout>
+            <div className="flex gap-2 flex-wrap">
+              <button
+                onClick={() => setActiveTab("all")}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                  activeTab === "all"
+                    ? "bg-primary text-white"
+                    : "bg-muted text-muted-foreground hover:bg-primary-50"
+                } transition`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setActiveTab("suggestions")}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                  activeTab === "suggestions"
+                    ? "bg-primary text-white"
+                    : "bg-muted text-muted-foreground hover:bg-primary-50"
+                } transition`}
+              >
+                Suggestions
+              </button>
+              <button
+                onClick={() => setActiveTab("ratings")}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                  activeTab === "ratings"
+                    ? "bg-primary text-white"
+                    : "bg-muted text-muted-foreground hover:bg-primary-50"
+                } transition`}
+              >
+                Ratings
+              </button>
+              <button
+                onClick={() => setActiveTab("new")}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                  activeTab === "new"
+                    ? "bg-primary text-white"
+                    : "bg-muted text-muted-foreground hover:bg-primary-50"
+                } transition`}
+              >
+                New
+              </button>
+              <button
+                onClick={() => setActiveTab("reviewed")}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                  activeTab === "reviewed"
+                    ? "bg-primary text-white"
+                    : "bg-muted text-muted-foreground hover:bg-primary-50"
+                } transition`}
+              >
+                Reviewed
+              </button>
+            </div>
+          </div>
+
+          {/* Search */}
+          <div className="flex justify-between mb-4">
+            <Input
+              placeholder="Search suggestions..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="max-w-sm"
+            />
+          </div>
+
+          {/* Suggestions List */}
+          <div className="space-y-4">
+            {filteredSuggestions.length > 0 ? (
+              filteredSuggestions.map((suggestion) => (
+                <SuggestionCard
+                  key={suggestion.id}
+                  suggestion={suggestion}
+                  onUpdateStatus={handleUpdateStatus}
+                  onDelete={handleDeleteSuggestion}
+                  selectedEventId={selectedEventId}
+                  isDeleting={isDeleting}
+                />
+              ))
+            ) : (
+              <div className="text-center py-8">
+                <Lightbulb className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
+                <h3 className="mt-4 text-lg font-medium">
+                  No suggestions found
+                </h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  No suggestions match your filter or search criteria.
+                </p>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
   );
 };
 
 const AdminSuggestions = () => (
-  <AdminEventProvider>
-    <AdminSuggestionsContent />
-  </AdminEventProvider>
+  <AdminLayout>
+    <AdminEventProvider>
+      <AdminSuggestionsContent />
+    </AdminEventProvider>
+  </AdminLayout>
 );
 
 export default AdminSuggestions;

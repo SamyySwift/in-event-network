@@ -33,7 +33,8 @@ const AdminAttendeesContent = () => {
 
   if (isLoading) {
     return (
-      <div className="flex flex-col gap-10">
+      <div className="space-y-8 animate-fade-in">
+        {/* Event Selector */}
         <div className="flex justify-between items-center">
           <EventSelector />
         </div>

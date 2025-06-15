@@ -1,4 +1,3 @@
-
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -108,21 +107,30 @@ export const useAdminDashboard = () => {
         .filter(Boolean);
       const uniqueAttendeeUserIds = Array.from(new Set(attendeeUserIds));
 
+      // DEBUG: log attendee user IDs used for connections
+      console.log('[DASHBOARD-CONNECTIONS]', { uniqueAttendeeUserIds });
+
       // Get all accepted connections between these attendees (either direction)
       let connectionsCount = 0;
       if (uniqueAttendeeUserIds.length > 0) {
+        // Supabase requires the .or() argument to be a string in this exact format:
+        // "requester_id.in.(uuid1,uuid2),recipient_id.in.(uuid1,uuid2)"
+        const inList = uniqueAttendeeUserIds.map(id => `"${id}"`).join(',');
+        const orFilter = `requester_id.in.(${inList}),recipient_id.in.(${inList})`;
+        // DEBUG: log the orFilter used
+        console.log('[DASHBOARD-CONNECTIONS] Query .or() filter:', orFilter);
+
         const { count: connectionsCountRes, error: connectionsError } = await supabase
           .from('connections')
           .select('*', { count: 'exact', head: true })
-          .or(
-            `requester_id.in.(${uniqueAttendeeUserIds.join(',')}),
-             recipient_id.in.(${uniqueAttendeeUserIds.join(',')})`
-          )
+          .or(orFilter)
           .eq('status', 'accepted');
         if (connectionsError) {
           console.error('Error fetching attendee connections:', connectionsError);
         }
         connectionsCount = connectionsCountRes || 0;
+        // DEBUG: log the result from the query
+        console.log('[DASHBOARD-CONNECTIONS] Live count result:', connectionsCount);
       }
 
       // Compute a simple "performance score" out of 100

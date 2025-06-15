@@ -24,8 +24,8 @@ import {
   Instagram,
   Mail,
   Linkedin,
-  XLogo,
 } from "lucide-react";
+import XLogo from "@/components/icons/XLogo";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Sheet,

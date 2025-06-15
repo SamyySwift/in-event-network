@@ -1,4 +1,3 @@
-
 import React from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import QRCodeGenerator from '@/components/admin/QRCodeGenerator';
@@ -19,6 +18,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { AdminEventProvider } from '@/hooks/useAdminEventContext';
+import DashboardMetrics from "./components/DashboardMetrics";
+import EventPerformanceCard from "./components/EventPerformanceCard";
+import EventFocusCard from "./components/EventFocusCard";
+import RegistrationQRCodeCard from "./components/RegistrationQRCodeCard";
 
 const AdminDashboardContent = () => {
   const { currentUser } = useAuth();
@@ -126,56 +129,18 @@ const AdminDashboardContent = () => {
       </div>
 
       {/* Metrics Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {metrics.map((metric) => (
-          <Card key={metric.title} className="glass-card hover:-translate-y-1 hover:shadow-primary/20">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {metric.title}
-              </CardTitle>
-              <div className={`p-2 rounded-lg bg-gradient-to-br ${metric.gradient} shadow-md shadow-black/20`}>
-                <metric.icon className="h-5 w-5 text-white" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <Skeleton className="h-8 w-20" />
-              ) : (
-                <div className="text-3xl font-bold">{metric.value?.toString() || '0'}</div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <DashboardMetrics metrics={metrics} isLoading={isLoading} />
 
       {/* Only Event Performance, no grid needed */}
       <div className="mt-4">
         {extraMetrics.map((metric) => {
           const Icon = iconMap[metric.icon] || (() => null);
           return (
-            <Card
+            <EventPerformanceCard
               key={metric.title}
-              className="glass-card shadow-lg rounded-xl p-6 flex flex-col gap-3"
-            >
-              <CardHeader className="flex-row items-center justify-between pb-2 space-y-0">
-                <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg bg-gradient-to-br ${metric.gradient} shadow-md`}>
-                    <Icon className="h-7 w-7 text-white" />
-                  </div>
-                  <CardTitle className="text-lg font-bold text-card-foreground">{metric.title}</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-2">
-                <div className="text-4xl font-extrabold mt-2 text-card-foreground">
-                  {isLoading ? (
-                    <span className="inline-block w-14 h-10 rounded bg-muted animate-pulse" />
-                  ) : (
-                    metric.value ?? '0'
-                  )}
-                </div>
-                <div className="text-base mt-2 text-muted-foreground">{metric.description}</div>
-              </CardContent>
-            </Card>
+              metric={{ ...metric, icon: Icon }}
+              isLoading={isLoading}
+            />
           );
         })}
       </div>
@@ -183,53 +148,11 @@ const AdminDashboardContent = () => {
       <div className="grid gap-6 lg:grid-cols-5">
         <div className="lg:col-span-3 space-y-6">
           {/* Event Selector */}
-          <Card className="glass-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart4 className="h-5 w-5 text-primary" />
-                Event Focus
-              </CardTitle>
-              <CardDescription>
-                Select an event to see detailed stats and manage it.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <EventSelector />
-            </CardContent>
-          </Card>
+          <EventFocusCard />
         </div>
-        
         <div className="lg:col-span-2 space-y-6">
           {/* QR Code Generator Section */}
-          <Card className="glass-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <QrCode className="h-5 w-5 text-primary" />
-                Event Registration QR
-              </CardTitle>
-              <CardDescription>
-                Share this QR code for easy event registration.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center">
-              {userProfile?.access_key ? (
-                <QRCodeGenerator 
-                  eventName="Join Event" 
-                  eventUrl={`${window.location.origin}/register?code=${userProfile.access_key}`}
-                />
-              ) : (
-                isLoading ? 
-                <div className="flex flex-col items-center justify-center h-48">
-                  <Skeleton className="h-32 w-32" />
-                  <Skeleton className="h-4 w-40 mt-4" />
-                </div>
-                :
-                <div className="text-muted-foreground text-center p-4">
-                  Access key not available. Please contact support.
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <RegistrationQRCodeCard accessKey={userProfile?.access_key} isLoading={isLoading} />
         </div>
       </div>
     </div>

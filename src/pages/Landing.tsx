@@ -256,17 +256,53 @@ const Landing = () => {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <FeatureCard icon={<Brain className="h-8 w-8" />} title="Smart Matching" description="Intelligent algorithms analyze interests and goals to create meaningful networking opportunities" gradient="from-cyan-500/20 to-blue-500/20" borderGradient="from-cyan-500/50 to-blue-500/50" />
+            <FeatureCard
+              icon={<Brain className="h-8 w-8" />}
+              title="Smart Matching"
+              description="AI-powered intelligent algorithms analyze interests and goals to create meaningful networking opportunities"
+              gradient="from-cyan-500/20 to-blue-500/20"
+              borderGradient="from-cyan-500/50 to-blue-500/50"
+            />
 
-            <FeatureCard icon={<Zap className="h-8 w-8" />} title="Efficient Scheduling" description="Real-time adaptive scheduling that adjusts based on attendee preferences and engagement" gradient="from-purple-500/20 to-pink-500/20" borderGradient="from-purple-500/50 to-pink-500/50" />
+            <FeatureCard
+              icon={<Zap className="h-8 w-8" />}
+              title="Efficient Scheduling"
+              description="Real-time adaptive scheduling that adjusts based on attendee preferences and engagement"
+              gradient="from-purple-500/20 to-pink-500/20"
+              borderGradient="from-purple-500/50 to-pink-500/50"
+            />
 
-            <FeatureCard icon={<Globe className="h-8 w-8" />} title="Interactive Sessions" description="Engaging Q&A sessions and presentations that enhance participant experience" gradient="from-green-500/20 to-cyan-500/20" borderGradient="from-green-500/50 to-cyan-500/50" />
+            <FeatureCard
+              icon={<Globe className="h-8 w-8" />}
+              title="Interactive Sessions"
+              description="Engaging Q&A sessions and presentations that enhance participant experience"
+              gradient="from-green-500/20 to-cyan-500/20"
+              borderGradient="from-green-500/50 to-cyan-500/50"
+            />
 
-            <FeatureCard icon={<Shield className="h-8 w-8" />} title="Enhanced Security" description="Enterprise-grade encryption and privacy controls protect all interactions and data" gradient="from-orange-500/20 to-red-500/20" borderGradient="from-orange-500/50 to-red-500/50" />
+            <FeatureCard
+              icon={<Shield className="h-8 w-8" />}
+              title="Enhanced Security"
+              description="Enterprise-grade encryption and privacy controls protect all interactions and data"
+              gradient="from-orange-500/20 to-red-500/20"
+              borderGradient="from-orange-500/50 to-red-500/50"
+            />
 
-            <FeatureCard icon={<Network className="h-8 w-8" />} title="Connection Building" description="Build lasting professional relationships through intelligent connection recommendations" gradient="from-indigo-500/20 to-purple-500/20" borderGradient="from-indigo-500/50 to-purple-500/50" />
+            <FeatureCard
+              icon={<Network className="h-8 w-8" />}
+              title="Connection Building"
+              description="Build lasting professional relationships through intelligent connection recommendations"
+              gradient="from-indigo-500/20 to-purple-500/20"
+              borderGradient="from-indigo-500/50 to-purple-500/50"
+            />
 
-            <FeatureCard icon={<Sparkles className="h-8 w-8" />} title="Hybrid Experience" description="Seamlessly blend virtual and physical event experiences for maximum engagement" gradient="from-pink-500/20 to-cyan-500/20" borderGradient="from-pink-500/50 to-cyan-500/50" />
+            <FeatureCard
+              icon={<Sparkles className="h-8 w-8" />}
+              title="Hybrid Experience"
+              description="Seamlessly blend virtual and physical event experiences for maximum engagement"
+              gradient="from-pink-500/20 to-cyan-500/20"
+              borderGradient="from-pink-500/50 to-cyan-500/50"
+            />
           </div>
         </div>
       </section>

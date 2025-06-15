@@ -1,3 +1,4 @@
+
 import React from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import QRCodeGenerator from '@/components/admin/QRCodeGenerator';
@@ -10,7 +11,10 @@ import {
   MessageSquare, 
   QrCode,
   User,
-  BarChart4
+  BarChart4,
+  Network,
+  Handshake,
+  TrendingUp,
 } from 'lucide-react';
 import { useAdminDashboard } from '@/hooks/useAdminDashboard';
 import { useAuth } from '@/contexts/AuthContext';
@@ -93,10 +97,10 @@ const AdminDashboardContent = () => {
 
   // Helper for rendering Lucide icons by name, so we stay inside allowed lucide list
   const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-    'network': require('lucide-react').Network,
-    'handshake': require('lucide-react').Handshake,
-    'trending-up': require('lucide-react').TrendingUp,
-    'bar-chart': require('lucide-react').BarChart4,
+    'network': Network,
+    'handshake': Handshake,
+    'trending-up': TrendingUp,
+    'bar-chart': BarChart4,
   };
 
   return (
@@ -243,3 +247,4 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import QRCodeGenerator from '@/components/admin/QRCodeGenerator';
@@ -11,8 +12,6 @@ import {
   QrCode,
   User,
   BarChart4,
-  Network,
-  Handshake,
   TrendingUp,
 } from 'lucide-react';
 import { useAdminDashboard } from '@/hooks/useAdminDashboard';
@@ -74,15 +73,8 @@ const AdminDashboardContent = () => {
     },
   ];
 
-  // NEW: Extra Metrics Section
+  // Remove Total Connections from extraMetrics
   const extraMetrics = [
-    {
-      title: 'Total Connections',
-      value: dashboardData?.connectionsCount,
-      icon: 'network', // string for later mapping to lucide icon
-      gradient: 'from-teal-500 to-cyan-400',
-      description: 'Number of accepted attendee connections across your events.'
-    },
     {
       title: 'Event Performance',
       value: dashboardData
@@ -90,17 +82,12 @@ const AdminDashboardContent = () => {
         : undefined,
       icon: 'trending-up',
       gradient: 'from-rose-500 to-pink-400',
-      description: 'Engagement score calculated from attendee questions and networking.'
+      description: 'Engagement score calculated from attendee questions.',
     }
   ];
 
-  // Log metrics for debugging real data
-  console.log("[ExtraMetrics] Data:", extraMetrics);
-
   // Helper for rendering Lucide icons by name, so we stay inside allowed lucide list
   const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-    'network': Network,
-    'handshake': Handshake,
     'trending-up': TrendingUp,
     'bar-chart': BarChart4,
   };
@@ -161,8 +148,8 @@ const AdminDashboardContent = () => {
         ))}
       </div>
 
-      {/* Extra Metrics Section */}
-      <div className="mt-4 grid md:grid-cols-2 gap-6">
+      {/* Only Event Performance, no grid needed */}
+      <div className="mt-4">
         {extraMetrics.map((metric) => {
           const Icon = iconMap[metric.icon] || (() => null);
           return (
@@ -175,12 +162,10 @@ const AdminDashboardContent = () => {
                   <div className={`p-2 rounded-lg bg-gradient-to-br ${metric.gradient} shadow-md`}>
                     <Icon className="h-7 w-7 text-white" />
                   </div>
-                  {/* Use theme-aware color for title */}
                   <CardTitle className="text-lg font-bold text-card-foreground">{metric.title}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="pt-2">
-                {/* Use theme-aware color for value */}
                 <div className="text-4xl font-extrabold mt-2 text-card-foreground">
                   {isLoading ? (
                     <span className="inline-block w-14 h-10 rounded bg-muted animate-pulse" />
@@ -188,7 +173,6 @@ const AdminDashboardContent = () => {
                     metric.value ?? '0'
                   )}
                 </div>
-                {/* Use muted foreground for the description */}
                 <div className="text-base mt-2 text-muted-foreground">{metric.description}</div>
               </CardContent>
             </Card>

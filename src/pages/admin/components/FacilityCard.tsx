@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,7 @@ import {
 } from "@/components/ui/tooltip";
 import {
   AlertDialog,
+  AlertDialogTrigger,   // <-- Add this import
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,

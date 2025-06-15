@@ -1,4 +1,3 @@
-
 import React from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import QRCodeGenerator from '@/components/admin/QRCodeGenerator';
@@ -164,17 +163,24 @@ const AdminDashboardContent = () => {
         {extraMetrics.map((metric) => {
           const Icon = iconMap[metric.icon] || (() => null);
           return (
-            <div key={metric.title} className={`bg-white/10 backdrop-blur-sm p-6 rounded-xl border border-white/10 flex flex-col gap-2`}>
+            <div
+              key={metric.title}
+              className="rounded-xl shadow-lg shadow-black/20 bg-gradient-to-br from-black/70 via-black/60 to-primary/80 border border-white/30 p-6 flex flex-col gap-3"
+            >
               <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg bg-gradient-to-br ${metric.gradient}`}>
-                  <Icon className="h-6 w-6 text-white" />
+                <div className={`p-2 rounded-lg bg-gradient-to-br ${metric.gradient} shadow-md shadow-black/30`}>
+                  <Icon className="h-7 w-7 text-white" />
                 </div>
-                <div className="text-lg font-medium text-white">{metric.title}</div>
+                <div className="text-lg font-semibold text-white">{metric.title}</div>
               </div>
-              <div className="text-4xl font-bold mt-2 text-white">
-                {isLoading ? <span className="inline-block w-14 h-10 rounded bg-white/20 animate-pulse" /> : metric.value ?? '0'}
+              <div className="text-4xl font-bold mt-2 text-white drop-shadow-sm">
+                {isLoading ? (
+                  <span className="inline-block w-14 h-10 rounded bg-white/20 animate-pulse" />
+                ) : (
+                  metric.value ?? '0'
+                )}
               </div>
-              <div className="text-sm text-primary-200">{metric.description}</div>
+              <div className="text-base text-white/80 font-normal">{metric.description}</div>
             </div>
           );
         })}
@@ -247,4 +253,3 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
-

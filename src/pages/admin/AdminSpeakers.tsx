@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -165,12 +164,12 @@ const AdminSpeakersContent = () => {
       </div>
 
       {/* Gradient Hero Section */}
-      <div className="p-8 rounded-2xl bg-gradient-to-br from-primary-100 via-purple-100 to-blue-50 text-primary-900 dark:text-white shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
+      <div className="p-8 rounded-2xl bg-gradient-to-br from-blue-100 to-primary-100 text-primary-900 shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
         <div className="absolute -top-12 -right-10 w-56 h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
         <div className="absolute -bottom-14 -left-14 w-36 h-36 bg-white/20 rounded-full opacity-30 pointer-events-none"></div>
         <div className="relative z-10">
           <h1 className="text-4xl font-bold tracking-tight">Speakers</h1>
-          <p className="mt-2 max-w-2xl text-primary-700 dark:text-primary-100">
+          <p className="mt-2 max-w-2xl text-primary-700">
             Manage all speakers and sessions for <span className="font-semibold">{selectedEvent?.name ?? "your event"}</span>.
           </p>
           <div className="mt-6">
@@ -185,7 +184,7 @@ const AdminSpeakersContent = () => {
           <div className="flex items-center gap-3">
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-600 shadow-md">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6 2a4 4 0 11-8 0 4 4 0 018 0zm6-8v2m0 4v2m0-8a4 4 0 10-8 0 4 4 0 008 0z"/>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6 2a4 4 0 11-8 0 4 4 0 008 0zm6-8v2m0 4v2m0-8a4 4 0 10-8 0 4 4 0 008 0z"/>
               </svg>
             </span>
             <div>

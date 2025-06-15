@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -48,6 +49,7 @@ import AttendeeSearch from '@/pages/attendee/AttendeeSearch';
 
 import Index from '@/pages/Index';
 import { AdminEventProvider } from '@/hooks/useAdminEventContext';
+import DataPrivacy from '@/pages/DataPrivacy'; // <-- Added this line
 
 const queryClient = new QueryClient();
 

@@ -20,8 +20,25 @@ import {
   Wifi,
   Phone,
   User,
-  Edit,
-  Trash2,
+  Bath,
+  ChefHat,
+  Utensils,
+  Home,
+  Dumbbell, // gym/fitness
+  Music,
+  Gamepad2,
+  Archive,
+  ArchiveRestore,
+  Box,
+  Landmark,
+  Warehouse,
+  Siren,
+  AlertTriangle,
+  Presentation,
+  Monitor,
+  Sofa,
+  Wine, // bar/lounge
+  ArrowUp,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,7 +48,7 @@ import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-// Expanded: Only use icons available in lucide-react for this project.
+// EXPANDED ICON SELECTION (up to 25 entries)
 const ICON_OPTIONS = [
   { value: "ambulance", label: "Ambulance", icon: Ambulance },
   { value: "hospital", label: "Hospital", icon: Hospital },
@@ -43,6 +60,25 @@ const ICON_OPTIONS = [
   { value: "wifi", label: "WiFi Zone", icon: Wifi },
   { value: "phone", label: "Phone", icon: Phone },
   { value: "user", label: "Reception/User", icon: User },
+  { value: "bath", label: "Bathroom/Toilet", icon: Bath },
+  { value: "chef-hat", label: "Kitchen/Chef Hat", icon: ChefHat },
+  { value: "utensils", label: "Dining/Utensils", icon: Utensils },
+  { value: "home", label: "Lodging/Rest Area", icon: Home },
+  { value: "dumbbell", label: "Gym/Fitness", icon: Dumbbell },
+  { value: "music", label: "Music/Entertainment", icon: Music },
+  { value: "gamepad-2", label: "Games/Recreation", icon: Gamepad2 },
+  { value: "archive", label: "Archive/Storage", icon: Archive },
+  { value: "archive-restore", label: "Restore Storage", icon: ArchiveRestore },
+  { value: "box", label: "Box/Locker", icon: Box },
+  { value: "landmark", label: "Landmark/Entry", icon: Landmark },
+  { value: "warehouse", label: "Warehouse", icon: Warehouse },
+  { value: "siren", label: "Siren/Emergency", icon: Siren },
+  { value: "alert-triangle", label: "Alert/Emergency", icon: AlertTriangle },
+  { value: "presentation", label: "Conference/Presentation", icon: Presentation },
+  { value: "monitor", label: "Monitor/Screen Room", icon: Monitor },
+  { value: "sofa", label: "Lounge/Sofa", icon: Sofa },
+  { value: "wine", label: "Bar/Wine", icon: Wine },
+  { value: "arrow-up", label: "Elevator/Arrow Up", icon: ArrowUp },
 ];
 
 const formSchema = z.object({

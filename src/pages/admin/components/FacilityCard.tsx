@@ -21,6 +21,25 @@ import {
   Wifi,
   Phone,
   User,
+  Bath,
+  ChefHat,
+  Utensils,
+  Home,
+  Dumbbell,
+  Music,
+  Gamepad2,
+  Archive,
+  ArchiveRestore,
+  Box,
+  Landmark,
+  Warehouse,
+  Siren,
+  AlertTriangle,
+  Presentation,
+  Monitor,
+  Sofa,
+  Wine,
+  ArrowUp,
   Trash2,
   Edit
 } from "lucide-react";
@@ -44,7 +63,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Facility } from "@/hooks/useAdminFacilities";
 
-// Expanded: Only use icons actually present in lucide-react & in dialogs
+// Expanded iconMap with new icons
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   ambulance: Ambulance,
   hospital: Hospital,
@@ -56,6 +75,25 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   wifi: Wifi,
   phone: Phone,
   user: User,
+  bath: Bath,
+  "chef-hat": ChefHat,
+  utensils: Utensils,
+  home: Home,
+  dumbbell: Dumbbell,
+  music: Music,
+  "gamepad-2": Gamepad2,
+  archive: Archive,
+  "archive-restore": ArchiveRestore,
+  box: Box,
+  landmark: Landmark,
+  warehouse: Warehouse,
+  siren: Siren,
+  "alert-triangle": AlertTriangle,
+  presentation: Presentation,
+  monitor: Monitor,
+  sofa: Sofa,
+  wine: Wine,
+  "arrow-up": ArrowUp,
 };
 
 interface FacilityCardProps {

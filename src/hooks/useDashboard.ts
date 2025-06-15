@@ -1,7 +1,8 @@
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useEffect } from 'react';
 
 interface DashboardData {
   currentEvent: any;
@@ -13,6 +14,7 @@ interface DashboardData {
 
 export const useDashboard = () => {
   const { currentUser } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: dashboardData, isLoading, error } = useQuery({
     queryKey: ['dashboard', currentUser?.id],
@@ -136,8 +138,46 @@ export const useDashboard = () => {
       };
     },
     enabled: !!currentUser,
-    refetchInterval: 30000, // Refetch every 30 seconds for real-time updates
+    // Remove refetchInterval: live updates now handled with realtime
   });
+
+  // Add realtime effect
+  useEffect(() => {
+    if (!currentUser?.id) return;
+
+    // Listen for realtime changes on attendee dashboard-relevant tables
+    // Listen to events, announcements, speakers, event_participants
+    const tables = [
+      'events',
+      'announcements',
+      'speakers',
+      'event_participants'
+    ];
+
+    const channels = tables.map((table) => 
+      supabase.channel(`realtime:attendee-dash:${table}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: table,
+          },
+          (payload) => {
+            // Broad invalidate so re-query picks up all changes
+            queryClient.invalidateQueries({ queryKey: ['dashboard', currentUser.id] });
+          }
+        )
+        .subscribe()
+    );
+
+    return () => {
+      // Unsubscribe when user changes or unmounts
+      channels.forEach(channel => {
+        try { supabase.removeChannel(channel); } catch {}
+      });
+    };
+  }, [currentUser?.id, queryClient]);
 
   return {
     dashboardData,

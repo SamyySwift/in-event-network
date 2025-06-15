@@ -82,7 +82,7 @@ const AdminDashboardContent = () => {
         : undefined,
       icon: 'trending-up',
       gradient: 'from-rose-500 to-pink-400',
-      description: 'Engagement score calculated from attendee questions.',
+      description: 'Calculated from attendee questions, poll engagement, suggestions submitted, and ratings. Higher score = more engaged event!',
     }
   ];
 

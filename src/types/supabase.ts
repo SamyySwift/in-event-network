@@ -10,41 +10,6 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
-      event_payments: {
-        Row: {
-          id: string;
-          event_id: string;
-          user_id: string;
-          amount: number;
-          currency: string;
-          status: 'pending' | 'success' | 'failed';
-          paystack_reference: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          event_id: string;
-          user_id: string;
-          amount: number;
-          currency?: string;
-          status?: 'pending' | 'success' | 'failed';
-          paystack_reference: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          event_id?: string;
-          user_id?: string;
-          amount?: number;
-          currency?: string;
-          status?: 'pending' | 'success' | 'failed';
-          paystack_reference?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
       schedule_items: {
         Row: {
           id: string;

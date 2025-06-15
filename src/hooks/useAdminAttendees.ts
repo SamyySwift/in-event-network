@@ -1,19 +1,13 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
-interface AttendeeWithProfile {
+interface Attendee {
   id: string;
   event_id: string;
   user_id: string;
   created_at: string;
-  joined_at: string;
-  name: string;
-  email: string;
-  role: string;
-  event_name: string;
 }
 
 export const useAdminAttendees = () => {
@@ -31,7 +25,7 @@ export const useAdminAttendees = () => {
       // Get current user's events
       const { data: events, error: eventsError } = await supabase
         .from('events')
-        .select('id, name')
+        .select('id')
         .eq('host_id', currentUser.id);
 
       if (eventsError) {
@@ -46,14 +40,10 @@ export const useAdminAttendees = () => {
 
       const eventIds = events.map(event => event.id);
 
-      // Fetch attendees from user's events with profile information
+      // Fetch attendees from user's events
       const { data, error } = await supabase
         .from('event_participants')
-        .select(`
-          *,
-          profiles!inner(name, email, role),
-          events!inner(name)
-        `)
+        .select('*')
         .in('event_id', eventIds);
 
       if (error) {
@@ -61,26 +51,13 @@ export const useAdminAttendees = () => {
         throw error;
       }
 
-      // Transform the data to match the expected interface
-      const transformedData: AttendeeWithProfile[] = (data || []).map((item: any) => ({
-        id: item.id,
-        event_id: item.event_id,
-        user_id: item.user_id,
-        created_at: item.created_at,
-        joined_at: item.joined_at,
-        name: item.profiles?.name || 'Unknown',
-        email: item.profiles?.email || 'No email',
-        role: item.profiles?.role || 'attendee',
-        event_name: item.events?.name || 'Unknown Event'
-      }));
-
-      return transformedData;
+      return data as Attendee[];
     },
     enabled: !!currentUser?.id,
   });
 
   const addAttendeeMutation = useMutation({
-    mutationFn: async (attendeeData: { event_id: string; user_id: string }) => {
+    mutationFn: async (attendeeData: Omit<Attendee, 'id' | 'created_at'>) => {
       const { data, error } = await supabase
         .from('event_participants')
         .insert([attendeeData])

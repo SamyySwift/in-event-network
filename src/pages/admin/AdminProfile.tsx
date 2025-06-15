@@ -29,12 +29,12 @@ const AdminProfile = () => {
     links: defaultLinks,
   });
 
-  // Log state for debugging
+  // Debug logs
   useEffect(() => {
-    console.log("currentUser changed", currentUser);
-  }, [currentUser]);
+    console.log("[AdminProfile] currentUser:", currentUser);
+    console.log("[AdminProfile] authIsLoading:", authIsLoading);
+  }, [currentUser, authIsLoading]);
 
-  // Initialize formData once currentUser loads
   useEffect(() => {
     if (currentUser) {
       setFormData({
@@ -50,6 +50,10 @@ const AdminProfile = () => {
       });
     }
   }, [currentUser]);
+
+  useEffect(() => {
+    console.log("[AdminProfile] formData:", formData);
+  }, [formData]);
 
   const handleInputChange = (field: string, value: string) => {
     if (field.startsWith("links.")) {
@@ -92,8 +96,9 @@ const AdminProfile = () => {
     }
   };
 
-  // Show loading if auth context or profile is still loading, or initial formData not ready
-  if (authIsLoading || !currentUser || (!formData.email && !formData.name)) {
+  // More robust loading / missing state
+  if (authIsLoading) {
+    console.log("[AdminProfile] Showing: Loading (authIsLoading)");
     return (
       <div className="flex items-center justify-center h-64">
         <p className="text-muted-foreground">Loading profile...</p>
@@ -101,6 +106,33 @@ const AdminProfile = () => {
     );
   }
 
+  if (!currentUser) {
+    console.log("[AdminProfile] Showing: Error (no currentUser)");
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-destructive font-semibold mb-2">
+            Could not load profile. No user found.
+          </p>
+          <p className="text-muted-foreground">
+            Try logging out and back in. If you believe this is a bug, contact support.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // If profile loaded, but formData is still empty
+  if (!formData.email && !formData.name) {
+    console.log("[AdminProfile] Showing: Loading (waiting for formData)");
+    return (
+      <div className="flex items-center justify-center h-64">
+        <p className="text-muted-foreground">Still loading profile details...</p>
+      </div>
+    );
+  }
+
+  // Normal form render
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -141,9 +173,7 @@ const AdminProfile = () => {
                 Change Photo
               </Button>
             </div>
-
             <Separator />
-
             <div className="space-y-3">
               <div>
                 <Label className="text-xs text-muted-foreground">NAME</Label>
@@ -191,7 +221,6 @@ const AdminProfile = () => {
                 />
               </div>
             </div>
-
             <div>
               <Label htmlFor="niche">Expertise/Niche</Label>
               <Input
@@ -201,7 +230,6 @@ const AdminProfile = () => {
                 placeholder="e.g., Event Management, Technology, Marketing"
               />
             </div>
-
             <div>
               <Label htmlFor="bio">Bio</Label>
               <Textarea
@@ -212,9 +240,7 @@ const AdminProfile = () => {
                 rows={4}
               />
             </div>
-
             <Separator />
-
             <div>
               <Label className="text-base font-medium flex items-center mb-4">
                 <Globe className="h-4 w-4 mr-2" />
@@ -250,7 +276,6 @@ const AdminProfile = () => {
                 </div>
               </div>
             </div>
-
             <div className="flex justify-end pt-4">
               <Button onClick={handleSave} disabled={isSaving}>
                 <Save className="h-4 w-4 mr-2" />

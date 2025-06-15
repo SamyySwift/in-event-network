@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -8,7 +7,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Ambulance, Hospital, Edit, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,31 +16,10 @@ import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-// ONLY import Lucide icons that exist and are in the allow-list
-import {
-  Ambulance,
-  Bell,
-  BellRing,
-  BellElectric,
-  Cafe,
-  Hospital,
-  ParkingMeter,
-  Restroom,
-  Toilet,
-  // fallback: Bell if needed
-} from "lucide-react";
-
+// Only use icons that are available in lucide-react for this project.
 const ICON_OPTIONS = [
   { value: "ambulance", label: "Ambulance", icon: Ambulance },
   { value: "hospital", label: "Hospital", icon: Hospital },
-  { value: "toilet", label: "Toilet", icon: Toilet },
-  { value: "restroom", label: "Restroom", icon: Restroom },
-  { value: "cafe", label: "Cafe", icon: Cafe },
-  { value: "bell", label: "Bell", icon: Bell },
-  { value: "bell-ring", label: "Bell Ring", icon: BellRing },
-  { value: "bell-electric", label: "Bell Electric", icon: BellElectric },
-  { value: "parking-meter", label: "Parking Meter", icon: ParkingMeter },
-  // fallback to Bell if needed later...
 ];
 
 const formSchema = z.object({
@@ -241,6 +219,4 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
 };
 
 export default CreateFacilityDialog;
-
 // NOTE: This file is getting long (over 200 lines). Please consider asking to refactor it into smaller components!
-

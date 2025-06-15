@@ -15,28 +15,11 @@ import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Facility } from "@/hooks/useAdminFacilities";
-import {
-  Ambulance,
-  Bell,
-  BellRing,
-  BellElectric,
-  Cafe,
-  Hospital,
-  ParkingMeter,
-  Restroom,
-  Toilet,
-} from "lucide-react";
+import { Ambulance, Hospital, Edit, Trash2 } from "lucide-react";
 
 const ICON_OPTIONS = [
   { value: "ambulance", label: "Ambulance", icon: Ambulance },
   { value: "hospital", label: "Hospital", icon: Hospital },
-  { value: "toilet", label: "Toilet", icon: Toilet },
-  { value: "restroom", label: "Restroom", icon: Restroom },
-  { value: "cafe", label: "Cafe", icon: Cafe },
-  { value: "bell", label: "Bell", icon: Bell },
-  { value: "bell-ring", label: "Bell Ring", icon: BellRing },
-  { value: "bell-electric", label: "Bell Electric", icon: BellElectric },
-  { value: "parking-meter", label: "Parking Meter", icon: ParkingMeter },
 ];
 
 const formSchema = z.object({
@@ -110,7 +93,6 @@ const EditFacilityDialog: React.FC<EditFacilityDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={(open) => (!open ? onClose() : undefined)}>
-      {/* Added scroll and constrained height to DialogContent */}
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Facility</DialogTitle>

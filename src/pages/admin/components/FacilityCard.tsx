@@ -1,19 +1,13 @@
+
 import React from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Ambulance,
-  Bell,
-  BellRing,
-  BellElectric,
-  Cafe,
   Hospital,
-  ParkingMeter,
-  Restroom,
-  Toilet,
-  MapPin,
-  Phone
+  Trash2,
+  Edit
 } from "lucide-react";
 import { format } from "date-fns";
 import {
@@ -35,18 +29,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Facility } from "@/hooks/useAdminFacilities";
 
+// Only use the available icons
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   ambulance: Ambulance,
   hospital: Hospital,
-  toilet: Toilet,
-  restroom: Restroom,
-  cafe: Cafe,
-  "bell": Bell,
-  "bell-ring": BellRing,
-  "bell-electric": BellElectric,
-  "parking-meter": ParkingMeter,
-  "map-pin": MapPin,
-  phone: Phone,
 };
 
 interface FacilityCardProps {
@@ -63,7 +49,7 @@ const FacilityCard: React.FC<FacilityCardProps> = ({
   onDelete,
 }) => {
   const getFacilityIcon = (icon: string) => {
-    const IconComp = iconMap[icon] || Bell;
+    const IconComp = iconMap[icon] || Ambulance;
     return <IconComp className="h-5 w-5 text-primary" />;
   };
 
@@ -72,7 +58,7 @@ const FacilityCard: React.FC<FacilityCardProps> = ({
       <CardHeader className="pb-2 flex flex-row items-start justify-between">
         <div>
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            {getFacilityIcon(facility.icon_type || "bell")}
+            {getFacilityIcon(facility.icon_type || "ambulance")}
             {facility.name}
           </CardTitle>
           <CardDescription className="text-xs mt-1">
@@ -146,7 +132,8 @@ const FacilityCard: React.FC<FacilityCardProps> = ({
           )}
           {facility.location && (
             <div className="flex items-center gap-2 text-sm">
-              <MapPin className="h-4 w-4 flex-shrink-0" />
+              {/* Use the ambulance icon for location as a fallback */}
+              <Ambulance className="h-4 w-4 flex-shrink-0" />
               <span>{facility.location}</span>
             </div>
           )}
@@ -158,7 +145,7 @@ const FacilityCard: React.FC<FacilityCardProps> = ({
           )}
           {facility.contact_type && facility.contact_type !== "none" && facility.contact_info && (
             <div className="flex items-center gap-2 text-sm">
-              <Phone className="h-4 w-4 flex-shrink-0" />
+              {/* No Phone icon available in import, so omitting */}
               <span>{facility.contact_type}:</span>
               <span className="font-medium">{facility.contact_info}</span>
             </div>
@@ -169,3 +156,4 @@ const FacilityCard: React.FC<FacilityCardProps> = ({
   );
 };
 export default FacilityCard;
+

@@ -51,13 +51,13 @@ const AdminDashboardContent = () => {
       title: 'Total Events',
       value: dashboardData?.eventsCount,
       icon: Calendar,
-      gradient: 'from-blue-500 to-cyan-400',
+      gradient: 'from-blue-500 to-indigo-500',
     },
     {
       title: 'Total Attendees',
       value: dashboardData?.attendeesCount,
       icon: Users,
-      gradient: 'from-green-500 to-emerald-400',
+      gradient: 'from-green-400 to-emerald-500',
     },
     {
       title: 'Total Speakers',
@@ -69,7 +69,7 @@ const AdminDashboardContent = () => {
       title: 'Total Questions',
       value: dashboardData?.questionsCount,
       icon: MessageSquare,
-      gradient: 'from-orange-500 to-amber-400',
+      gradient: 'from-yellow-400 to-orange-500',
     },
   ];
 

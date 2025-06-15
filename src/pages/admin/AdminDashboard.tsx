@@ -94,6 +94,9 @@ const AdminDashboardContent = () => {
     }
   ];
 
+  // Log metrics for debugging real data
+  console.log("[ExtraMetrics] Data:", extraMetrics);
+
   // Helper for rendering Lucide icons by name, so we stay inside allowed lucide list
   const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
     'network': Network,
@@ -163,27 +166,30 @@ const AdminDashboardContent = () => {
         {extraMetrics.map((metric) => {
           const Icon = iconMap[metric.icon] || (() => null);
           return (
-            <Card 
+            <Card
               key={metric.title}
-              className="!bg-card !border-card shadow-lg rounded-xl p-6 flex flex-col gap-3"
+              className="glass-card shadow-lg rounded-xl p-6 flex flex-col gap-3"
             >
               <CardHeader className="flex-row items-center justify-between pb-2 space-y-0">
                 <div className="flex items-center gap-3">
                   <div className={`p-2 rounded-lg bg-gradient-to-br ${metric.gradient} shadow-md`}>
                     <Icon className="h-7 w-7 text-white" />
                   </div>
-                  <CardTitle className="text-lg font-bold text-white">{metric.title}</CardTitle>
+                  {/* Use theme-aware color for title */}
+                  <CardTitle className="text-lg font-bold text-card-foreground">{metric.title}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="pt-2">
-                <div className="text-4xl font-extrabold mt-2 text-white">
+                {/* Use theme-aware color for value */}
+                <div className="text-4xl font-extrabold mt-2 text-card-foreground">
                   {isLoading ? (
                     <span className="inline-block w-14 h-10 rounded bg-muted animate-pulse" />
                   ) : (
                     metric.value ?? '0'
                   )}
                 </div>
-                <div className="text-base mt-2 text-gray-200">{metric.description}</div>
+                {/* Use muted foreground for the description */}
+                <div className="text-base mt-2 text-muted-foreground">{metric.description}</div>
               </CardContent>
             </Card>
           );

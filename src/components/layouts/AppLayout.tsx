@@ -21,6 +21,10 @@ import {
   BookOpen,
   BarChart,
   Lightbulb,
+  Instagram,
+  Mail,
+  Linkedin,
+  XLogo,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -216,18 +220,67 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   ))}
 
                   {currentUser && (
-                    <Button
-                      variant="ghost"
-                      className="justify-start text-gray-600 dark:text-gray-300 mt-4"
-                      onClick={() => {
-                        logout();
-                        navigate("/");
-                        setMobileSidebarOpen(false);
-                      }}
-                    >
-                      <LogOut className="mr-3 h-5 w-5" />
-                      Logout
-                    </Button>
+                    <>
+                      <div className="mt-6 mb-2 px-2">
+                        <h3 className="text-xs font-bold text-connect-600 dark:text-connect-400 uppercase tracking-wide mb-1">
+                          Connect with Us
+                        </h3>
+                        <p className="text-xs text-muted-foreground mb-2">
+                          Stay connected for the latest updates and event
+                          opportunities.
+                        </p>
+                        <div className="flex space-x-3">
+                          <a
+                            href="https://instagram.com/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="Instagram"
+                            className="text-connect-600 hover:text-pink-500 transition"
+                          >
+                            <Instagram size={18} />
+                          </a>
+                          <a
+                            href="https://www.linkedin.com/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="LinkedIn"
+                            className="text-connect-600 hover:text-blue-700 transition"
+                          >
+                            <Linkedin size={18} />
+                          </a>
+                          <a
+                            href="mailto:hello@kconect.com"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="Mail"
+                            className="text-connect-600 hover:text-cyan-600 transition"
+                          >
+                            <Mail size={18} />
+                          </a>
+                          <a
+                            href="https://x.com/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="X"
+                            className="text-connect-600 hover:text-black dark:hover:text-white transition"
+                          >
+                            <XLogo size={18} />
+                          </a>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        className="justify-start text-gray-600 dark:text-gray-300 mt-4"
+                        onClick={() => {
+                          logout();
+                          navigate("/");
+                          setMobileSidebarOpen(false);
+                        }}
+                      >
+                        <LogOut className="mr-3 h-5 w-5" />
+                        Logout
+                      </Button>
+                    </>
                   )}
                 </nav>
               </div>
@@ -347,17 +400,66 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           ))}
 
           {currentUser && (
-            <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-600 dark:text-gray-300 mt-6 border-t border-gray-100 dark:border-gray-700 pt-4"
-              onClick={() => {
-                logout();
-                navigate("/");
-              }}
-            >
-              <LogOut className="mr-3 h-5 w-5" />
-              Logout
-            </Button>
+            <>
+              <div className="mt-8 px-3">
+                <h3 className="text-xs font-bold text-connect-600 dark:text-connect-400 uppercase tracking-wide mb-1">
+                  Connect with Us
+                </h3>
+                <p className="text-xs text-muted-foreground mb-2">
+                  Stay connected for the latest updates and event
+                  opportunities.
+                </p>
+                <div className="flex space-x-3">
+                  <a
+                    href="https://instagram.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Instagram"
+                    className="text-connect-600 hover:text-pink-500 transition"
+                  >
+                    <Instagram size={18} />
+                  </a>
+                  <a
+                    href="https://www.linkedin.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="LinkedIn"
+                    className="text-connect-600 hover:text-blue-700 transition"
+                  >
+                    <Linkedin size={18} />
+                  </a>
+                  <a
+                    href="mailto:hello@kconect.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Mail"
+                    className="text-connect-600 hover:text-cyan-600 transition"
+                  >
+                    <Mail size={18} />
+                  </a>
+                  <a
+                    href="https://x.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="X"
+                    className="text-connect-600 hover:text-black dark:hover:text-white transition"
+                  >
+                    <XLogo size={18} />
+                  </a>
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-gray-600 dark:text-gray-300 mt-6 border-t border-gray-100 dark:border-gray-700 pt-4"
+                onClick={() => {
+                  logout();
+                  navigate("/");
+                }}
+              >
+                <LogOut className="mr-3 h-5 w-5" />
+                Logout
+              </Button>
+            </>
           )}
         </nav>
       </aside>

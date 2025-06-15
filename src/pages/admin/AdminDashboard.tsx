@@ -172,18 +172,18 @@ const AdminDashboardContent = () => {
                   <div className={`p-2 rounded-lg bg-gradient-to-br ${metric.gradient} shadow-md`}>
                     <Icon className="h-7 w-7 text-white" />
                   </div>
-                  <CardTitle className="text-lg font-semibold text-foreground">{metric.title}</CardTitle>
+                  <CardTitle className="text-lg font-bold text-white">{metric.title}</CardTitle>
                 </div>
               </CardHeader>
               <CardContent className="pt-2">
-                <div className="text-4xl font-bold mt-2 text-foreground">
+                <div className="text-4xl font-extrabold mt-2 text-white">
                   {isLoading ? (
                     <span className="inline-block w-14 h-10 rounded bg-muted animate-pulse" />
                   ) : (
                     metric.value ?? '0'
                   )}
                 </div>
-                <div className="text-base text-muted-foreground mt-2">{metric.description}</div>
+                <div className="text-base mt-2 text-gray-200">{metric.description}</div>
               </CardContent>
             </Card>
           );

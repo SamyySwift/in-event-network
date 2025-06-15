@@ -163,25 +163,29 @@ const AdminDashboardContent = () => {
         {extraMetrics.map((metric) => {
           const Icon = iconMap[metric.icon] || (() => null);
           return (
-            <div
+            <Card 
               key={metric.title}
-              className="rounded-xl shadow-lg shadow-black/20 bg-gradient-to-br from-black/70 via-black/60 to-primary/80 border border-white/30 p-6 flex flex-col gap-3"
+              className="!bg-card !border-card shadow-lg rounded-xl p-6 flex flex-col gap-3"
             >
-              <div className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg bg-gradient-to-br ${metric.gradient} shadow-md shadow-black/30`}>
-                  <Icon className="h-7 w-7 text-white" />
+              <CardHeader className="flex-row items-center justify-between pb-2 space-y-0">
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg bg-gradient-to-br ${metric.gradient} shadow-md`}>
+                    <Icon className="h-7 w-7 text-white" />
+                  </div>
+                  <CardTitle className="text-lg font-semibold text-foreground">{metric.title}</CardTitle>
                 </div>
-                <div className="text-lg font-semibold text-white">{metric.title}</div>
-              </div>
-              <div className="text-4xl font-bold mt-2 text-white drop-shadow-sm">
-                {isLoading ? (
-                  <span className="inline-block w-14 h-10 rounded bg-white/20 animate-pulse" />
-                ) : (
-                  metric.value ?? '0'
-                )}
-              </div>
-              <div className="text-base text-white/80 font-normal">{metric.description}</div>
-            </div>
+              </CardHeader>
+              <CardContent className="pt-2">
+                <div className="text-4xl font-bold mt-2 text-foreground">
+                  {isLoading ? (
+                    <span className="inline-block w-14 h-10 rounded bg-muted animate-pulse" />
+                  ) : (
+                    metric.value ?? '0'
+                  )}
+                </div>
+                <div className="text-base text-muted-foreground mt-2">{metric.description}</div>
+              </CardContent>
+            </Card>
           );
         })}
       </div>

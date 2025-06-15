@@ -4,13 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Plus, Pencil, Trash2, Loader, Calendar, MapPin, Users, Clock } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader, Calendar, MapPin, Users, Clock, Lock } from 'lucide-react';
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { Badge } from '@/components/ui/badge';
 import { useAdminEvents } from '@/hooks/useAdminEvents';
 import { useAuth } from '@/contexts/AuthContext';
 import { ImageUpload } from '@/components/ui/image-upload';
+import PaymentGuard from '@/components/payment/PaymentGuard';
+import { usePayment } from '@/hooks/usePayment';
 
 type EventFormData = {
   name: string;
@@ -26,6 +28,7 @@ const AdminEvents = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const { currentUser } = useAuth();
   const { events, isLoading, createEvent, updateEvent, deleteEvent, isCreating, isUpdating, isDeleting } = useAdminEvents();
+  const { isEventPaid } = usePayment();
 
   const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm<EventFormData>({
     defaultValues: {
@@ -331,6 +334,12 @@ const AdminEvents = () => {
                               <Badge className="bg-gradient-to-r from-blue-500 to-cyan-400 text-white border-0 shadow-md">
                                 <Clock className="w-3 h-3 mr-1" />
                                 Upcoming
+                              </Badge>
+                            )}
+                            {!isEventPaid(event.id) && (
+                              <Badge variant="outline" className="border-amber-500 text-amber-600">
+                                <Lock className="w-3 h-3 mr-1" />
+                                Payment Required
                               </Badge>
                             )}
                           </div>

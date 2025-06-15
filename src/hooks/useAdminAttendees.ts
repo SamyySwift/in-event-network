@@ -1,91 +1,173 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 
-interface AdminAttendee {
+interface Attendee {
   id: string;
-  name: string;
-  email: string;
-  role: string;
-  photo_url?: string;
-  bio?: string;
-  company?: string;
-  event_name: string;
-  joined_at: string;
+  event_id: string;
+  user_id: string;
+  created_at: string;
 }
 
 export const useAdminAttendees = () => {
-  const { currentUser } = useAuth();
-  const { selectedEventId, selectedEvent } = useAdminEventContext();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentUser } = useAuth();
 
   const { data: attendees = [], isLoading, error } = useQuery({
-    queryKey: ['admin-attendees', currentUser?.id, selectedEventId],
-    queryFn: async (): Promise<AdminAttendee[]> => {
-      if (!currentUser?.id || !selectedEventId) {
-        console.log('Missing user or selected event:', { userId: currentUser?.id, eventId: selectedEventId });
+    queryKey: ['admin-attendees'],
+    queryFn: async () => {
+      if (!currentUser?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get current user's events
+      const { data: events, error: eventsError } = await supabase
+        .from('events')
+        .select('id')
+        .eq('host_id', currentUser.id);
+
+      if (eventsError) {
+        console.error('Error fetching events:', eventsError);
+        throw eventsError;
+      }
+
+      if (!events || events.length === 0) {
+        console.log('No events found for user');
         return [];
       }
 
-      console.log('Fetching attendees for selected event:', selectedEventId);
+      const eventIds = events.map(event => event.id);
 
-      // Get attendees only for the selected event
+      // Fetch attendees from user's events
       const { data, error } = await supabase
         .from('event_participants')
-        .select(`
-          joined_at,
-          profiles:user_id (
-            id,
-            name,
-            email,
-            role,
-            photo_url,
-            bio,
-            company
-          )
-        `)
-        .eq('event_id', selectedEventId);
+        .select('*')
+        .in('event_id', eventIds);
 
       if (error) {
-        console.error('Error fetching admin attendees:', error);
+        console.error('Error fetching attendees:', error);
         throw error;
       }
 
-      console.log('Raw event participants data:', data);
-
-      // Transform the data
-      const transformedData = data?.map((item: any) => ({
-        id: item.profiles?.id || '',
-        name: item.profiles?.name || 'Unknown',
-        email: item.profiles?.email || '',
-        role: item.profiles?.role || '',
-        photo_url: item.profiles?.photo_url,
-        bio: item.profiles?.bio,
-        company: item.profiles?.company,
-        event_name: selectedEvent?.name || '',
-        joined_at: item.joined_at
-      })).filter(item => item.id) || [];
-
-      console.log('Admin attendees fetched for event:', transformedData.length);
-      return transformedData as AdminAttendee[];
+      return data as Attendee[];
     },
-    enabled: !!currentUser?.id && !!selectedEventId,
+    enabled: !!currentUser?.id,
   });
 
-  // NEW: Mutation to clear all attendees for the current event
-  const { mutateAsync: clearAttendees, isLoading: isClearing, error: clearError } = useMutation({
-    mutationFn: async () => {
-      if (!selectedEventId) throw new Error('No event selected');
+  const addAttendeeMutation = useMutation({
+    mutationFn: async (attendeeData: Omit<Attendee, 'id' | 'created_at'>) => {
+      const { data, error } = await supabase
+        .from('event_participants')
+        .insert([attendeeData])
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error adding attendee:', error);
+        throw error;
+      }
+
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-attendees'] });
+      toast({
+        title: 'Success',
+        description: 'Attendee has been added successfully.',
+      });
+    },
+    onError: (error) => {
+      console.error('Add attendee error:', error);
+      toast({
+        title: 'Error',
+        description: `Failed to add attendee: ${error.message}`,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const deleteAttendeeMutation = useMutation({
+    mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('event_participants')
         .delete()
-        .eq('event_id', selectedEventId);
-      if (error) throw error;
+        .eq('id', id);
+
+      if (error) {
+        console.error('Error deleting attendee:', error);
+        throw error;
+      }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-attendees', currentUser?.id, selectedEventId] });
+      queryClient.invalidateQueries({ queryKey: ['admin-attendees'] });
+      toast({
+        title: 'Success',
+        description: 'Attendee has been deleted successfully.',
+      });
+    },
+    onError: (error) => {
+      console.error('Delete attendee error:', error);
+      toast({
+        title: 'Error',
+        description: `Failed to delete attendee: ${error.message}`,
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const clearAttendeesMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentUser?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get current user's events
+      const { data: events, error: eventsError } = await supabase
+        .from('events')
+        .select('id')
+        .eq('host_id', currentUser.id);
+
+      if (eventsError) {
+        console.error('Error fetching events:', eventsError);
+        throw eventsError;
+      }
+
+      if (!events || events.length === 0) {
+        console.log('No events found for user');
+        return;
+      }
+
+      const eventIds = events.map(event => event.id);
+
+      // Clear attendees from user's events
+      const { error } = await supabase
+        .from('event_participants')
+        .delete()
+        .in('event_id', eventIds);
+
+      if (error) {
+        console.error('Error clearing attendees:', error);
+        throw error;
+      }
+
+      console.log('Attendees cleared successfully');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-attendees'] });
+      toast({
+        title: 'Success',
+        description: 'All attendees have been cleared from your events.',
+      });
+    },
+    onError: (error) => {
+      console.error('Clear attendees error:', error);
+      toast({
+        title: 'Error',
+        description: `Failed to clear attendees: ${error.message}`,
+        variant: 'destructive',
+      });
     },
   });
 
@@ -93,8 +175,11 @@ export const useAdminAttendees = () => {
     attendees,
     isLoading,
     error,
-    clearAttendees,
-    isClearing,
-    clearError,
+    addAttendee: addAttendeeMutation.mutate,
+    deleteAttendee: deleteAttendeeMutation.mutate,
+    clearAttendees: clearAttendeesMutation.mutate,
+    isAdding: addAttendeeMutation.isPending,
+    isDeleting: deleteAttendeeMutation.isPending,
+    isClearing: clearAttendeesMutation.isPending,
   };
 };

@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAdminAttendees } from '@/hooks/useAdminAttendees';
-import ClearAttendeesDialog from './ClearAttendeesDialog';
+import { ClearAttendeesDialog } from './ClearAttendeesDialog';
 import { useToast } from '@/hooks/use-toast';
 
 type AttendeeManagementSectionProps = {

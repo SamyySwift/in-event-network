@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -7,7 +8,21 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Ambulance, Hospital, Edit, Trash2 } from "lucide-react";
+import {
+  Plus,
+  Ambulance,
+  Hospital,
+  Car,
+  MapPin,
+  Building,
+  Coffee,
+  Shield,
+  Wifi,
+  Phone,
+  User,
+  Edit,
+  Trash2,
+} from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,10 +31,18 @@ import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-// Only use icons that are available in lucide-react for this project.
+// Expanded: Only use icons available in lucide-react for this project.
 const ICON_OPTIONS = [
   { value: "ambulance", label: "Ambulance", icon: Ambulance },
   { value: "hospital", label: "Hospital", icon: Hospital },
+  { value: "car", label: "Car Park", icon: Car },
+  { value: "map-pin", label: "Help Desk", icon: MapPin },
+  { value: "building", label: "Building", icon: Building },
+  { value: "coffee", label: "Cafeteria", icon: Coffee },
+  { value: "shield", label: "Security/Shield", icon: Shield },
+  { value: "wifi", label: "WiFi Zone", icon: Wifi },
+  { value: "phone", label: "Phone", icon: Phone },
+  { value: "user", label: "Reception/User", icon: User },
 ];
 
 const formSchema = z.object({
@@ -220,3 +243,4 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
 
 export default CreateFacilityDialog;
 // NOTE: This file is getting long (over 200 lines). Please consider asking to refactor it into smaller components!
+

@@ -1,11 +1,26 @@
 
 import React from "react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Ambulance,
   Hospital,
+  Car,
+  MapPin,
+  Building,
+  Coffee,
+  Shield,
+  Wifi,
+  Phone,
+  User,
   Trash2,
   Edit
 } from "lucide-react";
@@ -29,10 +44,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Facility } from "@/hooks/useAdminFacilities";
 
-// Only use the available icons
+// Expanded: Only use icons actually present in lucide-react & in dialogs
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   ambulance: Ambulance,
   hospital: Hospital,
+  car: Car,
+  "map-pin": MapPin,
+  building: Building,
+  coffee: Coffee,
+  shield: Shield,
+  wifi: Wifi,
+  phone: Phone,
+  user: User,
 };
 
 interface FacilityCardProps {
@@ -132,8 +155,8 @@ const FacilityCard: React.FC<FacilityCardProps> = ({
           )}
           {facility.location && (
             <div className="flex items-center gap-2 text-sm">
-              {/* Use the ambulance icon for location as a fallback */}
-              <Ambulance className="h-4 w-4 flex-shrink-0" />
+              {/* Show matching icon for location if possible, ambiance fallback */}
+              {getFacilityIcon(facility.icon_type || "ambulance")}
               <span>{facility.location}</span>
             </div>
           )}
@@ -156,4 +179,3 @@ const FacilityCard: React.FC<FacilityCardProps> = ({
   );
 };
 export default FacilityCard;
-

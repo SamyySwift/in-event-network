@@ -179,8 +179,8 @@ const AdminSpeakersContent = () => {
       </div>
 
       <div className="glass-card p-6 rounded-xl space-y-8 shadow-xl">
-        {/* Modern Section Header */}
-        <div className="flex items-center justify-between mb-8">
+        {/* Modern Section Header - Responsive for mobile */}
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
           <div className="flex items-center gap-3">
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-600 shadow-md">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -197,7 +197,7 @@ const AdminSpeakersContent = () => {
           <Button 
             onClick={() => setIsCreating(true)} 
             variant="gradient" 
-            className="shadow hover-scale"
+            className="shadow hover-scale w-full md:w-auto"
             disabled={!selectedEventId}
           >
             Add Speaker

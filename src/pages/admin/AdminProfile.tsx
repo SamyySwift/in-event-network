@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,93 +12,53 @@ import { Separator } from "@/components/ui/separator";
 import { Save, Upload, User, Mail, Building, Globe, Key } from "lucide-react";
 import { toast } from "sonner";
 
-const defaultLinks = {
-  website: "",
-  linkedin: "",
-  twitter: "",
-};
-
 const AdminProfile = () => {
-  const { currentUser, isLoading: authIsLoading, updateUser } = useAuth();
-  const [isSaving, setIsSaving] = useState(false);
+  const { currentUser, updateUser } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    bio: "",
-    niche: "",
-    links: defaultLinks,
+    name: currentUser?.name || "",
+    email: currentUser?.email || "",
+    bio: currentUser?.bio || "",
+    niche: currentUser?.niche || "",
+    links: {
+      website: currentUser?.links?.website || "",
+      linkedin: currentUser?.links?.linkedin || "",
+      twitter: currentUser?.links?.twitter || "",
+    },
   });
-
-  // Debug logs
-  useEffect(() => {
-    console.log("[AdminProfile] currentUser:", currentUser);
-    console.log("[AdminProfile] authIsLoading:", authIsLoading);
-  }, [currentUser, authIsLoading]);
-
-  useEffect(() => {
-    if (currentUser) {
-      setFormData({
-        name: currentUser.name || "",
-        email: currentUser.email || "",
-        bio: currentUser.bio || "",
-        niche: currentUser.niche || "",
-        links: {
-          website: currentUser.links?.website || "",
-          linkedin: currentUser.links?.linkedin || "",
-          twitter: currentUser.links?.twitter || "",
-        },
-      });
-    }
-  }, [currentUser]);
-
-  useEffect(() => {
-    console.log("[AdminProfile] formData:", formData);
-  }, [formData]);
 
   const handleInputChange = (field: string, value: string) => {
     if (field.startsWith("links.")) {
       const linkField = field.split(".")[1];
-      setFormData((prev) => ({
-        ...prev,
+      setFormData({
+        ...formData,
         links: {
-          ...prev.links,
+          ...formData.links,
           [linkField]: value,
         },
-      }));
+      });
     } else {
-      setFormData((prev) => ({
-        ...prev,
+      setFormData({
+        ...formData,
         [field]: value,
-      }));
+      });
     }
   };
 
   const handleSave = async () => {
-    setIsSaving(true);
+    setIsLoading(true);
     try {
-      await updateUser({
-        name: formData.name,
-        email: formData.email,
-        bio: formData.bio,
-        niche: formData.niche,
-        links: {
-          website: formData.links.website,
-          linkedin: formData.links.linkedin,
-          twitter: formData.links.twitter,
-        },
-      });
+      await updateUser(formData);
       toast.success("Profile updated successfully!");
     } catch (error) {
       toast.error("Failed to update profile");
       console.error("Error updating profile:", error);
     } finally {
-      setIsSaving(false);
+      setIsLoading(false);
     }
   };
 
-  // More robust loading / missing state
-  if (authIsLoading) {
-    console.log("[AdminProfile] Showing: Loading (authIsLoading)");
+  if (!currentUser) {
     return (
       <div className="flex items-center justify-center h-64">
         <p className="text-muted-foreground">Loading profile...</p>
@@ -106,33 +66,6 @@ const AdminProfile = () => {
     );
   }
 
-  if (!currentUser) {
-    console.log("[AdminProfile] Showing: Error (no currentUser)");
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <p className="text-destructive font-semibold mb-2">
-            Could not load profile. No user found.
-          </p>
-          <p className="text-muted-foreground">
-            Try logging out and back in. If you believe this is a bug, contact support.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // If profile loaded, but formData is still empty
-  if (!formData.email && !formData.name) {
-    console.log("[AdminProfile] Showing: Loading (waiting for formData)");
-    return (
-      <div className="flex items-center justify-center h-64">
-        <p className="text-muted-foreground">Still loading profile details...</p>
-      </div>
-    );
-  }
-
-  // Normal form render
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
@@ -161,31 +94,33 @@ const AdminProfile = () => {
             <div className="flex flex-col items-center">
               <Avatar className="h-24 w-24 mb-4">
                 {currentUser.photoUrl ? (
-                  <AvatarImage src={currentUser.photoUrl} alt={currentUser.name ?? "Admin"} />
+                  <AvatarImage src={currentUser.photoUrl} alt={currentUser.name} />
                 ) : (
                   <AvatarFallback className="bg-primary text-primary-foreground text-lg">
-                    {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : "A"}
+                    {currentUser.name.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 )}
               </Avatar>
-              <Button variant="outline" size="sm" className="mb-4" disabled>
+              <Button variant="outline" size="sm" className="mb-4">
                 <Upload className="h-4 w-4 mr-2" />
                 Change Photo
               </Button>
             </div>
+
             <Separator />
+
             <div className="space-y-3">
               <div>
                 <Label className="text-xs text-muted-foreground">NAME</Label>
-                <p className="font-medium">{currentUser.name || <span className="text-muted-foreground">N/A</span>}</p>
+                <p className="font-medium">{currentUser.name}</p>
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">EMAIL</Label>
-                <p className="font-medium">{currentUser.email || <span className="text-muted-foreground">N/A</span>}</p>
+                <p className="font-medium">{currentUser.email}</p>
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">ROLE</Label>
-                <p className="font-medium capitalize">{currentUser.role || "admin"}</p>
+                <p className="font-medium capitalize">{currentUser.role}</p>
               </div>
             </div>
           </CardContent>
@@ -221,6 +156,7 @@ const AdminProfile = () => {
                 />
               </div>
             </div>
+
             <div>
               <Label htmlFor="niche">Expertise/Niche</Label>
               <Input
@@ -230,6 +166,7 @@ const AdminProfile = () => {
                 placeholder="e.g., Event Management, Technology, Marketing"
               />
             </div>
+
             <div>
               <Label htmlFor="bio">Bio</Label>
               <Textarea
@@ -240,7 +177,9 @@ const AdminProfile = () => {
                 rows={4}
               />
             </div>
+
             <Separator />
+
             <div>
               <Label className="text-base font-medium flex items-center mb-4">
                 <Globe className="h-4 w-4 mr-2" />
@@ -276,10 +215,11 @@ const AdminProfile = () => {
                 </div>
               </div>
             </div>
+
             <div className="flex justify-end pt-4">
-              <Button onClick={handleSave} disabled={isSaving}>
+              <Button onClick={handleSave} disabled={isLoading}>
                 <Save className="h-4 w-4 mr-2" />
-                {isSaving ? "Saving..." : "Save Changes"}
+                {isLoading ? "Saving..." : "Save Changes"}
               </Button>
             </div>
           </CardContent>

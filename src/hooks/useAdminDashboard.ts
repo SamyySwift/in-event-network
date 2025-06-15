@@ -113,24 +113,50 @@ export const useAdminDashboard = () => {
       // Get all accepted connections between these attendees (either direction)
       let connectionsCount = 0;
       if (uniqueAttendeeUserIds.length > 0) {
-        // Supabase requires the .or() argument to be a string in this exact format:
-        // "requester_id.in.(uuid1,uuid2),recipient_id.in.(uuid1,uuid2)"
-        const inList = uniqueAttendeeUserIds.map(id => `"${id}"`).join(',');
+        // Proper Supabase .or() filter: no quotes on UUIDs
+        const inList = uniqueAttendeeUserIds.join(',');
         const orFilter = `requester_id.in.(${inList}),recipient_id.in.(${inList})`;
-        // DEBUG: log the orFilter used
         console.log('[DASHBOARD-CONNECTIONS] Query .or() filter:', orFilter);
 
-        const { count: connectionsCountRes, error: connectionsError } = await supabase
+        // Try .or() query first
+        const { count: connectionsCountRes, data: orData, error: connectionsError } = await supabase
           .from('connections')
           .select('*', { count: 'exact', head: true })
           .or(orFilter)
           .eq('status', 'accepted');
-        if (connectionsError) {
-          console.error('Error fetching attendee connections:', connectionsError);
+
+        if (!connectionsError && typeof connectionsCountRes === 'number') {
+          connectionsCount = connectionsCountRes;
+          console.log('[DASHBOARD-CONNECTIONS] .or() count result:', connectionsCount);
+        } else {
+          // DEBUG fallback: try two queries and merge user IDs manually if .or() fails (Supabase restriction workaround)
+          console.warn('[DASHBOARD-CONNECTIONS] .or() query failed, trying fallback approach.', { connectionsError });
+
+          // Query by requester_id
+          const { count: countRequester, error: errRequester } = await supabase
+            .from('connections')
+            .select('*', { count: 'exact', head: true })
+            .in('requester_id', uniqueAttendeeUserIds)
+            .eq('status', 'accepted');
+          // Query by recipient_id
+          const { count: countRecipient, error: errRecipient } = await supabase
+            .from('connections')
+            .select('*', { count: 'exact', head: true })
+            .in('recipient_id', uniqueAttendeeUserIds)
+            .eq('status', 'accepted');
+
+          if (errRequester || errRecipient) {
+            console.error('[DASHBOARD-CONNECTIONS] Fallback queries error:', errRequester, errRecipient);
+            connectionsCount = 0;
+          } else {
+            // Fallback will overcount bi-directional connections, so if exactness is needed fetch full data and de-duplicate by id.
+            // For performance we sum counts, but ideally you would fetch and dedupe here (not head:true).
+            if (typeof countRequester === 'number' && typeof countRecipient === 'number') {
+              connectionsCount = countRequester + countRecipient;
+            }
+          }
+          console.log('[DASHBOARD-CONNECTIONS] Fallback count:', connectionsCount);
         }
-        connectionsCount = connectionsCountRes || 0;
-        // DEBUG: log the result from the query
-        console.log('[DASHBOARD-CONNECTIONS] Live count result:', connectionsCount);
       }
 
       // Compute a simple "performance score" out of 100

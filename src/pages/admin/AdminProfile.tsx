@@ -15,6 +15,8 @@ import { toast } from "sonner";
 const AdminProfile = () => {
   const { currentUser, updateUser } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+
+  // Defensive fallback: handle possibly missing/empty fields
   const [formData, setFormData] = useState({
     name: currentUser?.name || "",
     email: currentUser?.email || "",
@@ -48,7 +50,18 @@ const AdminProfile = () => {
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      await updateUser(formData);
+      // Submit only available fields
+      await updateUser({
+        name: formData.name,
+        email: formData.email,
+        bio: formData.bio,
+        niche: formData.niche,
+        links: {
+          website: formData.links.website,
+          linkedin: formData.links.linkedin,
+          twitter: formData.links.twitter,
+        },
+      });
       toast.success("Profile updated successfully!");
     } catch (error) {
       toast.error("Failed to update profile");
@@ -94,17 +107,18 @@ const AdminProfile = () => {
             <div className="flex flex-col items-center">
               <Avatar className="h-24 w-24 mb-4">
                 {currentUser.photoUrl ? (
-                  <AvatarImage src={currentUser.photoUrl} alt={currentUser.name} />
+                  <AvatarImage src={currentUser.photoUrl} alt={currentUser.name ?? "Admin"} />
                 ) : (
                   <AvatarFallback className="bg-primary text-primary-foreground text-lg">
-                    {currentUser.name.charAt(0).toUpperCase()}
+                    {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : "A"}
                   </AvatarFallback>
                 )}
               </Avatar>
-              <Button variant="outline" size="sm" className="mb-4">
+              <Button variant="outline" size="sm" className="mb-4" disabled>
                 <Upload className="h-4 w-4 mr-2" />
                 Change Photo
               </Button>
+              {/* Upload functionality not implemented in this version */}
             </div>
 
             <Separator />
@@ -112,15 +126,15 @@ const AdminProfile = () => {
             <div className="space-y-3">
               <div>
                 <Label className="text-xs text-muted-foreground">NAME</Label>
-                <p className="font-medium">{currentUser.name}</p>
+                <p className="font-medium">{currentUser.name || <span className="text-muted-foreground">N/A</span>}</p>
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">EMAIL</Label>
-                <p className="font-medium">{currentUser.email}</p>
+                <p className="font-medium">{currentUser.email || <span className="text-muted-foreground">N/A</span>}</p>
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">ROLE</Label>
-                <p className="font-medium capitalize">{currentUser.role}</p>
+                <p className="font-medium capitalize">{currentUser.role || "admin"}</p>
               </div>
             </div>
           </CardContent>

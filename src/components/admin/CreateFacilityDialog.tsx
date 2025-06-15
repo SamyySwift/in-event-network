@@ -16,26 +16,32 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+// ONLY import Lucide icons that exist and are in the allow-list
 import {
-  Emergency,
+  Ambulance,
+  Bell,
+  BellRing,
+  BellElectric,
+  Cafe,
+  Hospital,
+  ParkingMeter,
+  Restroom,
   Toilet,
-  Cafeteria,
-  Building,
-  MapPin,
-  Phone,
+  // fallback: Bell if needed
 } from "lucide-react";
 
 const ICON_OPTIONS = [
-  { value: "emergency", label: "Emergency", icon: Emergency },
+  { value: "ambulance", label: "Ambulance", icon: Ambulance },
+  { value: "hospital", label: "Hospital", icon: Hospital },
   { value: "toilet", label: "Toilet", icon: Toilet },
-  { value: "cafeteria", label: "Cafeteria", icon: Cafeteria },
-  { value: "building", label: "Building", icon: Building },
-  { value: "map-pin", label: "Map Pin", icon: MapPin },
-  { value: "phone", label: "Phone", icon: Phone },
-  { value: "parking", label: "Parking", icon: MapPin },
-  { value: "locker", label: "Locker", icon: Building },
-  { value: "exit", label: "Exit", icon: Emergency },
-  { value: "info", label: "Info", icon: Cafeteria },
+  { value: "restroom", label: "Restroom", icon: Restroom },
+  { value: "cafe", label: "Cafe", icon: Cafe },
+  { value: "bell", label: "Bell", icon: Bell },
+  { value: "bell-ring", label: "Bell Ring", icon: BellRing },
+  { value: "bell-electric", label: "Bell Electric", icon: BellElectric },
+  { value: "parking-meter", label: "Parking Meter", icon: ParkingMeter },
+  // fallback to Bell if needed later...
 ];
 
 const formSchema = z.object({
@@ -84,12 +90,10 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
     },
   });
 
-  // keep eventId in sync with external change
   useEffect(() => {
     if (defaultEventId) setValue("eventId", defaultEventId);
   }, [defaultEventId, setValue]);
 
-  // Always reset form when dialog is closed
   useEffect(() => {
     if (!open) reset();
   }, [open, reset]);
@@ -99,7 +103,7 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
 
   const handleDialogSubmit = (data: FormData) => {
     onSubmit(data);
-    setOpen(false); // close on submit
+    setOpen(false);
   };
 
   return (
@@ -112,7 +116,6 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
           </Button>
         )}
       </DialogTrigger>
-      {/* Added scroll and constrained height to DialogContent */}
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add Facility</DialogTitle>
@@ -165,7 +168,6 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select icon">
-                    {/* Show the selected icon and its label */}
                     {(() => {
                       const iconObj = ICON_OPTIONS.find(icon => icon.value === selectedIcon);
                       if (iconObj) {
@@ -241,3 +243,4 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
 export default CreateFacilityDialog;
 
 // NOTE: This file is getting long (over 200 lines). Please consider asking to refactor it into smaller components!
+

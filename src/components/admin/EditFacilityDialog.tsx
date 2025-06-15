@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -17,25 +16,27 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Facility } from "@/hooks/useAdminFacilities";
 import {
-  Emergency,
+  Ambulance,
+  Bell,
+  BellRing,
+  BellElectric,
+  Cafe,
+  Hospital,
+  ParkingMeter,
+  Restroom,
   Toilet,
-  Cafeteria,
-  Building,
-  MapPin,
-  Phone,
 } from "lucide-react";
 
 const ICON_OPTIONS = [
-  { value: "emergency", label: "Emergency", icon: Emergency },
+  { value: "ambulance", label: "Ambulance", icon: Ambulance },
+  { value: "hospital", label: "Hospital", icon: Hospital },
   { value: "toilet", label: "Toilet", icon: Toilet },
-  { value: "cafeteria", label: "Cafeteria", icon: Cafeteria },
-  { value: "building", label: "Building", icon: Building },
-  { value: "map-pin", label: "Map Pin", icon: MapPin },
-  { value: "phone", label: "Phone", icon: Phone },
-  { value: "parking", label: "Parking", icon: MapPin },
-  { value: "locker", label: "Locker", icon: Building },
-  { value: "exit", label: "Exit", icon: Emergency },
-  { value: "info", label: "Info", icon: Cafeteria },
+  { value: "restroom", label: "Restroom", icon: Restroom },
+  { value: "cafe", label: "Cafe", icon: Cafe },
+  { value: "bell", label: "Bell", icon: Bell },
+  { value: "bell-ring", label: "Bell Ring", icon: BellRing },
+  { value: "bell-electric", label: "Bell Electric", icon: BellElectric },
+  { value: "parking-meter", label: "Parking Meter", icon: ParkingMeter },
 ];
 
 const formSchema = z.object({

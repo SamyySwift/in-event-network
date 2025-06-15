@@ -1,9 +1,20 @@
-
 import React from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, Emergency, Toilet, Cafeteria, Building, MapPin, Phone } from "lucide-react";
+import {
+  Ambulance,
+  Bell,
+  BellRing,
+  BellElectric,
+  Cafe,
+  Hospital,
+  ParkingMeter,
+  Restroom,
+  Toilet,
+  MapPin,
+  Phone
+} from "lucide-react";
 import { format } from "date-fns";
 import {
   Tooltip,
@@ -25,16 +36,17 @@ import {
 import { Facility } from "@/hooks/useAdminFacilities";
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  emergency: Emergency,
+  ambulance: Ambulance,
+  hospital: Hospital,
   toilet: Toilet,
-  cafeteria: Cafeteria,
-  building: Building,
+  restroom: Restroom,
+  cafe: Cafe,
+  "bell": Bell,
+  "bell-ring": BellRing,
+  "bell-electric": BellElectric,
+  "parking-meter": ParkingMeter,
   "map-pin": MapPin,
   phone: Phone,
-  parking: MapPin,
-  locker: Building,
-  exit: Emergency,
-  info: Cafeteria,
 };
 
 interface FacilityCardProps {
@@ -51,7 +63,7 @@ const FacilityCard: React.FC<FacilityCardProps> = ({
   onDelete,
 }) => {
   const getFacilityIcon = (icon: string) => {
-    const IconComp = iconMap[icon] || Building;
+    const IconComp = iconMap[icon] || Bell;
     return <IconComp className="h-5 w-5 text-primary" />;
   };
 
@@ -60,7 +72,7 @@ const FacilityCard: React.FC<FacilityCardProps> = ({
       <CardHeader className="pb-2 flex flex-row items-start justify-between">
         <div>
           <CardTitle className="text-lg font-semibold flex items-center gap-2">
-            {getFacilityIcon(facility.icon_type || "building")}
+            {getFacilityIcon(facility.icon_type || "bell")}
             {facility.name}
           </CardTitle>
           <CardDescription className="text-xs mt-1">
@@ -157,4 +169,3 @@ const FacilityCard: React.FC<FacilityCardProps> = ({
   );
 };
 export default FacilityCard;
-

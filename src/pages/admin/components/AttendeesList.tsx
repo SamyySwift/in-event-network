@@ -31,16 +31,14 @@ const AttendeesList: React.FC<AttendeesListProps> = ({
   filterRole,
 }) => {
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Current Attendees</CardTitle>
-        <CardDescription>
-          {filteredAttendees.length} of {totalAttendees} attendees for {eventName}
-        </CardDescription>
+    <Card className="sm:p-4 p-2 rounded-lg">
+      <CardHeader className="px-0 pb-2">
+        <CardTitle className="text-base sm:text-lg truncate">{eventName ? "Current Attendees" : "Attendees"}</CardTitle>
+        <CardDescription className="text-xs sm:text-sm truncate">{filteredAttendees.length} of {totalAttendees} attendees for {eventName}</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-0">
         {filteredAttendees.length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">
+          <p className="text-center text-muted-foreground py-8 text-sm">
             {searchTerm || filterRole !== 'all' 
               ? 'No attendees match your search criteria.'
               : 'No attendees registered yet for this event.'

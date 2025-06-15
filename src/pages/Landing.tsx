@@ -439,22 +439,6 @@ const Landing = () => {
                     Pricing
                   </a>
                 </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-white/60 hover:text-cyan-400 transition-colors"
-                  >
-                    Case Studies
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-white/60 hover:text-cyan-400 transition-colors"
-                  >
-                    Reviews
-                  </a>
-                </li>
               </ul>
             </div>
 
@@ -466,31 +450,7 @@ const Landing = () => {
                     href="#"
                     className="text-white/60 hover:text-cyan-400 transition-colors"
                   >
-                    Mission
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-white/60 hover:text-cyan-400 transition-colors"
-                  >
-                    Careers
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-white/60 hover:text-cyan-400 transition-colors"
-                  >
                     Contact Us
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-white/60 hover:text-cyan-400 transition-colors"
-                  >
-                    Blog
                   </a>
                 </li>
               </ul>
@@ -513,14 +473,6 @@ const Landing = () => {
                     className="text-white/60 hover:text-cyan-400 transition-colors"
                   >
                     Terms of Service
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="#"
-                    className="text-white/60 hover:text-cyan-400 transition-colors"
-                  >
-                    Security
                   </a>
                 </li>
               </ul>

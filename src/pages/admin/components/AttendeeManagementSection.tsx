@@ -1,7 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users } from 'lucide-react';
+import { Users, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useAdminAttendees } from '@/hooks/useAdminAttendees';
+import { ClearAttendeesDialog } from './ClearAttendeesDialog';
+import { useToast } from '@/hooks/use-toast';
 
 type AttendeeManagementSectionProps = {
   eventName: string;
@@ -12,6 +16,28 @@ const AttendeeManagementSection: React.FC<AttendeeManagementSectionProps> = ({
   eventName,
   children,
 }) => {
+  const { attendees, clearAttendees, isClearing, clearError } = useAdminAttendees();
+  const { toast } = useToast();
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  const handleClearAttendees = async () => {
+    try {
+      await clearAttendees();
+      toast({
+        title: "Attendees Cleared",
+        description: "All attendee data for this event has been cleared.",
+        variant: "default",
+      });
+      setDialogOpen(false);
+    } catch (err: any) {
+      toast({
+        title: "Error",
+        description: err?.message || "Failed to clear attendees.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="glass-card p-6 rounded-xl space-y-8 shadow-xl">
       {/* Section Header */}
@@ -26,6 +52,27 @@ const AttendeeManagementSection: React.FC<AttendeeManagementSectionProps> = ({
               {eventName}
             </div>
           </div>
+        </div>
+        {/* Clear All Attendees Button - destructive style */}
+        <div>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={() => setDialogOpen(true)}
+            disabled={isClearing || attendees.length === 0}
+            className="flex gap-2"
+          >
+            <Trash2 className="h-4 w-4" />
+            Clear Attendee Data
+          </Button>
+          <ClearAttendeesDialog
+            open={dialogOpen}
+            onOpenChange={setDialogOpen}
+            onConfirm={handleClearAttendees}
+            isLoading={isClearing}
+            attendeeCount={attendees.length}
+            eventName={eventName}
+          />
         </div>
       </div>
 

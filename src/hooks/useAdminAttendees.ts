@@ -1,5 +1,5 @@
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminEventContext } from '@/hooks/useAdminEventContext';
@@ -19,6 +19,7 @@ interface AdminAttendee {
 export const useAdminAttendees = () => {
   const { currentUser } = useAuth();
   const { selectedEventId, selectedEvent } = useAdminEventContext();
+  const queryClient = useQueryClient();
 
   const { data: attendees = [], isLoading, error } = useQuery({
     queryKey: ['admin-attendees', currentUser?.id, selectedEventId],
@@ -73,9 +74,27 @@ export const useAdminAttendees = () => {
     enabled: !!currentUser?.id && !!selectedEventId,
   });
 
+  // NEW: Mutation to clear all attendees for the current event
+  const { mutateAsync: clearAttendees, isLoading: isClearing, error: clearError } = useMutation({
+    mutationFn: async () => {
+      if (!selectedEventId) throw new Error('No event selected');
+      const { error } = await supabase
+        .from('event_participants')
+        .delete()
+        .eq('event_id', selectedEventId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-attendees', currentUser?.id, selectedEventId] });
+    },
+  });
+
   return {
     attendees,
     isLoading,
     error,
+    clearAttendees,
+    isClearing,
+    clearError,
   };
 };

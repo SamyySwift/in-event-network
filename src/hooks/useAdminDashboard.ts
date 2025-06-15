@@ -10,6 +10,8 @@ interface DashboardData {
   questionsCount: number;
   liveEventsCount: number;
   upcomingEventsCount: number;
+  connectionsCount: number;
+  performanceScore: number;
 }
 
 export const useAdminDashboard = () => {
@@ -65,7 +67,7 @@ export const useAdminDashboard = () => {
       }) || [];
 
       // Get counts only for the current admin's events
-      const [attendeesResult, speakersResult, questionsResult] = await Promise.all([
+      const [attendeesResult, speakersResult, questionsResult, eventParticipantsResult] = await Promise.all([
         eventIds.length > 0 ? supabase
           .from('event_participants')
           .select('*', { count: 'exact', head: true })
@@ -79,7 +81,12 @@ export const useAdminDashboard = () => {
         eventIds.length > 0 ? supabase
           .from('questions')
           .select('*', { count: 'exact', head: true })
-          .in('event_id', eventIds) : { count: 0, error: null }
+          .in('event_id', eventIds) : { count: 0, error: null },
+
+        eventIds.length > 0 ? supabase
+          .from('event_participants')
+          .select('user_id')
+          .in('event_id', eventIds) : { data: [], error: null }
       ]);
 
       if (attendeesResult.error) {
@@ -91,6 +98,47 @@ export const useAdminDashboard = () => {
       if (questionsResult.error) {
         console.error('Error fetching questions:', questionsResult.error);
       }
+      if (eventParticipantsResult.error) {
+        console.error('Error fetching participant user IDs:', eventParticipantsResult.error);
+      }
+
+      // Get unique attendee user ids for admin events
+      const attendeeUserIds: string[] = (eventParticipantsResult?.data || [])
+        .map((p: any) => p.user_id)
+        .filter(Boolean);
+      const uniqueAttendeeUserIds = Array.from(new Set(attendeeUserIds));
+
+      // Get all accepted connections between these attendees (either direction)
+      let connectionsCount = 0;
+      if (uniqueAttendeeUserIds.length > 0) {
+        const { count: connectionsCountRes, error: connectionsError } = await supabase
+          .from('connections')
+          .select('*', { count: 'exact', head: true })
+          .or(
+            `requester_id.in.(${uniqueAttendeeUserIds.join(',')}),
+             recipient_id.in.(${uniqueAttendeeUserIds.join(',')})`
+          )
+          .eq('status', 'accepted');
+        if (connectionsError) {
+          console.error('Error fetching attendee connections:', connectionsError);
+        }
+        connectionsCount = connectionsCountRes || 0;
+      }
+
+      // Compute a simple "performance score" out of 100
+      // Performance = 50% question engagement, 50% connections engagement
+      const attendeesCount = attendeesResult.count || 1; // prevent divide by zero
+      const questionsCount = questionsResult.count || 0;
+
+      // Up to 50 points for questions per attendee
+      const questionsPerAttendee = questionsCount / attendeesCount;
+      const questionsScore = Math.min((questionsPerAttendee / 3) * 50, 50); // 3+ questions/attendee = max score
+
+      // Up to 50 points for connections per attendee
+      const connectionsPerAttendee = connectionsCount / attendeesCount;
+      const connectionsScore = Math.min((connectionsPerAttendee / 2) * 50, 50); // 2+ connections/attendee = max score
+
+      const performanceScore = Math.round(questionsScore + connectionsScore);
 
       return {
         eventsCount: eventsCount || 0,
@@ -99,10 +147,12 @@ export const useAdminDashboard = () => {
         questionsCount: questionsResult.count || 0,
         liveEventsCount: liveEvents.length,
         upcomingEventsCount: upcomingEvents.length,
+        connectionsCount,
+        performanceScore,
       };
     },
     enabled: !!currentUser?.id,
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 30000,
   });
 
   return {

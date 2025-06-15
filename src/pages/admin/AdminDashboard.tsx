@@ -1,4 +1,3 @@
-
 import React from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import QRCodeGenerator from '@/components/admin/QRCodeGenerator';
@@ -72,6 +71,34 @@ const AdminDashboardContent = () => {
     },
   ];
 
+  // NEW: Extra Metrics Section
+  const extraMetrics = [
+    {
+      title: 'Total Connections',
+      value: dashboardData?.connectionsCount,
+      icon: 'network', // string for later mapping to lucide icon
+      gradient: 'from-teal-500 to-cyan-400',
+      description: 'Number of accepted attendee connections across your events.'
+    },
+    {
+      title: 'Event Performance',
+      value: dashboardData
+        ? `${dashboardData.performanceScore}%`
+        : undefined,
+      icon: 'trending-up',
+      gradient: 'from-rose-500 to-pink-400',
+      description: 'Engagement score calculated from attendee questions and networking.'
+    }
+  ];
+
+  // Helper for rendering Lucide icons by name, so we stay inside allowed lucide list
+  const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+    'network': require('lucide-react').Network,
+    'handshake': require('lucide-react').Handshake,
+    'trending-up': require('lucide-react').TrendingUp,
+    'bar-chart': require('lucide-react').BarChart4,
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Hero Section */}
@@ -126,6 +153,27 @@ const AdminDashboardContent = () => {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Extra Metrics Section */}
+      <div className="mt-4 grid md:grid-cols-2 gap-6">
+        {extraMetrics.map((metric) => {
+          const Icon = iconMap[metric.icon] || (() => null);
+          return (
+            <div key={metric.title} className={`bg-white/10 backdrop-blur-sm p-6 rounded-xl border border-white/10 flex flex-col gap-2`}>
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg bg-gradient-to-br ${metric.gradient}`}>
+                  <Icon className="h-6 w-6 text-white" />
+                </div>
+                <div className="text-lg font-medium text-white">{metric.title}</div>
+              </div>
+              <div className="text-4xl font-bold mt-2 text-white">
+                {isLoading ? <span className="inline-block w-14 h-10 rounded bg-white/20 animate-pulse" /> : metric.value ?? '0'}
+              </div>
+              <div className="text-sm text-primary-200">{metric.description}</div>
+            </div>
+          );
+        })}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-5">

@@ -159,6 +159,11 @@ const AdminSpeakersContent = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
+      {/* Event Selector */}
+      <div className="flex justify-between items-center">
+        <EventSelector />
+      </div>
+
       {/* Gradient Hero Section */}
       <div className="p-8 rounded-2xl bg-gradient-to-br from-primary-100 via-purple-100 to-blue-50 text-primary-900 dark:text-white shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
         <div className="absolute -top-12 -right-10 w-56 h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
@@ -190,13 +195,31 @@ const AdminSpeakersContent = () => {
               </div>
             </div>
           </div>
-          <Button onClick={() => setIsCreating(true)} variant="gradient" className="shadow hover-scale">
+          <Button 
+            onClick={() => setIsCreating(true)} 
+            variant="gradient" 
+            className="shadow hover-scale"
+            disabled={!selectedEventId}
+          >
             Add Speaker
           </Button>
         </div>
 
+        {/* Show message when no event is selected */}
+        {!selectedEventId && (
+          <div className="text-center py-12">
+            <div className="p-4 rounded-full bg-primary/10 inline-block mb-4">
+              <svg className="h-8 w-8 text-primary" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </div>
+            <p className="text-muted-foreground text-lg mb-2">No event selected</p>
+            <p className="text-sm text-muted-foreground">Please select an event above to manage its speakers</p>
+          </div>
+        )}
+
         {/* Add/Edit Speaker Form */}
-        {isCreating && (
+        {isCreating && selectedEventId && (
           <Card className="mb-6 glass-card bg-gradient-to-br from-white/90 via-primary-50/70 to-primary-100/60 transition-all animate-fade-in shadow-lg">
             <CardHeader>
               <CardTitle>{editingSpeaker ? 'Edit Speaker' : 'Add New Speaker'}</CardTitle>
@@ -313,11 +336,13 @@ const AdminSpeakersContent = () => {
         )}
 
         {/* Table with Modern Styling */}
-        <SpeakersTable
-          speakers={speakers}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        {selectedEventId && (
+          <SpeakersTable
+            speakers={speakers}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        )}
       </div>
     </div>
   );

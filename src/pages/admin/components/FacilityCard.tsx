@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -19,7 +18,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
 import { Facility } from "@/hooks/useAdminFacilities";
@@ -150,5 +148,4 @@ const FacilityCard: React.FC<FacilityCardProps> = ({
     </Card>
   );
 };
-
 export default FacilityCard;

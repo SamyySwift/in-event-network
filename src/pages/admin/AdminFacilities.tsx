@@ -1,10 +1,10 @@
-
 import React, { useState } from "react";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import FacilityStatsCards from "./components/FacilityStatsCards";
 import FacilityCard from "./components/FacilityCard";
 import CreateFacilityDialog from "@/components/admin/CreateFacilityDialog";
 import EventSelector from "@/components/admin/EventSelector";
+import EditFacilityDialog from "@/components/admin/EditFacilityDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus } from "lucide-react";
@@ -29,6 +29,8 @@ function getFacilityStats(facilities: Facility[]) {
 
 const AdminFacilitiesContent = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [editingFacility, setEditingFacility] = useState<Facility | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const { selectedEventId, selectedEvent, adminEvents, isLoading: eventsLoading } = useAdminEventContext();
   const {
@@ -36,8 +38,10 @@ const AdminFacilitiesContent = () => {
     isLoading,
     error,
     createFacility,
+    updateFacility,
     deleteFacility,
     isCreating,
+    isUpdating,
     isDeleting
   } = useAdminFacilities(selectedEventId || undefined);
 
@@ -183,13 +187,17 @@ const AdminFacilitiesContent = () => {
           <div className="space-y-4">
             {filteredFacilities.length > 0 ? (
               filteredFacilities.map(facility => (
-                <FacilityCard
-                  key={facility.id}
-                  facility={facility}
-                  isDeleting={isDeleting}
-                  onEdit={() => {/* can implement edit modal later */}}
-                  onDelete={(facility) => deleteFacility(facility.id)}
-                />
+                <React.Fragment key={facility.id}>
+                  <FacilityCard
+                    facility={facility}
+                    isDeleting={isDeleting}
+                    onEdit={(fac) => {
+                      setEditingFacility(fac);
+                      setEditDialogOpen(true);
+                    }}
+                    onDelete={facility => deleteFacility(facility.id)}
+                  />
+                </React.Fragment>
               ))
             ) : (
               <div className="text-center py-8">
@@ -224,6 +232,30 @@ const AdminFacilitiesContent = () => {
               </div>
             )}
           </div>
+
+          {/* Edit Facility Dialog */}
+          <EditFacilityDialog
+            facility={editingFacility}
+            events={adminEvents}
+            isUpdating={isUpdating}
+            open={editDialogOpen}
+            onClose={() => setEditDialogOpen(false)}
+            onSubmit={form => {
+              if (!editingFacility) return;
+              updateFacility({
+                id: editingFacility.id,
+                name: form.name,
+                description: form.description,
+                location: form.location,
+                rules: form.rules,
+                contact_type: form.contactType,
+                contact_info: form.contactInfo,
+                icon_type: form.iconType,
+                event_id: form.eventId,
+              });
+              setEditDialogOpen(false);
+            }}
+          />
         </>
       )}
     </div>

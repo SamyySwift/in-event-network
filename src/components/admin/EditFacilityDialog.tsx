@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   Dialog,
@@ -7,7 +8,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,6 +15,7 @@ import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Facility } from "@/hooks/useAdminFacilities";
 
 const formSchema = z.object({
   name: z.string().min(2, { message: "Facility name must be at least 2 characters." }),
@@ -29,12 +30,13 @@ const formSchema = z.object({
 
 type FormData = z.infer<typeof formSchema>;
 
-type CreateFacilityDialogProps = {
-  onSubmit: (form: FormData) => void;
+type EditFacilityDialogProps = {
+  facility: Facility | null;
   events: { id: string; name: string }[];
-  defaultEventId?: string;
-  isCreating: boolean;
-  children?: React.ReactNode;
+  isUpdating: boolean;
+  onSubmit: (form: FormData) => void;
+  onClose: () => void;
+  open: boolean;
 };
 
 const iconTypes = [
@@ -43,15 +45,14 @@ const iconTypes = [
   { value: "phone", label: "Phone" },
 ];
 
-const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
-  children,
-  onSubmit,
+const EditFacilityDialog: React.FC<EditFacilityDialogProps> = ({
+  facility,
   events,
-  defaultEventId,
-  isCreating,
+  isUpdating,
+  onSubmit,
+  onClose,
+  open
 }) => {
-  const [open, setOpen] = useState(false);
-
   const {
     register, handleSubmit, setValue, watch, reset, formState: { errors }
   } = useForm<FormData>({
@@ -64,41 +65,38 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
       contactType: "none",
       contactInfo: "",
       iconType: "building",
-      eventId: defaultEventId || "",
+      eventId: events[0]?.id || "",
     },
   });
 
-  // keep eventId in sync with external change
+  // Populate form when facility changes
   useEffect(() => {
-    if (defaultEventId) setValue("eventId", defaultEventId);
-  }, [defaultEventId, setValue]);
-
-  // Always reset form when dialog is closed
-  useEffect(() => {
-    if (!open) reset();
-  }, [open, reset]);
+    if (facility) {
+      reset({
+        name: facility.name || "",
+        description: facility.description || "",
+        location: facility.location || "",
+        rules: facility.rules || "",
+        contactType: facility.contact_type || "none",
+        contactInfo: facility.contact_info || "",
+        iconType: facility.icon_type || "building",
+        eventId: facility.event_id || events[0]?.id || ""
+      });
+    }
+  }, [facility, reset, events]);
 
   const contactType = watch("contactType");
   const selectedIcon = watch("iconType");
 
   const handleDialogSubmit = (data: FormData) => {
     onSubmit(data);
-    setOpen(false); // close on submit
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {children || (
-          <Button>
-            <Plus size={16} className="mr-1" />
-            Add Facility
-          </Button>
-        )}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={(open) => (!open ? onClose() : undefined)}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Facility</DialogTitle>
+          <DialogTitle>Edit Facility</DialogTitle>
         </DialogHeader>
         <form
           onSubmit={handleSubmit(handleDialogSubmit)}
@@ -109,8 +107,8 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
             <Label htmlFor="eventId">Event *</Label>
             <Select
               value={watch("eventId")}
-              onValueChange={(val) => setValue("eventId", val, { shouldValidate: true })}
-              disabled={isCreating}
+              onValueChange={val => setValue("eventId", val, { shouldValidate: true })}
+              disabled={isUpdating}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select event" />
@@ -127,24 +125,24 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
           </div>
           <div>
             <Label htmlFor="name">Facility Name *</Label>
-            <Input id="name" {...register("name")} placeholder="Enter facility name" disabled={isCreating} />
+            <Input id="name" {...register("name")} placeholder="Enter facility name" disabled={isUpdating} />
             {errors.name?.message && <p className="text-sm text-destructive">{errors.name.message}</p>}
           </div>
           <div>
             <Label htmlFor="description">Description</Label>
-            <Textarea id="description" {...register("description")} placeholder="Enter facility description" rows={2} disabled={isCreating} />
+            <Textarea id="description" {...register("description")} placeholder="Enter facility description" rows={2} disabled={isUpdating} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="location">Location</Label>
-              <Input id="location" {...register("location")} placeholder="Enter facility location" disabled={isCreating} />
+              <Input id="location" {...register("location")} placeholder="Enter facility location" disabled={isUpdating} />
             </div>
             <div>
               <Label>Icon</Label>
               <Select
                 value={selectedIcon}
                 onValueChange={val => setValue("iconType", val)}
-                disabled={isCreating}
+                disabled={isUpdating}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select icon" />
@@ -161,7 +159,7 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
           </div>
           <div>
             <Label htmlFor="rules">Rules (Optional)</Label>
-            <Textarea id="rules" {...register("rules")} placeholder="Enter rules and guidelines" rows={2} disabled={isCreating} />
+            <Textarea id="rules" {...register("rules")} placeholder="Enter rules and guidelines" rows={2} disabled={isUpdating} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -169,7 +167,7 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
               <Select
                 value={contactType}
                 onValueChange={val => setValue("contactType", val as "none" | "phone" | "whatsapp")}
-                disabled={isCreating}
+                disabled={isUpdating}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select contact type" />
@@ -184,15 +182,15 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
             {(contactType === "phone" || contactType === "whatsapp") && (
               <div>
                 <Label htmlFor="contactInfo">Contact Number</Label>
-                <Input id="contactInfo" {...register("contactInfo")} placeholder="Enter phone number" disabled={isCreating} />
+                <Input id="contactInfo" {...register("contactInfo")} placeholder="Enter phone number" disabled={isUpdating} />
                 {errors.contactInfo?.message && (
                   <p className="text-sm text-destructive">{errors.contactInfo.message}</p>
                 )}
               </div>
             )}
           </div>
-          <Button type="submit" disabled={isCreating} className="w-full">
-            {isCreating ? "Creating..." : "Create Facility"}
+          <Button type="submit" disabled={isUpdating} className="w-full">
+            {isUpdating ? "Saving..." : "Save Changes"}
           </Button>
         </form>
       </DialogContent>
@@ -200,4 +198,4 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
   );
 };
 
-export default CreateFacilityDialog;
+export default EditFacilityDialog;

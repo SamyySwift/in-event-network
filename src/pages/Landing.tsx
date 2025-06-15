@@ -10,8 +10,6 @@ import { HeroGeometric } from "@/components/ui/shape-landing-hero";
 import { cn } from "@/lib/utils";
 import { Instagram, Mail } from "lucide-react";
 import XLogo from "@/components/icons/XLogo";
-import FeatureCard from "@/components/landing/FeatureCard";
-import ListItem from "@/components/landing/ListItem";
 import LandingFooter from "@/components/landing/LandingFooter";
 const Landing = () => {
   const [showScanner, setShowScanner] = useState(false);
@@ -406,55 +404,4 @@ const Landing = () => {
     </div>;
 };
 
-// Feature Card Component
-interface FeatureCardProps {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  gradient: string;
-  borderGradient: string;
-}
-const FeatureCard: React.FC<FeatureCardProps> = ({
-  icon,
-  title,
-  description,
-  gradient,
-  borderGradient
-}) => <div className={`relative group p-6 rounded-xl bg-gradient-to-br ${gradient} backdrop-blur-sm border border-white/10 hover:border-white/20 transition-all duration-300 hover:transform hover:scale-105 hover:shadow-2xl`}>
-    <div className={`absolute inset-0 rounded-xl bg-gradient-to-r ${borderGradient} opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-xl`}></div>
-    <div className="relative z-10">
-      <div className="w-12 h-12 bg-white/10 rounded-lg flex items-center justify-center mb-4 text-cyan-400">
-        {icon}
-      </div>
-      <h3 className="text-xl font-semibold mb-3 text-white">{title}</h3>
-      <p className="text-white/60 leading-relaxed">{description}</p>
-    </div>
-  </div>;
-
-// NavigationMenu component helper
-const ListItem = React.forwardRef<React.ElementRef<"a">, React.ComponentPropsWithoutRef<"a"> & {
-  title: string;
-  icon: React.ReactNode;
-}>(({
-  className,
-  title,
-  children,
-  icon,
-  ...props
-}, ref) => {
-  return <li>
-      <NavigationMenuLink asChild>
-        <a ref={ref} className={cn("block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-white/10 focus:bg-white/10 text-white", className)} {...props}>
-          <div className="text-sm font-medium leading-none flex items-center">
-            <span className="mr-2 text-cyan-400">{icon}</span>
-            {title}
-          </div>
-          <p className="line-clamp-2 text-sm leading-snug text-white/60">
-            {children}
-          </p>
-        </a>
-      </NavigationMenuLink>
-    </li>;
-});
-ListItem.displayName = "ListItem";
 export default Landing;

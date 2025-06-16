@@ -1,5 +1,4 @@
 
-
 import React, { useState } from 'react';
 import { PaystackButton } from 'react-paystack';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -68,13 +67,20 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     },
     onClose: () => {
       console.log('Payment closed');
+      // Don't automatically close the main modal here, let user decide
+    },
+    // This callback is triggered when Paystack modal opens
+    callback: (response: any) => {
+      console.log('Paystack callback:', response);
+      // Close the PaymentModal when Paystack opens to prevent z-index conflicts
+      onClose();
     },
   };
 
   if (isLoadingConfig) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md mx-4 sm:mx-auto">
           <div className="flex items-center justify-center py-8">
             <Loader className="h-8 w-8 animate-spin text-primary" />
           </div>
@@ -86,7 +92,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   if (!publicKey) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md mx-4 sm:mx-auto">
           <DialogHeader>
             <DialogTitle>Payment Configuration Error</DialogTitle>
             <DialogDescription>
@@ -101,30 +107,30 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-[9999]">
+      <DialogContent className="max-w-md mx-4 sm:mx-auto max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
             <CreditCard className="h-5 w-5 text-primary" />
             Event Payment Required
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm sm:text-base">
             Complete payment to unlock full access to your event features.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Event Details */}
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border">
-            <h3 className="font-semibold text-gray-900 mb-2">{eventName}</h3>
+          <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-3 sm:p-4 rounded-lg border">
+            <h3 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">{eventName}</h3>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-600">Event Access Fee</span>
-              <span className="text-xl font-bold text-primary">₦30,000</span>
+              <span className="text-xs sm:text-sm text-gray-600">Event Access Fee</span>
+              <span className="text-lg sm:text-xl font-bold text-primary">₦30,000</span>
             </div>
           </div>
 
           {/* Features Included */}
           <div className="space-y-3">
-            <h4 className="font-medium text-gray-900">What's included:</h4>
+            <h4 className="font-medium text-gray-900 text-sm sm:text-base">What's included:</h4>
             <div className="space-y-2">
               {[
                 'Unlimited attendees',
@@ -135,16 +141,16 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 '24/7 premium support'
               ].map((feature, index) => (
                 <div key={index} className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
-                  <span className="text-sm text-gray-600">{feature}</span>
+                  <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-500 flex-shrink-0" />
+                  <span className="text-xs sm:text-sm text-gray-600">{feature}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Security Info */}
-          <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-50 p-3 rounded-lg">
-            <Shield className="h-4 w-4" />
+          <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 bg-gray-50 p-2 sm:p-3 rounded-lg">
+            <Shield className="h-3 w-3 sm:h-4 sm:w-4" />
             <span>Secure payment powered by Paystack</span>
           </div>
 
@@ -152,7 +158,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           <div className="space-y-3">
             <PaystackButton
               {...paystackProps}
-              className="w-full bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white py-3 px-6 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 cursor-pointer"
+              className="w-full bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white py-2 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 cursor-pointer text-sm sm:text-base"
               disabled={isProcessing || isRecordingPayment}
             >
               {isProcessing || isRecordingPayment ? (
@@ -168,7 +174,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             <Button
               variant="outline"
               onClick={onClose}
-              className="w-full"
+              className="w-full text-sm sm:text-base py-2 sm:py-3"
               disabled={isProcessing || isRecordingPayment}
             >
               Cancel
@@ -185,4 +191,3 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 };
 
 export default PaymentModal;
-

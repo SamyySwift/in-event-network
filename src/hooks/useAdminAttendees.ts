@@ -30,6 +30,8 @@ export const useAdminAttendees = () => {
         throw new Error('User not authenticated');
       }
 
+      console.log('Fetching attendees for user:', currentUser.id);
+
       // Get current user's events
       const { data: events, error: eventsError } = await supabase
         .from('events')
@@ -47,13 +49,17 @@ export const useAdminAttendees = () => {
       }
 
       const eventIds = events.map(event => event.id);
+      console.log('Event IDs:', eventIds);
 
       // Fetch attendees from user's events with profile information
-      // Fix: Be more specific about the relationship using event_id
       const { data, error } = await supabase
         .from('event_participants')
         .select(`
-          *,
+          id,
+          event_id,
+          user_id,
+          created_at,
+          joined_at,
           profiles!event_participants_user_id_fkey(name, email, role),
           events!event_participants_event_id_fkey(name)
         `)
@@ -64,19 +70,22 @@ export const useAdminAttendees = () => {
         throw error;
       }
 
+      console.log('Raw attendees data:', data);
+
       // Transform the data to match the expected interface
       const transformedData = data?.map((item: any) => ({
         id: item.id,
         event_id: item.event_id,
         user_id: item.user_id,
         created_at: item.created_at,
-        name: item.profiles?.name || null,
-        email: item.profiles?.email || null,
-        role: item.profiles?.role || null,
-        event_name: item.events?.name || null,
+        name: item.profiles?.name || 'Unknown User',
+        email: item.profiles?.email || 'No Email',
+        role: item.profiles?.role || 'attendee',
+        event_name: item.events?.name || 'Unknown Event',
         joined_at: item.joined_at || item.created_at,
       })) as AttendeeWithProfile[];
 
+      console.log('Transformed attendees data:', transformedData);
       return transformedData;
     },
     enabled: !!currentUser?.id,

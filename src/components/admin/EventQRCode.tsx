@@ -56,9 +56,12 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
 
   const isPaid = isEventPaid(eventId);
 
+  console.log('EventQRCode - isPaid:', isPaid, 'eventId:', eventId);
+  console.log('EventQRCode - isLoadingPayments:', isLoadingPayments);
+
   if (isLoadingPayments) {
     return (
-      <div className="flex items-center justify-center h-20">
+      <div className="flex items-center justify-center h-16 mt-3">
         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
       </div>
     );
@@ -66,23 +69,23 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
 
   return (
     <>
-      <div className="flex items-center gap-2 mt-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mt-3">
         {isPaid ? (
           <Button
             onClick={() => setShowQRModal(true)}
             size="sm"
-            className="bg-gradient-to-r from-green-500 to-emerald-400 hover:from-green-600 hover:to-emerald-500 text-white"
+            className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-emerald-400 hover:from-green-600 hover:to-emerald-500 text-white text-xs sm:text-sm"
           >
-            <QrCode className="h-4 w-4 mr-2" />
+            <QrCode className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
             Generate QR Code
           </Button>
         ) : (
           <Button
             onClick={() => setShowPaymentModal(true)}
             size="sm"
-            className="bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700"
+            className="w-full sm:w-auto bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-xs sm:text-sm"
           >
-            <CreditCard className="h-4 w-4 mr-2" />
+            <CreditCard className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
             Pay Now (₦30,000)
           </Button>
         )}
@@ -96,27 +99,27 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
         eventName={eventName}
         onPaymentSuccess={() => {
           setShowPaymentModal(false);
-          // Optionally refresh the page or trigger a re-render
+          // Force a refresh of payment status
           window.location.reload();
         }}
       />
 
       {/* QR Code Modal */}
       <Dialog open={showQRModal} onOpenChange={setShowQRModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="w-[95vw] max-w-md mx-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2 text-lg">
               <QrCode className="h-5 w-5 text-primary" />
               Event Registration QR Code
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-sm">
               Share this QR code for easy event registration.
             </DialogDescription>
           </DialogHeader>
 
           <div className="flex flex-col items-center space-y-4">
             {userProfile?.access_key ? (
-              <div id="qr-canvas">
+              <div id="qr-canvas" className="w-full flex justify-center">
                 <QRCodeGenerator
                   eventName={eventName}
                   eventUrl={`${window.location.origin}/register?code=${userProfile.access_key}`}
@@ -128,12 +131,12 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
               </div>
             )}
 
-            <div className="flex gap-3 w-full">
-              <Button onClick={handleDownloadQR} className="flex-1">
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <Button onClick={handleDownloadQR} className="flex-1 text-sm">
                 <Download className="h-4 w-4 mr-2" />
                 Download QR Code
               </Button>
-              <Button variant="outline" onClick={() => setShowQRModal(false)} className="flex-1">
+              <Button variant="outline" onClick={() => setShowQRModal(false)} className="flex-1 text-sm">
                 Close
               </Button>
             </div>

@@ -16,7 +16,11 @@ const AdminAttendeesContent = () => {
   const [filterRole, setFilterRole] = useState<string>('all');
   const { currentUser } = useAuth();
   const { selectedEvent, selectedEventId } = useAdminEventContext();
-  const { attendees, isLoading } = useAdminAttendees();
+  const { attendees, isLoading, error } = useAdminAttendees();
+
+  console.log('AdminAttendees - attendees:', attendees);
+  console.log('AdminAttendees - isLoading:', isLoading);
+  console.log('AdminAttendees - error:', error);
 
   // Calculate metrics for stats cards
   const total = attendees.length;
@@ -25,8 +29,11 @@ const AdminAttendeesContent = () => {
 
   // Filter attendees based on search and role
   const filteredAttendees = attendees.filter(attendee => {
-    const matchesSearch = attendee.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         attendee.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const name = attendee.name || '';
+    const email = attendee.email || '';
+    
+    const matchesSearch = name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         email.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = filterRole === 'all' || attendee.role === filterRole;
     return matchesSearch && matchesRole;
   });
@@ -47,6 +54,26 @@ const AdminAttendeesContent = () => {
         />
         <div className="h-24 flex items-center justify-center">
           <Loader className="animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-8 animate-fade-in">
+        {/* Event Selector */}
+        <div className="flex justify-between items-center">
+          <EventSelector />
+        </div>
+        <div className="text-center py-12">
+          <div className="p-4 rounded-full bg-red-100 inline-block mb-4">
+            <svg className="h-8 w-8 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <p className="text-red-600 text-lg mb-2">Error loading attendees</p>
+          <p className="text-sm text-muted-foreground">{error?.message || 'Please try refreshing the page'}</p>
         </div>
       </div>
     );

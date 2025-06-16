@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { PaystackButton } from 'react-paystack';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -73,7 +74,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   if (isLoadingConfig) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-md z-[100]">
+        <DialogContent className="max-w-md">
           <div className="flex items-center justify-center py-8">
             <Loader className="h-8 w-8 animate-spin text-primary" />
           </div>
@@ -85,7 +86,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   if (!publicKey) {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="max-w-md z-[100]">
+        <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Payment Configuration Error</DialogTitle>
             <DialogDescription>
@@ -100,7 +101,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md z-[100] relative">
+      <DialogContent className="max-w-md fixed left-[50%] top-[50%] translate-x-[-50%] translate-y-[-50%] z-[9999]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-primary" />
@@ -111,7 +112,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 relative z-[101]">
+        <div className="space-y-6">
           {/* Event Details */}
           <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg border">
             <h3 className="font-semibold text-gray-900 mb-2">{eventName}</h3>
@@ -148,28 +149,26 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           </div>
 
           {/* Payment Button */}
-          <div className="space-y-3 relative z-[102]">
-            <div className="relative z-[103]">
-              <PaystackButton
-                {...paystackProps}
-                className="w-full bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white py-3 px-6 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 relative z-[104] cursor-pointer"
-                disabled={isProcessing || isRecordingPayment}
-              >
-                {isProcessing || isRecordingPayment ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader className="h-4 w-4 animate-spin" />
-                    Processing...
-                  </div>
-                ) : (
-                  'Pay ₦30,000'
-                )}
-              </PaystackButton>
-            </div>
+          <div className="space-y-3">
+            <PaystackButton
+              {...paystackProps}
+              className="w-full bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white py-3 px-6 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 cursor-pointer"
+              disabled={isProcessing || isRecordingPayment}
+            >
+              {isProcessing || isRecordingPayment ? (
+                <div className="flex items-center justify-center gap-2">
+                  <Loader className="h-4 w-4 animate-spin" />
+                  Processing...
+                </div>
+              ) : (
+                'Pay ₦30,000'
+              )}
+            </PaystackButton>
 
             <Button
               variant="outline"
               onClick={onClose}
-              className="w-full relative z-[103]"
+              className="w-full"
               disabled={isProcessing || isRecordingPayment}
             >
               Cancel
@@ -186,3 +185,4 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 };
 
 export default PaymentModal;
+

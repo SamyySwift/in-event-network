@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -50,12 +49,13 @@ export const useAdminAttendees = () => {
       const eventIds = events.map(event => event.id);
 
       // Fetch attendees from user's events with profile information
+      // Fix: Be more specific about the relationship using event_id
       const { data, error } = await supabase
         .from('event_participants')
         .select(`
           *,
-          profiles!inner(name, email, role),
-          events!inner(name)
+          profiles!event_participants_user_id_fkey(name, email, role),
+          events!event_participants_event_id_fkey(name)
         `)
         .in('event_id', eventIds);
 

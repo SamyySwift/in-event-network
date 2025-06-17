@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -57,45 +56,68 @@ export const useAdminAttendees = () => {
         throw new Error('Event not found or you do not have permission to view its attendees');
       }
 
-      // Fetch attendees for this specific event with profile information
-      const { data, error } = await supabase
-        .from('event_participants')
-        .select(`
-          id,
-          event_id,
-          user_id,
-          created_at,
-          joined_at,
-          profiles (
-            name,
-            email,
-            role
-          )
-        `)
-        .eq('event_id', selectedEventId);
+      // Use a raw SQL query to join the tables explicitly
+      const { data, error } = await supabase.rpc('get_event_attendees_with_profiles', {
+        p_event_id: selectedEventId
+      });
 
       if (error) {
-        console.error('Error fetching attendees:', error);
-        throw error;
+        console.error('Error fetching attendees with RPC:', error);
+        // Fallback to manual query if RPC fails
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('event_participants')
+          .select(`
+            id,
+            event_id,
+            user_id,
+            created_at,
+            joined_at
+          `)
+          .eq('event_id', selectedEventId);
+
+        if (fallbackError) {
+          console.error('Fallback query also failed:', fallbackError);
+          throw fallbackError;
+        }
+
+        // Get profile data separately
+        const userIds = fallbackData?.map(p => p.user_id) || [];
+        if (userIds.length === 0) {
+          return [];
+        }
+
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, name, email, role')
+          .in('id', userIds);
+
+        if (profilesError) {
+          console.error('Error fetching profiles:', profilesError);
+          throw profilesError;
+        }
+
+        // Manually join the data
+        const transformedData = fallbackData?.map((participant: any) => {
+          const profile = profiles?.find(p => p.id === participant.user_id);
+          return {
+            id: participant.id,
+            event_id: participant.event_id,
+            user_id: participant.user_id,
+            created_at: participant.created_at,
+            name: profile?.name || 'Unknown User',
+            email: profile?.email || 'No Email',
+            role: profile?.role || 'attendee',
+            event_name: event.name,
+            joined_at: participant.joined_at || participant.created_at,
+          };
+        }) as AttendeeWithProfile[];
+
+        console.log('Fallback transformed attendees data:', transformedData);
+        return transformedData;
       }
 
-      console.log('Raw attendees data:', data);
-
-      // Transform the data to match the expected interface
-      const transformedData = data?.map((item: any) => ({
-        id: item.id,
-        event_id: item.event_id,
-        user_id: item.user_id,
-        created_at: item.created_at,
-        name: item.profiles?.name || 'Unknown User',
-        email: item.profiles?.email || 'No Email',
-        role: item.profiles?.role || 'attendee',
-        event_name: event.name,
-        joined_at: item.joined_at || item.created_at,
-      })) as AttendeeWithProfile[];
-
-      console.log('Transformed attendees data:', transformedData);
-      return transformedData;
+      console.log('RPC attendees data:', data);
+      return data as AttendeeWithProfile[];
     },
     enabled: !!currentUser?.id && !!selectedEventId,
   });

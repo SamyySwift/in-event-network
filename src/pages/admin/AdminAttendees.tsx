@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import EventSelector from '@/components/admin/EventSelector';
@@ -17,7 +18,6 @@ const AdminAttendeesContent = () => {
   const { selectedEvent, selectedEventId } = useAdminEventContext();
   const { attendees, isLoading, error } = useAdminAttendees();
 
-  console.log('AdminAttendees - selectedEventId:', selectedEventId);
   console.log('AdminAttendees - attendees:', attendees);
   console.log('AdminAttendees - isLoading:', isLoading);
   console.log('AdminAttendees - error:', error);
@@ -37,6 +37,47 @@ const AdminAttendeesContent = () => {
     const matchesRole = filterRole === 'all' || attendee.role === filterRole;
     return matchesSearch && matchesRole;
   });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-8 animate-fade-in">
+        {/* Event Selector */}
+        <div className="flex justify-between items-center">
+          <EventSelector />
+        </div>
+        <AttendeeHero
+          eventName={selectedEvent?.name ?? "your event"}
+          total={0}
+          technical={0}
+          business={0}
+          loading
+        />
+        <div className="h-24 flex items-center justify-center">
+          <Loader className="animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-8 animate-fade-in">
+        {/* Event Selector */}
+        <div className="flex justify-between items-center">
+          <EventSelector />
+        </div>
+        <div className="text-center py-12">
+          <div className="p-4 rounded-full bg-red-100 inline-block mb-4">
+            <svg className="h-8 w-8 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <p className="text-red-600 text-lg mb-2">Error loading attendees</p>
+          <p className="text-sm text-muted-foreground">{error?.message || 'Please try refreshing the page'}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -58,44 +99,15 @@ const AdminAttendeesContent = () => {
         </div>
       )}
 
-      {/* Show loading state when an event is selected and loading */}
-      {selectedEventId && isLoading && (
-        <div className="space-y-8">
-          <AttendeeHero
-            eventName={selectedEvent?.name ?? "your event"}
-            total={0}
-            technical={0}
-            business={0}
-            loading
-          />
-          <div className="h-24 flex items-center justify-center">
-            <Loader className="animate-spin" />
-          </div>
-        </div>
-      )}
-
-      {/* Show error state */}
-      {selectedEventId && error && (
-        <div className="text-center py-12">
-          <div className="p-4 rounded-full bg-red-100 inline-block mb-4">
-            <svg className="h-8 w-8 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-            </svg>
-          </div>
-          <p className="text-red-600 text-lg mb-2">Error loading attendees</p>
-          <p className="text-sm text-muted-foreground">{error?.message || 'Please try refreshing the page'}</p>
-        </div>
-      )}
-
-      {/* Show content when event is selected and data is loaded */}
-      {selectedEventId && !isLoading && !error && (
+      {/* Only show content when an event is selected */}
+      {selectedEventId && (
         <>
           <AttendeeHero
             eventName={selectedEvent?.name ?? ''}
             total={total}
             technical={technical}
             business={business}
-            loading={false}
+            loading={isLoading}
           />
 
           <AttendeeManagementSection eventName={selectedEvent?.name ?? ''}>

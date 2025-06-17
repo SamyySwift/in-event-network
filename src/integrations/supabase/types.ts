@@ -295,13 +295,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fk_event_participants_event"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "fk_event_participants_event_id"
             columns: ["event_id"]
             isOneToOne: false
@@ -317,20 +310,6 @@ export type Database = {
           },
           {
             foreignKeyName: "fk_event_participants_user_id"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_event_participants_user_profile"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_event_participants_user_profile"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"
@@ -1136,20 +1115,6 @@ export type Database = {
       get_current_user_role: {
         Args: Record<PropertyKey, never>
         Returns: string
-      }
-      get_event_attendees_with_profiles: {
-        Args: { p_event_id: string }
-        Returns: {
-          id: string
-          event_id: string
-          user_id: string
-          created_at: string
-          joined_at: string
-          name: string
-          email: string
-          role: string
-          event_name: string
-        }[]
       }
       get_poll_with_results: {
         Args: { poll_uuid: string }

@@ -1137,20 +1137,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
-      get_event_attendees_with_profiles: {
-        Args: { p_event_id: string }
-        Returns: {
-          id: string
-          event_id: string
-          user_id: string
-          created_at: string
-          joined_at: string
-          name: string
-          email: string
-          role: string
-          event_name: string
-        }[]
-      }
       get_poll_with_results: {
         Args: { poll_uuid: string }
         Returns: Json

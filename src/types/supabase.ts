@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -136,76 +135,6 @@ export interface Database {
           updated_at?: string;
         };
       };
-      event_participants: {
-        Row: {
-          id: string;
-          event_id: string;
-          user_id: string;
-          created_at: string;
-          joined_at: string;
-        };
-        Insert: {
-          id?: string;
-          event_id: string;
-          user_id: string;
-          created_at?: string;
-          joined_at?: string;
-        };
-        Update: {
-          id?: string;
-          event_id?: string;
-          user_id?: string;
-          created_at?: string;
-          joined_at?: string;
-        };
-      };
-      events: {
-        Row: {
-          id: string;
-          name: string;
-          description?: string;
-          start_time: string;
-          end_time: string;
-          location?: string;
-          host_id?: string;
-          event_key?: string;
-          logo_url?: string;
-          banner_url?: string;
-          website?: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          name: string;
-          description?: string;
-          start_time: string;
-          end_time: string;
-          location?: string;
-          host_id?: string;
-          event_key?: string;
-          logo_url?: string;
-          banner_url?: string;
-          website?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          name?: string;
-          description?: string;
-          start_time?: string;
-          end_time?: string;
-          location?: string;
-          host_id?: string;
-          event_key?: string;
-          logo_url?: string;
-          banner_url?: string;
-          website?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
       profiles: {
         Row: {
           id: string;
@@ -226,8 +155,6 @@ export interface Database {
           tiktok_link: string | null;
           github_link: string | null;
           website_link: string | null;
-          current_event_id: string | null;
-          access_key: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -250,8 +177,6 @@ export interface Database {
           tiktok_link?: string | null;
           github_link?: string | null;
           website_link?: string | null;
-          current_event_id?: string | null;
-          access_key?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -274,8 +199,6 @@ export interface Database {
           tiktok_link?: string | null;
           github_link?: string | null;
           website_link?: string | null;
-          current_event_id?: string | null;
-          access_key?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -355,22 +278,6 @@ export interface Database {
       };
     };
     Functions: {
-      get_event_attendees_with_profiles: {
-        Args: {
-          p_event_id: string;
-        };
-        Returns: {
-          id: string;
-          event_id: string;
-          user_id: string;
-          created_at: string;
-          joined_at: string;
-          name: string | null;
-          email: string | null;
-          role: string | null;
-          event_name: string | null;
-        }[];
-      };
       [_ in never]: never;
     };
     Enums: {

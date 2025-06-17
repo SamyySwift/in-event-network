@@ -56,7 +56,7 @@ export const useAdminAttendees = () => {
         throw new Error('Event not found or you do not have permission to view its attendees');
       }
 
-      // Use the RPC function to get attendees with profile information
+      // Use a raw SQL query to join the tables explicitly
       const { data, error } = await supabase.rpc('get_event_attendees_with_profiles', {
         p_event_id: selectedEventId
       });
@@ -116,21 +116,8 @@ export const useAdminAttendees = () => {
         return transformedData;
       }
 
-      // Transform RPC data to match our interface
-      const transformedData = data?.map((item: any) => ({
-        id: item.id,
-        event_id: item.event_id,
-        user_id: item.user_id,
-        created_at: item.created_at,
-        name: item.name || 'Unknown User',
-        email: item.email || 'No Email',
-        role: item.role || 'attendee',
-        event_name: item.event_name || event.name,
-        joined_at: item.joined_at || item.created_at,
-      })) as AttendeeWithProfile[];
-
-      console.log('RPC attendees data:', transformedData);
-      return transformedData;
+      console.log('RPC attendees data:', data);
+      return data as AttendeeWithProfile[];
     },
     enabled: !!currentUser?.id && !!selectedEventId,
   });

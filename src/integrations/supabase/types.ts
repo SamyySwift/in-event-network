@@ -295,13 +295,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "fk_event_participants_event"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "fk_event_participants_event_id"
             columns: ["event_id"]
             isOneToOne: false
@@ -317,20 +310,6 @@ export type Database = {
           },
           {
             foreignKeyName: "fk_event_participants_user_id"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_event_participants_user_profile"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_event_participants_user_profile"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "public_profiles"

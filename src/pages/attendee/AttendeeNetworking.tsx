@@ -17,6 +17,7 @@ import {
   Network,
   Heart,
   MapPin,
+  AlertCircle,
 } from "lucide-react";
 import AppLayout from "@/components/layouts/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -50,8 +51,13 @@ const AttendeeNetworking = () => {
     userPhoto?: string;
   } | null>(null);
 
-  const { attendees: profiles, isLoading: loading } = useAttendeeNetworking();
+  const { attendees: profiles, isLoading: loading, error } = useAttendeeNetworking();
   const { sendConnectionRequest, getConnectionStatus, connections } = useNetworking();
+
+  console.log('AttendeeNetworking - currentEventId:', currentEventId);
+  console.log('AttendeeNetworking - profiles:', profiles);
+  console.log('AttendeeNetworking - loading:', loading);
+  console.log('AttendeeNetworking - error:', error);
 
   // Filter profiles based on search term
   const filteredProfiles = profiles.filter(profile =>
@@ -343,6 +349,58 @@ const AttendeeNetworking = () => {
               <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">
                 Loading amazing people...
               </p>
+            </div>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <AppLayout>
+        <div className="animate-fade-in max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-center">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                Error Loading Attendees
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                {error?.message || 'Failed to load attendee data'}
+              </p>
+              <Button
+                onClick={() => window.location.reload()}
+                className="bg-connect-600 hover:bg-connect-700 text-white"
+              >
+                Try Again
+              </Button>
+            </div>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!currentEventId) {
+    return (
+      <AppLayout>
+        <div className="animate-fade-in max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-center">
+              <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                No Event Selected
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
+                Please join an event to start networking with other attendees
+              </p>
+              <Button
+                onClick={() => navigate('/scan-qr')}
+                className="bg-connect-600 hover:bg-connect-700 text-white"
+              >
+                Join Event
+              </Button>
             </div>
           </div>
         </div>

@@ -16,6 +16,10 @@ const AttendeeEventContext = createContext<AttendeeEventContextType | undefined>
 export const AttendeeEventProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { context, isLoading, error } = useAttendeeContext();
 
+  console.log('AttendeeEventContext - context:', context);
+  console.log('AttendeeEventContext - isLoading:', isLoading);
+  console.log('AttendeeEventContext - error:', error);
+
   const value: AttendeeEventContextType = {
     currentEventId: context?.currentEventId || null,
     hostId: context?.hostId || null,
@@ -24,6 +28,8 @@ export const AttendeeEventProvider: React.FC<{ children: ReactNode }> = ({ child
     error,
     hasJoinedEvent: !!context?.currentEventId && !!context?.hostId,
   };
+
+  console.log('AttendeeEventContext - providing value:', value);
 
   return (
     <AttendeeEventContext.Provider value={value}>

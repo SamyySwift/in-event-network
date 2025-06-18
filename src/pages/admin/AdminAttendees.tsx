@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import EventSelector from '@/components/admin/EventSelector';
@@ -39,28 +40,28 @@ const AdminAttendeesContent = () => {
   });
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-6 sm:space-y-8 animate-fade-in px-2 sm:px-4 lg:px-6 max-w-full overflow-hidden">
       {/* Event Selector */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center w-full">
         <EventSelector />
       </div>
 
       {/* Show message when no event is selected */}
       {!selectedEventId && (
-        <div className="text-center py-12">
+        <div className="text-center py-8 sm:py-12">
           <div className="p-4 rounded-full bg-primary/10 inline-block mb-4">
-            <svg className="h-8 w-8 text-primary" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <svg className="h-6 w-6 sm:h-8 sm:w-8 text-primary" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z"/>
             </svg>
           </div>
-          <p className="text-muted-foreground text-lg mb-2">No event selected</p>
-          <p className="text-sm text-muted-foreground">Please select an event above to manage its attendees</p>
+          <p className="text-muted-foreground text-base sm:text-lg mb-2">No event selected</p>
+          <p className="text-xs sm:text-sm text-muted-foreground px-4">Please select an event above to manage its attendees</p>
         </div>
       )}
 
       {/* Show loading state when an event is selected and loading */}
       {selectedEventId && isLoading && (
-        <div className="space-y-8">
+        <div className="space-y-6 sm:space-y-8">
           <AttendeeHero
             eventName={selectedEvent?.name ?? "your event"}
             total={0}
@@ -76,14 +77,14 @@ const AdminAttendeesContent = () => {
 
       {/* Show error state */}
       {selectedEventId && error && (
-        <div className="text-center py-12">
+        <div className="text-center py-8 sm:py-12 px-4">
           <div className="p-4 rounded-full bg-red-100 inline-block mb-4">
-            <svg className="h-8 w-8 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <svg className="h-6 w-6 sm:h-8 sm:w-8 text-red-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
             </svg>
           </div>
-          <p className="text-red-600 text-lg mb-2">Error loading attendees</p>
-          <p className="text-sm text-muted-foreground">{error?.message || 'Please try refreshing the page'}</p>
+          <p className="text-red-600 text-base sm:text-lg mb-2">Error loading attendees</p>
+          <p className="text-xs sm:text-sm text-muted-foreground">{error?.message || 'Please try refreshing the page'}</p>
         </div>
       )}
 

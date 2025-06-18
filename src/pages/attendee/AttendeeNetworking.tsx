@@ -51,24 +51,30 @@ const AttendeeNetworking = () => {
     userPhoto?: string;
   } | null>(null);
 
-  const { attendees: profiles, isLoading: loading, error } = useAttendeeNetworking();
-  const { sendConnectionRequest, getConnectionStatus, connections } = useNetworking();
+  const {
+    attendees: profiles,
+    isLoading: loading,
+    error,
+  } = useAttendeeNetworking();
+  const { sendConnectionRequest, getConnectionStatus, connections } =
+    useNetworking();
 
-  console.log('AttendeeNetworking - currentEventId:', currentEventId);
-  console.log('AttendeeNetworking - profiles:', profiles);
-  console.log('AttendeeNetworking - loading:', loading);
-  console.log('AttendeeNetworking - error:', error);
+  console.log("AttendeeNetworking - currentEventId:", currentEventId);
+  console.log("AttendeeNetworking - profiles:", profiles);
+  console.log("AttendeeNetworking - loading:", loading);
+  console.log("AttendeeNetworking - error:", error);
 
   // Filter profiles based on search term
-  const filteredProfiles = profiles.filter(profile =>
-    profile.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    profile.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    profile.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    profile.niche?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredProfiles = profiles.filter(
+    (profile) =>
+      profile.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      profile.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      profile.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      profile.niche?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Get connected users
-  const connectedUsers = profiles.filter(profile => {
+  const connectedUsers = profiles.filter((profile) => {
     const connectionStatus = getConnectionStatus(profile.id);
     return connectionStatus?.status === "accepted";
   });
@@ -157,7 +163,7 @@ const AttendeeNetworking = () => {
         {/* Decorative Background Elements */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-connect-100/20 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-700" />
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-100/20 to-transparent rounded-full translate-y-12 -translate-x-12 group-hover:scale-125 transition-transform duration-700" />
-        
+
         <CardHeader className="relative z-10 pb-4">
           <div className="flex justify-between items-start">
             <div className="flex items-center space-x-4">
@@ -180,7 +186,7 @@ const AttendeeNetworking = () => {
                 </Avatar>
                 <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-400 rounded-full border-2 border-white dark:border-gray-800 animate-pulse" />
               </div>
-              
+
               <div className="flex-1">
                 <CardTitle className="text-xl text-gray-900 dark:text-white font-bold mb-1">
                   {profile.name || "Unknown"}
@@ -200,7 +206,7 @@ const AttendeeNetworking = () => {
             </div>
           </div>
         </CardHeader>
-        
+
         <CardContent className="relative z-10 space-y-6">
           {/* About Section */}
           {profile.bio && (
@@ -229,7 +235,9 @@ const AttendeeNetworking = () => {
             <div className="space-y-2">
               <div className="flex items-center space-x-2">
                 <Heart size={14} className="text-red-400" />
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Interests</span>
+                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                  Interests
+                </span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {profile.tags.slice(0, 3).map((tag: string, index: number) => (
@@ -254,33 +262,38 @@ const AttendeeNetworking = () => {
           )}
 
           {/* Networking Preferences */}
-          {profile.networking_preferences && profile.networking_preferences.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Network size={14} className="text-blue-400" />
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">Looking to connect with</span>
+          {profile.networking_preferences &&
+            profile.networking_preferences.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center space-x-2">
+                  <Network size={14} className="text-blue-400" />
+                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    Looking to connect with
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {profile.networking_preferences
+                    .slice(0, 2)
+                    .map((pref: string, index: number) => (
+                      <Badge
+                        key={index}
+                        variant="outline"
+                        className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 text-xs"
+                      >
+                        {pref}
+                      </Badge>
+                    ))}
+                  {profile.networking_preferences.length > 2 && (
+                    <Badge
+                      variant="outline"
+                      className="bg-gray-50 dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-600 text-xs"
+                    >
+                      +{profile.networking_preferences.length - 2} more
+                    </Badge>
+                  )}
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {profile.networking_preferences.slice(0, 2).map((pref: string, index: number) => (
-                  <Badge
-                    key={index}
-                    variant="outline"
-                    className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 text-xs"
-                  >
-                    {pref}
-                  </Badge>
-                ))}
-                {profile.networking_preferences.length > 2 && (
-                  <Badge
-                    variant="outline"
-                    className="bg-gray-50 dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-600 text-xs"
-                  >
-                    +{profile.networking_preferences.length - 2} more
-                  </Badge>
-                )}
-              </div>
-            </div>
-          )}
+            )}
 
           {/* Social Links */}
           {socialLinks.length > 0 && (
@@ -289,7 +302,7 @@ const AttendeeNetworking = () => {
                 {socialLinks.slice(0, 4).map((link, index) => (
                   <button
                     key={index}
-                    onClick={() => window.open(link.url, '_blank')}
+                    onClick={() => window.open(link.url, "_blank")}
                     className="p-2 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 hover:from-connect-100 hover:to-connect-200 transition-all duration-300 text-gray-600 dark:text-gray-300 hover:text-connect-600 dark:hover:text-connect-400 transform hover:scale-110"
                     title={`Follow on ${link.platform}`}
                   >
@@ -326,11 +339,7 @@ const AttendeeNetworking = () => {
                 disabled={isConnected || isPending}
               >
                 <UserPlus size={16} className="mr-2" />
-                {isPending
-                  ? "Pending"
-                  : isConnected
-                  ? "Connected"
-                  : "Connect"}
+                {isPending ? "Pending" : isConnected ? "Connected" : "Connect"}
               </Button>
             )}
           </div>
@@ -367,7 +376,7 @@ const AttendeeNetworking = () => {
                 Error Loading Attendees
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-4">
-                {error?.message || 'Failed to load attendee data'}
+                {error?.message || "Failed to load attendee data"}
               </p>
               <Button
                 onClick={() => window.location.reload()}
@@ -396,7 +405,7 @@ const AttendeeNetworking = () => {
                 Please join an event to start networking with other attendees
               </p>
               <Button
-                onClick={() => navigate('/scan-qr')}
+                onClick={() => navigate("/scan-qr")}
                 className="bg-connect-600 hover:bg-connect-700 text-white"
               >
                 Join Event
@@ -414,7 +423,10 @@ const AttendeeNetworking = () => {
         {/* Hero Section */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-connect-100 to-purple-100 dark:from-connect-900/30 dark:to-purple-900/30 px-4 py-2 rounded-full mb-4">
-            <Sparkles size={20} className="text-connect-600 dark:text-connect-400" />
+            <Sparkles
+              size={20}
+              className="text-connect-600 dark:text-connect-400"
+            />
             <span className="text-connect-700 dark:text-connect-300 font-medium text-sm">
               Event Networking Hub
             </span>
@@ -423,7 +435,8 @@ const AttendeeNetworking = () => {
             Connect & Collaborate
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
-            Discover amazing people, build meaningful connections, and expand your professional network
+            Discover amazing people, build meaningful connections, and expand
+            your professional network
           </p>
           <div className="mt-6 flex items-center justify-center space-x-6 text-sm text-gray-500 dark:text-gray-400">
             <div className="flex items-center space-x-2">
@@ -440,29 +453,29 @@ const AttendeeNetworking = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
             <TabsList className="grid grid-cols-4 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl p-1 shadow-lg">
-              <TabsTrigger 
-                value="people" 
+              <TabsTrigger
+                value="people"
                 className="flex items-center space-x-2 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-connect-500 data-[state=active]:to-connect-600 data-[state=active]:text-white transition-all duration-300"
               >
                 <UserPlus size={18} />
                 <span className="hidden sm:inline">Discover</span>
               </TabsTrigger>
-              <TabsTrigger 
-                value="connections" 
+              <TabsTrigger
+                value="connections"
                 className="flex items-center space-x-2 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-connect-500 data-[state=active]:to-connect-600 data-[state=active]:text-white transition-all duration-300"
               >
                 <Users size={18} />
                 <span className="hidden sm:inline">Network</span>
               </TabsTrigger>
-              <TabsTrigger 
-                value="chats" 
+              <TabsTrigger
+                value="chats"
                 className="flex items-center space-x-2 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-connect-500 data-[state=active]:to-connect-600 data-[state=active]:text-white transition-all duration-300"
               >
                 <MessageSquare size={18} />
                 <span className="hidden sm:inline">Chat Room</span>
               </TabsTrigger>
-              <TabsTrigger 
-                value="messages" 
+              <TabsTrigger
+                value="messages"
                 className="flex items-center space-x-2 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-connect-500 data-[state=active]:to-connect-600 data-[state=active]:text-white transition-all duration-300"
               >
                 <Send size={18} />
@@ -472,7 +485,10 @@ const AttendeeNetworking = () => {
 
             {activeTab === "people" && (
               <div className="relative mt-4 lg:mt-0 lg:w-80">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                <Search
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  size={20}
+                />
                 <Input
                   placeholder="Search attendees..."
                   value={searchTerm}
@@ -512,12 +528,17 @@ const AttendeeNetworking = () => {
           <TabsContent value="connections" className="space-y-8">
             {connectedUsers.length > 0 ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-                {connectedUsers.map((profile) => renderUserCard(profile, false))}
+                {connectedUsers.map((profile) =>
+                  renderUserCard(profile, false)
+                )}
               </div>
             ) : (
               <div className="text-center py-16">
                 <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-connect-100 to-purple-100 dark:from-connect-900/30 dark:to-purple-900/30 rounded-full flex items-center justify-center">
-                  <Users size={32} className="text-connect-600 dark:text-connect-400" />
+                  <Users
+                    size={32}
+                    className="text-connect-600 dark:text-connect-400"
+                  />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                   No connections yet

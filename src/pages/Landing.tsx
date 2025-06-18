@@ -4,8 +4,28 @@ import { Button } from "@/components/ui/button";
 import QRCodeScanner from "@/components/QRCodeScanner";
 import { useToast } from "@/hooks/use-toast";
 import { useJoinEvent } from "@/hooks/useJoinEvent";
-import { Users, Calendar, MapPin, Zap, ArrowRight, Sparkles, Network, Brain, Rocket, Globe, Shield, Star } from "lucide-react";
-import { NavigationMenu, NavigationMenuContent, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger } from "@/components/ui/navigation-menu";
+import {
+  Users,
+  Calendar,
+  MapPin,
+  Zap,
+  ArrowRight,
+  Sparkles,
+  Network,
+  Brain,
+  Rocket,
+  Globe,
+  Shield,
+  Star,
+} from "lucide-react";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
 import { HeroGeometric } from "@/components/ui/shape-landing-hero";
 import { cn } from "@/lib/utils";
 import { Instagram, Mail } from "lucide-react";
@@ -16,13 +36,8 @@ import ListItem from "@/components/landing/ListItem";
 const Landing = () => {
   const [showScanner, setShowScanner] = useState(false);
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
-  const {
-    joinEvent,
-    isJoining
-  } = useJoinEvent();
+  const { toast } = useToast();
+  const { joinEvent, isJoining } = useJoinEvent();
   const handleScanSuccess = (decodedText: string) => {
     console.log("QR Code decoded:", decodedText);
     setShowScanner(false);
@@ -58,7 +73,7 @@ const Landing = () => {
         toast({
           title: "Invalid QR Code",
           description: "This doesn't appear to be a valid Connect event code.",
-          variant: "destructive"
+          variant: "destructive",
         });
       }
     } catch (error) {
@@ -66,14 +81,15 @@ const Landing = () => {
       toast({
         title: "Invalid QR Code",
         description: "This doesn't appear to be a valid Connect event code.",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
   };
   const handleScanError = (error: string) => {
     console.error("QR Scanner error:", error);
   };
-  return <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-950 via-purple-950 to-blue-950 text-white overflow-hidden">
+  return (
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-950 via-purple-950 to-blue-950 text-white overflow-hidden">
       {/* Futuristic Header */}
       <header className="relative z-50 bg-black/20 backdrop-blur-xl border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
@@ -81,7 +97,9 @@ const Landing = () => {
             <div className="w-10 h-10 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-lg flex items-center justify-center">
               <Network className="h-6 w-6 text-white" />
             </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">Kconect</span>
+            <span className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+              Kconect
+            </span>
           </div>
 
           <div className="hidden md:flex items-center space-x-8">
@@ -107,21 +125,33 @@ const Landing = () => {
                           </a>
                         </NavigationMenuLink>
                       </li>
-                      <ListItem title="Neural Matching" icon={<Brain className="h-4 w-4" />}>
+                      <ListItem
+                        title="Neural Matching"
+                        icon={<Brain className="h-4 w-4" />}
+                      >
                         AI algorithms match you with perfect networking
                         opportunities
                       </ListItem>
-                      <ListItem title="Quantum Scheduling" icon={<Zap className="h-4 w-4" />}>
+                      <ListItem
+                        title="Quantum Scheduling"
+                        icon={<Zap className="h-4 w-4" />}
+                      >
                         Dynamic event scheduling that adapts in real-time
                       </ListItem>
-                      <ListItem title="Holographic Q&A" icon={<Globe className="h-4 w-4" />}>
+                      <ListItem
+                        title="Holographic Q&A"
+                        icon={<Globe className="h-4 w-4" />}
+                      >
                         Immersive interaction with speakers and attendees
                       </ListItem>
                     </ul>
                   </NavigationMenuContent>
                 </NavigationMenuItem>
                 <NavigationMenuItem>
-                  <Button variant="ghost" className="text-white/80 hover:text-white hover:bg-white/10">
+                  <Button
+                    variant="ghost"
+                    className="text-white/80 hover:text-white hover:bg-white/10"
+                  >
                     Pricing
                   </Button>
                 </NavigationMenuItem>
@@ -129,20 +159,36 @@ const Landing = () => {
             </NavigationMenu>
 
             <div className="flex space-x-3">
-              <Button variant="ghost" className="text-white/80 hover:text-white border border-white/20 hover:bg-white/10" onClick={() => navigate("/login")}>
+              <Button
+                variant="ghost"
+                className="text-white/80 hover:text-white border border-white/20 hover:bg-white/10"
+                onClick={() => navigate("/login")}
+              >
                 Sign In
               </Button>
-              <Button className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white shadow-lg shadow-purple-500/20" onClick={() => navigate("/register")}>
+              <Button
+                className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white shadow-lg shadow-purple-500/20"
+                onClick={() => navigate("/register")}
+              >
                 Launch Event
               </Button>
             </div>
           </div>
 
           <div className="flex md:hidden space-x-2">
-            <Button variant="ghost" size="sm" className="text-white/80" onClick={() => navigate("/login")}>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-white/80"
+              onClick={() => navigate("/login")}
+            >
               Sign In
             </Button>
-            <Button size="sm" className="bg-gradient-to-r from-cyan-500 to-purple-500" onClick={() => navigate("/register")}>
+            <Button
+              size="sm"
+              className="bg-gradient-to-r from-cyan-500 to-purple-500"
+              onClick={() => navigate("/register")}
+            >
               Launch
             </Button>
           </div>
@@ -233,7 +279,11 @@ const Landing = () => {
         </div>
        </section> */}
 
-      <HeroGeometric badge="The Future of Event Networking" title1="Smart Connect" title2="Events Reimagined" />
+      <HeroGeometric
+        badge="The Future of Event Networking"
+        title1="Smart Connect"
+        title2="Events Reimagined"
+      />
 
       {/* Features Section */}
       <section className="py-20 bg-black/20 backdrop-blur-sm border-y border-white/10">
@@ -319,7 +369,7 @@ const Landing = () => {
               </span>
             </h2>
             <p className="text-xl text-white/60 max-w-3xl mx-auto">
-              Get access to all premium features with our all-inclusive pricing. 
+              Get access to all premium features with our all-inclusive pricing.
               No hidden fees, no surprises.
             </p>
           </div>
@@ -328,14 +378,18 @@ const Landing = () => {
             <div className="relative group">
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-cyan-500/30 to-purple-500/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
               <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl p-8 rounded-2xl border border-white/20 hover:border-white/30 transition-all duration-300 hover:transform hover:scale-105 hover:shadow-2xl">
-                <div className="absolute top-4 right-4">
-                  <div className="bg-gradient-to-r from-cyan-500 to-purple-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
-                    Best Value
+                <div className="absolute top-0 right-0">
+                  <div className="bg-gradient-to-r from-cyan-500 to-purple-500 text-white text-xs font-semibold px-3 py-1 rounded-bl">
+                    Premium Plan
                   </div>
                 </div>
-                
+
                 <div className="text-center mb-8">
-                  <h3 className="text-2xl font-bold text-white mb-2">Premium Plan</h3>
+                  <h3 className="text-3xl font-bold text-white mb-2 relative">
+                    <span className="line-through decoration-2 opacity-50">
+                      ₦100,000
+                    </span>
+                  </h3>
                   <div className="flex items-center justify-center mb-4">
                     <span className="text-5xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
                       ₦30,000
@@ -355,25 +409,33 @@ const Landing = () => {
                     <div className="w-5 h-5 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-white text-xs">✓</span>
                     </div>
-                    <span className="text-white/80">AI-powered smart matching</span>
+                    <span className="text-white/80">
+                      AI-powered smart matching
+                    </span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <div className="w-5 h-5 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-white text-xs">✓</span>
                     </div>
-                    <span className="text-white/80">Real-time analytics dashboard</span>
+                    <span className="text-white/80">
+                      Real-time analytics dashboard
+                    </span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <div className="w-5 h-5 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-white text-xs">✓</span>
                     </div>
-                    <span className="text-white/80">Interactive Q&amp;A sessions</span>
+                    <span className="text-white/80">
+                      Interactive Q&amp;A sessions
+                    </span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <div className="w-5 h-5 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-white text-xs">✓</span>
                     </div>
-                    <span className="text-white/80">Real-time attendee messaging</span>
+                    <span className="text-white/80">
+                      Real-time attendee messaging
+                    </span>
                   </div>
                   <div className="flex items-center space-x-3">
                     <div className="w-5 h-5 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
@@ -383,7 +445,11 @@ const Landing = () => {
                   </div>
                 </div>
 
-                <Button size="lg" className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white shadow-2xl shadow-purple-500/30 px-8 py-4 text-lg font-semibold transform hover:scale-105 transition-all duration-200" onClick={() => navigate("/register?role=host")}>
+                <Button
+                  size="lg"
+                  className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white shadow-2xl shadow-purple-500/30 px-8 py-4 text-lg font-semibold transform hover:scale-105 transition-all duration-200"
+                  onClick={() => navigate("/register?role=host")}
+                >
                   <Rocket className="mr-2 h-5 w-5" />
                   Get Started Today
                 </Button>
@@ -434,7 +500,8 @@ const Landing = () => {
 
       {/* Footer */}
       <LandingFooter />
-    </div>;
+    </div>
+  );
 };
 
 export default Landing;

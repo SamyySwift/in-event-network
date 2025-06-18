@@ -10,7 +10,18 @@ RETURNS TABLE (
   name text,
   email text,
   role text,
-  event_name text
+  event_name text,
+  bio text,
+  niche text,
+  company text,
+  photo_url text,
+  networking_preferences text[],
+  tags text[],
+  twitter_link text,
+  linkedin_link text,
+  github_link text,
+  instagram_link text,
+  website_link text
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -26,7 +37,18 @@ BEGIN
     p.name,
     p.email,
     p.role,
-    e.name as event_name
+    e.name as event_name,
+    p.bio,
+    p.niche,
+    p.company,
+    p.photo_url,
+    p.networking_preferences,
+    p.tags,
+    p.twitter_link,
+    p.linkedin_link,
+    p.github_link,
+    p.instagram_link,
+    p.website_link
   FROM event_participants ep
   LEFT JOIN profiles p ON ep.user_id = p.id
   LEFT JOIN events e ON ep.event_id = e.id

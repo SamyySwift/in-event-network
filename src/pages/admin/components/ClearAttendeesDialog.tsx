@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import {
   AlertDialog,
@@ -9,7 +8,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogCancel,
-  AlertDialogAction
+  AlertDialogAction,
 } from "@/components/ui/alert-dialog";
 import { Loader, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,7 +28,7 @@ export const ClearAttendeesDialog: React.FC<ClearAttendeesDialogProps> = ({
   onConfirm,
   isLoading,
   attendeeCount,
-  eventName
+  eventName,
 }) => (
   <AlertDialog open={open} onOpenChange={onOpenChange}>
     <AlertDialogTrigger asChild>
@@ -45,10 +44,19 @@ export const ClearAttendeesDialog: React.FC<ClearAttendeesDialogProps> = ({
           </span>
         </AlertDialogTitle>
         <AlertDialogDescription>
-          This will <span className="font-bold">permanently remove all {attendeeCount} attendees</span> from <span className="font-semibold">{eventName || "this event"}</span>.
+          This will{" "}
+          <span className="font-bold">
+            permanently remove all {attendeeCount} attendees
+          </span>{" "}
+          from{" "}
+          <span className="font-semibold">{eventName || "this event"}</span>.
           <br />
-          All users will still exist, but will no longer be associated with this event.<br/>
-          <span className="text-destructive font-semibold">This action cannot be undone!</span>
+          All users will still exist, but will no longer be associated with this
+          event.
+          <br />
+          <span className="text-destructive font-semibold">
+            This action cannot be undone!
+          </span>
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
@@ -64,4 +72,4 @@ export const ClearAttendeesDialog: React.FC<ClearAttendeesDialogProps> = ({
       </AlertDialogFooter>
     </AlertDialogContent>
   </AlertDialog>
-)
+);

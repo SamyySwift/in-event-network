@@ -1,10 +1,16 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useAdminAttendees } from '@/hooks/useAdminAttendees';
-import { ClearAttendeesDialog } from './ClearAttendeesDialog';
-import { useToast } from '@/hooks/use-toast';
+import React, { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Users, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useAdminAttendees } from "@/hooks/useAdminAttendees";
+import { ClearAttendeesDialog } from "./ClearAttendeesDialog";
+import { useToast } from "@/hooks/use-toast";
 
 type AttendeeManagementSectionProps = {
   eventName: string;
@@ -40,13 +46,15 @@ const AttendeeManagementSection: React.FC<AttendeeManagementSectionProps> = ({
   return (
     <div className="glass-card p-6 rounded-xl space-y-8 shadow-xl">
       {/* Section Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col space-y-3 md:flex-row items-center justify-between mb-8">
         <div className="flex items-center gap-3">
           <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-600 shadow-md">
             <Users className="w-6 h-6 text-white" />
           </span>
           <div>
-            <div className="uppercase text-xs font-bold text-primary-600 tracking-wide">Attendees</div>
+            <div className="uppercase text-xs font-bold text-primary-600 tracking-wide">
+              Attendees
+            </div>
             <div className="text-lg font-semibold text-primary-900 dark:text-primary-100">
               {eventName}
             </div>
@@ -80,7 +88,8 @@ const AttendeeManagementSection: React.FC<AttendeeManagementSectionProps> = ({
         <CardHeader>
           <CardTitle>Add New Attendee (Coming soon)</CardTitle>
           <CardDescription>
-            Manual addition of attendees is currently not available in this admin panel.
+            Manual addition of attendees is currently not available in this
+            admin panel.
           </CardDescription>
         </CardHeader>
         <CardContent>

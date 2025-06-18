@@ -186,11 +186,9 @@ const AttendeeNetworking = () => {
                   {profile.name || "Unknown"}
                 </CardTitle>
                 <CardDescription className="text-sm flex flex-col space-y-1">
-                  {profile.role && (
-                    <span className="text-gray-600 dark:text-gray-400 font-medium">
-                      {profile.role}
-                    </span>
-                  )}
+                  <span className="text-gray-600 dark:text-gray-400 font-medium">
+                    {profile.role || "No role specified"}
+                  </span>
                   {profile.company && (
                     <span className="text-gray-500 dark:text-gray-500 text-xs flex items-center">
                       <MapPin size={12} className="mr-1" />
@@ -207,10 +205,6 @@ const AttendeeNetworking = () => {
           {/* About Section */}
           {profile.bio && (
             <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 backdrop-blur-sm">
-              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
-                <Heart size={14} className="text-red-400" />
-                About
-              </h4>
               <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
                 {profile.bio}
               </p>
@@ -221,15 +215,12 @@ const AttendeeNetworking = () => {
           {profile.niche && (
             <div className="flex items-center space-x-2">
               <Sparkles size={16} className="text-purple-500" />
-              <div>
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-400 block mb-1">Professional Focus</span>
-                <Badge
-                  variant="outline"
-                  className="bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700 font-medium"
-                >
-                  {profile.niche}
-                </Badge>
-              </div>
+              <Badge
+                variant="outline"
+                className="bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700 font-medium"
+              >
+                {profile.niche}
+              </Badge>
             </div>
           )}
 

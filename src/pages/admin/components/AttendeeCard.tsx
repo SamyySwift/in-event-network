@@ -24,78 +24,69 @@ type AttendeeCardProps = {
 function getCategoryBadge(bio?: string) {
   const txt = bio?.toLowerCase() || "";
   if (txt.includes("tech") || txt.includes("dev") || txt.includes("engineer"))
-    return <Badge variant="info" className="gap-1 text-xs"><Code size={12} />Technical</Badge>;
+    return <Badge variant="info" className="gap-1"><Code size={14} />Technical</Badge>;
   if (txt.includes("design") || txt.includes("ux") || txt.includes("ui"))
-    return <Badge variant="secondary" className="gap-1 text-xs"><Palette size={12}/>Design</Badge>;
+    return <Badge variant="secondary" className="gap-1"><Palette size={14}/>Design</Badge>;
   if (txt.includes("business") || txt.includes("management") || txt.includes("marketing"))
-    return <Badge variant="success" className="gap-1 text-xs"><Briefcase size={12}/>Business</Badge>;
+    return <Badge variant="success" className="gap-1"><Briefcase size={14}/>Business</Badge>;
   return null;
 }
 
 const AttendeeCard: React.FC<AttendeeCardProps> = ({ attendee, onEdit, onDelete }) => {
   return (
-    <div className="glass-card rounded-xl p-3 sm:p-4 flex flex-col sm:flex-row gap-3 sm:gap-4 items-start shadow hover:shadow-xl transition-all w-full max-w-full overflow-hidden">
-      <div className="flex-shrink-0 self-center sm:self-start">
-        <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
+    <div className="glass-card rounded-xl px-3 py-2 mb-4 flex flex-col sm:flex-row gap-4 sm:gap-4 items-start sm:items-center shadow hover:shadow-xl transition-all">
+      <div className="flex-shrink-0">
+        <Avatar className="h-12 w-12">
           <AvatarImage src={attendee.photo_url} alt={attendee.name} />
-          <AvatarFallback className="text-xs sm:text-sm">{attendee.name?.charAt(0) || 'U'}</AvatarFallback>
+          <AvatarFallback>{attendee.name?.charAt(0) || 'U'}</AvatarFallback>
         </Avatar>
       </div>
-      
-      <div className="flex-1 min-w-0 w-full space-y-2">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-          <span className="font-semibold text-sm sm:text-base truncate max-w-full">
-            {attendee.name || 'Unknown'}
+      <div className="flex-1 min-w-0 flex flex-col gap-1 w-full">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
+          <span className="font-semibold truncate text-base sm:text-lg max-w-[90vw]">{attendee.name || 'Unknown'}</span>
+          {getCategoryBadge(attendee.bio)}
+        </div>
+        <div className="flex flex-col sm:flex-row flex-wrap sm:items-center gap-1.5 sm:gap-3 text-muted-foreground text-xs sm:text-xs w-full">
+          <span className="flex items-center gap-1 min-w-0 break-all max-w-full">
+            <Mail size={14} className="flex-shrink-0" />
+            <span className="truncate break-all">{attendee.email}</span>
           </span>
-          <div className="flex-shrink-0">
-            {getCategoryBadge(attendee.bio)}
-          </div>
-        </div>
-        
-        <div className="flex flex-col gap-1.5 text-muted-foreground text-xs w-full">
-          <div className="flex items-center gap-1.5 min-w-0">
-            <Mail size={12} className="flex-shrink-0" />
-            <span className="truncate break-all text-xs">{attendee.email}</span>
-          </div>
-          
           {attendee.company && (
-            <div className="flex items-center gap-1.5 min-w-0">
-              <Briefcase size={12} className="flex-shrink-0" />
-              <span className="truncate text-xs">{attendee.company}</span>
-            </div>
+            <span className="flex items-center gap-1 min-w-0 truncate max-w-full">
+              <Briefcase size={13}/> <span className="truncate">{attendee.company}</span>
+            </span>
           )}
-          
-          <div className="flex items-center gap-1.5">
-            <Calendar size={12} className="flex-shrink-0" />
-            <span className="text-xs">{format(new Date(attendee.joined_at), "MMM d, yyyy")}</span>
-          </div>
+          <span className="flex items-center gap-1 min-w-0">
+            <Calendar size={13} /> {format(new Date(attendee.joined_at), "MMM d, yyyy")}
+          </span>
         </div>
-        
         {attendee.bio && (
-          <div className="text-xs text-muted-foreground break-words line-clamp-2 max-w-full">
+          <div
+            className="text-xs sm:text-sm text-muted-foreground break-words truncate sm:truncate max-w-full mt-1"
+            title={attendee.bio}
+            style={{ wordBreak: "break-word" }}
+          >
             {attendee.bio}
           </div>
         )}
       </div>
-      
-      <div className="flex gap-1 self-center sm:self-start flex-shrink-0">
+      <div className="flex gap-1 mt-2 sm:mt-0 flex-row w-full sm:w-auto justify-end">
         <Button
           size="icon"
           variant="ghost"
           aria-label="Edit Attendee"
           onClick={() => onEdit(attendee)}
-          className="h-8 w-8"
+          className="sm:ml-0"
         >
-          <Edit2 size={14} />
+          <Edit2 size={16} />
         </Button>
         <Button
           size="icon"
           variant="ghost"
           aria-label="Delete Attendee"
           onClick={() => onDelete(attendee)}
-          className="h-8 w-8"
         >
-          <Trash2 size={14} className="text-destructive" />
+          <Trash2 size={16} className="text-destructive" />
         </Button>
       </div>
     </div>

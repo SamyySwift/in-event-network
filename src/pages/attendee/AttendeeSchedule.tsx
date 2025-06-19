@@ -1,8 +1,9 @@
+
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, User, ChevronRight, Search, Filter, Star, Users, ExternalLink, Linkedin, Globe, X } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, ChevronRight, Search, Users, ExternalLink, Linkedin, Globe } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
 import AttendeeRouteGuard from '@/components/attendee/AttendeeRouteGuard';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,57 +55,80 @@ const AttendeeSchedule = () => {
   const [combinedItems, setCombinedItems] = useState<CombinedScheduleItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<CombinedScheduleItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   
   const {
     speakers,
     isLoading: speakersLoading,
-    error
+    error: speakersError
   } = useAttendeeSpeakers();
+  
   const {
     context,
-    isLoading: contextLoading
+    isLoading: contextLoading,
+    error: contextError
   } = useAttendeeContext();
+
+  console.log('AttendeeSchedule - Context:', context);
+  console.log('AttendeeSchedule - Speakers:', speakers);
+  console.log('AttendeeSchedule - Schedule items:', scheduleItems);
 
   // Fetch schedule items from database
   useEffect(() => {
     const fetchScheduleItems = async () => {
       if (!context?.currentEventId) {
         console.log('No current event ID, skipping schedule fetch');
+        setScheduleItems([]);
+        setLoading(false);
         return;
       }
+
       try {
+        setLoading(true);
         console.log('Fetching schedule items for event:', context.currentEventId);
-        const {
-          data,
-          error
-        } = await supabase.from('schedule_items').select('*').eq('event_id', context.currentEventId).order('start_time', {
-          ascending: true
-        });
+        
+        const { data, error } = await supabase
+          .from('schedule_items')
+          .select('*')
+          .eq('event_id', context.currentEventId)
+          .order('start_time', { ascending: true });
+
         if (error) {
           console.error('Error fetching schedule items:', error);
-          return;
+          setScheduleItems([]);
+        } else {
+          console.log('Schedule items fetched:', data);
+          setScheduleItems(data || []);
         }
-        console.log('Schedule items fetched:', data);
-        setScheduleItems(data || []);
       } catch (error) {
         console.error('Error fetching schedule items:', error);
+        setScheduleItems([]);
+      } finally {
+        setLoading(false);
       }
     };
+
     if (context?.currentEventId) {
       fetchScheduleItems();
+    } else {
+      setLoading(false);
     }
 
     // Set up real-time subscription for schedule items
     if (context?.currentEventId) {
-      const channel = supabase.channel('attendee-schedule-changes').on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'schedule_items',
-        filter: `event_id=eq.${context.currentEventId}`
-      }, () => {
-        console.log('Schedule items updated, refetching...');
-        fetchScheduleItems();
-      }).subscribe();
+      const channel = supabase
+        .channel('attendee-schedule-changes')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'schedule_items',
+          filter: `event_id=eq.${context.currentEventId}`
+        }, () => {
+          console.log('Schedule items updated, refetching...');
+          fetchScheduleItems();
+        })
+        .subscribe();
+
       return () => {
         supabase.removeChannel(channel);
       };
@@ -114,48 +138,57 @@ const AttendeeSchedule = () => {
   // Combine speakers and schedule items
   useEffect(() => {
     console.log('Combining speakers and schedule items');
-    console.log('Speakers:', speakers);
-    console.log('Schedule items:', scheduleItems);
+    console.log('Available speakers:', speakers?.length || 0);
+    console.log('Available schedule items:', scheduleItems?.length || 0);
+    
     const combined: CombinedScheduleItem[] = [];
 
     // Add speaker sessions
-    const speakersWithSessions = speakers.filter(speaker => speaker.session_time && speaker.session_title);
-    console.log('Speakers with sessions:', speakersWithSessions);
-    speakersWithSessions.forEach(speaker => {
-      combined.push({
-        id: `speaker-${speaker.id}`,
-        title: speaker.session_title!,
-        description: speaker.bio,
-        start_time: speaker.session_time!,
-        location: undefined,
-        type: 'speaker',
-        speaker_name: speaker.name,
-        speaker_photo: speaker.photo_url,
-        speaker_company: speaker.company,
-        speaker_bio: speaker.bio,
-        speaker_twitter: speaker.twitter_link,
-        speaker_linkedin: speaker.linkedin_link,
-        speaker_website: speaker.website_link
+    if (speakers && speakers.length > 0) {
+      const speakersWithSessions = speakers.filter(speaker => 
+        speaker.session_time && speaker.session_title
+      );
+      console.log('Speakers with sessions:', speakersWithSessions.length);
+      
+      speakersWithSessions.forEach(speaker => {
+        combined.push({
+          id: `speaker-${speaker.id}`,
+          title: speaker.session_title!,
+          description: speaker.bio,
+          start_time: speaker.session_time!,
+          location: undefined,
+          type: 'speaker',
+          speaker_name: speaker.name,
+          speaker_photo: speaker.photo_url,
+          speaker_company: speaker.company,
+          speaker_bio: speaker.bio,
+          speaker_twitter: speaker.twitter_link,
+          speaker_linkedin: speaker.linkedin_link,
+          speaker_website: speaker.website_link
+        });
       });
-    });
+    }
 
     // Add schedule items
-    scheduleItems.forEach(item => {
-      combined.push({
-        id: `schedule-${item.id}`,
-        title: item.title,
-        description: item.description,
-        start_time: item.start_time,
-        end_time: item.end_time,
-        location: item.location,
-        type: 'schedule',
-        priority: item.priority
+    if (scheduleItems && scheduleItems.length > 0) {
+      scheduleItems.forEach(item => {
+        combined.push({
+          id: `schedule-${item.id}`,
+          title: item.title,
+          description: item.description,
+          start_time: item.start_time,
+          end_time: item.end_time,
+          location: item.location,
+          type: 'schedule',
+          priority: item.priority,
+          image_url: item.image_url
+        });
       });
-    });
+    }
 
     // Sort by start time
     combined.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
-    console.log('Combined items:', combined);
+    console.log('Final combined items:', combined.length);
     setCombinedItems(combined);
   }, [speakers, scheduleItems]);
 
@@ -166,7 +199,9 @@ const AttendeeSchedule = () => {
                          item.speaker_name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
                          item.speaker_company?.toLowerCase().includes(searchTerm.toLowerCase());
     if (!matchesSearch) return false;
+    
     if (selectedDate === 'all') return true;
+    
     try {
       const sessionDate = parseISO(item.start_time);
       if (selectedDate === 'today') return isToday(sessionDate);
@@ -192,6 +227,7 @@ const AttendeeSchedule = () => {
     }
     return groups;
   }, {} as Record<string, typeof filteredItems>);
+
   const formatDateHeader = (dateStr: string) => {
     try {
       const date = parseISO(dateStr);
@@ -204,6 +240,7 @@ const AttendeeSchedule = () => {
       return dateStr;
     }
   };
+
   const getTypeBadge = (type: string) => {
     switch (type) {
       case 'speaker':
@@ -220,12 +257,12 @@ const AttendeeSchedule = () => {
         return <Badge variant="outline">{type}</Badge>;
     }
   };
+
   const getPriorityBadge = (priority?: string) => {
     if (!priority) return null;
     switch (priority) {
       case 'high':
         return <Badge className="bg-gradient-to-r from-red-500 to-orange-500 text-white border-0">
-          <Star className="w-3 h-3 mr-1" />
           High Priority
         </Badge>;
       case 'medium':
@@ -299,7 +336,8 @@ const AttendeeSchedule = () => {
     setSelectedItem(null);
   };
 
-  if (speakersLoading || contextLoading) {
+  // Show loading state
+  if (speakersLoading || contextLoading || loading) {
     return (
       <AppLayout>
         <AttendeeRouteGuard>
@@ -313,6 +351,27 @@ const AttendeeSchedule = () => {
       </AppLayout>
     );
   }
+
+  // Show error state
+  if (speakersError || contextError) {
+    return (
+      <AppLayout>
+        <AttendeeRouteGuard>
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <h3 className="text-lg font-medium mb-2">Error Loading Schedule</h3>
+              <p className="text-muted-foreground">
+                {speakersError?.message || contextError?.message || 'Failed to load schedule data'}
+              </p>
+            </div>
+          </div>
+        </AttendeeRouteGuard>
+      </AppLayout>
+    );
+  }
+
+  // Show no event selected state
   if (!context?.currentEventId) {
     return (
       <AppLayout>
@@ -328,16 +387,17 @@ const AttendeeSchedule = () => {
       </AppLayout>
     );
   }
+
   return (
     <AppLayout>
       <AttendeeRouteGuard>
-        <div className="animate-fade-in max-w-6xl mx-auto p-6">
+        <div className="animate-fade-in max-w-6xl mx-auto p-4 sm:p-6">
           {/* Hero Section */}
-          <div className="mb-8 relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-8 text-white">
+          <div className="mb-6 sm:mb-8 relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-6 sm:p-8 text-white">
             <div className="absolute inset-0 bg-black/20"></div>
             <div className="relative z-10">
-              <h1 className="text-4xl font-bold mb-2">Event Schedule</h1>
-              <p className="text-lg opacity-90 mb-4">
+              <h1 className="text-3xl sm:text-4xl font-bold mb-2">Event Schedule</h1>
+              <p className="text-base sm:text-lg opacity-90 mb-4">
                 Discover amazing sessions, speakers, and activities
               </p>
               <div className="flex items-center gap-4 text-sm">
@@ -356,8 +416,8 @@ const AttendeeSchedule = () => {
           </div>
 
           {/* Search and Filter Section */}
-          <Card className="mb-8 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-            <CardContent className="p-6">
+          <Card className="mb-6 sm:mb-8 border-0 shadow-lg bg-white/80 backdrop-blur-sm">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex flex-col lg:flex-row gap-4">
                 <div className="flex-1 relative">
                   <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -370,9 +430,9 @@ const AttendeeSchedule = () => {
                 </div>
                 <Tabs value={selectedDate} onValueChange={setSelectedDate} className="w-auto">
                   <TabsList className="bg-gray-100 p-1">
-                    <TabsTrigger value="all" className="px-6">All Days</TabsTrigger>
-                    <TabsTrigger value="today" className="px-6">Today</TabsTrigger>
-                    <TabsTrigger value="tomorrow" className="px-6">Tomorrow</TabsTrigger>
+                    <TabsTrigger value="all" className="px-4 sm:px-6">All Days</TabsTrigger>
+                    <TabsTrigger value="today" className="px-4 sm:px-6">Today</TabsTrigger>
+                    <TabsTrigger value="tomorrow" className="px-4 sm:px-6">Tomorrow</TabsTrigger>
                   </TabsList>
                 </Tabs>
               </div>
@@ -394,17 +454,17 @@ const AttendeeSchedule = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-8">
+            <div className="space-y-6 sm:space-y-8">
               {Object.keys(groupedByDate).sort().map((date) => (
                 <div key={date} className="space-y-4">
                   <div className="flex items-center gap-4 mb-6">
                     <div className="flex-shrink-0">
-                      <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
-                        <Calendar className="w-6 h-6 text-white" />
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center">
+                        <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                       </div>
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold text-gray-900">
+                      <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
                         {formatDateHeader(date)}
                       </h2>
                       <p className="text-gray-500">{groupedByDate[date].length} events scheduled</p>
@@ -419,10 +479,10 @@ const AttendeeSchedule = () => {
                         onClick={() => handleViewDetails(item)}
                       >
                         <CardContent className="p-0">
-                          <div className="flex">
+                          <div className="flex flex-col sm:flex-row">
                             {/* Time Column */}
-                            <div className="w-24 bg-gradient-to-b from-gray-50 to-gray-100 p-4 flex flex-col items-center justify-center border-r">
-                              <div className="text-lg font-bold text-gray-900">
+                            <div className="w-full sm:w-20 md:w-24 bg-gradient-to-b from-gray-50 to-gray-100 p-3 sm:p-4 flex flex-row sm:flex-col items-center justify-center border-b sm:border-b-0 sm:border-r">
+                              <div className="text-base sm:text-lg font-bold text-gray-900">
                                 {(() => {
                                   try {
                                     return format(parseISO(item.start_time), 'HH:mm');
@@ -432,7 +492,7 @@ const AttendeeSchedule = () => {
                                 })()}
                               </div>
                               {item.end_time && (
-                                <div className="text-sm text-gray-500">
+                                <div className="text-sm text-gray-500 ml-2 sm:ml-0">
                                   {(() => {
                                     try {
                                       return format(parseISO(item.end_time), 'HH:mm');
@@ -446,11 +506,11 @@ const AttendeeSchedule = () => {
 
                             {/* Content Column */}
                             <div className="flex-1 p-4">
-                              <div className="flex items-start gap-4">
+                              <div className="flex items-start gap-3 sm:gap-4">
                                 {/* Image or Avatar */}
                                 <div className="flex-shrink-0">
                                   {item.type === 'speaker' ? (
-                                    <Avatar className="w-12 h-12 border-2 border-white shadow-md">
+                                    <Avatar className="w-10 h-10 sm:w-12 sm:h-12 border-2 border-white shadow-md">
                                       <AvatarImage src={item.speaker_photo} alt={item.speaker_name} />
                                       <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
                                         {item.speaker_name?.split(' ').map(n => n[0]).join('') || 'S'}
@@ -460,11 +520,11 @@ const AttendeeSchedule = () => {
                                     <img 
                                       src={item.image_url} 
                                       alt={item.title}
-                                      className="w-12 h-12 rounded-xl object-cover border-2 border-white shadow-md"
+                                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover border-2 border-white shadow-md"
                                     />
                                   ) : (
-                                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
-                                      <Calendar className="w-6 h-6 text-white" />
+                                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
+                                      <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                                     </div>
                                   )}
                                 </div>
@@ -472,24 +532,24 @@ const AttendeeSchedule = () => {
                                 {/* Content */}
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-start justify-between mb-2">
-                                    <div>
-                                      <h3 className="font-semibold text-lg text-gray-900 group-hover:text-indigo-600 transition-colors">
+                                    <div className="min-w-0 flex-1">
+                                      <h3 className="font-semibold text-base sm:text-lg text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-2">
                                         {item.title}
                                       </h3>
                                       {item.type === 'speaker' && (
-                                        <p className="text-gray-600 text-sm">
+                                        <p className="text-gray-600 text-sm line-clamp-1">
                                           by <span className="font-medium">{item.speaker_name}</span>
                                           {item.speaker_company && ` • ${item.speaker_company}`}
                                         </p>
                                       )}
                                     </div>
-                                    <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-indigo-500 transition-colors" />
+                                    <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-indigo-500 transition-colors flex-shrink-0 ml-2" />
                                   </div>
 
                                   {item.location && (
                                     <div className="flex items-center gap-1 text-sm text-gray-500 mb-2">
-                                      <MapPin className="h-4 w-4" />
-                                      {item.location}
+                                      <MapPin className="h-4 w-4 flex-shrink-0" />
+                                      <span className="line-clamp-1">{item.location}</span>
                                     </div>
                                   )}
 
@@ -499,18 +559,15 @@ const AttendeeSchedule = () => {
                                     </p>
                                   )}
 
-                                  {/* --- BADGES AND SOCIAL LINKS: vertical layout --- */}
                                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                    <div className="flex items-center gap-2 flex-wrap mb-2 sm:mb-0">
+                                    <div className="flex items-center gap-2 flex-wrap">
                                       {getTypeBadge(item.type)}
                                       {getPriorityBadge(item.priority)}
                                     </div>
-                                    {/* Only show on non-speakers for spacing - mobile safe */}
-                                    {/* For speaker, show social links right under badges */}
                                   </div>
-                                  {/* Move social links directly below badges, full width, for vertical stacking on mobile */}
+
                                   {item.type === 'speaker' && (
-                                    <div className="mt-2 mb-1">
+                                    <div className="mt-2">
                                       {renderSocialLinks(item)}
                                     </div>
                                   )}

@@ -13,16 +13,26 @@ export const useAttendeeSpeakers = () => {
         throw new Error('User not authenticated');
       }
 
+      console.log('Fetching speakers for user:', currentUser.id);
+
       // Get the user's current event from their profile
-      const { data: userProfile } = await supabase
+      const { data: userProfile, error: profileError } = await supabase
         .from('profiles')
         .select('current_event_id')
         .eq('id', currentUser.id)
         .single();
 
+      if (profileError) {
+        console.error('Error fetching user profile:', profileError);
+        throw profileError;
+      }
+
       if (!userProfile?.current_event_id) {
+        console.log('No current event ID found for user');
         return [];
       }
+
+      console.log('Fetching speakers for event:', userProfile.current_event_id);
 
       // Get speakers for the current event only
       const { data: speakers, error } = await supabase
@@ -36,9 +46,12 @@ export const useAttendeeSpeakers = () => {
         throw error;
       }
 
+      console.log('Speakers fetched successfully:', speakers?.length || 0);
       return speakers || [];
     },
     enabled: !!currentUser?.id,
+    retry: 3,
+    retryDelay: 1000,
   });
 
   return {

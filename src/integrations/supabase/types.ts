@@ -1149,6 +1149,17 @@ export type Database = {
           email: string
           role: string
           event_name: string
+          bio: string
+          niche: string
+          company: string
+          photo_url: string
+          networking_preferences: string[]
+          tags: string[]
+          twitter_link: string
+          linkedin_link: string
+          github_link: string
+          instagram_link: string
+          website_link: string
         }[]
       }
       get_poll_with_results: {

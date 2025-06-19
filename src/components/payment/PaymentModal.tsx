@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { PaystackButton } from 'react-paystack';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -7,6 +8,7 @@ import { usePayment } from '@/hooks/usePayment';
 import { usePaystackConfig } from '@/hooks/usePaystackConfig';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface PaymentModalProps {
   isOpen: boolean;
@@ -25,6 +27,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 }) => {
   const { currentUser } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { recordPayment, updatePaymentStatus, getPaymentAmount, isRecordingPayment } = usePayment();
   const { publicKey, isLoading: isLoadingConfig } = usePaystackConfig();
   const [isProcessing, setIsProcessing] = useState(false);
@@ -42,35 +45,49 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     currency: 'NGN',
     publicKey,
     text: 'Pay ₦30,000',
-    onSuccess: (reference: any) => {
+    onSuccess: async (reference: any) => {
       console.log('Payment successful:', reference);
       setIsProcessing(true);
       
-      // Record successful payment
-      recordPayment({
-        eventId,
-        amount: amount / 100, // Convert back from kobo to naira for storage
-        currency: 'NGN',
-        reference: reference.reference,
-        status: 'success',
-      });
+      try {
+        // Record successful payment
+        recordPayment({
+          eventId,
+          amount: amount / 100, // Convert back from kobo to naira for storage
+          currency: 'NGN',
+          reference: reference.reference,
+          status: 'success',
+        });
 
-      updatePaymentStatus({
-        reference: reference.reference,
-        status: 'success',
-      });
+        updatePaymentStatus({
+          reference: reference.reference,
+          status: 'success',
+        });
 
-      setIsProcessing(false);
-      onPaymentSuccess?.();
+        // Invalidate and refetch payment queries to ensure UI updates immediately
+        await queryClient.invalidateQueries({ queryKey: ['event-payments'] });
+        await queryClient.refetchQueries({ queryKey: ['event-payments', currentUser?.id] });
 
-      toast({
-        title: 'Payment Successful!',
-        description: `Payment for ${eventName} has been completed successfully.`,
-      });
+        setIsProcessing(false);
+        onPaymentSuccess?.();
+
+        toast({
+          title: 'Payment Successful!',
+          description: `Payment for ${eventName} has been completed successfully.`,
+        });
+      } catch (error) {
+        setIsProcessing(false);
+        console.error('Error processing payment success:', error);
+        toast({
+          title: 'Payment Processing Error',
+          description: 'Payment was successful but there was an issue updating the status. Please refresh the page.',
+          variant: 'destructive',
+        });
+      }
     },
     onClose: () => {
       console.log('Payment closed');
-      // Don't automatically close the main modal here, let user decide
+      setIsProcessing(false);
     },
   };
 

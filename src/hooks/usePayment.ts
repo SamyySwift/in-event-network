@@ -22,10 +22,12 @@ export const usePayment = () => {
   const { currentUser } = useAuth();
 
   // Check if user has paid for a specific event
-  const { data: eventPayments = [], isLoading: isLoadingPayments } = useQuery({
+  const { data: eventPayments = [], isLoading: isLoadingPayments, refetch: refetchPayments } = useQuery({
     queryKey: ['event-payments', currentUser?.id],
     queryFn: async () => {
       if (!currentUser?.id) return [];
+
+      console.log('Fetching payment records for user:', currentUser.id);
 
       const { data, error } = await supabase
         .from('event_payments')
@@ -38,9 +40,12 @@ export const usePayment = () => {
         throw error;
       }
 
+      console.log('Payment records fetched:', data);
       return data as PaymentRecord[];
     },
     enabled: !!currentUser?.id,
+    staleTime: 0, // Always refetch to get latest payment status
+    refetchOnWindowFocus: true,
   });
 
   // Record payment in database
@@ -55,6 +60,8 @@ export const usePayment = () => {
       if (!currentUser?.id) {
         throw new Error('User not authenticated');
       }
+
+      console.log('Recording payment:', paymentData);
 
       const { data, error } = await supabase
         .from('event_payments')
@@ -76,8 +83,11 @@ export const usePayment = () => {
 
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['event-payments'] });
+    onSuccess: async () => {
+      // Invalidate and refetch payment queries immediately
+      await queryClient.invalidateQueries({ queryKey: ['event-payments'] });
+      await queryClient.refetchQueries({ queryKey: ['event-payments', currentUser?.id] });
+      
       toast({
         title: 'Payment Recorded',
         description: 'Payment has been successfully recorded.',
@@ -96,6 +106,8 @@ export const usePayment = () => {
   // Update payment status
   const updatePaymentStatusMutation = useMutation({
     mutationFn: async ({ reference, status }: { reference: string; status: 'success' | 'failed' }) => {
+      console.log('Updating payment status:', { reference, status });
+
       const { data, error } = await supabase
         .from('event_payments')
         .update({ status })
@@ -110,14 +122,18 @@ export const usePayment = () => {
 
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['event-payments'] });
+    onSuccess: async () => {
+      // Invalidate and refetch payment queries immediately
+      await queryClient.invalidateQueries({ queryKey: ['event-payments'] });
+      await queryClient.refetchQueries({ queryKey: ['event-payments', currentUser?.id] });
     },
   });
 
   // Check if event is paid for
   const isEventPaid = (eventId: string) => {
-    return eventPayments.some(payment => payment.event_id === eventId && payment.status === 'success');
+    const isPaid = eventPayments.some(payment => payment.event_id === eventId && payment.status === 'success');
+    console.log('Checking if event is paid:', { eventId, isPaid, eventPayments });
+    return isPaid;
   };
 
   // Get payment amount (₦30,000 as specified in the landing page)
@@ -126,6 +142,7 @@ export const usePayment = () => {
   return {
     eventPayments,
     isLoadingPayments,
+    refetchPayments,
     recordPayment: recordPaymentMutation.mutate,
     updatePaymentStatus: updatePaymentStatusMutation.mutate,
     isRecordingPayment: recordPaymentMutation.isPending,

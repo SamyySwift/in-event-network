@@ -8,7 +8,7 @@ import QRCodeGenerator from '@/components/admin/QRCodeGenerator';
 import PaymentModal from '@/components/payment/PaymentModal';
 import { usePayment } from '@/hooks/usePayment';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 interface EventQRCodeProps {
@@ -21,6 +21,7 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
   const [showQRModal, setShowQRModal] = useState(false);
   const { isEventPaid, isLoadingPayments } = usePayment();
   const { currentUser } = useAuth();
+  const queryClient = useQueryClient();
 
   // Get the current user's profile data including access_key
   const { data: userProfile } = useQuery({
@@ -54,6 +55,13 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
     }
   };
 
+  const handlePaymentSuccess = async () => {
+    setShowPaymentModal(false);
+    // Force refetch of payment data to ensure immediate UI update
+    await queryClient.invalidateQueries({ queryKey: ['event-payments'] });
+    await queryClient.refetchQueries({ queryKey: ['event-payments', currentUser?.id] });
+  };
+
   const isPaid = isEventPaid(eventId);
 
   console.log('EventQRCode - isPaid:', isPaid, 'eventId:', eventId);
@@ -74,19 +82,19 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
           <Button
             onClick={() => setShowQRModal(true)}
             size="sm"
-            className="w-full bg-gradient-to-r from-green-500 to-emerald-400 hover:from-green-600 hover:to-emerald-500 text-white"
+            className="w-full min-h-[40px] bg-gradient-to-r from-green-500 to-emerald-400 hover:from-green-600 hover:to-emerald-500 text-white text-xs sm:text-sm px-3 py-2"
           >
-            <QrCode className="h-4 w-4 mr-2" />
-            Generate QR Code
+            <QrCode className="h-4 w-4 mr-2 flex-shrink-0" />
+            <span className="truncate">Generate QR Code</span>
           </Button>
         ) : (
           <Button
             onClick={() => setShowPaymentModal(true)}
             size="sm"
-            className="w-full bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700"
+            className="w-full min-h-[40px] bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-xs sm:text-sm px-3 py-2"
           >
-            <CreditCard className="h-4 w-4 mr-2" />
-            Pay Now (₦30,000)
+            <CreditCard className="h-4 w-4 mr-2 flex-shrink-0" />
+            <span className="truncate">Pay Now (₦30,000)</span>
           </Button>
         )}
       </div>
@@ -97,11 +105,7 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
         onClose={() => setShowPaymentModal(false)}
         eventId={eventId}
         eventName={eventName}
-        onPaymentSuccess={() => {
-          setShowPaymentModal(false);
-          // Force a refresh of payment status
-          window.location.reload();
-        }}
+        onPaymentSuccess={handlePaymentSuccess}
       />
 
       {/* QR Code Modal */}

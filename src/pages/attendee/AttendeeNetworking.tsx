@@ -405,7 +405,7 @@ const AttendeeNetworking = () => {
                 Please join an event to start networking with other attendees
               </p>
               <Button
-                onClick={() => navigate("/scan-qr")}
+                onClick={() => navigate("/scan")}
                 className="bg-connect-600 hover:bg-connect-700 text-white"
               >
                 Join Event

@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Plus, Pencil, Trash2, Loader, Calendar, MapPin, Users, Clock, Lock } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader, Calendar, MapPin, Users, Clock, Lock, CalendarIcon } from 'lucide-react';
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { Badge } from '@/components/ui/badge';
@@ -13,11 +14,17 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ImageUpload } from '@/components/ui/image-upload';
 import { usePayment } from '@/hooks/usePayment';
 import EventQRCode from '@/components/admin/EventQRCode';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 type EventFormData = {
   name: string;
   description?: string;
+  start_date: Date | undefined;
   start_time: string;
+  end_date: Date | undefined;
   end_time: string;
   location?: string;
   image?: File;
@@ -30,27 +37,46 @@ const AdminEvents = () => {
   const { events, isLoading, createEvent, updateEvent, deleteEvent, isCreating, isUpdating, isDeleting } = useAdminEvents();
   const { isEventPaid } = usePayment();
 
-  const { register, handleSubmit, setValue, reset, formState: { errors } } = useForm<EventFormData>({
+  const { register, handleSubmit, setValue, reset, watch, formState: { errors } } = useForm<EventFormData>({
     defaultValues: {
       name: '',
       description: '',
+      start_date: undefined,
       start_time: '',
+      end_date: undefined,
       end_time: '',
       location: ''
     }
   });
 
+  const startDate = watch('start_date');
+  const endDate = watch('end_date');
+
   const onSubmit = (data: EventFormData) => {
     console.log('Submitting event data:', data);
     console.log('Current user:', currentUser?.id);
     
-    if (!data.name || !data.start_time || !data.end_time) {
-      console.error('Missing required fields:', { name: data.name, start_time: data.start_time, end_time: data.end_time });
+    if (!data.name || !data.start_date || !data.start_time || !data.end_date || !data.end_time) {
+      console.error('Missing required fields');
       return;
     }
 
+    // Combine date and time for start_time
+    const startDateTime = new Date(data.start_date);
+    const [startHours, startMinutes] = data.start_time.split(':');
+    startDateTime.setHours(parseInt(startHours), parseInt(startMinutes));
+
+    // Combine date and time for end_time
+    const endDateTime = new Date(data.end_date);
+    const [endHours, endMinutes] = data.end_time.split(':');
+    endDateTime.setHours(parseInt(endHours), parseInt(endMinutes));
+
     const eventData = {
-      ...data,
+      name: data.name,
+      description: data.description,
+      start_time: startDateTime.toISOString(),
+      end_time: endDateTime.toISOString(),
+      location: data.location,
       host_id: currentUser?.id,
       image: selectedImage,
     };
@@ -71,8 +97,14 @@ const AdminEvents = () => {
     setEditingEvent(event.id);
     setValue('name', event.name);
     setValue('description', event.description || '');
-    setValue('start_time', new Date(event.start_time).toISOString().slice(0, 16));
-    setValue('end_time', new Date(event.end_time).toISOString().slice(0, 16));
+    
+    const startDateTime = new Date(event.start_time);
+    const endDateTime = new Date(event.end_time);
+    
+    setValue('start_date', startDateTime);
+    setValue('start_time', startDateTime.toTimeString().slice(0, 5));
+    setValue('end_date', endDateTime);
+    setValue('end_time', endDateTime.toTimeString().slice(0, 5));
     setValue('location', event.location || '');
     setSelectedImage(null);
   };
@@ -226,32 +258,92 @@ const AdminEvents = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="start_time" className="text-sm font-medium">Start Time *</Label>
-                    <Input
-                      id="start_time"
-                      type="datetime-local"
-                      {...register("start_time", { required: "Start time is required" })}
-                      className="bg-background/50 border-primary/20 focus:border-primary/50 transition-colors"
-                    />
-                    {errors.start_time?.message && (
-                      <p className="text-sm text-destructive">{errors.start_time.message}</p>
-                    )}
+                {/* Start Date & Time */}
+                <div className="space-y-4">
+                  <Label className="text-sm font-medium">Start Date & Time *</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Start Date</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full justify-start text-left font-normal bg-background/50 border-primary/20 focus:border-primary/50",
+                              !startDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {startDate ? format(startDate, "PPP") : <span>Pick start date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent
+                            mode="single"
+                            selected={startDate}
+                            onSelect={(date) => setValue('start_date', date)}
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Start Time</Label>
+                      <Input
+                        type="time"
+                        {...register("start_time", { required: "Start time is required" })}
+                        className="bg-background/50 border-primary/20 focus:border-primary/50 transition-colors"
+                      />
+                    </div>
                   </div>
+                  {(errors.start_time?.message) && (
+                    <p className="text-sm text-destructive">Start date and time are required</p>
+                  )}
+                </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="end_time" className="text-sm font-medium">End Time *</Label>
-                    <Input
-                      id="end_time"
-                      type="datetime-local"
-                      {...register("end_time", { required: "End time is required" })}
-                      className="bg-background/50 border-primary/20 focus:border-primary/50 transition-colors"
-                    />
-                    {errors.end_time?.message && (
-                      <p className="text-sm text-destructive">{errors.end_time.message}</p>
-                    )}
+                {/* End Date & Time */}
+                <div className="space-y-4">
+                  <Label className="text-sm font-medium">End Date & Time *</Label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">End Date</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-full justify-start text-left font-normal bg-background/50 border-primary/20 focus:border-primary/50",
+                              !endDate && "text-muted-foreground"
+                            )}
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {endDate ? format(endDate, "PPP") : <span>Pick end date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent
+                            mode="single"
+                            selected={endDate}
+                            onSelect={(date) => setValue('end_date', date)}
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">End Time</Label>
+                      <Input
+                        type="time"
+                        {...register("end_time", { required: "End time is required" })}
+                        className="bg-background/50 border-primary/20 focus:border-primary/50 transition-colors"
+                      />
+                    </div>
                   </div>
+                  {(errors.end_time?.message) && (
+                    <p className="text-sm text-destructive">End date and time are required</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">

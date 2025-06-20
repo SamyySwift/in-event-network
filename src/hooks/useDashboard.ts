@@ -8,6 +8,7 @@ interface DashboardData {
   currentEvent: any;
   upcomingEvents: any[];
   nextSession: any;
+  upcomingSessions: any[];
   recentAnnouncements: any[];
   suggestedConnections: any[];
 }
@@ -38,6 +39,7 @@ export const useDashboard = () => {
           currentEvent: null,
           upcomingEvents: [],
           nextSession: null,
+          upcomingSessions: [],
           recentAnnouncements: [],
           suggestedConnections: [],
         };
@@ -55,6 +57,7 @@ export const useDashboard = () => {
           currentEvent: null,
           upcomingEvents: [],
           nextSession: null,
+          upcomingSessions: [],
           recentAnnouncements: [],
           suggestedConnections: [],
         };
@@ -100,6 +103,15 @@ export const useDashboard = () => {
         .order('session_time', { ascending: true })
         .limit(1);
 
+      // Get upcoming schedule items/sessions from this host's events
+      const { data: upcomingSessions } = await supabase
+        .from('schedule_items')
+        .select('*')
+        .in('event_id', eventIds)
+        .gt('start_time', now)
+        .order('start_time', { ascending: true })
+        .limit(5);
+
       // Get suggested connections from attendees of the same host's events
       const { data: sameHostAttendees } = await supabase
         .from('event_participants')
@@ -133,6 +145,7 @@ export const useDashboard = () => {
         currentEvent,
         upcomingEvents: upcomingEvents || [],
         nextSession: speakers?.[0] || null,
+        upcomingSessions: upcomingSessions || [],
         recentAnnouncements: announcements || [],
         suggestedConnections: suggestedConnections.slice(0, 3),
       };
@@ -146,12 +159,13 @@ export const useDashboard = () => {
     if (!currentUser?.id) return;
 
     // Listen for realtime changes on attendee dashboard-relevant tables
-    // Listen to events, announcements, speakers, event_participants
+    // Listen to events, announcements, speakers, event_participants, schedule_items
     const tables = [
       'events',
       'announcements',
       'speakers',
-      'event_participants'
+      'event_participants',
+      'schedule_items'
     ];
 
     const channels = tables.map((table) => 

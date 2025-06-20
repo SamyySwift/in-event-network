@@ -105,7 +105,7 @@ const AttendeeDashboardContent = () => {
     );
   }
 
-  const { currentEvent, upcomingEvents, nextSession, recentAnnouncements, suggestedConnections } = dashboardData;
+  const { currentEvent, upcomingEvents, nextSession, upcomingSessions, recentAnnouncements, suggestedConnections } = dashboardData;
 
   // Main dashboard content
   return (
@@ -204,6 +204,26 @@ const AttendeeDashboardContent = () => {
                       </p>
                     )}
                   </div>
+                  
+                  {/* Show additional upcoming events */}
+                  {!currentEvent && upcomingEvents.length > 1 && (
+                    <div className="mt-6 pt-4 border-t border-gray-200">
+                      <h4 className="text-sm font-semibold text-gray-900 mb-3">Other Upcoming Events</h4>
+                      <div className="space-y-2">
+                        {upcomingEvents.slice(1, 3).map((event) => (
+                          <div key={event.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{event.name}</p>
+                              <p className="text-xs text-gray-500">{formatDate(event.start_time)}</p>
+                            </div>
+                            <Badge variant="outline" className="text-xs">
+                              {event.location || 'Online'}
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="text-center py-8">
@@ -240,30 +260,57 @@ const AttendeeDashboardContent = () => {
                 </div>
                 <div>
                   <CardTitle className="text-xl">Next Session</CardTitle>
-                  <CardDescription>Upcoming speaker</CardDescription>
+                  <CardDescription>Upcoming activities</CardDescription>
                 </div>
               </div>
             </CardHeader>
             
             <CardContent className="relative z-20 pb-6 bg-white/80 backdrop-blur-sm">
-              {nextSession ? (
+              {nextSession || upcomingSessions?.[0] ? (
                 <>
                   <h3 className="text-lg font-bold mb-3 text-gray-900">
-                    {nextSession.session_title || 'Speaker Session'}
+                    {nextSession?.session_title || upcomingSessions?.[0]?.title || 'Session'}
                   </h3>
                   <div className="space-y-3">
                     <div className="flex items-center gap-3 text-gray-700">
                       <Clock className="h-4 w-4 text-orange-500" />
-                      <span className="text-sm font-medium">{formatDate(nextSession.session_time)}</span>
+                      <span className="text-sm font-medium">
+                        {formatDate(nextSession?.session_time || upcomingSessions?.[0]?.start_time)}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-3 text-gray-700">
-                      <Users className="h-4 w-4 text-orange-500" />
-                      <span className="text-sm font-medium">by {nextSession.name}</span>
-                    </div>
-                    {nextSession.title && (
-                      <p className="text-xs text-gray-600 mt-2">{nextSession.title}</p>
+                    {nextSession && (
+                      <div className="flex items-center gap-3 text-gray-700">
+                        <Users className="h-4 w-4 text-orange-500" />
+                        <span className="text-sm font-medium">by {nextSession.name}</span>
+                      </div>
+                    )}
+                    {upcomingSessions?.[0]?.location && (
+                      <div className="flex items-center gap-3 text-gray-700">
+                        <MapPin className="h-4 w-4 text-orange-500" />
+                        <span className="text-sm font-medium">{upcomingSessions[0].location}</span>
+                      </div>
+                    )}
+                    {(nextSession?.title || upcomingSessions?.[0]?.description) && (
+                      <p className="text-xs text-gray-600 mt-2">
+                        {nextSession?.title || upcomingSessions?.[0]?.description}
+                      </p>
                     )}
                   </div>
+                  
+                  {/* Show additional upcoming sessions */}
+                  {upcomingSessions.length > 1 && (
+                    <div className="mt-4 pt-3 border-t border-gray-200">
+                      <h4 className="text-xs font-semibold text-gray-900 mb-2">More Sessions</h4>
+                      <div className="space-y-1">
+                        {upcomingSessions.slice(1, 3).map((session) => (
+                          <div key={session.id} className="flex items-center justify-between text-xs">
+                            <span className="text-gray-700 truncate">{session.title}</span>
+                            <span className="text-gray-500 ml-2">{formatTime(session.start_time)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className="text-center py-4">

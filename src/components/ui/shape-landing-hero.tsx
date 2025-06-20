@@ -9,7 +9,7 @@ import { useJoinEvent } from "@/hooks/useJoinEvent";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import QRCodeScanner from "@/components/QRCodeScanner";
-import { Rocket, Zap } from "lucide-react";
+import { Rocket, Zap, ScanQrCode } from "lucide-react";
 import { InfiniteSlider } from "./infinite-slider";
 
 function ElegantShape({
@@ -258,11 +258,11 @@ function HeroGeometric({
             <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6 mt-20">
               <Button
                 size="lg"
-                className="bg-gradient-to-r  rounded-full from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white shadow-2xl shadow-purple-500/30 border-0 px-8 py-8 text-lg  transform hover:scale-105 transition-all duration-600"
+                className="bg-gradient-to-r   rounded-full from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white shadow-2xl shadow-purple-500/30 border-0 px-8 py-8 text-lg  transform hover:scale-105 transition-all duration-600"
                 onClick={() => setShowScanner(true)}
                 disabled={isJoining}
               >
-                <Scan className="mr-2 h-5 w-5" />
+                <ScanQrCode className="mr-2" />
                 {isJoining ? "Joining..." : "Scan Event"}
               </Button>
               <Button
@@ -278,7 +278,7 @@ function HeroGeometric({
           </motion.div>
 
           {showScanner && (
-            <div className="max-w-md mx-auto">
+            <div className="max-w-md mx-auto mt-10">
               <div className="bg-black/40 backdrop-blur-xl p-8 rounded-2xl border border-white/20 shadow-2xl">
                 <h3 className="text-xl font-semibold mb-6 text-white text-center flex items-center justify-center">
                   <Zap className="mr-2 h-5 w-5 text-cyan-400" />
@@ -301,7 +301,7 @@ function HeroGeometric({
           )}
         </div>
         {/* SLider section */}
-        <div className="w-full mt-28">
+        {/* <div className="w-full mt-28">
           <div className="flex items-center">
             <div className="relative z-10 min-w-[200px]">
               <div className="bg-gradient-to-r from-white/10 via-white/20 backdrop-blur-xl to-transparent pr-10 py-2">
@@ -391,7 +391,7 @@ function HeroGeometric({
               </InfiniteSlider>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
 
       <div className="absolute inset-0 bg-gradient-to-t from-[#030303] via-transparent to-[#030303]/80 pointer-events-none" />

@@ -1,15 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import QRCodeScanner from "@/components/QRCodeScanner";
-import { useToast } from "@/hooks/use-toast";
-import { useJoinEvent } from "@/hooks/useJoinEvent";
+
 import {
-  Users,
-  Calendar,
-  MapPin,
   Zap,
-  ArrowRight,
   Sparkles,
   Network,
   Brain,
@@ -34,60 +28,8 @@ import LandingFooter from "@/components/landing/LandingFooter";
 import FeatureCard from "@/components/landing/FeatureCard";
 import ListItem from "@/components/landing/ListItem";
 const Landing = () => {
-  const [showScanner, setShowScanner] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const { joinEvent, isJoining } = useJoinEvent();
-  const handleScanSuccess = (decodedText: string) => {
-    console.log("QR Code decoded:", decodedText);
-    setShowScanner(false);
-    try {
-      // Handle different QR code formats
-      let accessCode = "";
 
-      // Check if it's a URL with access code parameter
-      if (decodedText.includes("code=")) {
-        const url = new URL(decodedText);
-        accessCode = url.searchParams.get("code") || "";
-      }
-      // Check if it's just a 6-digit access code
-      else if (/^\d{6}$/.test(decodedText.trim())) {
-        accessCode = decodedText.trim();
-      }
-      // Handle connect:// protocol URLs
-      else if (decodedText.startsWith("connect://")) {
-        const url = new URL(decodedText);
-        const pathParts = url.pathname.split("/");
-        if (pathParts.length >= 2 && pathParts[1] === "event") {
-          const eventId = pathParts[2];
-          if (eventId) {
-            navigate(`/join/${eventId}`);
-            return;
-          }
-        }
-      }
-      if (accessCode && /^\d{6}$/.test(accessCode)) {
-        console.log("Extracted access code:", accessCode);
-        joinEvent(accessCode);
-      } else {
-        toast({
-          title: "Invalid QR Code",
-          description: "This doesn't appear to be a valid Connect event code.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      console.error("QR Code parsing error:", error);
-      toast({
-        title: "Invalid QR Code",
-        description: "This doesn't appear to be a valid Connect event code.",
-        variant: "destructive",
-      });
-    }
-  };
-  const handleScanError = (error: string) => {
-    console.error("QR Scanner error:", error);
-  };
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-950 via-purple-950 to-blue-950 text-white overflow-hidden">
       {/* Futuristic Header */}
@@ -114,9 +56,9 @@ const Landing = () => {
                       <li className="row-span-3">
                         <NavigationMenuLink asChild>
                           <a className="flex h-full w-full select-none flex-col justify-end rounded-lg bg-gradient-to-b from-purple-600/20 to-cyan-600/20 p-6 no-underline outline-none focus:shadow-md border border-white/10">
-                            <Sparkles className="h-6 w-6 text-cyan-400 mb-2" />
+                            <Brain className="h-6 w-6 text-cyan-400 mb-2" />
                             <div className="mb-2 text-lg font-medium text-white">
-                              Next-Gen Networking
+                              Smart Matching
                             </div>
                             <p className="text-sm text-white/60">
                               AI-powered connections that transform how you
@@ -126,23 +68,24 @@ const Landing = () => {
                         </NavigationMenuLink>
                       </li>
                       <ListItem
-                        title="Neural Matching"
-                        icon={<Brain className="h-4 w-4" />}
+                        title="Network"
+                        icon={<Network className="h-4 w-4" />}
                       >
-                        AI algorithms match you with perfect networking
-                        opportunities
+                        Build lasting professional relationships through
+                        intelligent connection recommendations
                       </ListItem>
                       <ListItem
-                        title="Quantum Scheduling"
+                        title="Hybrid Experience"
                         icon={<Zap className="h-4 w-4" />}
                       >
-                        Dynamic event scheduling that adapts in real-time
+                        Seamlessly blend virtual and physical event experiences
+                        for maximum engagement
                       </ListItem>
                       <ListItem
-                        title="Holographic Q&A"
+                        title="Q&Live Chat"
                         icon={<Globe className="h-4 w-4" />}
                       >
-                        Immersive interaction with speakers and attendees
+                        Immersive interaction with fellow attendees
                       </ListItem>
                     </ul>
                   </NavigationMenuContent>
@@ -195,93 +138,9 @@ const Landing = () => {
         </div>
       </header>
 
-      {/* Hero 1 Section */}
-      {/* <section className="relative flex-1 flex items-center justify-center py-20 overflow-hidden">
-        <div className="absolute inset-0 -z-10">
-          <div className="absolute top-1/4 -left-40 w-96 h-96 rounded-full bg-cyan-500/10 blur-3xl animate-pulse"></div>
-          <div
-            className="absolute bottom-1/4 -right-40 w-96 h-96 rounded-full bg-purple-500/10 blur-3xl animate-pulse"
-            style={{ animationDelay: "1s" }}
-          ></div>
-          <div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full border border-white/5 animate-spin"
-            style={{ animationDuration: "20s" }}
-          ></div>
-          <div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-white/5 animate-spin"
-            style={{ animationDuration: "15s", animationDirection: "reverse" }}
-          ></div>
-        </div>
-         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <div className="max-w-4xl mx-auto">
-            <div className="inline-flex items-center space-x-2 bg-white/10 backdrop-blur-sm rounded-full px-6 py-2 mb-8 border border-white/20">
-              <Rocket className="h-4 w-4 text-cyan-400" />
-              <span className="text-sm text-white/80">
-                The Future of Event Networking
-              </span>
-            </div>
-             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold mb-8 leading-tight">
-              <span className="bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
-                Smart Connect
-              </span>
-              <br />
-              <span className="text-white">Events Reimagined</span>
-            </h1>
-             <p className="text-xl sm:text-2xl mb-12 text-white/70 max-w-3xl mx-auto leading-relaxed">
-              Experience a better way to network at events. Smart matchmaking,
-              efficient connections, and engaging interactions that enhance your
-              event experience.
-            </p>
-             <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6 mb-16">
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white shadow-2xl shadow-purple-500/30 border-0 px-8 py-4 text-lg font-semibold transform hover:scale-105 transition-all duration-200"
-                onClick={() => setShowScanner(true)}
-                disabled={isJoining}
-              >
-                <Zap className="mr-2 h-5 w-5" />
-                {isJoining ? "Joining..." : "Quick Scan"}
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-2 border-white/30 text-white hover:bg-white/10 backdrop-blur-sm px-8 py-4 text-lg font-semibold"
-                onClick={() => navigate("/register?role=host")}
-              >
-                <Rocket className="mr-2 h-5 w-5" />
-                Create Event
-              </Button>
-            </div>
-        
-            {showScanner && (
-              <div className="max-w-md mx-auto">
-                <div className="bg-black/40 backdrop-blur-xl p-8 rounded-2xl border border-white/20 shadow-2xl">
-                  <h3 className="text-xl font-semibold mb-6 text-white text-center flex items-center justify-center">
-                    <Zap className="mr-2 h-5 w-5 text-cyan-400" />
-                    QR Scanner Active
-                  </h3>
-                  <QRCodeScanner
-                    onScanSuccess={handleScanSuccess}
-                    onScanError={handleScanError}
-                  />
-                  <Button
-                    variant="ghost"
-                    className="mt-6 w-full text-white/80 hover:text-white hover:bg-white/10"
-                    onClick={() => setShowScanner(false)}
-                    disabled={isJoining}
-                  >
-                    Close Scanner
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-       </section> */}
-
       <HeroGeometric
         badge="The Future of Event Networking"
-        title1="Smart Connect"
+        title1="Kconect"
         title2="Events Reimagined"
       />
 
@@ -379,7 +238,7 @@ const Landing = () => {
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-cyan-500/30 to-purple-500/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
               <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl p-8 rounded-2xl border border-white/20 hover:border-white/30 transition-all duration-300 hover:transform hover:scale-105 hover:shadow-2xl">
                 <div className="absolute top-0 right-0">
-                  <div className="bg-gradient-to-r from-cyan-500 to-purple-500 text-white text-xs font-semibold px-3 py-1 rounded-bl">
+                  <div className="bg-gradient-to-r from-cyan-500 to-purple-500 text-white text-xs font-semibold px-3 py-2 rounded-bl-xl rounded-tr-xl">
                     Premium Plan
                   </div>
                 </div>
@@ -392,10 +251,10 @@ const Landing = () => {
                   </h3>
                   <div className="flex items-center justify-center mb-4">
                     <span className="text-5xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-                      ₦30,000
+                      ₦30,000{" "}
                     </span>
+                    <p className="text-white/60">/ per event</p>
                   </div>
-                  <p className="text-white/60">per event</p>
                 </div>
 
                 <div className="space-y-4 mb-8">

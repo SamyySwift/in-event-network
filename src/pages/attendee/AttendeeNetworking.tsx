@@ -33,18 +33,19 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useAttendeeNetworking } from "@/hooks/useAttendeeNetworking";
+import { useNetworkingFilters } from "@/hooks/useNetworkingFilters";
 import ChatRoom from "@/components/chat/ChatRoom";
 import { ConversationsList } from "@/components/messaging/ConversationsList";
 import { DirectMessageThread } from "@/components/messaging/DirectMessageThread";
 import { useNetworking } from "@/hooks/useNetworking";
 import { useAttendeeEventContext } from "@/contexts/AttendeeEventContext";
+import { NetworkingFilter } from "@/components/networking/NetworkingFilter";
 import XLogo from "@/components/icons/XLogo";
 
 const AttendeeNetworking = () => {
   const navigate = useNavigate();
   const { currentEventId } = useAttendeeEventContext();
   const [activeTab, setActiveTab] = useState("people");
-  const [searchTerm, setSearchTerm] = useState("");
   const [selectedConversation, setSelectedConversation] = useState<{
     userId: string;
     userName: string;
@@ -56,6 +57,24 @@ const AttendeeNetworking = () => {
     isLoading: loading,
     error,
   } = useAttendeeNetworking();
+
+  // Use the new filtering hook
+  const {
+    searchTerm,
+    setSearchTerm,
+    selectedNiches,
+    setSelectedNiches,
+    selectedNetworkingPrefs,
+    setSelectedNetworkingPrefs,
+    selectedTags,
+    setSelectedTags,
+    availableNiches,
+    availableNetworkingPrefs,
+    availableTags,
+    filteredProfiles,
+    clearAllFilters,
+  } = useNetworkingFilters(profiles);
+
   const { sendConnectionRequest, getConnectionStatus, connections } =
     useNetworking();
 
@@ -63,15 +82,6 @@ const AttendeeNetworking = () => {
   console.log("AttendeeNetworking - profiles:", profiles);
   console.log("AttendeeNetworking - loading:", loading);
   console.log("AttendeeNetworking - error:", error);
-
-  // Filter profiles based on search term
-  const filteredProfiles = profiles.filter(
-    (profile) =>
-      profile.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      profile.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      profile.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      profile.niche?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   // Get connected users
   const connectedUsers = profiles.filter((profile) => {
@@ -482,28 +492,28 @@ const AttendeeNetworking = () => {
                 <span className="hidden sm:inline">Messages</span>
               </TabsTrigger>
             </TabsList>
-
-            {activeTab === "people" && (
-              <div className="relative mt-4 lg:mt-0 lg:w-80">
-                <Search
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"
-                  size={20}
-                />
-                <Input
-                  placeholder="Search attendees..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-12 pr-4 h-12 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border-gray-200 dark:border-gray-700 rounded-2xl shadow-lg focus:ring-2 focus:ring-connect-500 focus:border-transparent transition-all duration-300"
-                />
-              </div>
-            )}
           </div>
 
           <TabsContent value="people" className="space-y-8">
+            <NetworkingFilter
+              searchTerm={searchTerm}
+              onSearchChange={setSearchTerm}
+              selectedNiches={selectedNiches}
+              onNicheChange={setSelectedNiches}
+              selectedNetworkingPrefs={selectedNetworkingPrefs}
+              onNetworkingPrefChange={setSelectedNetworkingPrefs}
+              selectedTags={selectedTags}
+              onTagChange={setSelectedTags}
+              availableNiches={availableNiches}
+              availableNetworkingPrefs={availableNetworkingPrefs}
+              availableTags={availableTags}
+              onClearFilters={clearAllFilters}
+            />
+            
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
               {filteredProfiles.map((profile) => renderUserCard(profile, true))}
             </div>
-            {filteredProfiles.length === 0 && searchTerm && (
+            {filteredProfiles.length === 0 && (
               <div className="text-center py-16">
                 <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-full flex items-center justify-center">
                   <Search size={32} className="text-gray-400" />
@@ -512,14 +522,14 @@ const AttendeeNetworking = () => {
                   No results found
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400">
-                  Try adjusting your search terms or browse all attendees
+                  Try adjusting your search terms or filters
                 </p>
                 <Button
                   variant="outline"
                   className="mt-4"
-                  onClick={() => setSearchTerm("")}
+                  onClick={clearAllFilters}
                 >
-                  Clear Search
+                  Clear All Filters
                 </Button>
               </div>
             )}

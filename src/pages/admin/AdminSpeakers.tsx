@@ -16,7 +16,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import SpeakerStatsCards from './components/SpeakerStatsCards';
 import SpeakersTable from './components/SpeakersTable';
-
 type SpeakerFormData = {
   name: string;
   title?: string;
@@ -28,42 +27,57 @@ type SpeakerFormData = {
   linkedin_link?: string;
   website_link?: string;
 };
-
 const AdminSpeakersContent = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [editingSpeaker, setEditingSpeaker] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
-  const { selectedEventId, selectedEvent } = useAdminEventContext();
-  const { speakers, isLoading, createSpeaker, updateSpeaker, deleteSpeaker } = useAdminSpeakers(selectedEventId || undefined);
-  const { toast } = useToast();
-  const { currentUser } = useAuth();
-
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<SpeakerFormData>();
+  const {
+    selectedEventId,
+    selectedEvent
+  } = useAdminEventContext();
+  const {
+    speakers,
+    isLoading,
+    createSpeaker,
+    updateSpeaker,
+    deleteSpeaker
+  } = useAdminSpeakers(selectedEventId || undefined);
+  const {
+    toast
+  } = useToast();
+  const {
+    currentUser
+  } = useAuth();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: {
+      errors
+    }
+  } = useForm<SpeakerFormData>();
 
   // Calculate some simple speaker stats
   const totalSpeakers = speakers.length;
   const sessions = speakers.filter(s => s.session_title).length;
-
   const uploadImage = async (file: File): Promise<string> => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${currentUser?.id}/speakers/${Date.now()}.${fileExt}`;
-
-    const { error: uploadError } = await supabase.storage
-      .from('event-images')
-      .upload(fileName, file);
-
+    const {
+      error: uploadError
+    } = await supabase.storage.from('event-images').upload(fileName, file);
     if (uploadError) {
       throw uploadError;
     }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from('event-images')
-      .getPublicUrl(fileName);
-
+    const {
+      data: {
+        publicUrl
+      }
+    } = supabase.storage.from('event-images').getPublicUrl(fileName);
     return publicUrl;
   };
-
   const onSubmit = async (data: SpeakerFormData) => {
     if (!selectedEventId) {
       toast({
@@ -73,7 +87,6 @@ const AdminSpeakersContent = () => {
       });
       return;
     }
-
     try {
       let photoUrl = imagePreview;
       if (selectedImage) {
@@ -83,11 +96,13 @@ const AdminSpeakersContent = () => {
         ...data,
         event_id: selectedEventId,
         photo_url: photoUrl,
-        session_time: data.session_time ? new Date(data.session_time).toISOString() : undefined,
+        session_time: data.session_time ? new Date(data.session_time).toISOString() : undefined
       };
-
       if (editingSpeaker) {
-        updateSpeaker({ id: editingSpeaker, ...speakerData });
+        updateSpeaker({
+          id: editingSpeaker,
+          ...speakerData
+        });
         setEditingSpeaker(null);
       } else {
         createSpeaker(speakerData);
@@ -104,7 +119,6 @@ const AdminSpeakersContent = () => {
       });
     }
   };
-
   const handleEdit = (speaker: any) => {
     setEditingSpeaker(speaker.id);
     setIsCreating(true);
@@ -119,13 +133,11 @@ const AdminSpeakersContent = () => {
     setValue('linkedin_link', speaker.linkedin_link || '');
     setValue('website_link', speaker.website_link || '');
   };
-
   const handleDelete = (speaker: any) => {
     if (confirm('Are you sure you want to delete this speaker?')) {
       deleteSpeaker(speaker.id);
     }
   };
-
   const handleCancel = () => {
     setIsCreating(false);
     setEditingSpeaker(null);
@@ -133,12 +145,11 @@ const AdminSpeakersContent = () => {
     setImagePreview('');
     reset();
   };
-
   const handleImageSelect = (file: File | null) => {
     setSelectedImage(file);
     if (file) {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = e => {
         setImagePreview(e.target?.result as string);
       };
       reader.readAsDataURL(file);
@@ -146,18 +157,13 @@ const AdminSpeakersContent = () => {
       setImagePreview('');
     }
   };
-
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
+    return <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
         <p className="text-muted-foreground">Loading speakers...</p>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="space-y-8 animate-fade-in">
+  return <div className="space-y-8 animate-fade-in">
       {/* Event Selector */}
       <div className="flex justify-between items-center">
         <EventSelector />
@@ -184,7 +190,7 @@ const AdminSpeakersContent = () => {
           <div className="flex items-center gap-3">
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-600 shadow-md">
               <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6 2a4 4 0 11-8 0 4 4 0 008 0zm6-8v2m0 4v2m0-8a4 4 0 10-8 0 4 4 0 008 0z"/>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6 2a4 4 0 11-8 0 4 4 0 008 0zm6-8v2m0 4v2m0-8a4 4 0 10-8 0 4 4 0 008 0z" />
               </svg>
             </span>
             <div>
@@ -194,32 +200,24 @@ const AdminSpeakersContent = () => {
               </div>
             </div>
           </div>
-          <Button 
-            onClick={() => setIsCreating(true)} 
-            variant="gradient" 
-            className="shadow hover-scale w-full md:w-auto"
-            disabled={!selectedEventId}
-          >
+          <Button onClick={() => setIsCreating(true)} variant="gradient" className="shadow hover-scale w-full md:w-auto" disabled={!selectedEventId}>
             Add Speaker
           </Button>
         </div>
 
         {/* Show message when no event is selected */}
-        {!selectedEventId && (
-          <div className="text-center py-12">
+        {!selectedEventId && <div className="text-center py-12">
             <div className="p-4 rounded-full bg-primary/10 inline-block mb-4">
               <svg className="h-8 w-8 text-primary" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
             <p className="text-muted-foreground text-lg mb-2">No event selected</p>
             <p className="text-sm text-muted-foreground">Please select an event above to manage its speakers</p>
-          </div>
-        )}
+          </div>}
 
         {/* Add/Edit Speaker Form */}
-        {isCreating && selectedEventId && (
-          <Card className="mb-6 glass-card bg-gradient-to-br from-white/90 via-primary-50/70 to-primary-100/60 transition-all animate-fade-in shadow-lg">
+        {isCreating && selectedEventId && <Card className="mb-6 glass-card bg-gradient-to-br from-white/90 via-primary-50/70 to-primary-100/60 transition-all animate-fade-in shadow-lg">
             <CardHeader>
               <CardTitle>{editingSpeaker ? 'Edit Speaker' : 'Add New Speaker'}</CardTitle>
               <CardDescription>
@@ -229,96 +227,50 @@ const AdminSpeakersContent = () => {
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)} className="grid md:grid-cols-2 gap-6">
                 <div className="flex flex-col space-y-5">
-                  <ImageUpload
-                    onImageSelect={handleImageSelect}
-                    currentImageUrl={imagePreview}
-                    label="Speaker Photo"
-                  />
+                  <ImageUpload onImageSelect={handleImageSelect} currentImageUrl={imagePreview} label="Speaker Photo" />
                   <div>
                     <Label htmlFor="name">Name *</Label>
-                    <Input
-                      id="name"
-                      {...register("name", { required: "Name is required" })}
-                      placeholder="Speaker name"
-                      className="mt-1"
-                    />
+                    <Input id="name" {...register("name", {
+                  required: "Name is required"
+                })} placeholder="Speaker name" className="mt-1" />
                     {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
                   </div>
                   <div>
-                    <Label htmlFor="title">Title</Label>
-                    <Input
-                      id="title"
-                      {...register("title")}
-                      placeholder="Job title"
-                      className="mt-1"
-                    />
+                    <Label htmlFor="title">Title/Role</Label>
+                    <Input id="title" {...register("title")} placeholder="Job title" className="mt-1" />
                   </div>
                   <div>
-                    <Label htmlFor="company">Company</Label>
-                    <Input
-                      id="company"
-                      {...register("company")}
-                      placeholder="Company name"
-                      className="mt-1"
-                    />
+                    <Label htmlFor="company">Organization</Label>
+                    <Input id="company" {...register("company")} placeholder="Company name" className="mt-1" />
                   </div>
                   <div>
                     <Label htmlFor="bio">Bio *</Label>
-                    <Textarea
-                      id="bio"
-                      {...register("bio", { required: "Bio is required" })}
-                      placeholder="Speaker biography"
-                      rows={3}
-                      className="mt-1"
-                    />
+                    <Textarea id="bio" {...register("bio", {
+                  required: "Bio is required"
+                })} placeholder="Speaker biography" rows={3} className="mt-1" />
                     {errors.bio && <p className="text-sm text-destructive">{errors.bio.message}</p>}
                   </div>
                 </div>
                 <div className="flex flex-col space-y-5">
                   <div>
                     <Label htmlFor="session_title">Session Title</Label>
-                    <Input
-                      id="session_title"
-                      {...register("session_title")}
-                      placeholder="Session or talk title"
-                      className="mt-1"
-                    />
+                    <Input id="session_title" {...register("session_title")} placeholder="Session or talk title" className="mt-1" />
                   </div>
                   <div>
                     <Label htmlFor="session_time">Session Time</Label>
-                    <Input
-                      id="session_time"
-                      type="datetime-local"
-                      {...register("session_time")}
-                      className="mt-1"
-                    />
+                    <Input id="session_time" type="datetime-local" {...register("session_time")} className="mt-1" />
                   </div>
                   <div>
                     <Label htmlFor="twitter_link">Twitter</Label>
-                    <Input
-                      id="twitter_link"
-                      {...register("twitter_link")}
-                      placeholder="https://twitter.com/username"
-                      className="mt-1"
-                    />
+                    <Input id="twitter_link" {...register("twitter_link")} placeholder="https://twitter.com/username" className="mt-1" />
                   </div>
                   <div>
                     <Label htmlFor="linkedin_link">LinkedIn</Label>
-                    <Input
-                      id="linkedin_link"
-                      {...register("linkedin_link")}
-                      placeholder="https://linkedin.com/in/username"
-                      className="mt-1"
-                    />
+                    <Input id="linkedin_link" {...register("linkedin_link")} placeholder="https://linkedin.com/in/username" className="mt-1" />
                   </div>
                   <div>
                     <Label htmlFor="website_link">Website</Label>
-                    <Input
-                      id="website_link"
-                      {...register("website_link")}
-                      placeholder="https://website.com"
-                      className="mt-1"
-                    />
+                    <Input id="website_link" {...register("website_link")} placeholder="https://website.com" className="mt-1" />
                   </div>
                   <div className="flex gap-2 pt-4">
                     <Button type="submit" className="flex-1">
@@ -331,30 +283,18 @@ const AdminSpeakersContent = () => {
                 </div>
               </form>
             </CardContent>
-          </Card>
-        )}
+          </Card>}
 
         {/* Table with Modern Styling */}
-        {selectedEventId && (
-          <SpeakersTable
-            speakers={speakers}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
-          />
-        )}
+        {selectedEventId && <SpeakersTable speakers={speakers} onEdit={handleEdit} onDelete={handleDelete} />}
       </div>
-    </div>
-  );
+    </div>;
 };
-
 const AdminSpeakers = () => {
-  return (
-    <AdminLayout>
+  return <AdminLayout>
       <AdminEventProvider>
         <AdminSpeakersContent />
       </AdminEventProvider>
-    </AdminLayout>
-  );
+    </AdminLayout>;
 };
-
 export default AdminSpeakers;

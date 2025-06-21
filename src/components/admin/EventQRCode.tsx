@@ -2,14 +2,16 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { QrCode, Download, CreditCard } from 'lucide-react';
+import { QrCode, Download, CreditCard, Key, Check, X } from 'lucide-react';
 import QRCodeGenerator from '@/components/admin/QRCodeGenerator';
 import PaymentModal from '@/components/payment/PaymentModal';
 import { usePayment } from '@/hooks/usePayment';
 import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface EventQRCodeProps {
   eventId: string;
@@ -19,9 +21,13 @@ interface EventQRCodeProps {
 const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
+  const [referralCode, setReferralCode] = useState('');
+  const [hasValidReferralCode, setHasValidReferralCode] = useState(false);
+  const [isValidatingCode, setIsValidatingCode] = useState(false);
   const { isEventPaid, isLoadingPayments } = usePayment();
   const { currentUser } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Get the current user's profile data including access_key
   const { data: userProfile } = useQuery({
@@ -62,9 +68,31 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
     await queryClient.refetchQueries({ queryKey: ['event-payments', currentUser?.id] });
   };
 
-  const isPaid = isEventPaid(eventId);
+  const handleApplyReferralCode = async () => {
+    setIsValidatingCode(true);
+    
+    // Check if the referral code matches the specific code
+    if (referralCode.trim() === '#Kconect09099') {
+      setHasValidReferralCode(true);
+      toast({
+        title: 'Referral Code Applied',
+        description: 'You now have access to generate QR codes for this event!',
+      });
+    } else {
+      toast({
+        title: 'Invalid Referral Code',
+        description: 'The referral code you entered is not valid.',
+        variant: 'destructive',
+      });
+    }
+    
+    setIsValidatingCode(false);
+  };
 
-  console.log('EventQRCode - isPaid:', isPaid, 'eventId:', eventId);
+  const isPaid = isEventPaid(eventId);
+  const hasAccess = isPaid || hasValidReferralCode;
+
+  console.log('EventQRCode - isPaid:', isPaid, 'hasValidReferralCode:', hasValidReferralCode, 'eventId:', eventId);
   console.log('EventQRCode - isLoadingPayments:', isLoadingPayments);
 
   if (isLoadingPayments) {
@@ -78,7 +106,7 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
   return (
     <>
       <div className="flex flex-col gap-2 mt-3 w-full">
-        {isPaid ? (
+        {hasAccess ? (
           <Button
             onClick={() => setShowQRModal(true)}
             size="sm"
@@ -88,14 +116,45 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
             <span className="truncate">Generate QR Code</span>
           </Button>
         ) : (
-          <Button
-            onClick={() => setShowPaymentModal(true)}
-            size="sm"
-            className="w-full min-h-[40px] bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-xs sm:text-sm px-3 py-2"
-          >
-            <CreditCard className="h-4 w-4 mr-2 flex-shrink-0" />
-            <span className="truncate">Pay Now (₦30,000)</span>
-          </Button>
+          <>
+            <Button
+              onClick={() => setShowPaymentModal(true)}
+              size="sm"
+              className="w-full min-h-[40px] bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-xs sm:text-sm px-3 py-2"
+            >
+              <CreditCard className="h-4 w-4 mr-2 flex-shrink-0" />
+              <span className="truncate">Pay Now (₦30,000)</span>
+            </Button>
+            
+            {/* Referral Code Section */}
+            <div className="space-y-2 p-3 rounded-lg bg-muted/30 border border-dashed border-muted-foreground/30">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Key className="h-3 w-3" />
+                <span>Have a referral code?</span>
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter referral code"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value)}
+                  className="text-xs h-8 bg-background/50"
+                />
+                <Button
+                  onClick={handleApplyReferralCode}
+                  disabled={!referralCode.trim() || isValidatingCode}
+                  size="sm"
+                  variant="outline"
+                  className="h-8 px-3 text-xs"
+                >
+                  {isValidatingCode ? (
+                    <div className="animate-spin rounded-full h-3 w-3 border-b border-current"></div>
+                  ) : (
+                    'Apply'
+                  )}
+                </Button>
+              </div>
+            </div>
+          </>
         )}
       </div>
 

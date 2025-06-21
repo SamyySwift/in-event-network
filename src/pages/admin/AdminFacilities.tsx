@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import AdminLayout from "@/components/layouts/AdminLayout";
 import FacilityStatsCards from "./components/FacilityStatsCards";
@@ -57,7 +58,7 @@ const AdminFacilitiesContent = () => {
   const stats = getFacilityStats(facilities);
 
   // Event missing/error states
-  if (eventsLoading || isLoading) {
+  if (eventsLoading) {
     return (
       <div className="space-y-8 animate-fade-in">
         <div className="flex justify-between items-center">
@@ -66,7 +67,7 @@ const AdminFacilitiesContent = () => {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-2 text-muted-foreground">Loading facilities...</p>
+            <p className="mt-2 text-muted-foreground">Loading events...</p>
           </div>
         </div>
       </div>
@@ -153,16 +154,17 @@ const AdminFacilitiesContent = () => {
               defaultEventId={selectedEventId}
               isCreating={isCreating}
               onSubmit={form => {
+                console.log('Submitting facility form:', form);
                 createFacility({
                   name: form.name,
-                  description: form.description,
-                  location: form.location,
-                  rules: form.rules,
+                  description: form.description || undefined,
+                  location: form.location || undefined,
+                  rules: form.rules || undefined,
                   contact_type: form.contactType,
-                  contact_info: form.contactInfo,
+                  contact_info: form.contactInfo || undefined,
                   icon_type: form.iconType,
                   event_id: form.eventId,
-                  image_url: null,
+                  image_url: undefined,
                 });
               }}
             >
@@ -183,55 +185,68 @@ const AdminFacilitiesContent = () => {
             />
           </div>
 
-          {/* Facilities List */}
-          <div className="space-y-4">
-            {filteredFacilities.length > 0 ? (
-              filteredFacilities.map(facility => (
-                <React.Fragment key={facility.id}>
-                  <FacilityCard
-                    facility={facility}
-                    isDeleting={isDeleting}
-                    onEdit={(fac) => {
-                      setEditingFacility(fac);
-                      setEditDialogOpen(true);
-                    }}
-                    onDelete={facility => deleteFacility(facility.id)}
-                  />
-                </React.Fragment>
-              ))
-            ) : (
-              <div className="text-center py-8">
-                <Plus className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
-                <h3 className="mt-4 text-lg font-medium">No facilities found</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  No facilities match your search criteria.
-                </p>
-                <CreateFacilityDialog
-                  events={adminEvents}
-                  defaultEventId={selectedEventId}
-                  isCreating={isCreating}
-                  onSubmit={form => {
-                    createFacility({
-                      name: form.name,
-                      description: form.description,
-                      location: form.location,
-                      rules: form.rules,
-                      contact_type: form.contactType,
-                      contact_info: form.contactInfo,
-                      icon_type: form.iconType,
-                      event_id: form.eventId,
-                      image_url: null,
-                    });
-                  }}
-                >
-                  <Button className="mt-4">
-                    <Plus size={16} className="mr-1" />
-                    Add Facility
-                  </Button>
-                </CreateFacilityDialog>
+          {/* Loading state */}
+          {isLoading && (
+            <div className="flex items-center justify-center h-32">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+                <p className="mt-2 text-muted-foreground">Loading facilities...</p>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          {/* Facilities List */}
+          {!isLoading && (
+            <div className="space-y-4">
+              {filteredFacilities.length > 0 ? (
+                filteredFacilities.map(facility => (
+                  <React.Fragment key={facility.id}>
+                    <FacilityCard
+                      facility={facility}
+                      isDeleting={isDeleting}
+                      onEdit={(fac) => {
+                        setEditingFacility(fac);
+                        setEditDialogOpen(true);
+                      }}
+                      onDelete={facility => deleteFacility(facility.id)}
+                    />
+                  </React.Fragment>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <Plus className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
+                  <h3 className="mt-4 text-lg font-medium">No facilities found</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {searchQuery ? 'No facilities match your search criteria.' : 'Get started by adding your first facility.'}
+                  </p>
+                  <CreateFacilityDialog
+                    events={adminEvents}
+                    defaultEventId={selectedEventId}
+                    isCreating={isCreating}
+                    onSubmit={form => {
+                      console.log('Submitting facility form:', form);
+                      createFacility({
+                        name: form.name,
+                        description: form.description || undefined,
+                        location: form.location || undefined,
+                        rules: form.rules || undefined,
+                        contact_type: form.contactType,
+                        contact_info: form.contactInfo || undefined,
+                        icon_type: form.iconType,
+                        event_id: form.eventId,
+                        image_url: undefined,
+                      });
+                    }}
+                  >
+                    <Button className="mt-4">
+                      <Plus size={16} className="mr-1" />
+                      Add Facility
+                    </Button>
+                  </CreateFacilityDialog>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Edit Facility Dialog */}
           <EditFacilityDialog
@@ -242,14 +257,15 @@ const AdminFacilitiesContent = () => {
             onClose={() => setEditDialogOpen(false)}
             onSubmit={form => {
               if (!editingFacility) return;
+              console.log('Updating facility:', form);
               updateFacility({
                 id: editingFacility.id,
                 name: form.name,
-                description: form.description,
-                location: form.location,
-                rules: form.rules,
+                description: form.description || undefined,
+                location: form.location || undefined,
+                rules: form.rules || undefined,
                 contact_type: form.contactType,
-                contact_info: form.contactInfo,
+                contact_info: form.contactInfo || undefined,
                 icon_type: form.iconType,
                 event_id: form.eventId,
               });

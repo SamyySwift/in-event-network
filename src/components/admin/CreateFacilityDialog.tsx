@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Ambulance, Hospital, Car, MapPin, Building, Coffee, Shield, Wifi, Phone, User, Bath, ChefHat, Utensils, Home, Dumbbell,
-// gym/fitness
-Music, Gamepad2, Archive, ArchiveRestore, Box, Landmark, Warehouse, Siren, AlertTriangle, Presentation, Monitor, Sofa, Wine,
-// bar/lounge
-ArrowUp } from "lucide-react";
+import { Plus, Ambulance, Hospital, Car, MapPin, Building, Coffee, Shield, Wifi, Phone, User, Bath, ChefHat, Utensils, Home, Dumbbell, Music, Gamepad2, Archive, ArchiveRestore, Box, Landmark, Warehouse, Siren, AlertTriangle, Presentation, Monitor, Sofa, Wine, ArrowUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -187,40 +183,91 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
       eventId: defaultEventId || ""
     }
   });
+
   useEffect(() => {
-    if (defaultEventId) setValue("eventId", defaultEventId);
+    if (defaultEventId) {
+      setValue("eventId", defaultEventId);
+    }
   }, [defaultEventId, setValue]);
+
   useEffect(() => {
-    if (!open) reset();
-  }, [open, reset]);
+    if (!open) {
+      reset({
+        name: "",
+        description: "",
+        location: "",
+        rules: "",
+        contactType: "none",
+        contactInfo: "",
+        iconType: ICON_OPTIONS[0].value,
+        eventId: defaultEventId || ""
+      });
+    }
+  }, [open, reset, defaultEventId]);
+
   const contactType = watch("contactType");
   const selectedIcon = watch("iconType");
+
   const handleDialogSubmit = (data: FormData) => {
+    console.log('CreateFacilityDialog - Form data:', data);
+    
+    // Validate required fields
+    if (!data.name || !data.eventId) {
+      console.error('Missing required fields:', { name: data.name, eventId: data.eventId });
+      return;
+    }
+
     onSubmit(data);
     setOpen(false);
   };
-  return <Dialog open={open} onOpenChange={setOpen}>
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {children || <Button>
+        {children || (
+          <Button>
             <Plus size={16} className="mr-1" />
             Add Facility
-          </Button>}
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add Facility</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit(handleDialogSubmit)} className="space-y-4 mt-3" autoComplete="off">
-          
+          <div>
+            <Label htmlFor="eventId">Event *</Label>
+            <Select
+              value={watch("eventId")}
+              onValueChange={val => setValue("eventId", val, { shouldValidate: true })}
+              disabled={isCreating}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select event" />
+              </SelectTrigger>
+              <SelectContent>
+                {events.map(ev => (
+                  <SelectItem key={ev.id} value={ev.id}>
+                    {ev.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.eventId?.message && <p className="text-sm text-destructive">{errors.eventId.message}</p>}
+          </div>
+
           <div>
             <Label htmlFor="name">Facility Name *</Label>
             <Input id="name" {...register("name")} placeholder="Enter facility name" disabled={isCreating} />
             {errors.name?.message && <p className="text-sm text-destructive">{errors.name.message}</p>}
           </div>
+
           <div>
             <Label htmlFor="description">Description</Label>
             <Textarea id="description" {...register("description")} placeholder="Enter facility description" rows={2} disabled={isCreating} />
           </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="location">Location</Label>
@@ -232,36 +279,42 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
                 <SelectTrigger>
                   <SelectValue placeholder="Select icon">
                     {(() => {
-                    const iconObj = ICON_OPTIONS.find(icon => icon.value === selectedIcon);
-                    if (iconObj) {
-                      const IconComp = iconObj.icon;
-                      return <span className="flex items-center gap-2">
+                      const iconObj = ICON_OPTIONS.find(icon => icon.value === selectedIcon);
+                      if (iconObj) {
+                        const IconComp = iconObj.icon;
+                        return (
+                          <span className="flex items-center gap-2">
                             <IconComp className="w-4 h-4" />
                             {iconObj.label}
-                          </span>;
-                    }
-                    return null;
-                  })()}
+                          </span>
+                        );
+                      }
+                      return null;
+                    })()}
                   </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {ICON_OPTIONS.map(icon => {
-                  const IconComp = icon.icon;
-                  return <SelectItem key={icon.value} value={icon.value}>
+                    const IconComp = icon.icon;
+                    return (
+                      <SelectItem key={icon.value} value={icon.value}>
                         <span className="flex items-center gap-2">
                           <IconComp className="w-4 h-4" />
                           {icon.label}
                         </span>
-                      </SelectItem>;
-                })}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
           </div>
+
           <div>
             <Label htmlFor="rules">Rules (Optional)</Label>
             <Textarea id="rules" {...register("rules")} placeholder="Enter rules and guidelines" rows={2} disabled={isCreating} />
           </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label>Contact Type</Label>
@@ -276,18 +329,23 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
                 </SelectContent>
               </Select>
             </div>
-            {(contactType === "phone" || contactType === "whatsapp") && <div>
+            {(contactType === "phone" || contactType === "whatsapp") && (
+              <div>
                 <Label htmlFor="contactInfo">Contact Number</Label>
                 <Input id="contactInfo" {...register("contactInfo")} placeholder="Enter phone number" disabled={isCreating} />
                 {errors.contactInfo?.message && <p className="text-sm text-destructive">{errors.contactInfo.message}</p>}
-              </div>}
+              </div>
+            )}
           </div>
+
           <Button type="submit" disabled={isCreating} className="w-full">
             {isCreating ? "Creating..." : "Create Facility"}
           </Button>
         </form>
       </DialogContent>
-    </Dialog>;
+    </Dialog>
+  );
 };
+
 export default CreateFacilityDialog;
 // NOTE: This file is getting long (over 200 lines). Please consider asking to refactor it into smaller components!

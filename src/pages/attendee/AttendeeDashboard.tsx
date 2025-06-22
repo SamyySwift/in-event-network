@@ -330,7 +330,7 @@ const AttendeeDashboardContent = () => {
         </div>
       </div>
 
-      {/* Recent Announcements */}
+      {/* Recent Announcements - Improved Mobile Layout */}
       {recentAnnouncements && recentAnnouncements.length > 0 && (
         <div className="mb-8 relative z-10">
           <div className="flex items-center gap-4 mb-6">
@@ -347,16 +347,16 @@ const AttendeeDashboardContent = () => {
           <div className="grid gap-4">
             {recentAnnouncements.map((announcement) => (
               <Card key={announcement.id} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 border-l-4 border-l-blue-500 bg-white backdrop-blur-sm relative z-10">
-                <CardContent className="p-6 bg-white/95 backdrop-blur-sm">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg text-gray-900 mb-2">{announcement.title}</h3>
-                      <p className="text-gray-600 leading-relaxed">
+                <CardContent className="p-4 sm:p-6 bg-white/95 backdrop-blur-sm">
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-6">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-lg text-gray-900 mb-2 break-words">{announcement.title}</h3>
+                      <p className="text-gray-600 leading-relaxed break-words">
                         {announcement.content}
                       </p>
                     </div>
-                    <div className="flex items-center gap-3 ml-6">
-                      <Badge variant={announcement.priority === 'high' ? 'destructive' : 'outline'} className="font-medium">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 flex-shrink-0">
+                      <Badge variant={announcement.priority === 'high' ? 'destructive' : 'outline'} className="font-medium self-start">
                         {announcement.priority}
                       </Badge>
                       <span className="text-xs text-gray-500 whitespace-nowrap">
@@ -375,7 +375,7 @@ const AttendeeDashboardContent = () => {
       <div className="mb-8 relative z-10">
         <div className="flex items-center gap-4 mb-6">
           <div className="flex-shrink-0">
-            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+            <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl flex items-center justify-center">
               <Zap className="w-6 h-6 text-white" />
             </div>
           </div>

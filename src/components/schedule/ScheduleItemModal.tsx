@@ -205,8 +205,8 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
           {/* Social Links */}
           {renderSocialLinks()}
 
-          {/* Description */}
-          {item.description && (
+          {/* Session/Event Description - Only show if there's actual description content */}
+          {item.description && item.description.trim() && (
             <div>
               <h3 className="font-medium mb-2">
                 {item.type === 'speaker' ? 'Session Description' : 'Description'}

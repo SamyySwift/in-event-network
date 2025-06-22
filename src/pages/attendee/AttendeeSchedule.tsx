@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, MapPin, User, ChevronRight, Search, Users, ExternalLink, Linkedin, Globe } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
@@ -143,7 +142,7 @@ const AttendeeSchedule = () => {
     
     const combined: CombinedScheduleItem[] = [];
 
-    // Add speaker sessions
+    // Add speaker sessions - Fixed: Don't assign bio to description
     if (speakers && speakers.length > 0) {
       const speakersWithSessions = speakers.filter(speaker => 
         speaker.session_time && speaker.session_title
@@ -154,7 +153,7 @@ const AttendeeSchedule = () => {
         combined.push({
           id: `speaker-${speaker.id}`,
           title: speaker.session_title!,
-          description: speaker.bio,
+          description: null, // Don't use bio as description - this was causing duplication
           start_time: speaker.session_time!,
           location: undefined,
           type: 'speaker',
@@ -546,6 +545,7 @@ const AttendeeSchedule = () => {
                                     <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-indigo-500 transition-colors flex-shrink-0 ml-2" />
                                   </div>
 
+                                  {/* Location */}
                                   {item.location && (
                                     <div className="flex items-center gap-1 text-sm text-gray-500 mb-2">
                                       <MapPin className="h-4 w-4 flex-shrink-0" />
@@ -553,6 +553,7 @@ const AttendeeSchedule = () => {
                                     </div>
                                   )}
 
+                                  {/* Description - Only show for schedule items or if speaker has session description */}
                                   {item.description && (
                                     <p className="text-gray-700 text-sm mb-3 line-clamp-2">
                                       {item.description}

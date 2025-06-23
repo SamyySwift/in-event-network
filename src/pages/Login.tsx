@@ -26,11 +26,28 @@ const Login = () => {
   const { toast } = useToast();
 
   // Handle redirect when user becomes authenticated
+  // Add similar logic to Login.tsx for users who already have accounts
   useEffect(() => {
     console.log("Login component - Auth state:", { currentUser, isLoading });
-
+  
     if (currentUser && !isLoading) {
-      console.log("User authenticated, redirecting...", currentUser);
+      console.log("User authenticated, checking for pending event...", currentUser);
+      
+      // Check if there's a pending event to join
+      const pendingEventCode = sessionStorage.getItem('pendingEventCode');
+      
+      if (pendingEventCode && currentUser.role === 'attendee') {
+        console.log('Found pending event code, attempting to join:', pendingEventCode);
+        
+        // Clear the stored code
+        sessionStorage.removeItem('pendingEventCode');
+        
+        // Navigate to join the event
+        navigate(`/join/${pendingEventCode}`, { replace: true });
+        return;
+      }
+      
+      // Normal redirect
       const redirectPath = currentUser.role === "host" ? "/admin" : "/attendee";
       navigate(redirectPath, { replace: true });
     }

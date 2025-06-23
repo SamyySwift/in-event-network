@@ -18,12 +18,12 @@ const ScanQR = () => {
 
   const handleScanSuccess = (decodedText: string) => {
     console.log('QR Code decoded:', decodedText);
-
+  
     try {
       // Handle different QR code formats
       let accessCode = '';
       let eventId = '';
-
+  
       // Check if it's a URL with access code parameter
       if (decodedText.includes('code=')) {
         const url = new URL(decodedText);
@@ -46,7 +46,7 @@ const ScanQR = () => {
           }
         }
       }
-
+  
       if (accessCode && /^\d{6}$/.test(accessCode)) {
         console.log('Extracted access code:', accessCode);
         
@@ -55,7 +55,7 @@ const ScanQR = () => {
             console.log('Join event success:', data);
             setScanSuccess(true);
             setEventName(data?.event_name || 'Event');
-            
+  
             // Navigate to dashboard after a short delay
             setTimeout(() => {
               navigate('/attendee/dashboard', { replace: true });
@@ -63,6 +63,15 @@ const ScanQR = () => {
           },
           onError: (error: any) => {
             console.error('Join event error:', error);
+  
+            // Check if the error is due to authentication
+            if (error?.message?.includes('not authenticated') || error?.message?.includes('login') || error?.code === 'PGRST301') {
+              // Store the access code and redirect to register with the code
+              sessionStorage.setItem('pendingEventCode', accessCode);
+              navigate(`/register?eventCode=${accessCode}&role=attendee`, { replace: true });
+              return;
+            }
+            
             toast({
               title: "Failed to Join Event",
               description: error?.message || "Could not join the event. Please try again.",

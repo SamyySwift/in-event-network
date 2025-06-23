@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,12 +14,14 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useJoinEvent } from "@/hooks/useJoinEvent";
 import { AlertCircle, Network } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Register = () => {
   const [searchParams] = useSearchParams();
   const defaultRole = searchParams.get("role") || "attendee";
+  const eventCode = searchParams.get("eventCode");
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -30,8 +32,10 @@ const Register = () => {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isJoiningEvent, setIsJoiningEvent] = useState(false);
 
   const { register, currentUser, isLoading } = useAuth();
+  const { joinEvent } = useJoinEvent();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -41,13 +45,48 @@ const Register = () => {
 
     if (currentUser && !isLoading) {
       console.log(
-        "User authenticated after registration, redirecting...",
+        "User authenticated after registration, checking for pending event...",
         currentUser
       );
-      const redirectPath = currentUser.role === "host" ? "/admin" : "/attendee";
-      navigate(redirectPath, { replace: true });
+      
+      // Check if there's a pending event to join
+      const pendingEventCode = eventCode || sessionStorage.getItem('pendingEventCode');
+      
+      if (pendingEventCode && currentUser.role === 'attendee') {
+        console.log('Found pending event code, attempting to join:', pendingEventCode);
+        setIsJoiningEvent(true);
+        
+        // Clear the stored code
+        sessionStorage.removeItem('pendingEventCode');
+        
+        joinEvent(pendingEventCode, {
+          onSuccess: (data: any) => {
+            console.log('Successfully joined event after registration:', data);
+            setIsJoiningEvent(false);
+            toast({
+              title: "Welcome!",
+              description: `Account created and joined ${data?.event_name || 'event'} successfully!`,
+            });
+            navigate('/attendee/dashboard', { replace: true });
+          },
+          onError: (error: any) => {
+            console.error('Failed to join event after registration:', error);
+            setIsJoiningEvent(false);
+            toast({
+              title: "Account Created",
+              description: "Your account was created, but we couldn't join the event. Please scan the QR code again.",
+              variant: "destructive"
+            });
+            navigate('/attendee/dashboard', { replace: true });
+          }
+        });
+      } else {
+        // Normal redirect without event joining
+        const redirectPath = currentUser.role === "host" ? "/admin" : "/attendee";
+        navigate(redirectPath, { replace: true });
+      }
     }
-  }, [currentUser, isLoading, navigate]);
+  }, [currentUser, isLoading, navigate, eventCode, joinEvent, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,13 +144,15 @@ const Register = () => {
     }
   };
 
-  // Show loading only during registration process
-  if (isSubmitting) {
+  // Show loading during registration or event joining
+  if (isSubmitting || isJoiningEvent) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-connect-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Creating your account...</p>
+          <p className="text-gray-600">
+            {isSubmitting ? "Creating your account..." : "Joining event..."}
+          </p>
         </div>
       </div>
     );

@@ -208,7 +208,7 @@ const AttendeeMap = () => {
             <div className="lg:col-span-2">
               <Tabs defaultValue="map" className="space-y-4">
                 <TabsList className="grid grid-cols-2">
-                  <TabsTrigger value="map">Interactive Map</TabsTrigger>
+                  <TabsTrigger value="map">More Details</TabsTrigger>
                   <TabsTrigger value="list">List View</TabsTrigger>
                 </TabsList>
                 

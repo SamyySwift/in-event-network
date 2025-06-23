@@ -227,10 +227,7 @@ const AttendeeMap = () => {
                               </Badge>
                             </CardDescription>
                           </div>
-                          <Button size="sm" variant="outline" onClick={() => alert(`Directions to ${selectedFacility.name}`)} className="flex items-center gap-1">
-                            <Compass className="h-4 w-4" />
-                            Directions
-                          </Button>
+                          
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-4">

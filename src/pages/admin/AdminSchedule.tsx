@@ -41,6 +41,7 @@ interface ScheduleFormData {
   location: string;
   type: string;
   priority: string;
+  time_allocation?: string; // Add optional time allocation
 }
 
 const AdminScheduleContent = () => {
@@ -337,7 +338,7 @@ const AdminScheduleContent = () => {
                 </div>
                 <div className="flex flex-col space-y-5">
                   <div>
-                    <Label htmlFor="start_time">Start Time</Label>
+                    <Label htmlFor="start_time">Start Time *</Label>
                     <Input
                       id="start_time"
                       type="datetime-local"
@@ -348,7 +349,7 @@ const AdminScheduleContent = () => {
                     )}
                   </div>
                   <div>
-                    <Label htmlFor="end_time">End Time</Label>
+                    <Label htmlFor="end_time">End Time *</Label>
                     <Input
                       id="end_time"
                       type="datetime-local"
@@ -357,6 +358,14 @@ const AdminScheduleContent = () => {
                     {errors.end_time?.message && (
                       <p className="text-sm text-destructive">{errors.end_time.message}</p>
                     )}
+                  </div>
+                  <div>
+                    <Label htmlFor="time_allocation">Time Allocation (Optional)</Label>
+                    <Input
+                      id="time_allocation"
+                      {...register("time_allocation")}
+                      placeholder="e.g., 30min, 1hr, 2hrs"
+                    />
                   </div>
                   <div>
                     <Label htmlFor="location">Location</Label>

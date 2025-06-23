@@ -4,7 +4,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, Clock, MapPin } from "lucide-react";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 interface ScheduleItem {
   id: string;
@@ -69,7 +69,7 @@ const ScheduleItemCard: React.FC<ScheduleItemCardProps> = ({
         <CardDescription className="mt-1">{item.description}</CardDescription>
         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
           <Clock className="h-4 w-4" />
-          {format(new Date(item.start_time), 'MMM d, h:mm a')} - {format(new Date(item.end_time), 'h:mm a')}
+          {format(parseISO(item.start_time), 'MMM d, h:mm a')} - {format(parseISO(item.end_time), 'h:mm a')}
           {item.location && (
             <>
               <MapPin className="h-4 w-4 ml-2" />

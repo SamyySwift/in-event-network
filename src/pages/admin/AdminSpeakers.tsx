@@ -23,6 +23,7 @@ type SpeakerFormData = {
   bio: string;
   session_title?: string;
   session_time?: string;
+  time_allocation?: string; // Add optional time allocation
   twitter_link?: string;
   linkedin_link?: string;
   website_link?: string;
@@ -259,6 +260,15 @@ const AdminSpeakersContent = () => {
                   <div>
                     <Label htmlFor="session_time">Session Time</Label>
                     <Input id="session_time" type="datetime-local" {...register("session_time")} className="mt-1" />
+                  </div>
+                  <div>
+                    <Label htmlFor="time_allocation">Time Allocation (Optional)</Label>
+                    <Input
+                      id="time_allocation"
+                      {...register("time_allocation")}
+                      placeholder="e.g., 30min, 1hr, 2hrs"
+                      className="mt-1"
+                    />
                   </div>
                   <div>
                     <Label htmlFor="twitter_link">Twitter</Label>

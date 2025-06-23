@@ -14,6 +14,7 @@ type Speaker = {
   photo_url?: string;
   session_title?: string;
   session_time?: string;
+  time_allocation?: string; // Add this line
 };
 
 interface SpeakersTableProps {
@@ -57,6 +58,15 @@ const columns = [
             {new Date(row.session_time).toLocaleTimeString()}
           </div>
         )}
+      </div>
+    ),
+  },
+  {
+    header: "Time Allocation",
+    accessorKey: "time_allocation",
+    cell: (value: string) => (
+      <div className="font-medium">
+        {value || "—"}
       </div>
     ),
   },

@@ -78,7 +78,8 @@ const ScheduleItemCard: React.FC<ScheduleItemCardProps> = ({
         <CardDescription className="mt-1">{item.description}</CardDescription>
         <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
           <Clock className="h-4 w-4" />
-          {format(parseISO(item.start_time), 'MMM d, h:mm a')} - {format(parseISO(item.end_time), 'h:mm a')}
+          {item.start_time && format(parseISO(item.start_time), 'MMM d, h:mm a')}
+          {item.end_time && ` - ${format(parseISO(item.end_time), 'h:mm a')}`}
           {item.location && (
             <>
               <MapPin className="h-4 w-4 ml-2" />
@@ -89,6 +90,11 @@ const ScheduleItemCard: React.FC<ScheduleItemCardProps> = ({
         <div className="flex gap-2 mt-1">
           {getTypeBadge(item.type)}
           {getPriorityBadge(item.priority)}
+          {item.time_allocation && (
+            <Badge variant="outline" className="text-xs">
+              {item.time_allocation}
+            </Badge>
+          )}
         </div>
       </div>
       <div className="flex flex-col gap-2">

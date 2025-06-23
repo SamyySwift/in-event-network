@@ -275,6 +275,7 @@ export type Database = {
           website_link: string | null;
           current_event_id: string | null;
           access_key: string | null;
+          networking_visible: boolean | null; // Add this line
           created_at: string;
           updated_at: string;
         };
@@ -299,6 +300,7 @@ export type Database = {
           website_link?: string | null;
           current_event_id?: string | null;
           access_key?: string | null;
+          networking_visible?: boolean | null; // Add this line
           created_at?: string;
           updated_at?: string;
         };
@@ -323,6 +325,7 @@ export type Database = {
           website_link?: string | null;
           current_event_id?: string | null;
           access_key?: string | null;
+          networking_visible?: boolean | null; // Add this line
           created_at?: string;
           updated_at?: string;
         };

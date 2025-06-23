@@ -19,6 +19,7 @@ interface AttendeeProfile {
   github_link?: string;
   instagram_link?: string;
   website_link?: string;
+  networking_visible?: boolean; // Add this line
   created_at?: string;
 }
 

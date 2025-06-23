@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Card,
   CardContent,
@@ -86,6 +87,7 @@ const AttendeeProfile = () => {
     company: "",
     customTags: [] as string[],
     networkingPreferences: [] as string[],
+    networkingVisible: true,
     links: {
       twitter: "",
       linkedin: "",
@@ -126,6 +128,7 @@ const AttendeeProfile = () => {
             company: profile.company || "",
             customTags: profile.tags || [],
             networkingPreferences: profile.networking_preferences || [],
+            networkingVisible: profile.networking_visible ?? true,
             links: {
               twitter: profile.twitter_link || "",
               linkedin: profile.linkedin_link || "",
@@ -216,6 +219,7 @@ const AttendeeProfile = () => {
           company: profileData.company,
           tags: profileData.customTags,
           networking_preferences: selectedNetworking,
+          networking_visible: profileData.networkingVisible,
           twitter_link: profileData.links.twitter,
           linkedin_link: profileData.links.linkedin,
           github_link: profileData.links.github,
@@ -498,11 +502,37 @@ const AttendeeProfile = () => {
 
             <Separator />
 
+            {/* Networking Visibility */}
+            <div className="space-y-4">
+              <Label className="text-base font-semibold">Networking Visibility</Label>
+              <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="space-y-1">
+                  <div className="font-medium">Appear in Networking Tab</div>
+                  <div className="text-sm text-muted-foreground">
+                    {profileData.networkingVisible 
+                      ? "Other attendees can see your profile and connect with you" 
+                      : "You will remain anonymous and won't appear in the networking tab"}
+                  </div>
+                </div>
+                <Switch
+                  checked={profileData.networkingVisible}
+                  onCheckedChange={(checked) => 
+                    setProfileData(prev => ({ ...prev, networkingVisible: checked }))
+                  }
+                  disabled={!isEditing}
+                />
+              </div>
+            </div>
+
+            <Separator />
+
             {/* Networking Preferences */}
             <div>
-              <h3 className="font-semibold mb-2 text-gray-900 dark:text-white">
-                Networking Preferences
-              </h3>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="font-semibold text-gray-900 dark:text-white">
+                  Networking Preferences
+                </h3>
+              </div>
               <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                 Who are you interested in meeting?
               </p>

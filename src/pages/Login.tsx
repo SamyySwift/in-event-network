@@ -124,6 +124,9 @@ const Login = () => {
       <div className="flex justify-center mb-8">
         <Link to="/" className="flex items-center">
           <img src="/logo.png" alt="Kconect Logo" className="h-8 w-auto" />
+          <span className="ml-2 font-semibold text-2xl bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
+            Kconect
+          </span>
         </Link>
       </div>
 

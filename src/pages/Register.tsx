@@ -189,9 +189,9 @@ const Register = () => {
               className="h-8 w-auto object-cover"
             />
           </div>
-          {/* <span className="ml-2 font-semibold text-2xl bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
-            Kconnect
-          </span> */}
+          <span className="ml-2 font-semibold text-2xl bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
+            Kconect
+          </span>
         </Link>
       </div>
 

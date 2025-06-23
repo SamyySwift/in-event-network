@@ -74,6 +74,9 @@ const Landing = () => {
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <div className="flex items-center space-x-3">
             <img src="/logo.png" alt="Kconect Logo" className="h-8 w-auto" />
+            <span className="ml-2 font-semibold text-2xl bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
+              Kconect
+            </span>
           </div>
 
           <div className="hidden md:flex items-center space-x-8">

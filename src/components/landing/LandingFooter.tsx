@@ -30,7 +30,9 @@ const LandingFooter: React.FC = () => {
           </div>
 
           <div>
-            <h3 className="font-semibold text-lg mb-4 text-white">Events</h3>
+            <h3 className="font-semibold text-lg mb-4 text-white">
+              Quick Links
+            </h3>
             <ul className="space-y-2">
               <li>
                 <button

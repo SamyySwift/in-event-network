@@ -26,6 +26,7 @@ interface ScheduleItem {
   priority: string;
   event_id: string;
   image_url?: string;
+  time_allocation?: string | null; // Add this field
 }
 
 interface CombinedScheduleItem {
@@ -45,6 +46,7 @@ interface CombinedScheduleItem {
   speaker_website?: string;
   priority?: string;
   image_url?: string;
+  time_allocation?: string | null; // Add this field
 }
 
 const AttendeeSchedule = () => {
@@ -180,7 +182,8 @@ const AttendeeSchedule = () => {
           location: item.location,
           type: 'schedule',
           priority: item.priority,
-          image_url: item.image_url
+          image_url: item.image_url,
+          time_allocation: item.time_allocation // Add this line
         });
       });
     }
@@ -208,6 +211,10 @@ const AttendeeSchedule = () => {
       if (selectedDate === 'yesterday') return isYesterday(sessionDate);
     } catch (error) {
       console.error('Error parsing date:', item.start_time, error);
+      // Instead of returning false, return true for 'all' or handle time-only items
+      if (selectedDate === 'all') return true;
+      // For time-only items, show them in 'today' by default
+      if (selectedDate === 'today') return true;
       return false;
     }
     return true;
@@ -223,11 +230,21 @@ const AttendeeSchedule = () => {
       groups[date].push(item);
     } catch (error) {
       console.error('Error formatting date:', item.start_time, error);
+      // For items without proper dates, group them under "Time-based Events"
+      const fallbackKey = 'time-only';
+      if (!groups[fallbackKey]) {
+        groups[fallbackKey] = [];
+      }
+      groups[fallbackKey].push(item);
     }
     return groups;
   }, {} as Record<string, typeof filteredItems>);
 
   const formatDateHeader = (dateStr: string) => {
+    if (dateStr === 'time-only') {
+      return 'Time-based Events';
+    }
+    
     try {
       const date = parseISO(dateStr);
       if (isToday(date)) return 'Today';
@@ -501,78 +518,63 @@ const AttendeeSchedule = () => {
                                   })()}
                                 </div>
                               )}
+                              {/* Time allocation display */}
+                              {item.time_allocation && (
+                                <div className="text-xs text-gray-400 mt-1 flex items-center">
+                                  <Clock className="w-3 h-3 mr-1" />
+                                  {item.time_allocation}
+                                </div>
+                              )}
                             </div>
 
-                            {/* Content Column */}
-                            <div className="flex-1 p-4">
-                              <div className="flex items-start gap-3 sm:gap-4">
-                                {/* Image or Avatar */}
-                                <div className="flex-shrink-0">
-                                  {item.type === 'speaker' ? (
-                                    <Avatar className="w-10 h-10 sm:w-12 sm:h-12 border-2 border-white shadow-md">
-                                      <AvatarImage src={item.speaker_photo} alt={item.speaker_name} />
-                                      <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white">
-                                        {item.speaker_name?.split(' ').map(n => n[0]).join('') || 'S'}
-                                      </AvatarFallback>
-                                    </Avatar>
-                                  ) : item.image_url ? (
-                                    <img 
-                                      src={item.image_url} 
-                                      alt={item.title}
-                                      className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-cover border-2 border-white shadow-md"
-                                    />
-                                  ) : (
-                                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
-                                      <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-                                    </div>
-                                  )}
-                                </div>
-
-                                {/* Content */}
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-start justify-between mb-2">
-                                    <div className="min-w-0 flex-1">
-                                      <h3 className="font-semibold text-base sm:text-lg text-gray-900 group-hover:text-indigo-600 transition-colors line-clamp-2">
-                                        {item.title}
-                                      </h3>
-                                      {item.type === 'speaker' && (
-                                        <p className="text-gray-600 text-sm line-clamp-1">
-                                          by <span className="font-medium">{item.speaker_name}</span>
-                                          {item.speaker_company && ` • ${item.speaker_company}`}
-                                        </p>
-                                      )}
-                                    </div>
-                                    <ChevronRight className="h-5 w-5 text-gray-400 group-hover:text-indigo-500 transition-colors flex-shrink-0 ml-2" />
-                                  </div>
-
-                                  {/* Location */}
-                                  {item.location && (
-                                    <div className="flex items-center gap-1 text-sm text-gray-500 mb-2">
-                                      <MapPin className="h-4 w-4 flex-shrink-0" />
-                                      <span className="line-clamp-1">{item.location}</span>
-                                    </div>
-                                  )}
-
-                                  {/* Description - Only show for schedule items or if speaker has session description */}
+                            {/* Main Content Section */}
+                            <div className="flex-1 p-4 sm:p-6">
+                              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                                <div className="flex-1">
+                                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">
+                                    {item.title}
+                                  </h3>
+                                  
                                   {item.description && (
-                                    <p className="text-gray-700 text-sm mb-3 line-clamp-2">
+                                    <p className="text-gray-600 text-sm sm:text-base mb-3 line-clamp-2">
                                       {item.description}
                                     </p>
                                   )}
-
-                                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      {getTypeBadge(item.type)}
-                                      {getPriorityBadge(item.priority)}
+                                  
+                                  <div className="flex flex-wrap gap-2">
+                                    {getTypeBadge(item.type)}
+                                    {getPriorityBadge(item.priority)}
+                                  </div>
+                                </div>
+                                
+                                {/* Speaker Info or Image */}
+                                {item.type === 'speaker' && item.speaker_name && (
+                                  <div className="flex items-center gap-3 mt-3 sm:mt-0">
+                                    {item.speaker_photo && (
+                                      <img 
+                                        src={item.speaker_photo} 
+                                        alt={item.speaker_name}
+                                        className="w-12 h-12 rounded-full object-cover"
+                                      />
+                                    )}
+                                    <div>
+                                      <p className="font-medium text-gray-900">{item.speaker_name}</p>
+                                      {item.speaker_company && (
+                                        <p className="text-sm text-gray-500">{item.speaker_company}</p>
+                                      )}
                                     </div>
                                   </div>
-
-                                  {item.type === 'speaker' && (
-                                    <div className="mt-2">
-                                      {renderSocialLinks(item)}
-                                    </div>
-                                  )}
-                                </div>
+                                )}
+                                
+                                {item.type === 'schedule' && item.image_url && (
+                                  <div className="mt-3 sm:mt-0">
+                                    <img 
+                                      src={item.image_url} 
+                                      alt={item.title}
+                                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover"
+                                    />
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>

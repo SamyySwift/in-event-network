@@ -10,12 +10,21 @@ interface ScheduleItem {
   id: string;
   title: string;
   description: string | null;
-  start_time: string;
-  end_time: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
+  start_time_full?: string;
+  end_time_full?: string;
+  time_allocation?: string | null;
   location: string | null;
   type: string;
   priority: string;
   image_url: string | null;
+  event_id: string;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 interface ScheduleItemCardProps {

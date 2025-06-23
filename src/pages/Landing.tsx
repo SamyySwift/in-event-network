@@ -11,6 +11,20 @@ import {
   Globe,
   Shield,
   Star,
+  Users,
+  Calendar,
+  MessageSquare,
+  MapPin,
+  Bell,
+  Settings,
+  BarChart3,
+  UserCheck,
+  Vote,
+  HelpCircle,
+  Search,
+  QrCode,
+  ChevronRight,
+  BookOpen,
 } from "lucide-react";
 import {
   NavigationMenu,
@@ -28,9 +42,30 @@ import LandingFooter from "@/components/landing/LandingFooter";
 import FeatureCard from "@/components/landing/FeatureCard";
 import ListItem from "@/components/landing/ListItem";
 import PricingSection from "@/components/landing/PricingSection";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 const Landing = () => {
   const navigate = useNavigate();
+
+  // Smooth scroll function
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-950 via-purple-950 to-blue-950 text-white overflow-hidden">
@@ -38,12 +73,7 @@ const Landing = () => {
       <header className="relative z-50 bg-black/20 backdrop-blur-xl border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-lg flex items-center justify-center">
-              <Network className="h-6 w-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-              Kconect
-            </span>
+            <img src="/logo.png" alt="Kconect Logo" className="h-8 w-auto" />
           </div>
 
           <div className="hidden md:flex items-center space-x-8">
@@ -96,6 +126,16 @@ const Landing = () => {
                   <Button
                     variant="ghost"
                     className="text-white/80 hover:text-white hover:bg-white/10"
+                    onClick={() => navigate("/guide")}
+                  >
+                    Guide
+                  </Button>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <Button
+                    variant="ghost"
+                    className="text-white/80 hover:text-white hover:bg-white/10"
+                    onClick={() => scrollToSection("pricing")}
                   >
                     Pricing
                   </Button>
@@ -147,13 +187,14 @@ const Landing = () => {
       />
 
       {/* Features Section */}
-      <section className="py-20 bg-black/20 backdrop-blur-sm border-y border-white/10">
+      <section
+        id="features"
+        className="py-20 bg-black/20 backdrop-blur-sm border-y border-white/10"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold mb-6">
-              <span className="bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-                Key Features
-              </span>
+              <span className="text-cyan-400">Key Features</span>
             </h2>
             <p className="text-xl text-white/60 max-w-3xl mx-auto">
               Powerful tools to create meaningful connections and memorable
@@ -214,7 +255,9 @@ const Landing = () => {
       </section>
 
       {/* Pricing Section - Use new component */}
-      <PricingSection />
+      <div id="pricing">
+        <PricingSection />
+      </div>
 
       {/* Footer */}
       <LandingFooter />

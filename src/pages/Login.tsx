@@ -29,27 +29,36 @@ const Login = () => {
   // Add similar logic to Login.tsx for users who already have accounts
   useEffect(() => {
     console.log("Login component - Auth state:", { currentUser, isLoading });
-  
+
     if (currentUser && !isLoading) {
-      console.log("User authenticated, checking for pending event...", currentUser);
-      
+      console.log(
+        "User authenticated, checking for pending event...",
+        currentUser
+      );
+
       // Check if there's a pending event to join
-      const pendingEventCode = sessionStorage.getItem('pendingEventCode');
-      
-      if (pendingEventCode && currentUser.role === 'attendee') {
-        console.log('Found pending event code, attempting to join:', pendingEventCode);
-        
+      const pendingEventCode = sessionStorage.getItem("pendingEventCode");
+
+      if (pendingEventCode && currentUser.role === "attendee") {
+        console.log(
+          "Found pending event code, attempting to join:",
+          pendingEventCode
+        );
+
         // Clear the stored code
-        sessionStorage.removeItem('pendingEventCode');
-        
+        sessionStorage.removeItem("pendingEventCode");
+
         // Navigate to join the event
         navigate(`/join/${pendingEventCode}`, { replace: true });
         return;
       }
-      
+
       // Normal redirect
-      const redirectPath = currentUser.role === "host" ? "/admin" : "/attendee";
-      navigate(redirectPath, { replace: true });
+      if (currentUser.role === "host") {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/attendee", { replace: true });
+      }
     }
   }, [currentUser, isLoading, navigate]);
 
@@ -67,34 +76,25 @@ const Login = () => {
     try {
       setIsSubmitting(true);
       console.log("Attempting login for:", email);
-
-      const { error } = await login(email, password);
-
-      if (error) {
-        console.error("Login error:", error);
-        setErrorMessage(
-          error.message || "Failed to login. Please check your credentials."
-        );
-        return;
-      }
-
+      await login(email, password);
       console.log("Login successful");
-      toast({
-        title: "Success",
-        description: "You've successfully logged in",
-      });
 
-      // The redirect will be handled by the useEffect when currentUser updates
-    } catch (error) {
+      toast({
+        title: "Welcome back!",
+        description: "You have been successfully signed in.",
+      });
+    } catch (error: any) {
       console.error("Login error:", error);
-      setErrorMessage("An unexpected error occurred. Please try again.");
+      setErrorMessage(
+        error.message || "Invalid email or password. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Show loading only during initial auth check or login process
-  if ((isLoading && !currentUser) || isSubmitting) {
+  // Show loading state while checking authentication
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
         <div className="text-center">
@@ -123,12 +123,7 @@ const Login = () => {
     <div className="min-h-screen  flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="flex justify-center mb-8">
         <Link to="/" className="flex items-center">
-          <div className="w-10 h-10 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-lg flex items-center justify-center">
-            <Network className="h-6 w-6 text-white" />
-          </div>
-          <span className="ml-2 font-semibold text-2xl bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
-            Kconnect
-          </span>
+          <img src="/logo.png" alt="Kconect Logo" className="h-8 w-auto" />
         </Link>
       </div>
 

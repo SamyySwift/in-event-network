@@ -6,8 +6,8 @@ import { Button } from '@/components/ui/button';
 export const ThemeToggle = () => {
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.theme === 'dark' || 
-        (!localStorage.theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      // Default to light mode instead of system preference
+      return localStorage.theme === 'dark';
     }
     return false;
   });

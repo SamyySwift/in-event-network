@@ -265,14 +265,14 @@ const AdminScheduleContent = () => {
       endDate = item.end_time_full.slice(0, 10);
     }
     
-    if (item.start_time_only) {
-      startTime = item.start_time_only;
+    if (item.start_time) {
+      startTime = item.start_time;
     } else if (item.start_time_full) {
       startTime = item.start_time_full.slice(11, 16);
     }
     
-    if (item.end_time_only) {
-      endTime = item.end_time_only;
+    if (item.end_time) {
+      endTime = item.end_time;
     } else if (item.end_time_full) {
       endTime = item.end_time_full.slice(11, 16);
     }

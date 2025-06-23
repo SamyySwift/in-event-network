@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,11 +20,11 @@ import {
   LogOut,
   Menu,
   Search,
-  Sun,
-  Moon,
-  BarChart,
   Clock,
-  X,
+  BarChart,
+  Moon,
+  Sun,
+  BookOpen, // Add this import
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -168,6 +167,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       href: "/admin/suggestions",
       icon: <MessageCircle size={20} />,
     },
+
     {
       name: "Notifications",
       href: "/admin/notifications",
@@ -317,7 +317,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
                   Kconect
                 </span>
-                <span className="ml-2 text-sm text-muted-foreground">Admin</span>
+                <span className="ml-2 text-sm text-muted-foreground">
+                  Admin
+                </span>
               </>
             )}
             {!sidebarOpen && (

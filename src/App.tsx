@@ -10,6 +10,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import Landing from '@/pages/Landing';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
+import Guide from '@/pages/Guide';
 import NotFound from '@/pages/NotFound';
 import ScanQR from '@/pages/ScanQR';
 
@@ -62,6 +63,7 @@ function App() {
             <Routes>
               {/* Public routes */}
               <Route path="/" element={<Landing />} />
+              <Route path="/guide" element={<Guide />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/scan" element={<ScanQR />} />

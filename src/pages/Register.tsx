@@ -48,41 +48,49 @@ const Register = () => {
         "User authenticated after registration, checking for pending event...",
         currentUser
       );
-      
+
       // Check if there's a pending event to join
-      const pendingEventCode = eventCode || sessionStorage.getItem('pendingEventCode');
-      
-      if (pendingEventCode && currentUser.role === 'attendee') {
-        console.log('Found pending event code, attempting to join:', pendingEventCode);
+      const pendingEventCode =
+        eventCode || sessionStorage.getItem("pendingEventCode");
+
+      if (pendingEventCode && currentUser.role === "attendee") {
+        console.log(
+          "Found pending event code, attempting to join:",
+          pendingEventCode
+        );
         setIsJoiningEvent(true);
-        
+
         // Clear the stored code
-        sessionStorage.removeItem('pendingEventCode');
-        
+        sessionStorage.removeItem("pendingEventCode");
+
         joinEvent(pendingEventCode, {
           onSuccess: (data: any) => {
-            console.log('Successfully joined event after registration:', data);
+            console.log("Successfully joined event after registration:", data);
             setIsJoiningEvent(false);
             toast({
               title: "Welcome!",
-              description: `Account created and joined ${data?.event_name || 'event'} successfully!`,
+              description: `Account created and joined ${
+                data?.event_name || "event"
+              } successfully!`,
             });
-            navigate('/attendee/dashboard', { replace: true });
+            navigate("/attendee/dashboard", { replace: true });
           },
           onError: (error: any) => {
-            console.error('Failed to join event after registration:', error);
+            console.error("Failed to join event after registration:", error);
             setIsJoiningEvent(false);
             toast({
               title: "Account Created",
-              description: "Your account was created, but we couldn't join the event. Please scan the QR code again.",
-              variant: "destructive"
+              description:
+                "Your account was created, but we couldn't join the event. Please scan the QR code again.",
+              variant: "destructive",
             });
-            navigate('/attendee/dashboard', { replace: true });
-          }
+            navigate("/attendee/dashboard", { replace: true });
+          },
         });
       } else {
         // Normal redirect without event joining
-        const redirectPath = currentUser.role === "host" ? "/admin" : "/attendee";
+        const redirectPath =
+          currentUser.role === "host" ? "/admin" : "/attendee";
         navigate(redirectPath, { replace: true });
       }
     }
@@ -174,12 +182,16 @@ const Register = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="flex justify-center mb-8">
         <Link to="/" className="flex items-center">
-          <div className="w-10 h-10 bg-gradient-to-r from-cyan-400 to-purple-500 rounded-lg flex items-center justify-center">
-            <Network className="h-6 w-6 text-white" />
+          <div className=" flex items-center justify-center">
+            <img
+              src="/logo.png"
+              alt="Kconect Logo"
+              className="h-8 w-auto object-cover"
+            />
           </div>
-          <span className="ml-2 font-semibold text-2xl bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
+          {/* <span className="ml-2 font-semibold text-2xl bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
             Kconnect
-          </span>
+          </span> */}
         </Link>
       </div>
 

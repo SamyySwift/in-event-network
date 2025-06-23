@@ -1,10 +1,10 @@
-
 import React from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
+import Guide from "@/pages/Guide";
 import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
 import ScanQR from "@/pages/ScanQR";
@@ -45,7 +45,13 @@ import AttendeeOnboarding from "@/pages/attendee/AttendeeOnboarding";
 import HostDashboard from "@/pages/host/HostDashboard";
 
 // Auth Guard Component
-const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) => {
+const ProtectedRoute = ({
+  children,
+  allowedRoles,
+}: {
+  children: React.ReactNode;
+  allowedRoles?: string[];
+}) => {
   const { currentUser, isLoading } = useAuth();
 
   if (isLoading) {
@@ -100,6 +106,10 @@ export const router = createBrowserRouter([
     element: <Landing />,
   },
   {
+    path: "/guide",
+    element: <Guide />,
+  },
+  {
     path: "/login",
     element: <Login />,
   },
@@ -115,7 +125,7 @@ export const router = createBrowserRouter([
     path: "/index",
     element: <Index />,
   },
-  
+
   // Admin Routes
   {
     path: "/admin",
@@ -205,6 +215,7 @@ export const router = createBrowserRouter([
       </AdminRoute>
     ),
   },
+
   {
     path: "/admin/suggestions",
     element: (
@@ -213,6 +224,7 @@ export const router = createBrowserRouter([
       </AdminRoute>
     ),
   },
+
   {
     path: "/admin/notifications",
     element: (
@@ -333,7 +345,7 @@ export const router = createBrowserRouter([
       </AttendeeRoute>
     ),
   },
-  
+
   // Catch all route
   {
     path: "*",

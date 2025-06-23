@@ -21,8 +21,13 @@ interface ScheduleItem {
   id: string;
   title: string;
   description: string | null;
-  start_time: string;
-  end_time: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
+  start_time_full?: string; // For backward compatibility
+  end_time_full?: string; // For backward compatibility
+  time_allocation?: string | null;
   location: string | null;
   type: string;
   priority: string;
@@ -36,12 +41,14 @@ interface ScheduleItem {
 interface ScheduleFormData {
   title: string;
   description: string;
-  start_time: string;
-  end_time: string;
+  start_date?: string;
+  end_date?: string;
+  start_time?: string;
+  end_time?: string;
+  time_allocation?: string;
   location: string;
   type: string;
   priority: string;
-  time_allocation?: string; // Add optional time allocation
 }
 
 const AdminScheduleContent = () => {
@@ -53,17 +60,26 @@ const AdminScheduleContent = () => {
   const { toast } = useToast();
   const { currentUser } = useAuth();
   const { selectedEventId, selectedEvent } = useAdminEventContext();
-  const { register, handleSubmit, control, reset, formState: { errors } } = useForm<ScheduleFormData>({
+  const { register, handleSubmit, control, reset, watch, formState: { errors } } = useForm<ScheduleFormData>({
     defaultValues: {
       title: "",
       description: "",
+      start_date: "",
+      end_date: "",
       start_time: "",
       end_time: "",
+      time_allocation: "",
       location: "",
       type: "general",
       priority: "medium"
     }
   });
+
+  // Watch form values to enable conditional logic
+  const watchStartDate = watch("start_date");
+  const watchEndDate = watch("end_date");
+  const watchStartTime = watch("start_time");
+  const watchEndTime = watch("end_time");
 
   // Stats for cards
   const total = scheduleItems.length;
@@ -141,17 +157,47 @@ const AdminScheduleContent = () => {
       });
       return;
     }
+    
     try {
       let imageUrl = imagePreview;
       if (selectedImage) {
         imageUrl = await uploadImage(selectedImage);
       }
+      
+      // Combine date and time if both are provided
+      let startTimeForDb = null;
+      let endTimeForDb = null;
+      
+      if (data.start_date && data.start_time) {
+        startTimeForDb = `${data.start_date}T${data.start_time}:00`;
+      } else if (data.start_date) {
+        startTimeForDb = `${data.start_date}T00:00:00`;
+      }
+      
+      if (data.end_date && data.end_time) {
+        endTimeForDb = `${data.end_date}T${data.end_time}:00`;
+      } else if (data.end_date) {
+        endTimeForDb = `${data.end_date}T23:59:59`;
+      }
+      
       const scheduleData = {
-        ...data,
+        title: data.title,
+        description: data.description || null,
+        start_time: startTimeForDb,
+        end_time: endTimeForDb,
+        start_date: data.start_date || null,
+        end_date: data.end_date || null,
+        start_time_only: data.start_time || null,
+        end_time_only: data.end_time || null,
+        time_allocation: data.time_allocation || null,
+        location: data.location || null,
+        type: data.type,
+        priority: data.priority,
         image_url: imageUrl || null,
         event_id: selectedEventId,
         created_by: currentUser?.id,
       };
+      
       let result;
       if (editingItem) {
         result = await supabase
@@ -163,25 +209,32 @@ const AdminScheduleContent = () => {
           .from("schedule_items")
           .insert([scheduleData]);
       }
+      
       if (result.error) throw result.error;
+      
       toast({
         title: "Success",
         description: `Schedule item ${editingItem ? "updated" : "created"} successfully`,
       });
+      
       reset({
         title: '',
         description: '',
+        start_date: '',
+        end_date: '',
         start_time: '',
         end_time: '',
+        time_allocation: '',
         location: '',
         type: 'general',
         priority: 'medium'
       });
+      
       setEditingItem(null);
       setSelectedImage(null);
       setImagePreview('');
       fetchScheduleItems();
-    } catch {
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to save schedule item",
@@ -193,11 +246,45 @@ const AdminScheduleContent = () => {
   const handleEdit = (item: ScheduleItem) => {
     setEditingItem(item);
     setImagePreview(item.image_url || "");
+    
+    // Extract date and time components
+    let startDate = '';
+    let endDate = '';
+    let startTime = '';
+    let endTime = '';
+    
+    if (item.start_date) {
+      startDate = item.start_date;
+    } else if (item.start_time_full) {
+      startDate = item.start_time_full.slice(0, 10);
+    }
+    
+    if (item.end_date) {
+      endDate = item.end_date;
+    } else if (item.end_time_full) {
+      endDate = item.end_time_full.slice(0, 10);
+    }
+    
+    if (item.start_time_only) {
+      startTime = item.start_time_only;
+    } else if (item.start_time_full) {
+      startTime = item.start_time_full.slice(11, 16);
+    }
+    
+    if (item.end_time_only) {
+      endTime = item.end_time_only;
+    } else if (item.end_time_full) {
+      endTime = item.end_time_full.slice(11, 16);
+    }
+    
     reset({
       title: item.title,
       description: item.description || "",
-      start_time: item.start_time.slice(0, 16),
-      end_time: item.end_time.slice(0, 16),
+      start_date: startDate,
+      end_date: endDate,
+      start_time: startTime,
+      end_time: endTime,
+      time_allocation: item.time_allocation || "",
       location: item.location || "",
       type: item.type,
       priority: item.priority
@@ -314,7 +401,7 @@ const AdminScheduleContent = () => {
                     label="Schedule Item Image"
                   />
                   <div>
-                    <Label htmlFor="title">Title</Label>
+                    <Label htmlFor="title">Title *</Label>
                     <Input
                       id="title"
                       {...register("title", { required: "Title is required" })}
@@ -335,55 +422,98 @@ const AdminScheduleContent = () => {
                       className="mt-1"
                     />
                   </div>
+                  
+                  {/* Flexible Date Section */}
+                  <div className="space-y-3">
+                    <Label className="text-base font-semibold">Date Settings (Optional)</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor="start_date" className="text-sm">Start Date</Label>
+                        <Input
+                          id="start_date"
+                          type="date"
+                          {...register("start_date")}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="end_date" className="text-sm">End Date</Label>
+                        <Input
+                          id="end_date"
+                          type="date"
+                          {...register("end_date")}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Set dates independently from specific times
+                    </p>
+                  </div>
                 </div>
+                
                 <div className="flex flex-col space-y-5">
-                  <div>
-                    <Label htmlFor="start_time">Start Time *</Label>
-                    <Input
-                      id="start_time"
-                      type="datetime-local"
-                      {...register("start_time", { required: "Start time is required" })}
-                    />
-                    {errors.start_time?.message && (
-                      <p className="text-sm text-destructive">{errors.start_time.message}</p>
-                    )}
+                  {/* Flexible Time Section */}
+                  <div className="space-y-3">
+                    <Label className="text-base font-semibold">Time Settings (Optional)</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label htmlFor="start_time" className="text-sm">Start Time</Label>
+                        <Input
+                          id="start_time"
+                          type="time"
+                          {...register("start_time")}
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="end_time" className="text-sm">End Time</Label>
+                        <Input
+                          id="end_time"
+                          type="time"
+                          {...register("end_time")}
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Set specific times independently from dates
+                    </p>
                   </div>
+                  
+                  {/* Time Allocation */}
                   <div>
-                    <Label htmlFor="end_time">End Time *</Label>
-                    <Input
-                      id="end_time"
-                      type="datetime-local"
-                      {...register("end_time", { required: "End time is required" })}
-                    />
-                    {errors.end_time?.message && (
-                      <p className="text-sm text-destructive">{errors.end_time.message}</p>
-                    )}
-                  </div>
-                  <div>
-                    <Label htmlFor="time_allocation">Time Allocation (Optional)</Label>
+                    <Label htmlFor="time_allocation">Time Allocation</Label>
                     <Input
                       id="time_allocation"
                       {...register("time_allocation")}
                       placeholder="e.g., 30min, 1hr, 2hrs"
+                      className="mt-1"
                     />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Allocate duration without setting exact start time
+                    </p>
                   </div>
+                  
                   <div>
                     <Label htmlFor="location">Location</Label>
                     <Input
                       id="location"
                       {...register("location")}
                       placeholder="Enter location (optional)"
+                      className="mt-1"
                     />
                   </div>
+                  
                   <div>
-                    <Label htmlFor="type">Type</Label>
+                    <Label htmlFor="type">Type *</Label>
                     <Controller
                       name="type"
                       control={control}
                       rules={{ required: "Type is required" }}
                       render={({ field }) => (
                         <Select value={field.value} onValueChange={field.onChange}>
-                          <SelectTrigger>
+                          <SelectTrigger className="mt-1">
                             <SelectValue placeholder="Select type" />
                           </SelectTrigger>
                           <SelectContent>
@@ -400,15 +530,16 @@ const AdminScheduleContent = () => {
                       <p className="text-sm text-destructive">{errors.type.message}</p>
                     )}
                   </div>
+                  
                   <div>
-                    <Label htmlFor="priority">Priority</Label>
+                    <Label htmlFor="priority">Priority *</Label>
                     <Controller
                       name="priority"
                       control={control}
                       rules={{ required: "Priority is required" }}
                       render={({ field }) => (
                         <Select value={field.value} onValueChange={field.onChange}>
-                          <SelectTrigger>
+                          <SelectTrigger className="mt-1">
                             <SelectValue placeholder="Select priority" />
                           </SelectTrigger>
                           <SelectContent>
@@ -423,6 +554,17 @@ const AdminScheduleContent = () => {
                       <p className="text-sm text-destructive">{errors.priority.message}</p>
                     )}
                   </div>
+                  
+                  {/* Form Status Indicator */}
+                  <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                    <p className="text-sm font-medium text-blue-800 mb-1">Scheduling Flexibility:</p>
+                    <ul className="text-xs text-blue-600 space-y-1">
+                      <li>✓ Dates: {watchStartDate || watchEndDate ? 'Set' : 'Not set'}</li>
+                      <li>✓ Times: {watchStartTime || watchEndTime ? 'Set' : 'Not set'}</li>
+                      <li>✓ Can save with any combination of the above</li>
+                    </ul>
+                  </div>
+                  
                   <div className="flex gap-2 pt-4">
                     <Button type="submit" className="flex-1">
                       <Plus className="h-4 w-4 mr-2" />
@@ -439,8 +581,11 @@ const AdminScheduleContent = () => {
                           reset({
                             title: '',
                             description: '',
+                            start_date: '',
+                            end_date: '',
                             start_time: '',
                             end_time: '',
+                            time_allocation: '',
                             location: '',
                             type: 'general',
                             priority: 'medium'

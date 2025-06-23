@@ -504,20 +504,25 @@ const AttendeeProfile = () => {
 
             {/* Networking Visibility */}
             <div className="space-y-4">
-              <Label className="text-base font-semibold">Networking Visibility</Label>
+              <Label className="text-base font-semibold">
+                Networking Visibility
+              </Label>
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div className="space-y-1">
                   <div className="font-medium">Appear in Networking Tab</div>
                   <div className="text-sm text-muted-foreground">
-                    {profileData.networkingVisible 
-                      ? "Other attendees can see your profile and connect with you" 
+                    {profileData.networkingVisible
+                      ? "Other attendees can see your profile and connect with you"
                       : "You will remain anonymous and won't appear in the networking tab"}
                   </div>
                 </div>
                 <Switch
                   checked={profileData.networkingVisible}
-                  onCheckedChange={(checked) => 
-                    setProfileData(prev => ({ ...prev, networkingVisible: checked }))
+                  onCheckedChange={(checked) =>
+                    setProfileData((prev) => ({
+                      ...prev,
+                      networkingVisible: checked,
+                    }))
                   }
                   disabled={!isEditing}
                 />

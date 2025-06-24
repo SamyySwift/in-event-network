@@ -247,34 +247,50 @@ const AdminScheduleContent = () => {
     setEditingItem(item);
     setImagePreview(item.image_url || "");
     
-    // Extract date and time components
+    // Extract date and time components with better handling
     let startDate = '';
     let endDate = '';
     let startTime = '';
     let endTime = '';
     
+    // Handle start date
     if (item.start_date) {
       startDate = item.start_date;
+    } else if (item.start_time) {
+      // Extract date from timestamp
+      startDate = item.start_time.slice(0, 10);
     } else if (item.start_time_full) {
       startDate = item.start_time_full.slice(0, 10);
     }
     
+    // Handle end date
     if (item.end_date) {
       endDate = item.end_date;
+    } else if (item.end_time) {
+      // Extract date from timestamp
+      endDate = item.end_time.slice(0, 10);
     } else if (item.end_time_full) {
       endDate = item.end_time_full.slice(0, 10);
     }
     
+    // Handle start time - check multiple sources
     if (item.start_time) {
-      startTime = item.start_time;
+      // Extract time from timestamp
+      const timeStr = item.start_time.slice(11, 16);
+      startTime = timeStr;
     } else if (item.start_time_full) {
-      startTime = item.start_time_full.slice(11, 16);
+      const timeStr = item.start_time_full.slice(11, 16);
+      startTime = timeStr;
     }
     
+    // Handle end time - check multiple sources
     if (item.end_time) {
-      endTime = item.end_time;
+      // Extract time from timestamp
+      const timeStr = item.end_time.slice(11, 16);
+      endTime = timeStr;
     } else if (item.end_time_full) {
-      endTime = item.end_time_full.slice(11, 16);
+      const timeStr = item.end_time_full.slice(11, 16);
+      endTime = timeStr;
     }
     
     reset({

@@ -717,6 +717,7 @@ export type Database = {
           linkedin_link: string | null
           name: string | null
           networking_preferences: string[] | null
+          networking_visible: boolean | null
           niche: string | null
           photo_url: string | null
           role: string | null
@@ -741,6 +742,7 @@ export type Database = {
           linkedin_link?: string | null
           name?: string | null
           networking_preferences?: string[] | null
+          networking_visible?: boolean | null
           niche?: string | null
           photo_url?: string | null
           role?: string | null
@@ -765,6 +767,7 @@ export type Database = {
           linkedin_link?: string | null
           name?: string | null
           networking_preferences?: string[] | null
+          networking_visible?: boolean | null
           niche?: string | null
           photo_url?: string | null
           role?: string | null
@@ -893,13 +896,18 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
-          end_time: string
+          end_date: string | null
+          end_time: string | null
+          end_time_only: string | null
           event_id: string
           id: string
           image_url: string | null
           location: string | null
           priority: string | null
-          start_time: string
+          start_date: string | null
+          start_time: string | null
+          start_time_only: string | null
+          time_allocation: string | null
           title: string
           type: string | null
           updated_at: string
@@ -908,13 +916,18 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
-          end_time: string
+          end_date?: string | null
+          end_time?: string | null
+          end_time_only?: string | null
           event_id: string
           id?: string
           image_url?: string | null
           location?: string | null
           priority?: string | null
-          start_time: string
+          start_date?: string | null
+          start_time?: string | null
+          start_time_only?: string | null
+          time_allocation?: string | null
           title: string
           type?: string | null
           updated_at?: string
@@ -923,13 +936,18 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
-          end_time?: string
+          end_date?: string | null
+          end_time?: string | null
+          end_time_only?: string | null
           event_id?: string
           id?: string
           image_url?: string | null
           location?: string | null
           priority?: string | null
-          start_time?: string
+          start_date?: string | null
+          start_time?: string | null
+          start_time_only?: string | null
+          time_allocation?: string | null
           title?: string
           type?: string | null
           updated_at?: string
@@ -942,6 +960,8 @@ export type Database = {
           company: string | null
           created_at: string
           created_by: string | null
+          end_date: string | null
+          end_time: string | null
           event_id: string | null
           id: string
           linkedin_link: string | null
@@ -949,6 +969,9 @@ export type Database = {
           photo_url: string | null
           session_time: string | null
           session_title: string | null
+          start_date: string | null
+          start_time: string | null
+          time_allocation: string | null
           title: string | null
           twitter_link: string | null
           updated_at: string
@@ -959,6 +982,8 @@ export type Database = {
           company?: string | null
           created_at?: string
           created_by?: string | null
+          end_date?: string | null
+          end_time?: string | null
           event_id?: string | null
           id?: string
           linkedin_link?: string | null
@@ -966,6 +991,9 @@ export type Database = {
           photo_url?: string | null
           session_time?: string | null
           session_title?: string | null
+          start_date?: string | null
+          start_time?: string | null
+          time_allocation?: string | null
           title?: string | null
           twitter_link?: string | null
           updated_at?: string
@@ -976,6 +1004,8 @@ export type Database = {
           company?: string | null
           created_at?: string
           created_by?: string | null
+          end_date?: string | null
+          end_time?: string | null
           event_id?: string | null
           id?: string
           linkedin_link?: string | null
@@ -983,6 +1013,9 @@ export type Database = {
           photo_url?: string | null
           session_time?: string | null
           session_title?: string | null
+          start_date?: string | null
+          start_time?: string | null
+          time_allocation?: string | null
           title?: string | null
           twitter_link?: string | null
           updated_at?: string
@@ -1160,6 +1193,7 @@ export type Database = {
           github_link: string
           instagram_link: string
           website_link: string
+          networking_visible: boolean
         }[]
       }
       get_poll_with_results: {

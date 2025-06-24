@@ -14,27 +14,40 @@ import { useAttendeeContext } from '@/hooks/useAttendeeContext';
 import { format, isToday, isTomorrow, isYesterday, parseISO } from 'date-fns';
 import { supabase } from '@/integrations/supabase/client';
 import XLogo from "@/components/icons/XLogo";
+import { formatDisplayTime, formatDisplayDate, formatDuration, parseTimeAllocation } from '@/utils/timezone';
 
 interface ScheduleItem {
   id: string;
   title: string;
   description: string | null;
-  start_time: string;
-  end_time: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
+  start_time_full?: string; // For backward compatibility
+  end_time_full?: string; // For backward compatibility
+  start_time_only?: string | null;
+  end_time_only?: string | null;
   location: string | null;
   type: string;
   priority: string;
   event_id: string;
   image_url?: string;
-  time_allocation?: string | null; // Add this field
+  time_allocation?: string | null;
 }
 
 interface CombinedScheduleItem {
   id: string;
   title: string;
   description?: string | null;
-  start_time: string;
-  end_time?: string;
+  start_date?: string | null;
+  end_date?: string | null;
+  start_time?: string | null;
+  end_time?: string | null;
+  start_time_full?: string;
+  end_time_full?: string;
+  start_time_only?: string | null;
+  end_time_only?: string | null;
   location?: string | null;
   type: 'speaker' | 'schedule';
   speaker_name?: string;
@@ -46,7 +59,7 @@ interface CombinedScheduleItem {
   speaker_website?: string;
   priority?: string;
   image_url?: string;
-  time_allocation?: string | null; // Add this field
+  time_allocation?: string | null;
 }
 
 const AttendeeSchedule = () => {
@@ -144,7 +157,7 @@ const AttendeeSchedule = () => {
     
     const combined: CombinedScheduleItem[] = [];
 
-    // Add speaker sessions - Fixed: Don't assign bio to description
+    // Add speaker sessions
     if (speakers && speakers.length > 0) {
       const speakersWithSessions = speakers.filter(speaker => 
         speaker.session_time && speaker.session_title
@@ -155,8 +168,9 @@ const AttendeeSchedule = () => {
         combined.push({
           id: `speaker-${speaker.id}`,
           title: speaker.session_title!,
-          description: null, // Don't use bio as description - this was causing duplication
+          description: null,
           start_time: speaker.session_time!,
+          start_time_full: speaker.session_time!,
           location: undefined,
           type: 'speaker',
           speaker_name: speaker.name,
@@ -177,22 +191,86 @@ const AttendeeSchedule = () => {
           id: `schedule-${item.id}`,
           title: item.title,
           description: item.description,
+          start_date: item.start_date,
+          end_date: item.end_date,
           start_time: item.start_time,
           end_time: item.end_time,
+          start_time_full: item.start_time_full,
+          end_time_full: item.end_time_full,
+          start_time_only: item.start_time_only,
+          end_time_only: item.end_time_only,
           location: item.location,
           type: 'schedule',
           priority: item.priority,
           image_url: item.image_url,
-          time_allocation: item.time_allocation // Add this line
+          time_allocation: item.time_allocation
         });
       });
     }
 
-    // Sort by start time
-    combined.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+    // Sort by start time - use the same logic as admin schedule
+    combined.sort((a, b) => {
+      const getStartTime = (item: CombinedScheduleItem) => {
+        if (item.start_time) return new Date(item.start_time).getTime();
+        if (item.start_time_full) return new Date(item.start_time_full).getTime();
+        return 0;
+      };
+      
+      return getStartTime(a) - getStartTime(b);
+    });
+    
     console.log('Final combined items:', combined.length);
     setCombinedItems(combined);
   }, [speakers, scheduleItems]);
+
+  // Enhanced time display logic matching admin schedule
+  const formatTimeDisplay = (item: CombinedScheduleItem): string => {
+    let startTimeStr = '';
+    let endTimeStr = '';
+    
+    // Get start time
+    if (item.start_time) {
+      startTimeStr = formatDisplayTime(item.start_time);
+    } else if (item.start_time_full) {
+      startTimeStr = formatDisplayTime(item.start_time_full);
+    }
+    
+    // Get end time
+    if (item.end_time) {
+      endTimeStr = formatDisplayTime(item.end_time);
+    } else if (item.end_time_full) {
+      endTimeStr = formatDisplayTime(item.end_time_full);
+    }
+    
+    // Build display string
+    if (startTimeStr && endTimeStr) {
+      return `${startTimeStr} - ${endTimeStr}`;
+    } else if (startTimeStr) {
+      return startTimeStr;
+    } else if (endTimeStr) {
+      return `Until ${endTimeStr}`;
+    }
+    
+    return '';
+  };
+
+  const formatDateDisplay = (item: CombinedScheduleItem): string => {
+    if (item.start_date) {
+      if (item.end_date && item.end_date !== item.start_date) {
+        return `${formatDisplayDate(item.start_date)} - ${formatDisplayDate(item.end_date)}`;
+      }
+      return formatDisplayDate(item.start_date);
+    }
+    
+    // Fallback to extracting date from timestamp
+    if (item.start_time) {
+      return formatDisplayDate(item.start_time);
+    } else if (item.start_time_full) {
+      return formatDisplayDate(item.start_time_full);
+    }
+    
+    return '';
+  };
 
   // Filter items based on search and date
   const filteredItems = combinedItems.filter(item => {
@@ -204,33 +282,44 @@ const AttendeeSchedule = () => {
     
     if (selectedDate === 'all') return true;
     
+    // Use the primary time source for date filtering
+    const timeStr = item.start_time || item.start_time_full;
+    if (!timeStr) return selectedDate === 'today'; // Default time-only items to today
+    
     try {
-      const sessionDate = parseISO(item.start_time);
+      const sessionDate = parseISO(timeStr);
       if (selectedDate === 'today') return isToday(sessionDate);
       if (selectedDate === 'tomorrow') return isTomorrow(sessionDate);
       if (selectedDate === 'yesterday') return isYesterday(sessionDate);
     } catch (error) {
-      console.error('Error parsing date:', item.start_time, error);
-      // Instead of returning false, return true for 'all' or handle time-only items
-      if (selectedDate === 'all') return true;
-      // For time-only items, show them in 'today' by default
-      if (selectedDate === 'today') return true;
-      return false;
+      console.error('Error parsing date:', timeStr, error);
+      return selectedDate === 'today'; // Default to today for parsing errors
     }
     return true;
   });
 
   // Group items by date
   const groupedByDate = filteredItems.reduce((groups, item) => {
+    const timeStr = item.start_time || item.start_time_full;
+    
+    if (!timeStr) {
+      // For items without proper dates, group them under "Time-based Events"
+      const fallbackKey = 'time-only';
+      if (!groups[fallbackKey]) {
+        groups[fallbackKey] = [];
+      }
+      groups[fallbackKey].push(item);
+      return groups;
+    }
+    
     try {
-      const date = format(parseISO(item.start_time), 'yyyy-MM-dd');
+      const date = format(parseISO(timeStr), 'yyyy-MM-dd');
       if (!groups[date]) {
         groups[date] = [];
       }
       groups[date].push(item);
     } catch (error) {
-      console.error('Error formatting date:', item.start_time, error);
-      // For items without proper dates, group them under "Time-based Events"
+      console.error('Error formatting date:', timeStr, error);
       const fallbackKey = 'time-only';
       if (!groups[fallbackKey]) {
         groups[fallbackKey] = [];
@@ -488,99 +577,119 @@ const AttendeeSchedule = () => {
                   </div>
 
                   <div className="grid gap-4 md:gap-6">
-                    {groupedByDate[date].map((item) => (
-                      <Card 
-                        key={item.id} 
-                        className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md hover:-translate-y-1 cursor-pointer overflow-hidden"
-                        onClick={() => handleViewDetails(item)}
-                      >
-                        <CardContent className="p-0">
-                          <div className="flex flex-col sm:flex-row">
-                            {/* Time Column */}
-                            <div className="w-full sm:w-20 md:w-24 bg-gradient-to-b from-gray-50 to-gray-100 p-3 sm:p-4 flex flex-row sm:flex-col items-center justify-center border-b sm:border-b-0 sm:border-r">
-                              <div className="text-base sm:text-lg font-bold text-gray-900">
-                                {(() => {
-                                  try {
-                                    return format(parseISO(item.start_time), 'HH:mm');
-                                  } catch (error) {
-                                    return '00:00';
-                                  }
-                                })()}
-                              </div>
-                              {item.end_time && (
-                                <div className="text-sm text-gray-500 ml-2 sm:ml-0">
-                                  {(() => {
-                                    try {
-                                      return format(parseISO(item.end_time), 'HH:mm');
-                                    } catch (error) {
-                                      return '';
-                                    }
-                                  })()}
-                                </div>
-                              )}
-                              {/* Time allocation display */}
-                              {item.time_allocation && (
-                                <div className="text-xs text-gray-400 mt-1 flex items-center">
-                                  <Clock className="w-3 h-3 mr-1" />
-                                  {item.time_allocation}
-                                </div>
-                              )}
-                            </div>
+                    {groupedByDate[date].map((item) => {
+                      const timeDisplay = formatTimeDisplay(item);
+                      const dateDisplay = formatDateDisplay(item);
+                      const durationMinutes = item.time_allocation ? parseTimeAllocation(item.time_allocation) : 0;
+                      const durationDisplay = formatDuration(durationMinutes);
 
-                            {/* Main Content Section */}
-                            <div className="flex-1 p-4 sm:p-6">
-                              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-                                <div className="flex-1">
-                                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">
-                                    {item.title}
-                                  </h3>
-                                  
-                                  {item.description && (
-                                    <p className="text-gray-600 text-sm sm:text-base mb-3 line-clamp-2">
-                                      {item.description}
-                                    </p>
-                                  )}
-                                  
-                                  <div className="flex flex-wrap gap-2">
-                                    {getTypeBadge(item.type)}
-                                    {getPriorityBadge(item.priority)}
-                                  </div>
+                      return (
+                        <Card 
+                          key={item.id} 
+                          className="group hover:shadow-xl transition-all duration-300 border-0 shadow-md hover:-translate-y-1 cursor-pointer overflow-hidden"
+                          onClick={() => handleViewDetails(item)}
+                        >
+                          <CardContent className="p-0">
+                            <div className="flex flex-col sm:flex-row">
+                              {/* Time Column */}
+                              <div className="w-full sm:w-20 md:w-24 bg-gradient-to-b from-gray-50 to-gray-100 p-3 sm:p-4 flex flex-row sm:flex-col items-center justify-center border-b sm:border-b-0 sm:border-r">
+                                <div className="text-base sm:text-lg font-bold text-gray-900">
+                                  {timeDisplay ? timeDisplay.split(' - ')[0] : '00:00'}
                                 </div>
-                                
-                                {/* Speaker Info or Image */}
-                                {item.type === 'speaker' && item.speaker_name && (
-                                  <div className="flex items-center gap-3 mt-3 sm:mt-0">
-                                    {item.speaker_photo && (
-                                      <img 
-                                        src={item.speaker_photo} 
-                                        alt={item.speaker_name}
-                                        className="w-12 h-12 rounded-full object-cover"
-                                      />
+                                {timeDisplay && timeDisplay.includes(' - ') && (
+                                  <div className="text-sm text-gray-500 ml-2 sm:ml-0">
+                                    {timeDisplay.split(' - ')[1]}
+                                  </div>
+                                )}
+                                {/* Duration display */}
+                                {durationDisplay && (
+                                  <div className="text-xs text-gray-400 mt-1 flex items-center">
+                                    <Clock className="w-3 h-3 mr-1" />
+                                    {durationDisplay}
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Main Content Section */}
+                              <div className="flex-1 p-4 sm:p-6">
+                                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                                  <div className="flex-1">
+                                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">
+                                      {item.title}
+                                    </h3>
+                                    
+                                    {item.description && (
+                                      <p className="text-gray-600 text-sm sm:text-base mb-3 line-clamp-2">
+                                        {item.description}
+                                      </p>
                                     )}
-                                    <div>
-                                      <p className="font-medium text-gray-900">{item.speaker_name}</p>
-                                      {item.speaker_company && (
-                                        <p className="text-sm text-gray-500">{item.speaker_company}</p>
+                                    
+                                    {/* Date and Location Information */}
+                                    <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground mb-3">
+                                      {dateDisplay && (
+                                        <div className="flex items-center gap-1">
+                                          <Calendar className="h-3 w-3" />
+                                          <span>{dateDisplay}</span>
+                                        </div>
+                                      )}
+                                      
+                                      {item.location && (
+                                        <div className="flex items-center gap-1">
+                                          <MapPin className="h-3 w-3" />
+                                          <span>{item.location}</span>
+                                        </div>
                                       )}
                                     </div>
+                                    
+                                    <div className="flex flex-wrap gap-2">
+                                      {getTypeBadge(item.type)}
+                                      {getPriorityBadge(item.priority)}
+                                      {durationDisplay && (
+                                        <Badge variant="outline" className="text-xs">
+                                          <Clock className="w-3 h-3 mr-1" />
+                                          {durationDisplay}
+                                        </Badge>
+                                      )}
+                                    </div>
+
+                                    {renderSocialLinks(item)}
                                   </div>
-                                )}
-                                
-                                {item.type === 'schedule' && item.image_url && (
-                                  <div className="mt-3 sm:mt-0">
-                                    <img 
-                                      src={item.image_url} 
-                                      alt={item.title}
-                                      className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover"
-                                    />
-                                  </div>
-                                )}
+                                  
+                                  {/* Speaker Info or Image */}
+                                  {item.type === 'speaker' && item.speaker_name && (
+                                    <div className="flex items-center gap-3 mt-3 sm:mt-0">
+                                      {item.speaker_photo && (
+                                        <img 
+                                          src={item.speaker_photo} 
+                                          alt={item.speaker_name}
+                                          className="w-12 h-12 rounded-full object-cover"
+                                        />
+                                      )}
+                                      <div>
+                                        <p className="font-medium text-gray-900">{item.speaker_name}</p>
+                                        {item.speaker_company && (
+                                          <p className="text-sm text-gray-500">{item.speaker_company}</p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                                  
+                                  {item.type === 'schedule' && item.image_url && (
+                                    <div className="mt-3 sm:mt-0">
+                                      <img 
+                                        src={item.image_url} 
+                                        alt={item.title}
+                                        className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 </div>
               ))}

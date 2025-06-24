@@ -430,163 +430,189 @@ const AttendeeNetworking = () => {
   return (
     <AppLayout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Hero Section */}
-        <div className="text-center mb-12">
-          <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-connect-100 to-purple-100 dark:from-connect-900/30 dark:to-purple-900/30 px-4 py-2 rounded-full mb-4">
-            <Sparkles
-              size={20}
-              className="text-connect-600 dark:text-connect-400"
-            />
-            <span className="text-connect-700 dark:text-connect-300 font-medium text-sm">
-              Event Networking Hub
-            </span>
-          </div>
-          <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-gray-900 via-connect-600 to-purple-600 dark:from-white dark:via-connect-400 dark:to-purple-400 bg-clip-text text-transparent mb-4">
-            Connect & Collaborate
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
-            Discover amazing people, build meaningful connections, and expand
-            your professional network
-          </p>
-          <div className="mt-6 flex items-center justify-center space-x-6 text-sm text-gray-500 dark:text-gray-400">
-            <div className="flex items-center space-x-2">
-              <Users size={16} />
-              <span>{profiles.length} Attendees</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Network size={16} />
-              <span>{connectedUsers.length} Connections</span>
+        {/* Modern Header with Purple Gradient */}
+        <div className="mb-8 relative overflow-hidden">
+          <div className="relative bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-transparent"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
+            
+            {/* Content */}
+            <div className="relative z-10">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  {/* Icon */}
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mb-4">
+                    <Users className="h-6 w-6 text-white" />
+                  </div>
+                  
+                  {/* Title and Description */}
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
+                    Connect & Collaborate
+                  </h1>
+                  <p className="text-purple-100 text-sm sm:text-base lg:text-lg font-medium mb-4">
+                    Discover amazing people, build meaningful connections, and expand your professional network
+                  </p>
+                  
+                  {/* Stats */}
+                  <div className="flex flex-wrap gap-2 sm:gap-3">
+                    <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                      <span className="text-white text-xs sm:text-sm font-medium">
+                        {profiles.length} Attendees
+                      </span>
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                      <span className="text-white text-xs sm:text-sm font-medium">
+                        {connectedUsers.length} Connections
+                      </span>
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                      <span className="text-white text-xs sm:text-sm font-medium">
+                        Event Networking Hub
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Right side decorative element */}
+                <div className="hidden sm:block">
+                  <div className="w-16 h-16 lg:w-20 lg:h-20 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                    <Network className="h-8 w-8 lg:h-10 lg:w-10 text-white/80" />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
-            <TabsList className="grid grid-cols-4 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl p-1 shadow-lg">
-              <TabsTrigger
-                value="people"
-                className="flex items-center space-x-2 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-connect-500 data-[state=active]:to-connect-600 data-[state=active]:text-white transition-all duration-300"
-              >
-                <UserPlus size={18} />
-                <span className="hidden sm:inline">Discover</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="connections"
-                className="flex items-center space-x-2 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-connect-500 data-[state=active]:to-connect-600 data-[state=active]:text-white transition-all duration-300"
-              >
-                <Users size={18} />
-                <span className="hidden sm:inline">Network</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="chats"
-                className="flex items-center space-x-2 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-connect-500 data-[state=active]:to-connect-600 data-[state=active]:text-white transition-all duration-300"
-              >
-                <MessageSquare size={18} />
-                <span className="hidden sm:inline">Chat Room</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="messages"
-                className="flex items-center space-x-2 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-connect-500 data-[state=active]:to-connect-600 data-[state=active]:text-white transition-all duration-300"
-              >
-                <Send size={18} />
-                <span className="hidden sm:inline">Messages</span>
-              </TabsTrigger>
-            </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
+          <TabsList className="grid grid-cols-4 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl p-1 shadow-lg">
+            <TabsTrigger
+              value="people"
+              className="flex items-center space-x-2 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-connect-500 data-[state=active]:to-connect-600 data-[state=active]:text-white transition-all duration-300"
+            >
+              <UserPlus size={18} />
+              <span className="hidden sm:inline">Discover</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="connections"
+              className="flex items-center space-x-2 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-connect-500 data-[state=active]:to-connect-600 data-[state=active]:text-white transition-all duration-300"
+            >
+              <Users size={18} />
+              <span className="hidden sm:inline">Network</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="chats"
+              className="flex items-center space-x-2 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-connect-500 data-[state=active]:to-connect-600 data-[state=active]:text-white transition-all duration-300"
+            >
+              <MessageSquare size={18} />
+              <span className="hidden sm:inline">Chat Room</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="messages"
+              className="flex items-center space-x-2 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-connect-500 data-[state=active]:to-connect-600 data-[state=active]:text-white transition-all duration-300"
+            >
+              <Send size={18} />
+              <span className="hidden sm:inline">Messages</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
+
+        <TabsContent value="people" className="space-y-8">
+          <NetworkingFilter
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            selectedNiches={selectedNiches}
+            onNicheChange={setSelectedNiches}
+            selectedNetworkingPrefs={selectedNetworkingPrefs}
+            onNetworkingPrefChange={setSelectedNetworkingPrefs}
+            selectedTags={selectedTags}
+            onTagChange={setSelectedTags}
+            availableNiches={availableNiches}
+            availableNetworkingPrefs={availableNetworkingPrefs}
+            availableTags={availableTags}
+            onClearFilters={clearAllFilters}
+          />
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+            {filteredProfiles.map((profile) => renderUserCard(profile, true))}
           </div>
+          {filteredProfiles.length === 0 && (
+            <div className="text-center py-16">
+              <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-full flex items-center justify-center">
+                <Search size={32} className="text-gray-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                No results found
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400">
+                Try adjusting your search terms or filters
+              </p>
+              <Button
+                variant="outline"
+                className="mt-4"
+                onClick={clearAllFilters}
+              >
+                Clear All Filters
+              </Button>
+            </div>
+          )}
+        </TabsContent>
 
-          <TabsContent value="people" className="space-y-8">
-            <NetworkingFilter
-              searchTerm={searchTerm}
-              onSearchChange={setSearchTerm}
-              selectedNiches={selectedNiches}
-              onNicheChange={setSelectedNiches}
-              selectedNetworkingPrefs={selectedNetworkingPrefs}
-              onNetworkingPrefChange={setSelectedNetworkingPrefs}
-              selectedTags={selectedTags}
-              onTagChange={setSelectedTags}
-              availableNiches={availableNiches}
-              availableNetworkingPrefs={availableNetworkingPrefs}
-              availableTags={availableTags}
-              onClearFilters={clearAllFilters}
-            />
-            
+        <TabsContent value="connections" className="space-y-8">
+          {connectedUsers.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-              {filteredProfiles.map((profile) => renderUserCard(profile, true))}
-            </div>
-            {filteredProfiles.length === 0 && (
-              <div className="text-center py-16">
-                <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-full flex items-center justify-center">
-                  <Search size={32} className="text-gray-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                  No results found
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Try adjusting your search terms or filters
-                </p>
-                <Button
-                  variant="outline"
-                  className="mt-4"
-                  onClick={clearAllFilters}
-                >
-                  Clear All Filters
-                </Button>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="connections" className="space-y-8">
-            {connectedUsers.length > 0 ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-                {connectedUsers.map((profile) =>
-                  renderUserCard(profile, false)
-                )}
-              </div>
-            ) : (
-              <div className="text-center py-16">
-                <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-connect-100 to-purple-100 dark:from-connect-900/30 dark:to-purple-900/30 rounded-full flex items-center justify-center">
-                  <Users
-                    size={32}
-                    className="text-connect-600 dark:text-connect-400"
-                  />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                  No connections yet
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400 mb-6">
-                  Start connecting with other attendees to build your network
-                </p>
-                <Button
-                  onClick={() => setActiveTab("people")}
-                  className="bg-gradient-to-r from-connect-500 to-connect-600 hover:from-connect-600 hover:to-connect-700 text-white"
-                >
-                  <UserPlus size={16} className="mr-2" />
-                  Discover People
-                </Button>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="chats">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
-              <ChatRoom />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="messages">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
-              {selectedConversation ? (
-                <DirectMessageThread
-                  conversation={selectedConversation}
-                  onBack={handleBackToConversations}
-                />
-              ) : (
-                <ConversationsList onSelect={handleSelectConversation} />
+              {connectedUsers.map((profile) =>
+                renderUserCard(profile, false)
               )}
             </div>
-          </TabsContent>
-        </Tabs>
-      </div>
+          ) : (
+            <div className="text-center py-16">
+              <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-connect-100 to-purple-100 dark:from-connect-900/30 dark:to-purple-900/30 rounded-full flex items-center justify-center">
+                <Users
+                  size={32}
+                  className="text-connect-600 dark:text-connect-400"
+                />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+                No connections yet
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                Start connecting with other attendees to build your network
+              </p>
+              <Button
+                onClick={() => setActiveTab("people")}
+                className="bg-gradient-to-r from-connect-500 to-connect-600 hover:from-connect-600 hover:to-connect-700 text-white"
+              >
+                <UserPlus size={16} className="mr-2" />
+                Discover People
+              </Button>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="chats">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+            <ChatRoom />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="messages">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+            {selectedConversation ? (
+              <DirectMessageThread
+                conversation={selectedConversation}
+                onBack={handleBackToConversations}
+              />
+            ) : (
+              <ConversationsList onSelect={handleSelectConversation} />
+            )}
+          </div>
+        </TabsContent>
+      </Tabs>
     </AppLayout>
   );
 };

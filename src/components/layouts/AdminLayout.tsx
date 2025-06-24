@@ -38,7 +38,13 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -52,6 +58,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false); // Add this line
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -181,10 +188,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       <div className="p-4 border-b border-sidebar-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+            <img src="/logo.png" alt="Kconect Logo" className="h-8 w-8 mr-2" />
+            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
               Kconect
             </span>
-            <span className="ml-2 text-sm text-muted-foreground">Admin</span>
           </div>
         </div>
       </div>
@@ -231,7 +238,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             }`}
             onClick={() => {
               navigate(item.href);
-              setMobileMenuOpen(false);
+              setMobileSidebarOpen(false);
             }}
           >
             <span className="mr-3">{item.icon}</span>
@@ -249,7 +256,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             onClick={() => {
               logout();
               navigate("/");
-              setMobileMenuOpen(false);
+              setMobileSidebarOpen(false);
             }}
           >
             <LogOut size={20} className="mr-3" />
@@ -263,22 +270,26 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen bg-background flex flex-col md:flex-row">
       {/* Mobile Header */}
-      <header className="md:hidden bg-card glass-effect border-b py-4 px-4 flex items-center justify-between sticky top-0 z-30 shadow-sm">
-        <div className="flex items-center">
-          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+      <header className="md:hidden bg-sidebar glass shadow-lg shadow-primary/5 border-b border-sidebar-border py-3 px-4 flex items-center justify-between sticky top-0 z-50">
+        <div className="flex items-center space-x-3">
+          <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="mr-2">
-                <Menu size={20} className="text-primary" />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-sidebar-foreground hover:bg-sidebar-accent"
+              >
+                <Menu size={20} />
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-80 p-0">
+            <SheetContent
+              side="left"
+              className="w-[280px] bg-sidebar border-sidebar-border"
+            >
               <MobileSidebarContent />
             </SheetContent>
           </Sheet>
-          <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-            Kconect
-          </span>
-          <span className="ml-2 text-sm text-muted-foreground">Admin</span>
+          {/* Removed duplicate title from mobile header */}
         </div>
 
         <Button
@@ -314,18 +325,18 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           >
             {sidebarOpen && (
               <>
+                <img
+                  src="/logo.png"
+                  alt="Kconect Logo"
+                  className="h-8 w-8 mr-2"
+                />
                 <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
                   Kconect
-                </span>
-                <span className="ml-2 text-sm text-muted-foreground">
-                  Admin
                 </span>
               </>
             )}
             {!sidebarOpen && (
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                K
-              </span>
+              <img src="/logo.png" alt="Kconect Logo" className="h-8 w-8" />
             )}
           </div>
 

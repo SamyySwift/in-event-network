@@ -171,7 +171,7 @@ const AdminAnnouncementsContent = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit(onSubmit)} className="grid md:grid-cols-2 gap-6">
+                <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="flex flex-col space-y-5">
                     <div>
                       <Label htmlFor="title">Title</Label>
@@ -229,14 +229,15 @@ const AdminAnnouncementsContent = () => {
                         </span>
                       </div>
                     </div>
-                    <div className="flex gap-2 pt-4">
+                    <div className="flex flex-col sm:flex-row gap-2 pt-4">
                       <Button type="submit" className="flex-1" disabled={isCreating || isUpdating}>
                         {(isCreating || isUpdating) && <Loader className="h-4 w-4 mr-2 animate-spin" />}
                         <Send className="h-4 w-4 mr-2" />
-                        {editingAnnouncement ? 'Update Announcement' : 'Create Announcement'}
+                        <span className="hidden sm:inline">{editingAnnouncement ? 'Update Announcement' : 'Create Announcement'}</span>
+                        <span className="sm:hidden">{editingAnnouncement ? 'Update' : 'Create'}</span>
                       </Button>
                       {!!editingAnnouncement && (
-                        <Button type="button" variant="outline" onClick={handleCancel}>
+                        <Button type="button" variant="outline" onClick={handleCancel} className="sm:w-auto">
                           Cancel
                         </Button>
                       )}

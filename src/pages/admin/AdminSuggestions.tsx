@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminEventContext, AdminEventProvider } from "@/hooks/useAdminEventContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Suggestion {
   id: string;
@@ -42,6 +43,7 @@ const AdminSuggestionsContent = () => {
   const { toast } = useToast();
   const { currentUser } = useAuth();
   const { selectedEventId, selectedEvent, adminEvents } = useAdminEventContext();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     fetchSuggestions();
@@ -263,7 +265,7 @@ const AdminSuggestionsContent = () => {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-6 sm:space-y-8 animate-fade-in px-4 sm:px-0">
       {/* Event Selector */}
       <div className="flex justify-between items-center">
         <EventSelector />
@@ -271,12 +273,12 @@ const AdminSuggestionsContent = () => {
 
       {/* Show message when no event is selected */}
       {adminEvents.length > 0 && !selectedEventId && (
-        <div className="text-center py-12">
+        <div className="text-center py-8 sm:py-12">
           <div className="p-4 rounded-full bg-primary/10 inline-block mb-4">
-            <Plus className="h-8 w-8 text-primary" />
+            <Plus className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
           </div>
-          <p className="text-muted-foreground text-lg mb-2">No event selected</p>
-          <p className="text-sm text-muted-foreground">Please select an event above to view suggestions</p>
+          <p className="text-muted-foreground text-base sm:text-lg mb-2">No event selected</p>
+          <p className="text-sm text-muted-foreground px-4">Please select an event above to view suggestions</p>
         </div>
       )}
 
@@ -284,77 +286,79 @@ const AdminSuggestionsContent = () => {
       {selectedEventId && (
         <>
           {/* Gradient Hero Section */}
-          <div className="p-8 rounded-2xl bg-gradient-to-br from-primary-100 via-blue-100 to-indigo-50 text-primary-900 dark:text-white shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
-            <div className="absolute -top-12 -right-10 w-56 h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
-            <div className="absolute -bottom-14 -left-14 w-36 h-36 bg-white/20 rounded-full opacity-30 pointer-events-none"></div>
+          <div className="p-4 sm:p-6 lg:p-8 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary-100 via-blue-100 to-indigo-50 text-primary-900 dark:text-white shadow-lg sm:shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
+            <div className="absolute -top-12 -right-10 w-32 h-32 sm:w-56 sm:h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
+            <div className="absolute -bottom-14 -left-14 w-24 h-24 sm:w-36 sm:h-36 bg-white/20 rounded-full opacity-30 pointer-events-none"></div>
             <div className="relative z-10">
-              <h1 className="text-4xl font-bold tracking-tight">Suggestions & Feedback</h1>
-              <p className="mt-2 max-w-2xl text-primary-700 dark:text-primary-100">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">Suggestions & Feedback</h1>
+              <p className="mt-2 max-w-2xl text-sm sm:text-base text-primary-700 dark:text-primary-100">
                 Manage suggestions and feedback for{" "}
                 <span className="font-semibold">{selectedEvent?.name}</span>.
               </p>
-              <div className="mt-6">
+              <div className="mt-4 sm:mt-6">
                 <SuggestionStatsCards {...stats} loading={loading} />
               </div>
             </div>
           </div>
 
           {/* Quick Actions Section (title, tabs, search) */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-bold">Suggestions</h2>
-              <p className="text-muted-foreground mt-1">
+          <div className="flex flex-col gap-4">
+            <div className="text-center sm:text-left">
+              <h2 className="text-xl sm:text-2xl font-bold">Suggestions</h2>
+              <p className="text-muted-foreground mt-1 text-sm sm:text-base">
                 Review, filter, and manage suggestions and feedback.
               </p>
             </div>
-            <div className="flex gap-2 flex-wrap">
+            
+            {/* Mobile: Stack tabs vertically, Desktop: Horizontal */}
+            <div className={`flex gap-2 ${isMobile ? 'flex-wrap justify-center' : 'flex-wrap'}`}>
               <button
                 onClick={() => setActiveTab("all")}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
                   activeTab === "all"
                     ? "bg-primary text-white"
                     : "bg-muted text-muted-foreground hover:bg-primary-50"
-                } transition`}
+                }`}
               >
                 All
               </button>
               <button
                 onClick={() => setActiveTab("suggestions")}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
                   activeTab === "suggestions"
                     ? "bg-primary text-white"
                     : "bg-muted text-muted-foreground hover:bg-primary-50"
-                } transition`}
+                }`}
               >
                 Suggestions
               </button>
               <button
                 onClick={() => setActiveTab("ratings")}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
                   activeTab === "ratings"
                     ? "bg-primary text-white"
                     : "bg-muted text-muted-foreground hover:bg-primary-50"
-                } transition`}
+                }`}
               >
                 Ratings
               </button>
               <button
                 onClick={() => setActiveTab("new")}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
                   activeTab === "new"
                     ? "bg-primary text-white"
                     : "bg-muted text-muted-foreground hover:bg-primary-50"
-                } transition`}
+                }`}
               >
                 New
               </button>
               <button
                 onClick={() => setActiveTab("reviewed")}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium ${
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
                   activeTab === "reviewed"
                     ? "bg-primary text-white"
                     : "bg-muted text-muted-foreground hover:bg-primary-50"
-                } transition`}
+                }`}
               >
                 Reviewed
               </button>
@@ -362,12 +366,12 @@ const AdminSuggestionsContent = () => {
           </div>
 
           {/* Search */}
-          <div className="flex justify-between mb-4">
+          <div className="flex justify-center sm:justify-start mb-4">
             <Input
               placeholder="Search suggestions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="max-w-sm"
+              className="w-full sm:max-w-sm"
             />
           </div>
 
@@ -386,11 +390,11 @@ const AdminSuggestionsContent = () => {
               ))
             ) : (
               <div className="text-center py-8">
-                <Lightbulb className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
-                <h3 className="mt-4 text-lg font-medium">
+                <Lightbulb className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground opacity-30" />
+                <h3 className="mt-4 text-base sm:text-lg font-medium">
                   No suggestions found
                 </h3>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className="text-sm text-muted-foreground mt-1 px-4">
                   No suggestions match your filter or search criteria.
                 </p>
               </div>

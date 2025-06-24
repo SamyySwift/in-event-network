@@ -52,20 +52,13 @@ const Guide = () => {
               className="text-white/80 hover:text-white hover:bg-white/10"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Home
+              Back
             </Button>
           </div>
           <div className="flex items-center space-x-3">
             <img src="/logo.png" alt="Kconect Logo" className="h-8 w-auto" />
           </div>
           <div className="flex space-x-3">
-            <Button
-              variant="ghost"
-              className="text-white/80 hover:text-white border border-white/20 hover:bg-white/10"
-              onClick={() => navigate("/login")}
-            >
-              Sign In
-            </Button>
             <Button
               className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white shadow-lg shadow-purple-500/20"
               onClick={() => navigate("/register")}
@@ -81,12 +74,12 @@ const Guide = () => {
         {/* Hero Section */}
         <div className="text-center mb-16">
           <div className="flex items-center justify-center mb-6">
-            <BookOpen className="h-12 w-12 text-cyan-400 mr-4" />
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+            <BookOpen className="h-10 w-10 text-cyan-400 mr-4" />
+            <h1 className="text-2xl md:text-4xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
               Getting Started Guide
             </h1>
           </div>
-          <p className="text-xl text-white/70 max-w-3xl mx-auto">
+          <p className="text-lg md:text-xl text-white/70 max-w-3xl mx-auto">
             Learn how to make the most of Kconect, whether you're organizing
             events or attending them. This comprehensive guide covers everything
             you need to know.
@@ -95,17 +88,19 @@ const Guide = () => {
 
         {/* Quick Start Section */}
         <section className="mb-16">
-          <h2 className="text-3xl font-bold text-center mb-8 text-cyan-400">
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-cyan-400">
             Quick Start
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
             <Card className="bg-black/40 border-white/10 backdrop-blur-xl">
               <CardHeader>
                 <div className="flex items-center space-x-3">
-                  <div className="bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full p-2">
+                  <div className="bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full w-10 h-10 flex items-center justify-center">
                     <span className="text-white font-bold">1</span>
                   </div>
-                  <CardTitle className="text-white">Sign Up</CardTitle>
+                  <CardTitle className="text-white text-2xl lg:text-3xl">
+                    Sign Up
+                  </CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
@@ -119,10 +114,12 @@ const Guide = () => {
             <Card className="bg-black/40 border-white/10 backdrop-blur-xl">
               <CardHeader>
                 <div className="flex items-center space-x-3">
-                  <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-full p-2">
+                  <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-full w-10 h-10 flex items-center justify-center">
                     <span className="text-white font-bold">2</span>
                   </div>
-                  <CardTitle className="text-white">Set Up Profile</CardTitle>
+                  <CardTitle className="text-white text-2xl lg:text-3xl">
+                    Set Up Profile
+                  </CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
@@ -136,10 +133,12 @@ const Guide = () => {
             <Card className="bg-black/40 border-white/10 backdrop-blur-xl">
               <CardHeader>
                 <div className="flex items-center space-x-3">
-                  <div className="bg-gradient-to-r from-pink-500 to-orange-500 rounded-full p-2">
+                  <div className="bg-gradient-to-r from-pink-500 to-orange-500 rounded-full w-10 h-10 flex items-center justify-center">
                     <span className="text-white font-bold">3</span>
                   </div>
-                  <CardTitle className="text-white">Start Connecting</CardTitle>
+                  <CardTitle className="text-white text-2xl lg:text-3xl">
+                    Start Connecting
+                  </CardTitle>
                 </div>
               </CardHeader>
               <CardContent>
@@ -154,7 +153,7 @@ const Guide = () => {
 
         {/* Admin Guide Section */}
         <section className="mb-16">
-          <h2 className="text-3xl font-bold text-center mb-8 text-purple-400">
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-purple-400">
             Admin/Host Dashboard Guide
           </h2>
           <div className="space-y-6">
@@ -415,7 +414,7 @@ const Guide = () => {
 
         {/* Attendee Guide Section */}
         <section className="mb-16">
-          <h2 className="text-3xl font-bold text-center mb-8 text-green-400">
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-green-400">
             Attendee Dashboard Guide
           </h2>
           <div className="space-y-6">
@@ -679,7 +678,7 @@ const Guide = () => {
 
         {/* Tips Section */}
         <section className="mb-16">
-          <h2 className="text-3xl font-bold text-center mb-8 text-yellow-400">
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 text-yellow-400">
             Pro Tips for Success
           </h2>
           <div className="grid md:grid-cols-2 gap-8">
@@ -724,7 +723,7 @@ const Guide = () => {
         {/* Call to Action */}
         <section className="text-center">
           <div className="bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-2xl p-8 border border-white/10">
-            <h2 className="text-3xl font-bold mb-4 text-white">
+            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-white">
               Ready to Get Started?
             </h2>
             <p className="text-white/70 mb-6 max-w-2xl mx-auto">

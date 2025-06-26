@@ -6,19 +6,29 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useCheckIns } from '@/hooks/useCheckIns';
 import { useTickets } from '@/hooks/useTickets';
+import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 import CheckInScanner from '@/components/admin/CheckInScanner';
+import EventSelector from '@/components/admin/EventSelector';
 import { UserCheck, Search, QrCode, Users, Clock, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
 
 const AdminCheckIns = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'scanner' | 'manual' | 'history'>('scanner');
-  const { data: checkIns, isLoading: checkInsLoading } = useCheckIns();
+  const { selectedEventId } = useAdminEventContext();
+  const { useEventCheckIns } = useCheckIns();
   const { useEventTickets } = useTickets();
-  const { data: eventTickets, isLoading: ticketsLoading } = useEventTickets();
+  
+  const checkInsQuery = useEventCheckIns(selectedEventId || undefined);
+  const eventTicketsQuery = useEventTickets(selectedEventId || undefined);
+  
+  const checkIns = checkInsQuery.data || [];
+  const eventTickets = eventTicketsQuery.data || [];
+  
+  const isLoading = checkInsQuery.isLoading || eventTicketsQuery.isLoading;
 
-  const totalTickets = eventTickets?.length || 0;
-  const checkedInTickets = eventTickets?.filter(ticket => ticket.check_in_status).length || 0;
+  const totalTickets = eventTickets.length;
+  const checkedInTickets = eventTickets.filter(ticket => ticket.check_in_status).length;
   const pendingTickets = totalTickets - checkedInTickets;
   const checkInRate = totalTickets > 0 ? Math.round((checkedInTickets / totalTickets) * 100) : 0;
 
@@ -27,13 +37,39 @@ const AdminCheckIns = () => {
     // Check-in logic will be handled by the CheckInScanner component
   };
 
-  const filteredCheckIns = checkIns?.filter(checkIn => 
+  const filteredCheckIns = checkIns.filter(checkIn => 
     searchTerm === '' || 
-    checkIn.ticket?.ticket_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    checkIn.ticket?.guest_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  ) || [];
+    checkIn.event_tickets?.ticket_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    checkIn.event_tickets?.guest_name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  if (checkInsLoading || ticketsLoading) {
+  if (!selectedEventId) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Check-in Management</h1>
+            <p className="text-muted-foreground">
+              Select an event to manage check-ins
+            </p>
+          </div>
+        </div>
+        <EventSelector />
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center py-8">
+              <UserCheck className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">
+                Please select an event to view and manage check-ins.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isLoading) {
     return (
       <div className="space-y-6">
         <div className="animate-pulse space-y-4">
@@ -54,6 +90,8 @@ const AdminCheckIns = () => {
           </p>
         </div>
       </div>
+
+      <EventSelector />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -169,7 +207,7 @@ const AdminCheckIns = () => {
               
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {eventTickets
-                  ?.filter(ticket => 
+                  .filter(ticket => 
                     searchTerm === '' || 
                     ticket.ticket_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
                     ticket.guest_name?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -212,9 +250,9 @@ const AdminCheckIns = () => {
                 {filteredCheckIns.map((checkIn) => (
                   <div key={checkIn.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div>
-                      <p className="font-medium">{checkIn.ticket?.ticket_number}</p>
+                      <p className="font-medium">{checkIn.event_tickets?.ticket_number}</p>
                       <p className="text-sm text-muted-foreground">
-                        {checkIn.ticket?.guest_name || 'Registered User'}
+                        {checkIn.event_tickets?.guest_name || 'Registered User'}
                       </p>
                       <p className="text-xs text-muted-foreground">
                         Checked in by admin • {format(new Date(checkIn.checked_in_at), 'PPp')}

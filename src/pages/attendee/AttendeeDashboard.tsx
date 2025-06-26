@@ -1,224 +1,173 @@
 
-import React from "react";
-import AppLayout from "@/components/layouts/AppLayout";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Users, Clock, Ticket, QrCode, MessageSquare, Network, Bell, HelpCircle } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useDashboard } from "@/hooks/useDashboard";
-import { useAttendeeContext } from "@/hooks/useAttendeeContext";
-import { format } from "date-fns";
-import TicketWallet from "@/components/tickets/TicketWallet";
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { useAttendeeContext } from '@/hooks/useAttendeeContext';
+import { useDashboard } from '@/hooks/useDashboard';
+import { Calendar, Users, MessageSquare, Bell, Clock, MapPin, QrCode, Ticket } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import TicketWallet from '@/components/tickets/TicketWallet';
 
 const AttendeeDashboard = () => {
-  const { context: attendeeContext } = useAttendeeContext();
-  const { dashboardData, isLoading } = useDashboard();
-  const currentEvent = attendeeContext?.currentEvent;
+  const navigate = useNavigate();
+  const { context: attendeeContext, isLoading: contextLoading } = useAttendeeContext();
+  const { dashboardData, isLoading: dashboardLoading } = useDashboard();
 
-  if (isLoading) {
+  const currentEvent = attendeeContext?.currentEventId ? {
+    id: attendeeContext.currentEventId,
+    name: attendeeContext.eventName || 'Current Event'
+  } : null;
+
+  if (contextLoading || dashboardLoading) {
     return (
-      <AppLayout>
-        <div className="space-y-8">
-          <div className="animate-pulse space-y-4">
-            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-          </div>
+      <div className="space-y-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
   if (!currentEvent) {
     return (
-      <AppLayout>
-        <div className="text-center py-12">
-          <div className="p-4 rounded-full bg-primary/10 inline-block mb-4">
-            <Calendar className="h-8 w-8 text-primary" />
-          </div>
-          <h2 className="text-2xl font-bold mb-2">No Event Selected</h2>
-          <p className="text-muted-foreground mb-6">
-            Join an event to access your personalized dashboard and features.
-          </p>
-          <Button asChild>
-            <Link to="/scan">Join an Event</Link>
-          </Button>
-        </div>
-      </AppLayout>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center">No Event Joined</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <p className="text-muted-foreground">
+              You haven't joined any events yet. Scan a QR code or enter an access code to join an event.
+            </p>
+            <div className="flex gap-2 justify-center">
+              <Button onClick={() => navigate('/scan')} className="flex items-center gap-2">
+                <QrCode className="h-4 w-4" />
+                Scan QR Code
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
-    <AppLayout>
-      <div className="space-y-8">
-        {/* Event Header */}
-        <div className="text-center space-y-4">
-          <div className="relative">
-            {currentEvent.banner_url && (
-              <div 
-                className="h-32 rounded-xl bg-cover bg-center"
-                style={{ backgroundImage: `url(${currentEvent.banner_url})` }}
-              />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent rounded-xl flex items-center justify-center">
-              <h1 className="text-3xl font-bold text-white">{currentEvent.name}</h1>
-            </div>
-          </div>
-          
-          <div className="flex flex-wrap justify-center gap-4 text-sm">
-            <div className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" />
-              <span>{format(new Date(currentEvent.start_time), 'PPP')}</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <Clock className="h-4 w-4" />
-              <span>{format(new Date(currentEvent.start_time), 'p')}</span>
-            </div>
-            {currentEvent.location && (
-              <div className="flex items-center gap-1">
-                <MapPin className="h-4 w-4" />
-                <span>{currentEvent.location}</span>
-              </div>
-            )}
-          </div>
+    <div className="space-y-6">
+      {/* Welcome Section */}
+      <div className="flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold">Welcome to Connect</h1>
+          <p className="text-muted-foreground">
+            You're connected to <span className="font-semibold">{currentEvent.name}</span>
+          </p>
         </div>
-
-        {/* My Tickets Section */}
-        <TicketWallet />
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Button asChild variant="outline" className="h-auto p-4 flex flex-col items-center gap-2">
-            <Link to="/scan">
-              <QrCode className="h-6 w-6" />
-              <span>Scan QR</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-auto p-4 flex flex-col items-center gap-2">
-            <Link to="/attendee/announcements">
-              <Bell className="h-6 w-6" />
-              <span>Announcements</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-auto p-4 flex flex-col items-center gap-2">
-            <Link to="/attendee/networking">
-              <Network className="h-6 w-6" />
-              <span>Networking</span>
-            </Link>
-          </Button>
-          <Button asChild variant="outline" className="h-auto p-4 flex flex-col items-center gap-2">
-            <Link to="/attendee/questions">
-              <HelpCircle className="h-6 w-6" />
-              <span>Q&A</span>
-            </Link>
-          </Button>
-        </div>
-
-        {/* Dashboard Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Upcoming Sessions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Schedule
-              </CardTitle>
-              <CardDescription>Upcoming sessions and activities</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {dashboardData?.upcomingSessions?.slice(0, 3).map((session: any) => (
-                  <div key={session.id} className="flex items-start gap-3 p-2 rounded-lg border">
-                    <div className="text-xs text-center min-w-0">
-                      <div className="font-medium">
-                        {format(new Date(session.start_time), 'HH:mm')}
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm truncate">{session.title}</div>
-                      {session.location && (
-                        <div className="text-xs text-muted-foreground">{session.location}</div>
-                      )}
-                    </div>
-                  </div>
-                )) || (
-                  <p className="text-sm text-muted-foreground">No upcoming sessions</p>
-                )}
-              </div>
-              <Button asChild variant="outline" size="sm" className="w-full mt-3">
-                <Link to="/attendee/schedule">View Full Schedule</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Recent Announcements */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Bell className="h-5 w-5" />
-                Announcements
-              </CardTitle>
-              <CardDescription>Latest event updates</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {dashboardData?.recentAnnouncements?.slice(0, 2).map((announcement: any) => (
-                  <div key={announcement.id} className="p-3 rounded-lg border">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge variant={announcement.priority === 'high' ? 'destructive' : 'secondary'}>
-                        {announcement.priority}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {format(new Date(announcement.created_at), 'MMM d')}
-                      </span>
-                    </div>
-                    <h4 className="font-medium text-sm">{announcement.title}</h4>
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                      {announcement.content}
-                    </p>
-                  </div>
-                )) || (
-                  <p className="text-sm text-muted-foreground">No recent announcements</p>
-                )}
-              </div>
-              <Button asChild variant="outline" size="sm" className="w-full mt-3">
-                <Link to="/attendee/announcements">View All</Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Event Stats */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Event Stats
-              </CardTitle>
-              <CardDescription>Event participation overview</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Total Attendees</span>
-                  <Badge variant="outline">{dashboardData?.totalAttendees || 0}</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Active Polls</span>
-                  <Badge variant="outline">{dashboardData?.activePolls || 0}</Badge>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm">Q&A Sessions</span>
-                  <Badge variant="outline">{dashboardData?.qaCount || 0}</Badge>
-                </div>
-              </div>
-              <Button asChild variant="outline" size="sm" className="w-full mt-4">
-                <Link to="/attendee/polls">Participate in Polls</Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        <Badge variant="outline" className="px-3 py-1">
+          <Users className="h-3 w-3 mr-1" />
+          Attendee
+        </Badge>
       </div>
-    </AppLayout>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/attendee/schedule')}>
+          <CardContent className="p-6 text-center">
+            <Calendar className="h-8 w-8 mx-auto mb-2 text-primary" />
+            <h3 className="font-semibold">Schedule</h3>
+            <p className="text-sm text-muted-foreground">View event agenda</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/attendee/networking')}>
+          <CardContent className="p-6 text-center">
+            <Users className="h-8 w-8 mx-auto mb-2 text-primary" />
+            <h3 className="font-semibold">Networking</h3>
+            <p className="text-sm text-muted-foreground">Connect with others</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/attendee/announcements')}>
+          <CardContent className="p-6 text-center">
+            <Bell className="h-8 w-8 mx-auto mb-2 text-primary" />
+            <h3 className="font-semibold">Updates</h3>
+            <p className="text-sm text-muted-foreground">Latest announcements</p>
+          </CardContent>
+        </Card>
+        
+        <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => navigate('/attendee/questions')}>
+          <CardContent className="p-6 text-center">
+            <MessageSquare className="h-8 w-8 mx-auto mb-2 text-primary" />
+            <h3 className="font-semibold">Q&A</h3>
+            <p className="text-sm text-muted-foreground">Ask questions</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Event Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Attendees</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{dashboardData?.totalAttendees || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              People connected to this event
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Active Polls</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{dashboardData?.activePolls || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Live polls you can participate in
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Q&A Questions</CardTitle>
+            <Bell className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{dashboardData?.qaCount || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              Questions submitted to speakers
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Ticket Wallet Section */}
+      <TicketWallet />
+
+      {/* Recent Activity */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Recent Activity</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center space-x-4">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <div className="flex-1">
+                <p className="text-sm font-medium">Welcome to the event!</p>
+                <p className="text-xs text-muted-foreground">Connected successfully</p>
+              </div>
+              <div className="text-xs text-muted-foreground">Just now</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 

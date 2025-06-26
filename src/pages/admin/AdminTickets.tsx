@@ -5,19 +5,55 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useTickets } from '@/hooks/useTickets';
 import { useAdminWallet } from '@/hooks/useAdminWallet';
+import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 import { Ticket, Plus, DollarSign, TrendingUp, Users } from 'lucide-react';
 import { format } from 'date-fns';
+import EventSelector from '@/components/admin/EventSelector';
 
 const AdminTickets = () => {
+  const { selectedEventId } = useAdminEventContext();
   const { useTicketTypes, useEventTickets } = useTickets();
-  const { data: ticketTypes, isLoading: typesLoading } = useTicketTypes();
-  const { data: eventTickets, isLoading: ticketsLoading } = useEventTickets();
-  const { data: walletData } = useAdminWallet();
+  const ticketTypesQuery = useTicketTypes(selectedEventId || undefined);
+  const eventTicketsQuery = useEventTickets(selectedEventId || undefined);
+  const { useEventWallet } = useAdminWallet();
+  const walletQuery = useEventWallet(selectedEventId || '');
 
-  const totalSales = eventTickets?.reduce((sum, ticket) => sum + ticket.price, 0) || 0;
-  const totalTicketsSold = eventTickets?.length || 0;
+  const ticketTypes = ticketTypesQuery.data || [];
+  const eventTickets = eventTicketsQuery.data || [];
+  const walletData = walletQuery.data;
+  
+  const isLoading = ticketTypesQuery.isLoading || eventTicketsQuery.isLoading;
 
-  if (typesLoading || ticketsLoading) {
+  const totalSales = eventTickets.reduce((sum, ticket) => sum + ticket.price, 0);
+  const totalTicketsSold = eventTickets.length;
+
+  if (!selectedEventId) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Ticket Management</h1>
+            <p className="text-muted-foreground">
+              Select an event to manage tickets
+            </p>
+          </div>
+        </div>
+        <EventSelector />
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center py-8">
+              <Ticket className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground">
+                Please select an event to view and manage tickets.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isLoading) {
     return (
       <div className="space-y-6">
         <div className="animate-pulse space-y-4">
@@ -42,6 +78,8 @@ const AdminTickets = () => {
           Create Ticket Type
         </Button>
       </div>
+
+      <EventSelector />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -79,7 +117,7 @@ const AdminTickets = () => {
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{ticketTypes?.length || 0}</div>
+            <div className="text-2xl font-bold">{ticketTypes.length}</div>
             <p className="text-xs text-muted-foreground">
               Active ticket categories
             </p>
@@ -94,7 +132,7 @@ const AdminTickets = () => {
           <CardContent>
             <div className="text-2xl font-bold">
               {totalTicketsSold > 0 
-                ? `${Math.round((eventTickets?.filter(t => t.check_in_status).length || 0) / totalTicketsSold * 100)}%`
+                ? `${Math.round((eventTickets.filter(t => t.check_in_status).length) / totalTicketsSold * 100)}%`
                 : '0%'
               }
             </div>
@@ -111,7 +149,7 @@ const AdminTickets = () => {
           <CardTitle>Ticket Types</CardTitle>
         </CardHeader>
         <CardContent>
-          {ticketTypes && ticketTypes.length > 0 ? (
+          {ticketTypes.length > 0 ? (
             <div className="space-y-4">
               {ticketTypes.map((ticketType) => (
                 <div key={ticketType.id} className="flex items-center justify-between p-4 border rounded-lg">
@@ -150,7 +188,7 @@ const AdminTickets = () => {
           <CardTitle>Recent Ticket Sales</CardTitle>
         </CardHeader>
         <CardContent>
-          {eventTickets && eventTickets.length > 0 ? (
+          {eventTickets.length > 0 ? (
             <div className="space-y-4">
               {eventTickets.slice(0, 10).map((ticket) => (
                 <div key={ticket.id} className="flex items-center justify-between p-4 border rounded-lg">

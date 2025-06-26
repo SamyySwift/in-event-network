@@ -76,7 +76,11 @@ const TicketWallet: React.FC = () => {
             {tickets.map((ticket) => (
               <TicketCard
                 key={ticket.id}
-                ticket={ticket}
+                ticket={{
+                  ...ticket,
+                  ticket_types: ticket.ticket_type,
+                  events: ticket.events
+                }}
                 onShowQR={handleShowQR}
               />
             ))}

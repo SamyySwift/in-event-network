@@ -11,6 +11,15 @@ export type CheckIn = {
   check_in_method: string;
   notes?: string;
   created_at: string;
+  event_tickets?: {
+    ticket_number: string;
+    guest_name?: string;
+    guest_email?: string;
+    profiles?: {
+      name: string;
+      email: string;
+    };
+  };
 };
 
 export const useCheckIns = () => {
@@ -18,18 +27,21 @@ export const useCheckIns = () => {
   const queryClient = useQueryClient();
 
   // Get check-ins for an event
-  const useEventCheckIns = (eventId: string) => {
+  const useEventCheckIns = (eventId?: string) => {
     return useQuery({
       queryKey: ['event-checkins', eventId],
       queryFn: async () => {
+        if (!eventId) return [];
+        
         const { data, error } = await supabase
           .from('check_ins')
           .select(`
             *,
-            event_tickets(
+            event_tickets!inner(
               ticket_number,
               guest_name,
               guest_email,
+              event_id,
               profiles(name, email)
             )
           `)
@@ -37,7 +49,7 @@ export const useCheckIns = () => {
           .order('checked_in_at', { ascending: false });
 
         if (error) throw error;
-        return data;
+        return data as CheckIn[];
       },
       enabled: !!eventId,
     });
@@ -99,7 +111,7 @@ export const useCheckIns = () => {
         description: `Ticket ${data.ticket.ticket_number} checked in successfully!`,
       });
       queryClient.invalidateQueries({ queryKey: ['event-checkins'] });
-      queryClient.invalidateQueries({ queryKey: ['event-tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['eventTickets'] });
     },
     onError: (error) => {
       toast({
@@ -165,7 +177,7 @@ export const useCheckIns = () => {
         description: `Ticket ${data.ticket.ticket_number} checked in manually!`,
       });
       queryClient.invalidateQueries({ queryKey: ['event-checkins'] });
-      queryClient.invalidateQueries({ queryKey: ['event-tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['eventTickets'] });
     },
     onError: (error) => {
       toast({

@@ -17,7 +17,7 @@ const QRCodeScanner: React.FC = () => {
   const { joinEvent, isJoining } = useJoinEvent();
 
   // Determine if user can perform check-ins (admin/host role)
-  const canCheckIn = currentUser?.role === 'host' || currentUser?.role === 'admin';
+  const canCheckIn = currentUser?.role === 'host';
 
   useEffect(() => {
     // Default to join tab for attendees, check-in tab for admins

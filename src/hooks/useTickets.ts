@@ -1,194 +1,177 @@
 
-import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
-export type TicketType = {
-  id: string;
-  event_id: string;
-  name: string;
-  price: number;
-  description?: string;
-  max_quantity?: number;
-  available_quantity: number;
-  is_active: boolean;
-  created_by?: string;
-  created_at: string;
-  updated_at: string;
-};
-
-export type EventTicket = {
-  id: string;
-  event_id: string;
-  user_id?: string;
-  ticket_number: string;
-  ticket_type_id: string;
-  price: number;
-  qr_code_data: string;
-  purchase_date: string;
-  check_in_status: boolean;
-  checked_in_at?: string;
-  checked_in_by?: string;
-  guest_email?: string;
-  guest_name?: string;
-  created_at: string;
-  updated_at: string;
-};
-
 export const useTickets = () => {
+  const { currentUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   // Get ticket types for an event
-  const useTicketTypes = (eventId: string) => {
+  const useTicketTypes = (eventId?: string) => {
     return useQuery({
-      queryKey: ['ticket-types', eventId],
+      queryKey: ['ticketTypes', eventId],
       queryFn: async () => {
-        const { data, error } = await supabase
+        let query = supabase
           .from('ticket_types')
           .select('*')
-          .eq('event_id', eventId)
-          .eq('is_active', true)
-          .order('price', { ascending: true });
-
+          .eq('is_active', true);
+        
+        if (eventId) {
+          query = query.eq('event_id', eventId);
+        }
+        
+        const { data, error } = await query.order('created_at', { ascending: false });
+        
         if (error) throw error;
-        return data as TicketType[];
+        return data;
       },
       enabled: !!eventId,
+    });
+  };
+
+  // Get all tickets for an event (admin view)
+  const useEventTickets = (eventId?: string) => {
+    return useQuery({
+      queryKey: ['eventTickets', eventId],
+      queryFn: async () => {
+        let query = supabase
+          .from('event_tickets')
+          .select(`
+            *,
+            ticket_type:ticket_types(name, price),
+            profiles(name, email)
+          `);
+        
+        if (eventId) {
+          query = query.eq('event_id', eventId);
+        }
+        
+        const { data, error } = await query.order('purchase_date', { ascending: false });
+        
+        if (error) throw error;
+        return data;
+      },
+      enabled: !!currentUser && currentUser.role === 'host',
     });
   };
 
   // Get user's tickets
   const useUserTickets = () => {
     return useQuery({
-      queryKey: ['user-tickets'],
+      queryKey: ['userTickets', currentUser?.id],
       queryFn: async () => {
+        if (!currentUser) return [];
+        
         const { data, error } = await supabase
           .from('event_tickets')
           .select(`
             *,
-            events(name, start_time, location),
-            ticket_types(name, description)
+            events(name, start_time, location, banner_url),
+            ticket_type:ticket_types(name, description)
           `)
+          .eq('user_id', currentUser.id)
           .order('purchase_date', { ascending: false });
-
+        
         if (error) throw error;
         return data;
       },
+      enabled: !!currentUser,
     });
   };
 
-  // Get event tickets for admin
-  const useEventTickets = (eventId: string) => {
-    return useQuery({
-      queryKey: ['event-tickets', eventId],
-      queryFn: async () => {
-        const { data, error } = await supabase
-          .from('event_tickets')
-          .select(`
-            *,
-            profiles(name, email),
-            ticket_types(name)
-          `)
-          .eq('event_id', eventId)
-          .order('purchase_date', { ascending: false });
-
-        if (error) throw error;
-        return data;
-      },
-      enabled: !!eventId,
-    });
-  };
-
-  // Purchase ticket mutation
+  // Purchase a ticket
   const purchaseTicket = useMutation({
-    mutationFn: async ({
-      eventId,
-      ticketTypeId,
-      price,
-      guestName,
-      guestEmail,
-      userId
-    }: {
-      eventId: string;
-      ticketTypeId: string;
+    mutationFn: async (ticketData: {
+      event_id: string;
+      ticket_type_id: string;
       price: number;
-      guestName?: string;
-      guestEmail?: string;
-      userId?: string;
+      guest_name?: string;
+      guest_email?: string;
     }) => {
       // Generate QR code data
-      const qrData = `ticket:${Date.now()}:${Math.random().toString(36).substring(7)}`;
+      const qrData = `ticket:${ticketData.event_id}:${Date.now()}:${Math.random().toString(36).substr(2, 9)}`;
       
+      const ticketPayload = {
+        event_id: ticketData.event_id,
+        ticket_type_id: ticketData.ticket_type_id,
+        price: ticketData.price,
+        qr_code_data: qrData,
+        user_id: currentUser?.id || null,
+        guest_name: ticketData.guest_name || null,
+        guest_email: ticketData.guest_email || null,
+      };
+
       const { data, error } = await supabase
         .from('event_tickets')
-        .insert({
-          event_id: eventId,
-          ticket_type_id: ticketTypeId,
-          price,
-          qr_code_data: qrData,
-          user_id: userId,
-          guest_name: guestName,
-          guest_email: guestEmail,
-        })
-        .select()
+        .insert(ticketPayload)
+        .select('*')
         .single();
 
       if (error) throw error;
-      return data as EventTicket;
+      return data;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userTickets'] });
+      queryClient.invalidateQueries({ queryKey: ['eventTickets'] });
       toast({
-        title: "Ticket Purchased",
-        description: "Your ticket has been purchased successfully!",
+        title: "Ticket Purchased Successfully!",
+        description: "Your ticket has been added to your wallet.",
       });
-      queryClient.invalidateQueries({ queryKey: ['user-tickets'] });
-      queryClient.invalidateQueries({ queryKey: ['ticket-types'] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Purchase Failed",
-        description: "Failed to purchase ticket. Please try again.",
+        description: error.message || "Could not purchase ticket. Please try again.",
         variant: "destructive",
       });
-      console.error('Ticket purchase error:', error);
     },
   });
 
-  // Create ticket type mutation
+  // Create ticket type (admin only)
   const createTicketType = useMutation({
-    mutationFn: async (ticketType: Omit<TicketType, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (ticketTypeData: {
+      event_id: string;
+      name: string;
+      price: number;
+      description?: string;
+      max_quantity?: number;
+      available_quantity: number;
+    }) => {
       const { data, error } = await supabase
         .from('ticket_types')
-        .insert(ticketType)
-        .select()
+        .insert({
+          ...ticketTypeData,
+          created_by: currentUser?.id,
+        })
+        .select('*')
         .single();
 
       if (error) throw error;
-      return data as TicketType;
+      return data;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ticketTypes'] });
       toast({
         title: "Ticket Type Created",
-        description: "New ticket type has been created successfully!",
+        description: "New ticket type has been added successfully.",
       });
-      queryClient.invalidateQueries({ queryKey: ['ticket-types'] });
     },
-    onError: (error) => {
+    onError: (error: any) => {
       toast({
         title: "Creation Failed",
-        description: "Failed to create ticket type. Please try again.",
+        description: error.message || "Could not create ticket type.",
         variant: "destructive",
       });
-      console.error('Ticket type creation error:', error);
     },
   });
 
   return {
     useTicketTypes,
-    useUserTickets,
     useEventTickets,
+    useUserTickets,
     purchaseTicket,
     createTicketType,
   };

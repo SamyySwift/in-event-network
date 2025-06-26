@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,7 +25,8 @@ import {
   BarChart,
   Moon,
   Sun,
-  BookOpen, // Add this import
+  Ticket,
+  UserCheck,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -130,6 +132,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       icon: <Calendar size={20} />,
     },
     {
+      name: "Tickets",
+      href: "/admin/tickets",
+      icon: <Ticket size={20} />,
+    },
+    {
+      name: "Check-ins",
+      href: "/admin/checkins",
+      icon: <UserCheck size={20} />,
+    },
+    {
       name: "Attendees",
       href: "/admin/attendees",
       icon: <Users size={20} />,
@@ -174,7 +186,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       href: "/admin/suggestions",
       icon: <MessageCircle size={20} />,
     },
-
     {
       name: "Notifications",
       href: "/admin/notifications",

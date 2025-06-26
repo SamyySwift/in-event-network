@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -20,6 +21,8 @@ import HostDashboard from '@/pages/host/HostDashboard';
 // Admin pages
 import AdminDashboard from '@/pages/admin/AdminDashboard';
 import AdminEvents from '@/pages/admin/AdminEvents';
+import AdminTickets from '@/pages/admin/AdminTickets';
+import AdminCheckIns from '@/pages/admin/AdminCheckIns';
 import AdminAttendees from '@/pages/admin/AdminAttendees';
 import AdminSpeakers from '@/pages/admin/AdminSpeakers';
 import AdminAnnouncements from '@/pages/admin/AdminAnnouncements';
@@ -80,6 +83,8 @@ function App() {
                       <Routes>
                         <Route path="" element={<AdminDashboard />} />
                         <Route path="events" element={<AdminEvents />} />
+                        <Route path="tickets" element={<AdminTickets />} />
+                        <Route path="checkins" element={<AdminCheckIns />} />
                         <Route path="attendees" element={<AdminAttendees />} />
                         <Route path="speakers" element={<AdminSpeakers />} />
                         <Route path="announcements" element={<AdminAnnouncements />} />

@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useCheckIns } from '@/hooks/useCheckIns';
 import { useAuth } from '@/contexts/AuthContext';
-import { Scan, UserCheck, Loader } from 'lucide-react';
+import { Scan, UserCheck, Loader, Camera, CameraOff } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Scanner, IDetectedBarcode } from '@yudiel/react-qr-scanner';
 
 type CheckInScannerProps = {
   onScanResult?: (result: string) => void;
@@ -17,11 +18,12 @@ type CheckInScannerProps = {
 const CheckInScanner: React.FC<CheckInScannerProps> = ({ onScanResult }) => {
   const [ticketNumber, setTicketNumber] = useState('');
   const [notes, setNotes] = useState('');
+  const [isScanning, setIsScanning] = useState(false);
   const { currentUser } = useAuth();
   const { checkInTicket, manualCheckIn } = useCheckIns();
   const { toast } = useToast();
 
-  const handleQRScan = (qrData: string) => {
+  const handleQRScan = (detectedCodes: IDetectedBarcode[]) => {
     if (!currentUser?.id) {
       toast({
         title: "Authentication Required",
@@ -31,15 +33,20 @@ const CheckInScanner: React.FC<CheckInScannerProps> = ({ onScanResult }) => {
       return;
     }
 
-    checkInTicket.mutate({
-      qrCodeData: qrData,
-      adminId: currentUser.id,
-      method: 'qr_scan',
-      notes,
-    });
+    if (detectedCodes.length > 0) {
+      const result = detectedCodes[0].rawValue;
+      setIsScanning(false);
+      
+      checkInTicket.mutate({
+        qrCodeData: result,
+        adminId: currentUser.id,
+        method: 'qr_scan',
+        notes,
+      });
 
-    if (onScanResult) {
-      onScanResult(qrData);
+      if (onScanResult) {
+        onScanResult(result);
+      }
     }
   };
 
@@ -72,6 +79,15 @@ const CheckInScanner: React.FC<CheckInScannerProps> = ({ onScanResult }) => {
     setNotes('');
   };
 
+  const handleScanError = (error: Error) => {
+    console.error('QR Scan error:', error);
+    toast({
+      title: "Scan Error",
+      description: "Failed to scan QR code. Please try again.",
+      variant: "destructive",
+    });
+  };
+
   return (
     <div className="space-y-6">
       {/* QR Scanner Section */}
@@ -84,29 +100,46 @@ const CheckInScanner: React.FC<CheckInScannerProps> = ({ onScanResult }) => {
         </CardHeader>
         <CardContent>
           <div className="text-center py-6">
-            <div className="w-64 h-64 mx-auto border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center mb-4">
-              <div className="text-center">
-                <Scan className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  QR Scanner will appear here
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Ask attendees to show their ticket QR code
-                </p>
+            {isScanning ? (
+              <div className="w-full max-w-md mx-auto">
+                <Scanner
+                  onScan={handleQRScan}
+                  onError={handleScanError}
+                  styles={{ container: { width: '100%' } }}
+                />
+                <Button
+                  onClick={() => setIsScanning(false)}
+                  variant="outline"
+                  className="mt-4"
+                >
+                  <CameraOff className="h-4 w-4 mr-2" />
+                  Stop Scanning
+                </Button>
               </div>
-            </div>
-            <Button
-              onClick={() => {
-                // Simulate QR scan for demo
-                const demoQR = `ticket:${Date.now()}:demo`;
-                handleQRScan(demoQR);
-              }}
-              disabled={checkInTicket.isPending}
-              className="mt-2"
-            >
-              {checkInTicket.isPending && <Loader className="h-4 w-4 mr-2 animate-spin" />}
-              Demo Scan (Test)
-            </Button>
+            ) : (
+              <div>
+                <div className="w-64 h-64 mx-auto border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center mb-4">
+                  <div className="text-center">
+                    <Camera className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                    <p className="text-sm text-muted-foreground">
+                      Click to start QR scanner
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Ask attendees to show their ticket QR code
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => setIsScanning(true)}
+                  disabled={checkInTicket.isPending}
+                  className="mt-2"
+                >
+                  {checkInTicket.isPending && <Loader className="h-4 w-4 mr-2 animate-spin" />}
+                  <Camera className="h-4 w-4 mr-2" />
+                  Start QR Scanner
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

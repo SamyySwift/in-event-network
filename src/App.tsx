@@ -14,6 +14,7 @@ import Register from '@/pages/Register';
 import Guide from '@/pages/Guide';
 import NotFound from '@/pages/NotFound';
 import ScanQR from '@/pages/ScanQR';
+import Discovery from '@/pages/Discovery';
 
 // Host pages
 import HostDashboard from '@/pages/host/HostDashboard';
@@ -260,6 +261,8 @@ function App() {
                 }
               />
 
+              {/* Add this route in the Routes section: */}
+              <Route path="/discovery" element={<Discovery />} />
               {/* Catch all route */}
               <Route path="*" element={<NotFound />} />
             </Routes>

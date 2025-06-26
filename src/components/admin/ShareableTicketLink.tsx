@@ -10,6 +10,11 @@ interface ShareableTicketLinkProps {
 }
 
 const ShareableTicketLink: React.FC<ShareableTicketLinkProps> = ({ eventId }) => {
+  const [copied, setCopied] = useState(false);
+  
+  // Change the URL to point to discovery page with eventId parameter
+  const shareableUrl = `${window.location.origin}/discovery?eventId=${eventId}`;
+  
   const { toast } = useToast();
   const ticketUrl = `${window.location.origin}/tickets/${eventId}`;
   

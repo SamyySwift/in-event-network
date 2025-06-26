@@ -7,16 +7,18 @@ import { Input } from '@/components/ui/input';
 import { useCheckIns } from '@/hooks/useCheckIns';
 import { useTickets } from '@/hooks/useTickets';
 import { useAdminEventContext } from '@/hooks/useAdminEventContext';
+import { useAuth } from '@/contexts/AuthContext';
 import CheckInScanner from '@/components/admin/CheckInScanner';
 import EventSelector from '@/components/admin/EventSelector';
-import { UserCheck, Search, QrCode, Users, Clock, TrendingUp } from 'lucide-react';
+import { UserCheck, Search, QrCode, Users, Clock, TrendingUp, Loader } from 'lucide-react';
 import { format } from 'date-fns';
 
 const AdminCheckIns = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'scanner' | 'manual' | 'history'>('scanner');
   const { selectedEventId } = useAdminEventContext();
-  const { useEventCheckIns } = useCheckIns();
+  const { currentUser } = useAuth();
+  const { useEventCheckIns, manualCheckIn } = useCheckIns();
   const { useEventTickets } = useTickets();
   
   const checkInsQuery = useEventCheckIns(selectedEventId || '');
@@ -206,32 +208,50 @@ const AdminCheckIns = () => {
               </div>
               
               <div className="space-y-2 max-h-96 overflow-y-auto">
+                // In the manual check-in section, fix the button handler:
                 {eventTickets
-                  .filter(ticket => 
-                    searchTerm === '' || 
-                    ticket.ticket_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    ticket.guest_name?.toLowerCase().includes(searchTerm.toLowerCase())
-                  )
-                  .map((ticket) => (
-                    <div key={ticket.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{ticket.ticket_number}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {ticket.guest_name || 'Registered User'}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={ticket.check_in_status ? "default" : "outline"}>
-                          {ticket.check_in_status ? "Checked In" : "Pending"}
-                        </Badge>
-                        {!ticket.check_in_status && (
-                          <Button size="sm">
-                            Check In
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))
+                .filter(ticket => 
+                searchTerm === '' || 
+                ticket.ticket_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                ticket.guest_name?.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+                .map((ticket) => {
+                const handleCheckIn = () => {
+                if (!currentUser?.id) return;
+                
+                manualCheckIn.mutate({
+                ticketNumber: ticket.ticket_number,
+                adminId: currentUser.id,
+                notes: '',
+                });
+                };
+                
+                return (
+                <div key={ticket.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                <p className="font-medium">{ticket.ticket_number}</p>
+                <p className="text-sm text-muted-foreground">
+                {ticket.guest_name || 'Registered User'}
+                </p>
+                </div>
+                <div className="flex items-center gap-2">
+                <Badge variant={ticket.check_in_status ? "default" : "outline"}>
+                {ticket.check_in_status ? "Checked In" : "Pending"}
+                </Badge>
+                {!ticket.check_in_status && (
+                <Button 
+                size="sm"
+                onClick={handleCheckIn}
+                disabled={manualCheckIn.isPending}
+                >
+                {manualCheckIn.isPending && <Loader className="h-3 w-3 mr-1 animate-spin" />}
+                Check In
+                </Button>
+                )}
+                </div>
+                </div>
+                );
+                })
                 }
               </div>
             </div>

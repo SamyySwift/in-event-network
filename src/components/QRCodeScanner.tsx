@@ -9,6 +9,7 @@ import { useJoinEvent } from '@/hooks/useJoinEvent';
 import { useAuth } from '@/contexts/AuthContext';
 import { Scan, Users, UserCheck, Loader } from 'lucide-react';
 import CheckInScanner from '@/components/admin/CheckInScanner';
+import { Scanner, IDetectedBarcode } from '@yudiel/react-qr-scanner';
 
 interface QRCodeScannerProps {
   onScanSuccess?: (decodedText: string) => void;
@@ -18,6 +19,7 @@ interface QRCodeScannerProps {
 const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onScanError }) => {
   const [accessCode, setAccessCode] = useState('');
   const [activeTab, setActiveTab] = useState('join');
+  const [isScanning, setIsScanning] = useState(false);
   const { currentUser } = useAuth();
   const { joinEvent, isJoining } = useJoinEvent();
 
@@ -51,13 +53,18 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onScanErro
       // This looks like an access code
       setAccessCode(result);
       setActiveTab('join');
+    } else {
+      // This is an access code
+      setAccessCode(result);
+      handleJoinEvent();
     }
   };
 
-  const handleScanErrorInternal = (error: string) => {
-    console.error('QR Scanner error:', error);
+  const handleScanErrorInternal = (error: unknown) => {
+    console.error('QR Scan error:', error);
     if (onScanError) {
-      onScanError(error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      onScanError(errorMessage);
     }
   };
 
@@ -95,17 +102,48 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onScanErro
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="text-center py-6">
-                    <div className="w-64 h-64 mx-auto border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center mb-4">
-                      <div className="text-center">
-                        <Scan className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-                        <p className="text-sm text-muted-foreground">
-                          Scan QR code to join event
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Or enter access code manually below
-                        </p>
+                    {isScanning ? (
+                      <div className="w-full max-w-md mx-auto">
+                        <Scanner
+                          onScan={(detectedCodes) => {
+                            setIsScanning(false);
+                            if (detectedCodes.length > 0) {
+                              handleScanResult(detectedCodes[0].rawValue);
+                            }
+                          }}
+                          onError={(error) => handleScanErrorInternal(error)}
+                          styles={{ container: { width: '100%' } }}
+                        />
+                        <Button
+                          onClick={() => setIsScanning(false)}
+                          variant="outline"
+                          className="mt-4"
+                        >
+                          Stop Scanning
+                        </Button>
                       </div>
-                    </div>
+                    ) : (
+                      <div>
+                        <div className="w-64 h-64 mx-auto border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-between mb-4">
+                          <div className="text-center">
+                            <Scan className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
+                            <p className="text-sm text-muted-foreground">
+                              Click to scan QR code
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Or enter access code manually below
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          onClick={() => setIsScanning(true)}
+                          className="mb-4"
+                        >
+                          <Scan className="h-4 w-4 mr-2" />
+                          Start QR Scanner
+                        </Button>
+                      </div>
+                    )}
                   </div>
                   
                   <div className="space-y-2">

@@ -14,7 +14,7 @@ const QRCodeScanner: React.FC = () => {
   const [accessCode, setAccessCode] = useState('');
   const [activeTab, setActiveTab] = useState('join');
   const { currentUser } = useAuth();
-  const { joinByAccessKey, isJoining } = useJoinEvent();
+  const { joinEvent, isJoining } = useJoinEvent();
 
   // Determine if user can perform check-ins (admin/host role)
   const canCheckIn = currentUser?.role === 'host' || currentUser?.role === 'admin';
@@ -28,7 +28,7 @@ const QRCodeScanner: React.FC = () => {
 
   const handleJoinEvent = () => {
     if (accessCode.trim()) {
-      joinByAccessKey(accessCode.trim());
+      joinEvent(accessCode.trim());
       setAccessCode('');
     }
   };

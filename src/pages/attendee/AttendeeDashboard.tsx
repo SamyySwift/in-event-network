@@ -12,8 +12,9 @@ import { format } from "date-fns";
 import TicketWallet from "@/components/tickets/TicketWallet";
 
 const AttendeeDashboard = () => {
-  const { currentEvent } = useAttendeeContext();
-  const { data: dashboardData, isLoading } = useDashboard();
+  const { context: attendeeContext } = useAttendeeContext();
+  const { dashboardData, isLoading } = useDashboard();
+  const currentEvent = attendeeContext?.currentEvent;
 
   if (isLoading) {
     return (

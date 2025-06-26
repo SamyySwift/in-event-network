@@ -19,7 +19,7 @@ const AdminCheckIns = () => {
   const { useEventCheckIns } = useCheckIns();
   const { useEventTickets } = useTickets();
   
-  const checkInsQuery = useEventCheckIns(selectedEventId || undefined);
+  const checkInsQuery = useEventCheckIns(selectedEventId || '');
   const eventTicketsQuery = useEventTickets(selectedEventId || undefined);
   
   const checkIns = checkInsQuery.data || [];

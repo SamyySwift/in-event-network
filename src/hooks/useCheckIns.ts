@@ -27,7 +27,7 @@ export const useCheckIns = () => {
   const queryClient = useQueryClient();
 
   // Get check-ins for an event
-  const useEventCheckIns = (eventId?: string) => {
+  const useEventCheckIns = (eventId: string) => {
     return useQuery({
       queryKey: ['event-checkins', eventId],
       queryFn: async () => {
@@ -49,7 +49,7 @@ export const useCheckIns = () => {
           .order('checked_in_at', { ascending: false });
 
         if (error) throw error;
-        return data as CheckIn[];
+        return data || [];
       },
       enabled: !!eventId,
     });

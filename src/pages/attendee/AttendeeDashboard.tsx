@@ -16,7 +16,7 @@ const AttendeeDashboard = () => {
 
   const currentEvent = attendeeContext?.currentEventId ? {
     id: attendeeContext.currentEventId,
-    name: attendeeContext.eventName || 'Current Event'
+    name: 'Current Event' // We don't have event name in context
   } : null;
 
   if (contextLoading || dashboardLoading) {
@@ -112,7 +112,7 @@ const AttendeeDashboard = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{dashboardData?.totalAttendees || 0}</div>
+            <div className="text-2xl font-bold">{dashboardData?.attendees || 0}</div>
             <p className="text-xs text-muted-foreground">
               People connected to this event
             </p>
@@ -125,7 +125,7 @@ const AttendeeDashboard = () => {
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{dashboardData?.activePolls || 0}</div>
+            <div className="text-2xl font-bold">{dashboardData?.polls || 0}</div>
             <p className="text-xs text-muted-foreground">
               Live polls you can participate in
             </p>
@@ -138,7 +138,7 @@ const AttendeeDashboard = () => {
             <Bell className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{dashboardData?.qaCount || 0}</div>
+            <div className="text-2xl font-bold">{dashboardData?.questions || 0}</div>
             <p className="text-xs text-muted-foreground">
               Questions submitted to speakers
             </p>

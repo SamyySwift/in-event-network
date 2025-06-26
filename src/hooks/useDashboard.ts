@@ -11,9 +11,6 @@ interface DashboardData {
   upcomingSessions: any[];
   recentAnnouncements: any[];
   suggestedConnections: any[];
-  attendees: number;
-  polls: number;
-  questions: number;
 }
 
 export const useDashboard = () => {
@@ -45,9 +42,6 @@ export const useDashboard = () => {
           upcomingSessions: [],
           recentAnnouncements: [],
           suggestedConnections: [],
-          attendees: 0,
-          polls: 0,
-          questions: 0,
         };
       }
 
@@ -66,9 +60,6 @@ export const useDashboard = () => {
           upcomingSessions: [],
           recentAnnouncements: [],
           suggestedConnections: [],
-          attendees: 0,
-          polls: 0,
-          questions: 0,
         };
       }
 
@@ -150,23 +141,6 @@ export const useDashboard = () => {
 
       const suggestedConnections = sameHostAttendees?.map((participant: any) => participant.profiles).filter(Boolean) || [];
 
-      // Get stats
-      const { count: attendeesCount } = await supabase
-        .from('event_participants')
-        .select('*', { count: 'exact', head: true })
-        .in('event_id', eventIds);
-
-      const { count: pollsCount } = await supabase
-        .from('polls')
-        .select('*', { count: 'exact', head: true })
-        .in('event_id', eventIds)
-        .eq('is_active', true);
-
-      const { count: questionsCount } = await supabase
-        .from('questions')
-        .select('*', { count: 'exact', head: true })
-        .in('event_id', eventIds);
-
       return {
         currentEvent,
         upcomingEvents: upcomingEvents || [],
@@ -174,9 +148,6 @@ export const useDashboard = () => {
         upcomingSessions: upcomingSessions || [],
         recentAnnouncements: announcements || [],
         suggestedConnections: suggestedConnections.slice(0, 3),
-        attendees: attendeesCount || 0,
-        polls: pollsCount || 0,
-        questions: questionsCount || 0,
       };
     },
     enabled: !!currentUser,

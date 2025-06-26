@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import QRCodeScanner from '@/components/QRCodeScanner';
 import { useToast } from '@/hooks/use-toast';
 import { useJoinEvent } from '@/hooks/useJoinEvent';
 import { Button } from '@/components/ui/button';
@@ -157,19 +158,12 @@ const ScanQR = () => {
                 Position the QR code within the camera frame to join an event.
               </p>
               
-              <div className="text-center py-6">
-                <div className="w-64 h-64 mx-auto border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center mb-4">
-                  <div className="text-center">
-                    <QrCode className="h-12 w-12 mx-auto text-muted-foreground mb-2" />
-                    <p className="text-sm text-muted-foreground">
-                      QR Scanner will appear here
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Camera-based QR scanning coming soon
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <QRCodeScanner 
+                onScanSuccess={handleScanSuccess} 
+                onScanError={handleScanError}
+                width="100%"
+                height="400px"
+              />
               
               {isJoining && (
                 <div className="text-center">

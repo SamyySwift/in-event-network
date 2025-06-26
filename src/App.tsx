@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -14,7 +13,6 @@ import Register from '@/pages/Register';
 import Guide from '@/pages/Guide';
 import NotFound from '@/pages/NotFound';
 import ScanQR from '@/pages/ScanQR';
-import Discovery from '@/pages/Discovery';
 
 // Host pages
 import HostDashboard from '@/pages/host/HostDashboard';
@@ -22,8 +20,6 @@ import HostDashboard from '@/pages/host/HostDashboard';
 // Admin pages
 import AdminDashboard from '@/pages/admin/AdminDashboard';
 import AdminEvents from '@/pages/admin/AdminEvents';
-import AdminTickets from '@/pages/admin/AdminTickets';
-import AdminCheckIns from '@/pages/admin/AdminCheckIns';
 import AdminAttendees from '@/pages/admin/AdminAttendees';
 import AdminSpeakers from '@/pages/admin/AdminSpeakers';
 import AdminAnnouncements from '@/pages/admin/AdminAnnouncements';
@@ -56,12 +52,6 @@ import { AdminEventProvider } from '@/hooks/useAdminEventContext';
 import DataPrivacy from '@/pages/DataPrivacy';
 import TermsOfService from '@/pages/TermsOfService';
 
-// Add this import
-import TicketPurchase from '@/pages/TicketPurchase';
-
-// Add this route in your routing configuration
-<Route path="/tickets/:eventId" element={<TicketPurchase />} />
-
 const queryClient = new QueryClient();
 
 function App() {
@@ -90,8 +80,6 @@ function App() {
                       <Routes>
                         <Route path="" element={<AdminDashboard />} />
                         <Route path="events" element={<AdminEvents />} />
-                        <Route path="tickets" element={<AdminTickets />} />
-                        <Route path="checkins" element={<AdminCheckIns />} />
                         <Route path="attendees" element={<AdminAttendees />} />
                         <Route path="speakers" element={<AdminSpeakers />} />
                         <Route path="announcements" element={<AdminAnnouncements />} />
@@ -261,8 +249,6 @@ function App() {
                 }
               />
 
-              {/* Add this route in the Routes section: */}
-              <Route path="/discovery" element={<Discovery />} />
               {/* Catch all route */}
               <Route path="*" element={<NotFound />} />
             </Routes>

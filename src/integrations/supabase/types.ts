@@ -9,64 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      admin_wallets: {
-        Row: {
-          admin_id: string
-          available_balance: number
-          created_at: string
-          event_id: string
-          id: string
-          last_payout_at: string | null
-          total_earnings: number
-          updated_at: string
-          withdrawn_amount: number
-        }
-        Insert: {
-          admin_id: string
-          available_balance?: number
-          created_at?: string
-          event_id: string
-          id?: string
-          last_payout_at?: string | null
-          total_earnings?: number
-          updated_at?: string
-          withdrawn_amount?: number
-        }
-        Update: {
-          admin_id?: string
-          available_balance?: number
-          created_at?: string
-          event_id?: string
-          id?: string
-          last_payout_at?: string | null
-          total_earnings?: number
-          updated_at?: string
-          withdrawn_amount?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "admin_wallets_admin_id_fkey"
-            columns: ["admin_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "admin_wallets_admin_id_fkey"
-            columns: ["admin_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "admin_wallets_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       advertisements: {
         Row: {
           created_at: string
@@ -203,58 +145,6 @@ export type Database = {
             columns: ["quoted_message_id"]
             isOneToOne: false
             referencedRelation: "chat_messages"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      check_ins: {
-        Row: {
-          admin_id: string
-          check_in_method: string
-          checked_in_at: string
-          created_at: string
-          id: string
-          notes: string | null
-          ticket_id: string
-        }
-        Insert: {
-          admin_id: string
-          check_in_method?: string
-          checked_in_at?: string
-          created_at?: string
-          id?: string
-          notes?: string | null
-          ticket_id: string
-        }
-        Update: {
-          admin_id?: string
-          check_in_method?: string
-          checked_in_at?: string
-          created_at?: string
-          id?: string
-          notes?: string | null
-          ticket_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "check_ins_admin_id_fkey"
-            columns: ["admin_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "check_ins_admin_id_fkey"
-            columns: ["admin_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "check_ins_ticket_id_fkey"
-            columns: ["ticket_id"]
-            isOneToOne: false
-            referencedRelation: "event_tickets"
             referencedColumns: ["id"]
           },
         ]
@@ -488,103 +378,6 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      event_tickets: {
-        Row: {
-          check_in_status: boolean
-          checked_in_at: string | null
-          checked_in_by: string | null
-          created_at: string
-          event_id: string
-          guest_email: string | null
-          guest_name: string | null
-          id: string
-          price: number
-          purchase_date: string
-          qr_code_data: string
-          ticket_number: string
-          ticket_type_id: string
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          check_in_status?: boolean
-          checked_in_at?: string | null
-          checked_in_by?: string | null
-          created_at?: string
-          event_id: string
-          guest_email?: string | null
-          guest_name?: string | null
-          id?: string
-          price?: number
-          purchase_date?: string
-          qr_code_data: string
-          ticket_number: string
-          ticket_type_id: string
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          check_in_status?: boolean
-          checked_in_at?: string | null
-          checked_in_by?: string | null
-          created_at?: string
-          event_id?: string
-          guest_email?: string | null
-          guest_name?: string | null
-          id?: string
-          price?: number
-          purchase_date?: string
-          qr_code_data?: string
-          ticket_number?: string
-          ticket_type_id?: string
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "event_tickets_checked_in_by_fkey"
-            columns: ["checked_in_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "event_tickets_checked_in_by_fkey"
-            columns: ["checked_in_by"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "event_tickets_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "event_tickets_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "event_tickets_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_ticket_type"
-            columns: ["ticket_type_id"]
-            isOneToOne: false
-            referencedRelation: "ticket_types"
             referencedColumns: ["id"]
           },
         ]
@@ -1288,70 +1081,6 @@ export type Database = {
         }
         Relationships: []
       }
-      ticket_types: {
-        Row: {
-          available_quantity: number
-          created_at: string
-          created_by: string | null
-          description: string | null
-          event_id: string
-          id: string
-          is_active: boolean
-          max_quantity: number | null
-          name: string
-          price: number
-          updated_at: string
-        }
-        Insert: {
-          available_quantity?: number
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          event_id: string
-          id?: string
-          is_active?: boolean
-          max_quantity?: number | null
-          name: string
-          price?: number
-          updated_at?: string
-        }
-        Update: {
-          available_quantity?: number
-          created_at?: string
-          created_by?: string | null
-          description?: string | null
-          event_id?: string
-          id?: string
-          is_active?: boolean
-          max_quantity?: number | null
-          name?: string
-          price?: number
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ticket_types_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ticket_types_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "public_profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ticket_types_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
     }
     Views: {
       conversations: {
@@ -1424,10 +1153,6 @@ export type Database = {
       can_access_event_data: {
         Args: { event_uuid: string }
         Returns: boolean
-      }
-      generate_ticket_number: {
-        Args: Record<PropertyKey, never>
-        Returns: string
       }
       generate_unique_event_key: {
         Args: Record<PropertyKey, never>

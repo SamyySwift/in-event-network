@@ -10,7 +10,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Scan, Users, UserCheck, Loader } from 'lucide-react';
 import CheckInScanner from '@/components/admin/CheckInScanner';
 
-const QRCodeScanner: React.FC = () => {
+interface QRCodeScannerProps {
+  onScanSuccess?: (decodedText: string) => void;
+  onScanError?: (error: string) => void;
+}
+
+const QRCodeScanner: React.FC<QRCodeScannerProps> = ({ onScanSuccess, onScanError }) => {
   const [accessCode, setAccessCode] = useState('');
   const [activeTab, setActiveTab] = useState('join');
   const { currentUser } = useAuth();
@@ -35,6 +40,9 @@ const QRCodeScanner: React.FC = () => {
 
   const handleScanResult = (result: string) => {
     console.log('QR Scan result:', result);
+    if (onScanSuccess) {
+      onScanSuccess(result);
+    }
     // Handle different QR code types here
     if (result.startsWith('ticket:')) {
       // This is a ticket QR code - handled by CheckInScanner
@@ -43,6 +51,13 @@ const QRCodeScanner: React.FC = () => {
       // This looks like an access code
       setAccessCode(result);
       setActiveTab('join');
+    }
+  };
+
+  const handleScanErrorInternal = (error: string) => {
+    console.error('QR Scanner error:', error);
+    if (onScanError) {
+      onScanError(error);
     }
   };
 

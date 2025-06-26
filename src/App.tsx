@@ -55,6 +55,12 @@ import { AdminEventProvider } from '@/hooks/useAdminEventContext';
 import DataPrivacy from '@/pages/DataPrivacy';
 import TermsOfService from '@/pages/TermsOfService';
 
+// Add this import
+import TicketPurchase from '@/pages/TicketPurchase';
+
+// Add this route in your routing configuration
+<Route path="/tickets/:eventId" element={<TicketPurchase />} />
+
 const queryClient = new QueryClient();
 
 function App() {

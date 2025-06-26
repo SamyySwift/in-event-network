@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import QRCode from 'qrcode';
+import * as QRCode from 'qrcode';
 import { useEffect, useState } from 'react';
 
 type QRCodeModalProps = {

@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export type CheckIn = {
   id: string;
@@ -25,6 +26,7 @@ export type CheckIn = {
 export const useCheckIns = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { currentUser } = useAuth();
 
   // Get check-ins for an event
   const useEventCheckIns = (eventId: string) => {
@@ -189,9 +191,56 @@ export const useCheckIns = () => {
     },
   });
 
+  // Simple check-in mutation for ticket ID
+  const checkInTicketById = useMutation({
+    mutationFn: async (ticketId: string) => {
+      if (!currentUser?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      const { data, error } = await supabase
+        .from('check_ins')
+        .insert({
+          ticket_id: ticketId,
+          admin_id: currentUser.id,
+          checked_in_at: new Date().toISOString(),
+        })
+        .select('*')
+        .single();
+        
+      if (error) throw error;
+      
+      // Update the ticket status
+      const { error: updateError } = await supabase
+        .from('event_tickets')
+        .update({ check_in_status: true })
+        .eq('id', ticketId);
+        
+      if (updateError) throw updateError;
+      
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['eventCheckIns'] });
+      queryClient.invalidateQueries({ queryKey: ['eventTickets'] });
+      toast({
+        title: "Check-in Successful",
+        description: "Attendee has been checked in.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Check-in Failed",
+        description: error.message || "Could not check in attendee.",
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     useEventCheckIns,
     checkInTicket,
     manualCheckIn,
+    checkInTicketById,
   };
 };

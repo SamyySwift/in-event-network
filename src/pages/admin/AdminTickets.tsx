@@ -9,8 +9,12 @@ import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 import { Ticket, Plus, DollarSign, TrendingUp, Users } from 'lucide-react';
 import { format } from 'date-fns';
 import EventSelector from '@/components/admin/EventSelector';
+import CreateTicketTypeModal from '@/components/admin/CreateTicketTypeModal';
+// Add this import
+import ShareableTicketLink from '@/components/admin/ShareableTicketLink';
 
 const AdminTickets = () => {
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const { selectedEventId } = useAdminEventContext();
   const { useTicketTypes, useEventTickets } = useTickets();
   const ticketTypesQuery = useTicketTypes(selectedEventId || undefined);
@@ -73,7 +77,7 @@ const AdminTickets = () => {
             Manage ticket types and track sales for your events
           </p>
         </div>
-        <Button>
+        <Button onClick={() => setShowCreateModal(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Create Ticket Type
         </Button>
@@ -173,7 +177,7 @@ const AdminTickets = () => {
             <div className="text-center py-8">
               <Ticket className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">No ticket types created yet</p>
-              <Button className="mt-4">
+              <Button className="mt-4" onClick={() => setShowCreateModal(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Create First Ticket Type
               </Button>
@@ -218,6 +222,15 @@ const AdminTickets = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Create Ticket Type Modal */}
+      <CreateTicketTypeModal 
+        isOpen={showCreateModal} 
+        onClose={() => setShowCreateModal(false)} 
+      />
+      // Add this component after the stats cards and before ticket types
+      {/* Shareable Ticket Link */}
+      <ShareableTicketLink eventId={selectedEventId} />
     </div>
   );
 };

@@ -31,6 +31,8 @@ import AdminQuestions from '@/pages/admin/AdminQuestions';
 import AdminSuggestions from '@/pages/admin/AdminSuggestions';
 import AdminNotifications from '@/pages/admin/AdminNotifications';
 import AdminSettings from '@/pages/admin/AdminSettings';
+import AdminTickets from '@/pages/admin/AdminTickets';
+import AdminCheckIn from '@/pages/admin/AdminCheckIn';
 
 // Attendee pages
 import AttendeeDashboard from '@/pages/attendee/AttendeeDashboard';
@@ -91,6 +93,8 @@ function App() {
                         <Route path="suggestions" element={<AdminSuggestions />} />
                         <Route path="notifications" element={<AdminNotifications />} />
                         <Route path="settings" element={<AdminSettings />} />
+                        <Route path="tickets" element={<AdminTickets />} />
+                        <Route path="checkin" element={<AdminCheckIn />} />
                       </Routes>
                     </AdminEventProvider>
                   </ProtectedRoute>

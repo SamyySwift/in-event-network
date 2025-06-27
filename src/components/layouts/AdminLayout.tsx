@@ -24,7 +24,9 @@ import {
   BarChart,
   Moon,
   Sun,
-  BookOpen, // Add this import
+  BookOpen,
+  Ticket,
+  Scan,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -155,6 +157,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       icon: <BarChart size={20} />,
     },
     {
+      name: "Tickets",
+      href: "/admin/tickets",
+      icon: <Ticket size={20} />,
+    },
+    {
+      name: "Check-In",
+      href: "/admin/checkin",
+      icon: <Scan size={20} />,
+    },
+    {
       name: "Facilities",
       href: "/admin/facilities",
       icon: <MapPin size={20} />,
@@ -174,7 +186,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       href: "/admin/suggestions",
       icon: <MessageCircle size={20} />,
     },
-
     {
       name: "Notifications",
       href: "/admin/notifications",

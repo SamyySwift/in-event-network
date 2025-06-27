@@ -26,15 +26,20 @@ export default function AdminTickets() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        {/* Page Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Tickets</h1>
-            <p className="text-muted-foreground mt-2">
-              Manage ticket types and view ticket sales
-            </p>
+        {/* Modern Section Header */}
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-600 shadow-md">
+              <Ticket className="w-6 h-6 text-white" />
+            </span>
+            <div>
+              <div className="uppercase text-xs font-bold text-primary-600 tracking-wide">Tickets</div>
+              <div className="text-lg font-semibold text-primary-900 dark:text-primary-100">
+                Manage ticket types and view sales
+              </div>
+            </div>
           </div>
-          <Button onClick={() => setCreateDialogOpen(true)}>
+          <Button onClick={() => setCreateDialogOpen(true)} className="w-full md:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Create Ticket Type
           </Button>

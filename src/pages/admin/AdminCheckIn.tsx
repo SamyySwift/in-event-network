@@ -56,12 +56,19 @@ export default function AdminCheckIn() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        {/* Page Header */}
-        <div>
-          <h1 className="text-3xl font-bold">Check-In Management</h1>
-          <p className="text-muted-foreground mt-2">
-            Check in attendees using QR codes or manual ticket numbers
-          </p>
+        {/* Modern Section Header */}
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-600 shadow-md">
+              <QrCode className="w-6 h-6 text-white" />
+            </span>
+            <div>
+              <div className="uppercase text-xs font-bold text-primary-600 tracking-wide">Check-In</div>
+              <div className="text-lg font-semibold text-primary-900 dark:text-primary-100">
+                Scan QR codes or manual entry
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Stats Cards */}

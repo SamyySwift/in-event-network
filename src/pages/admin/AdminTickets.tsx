@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Plus, Ticket, DollarSign, Users, CheckCircle } from 'lucide-react';
 import AdminLayout from '@/components/layouts/AdminLayout';
@@ -8,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAdminTickets } from '@/hooks/useAdminTickets';
 import { CreateTicketTypeDialog } from '@/components/admin/CreateTicketTypeDialog';
 import { TicketsTable } from '@/components/admin/TicketsTable';
+import { ShareableTicketLink } from '@/components/admin/ShareableTicketLink';
 
 export default function AdminTickets() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -39,6 +39,9 @@ export default function AdminTickets() {
             Create Ticket Type
           </Button>
         </div>
+
+        {/* Shareable Link Card */}
+        <ShareableTicketLink />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

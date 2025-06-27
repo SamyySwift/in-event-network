@@ -13,6 +13,7 @@ import Register from '@/pages/Register';
 import Guide from '@/pages/Guide';
 import NotFound from '@/pages/NotFound';
 import ScanQR from '@/pages/ScanQR';
+import BuyTickets from '@/pages/BuyTickets';
 
 // Host pages
 import HostDashboard from '@/pages/host/HostDashboard';
@@ -70,6 +71,7 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/scan" element={<ScanQR />} />
               <Route path="/join/:eventKey" element={<Index />} />
+              <Route path="/buy-tickets/:eventKey" element={<BuyTickets />} />
               <Route path="/privacy" element={<DataPrivacy />} />
               <Route path="/terms" element={<TermsOfService />} />
 

@@ -1,14 +1,15 @@
 
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Ticket, Calendar, MapPin, Clock } from 'lucide-react';
+import { Ticket, Calendar, MapPin, Clock, LogIn } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface TicketType {
@@ -32,10 +33,10 @@ interface Event {
 
 export default function BuyTickets() {
   const { eventKey } = useParams<{ eventKey: string }>();
+  const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [selectedTickets, setSelectedTickets] = useState<Record<string, number>>({});
-  const [guestName, setGuestName] = useState('');
-  const [guestEmail, setGuestEmail] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Fetch event and ticket types
@@ -85,13 +86,20 @@ export default function BuyTickets() {
     return Object.values(selectedTickets).reduce((sum, qty) => sum + qty, 0);
   };
 
+  const handleLoginRedirect = () => {
+    // Store the current URL to redirect back after login
+    localStorage.setItem('redirectAfterLogin', window.location.pathname);
+    navigate('/login');
+  };
+
   const handlePurchase = async () => {
-    if (!guestName || !guestEmail) {
+    if (!currentUser) {
       toast({
-        title: "Missing Information",
-        description: "Please enter your name and email address",
+        title: "Login Required",
+        description: "Please log in to purchase tickets",
         variant: "destructive",
       });
+      handleLoginRedirect();
       return;
     }
 
@@ -119,8 +127,7 @@ export default function BuyTickets() {
             ticketPurchases.push({
               event_id: eventData.event.id,
               ticket_type_id: ticketTypeId,
-              guest_name: guestName,
-              guest_email: guestEmail,
+              user_id: currentUser.id,
               price: ticketType.price,
               qr_code_data: `${window.location.origin}/ticket-verify?ticket_number=`, // Will be completed after insert
             });
@@ -135,27 +142,35 @@ export default function BuyTickets() {
 
       if (error) throw error;
 
-      // Update available quantities
+      // Update available quantities using a direct update with subtraction
       for (const [ticketTypeId, quantity] of Object.entries(selectedTickets)) {
         if (quantity > 0) {
-          await supabase
+          // Get current quantity first
+          const { data: currentTicketType } = await supabase
             .from('ticket_types')
-            .update({
-              available_quantity: supabase.sql`available_quantity - ${quantity}`
-            })
-            .eq('id', ticketTypeId);
+            .select('available_quantity')
+            .eq('id', ticketTypeId)
+            .single();
+
+          if (currentTicketType) {
+            await supabase
+              .from('ticket_types')
+              .update({
+                available_quantity: currentTicketType.available_quantity - quantity
+              })
+              .eq('id', ticketTypeId);
+          }
         }
       }
 
       toast({
         title: "Tickets Purchased Successfully!",
-        description: `${getTotalTickets()} ticket(s) purchased. Check your email for details.`,
+        description: `${getTotalTickets()} ticket(s) purchased. View them in your dashboard.`,
       });
 
-      // Reset form
+      // Reset form and redirect to attendee dashboard
       setSelectedTickets({});
-      setGuestName('');
-      setGuestEmail('');
+      navigate('/attendee/my-tickets');
     } catch (error: any) {
       toast({
         title: "Purchase Failed",
@@ -304,26 +319,27 @@ export default function BuyTickets() {
                 <CardTitle>Purchase Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="guest-name">Your Name *</Label>
-                  <Input
-                    id="guest-name"
-                    placeholder="Enter your full name"
-                    value={guestName}
-                    onChange={(e) => setGuestName(e.target.value)}
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="guest-email">Email Address *</Label>
-                  <Input
-                    id="guest-email"
-                    type="email"
-                    placeholder="Enter your email"
-                    value={guestEmail}
-                    onChange={(e) => setGuestEmail(e.target.value)}
-                  />
-                </div>
+                {!currentUser && (
+                  <Card className="border-amber-200 bg-amber-50">
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-2 text-amber-700 mb-2">
+                        <LogIn className="h-4 w-4" />
+                        <span className="font-medium">Login Required</span>
+                      </div>
+                      <p className="text-sm text-amber-600 mb-3">
+                        You need to log in to purchase tickets
+                      </p>
+                      <Button 
+                        onClick={handleLoginRedirect}
+                        className="w-full" 
+                        variant="outline"
+                      >
+                        <LogIn className="h-4 w-4 mr-2" />
+                        Login to Continue
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
 
                 <div className="border-t pt-4">
                   <div className="space-y-2">
@@ -340,7 +356,7 @@ export default function BuyTickets() {
 
                 <Button
                   onClick={handlePurchase}
-                  disabled={isProcessing || getTotalTickets() === 0}
+                  disabled={isProcessing || getTotalTickets() === 0 || !currentUser}
                   className="w-full"
                   size="lg"
                 >

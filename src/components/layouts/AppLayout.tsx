@@ -21,6 +21,7 @@ import {
   BookOpen,
   BarChart,
   Lightbulb,
+  Ticket,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -55,6 +56,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       name: "Dashboard",
       href: "/attendee",
       icon: <Users size={20} />,
+    },
+    {
+      name: "My Tickets",
+      href: "/attendee/my-tickets",
+      icon: <Ticket size={20} />,
     },
     {
       name: "Profile",

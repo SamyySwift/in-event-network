@@ -54,6 +54,7 @@ import Index from '@/pages/Index';
 import { AdminEventProvider } from '@/hooks/useAdminEventContext';
 import DataPrivacy from '@/pages/DataPrivacy';
 import TermsOfService from '@/pages/TermsOfService';
+import AttendeeMyTickets from '@/pages/attendee/AttendeeMyTickets';
 
 const queryClient = new QueryClient();
 
@@ -134,6 +135,14 @@ function App() {
                   </AttendeeEventProvider>
                 }
               />
+              <Route
+                path="/attendee/my-tickets"
+                element={
+                <ProtectedRoute requiredRole="attendee">
+                  <AttendeeMyTickets />
+                </ProtectedRoute>
+              }
+            />
               <Route
                 path="/attendee/profile"
                 element={

@@ -37,7 +37,7 @@ interface EventTicket {
   profiles?: {
     name: string;
     email: string;
-  };
+  } | null;
 }
 
 export const useAdminTickets = () => {
@@ -73,14 +73,34 @@ export const useAdminTickets = () => {
         .from('event_tickets')
         .select(`
           *,
-          ticket_types (*),
-          profiles (name, email)
+          ticket_types (*)
         `)
         .eq('event_id', selectedEventId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      
+      // Fetch profile data separately to avoid join issues
+      const ticketsWithProfiles = await Promise.all((data || []).map(async (ticket) => {
+        if (ticket.user_id) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('name, email')
+            .eq('id', ticket.user_id)
+            .single();
+          
+          return {
+            ...ticket,
+            profiles: profile
+          };
+        }
+        return {
+          ...ticket,
+          profiles: null
+        };
+      }));
+
+      return ticketsWithProfiles;
     },
     enabled: !!selectedEventId,
   });

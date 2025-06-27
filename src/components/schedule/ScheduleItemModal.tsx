@@ -1,10 +1,14 @@
+
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Badge } from '@/components/ui/badge';
+import { Calendar, Clock, MapPin, User, X, ExternalLink, Linkedin, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Calendar, Clock, MapPin, User, Building, Globe, Linkedin, ExternalLink, X } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import XLogo from "@/components/icons/XLogo";
 
 interface ScheduleItemModalProps {
@@ -12,10 +16,10 @@ interface ScheduleItemModalProps {
     id: string;
     title: string;
     description?: string | null;
-    start_time: string;
-    end_time?: string;
+    start_time?: string | null;
+    end_time?: string | null;
     location?: string | null;
-    type: 'speaker' | 'schedule';
+    type: 'schedule' | 'speaker';
     speaker_name?: string;
     speaker_photo?: string;
     speaker_company?: string;
@@ -24,6 +28,7 @@ interface ScheduleItemModalProps {
     speaker_linkedin?: string;
     speaker_website?: string;
     priority?: string;
+    image_url?: string;
   } | null;
   isOpen: boolean;
   onClose: () => void;
@@ -32,46 +37,15 @@ interface ScheduleItemModalProps {
 const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onClose }) => {
   if (!item) return null;
 
-  const formatTime = (timeStr: string) => {
+  const formatTime = (timeStr?: string | null) => {
+    if (!timeStr) return '';
     try {
-      return format(parseISO(timeStr), 'h:mm a');
-    } catch (error) {
-      console.error('Error formatting time:', error);
+      return new Date(timeStr).toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+    } catch {
       return timeStr;
-    }
-  };
-
-  const formatDate = (timeStr: string) => {
-    try {
-      return format(parseISO(timeStr), 'EEEE, MMMM d, yyyy');
-    } catch (error) {
-      console.error('Error formatting date:', error);
-      return timeStr;
-    }
-  };
-
-  const getTypeBadge = (type: string) => {
-    switch (type) {
-      case 'speaker':
-        return <Badge variant="default">Speaker Session</Badge>;
-      case 'schedule':
-        return <Badge variant="secondary">Event Item</Badge>;
-      default:
-        return <Badge variant="outline">{type}</Badge>;
-    }
-  };
-
-  const getPriorityBadge = (priority?: string) => {
-    if (!priority) return null;
-    switch (priority) {
-      case 'high':
-        return <Badge className="bg-red-100 text-red-800">High Priority</Badge>;
-      case 'medium':
-        return <Badge className="bg-yellow-100 text-yellow-800">Medium Priority</Badge>;
-      case 'low':
-        return <Badge className="bg-green-100 text-green-800">Low Priority</Badge>;
-      default:
-        return <Badge variant="outline">{priority}</Badge>;
     }
   };
 
@@ -92,28 +66,26 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
     if (item.type !== 'speaker') return null;
 
     const socialLinks = [];
-    if (item.speaker_twitter) socialLinks.push({ platform: 'x', url: item.speaker_twitter, label: 'X' });
-    if (item.speaker_linkedin) socialLinks.push({ platform: 'linkedin', url: item.speaker_linkedin, label: 'LinkedIn' });
-    if (item.speaker_website) socialLinks.push({ platform: 'website', url: item.speaker_website, label: 'Website' });
+    if (item.speaker_twitter) socialLinks.push({ platform: 'x', url: item.speaker_twitter });
+    if (item.speaker_linkedin) socialLinks.push({ platform: 'linkedin', url: item.speaker_linkedin });
+    if (item.speaker_website) socialLinks.push({ platform: 'website', url: item.speaker_website });
 
     if (socialLinks.length === 0) return null;
 
     return (
-      <div className="space-y-2">
-        <h3 className="font-medium text-sm text-gray-600 dark:text-gray-400">Connect with Speaker</h3>
+      <div className="flex items-center gap-2 mt-4">
+        <span className="text-sm font-medium">Connect:</span>
         <div className="flex gap-2">
           {socialLinks.map((link, index) => (
             <Button
               key={index}
               variant="outline"
               size="sm"
-              className="flex items-center gap-2"
               onClick={() => window.open(link.url, '_blank')}
-              aria-label={link.label}
-              title={link.label}
+              className="flex items-center gap-2"
             >
               {getSocialIcon(link.platform)}
-              {link.label}
+              {link.platform === 'x' ? 'X' : link.platform.charAt(0).toUpperCase() + link.platform.slice(1)}
             </Button>
           ))}
         </div>
@@ -123,99 +95,111 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">{item.title}</DialogTitle>
+          <DialogTitle className="text-xl font-bold pr-8">{item.title}</DialogTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onClose}
+            className="absolute right-4 top-4 p-1"
+          >
+            <X className="w-4 h-4" />
+          </Button>
         </DialogHeader>
-        
-        <div className="space-y-6">
-          {/* Type and Priority Badges */}
-          <div className="flex gap-2">
-            {getTypeBadge(item.type)}
-            {getPriorityBadge(item.priority)}
-          </div>
 
-          {/* Speaker Information (if applicable) */}
-          {item.type === 'speaker' && (
-            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-              <div className="flex items-start gap-4">
-                <Avatar className="h-16 w-16">
-                  {item.speaker_photo ? (
-                    <AvatarImage src={item.speaker_photo} alt={item.speaker_name} />
-                  ) : (
-                    <AvatarFallback className="text-lg">
-                      {item.speaker_name?.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg">{item.speaker_name}</h3>
-                  {item.speaker_company && (
-                    <div className="flex items-center gap-1 text-gray-600 dark:text-gray-400 mb-2">
-                      <Building className="h-4 w-4" />
-                      <span>{item.speaker_company}</span>
-                    </div>
-                  )}
-                  {item.speaker_bio && (
-                    <p className="text-gray-700 dark:text-gray-300 text-sm">
-                      {item.speaker_bio}
-                    </p>
-                  )}
-                </div>
-              </div>
+        <div className="space-y-6">
+          {/* Event/Speaker Image */}
+          {(item.image_url || item.speaker_photo) && (
+            <div className="w-full h-48 rounded-lg overflow-hidden">
+              <img 
+                src={item.image_url || item.speaker_photo} 
+                alt={item.title}
+                className="w-full h-full object-cover"
+              />
             </div>
           )}
 
-          {/* Time and Date Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-3">
+          {/* Time and Location Info */}
+          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+            {item.start_time && (
               <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-gray-500" />
-                <div>
-                  <p className="font-medium">Date</p>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {formatDate(item.start_time)}
-                  </p>
-                </div>
+                <Clock className="w-4 h-4" />
+                <span>
+                  {formatTime(item.start_time)}
+                  {item.end_time && ` - ${formatTime(item.end_time)}`}
+                </span>
               </div>
-              
-              <div className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-gray-500" />
-                <div>
-                  <p className="font-medium">Time</p>
-                  <p className="text-gray-600 dark:text-gray-400">
-                    {formatTime(item.start_time)}
-                    {item.end_time && ` - ${formatTime(item.end_time)}`}
-                  </p>
-                </div>
-              </div>
-            </div>
-
+            )}
+            
             {item.location && (
               <div className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-gray-500" />
-                <div>
-                  <p className="font-medium">Location</p>
-                  <p className="text-gray-600 dark:text-gray-400">{item.location}</p>
-                </div>
+                <MapPin className="w-4 h-4" />
+                <span>{item.location}</span>
               </div>
             )}
           </div>
 
-          {/* Social Links */}
-          {renderSocialLinks()}
+          {/* Type and Priority Badges */}
+          <div className="flex gap-2">
+            <Badge variant={item.type === 'speaker' ? 'default' : 'secondary'}>
+              {item.type === 'speaker' ? (
+                <>
+                  <User className="w-3 h-3 mr-1" />
+                  Speaker Session
+                </>
+              ) : (
+                <>
+                  <Calendar className="w-3 h-3 mr-1" />
+                  Event Item
+                </>
+              )}
+            </Badge>
+            
+            {item.priority && (
+              <Badge variant="outline">{item.priority} Priority</Badge>
+            )}
+          </div>
 
-          {/* Session/Event Description - Only show if there's actual description content */}
-          {item.description && item.description.trim() && (
-            <div>
-              <h3 className="font-medium mb-2">
-                {item.type === 'speaker' ? 'Session Description' : 'Description'}
-              </h3>
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
-                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
-                  {item.description}
-                </p>
+          {/* Speaker Info */}
+          {item.type === 'speaker' && item.speaker_name && (
+            <div className="bg-gray-50 rounded-lg p-4">
+              <div className="flex items-start gap-4">
+                {item.speaker_photo && (
+                  <img 
+                    src={item.speaker_photo} 
+                    alt={item.speaker_name}
+                    className="w-16 h-16 rounded-full object-cover"
+                  />
+                )}
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg">{item.speaker_name}</h3>
+                  {item.speaker_company && (
+                    <p className="text-muted-foreground">{item.speaker_company}</p>
+                  )}
+                </div>
               </div>
+              
+              {item.speaker_bio && (
+                <div className="mt-4">
+                  <h4 className="font-medium mb-2">About the Speaker</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    {item.speaker_bio}
+                  </p>
+                </div>
+              )}
+
+              {renderSocialLinks()}
+            </div>
+          )}
+
+          {/* Description */}
+          {item.description && (
+            <div>
+              <h4 className="font-medium mb-2">Description</h4>
+              <p className="text-muted-foreground leading-relaxed">
+                {item.description}
+              </p>
             </div>
           )}
         </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Plus, Ticket, DollarSign, Users, CheckCircle } from 'lucide-react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { useAdminTickets } from '@/hooks/useAdminTickets';
 import { CreateTicketTypeDialog } from '@/components/admin/CreateTicketTypeDialog';
 import { TicketsTable } from '@/components/admin/TicketsTable';
 import { ShareableTicketLink } from '@/components/admin/ShareableTicketLink';
+import { AdminWallet } from '@/components/admin/AdminWallet';
 
 export default function AdminTickets() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -44,6 +45,9 @@ export default function AdminTickets() {
             Create Ticket Type
           </Button>
         </div>
+
+        {/* Admin Wallet Section */}
+        <AdminWallet />
 
         {/* Shareable Link Card */}
         <ShareableTicketLink />

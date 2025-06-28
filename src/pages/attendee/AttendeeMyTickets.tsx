@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/layouts/AppLayout';
@@ -58,22 +57,9 @@ export default function AttendeeMyTickets() {
   const { currentUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [searchParams, setSearchParams] = useSearchParams();
   const [ticketUrl, setTicketUrl] = useState('');
   const [selectedTickets, setSelectedTickets] = useState<Record<string, number>>({});
   const [showPurchaseForm, setShowPurchaseForm] = useState(false);
-
-  // Check for event key from URL params (when redirected from BuyTickets)
-  useEffect(() => {
-    const eventKeyFromUrl = searchParams.get('eventKey');
-    if (eventKeyFromUrl) {
-      const generatedUrl = `${window.location.origin}/buy-tickets/${eventKeyFromUrl}`;
-      setTicketUrl(generatedUrl);
-      setShowPurchaseForm(true);
-      // Clear the URL parameter
-      setSearchParams({});
-    }
-  }, [searchParams, setSearchParams]);
 
   // Extract event key from URL
   const extractEventKey = (url: string) => {

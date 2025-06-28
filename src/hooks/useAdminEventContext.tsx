@@ -11,7 +11,6 @@ interface Event {
   start_time: string;
   end_time: string;
   location?: string;
-  event_key?: string;
   created_at: string;
 }
 

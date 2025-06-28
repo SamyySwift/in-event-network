@@ -13,18 +13,7 @@ const Index = () => {
 
   useEffect(() => {
     if (eventKey) {
-      // Check if this is coming from a ticket purchase URL
-      const urlParams = new URLSearchParams(window.location.search);
-      const isFromTicketUrl = urlParams.get('from') === 'ticket';
-      
-      if (isFromTicketUrl) {
-        // This is from a ticket purchase URL, redirect to buy tickets page
-        console.log('Redirecting to ticket purchase for event key:', eventKey);
-        navigate(`/buy-tickets/${eventKey}`, { replace: true });
-        return;
-      }
-
-      // This is for event joining (QR code scan or direct event join)
+      // If we have an event key from the URL, try to join the event
       console.log('Attempting to join event with key:', eventKey);
       
       joinEvent(eventKey, {

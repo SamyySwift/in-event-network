@@ -10,14 +10,14 @@ import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 
 export const ShareableTicketLink = () => {
   const { toast } = useToast();
-  const { currentEvent } = useAdminEventContext();
+  const { selectedEvent } = useAdminEventContext();
 
-  if (!currentEvent) {
+  if (!selectedEvent) {
     return null;
   }
 
   // Generate the shareable ticket link with the from=ticket parameter
-  const shareableUrl = `${window.location.origin}/buy-tickets/${currentEvent.event_key}?from=ticket`;
+  const shareableUrl = `${window.location.origin}/buy-tickets/${selectedEvent.event_key}?from=ticket`;
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(shareableUrl);

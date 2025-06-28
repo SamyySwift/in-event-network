@@ -45,13 +45,20 @@ export default function BuyTickets() {
     queryFn: async () => {
       if (!eventKey) throw new Error('Event key is required');
 
+      console.log('Fetching event with key:', eventKey);
+
       const { data: event, error: eventError } = await supabase
         .from('events')
         .select('*')
         .eq('event_key', eventKey)
         .single();
 
-      if (eventError) throw eventError;
+      if (eventError) {
+        console.error('Event fetch error:', eventError);
+        throw eventError;
+      }
+
+      console.log('Event found:', event);
 
       const { data: ticketTypes, error: ticketError } = await supabase
         .from('ticket_types')
@@ -60,7 +67,12 @@ export default function BuyTickets() {
         .eq('is_active', true)
         .gt('available_quantity', 0);
 
-      if (ticketError) throw ticketError;
+      if (ticketError) {
+        console.error('Ticket types fetch error:', ticketError);
+        throw ticketError;
+      }
+
+      console.log('Ticket types found:', ticketTypes);
 
       return { event, ticketTypes };
     },
@@ -68,9 +80,12 @@ export default function BuyTickets() {
   });
 
   const handleQuantityChange = (ticketTypeId: string, quantity: number) => {
+    const maxQuantity = eventData?.ticketTypes.find(t => t.id === ticketTypeId)?.available_quantity || 0;
+    const newQuantity = Math.max(0, Math.min(quantity, maxQuantity));
+    
     setSelectedTickets(prev => ({
       ...prev,
-      [ticketTypeId]: Math.max(0, quantity)
+      [ticketTypeId]: newQuantity
     }));
   };
 
@@ -93,6 +108,11 @@ export default function BuyTickets() {
   };
 
   const handlePurchase = async () => {
+    console.log('Purchase button clicked');
+    console.log('Current user:', currentUser);
+    console.log('Selected tickets:', selectedTickets);
+    console.log('Total tickets:', getTotalTickets());
+
     if (!currentUser) {
       toast({
         title: "Login Required",
@@ -112,7 +132,17 @@ export default function BuyTickets() {
       return;
     }
 
+    if (!eventData) {
+      toast({
+        title: "Error",
+        description: "Event data not available",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsProcessing(true);
+    console.log('Starting ticket purchase process...');
 
     try {
       // Create ticket purchases for each selected ticket type
@@ -120,8 +150,13 @@ export default function BuyTickets() {
       
       for (const [ticketTypeId, quantity] of Object.entries(selectedTickets)) {
         if (quantity > 0) {
-          const ticketType = eventData?.ticketTypes.find(t => t.id === ticketTypeId);
-          if (!ticketType) continue;
+          const ticketType = eventData.ticketTypes.find(t => t.id === ticketTypeId);
+          if (!ticketType) {
+            console.error('Ticket type not found:', ticketTypeId);
+            continue;
+          }
+
+          console.log(`Creating ${quantity} tickets for type:`, ticketType.name);
 
           for (let i = 0; i < quantity; i++) {
             ticketPurchases.push({
@@ -135,30 +170,51 @@ export default function BuyTickets() {
         }
       }
 
+      console.log('Inserting ticket purchases:', ticketPurchases);
+
       const { data: tickets, error } = await supabase
         .from('event_tickets')
         .insert(ticketPurchases)
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Ticket insert error:', error);
+        throw error;
+      }
 
-      // Update available quantities using a direct update with subtraction
+      console.log('Tickets created successfully:', tickets);
+
+      // Update available quantities
       for (const [ticketTypeId, quantity] of Object.entries(selectedTickets)) {
         if (quantity > 0) {
+          console.log(`Updating quantity for ticket type ${ticketTypeId}, reducing by ${quantity}`);
+          
           // Get current quantity first
-          const { data: currentTicketType } = await supabase
+          const { data: currentTicketType, error: fetchError } = await supabase
             .from('ticket_types')
             .select('available_quantity')
             .eq('id', ticketTypeId)
             .single();
 
+          if (fetchError) {
+            console.error('Error fetching current ticket type:', fetchError);
+            continue;
+          }
+
           if (currentTicketType) {
-            await supabase
+            const newQuantity = currentTicketType.available_quantity - quantity;
+            console.log(`Updating available quantity from ${currentTicketType.available_quantity} to ${newQuantity}`);
+            
+            const { error: updateError } = await supabase
               .from('ticket_types')
               .update({
-                available_quantity: currentTicketType.available_quantity - quantity
+                available_quantity: Math.max(0, newQuantity)
               })
               .eq('id', ticketTypeId);
+
+            if (updateError) {
+              console.error('Error updating ticket quantity:', updateError);
+            }
           }
         }
       }
@@ -168,13 +224,16 @@ export default function BuyTickets() {
         description: `${getTotalTickets()} ticket(s) purchased. View them in your dashboard.`,
       });
 
+      console.log('Purchase completed successfully');
+
       // Reset form and redirect to attendee dashboard
       setSelectedTickets({});
       navigate('/attendee/my-tickets');
     } catch (error: any) {
+      console.error('Purchase failed:', error);
       toast({
         title: "Purchase Failed",
-        description: error.message || "Failed to purchase tickets",
+        description: error.message || "Failed to purchase tickets. Please try again.",
         variant: "destructive",
       });
     } finally {

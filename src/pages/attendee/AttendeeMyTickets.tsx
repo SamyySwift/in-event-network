@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import AppLayout from '@/components/layouts/AppLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,6 +60,27 @@ export default function AttendeeMyTickets() {
   const [ticketUrl, setTicketUrl] = useState('');
   const [selectedTickets, setSelectedTickets] = useState<Record<string, number>>({});
   const [showPurchaseForm, setShowPurchaseForm] = useState(false);
+  const [userInfo, setUserInfo] = useState({
+    fullName: '',
+    email: currentUser?.email || '',
+    phone: ''
+  });
+  const [showUserInfoForm, setShowUserInfoForm] = useState(false);
+
+  // Check for pending ticketing URL on component mount
+  useEffect(() => {
+    const pendingUrl = localStorage.getItem('pendingTicketingUrl');
+    if (pendingUrl) {
+      setTicketUrl(pendingUrl);
+      localStorage.removeItem('pendingTicketingUrl');
+      
+      // Automatically show the purchase form
+      const key = extractEventKey(pendingUrl);
+      if (key) {
+        setShowPurchaseForm(true);
+      }
+    }
+  }, []);
 
   // Extract event key from URL
   const extractEventKey = (url: string) => {
@@ -130,9 +151,16 @@ export default function AttendeeMyTickets() {
   });
 
   // Purchase tickets mutation
-  const purchaseTicketsMutation = useMutation({
+  const purchaseTickets = useMutation({
     mutationFn: async () => {
-      if (!currentUser || !eventData) throw new Error('Missing required data');
+      if (!currentUser?.id || !eventData) {
+        throw new Error('User or event data not available');
+      }
+
+      // Validate user information
+      if (!userInfo.fullName.trim() || !userInfo.email.trim() || !userInfo.phone.trim()) {
+        throw new Error('Please provide your full name, email, and phone number before purchasing.');
+      }
 
       const ticketPurchases = [];
       
@@ -142,12 +170,22 @@ export default function AttendeeMyTickets() {
           if (!ticketType) continue;
 
           for (let i = 0; i < quantity; i++) {
+            const ticketNumber = `TKT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             ticketPurchases.push({
-              event_id: eventData.event.id,
-              ticket_type_id: ticketTypeId,
+              ticket_number: ticketNumber,
               user_id: currentUser.id,
+              ticket_type_id: ticketTypeId,
+              event_id: eventData.event.id,
               price: ticketType.price,
-              qr_code_data: `${window.location.origin}/ticket-verify?ticket_number=`,
+              guest_name: userInfo.fullName,
+              guest_email: userInfo.email,
+              guest_phone: userInfo.phone,
+              qr_code_data: JSON.stringify({
+                ticketNumber,
+                eventId: eventData.event.id,
+                userId: currentUser.id,
+                ticketTypeId
+              })
             });
           }
         }
@@ -190,9 +228,13 @@ export default function AttendeeMyTickets() {
       setSelectedTickets({});
       setTicketUrl('');
       setShowPurchaseForm(false);
+      setShowUserInfoForm(false);
       queryClient.invalidateQueries({ queryKey: ['my-tickets'] });
     },
     onError: (error: any) => {
+      if (error.message.includes('full name, email, and phone')) {
+        setShowUserInfoForm(true);
+      }
       toast({
         title: "Purchase Failed",
         description: error.message || "Failed to purchase tickets",
@@ -243,6 +285,16 @@ export default function AttendeeMyTickets() {
     setShowPurchaseForm(true);
   };
 
+  const handlePurchase = () => {
+    // Check if user info is complete
+    if (!userInfo.fullName.trim() || !userInfo.email.trim() || !userInfo.phone.trim()) {
+      setShowUserInfoForm(true);
+      return;
+    }
+    
+    purchaseTickets.mutate();
+  };
+
   const showQRCode = (qrData: string) => {
     toast({
       title: "QR Code",
@@ -250,115 +302,172 @@ export default function AttendeeMyTickets() {
     });
   };
 
-  if (ticketsLoading) {
-    return (
-      <AppLayout>
-        <div className="flex items-center justify-center min-h-96">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      </AppLayout>
-    );
-  }
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        {/* Page Header */}
-        <div>
-          <h1 className="text-3xl font-bold">My Tickets</h1>
-          <p className="text-muted-foreground mt-2">
-            View and manage your purchased event tickets
-          </p>
-        </div>
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold mb-8">My Tickets</h1>
+          
+          {/* User Information Form Modal */}
+          {showUserInfoForm && (
+            <Card className="mb-6 border-orange-200 bg-orange-50">
+              <CardHeader>
+                <CardTitle className="text-orange-800">Complete Your Information</CardTitle>
+                <CardDescription className="text-orange-600">
+                  Please provide your information before purchasing tickets.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="fullName">Full Name *</Label>
+                  <Input
+                    id="fullName"
+                    value={userInfo.fullName}
+                    onChange={(e) => setUserInfo(prev => ({ ...prev, fullName: e.target.value }))}
+                    placeholder="Enter your full name"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="email">Email *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={userInfo.email}
+                    onChange={(e) => setUserInfo(prev => ({ ...prev, email: e.target.value }))}
+                    placeholder="Enter your email"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="phone">Phone Number *</Label>
+                  <Input
+                    id="phone"
+                    value={userInfo.phone}
+                    onChange={(e) => setUserInfo(prev => ({ ...prev, phone: e.target.value }))}
+                    placeholder="Enter your phone number"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => {
+                      if (userInfo.fullName.trim() && userInfo.email.trim() && userInfo.phone.trim()) {
+                        setShowUserInfoForm(false);
+                        purchaseTickets.mutate();
+                      } else {
+                        toast({
+                          title: "Information Required",
+                          description: "Please fill in all required fields.",
+                          variant: "destructive"
+                        });
+                      }
+                    }}
+                    disabled={purchaseTickets.isPending}
+                  >
+                    Continue with Purchase
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => setShowUserInfoForm(false)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
-        {/* Purchase New Tickets Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5" />
-              Purchase New Tickets
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="ticket-url">Enter Ticket Purchase URL</Label>
+          {/* Ticket URL Input Section */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ShoppingCart className="h-5 w-5" />
+                Purchase New Tickets
+              </CardTitle>
+              <CardDescription>
+                Enter a ticket purchase URL to buy tickets for an event
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="flex gap-2">
                 <Input
-                  id="ticket-url"
-                  placeholder="https://yourapp.com/buy-tickets/123456"
+                  placeholder="Paste ticket purchase URL here..."
                   value={ticketUrl}
                   onChange={(e) => setTicketUrl(e.target.value)}
                   className="flex-1"
                 />
                 <Button onClick={handleUrlSubmit} disabled={!ticketUrl.trim()}>
-                  <ShoppingCart className="h-4 w-4 mr-2" />
-                  Buy Tickets
+                  Load Tickets
                 </Button>
               </div>
-            </div>
+            </CardContent>
+          </Card>
 
-            {/* Event Details and Ticket Selection */}
-            {showPurchaseForm && eventData && (
-              <div className="space-y-4 pt-4 border-t">
-                <div className="space-y-2">
-                  <h3 className="text-lg font-semibold">{eventData.event.name}</h3>
-                  {eventData.event.description && (
-                    <p className="text-muted-foreground">{eventData.event.description}</p>
-                  )}
-                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      <span>{new Date(eventData.event.start_time).toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-4 w-4" />
-                      <span>
-                        {new Date(eventData.event.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - 
-                        {new Date(eventData.event.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    </div>
-                    {eventData.event.location && (
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        <span>{eventData.event.location}</span>
-                      </div>
-                    )}
+          {/* Purchase Form */}
+          {showPurchaseForm && eventData && (
+            <Card className="mb-8">
+              <CardHeader>
+                <CardTitle>{eventData.event.name}</CardTitle>
+                <CardDescription>
+                  {eventData.event.description}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Event Details */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm">
+                      {formatDate(eventData.event.start_time)}
+                    </span>
                   </div>
+                  {eventData.event.location && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm">{eventData.event.location}</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Ticket Types */}
-                <div className="space-y-3">
-                  <h4 className="font-medium">Available Tickets</h4>
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold">Available Tickets</h3>
                   {eventData.ticketTypes.map((ticket) => (
-                    <div key={ticket.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <h5 className="font-medium">{ticket.name}</h5>
-                        {ticket.description && (
-                          <p className="text-sm text-muted-foreground">{ticket.description}</p>
-                        )}
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="font-semibold">₦{ticket.price.toLocaleString()}</span>
-                          <Badge variant="outline">{ticket.available_quantity} available</Badge>
+                    <div key={ticket.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-medium">{ticket.name}</h4>
+                          {ticket.description && (
+                            <p className="text-sm text-gray-600">{ticket.description}</p>
+                          )}
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold">₦{ticket.price.toLocaleString()}</div>
+                          <div className="text-sm text-gray-500">
+                            {ticket.available_quantity} available
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleQuantityChange(ticket.id, (selectedTickets[ticket.id] || 0) - 1)}
-                          disabled={!selectedTickets[ticket.id]}
-                        >
-                          -
-                        </Button>
-                        <span className="w-8 text-center">{selectedTickets[ticket.id] || 0}</span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleQuantityChange(ticket.id, (selectedTickets[ticket.id] || 0) + 1)}
-                          disabled={(selectedTickets[ticket.id] || 0) >= ticket.available_quantity}
-                        >
-                          +
-                        </Button>
+                        <Label htmlFor={`quantity-${ticket.id}`}>Quantity:</Label>
+                        <Input
+                          id={`quantity-${ticket.id}`}
+                          type="number"
+                          min="0"
+                          max={ticket.available_quantity}
+                          value={selectedTickets[ticket.id] || 0}
+                          onChange={(e) => handleQuantityChange(ticket.id, parseInt(e.target.value) || 0)}
+                          className="w-20"
+                        />
                       </div>
                     </div>
                   ))}
@@ -366,139 +475,101 @@ export default function AttendeeMyTickets() {
 
                 {/* Purchase Summary */}
                 {getTotalTickets() > 0 && (
-                  <div className="space-y-3 p-4 bg-muted rounded-lg">
-                    <div className="flex justify-between items-center">
-                      <span>Total Tickets: {getTotalTickets()}</span>
-                      <span className="font-semibold">₦{getTotalPrice().toLocaleString()}</span>
+                  <div className="border-t pt-4">
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="font-semibold">Total: {getTotalTickets()} ticket(s)</span>
+                      <span className="font-bold text-lg">₦{getTotalPrice().toLocaleString()}</span>
                     </div>
-                    <Button
-                      onClick={() => purchaseTicketsMutation.mutate()}
-                      disabled={purchaseTicketsMutation.isPending}
+                    <Button 
+                      onClick={handlePurchase}
+                      disabled={purchaseTickets.isPending}
                       className="w-full"
                     >
-                      {purchaseTicketsMutation.isPending ? 'Processing...' : `Purchase ${getTotalTickets()} Ticket${getTotalTickets() !== 1 ? 's' : ''}`}
+                      {purchaseTickets.isPending ? 'Processing...' : 'Purchase Tickets'}
                     </Button>
                   </div>
                 )}
-              </div>
-            )}
-
-            {eventLoading && (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Separator />
-
-        {/* Existing Tickets */}
-        <div>
-          <h2 className="text-2xl font-semibold mb-4">Your Tickets</h2>
-          
-          {tickets.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Ticket className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Tickets Yet</h3>
-                <p className="text-muted-foreground mb-6">
-                  You haven't purchased any tickets yet. Use the form above to buy tickets!
-                </p>
               </CardContent>
             </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {tickets.map((ticket) => (
-                <Card key={ticket.id} className="overflow-hidden">
-                  {ticket.events.banner_url && (
-                    <div className="h-32 overflow-hidden">
-                      <img 
-                        src={ticket.events.banner_url} 
-                        alt={ticket.events.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <CardTitle className="text-lg">{ticket.events.name}</CardTitle>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {ticket.ticket_types.name}
-                        </p>
-                      </div>
-                      <Badge variant={ticket.check_in_status ? "default" : "secondary"}>
-                        {ticket.check_in_status ? "Checked In" : "Not Checked In"}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="space-y-4">
-                    {/* Event Details */}
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
-                        <span>{new Date(ticket.events.start_time).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        <span>
-                          {new Date(ticket.events.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - 
-                          {new Date(ticket.events.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                      {ticket.events.location && (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <MapPin className="h-4 w-4" />
-                          <span>{ticket.events.location}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Ticket Info */}
-                    <div className="border-t pt-3 space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Ticket #:</span>
-                        <span className="font-mono">{ticket.ticket_number}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Price:</span>
-                        <span className="font-semibold">₦{ticket.price.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Purchased:</span>
-                        <span>{new Date(ticket.purchase_date).toLocaleDateString()}</span>
-                      </div>
-                      {ticket.check_in_status && ticket.checked_in_at && (
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Checked in:</span>
-                          <span className="text-green-600 flex items-center gap-1">
-                            <CheckCircle className="h-3 w-3" />
-                            {new Date(ticket.checked_in_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Actions */}
-                    <div className="border-t pt-3">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => showQRCode(ticket.qr_code_data)}
-                        className="w-full"
-                      >
-                        <QrCode className="h-4 w-4 mr-2" />
-                        Show QR Code
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
           )}
+
+          {/* My Existing Tickets */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Ticket className="h-5 w-5" />
+                My Tickets ({tickets.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {ticketsLoading ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                  <p className="mt-2 text-gray-600">Loading tickets...</p>
+                </div>
+              ) : tickets.length === 0 ? (
+                <div className="text-center py-8">
+                  <Ticket className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">No tickets found</p>
+                  <p className="text-sm text-gray-500">Purchase tickets using the form above</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {tickets.map((ticket) => (
+                    <div key={ticket.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-3">
+                        <div>
+                          <h3 className="font-semibold">{ticket.events.name}</h3>
+                          <p className="text-sm text-gray-600">{ticket.ticket_types.name}</p>
+                          <p className="text-xs text-gray-500">#{ticket.ticket_number}</p>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-semibold">₦{ticket.price.toLocaleString()}</div>
+                          <Badge variant={ticket.check_in_status ? "default" : "secondary"}>
+                            {ticket.check_in_status ? "Checked In" : "Not Checked In"}
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-600 mb-3">
+                        <div className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {formatDate(ticket.events.start_time)}
+                        </div>
+                        {ticket.events.location && (
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {ticket.events.location}
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          Purchased: {formatDate(ticket.purchase_date)}
+                        </div>
+                        {ticket.checked_in_at && (
+                          <div className="flex items-center gap-1">
+                            <CheckCircle className="h-3 w-3" />
+                            Checked in: {formatDate(ticket.checked_in_at)}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => showQRCode(ticket.qr_code_data)}
+                        >
+                          <QrCode className="h-4 w-4 mr-1" />
+                          Show QR Code
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </AppLayout>

@@ -219,11 +219,18 @@ export default function BuyTickets() {
         }
       }
 
-      toast({
-        title: "Tickets Purchased Successfully!",
-        description: `${getTotalTickets()} ticket(s) purchased. View them in your dashboard.`,
-      });
-
+      // Update the success handling in the purchase mutation
+      onSuccess: () => {
+        toast({
+          title: "Tickets Purchased Successfully!",
+          description: `${getTotalTickets()} ticket(s) purchased successfully.`,
+        });
+        setSelectedTickets({});
+        setIsProcessing(false);
+        
+        // Redirect to attendee my-tickets page instead of staying here
+        navigate('/attendee/my-tickets');
+      }
       console.log('Purchase completed successfully');
 
       // Reset form and redirect to attendee dashboard

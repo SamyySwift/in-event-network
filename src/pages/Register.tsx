@@ -51,6 +51,23 @@ const Register = () => {
         currentUser
       );
 
+      // Check for ticketing redirect first
+      const redirectAfterLogin = localStorage.getItem('redirectAfterLogin');
+      if (redirectAfterLogin && redirectAfterLogin.includes('/buy-tickets/')) {
+        // Extract event key from the buy-tickets URL
+        const eventKeyMatch = redirectAfterLogin.match(/\/buy-tickets\/([^\/\?]+)/);
+        if (eventKeyMatch) {
+          const eventKey = eventKeyMatch[1];
+          // Store the ticketing URL for the attendee dashboard
+          localStorage.setItem('pendingTicketingUrl', redirectAfterLogin);
+          localStorage.removeItem('redirectAfterLogin');
+          
+          // Redirect to attendee my-tickets page
+          navigate('/attendee/my-tickets', { replace: true });
+          return;
+        }
+      }
+
       // Check if there's a pending event to join
       const pendingEventCode =
         eventCode || sessionStorage.getItem("pendingEventCode");

@@ -145,6 +145,14 @@ export default function BuyTickets() {
     console.log('Starting ticket purchase process...');
 
     try {
+      // Calculate total price
+      const totalPrice = Object.entries(selectedTickets).reduce((total, [ticketTypeId, quantity]) => {
+        const ticketType = eventData.ticketTypes.find(t => t.id === ticketTypeId);
+        return total + (ticketType ? ticketType.price * quantity : 0);
+      }, 0);
+      
+      const isFreeTicket = totalPrice === 0;
+      
       // Create ticket purchases for each selected ticket type
       const ticketPurchases = [];
       
@@ -164,14 +172,80 @@ export default function BuyTickets() {
               ticket_type_id: ticketTypeId,
               user_id: currentUser.id,
               price: ticketType.price,
-              qr_code_data: `${window.location.origin}/ticket-verify?ticket_number=`, // Will be completed after insert
+              payment_status: isFreeTicket ? 'completed' : 'pending',
+              qr_code_data: `${window.location.origin}/ticket-verify?ticket_number=`,
             });
           }
         }
       }
 
-      console.log('Inserting ticket purchases:', ticketPurchases);
+      // For free tickets, skip payment gateway logic
+      if (isFreeTicket) {
+        const { data: tickets, error } = await supabase
+          .from('event_tickets')
+          .insert(ticketPurchases)
+          .select();
+      
+        if (error) {
+          console.error('Free ticket insert error:', error);
+          throw error;
+        }
 
+        // Update available quantities
+        for (const [ticketTypeId, quantity] of Object.entries(selectedTickets)) {
+          if (quantity > 0) {
+            console.log(`Updating quantity for ticket type ${ticketTypeId}, reducing by ${quantity}`);
+            
+            // Get current quantity first
+            const { data: currentTicketType, error: fetchError } = await supabase
+              .from('ticket_types')
+              .select('available_quantity')
+              .eq('id', ticketTypeId)
+              .single();
+      
+            if (fetchError) {
+              console.error('Error fetching current ticket type:', fetchError);
+              continue;
+            }
+      
+            if (currentTicketType) {
+              const newQuantity = currentTicketType.available_quantity - quantity;
+              console.log(`Updating available quantity from ${currentTicketType.available_quantity} to ${newQuantity}`);
+              
+              const { error: updateError } = await supabase
+                .from('ticket_types')
+                .update({
+                  available_quantity: Math.max(0, newQuantity)
+                })
+                .eq('id', ticketTypeId);
+      
+              if (updateError) {
+                console.error('Error updating ticket quantity:', updateError);
+              }
+            }
+          }
+        }
+
+        // Update the success handling in the purchase mutation
+        onSuccess: () => {
+          toast({
+            title: "Tickets Purchased Successfully!",
+            description: `${getTotalTickets()} ticket(s) purchased successfully.`,
+          });
+          setSelectedTickets({});
+          setIsProcessing(false);
+          
+          // Redirect to attendee my-tickets page instead of staying here
+          navigate('/attendee/my-tickets');
+        }
+        console.log('Purchase completed successfully');
+
+        // Reset form and redirect to attendee dashboard
+        setSelectedTickets({});
+        navigate('/attendee/my-tickets');
+      }
+      
+      // For paid tickets, proceed with existing payment logic
       const { data: tickets, error } = await supabase
         .from('event_tickets')
         .insert(ticketPurchases)

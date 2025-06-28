@@ -156,19 +156,23 @@ export default function AttendeeMyTickets() {
       if (!currentUser?.id || !eventData) {
         throw new Error('User or event data not available');
       }
-
+  
       // Validate user information
       if (!userInfo.fullName.trim() || !userInfo.email.trim() || !userInfo.phone.trim()) {
         throw new Error('Please provide your full name, email, and phone number before purchasing.');
       }
-
+  
+      // Calculate total price to determine if this is a free ticket
+      const totalPrice = getTotalPrice();
+      const isFreeTicket = totalPrice === 0;
+  
       const ticketPurchases = [];
       
       for (const [ticketTypeId, quantity] of Object.entries(selectedTickets)) {
         if (quantity > 0) {
           const ticketType = eventData.ticketTypes.find(t => t.id === ticketTypeId);
           if (!ticketType) continue;
-
+  
           for (let i = 0; i < quantity; i++) {
             const ticketNumber = `TKT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
             ticketPurchases.push({
@@ -177,27 +181,62 @@ export default function AttendeeMyTickets() {
               ticket_type_id: ticketTypeId,
               event_id: eventData.event.id,
               price: ticketType.price,
-              guest_name: userInfo.fullName,
-              guest_email: userInfo.email,
-              guest_phone: userInfo.phone,
+              guest_name: userInfo.fullName.substring(0, 100), // Trim to prevent length issues
+              guest_email: userInfo.email.substring(0, 100),
+              guest_phone: userInfo.phone.substring(0, 20), // Trim phone to 20 chars
               qr_code_data: JSON.stringify({
                 ticketNumber,
                 eventId: eventData.event.id,
                 userId: currentUser.id,
                 ticketTypeId
-              })
+              }),
+              // Add payment status for free tickets
+              payment_status: isFreeTicket ? 'completed' : 'pending'
             });
           }
         }
       }
-
+  
+      // For free tickets, insert directly without wallet operations
+      if (isFreeTicket) {
+        const { data: tickets, error } = await supabase
+          .from('event_tickets')
+          .insert(ticketPurchases)
+          .select();
+  
+        if (error) throw error;
+  
+        // Update available quantities
+        for (const [ticketTypeId, quantity] of Object.entries(selectedTickets)) {
+          if (quantity > 0) {
+            const { data: currentTicketType } = await supabase
+              .from('ticket_types')
+              .select('available_quantity')
+              .eq('id', ticketTypeId)
+              .single();
+  
+            if (currentTicketType) {
+              await supabase
+                .from('ticket_types')
+                .update({
+                  available_quantity: currentTicketType.available_quantity - quantity
+                })
+                .eq('id', ticketTypeId);
+            }
+          }
+        }
+  
+        return tickets;
+      }
+  
+      // For paid tickets, proceed with existing payment logic
       const { data: tickets, error } = await supabase
         .from('event_tickets')
         .insert(ticketPurchases)
         .select();
-
+  
       if (error) throw error;
-
+  
       // Update available quantities
       for (const [ticketTypeId, quantity] of Object.entries(selectedTickets)) {
         if (quantity > 0) {
@@ -206,7 +245,7 @@ export default function AttendeeMyTickets() {
             .select('available_quantity')
             .eq('id', ticketTypeId)
             .single();
-
+  
           if (currentTicketType) {
             await supabase
               .from('ticket_types')
@@ -217,7 +256,7 @@ export default function AttendeeMyTickets() {
           }
         }
       }
-
+  
       return tickets;
     },
     onSuccess: () => {

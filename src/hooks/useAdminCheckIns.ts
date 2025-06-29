@@ -25,7 +25,7 @@ export const useAdminCheckIns = () => {
         // This ensures consistent behavior between both access methods
         const { data: eventData, error: eventError } = await supabase
           .from('events')
-          .select('access_key')
+          .select('event_key')
           .eq('id', selectedEventId)
           .single();
 
@@ -34,10 +34,10 @@ export const useAdminCheckIns = () => {
           return;
         }
 
-        if (eventData?.access_key) {
+        if (eventData?.event_key) {
           // Use the join_event_by_access_key RPC to register the attendee
           const { data, error } = await supabase.rpc('join_event_by_access_key', {
-            access_code: eventData.access_key
+            access_code: eventData.event_key
           });
 
           if (error) {
@@ -60,7 +60,7 @@ export const useAdminCheckIns = () => {
         .from('event_tickets')
         .select(`
           *,
-          profiles:user_id(id, name, email)
+          profiles!event_tickets_user_id_fkey(id, name, email)
         `)
         .eq('ticket_number', ticketNumber)
         .eq('event_id', selectedEventId)
@@ -117,6 +117,8 @@ export const useAdminCheckIns = () => {
   // Check in ticket by QR code scan
   const checkInByQR = useMutation({
     mutationFn: async (qrData: string) => {
+      console.log('QR Data received:', qrData); // Add debugging
+      
       // Parse QR data to get ticket number
       let ticketNumber = '';
       
@@ -130,15 +132,27 @@ export const useAdminCheckIns = () => {
         } else {
           // Try to parse as JSON
           const parsed = JSON.parse(qrData);
-          ticketNumber = parsed.ticket_number || '';
+          // Fix: Check for both ticketNumber and ticket_number
+          ticketNumber = parsed.ticketNumber || parsed.ticket_number || '';
         }
-      } catch {
+      } catch (error) {
+        console.error('QR parsing error:', error);
         ticketNumber = qrData; // Use as-is if parsing fails
       }
-
-      if (!ticketNumber) throw new Error('Invalid QR code format');
+  
+      console.log('Extracted ticket number:', ticketNumber); // Add debugging
+      
+      if (!ticketNumber) {
+        throw new Error('Invalid QR code format. Could not extract ticket number.');
+      }
 
       return checkInTicket.mutateAsync({ ticketNumber });
+    },
+    onSuccess: (ticket) => {
+      console.log('QR check-in successful:', ticket);
+    },
+    onError: (error) => {
+      console.error('QR check-in failed:', error);
     },
   });
 

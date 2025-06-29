@@ -501,7 +501,9 @@ export type Database = {
           event_id: string
           guest_email: string | null
           guest_name: string | null
+          guest_phone: string | null
           id: string
+          payment_status: string | null
           price: number
           purchase_date: string
           qr_code_data: string
@@ -518,7 +520,9 @@ export type Database = {
           event_id: string
           guest_email?: string | null
           guest_name?: string | null
+          guest_phone?: string | null
           id?: string
+          payment_status?: string | null
           price?: number
           purchase_date?: string
           qr_code_data: string
@@ -535,7 +539,9 @@ export type Database = {
           event_id?: string
           guest_email?: string | null
           guest_name?: string | null
+          guest_phone?: string | null
           id?: string
+          payment_status?: string | null
           price?: number
           purchase_date?: string
           qr_code_data?: string

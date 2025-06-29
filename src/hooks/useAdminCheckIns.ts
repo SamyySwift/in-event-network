@@ -14,13 +14,54 @@ export const useAdminCheckIns = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  // Helper function to grant attendee dashboard access
+  const grantAttendeeAccess = async (ticketData: any) => {
+    try {
+      // Get the attendee's user ID from the ticket
+      const attendeeUserId = ticketData.user_id;
+      
+      if (attendeeUserId && selectedEventId) {
+        // Call the same RPC function that's used for QR code event joining
+        // This ensures consistent behavior between both access methods
+        const { data: eventData, error: eventError } = await supabase
+          .from('events')
+          .select('access_key')
+          .eq('id', selectedEventId)
+          .single();
+
+        if (eventError) {
+          console.error('Error fetching event access key:', eventError);
+          return;
+        }
+
+        if (eventData?.access_key) {
+          // Use the join_event_by_access_key RPC to register the attendee
+          const { data, error } = await supabase.rpc('join_event_by_access_key', {
+            access_code: eventData.access_key
+          });
+
+          if (error) {
+            console.error('Error granting attendee access:', error);
+          } else {
+            console.log('Successfully granted attendee dashboard access:', data);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error in grantAttendeeAccess:', error);
+    }
+  };
+
   // Check in a ticket by ticket number
   const checkInTicket = useMutation({
     mutationFn: async ({ ticketNumber, notes }: CheckInData) => {
-      // First, find the ticket
+      // First, find the ticket with user information
       const { data: ticket, error: ticketError } = await supabase
         .from('event_tickets')
-        .select('*')
+        .select(`
+          *,
+          profiles:user_id(id, name, email)
+        `)
         .eq('ticket_number', ticketNumber)
         .eq('event_id', selectedEventId)
         .single();
@@ -52,13 +93,16 @@ export const useAdminCheckIns = () => {
 
       if (checkInError) throw checkInError;
 
+      // Grant attendee dashboard access
+      await grantAttendeeAccess(ticket);
+
       return ticket;
     },
-    onSuccess: () => {
+    onSuccess: (ticket) => {
       queryClient.invalidateQueries({ queryKey: ['admin-event-tickets'] });
       toast({
         title: "Success",
-        description: "Ticket checked in successfully",
+        description: `Ticket checked in successfully. ${ticket.profiles?.name || 'Attendee'} now has dashboard access.`,
       });
     },
     onError: (error: any) => {

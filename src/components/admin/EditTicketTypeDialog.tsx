@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -24,9 +23,21 @@ import { useAdminTickets } from '@/hooks/useAdminTickets';
 import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 import { Ticket, DollarSign, Hash, ToggleLeft, ToggleRight } from 'lucide-react';
 
-interface CreateTicketTypeDialogProps {
+interface TicketType {
+  id: string;
+  name: string;
+  description?: string;
+  price: number;
+  max_quantity?: number;
+  available_quantity: number;
+  is_active: boolean;
+  event_id: string;
+}
+
+interface EditTicketTypeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  ticketType: TicketType | null;
 }
 
 const ticketNameOptions = [
@@ -37,25 +48,40 @@ const ticketNameOptions = [
   'Custom'
 ];
 
-export function CreateTicketTypeDialog({ open, onOpenChange }: CreateTicketTypeDialogProps) {
+export function EditTicketTypeDialog({ open, onOpenChange, ticketType }: EditTicketTypeDialogProps) {
   const [selectedTicketName, setSelectedTicketName] = useState('');
   const [customName, setCustomName] = useState('');
   const [description, setDescription] = useState('');
-  const [ticketType, setTicketType] = useState<'free' | 'paid'>('free');
+  const [ticketTypeState, setTicketTypeState] = useState<'free' | 'paid'>('free');
   const [price, setPrice] = useState('');
   const [availableQuantity, setAvailableQuantity] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [selectedEventId, setSelectedEventId] = useState('');
 
-  const { createTicketType } = useAdminTickets();
-  const { adminEvents, selectedEventId: contextEventId } = useAdminEventContext();
+  const { updateTicketType } = useAdminTickets();
+  const { adminEvents } = useAdminEventContext();
 
-  // Auto-select the current event if available
-  React.useEffect(() => {
-    if (contextEventId && !selectedEventId) {
-      setSelectedEventId(contextEventId);
+  // Populate form when ticketType changes
+  useEffect(() => {
+    if (ticketType) {
+      // Determine if it's a preset name or custom
+      const isPresetName = ticketNameOptions.includes(ticketType.name);
+      if (isPresetName) {
+        setSelectedTicketName(ticketType.name);
+        setCustomName('');
+      } else {
+        setSelectedTicketName('Custom');
+        setCustomName(ticketType.name);
+      }
+      
+      setDescription(ticketType.description || '');
+      setTicketTypeState(ticketType.price > 0 ? 'paid' : 'free');
+      setPrice(ticketType.price.toString());
+      setAvailableQuantity(ticketType.available_quantity.toString());
+      setIsActive(ticketType.is_active);
+      setSelectedEventId(ticketType.event_id);
     }
-  }, [contextEventId, selectedEventId]);
+  }, [ticketType]);
 
   const getTicketName = () => {
     return selectedTicketName === 'Custom' ? customName : selectedTicketName;
@@ -65,18 +91,17 @@ export function CreateTicketTypeDialog({ open, onOpenChange }: CreateTicketTypeD
     setSelectedTicketName('');
     setCustomName('');
     setDescription('');
-    setTicketType('free');
+    setTicketTypeState('free');
     setPrice('');
     setAvailableQuantity('');
     setIsActive(true);
-    // Keep the selected event if it's from context
-    if (!contextEventId) {
-      setSelectedEventId('');
-    }
+    setSelectedEventId('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!ticketType) return;
     
     const ticketName = getTicketName();
     if (!ticketName.trim()) {
@@ -87,11 +112,12 @@ export function CreateTicketTypeDialog({ open, onOpenChange }: CreateTicketTypeD
       return;
     }
 
-    const ticketPrice = ticketType === 'free' ? 0 : parseFloat(price) || 0;
+    const ticketPrice = ticketTypeState === 'free' ? 0 : parseFloat(price) || 0;
     const quantity = parseInt(availableQuantity) || 0;
 
     try {
-      await createTicketType.mutateAsync({
+      await updateTicketType.mutateAsync({
+        id: ticketType.id,
         name: ticketName,
         description: description.trim() || undefined,
         price: ticketPrice,
@@ -104,7 +130,7 @@ export function CreateTicketTypeDialog({ open, onOpenChange }: CreateTicketTypeD
       onOpenChange(false);
       resetForm();
     } catch (error) {
-      console.error('Error creating ticket type:', error);
+      console.error('Error updating ticket type:', error);
     }
   };
 
@@ -121,10 +147,10 @@ export function CreateTicketTypeDialog({ open, onOpenChange }: CreateTicketTypeD
         <DialogHeader className="space-y-3">
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Ticket className="w-5 h-5 text-primary" />
-            Create New Ticket Type
+            Edit Ticket Type
           </DialogTitle>
           <DialogDescription>
-            Set up a new ticket type for your event with pricing and availability options.
+            Update the ticket type details for your event.
           </DialogDescription>
         </DialogHeader>
         
@@ -203,9 +229,9 @@ export function CreateTicketTypeDialog({ open, onOpenChange }: CreateTicketTypeD
             <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => setTicketType('free')}
+                onClick={() => setTicketTypeState('free')}
                 className={`flex-1 p-3 rounded-xl border-2 transition-all duration-200 flex items-center justify-center gap-2 ${
-                  ticketType === 'free'
+                  ticketTypeState === 'free'
                     ? 'border-green-500 bg-green-50 text-green-700'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
@@ -215,9 +241,9 @@ export function CreateTicketTypeDialog({ open, onOpenChange }: CreateTicketTypeD
               </button>
               <button
                 type="button"
-                onClick={() => setTicketType('paid')}
+                onClick={() => setTicketTypeState('paid')}
                 className={`flex-1 p-3 rounded-xl border-2 transition-all duration-200 flex items-center justify-center gap-2 ${
-                  ticketType === 'paid'
+                  ticketTypeState === 'paid'
                     ? 'border-blue-500 bg-blue-50 text-blue-700'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
@@ -229,7 +255,7 @@ export function CreateTicketTypeDialog({ open, onOpenChange }: CreateTicketTypeD
           </div>
 
           {/* Price (only show if paid) */}
-          {ticketType === 'paid' && (
+          {ticketTypeState === 'paid' && (
             <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
               <Label htmlFor="price" className="text-sm font-medium flex items-center gap-2">
                 <DollarSign className="w-4 h-4" />
@@ -300,10 +326,10 @@ export function CreateTicketTypeDialog({ open, onOpenChange }: CreateTicketTypeD
             </Button>
             <Button 
               type="submit" 
-              disabled={createTicketType.isPending}
+              disabled={updateTicketType.isPending}
               className="rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
             >
-              {createTicketType.isPending ? 'Creating...' : 'Create Ticket Type'}
+              {updateTicketType.isPending ? 'Updating...' : 'Update Ticket Type'}
             </Button>
           </DialogFooter>
         </form>

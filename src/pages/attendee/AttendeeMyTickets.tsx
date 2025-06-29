@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Ticket, Calendar, MapPin, Clock, QrCode, CheckCircle, Plus, ShoppingCart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import TicketQRModal from '@/components/attendee/TicketQRModal';
 
 interface MyTicket {
   id: string;
@@ -66,6 +67,10 @@ export default function AttendeeMyTickets() {
     phone: ''
   });
   const [showUserInfoForm, setShowUserInfoForm] = useState(false);
+  
+  // QR Code modal state
+  const [selectedTicketForQR, setSelectedTicketForQR] = useState<MyTicket | null>(null);
+  const [showQRModal, setShowQRModal] = useState(false);
 
   // Check for pending ticketing URL on component mount
   useEffect(() => {
@@ -334,11 +339,14 @@ export default function AttendeeMyTickets() {
     purchaseTickets.mutate();
   };
 
-  const showQRCode = (qrData: string) => {
-    toast({
-      title: "QR Code",
-      description: "QR Code functionality would be implemented here",
-    });
+  const showQRCode = (ticket: MyTicket) => {
+    setSelectedTicketForQR(ticket);
+    setShowQRModal(true);
+  };
+
+  const closeQRModal = () => {
+    setShowQRModal(false);
+    setSelectedTicketForQR(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -561,6 +569,9 @@ export default function AttendeeMyTickets() {
                           <h3 className="font-semibold">{ticket.events.name}</h3>
                           <p className="text-sm text-gray-600">{ticket.ticket_types.name}</p>
                           <p className="text-xs text-gray-500">#{ticket.ticket_number}</p>
+                          {ticket.guest_name && (
+                            <p className="text-sm font-medium text-blue-700">{ticket.guest_name}</p>
+                          )}
                         </div>
                         <div className="text-right">
                           <div className="font-semibold">₦{ticket.price.toLocaleString()}</div>
@@ -597,7 +608,7 @@ export default function AttendeeMyTickets() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => showQRCode(ticket.qr_code_data)}
+                          onClick={() => showQRCode(ticket)}
                         >
                           <QrCode className="h-4 w-4 mr-1" />
                           Show QR Code
@@ -609,6 +620,13 @@ export default function AttendeeMyTickets() {
               )}
             </CardContent>
           </Card>
+
+          {/* QR Code Modal */}
+          <TicketQRModal
+            isOpen={showQRModal}
+            onClose={closeQRModal}
+            ticket={selectedTicketForQR}
+          />
         </div>
       </div>
     </AppLayout>

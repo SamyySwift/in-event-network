@@ -16,6 +16,9 @@ import TicketQRModal from '@/components/attendee/TicketQRModal';
 interface MyTicket {
   id: string;
   ticket_number: string;
+  guest_name?: string;
+  guest_email?: string;
+  guest_phone?: string;
   price: number;
   check_in_status: boolean;
   checked_in_at?: string;

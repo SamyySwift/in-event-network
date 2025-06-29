@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Ticket, Calendar, MapPin, Clock, LogIn } from 'lucide-react';
+import { Ticket, Calendar, MapPin, Clock, LogIn, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface TicketType {
@@ -37,6 +37,12 @@ export default function BuyTickets() {
   const { toast } = useToast();
   const [selectedTickets, setSelectedTickets] = useState<Record<string, number>>({});
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showUserInfoForm, setShowUserInfoForm] = useState(false);
+  const [userInfo, setUserInfo] = useState({
+    fullName: '',
+    email: currentUser?.email || '',
+    phone: ''
+  });
 
   // Fetch event and ticket types
   const { data: eventData, isLoading: eventLoading } = useQuery({
@@ -130,6 +136,12 @@ export default function BuyTickets() {
       return;
     }
 
+    // Check if user info is required and not provided
+    if (!userInfo.fullName.trim() || !userInfo.email.trim() || !userInfo.phone.trim()) {
+      setShowUserInfoForm(true);
+      return;
+    }
+
     if (!eventData) {
       toast({
         title: "Error",
@@ -161,8 +173,11 @@ export default function BuyTickets() {
               event_id: eventData.event.id,
               ticket_type_id: ticketTypeId,
               user_id: currentUser.id,
+              guest_name: userInfo.fullName.substring(0, 100),
+              guest_email: userInfo.email.substring(0, 255),
+              guest_phone: userInfo.phone.substring(0, 20),
               price: ticketType.price,
-              payment_status: 'completed', // Set to completed for all tickets (free and paid)
+              payment_status: 'completed',
               qr_code_data: `${window.location.origin}/ticket-verify?ticket_number=`,
             });
           }
@@ -229,6 +244,8 @@ export default function BuyTickets() {
 
       // Reset form and redirect to attendee dashboard
       setSelectedTickets({});
+      setUserInfo({ fullName: '', email: currentUser?.email || '', phone: '' });
+      setShowUserInfoForm(false);
       navigate('/attendee/my-tickets');
 
     } catch (error: any) {
@@ -241,6 +258,19 @@ export default function BuyTickets() {
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleUserInfoSubmit = () => {
+    if (!userInfo.fullName.trim() || !userInfo.email.trim() || !userInfo.phone.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    setShowUserInfoForm(false);
+    handlePurchase();
   };
 
   if (eventLoading) {
@@ -398,6 +428,59 @@ export default function BuyTickets() {
                         <LogIn className="h-4 w-4 mr-2" />
                         Login to Continue
                       </Button>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* User Info Form */}
+                {showUserInfoForm && currentUser && (
+                  <Card className="border-blue-200 bg-blue-50">
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-2 text-blue-700 mb-3">
+                        <User className="h-4 w-4" />
+                        <span className="font-medium">Your Information</span>
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <Label htmlFor="fullName">Full Name *</Label>
+                          <Input
+                            id="fullName"
+                            value={userInfo.fullName}
+                            onChange={(e) => setUserInfo(prev => ({ ...prev, fullName: e.target.value }))}
+                            placeholder="Enter your full name"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="email">Email *</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={userInfo.email}
+                            onChange={(e) => setUserInfo(prev => ({ ...prev, email: e.target.value }))}
+                            placeholder="Enter your email"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="phone">Phone Number *</Label>
+                          <Input
+                            id="phone"
+                            value={userInfo.phone}
+                            onChange={(e) => setUserInfo(prev => ({ ...prev, phone: e.target.value }))}
+                            placeholder="Enter your phone number"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button onClick={handleUserInfoSubmit} className="flex-1">
+                            Continue Purchase
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setShowUserInfoForm(false)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
                     </CardContent>
                   </Card>
                 )}

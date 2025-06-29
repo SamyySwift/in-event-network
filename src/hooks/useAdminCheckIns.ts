@@ -98,9 +98,79 @@ export const useAdminCheckIns = () => {
     },
   });
 
+  // Bulk check-in all tickets for the event
+  const bulkCheckInAll = useMutation({
+    mutationFn: async () => {
+      if (!selectedEventId) throw new Error('No event selected');
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('User not authenticated');
+
+      // Get all unchecked tickets for the event
+      const { data: uncheckedTickets, error: fetchError } = await supabase
+        .from('event_tickets')
+        .select('id, ticket_number')
+        .eq('event_id', selectedEventId)
+        .eq('check_in_status', false);
+
+      if (fetchError) throw fetchError;
+      if (!uncheckedTickets || uncheckedTickets.length === 0) {
+        throw new Error('No tickets to check in');
+      }
+
+      const now = new Date().toISOString();
+      
+      // Update all unchecked tickets
+      const { error: updateError } = await supabase
+        .from('event_tickets')
+        .update({
+          check_in_status: true,
+          checked_in_at: now,
+          checked_in_by: user.id,
+        })
+        .eq('event_id', selectedEventId)
+        .eq('check_in_status', false);
+
+      if (updateError) throw updateError;
+
+      // Create check-in records for all tickets
+      const checkInRecords = uncheckedTickets.map(ticket => ({
+        ticket_id: ticket.id,
+        admin_id: user.id,
+        check_in_method: 'bulk',
+        notes: 'Bulk check-in',
+      }));
+
+      const { error: checkInError } = await supabase
+        .from('check_ins')
+        .insert(checkInRecords);
+
+      if (checkInError) throw checkInError;
+
+      return uncheckedTickets.length;
+    },
+    onSuccess: (count) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-event-tickets'] });
+      toast({
+        title: "Bulk Check-in Successful",
+        description: `Successfully checked in ${count} attendees`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Bulk Check-in Failed",
+        description: error.message || "Failed to check in attendees",
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     checkInTicket,
     checkInByQR,
+    bulkCheckInAll,
     isCheckingIn: checkInTicket.isPending || checkInByQR.isPending,
+    isBulkCheckingIn: bulkCheckInAll.isPending,
   };
 };

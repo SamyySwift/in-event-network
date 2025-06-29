@@ -132,6 +132,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       icon: <Calendar size={20} />,
     },
     {
+      name: "Tickets",
+      href: "/admin/tickets",
+      icon: <Ticket size={20} />,
+    },
+    {
+      name: "Check-In",
+      href: "/admin/checkin",
+      icon: <Scan size={20} />,
+    },
+    {
       name: "Attendees",
       href: "/admin/attendees",
       icon: <Users size={20} />,
@@ -155,16 +165,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Polls & Surveys",
       href: "/admin/polls",
       icon: <BarChart size={20} />,
-    },
-    {
-      name: "Tickets",
-      href: "/admin/tickets",
-      icon: <Ticket size={20} />,
-    },
-    {
-      name: "Check-In",
-      href: "/admin/checkin",
-      icon: <Scan size={20} />,
     },
     {
       name: "Facilities",

@@ -1,26 +1,17 @@
-
-import { useState } from 'react';
-import { Wallet, Plus, Download, DollarSign, TrendingUp, Calendar, CreditCard, History, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Wallet, CreditCard, Download, Plus, TrendingUp, DollarSign, Calendar, ExternalLink, QrCode } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { useAdminWallet } from '@/hooks/useAdminWallet';
 import { useAdminWithdrawals } from '@/hooks/useAdminWithdrawals';
+import { useToast } from '@/hooks/use-toast';
 
-export const AdminWallet = () => {
+export function AdminWallet() {
   const { wallet, isLoading, createWallet, hasWallet } = useAdminWallet();
   const { 
     withdrawalHistory, 
@@ -30,24 +21,122 @@ export const AdminWallet = () => {
     initiateWithdrawal,
     isVerifyingAccount,
     isCreatingRecipient,
-    isInitiatingWithdrawal,
-    isLoadingBanks
+    isInitiatingWithdrawal
   } = useAdminWithdrawals();
+  const { toast } = useToast();
 
-  const [bankSetupDialogOpen, setBankSetupDialogOpen] = useState(false);
-  const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
+  const [showSetupDialog, setShowSetupDialog] = useState(false);
+  const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
+  const [bankForm, setBankForm] = useState({
+    bankCode: '',
+    bankName: '',
+    accountNumber: '',
+    accountName: '',
+  });
   const [withdrawAmount, setWithdrawAmount] = useState('');
-  
-  // Bank setup form
-  const [selectedBank, setSelectedBank] = useState('');
-  const [accountNumber, setAccountNumber] = useState('');
-  const [isAccountVerified, setIsAccountVerified] = useState(false);
-  const [verifiedAccountName, setVerifiedAccountName] = useState('');
+  const [verificationStep, setVerificationStep] = useState<'bank' | 'verify' | 'recipient'>('bank');
+
+  const handleBankInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setBankForm({ ...bankForm, [e.target.name]: e.target.value });
+  };
+
+  const handleWithdrawAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setWithdrawAmount(e.target.value);
+  };
+
+  const handleBankSelect = (value: string) => {
+    const selectedBank = banks.find(bank => bank.code === value);
+    if (selectedBank) {
+      setBankForm({
+        ...bankForm,
+        bankCode: selectedBank.code,
+        bankName: selectedBank.name,
+      });
+    }
+  };
+
+  const handleVerifyAccount = async () => {
+    try {
+      setVerificationStep('verify');
+      await verifyAccount.mutateAsync({
+        accountNumber: bankForm.accountNumber,
+        bankCode: bankForm.bankCode,
+        bankName: bankForm.bankName,
+      });
+      setVerificationStep('recipient');
+    } catch (error: any) {
+      toast({
+        title: 'Verification Failed',
+        description: error.message || 'Failed to verify bank account',
+        variant: 'destructive',
+      });
+      setVerificationStep('bank');
+    }
+  };
+
+  const handleCreateRecipient = async () => {
+    try {
+      await createRecipient.mutateAsync({
+        accountName: bankForm.accountName,
+        accountNumber: bankForm.accountNumber,
+        bankCode: bankForm.bankCode,
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Recipient Creation Failed',
+        description: error.message || 'Failed to create recipient',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleInitiateWithdrawal = async () => {
+    if (!wallet) return;
+
+    const amount = parseFloat(withdrawAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast({
+        title: 'Invalid Amount',
+        description: 'Please enter a valid withdrawal amount',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (amount > wallet.available_balance) {
+      toast({
+        title: 'Insufficient Balance',
+        description: 'You do not have sufficient balance to withdraw this amount',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      await initiateWithdrawal.mutateAsync({
+        walletId: wallet.id,
+        amount: amount * 100, // Amount in kobo
+        bankName: wallet.bank_name || bankForm.bankName,
+        accountNumber: wallet.account_number || bankForm.accountNumber,
+        accountName: wallet.account_name || bankForm.accountName,
+        recipientCode: wallet.recipient_code || '',
+        currentBalance: wallet.available_balance,
+        totalWithdrawn: wallet.withdrawn_amount,
+      });
+      setShowWithdrawDialog(false);
+    } catch (error: any) {
+      toast({
+        title: 'Withdrawal Failed',
+        description: error.message || 'Failed to initiate withdrawal',
+        variant: 'destructive',
+      });
+    }
+  };
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="flex items-center justify-center h-32">
+      <Card className="w-full">
+        <CardContent className="flex items-center justify-center p-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </CardContent>
       </Card>
@@ -56,423 +145,267 @@ export const AdminWallet = () => {
 
   if (!hasWallet) {
     return (
-      <Card>
+      <Card className="w-full">
         <CardHeader>
-          <div className="flex items-center gap-3">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-green-400 to-emerald-600 shadow-md">
-              <Wallet className="w-6 h-6 text-white" />
-            </span>
-            <div>
-              <CardTitle>Admin Wallet</CardTitle>
-              <p className="text-sm text-muted-foreground">Manage your event earnings</p>
-            </div>
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Wallet className="h-5 w-5" />
+            Admin Wallet
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <Wallet className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold">No wallet found</h3>
-            <p className="text-muted-foreground mb-4">
-              Create a wallet to track your ticket sales earnings
-            </p>
-            <Button onClick={() => createWallet.mutate()} disabled={createWallet.isPending}>
-              <Plus className="h-4 w-4 mr-2" />
-              {createWallet.isPending ? 'Creating...' : 'Create Wallet'}
-            </Button>
-          </div>
+        <CardContent className="space-y-4">
+          <p className="text-muted-foreground">
+            Create your wallet to start receiving payments from ticket sales.
+          </p>
+          <Button 
+            onClick={() => createWallet.mutate()} 
+            disabled={createWallet.isPending}
+            className="w-full sm:w-auto"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Wallet
+          </Button>
         </CardContent>
       </Card>
     );
   }
 
-  const handleVerifyAccount = async () => {
-    if (!selectedBank || !accountNumber) return;
-
-    const bank = banks.find(b => b.code === selectedBank);
-    if (!bank) return;
-
-    try {
-      const result = await verifyAccount.mutateAsync({
-        accountNumber,
-        bankCode: selectedBank,
-        bankName: bank.name,
-      });
-
-      if (result.status && result.data) {
-        setIsAccountVerified(true);
-        setVerifiedAccountName(result.data.account_name);
-      }
-    } catch (error) {
-      console.error('Account verification failed:', error);
-    }
-  };
-
-  const handleCreateRecipient = async () => {
-    if (!verifiedAccountName || !accountNumber || !selectedBank) return;
-
-    try {
-      await createRecipient.mutateAsync({
-        accountName: verifiedAccountName,
-        accountNumber,
-        bankCode: selectedBank,
-      });
-      setBankSetupDialogOpen(false);
-      setSelectedBank('');
-      setAccountNumber('');
-      setIsAccountVerified(false);
-      setVerifiedAccountName('');
-    } catch (error) {
-      console.error('Failed to create recipient:', error);
-    }
-  };
-
-  const handleWithdraw = async () => {
-    const amount = parseFloat(withdrawAmount) * 100; // Convert to kobo
-    if (!wallet || !wallet.recipient_code || amount <= 0 || amount > wallet.available_balance) return;
-
-    try {
-      await initiateWithdrawal.mutateAsync({
-        walletId: wallet.id,
-        amount,
-        bankName: wallet.bank_name || '',
-        accountNumber: wallet.account_number || '',
-        accountName: wallet.account_name || '',
-        recipientCode: wallet.recipient_code,
-        currentBalance: wallet.available_balance,
-        totalWithdrawn: wallet.withdrawn_amount,
-      });
-      setWithdrawAmount('');
-      setWithdrawDialogOpen(false);
-    } catch (error) {
-      console.error('Withdrawal failed:', error);
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case 'failed':
-        return <AlertCircle className="h-4 w-4 text-red-600" />;
-      case 'processing':
-        return <Clock className="h-4 w-4 text-yellow-600" />;
-      default:
-        return <Clock className="h-4 w-4 text-gray-600" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return 'bg-green-50 text-green-700 border-green-200';
-      case 'failed':
-        return 'bg-red-50 text-red-700 border-red-200';
-      case 'processing':
-        return 'bg-yellow-50 text-yellow-700 border-yellow-200';
-      default:
-        return 'bg-gray-50 text-gray-700 border-gray-200';
-    }
-  };
-
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-green-400 to-emerald-600 shadow-md">
-              <Wallet className="w-6 h-6 text-white" />
-            </span>
-            <div>
-              <CardTitle>Admin Wallet</CardTitle>
-              <p className="text-sm text-muted-foreground">Manage your event earnings</p>
-            </div>
-          </div>
-          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-            Active
-          </Badge>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="overview" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="bank-account">Bank Account</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 rounded-lg border border-green-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <DollarSign className="h-4 w-4 text-green-600" />
-                  <span className="text-sm font-medium text-green-800">Available Balance</span>
-                </div>
-                <div className="text-2xl font-bold text-green-900">
-                  ₦{(wallet.available_balance / 100).toLocaleString()}
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <TrendingUp className="h-4 w-4 text-blue-600" />
-                  <span className="text-sm font-medium text-blue-800">Total Earnings</span>
-                </div>
-                <div className="text-2xl font-bold text-blue-900">
-                  ₦{(wallet.total_earnings / 100).toLocaleString()}
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-r from-purple-50 to-violet-50 p-4 rounded-lg border border-purple-200">
-                <div className="flex items-center gap-2 mb-2">
-                  <Download className="h-4 w-4 text-purple-600" />
-                  <span className="text-sm font-medium text-purple-800">Withdrawn</span>
-                </div>
-                <div className="text-2xl font-bold text-purple-900">
-                  ₦{(wallet.withdrawn_amount / 100).toLocaleString()}
-                </div>
-              </div>
-            </div>
-
+    <div className="space-y-6">
+      {/* Wallet Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200">
+          <CardContent className="p-4">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Calendar className="h-4 w-4" />
-                <span>
-                  Last payout: {wallet.last_payout_at 
-                    ? new Date(wallet.last_payout_at).toLocaleDateString()
-                    : 'Never'
-                  }
-                </span>
+              <div>
+                <p className="text-sm font-medium text-blue-600">Total Earnings</p>
+                <p className="text-2xl font-bold text-blue-900">₦{wallet?.total_earnings?.toLocaleString() || 0}</p>
               </div>
+              <TrendingUp className="h-6 w-6 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
 
-              <div className="flex gap-2">
-                {!wallet.is_bank_verified && (
-                  <Dialog open={bankSetupDialogOpen} onOpenChange={setBankSetupDialogOpen}>
-                    <DialogTrigger asChild>
-                      <Button variant="outline">
-                        <CreditCard className="h-4 w-4 mr-2" />
-                        Setup Bank Account
+        <Card className="bg-gradient-to-br from-green-50 to-green-100 border-green-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-600">Available Balance</p>
+                <p className="text-2xl font-bold text-green-900">₦{wallet?.available_balance?.toLocaleString() || 0}</p>
+              </div>
+              <DollarSign className="h-6 w-6 text-green-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 border-purple-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-purple-600">Withdrawn</p>
+                <p className="text-2xl font-bold text-purple-900">₦{wallet?.withdrawn_amount?.toLocaleString() || 0}</p>
+              </div>
+              <Download className="h-6 w-6 text-purple-500" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-orange-600">Last Payout</p>
+                <p className="text-sm font-semibold text-orange-900">
+                  {wallet?.last_payout_at ? new Date(wallet.last_payout_at).toLocaleDateString() : 'Never'}
+                </p>
+              </div>
+              <Calendar className="h-6 w-6 text-orange-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Wallet Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Wallet className="h-5 w-5" />
+            Wallet Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-3">
+            {!wallet?.is_bank_verified ? (
+              <Dialog open={showSetupDialog} onOpenChange={setShowSetupDialog}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="flex-1 sm:flex-none">
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Setup Bank Account
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Setup Bank Account</DialogTitle>
+                  </DialogHeader>
+
+                  {verificationStep === 'bank' && (
+                    <div className="space-y-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="bank">Bank</Label>
+                        <Select onValueChange={handleBankSelect}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Bank" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {banks.map((bank) => (
+                              <SelectItem key={bank.code} value={bank.code}>
+                                {bank.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid gap-2">
+                        <Label htmlFor="accountNumber">Account Number</Label>
+                        <Input
+                          type="text"
+                          id="accountNumber"
+                          name="accountNumber"
+                          value={bankForm.accountNumber}
+                          onChange={handleBankInputChange}
+                        />
+                      </div>
+                      <Button onClick={handleVerifyAccount} disabled={isVerifyingAccount} className="w-full">
+                        {isVerifyingAccount ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+                            Verifying...
+                          </>
+                        ) : (
+                          'Verify Account'
+                        )}
                       </Button>
-                    </DialogTrigger>
-                  </Dialog>
-                )}
+                    </div>
+                  )}
 
-                <Dialog open={withdrawDialogOpen} onOpenChange={setWithdrawDialogOpen}>
+                  {verificationStep === 'verify' && (
+                    <div className="flex items-center justify-center p-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  )}
+
+                  {verificationStep === 'recipient' && (
+                    <div className="space-y-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="accountName">Account Name</Label>
+                        <Input
+                          type="text"
+                          id="accountName"
+                          name="accountName"
+                          value={bankForm.accountName}
+                          onChange={handleBankInputChange}
+                        />
+                      </div>
+                      <Button onClick={handleCreateRecipient} disabled={isCreatingRecipient} className="w-full">
+                        {isCreatingRecipient ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+                            Creating Recipient...
+                          </>
+                        ) : (
+                          'Create Recipient'
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
+            ) : (
+              <div className="flex flex-col sm:flex-row gap-3 w-full">
+                <div className="flex-1 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+                      Verified
+                    </Badge>
+                  </div>
+                  <p className="text-sm font-medium text-green-900">{wallet.bank_name}</p>
+                  <p className="text-xs text-green-700">{wallet.account_number} • {wallet.account_name}</p>
+                </div>
+                
+                <Dialog open={showWithdrawDialog} onOpenChange={setShowWithdrawDialog}>
                   <DialogTrigger asChild>
                     <Button 
-                      disabled={wallet.available_balance <= 0 || !wallet.is_bank_verified}
-                      className="bg-green-600 hover:bg-green-700"
+                      disabled={!wallet?.available_balance || wallet.available_balance < wallet.minimum_payout_amount}
+                      className="sm:w-auto"
                     >
                       <Download className="h-4 w-4 mr-2" />
-                      Withdraw Funds
+                      Withdraw
                     </Button>
                   </DialogTrigger>
+                  <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Withdraw Funds</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="amount">Amount (₦)</Label>
+                        <Input
+                          type="number"
+                          id="amount"
+                          placeholder="Enter amount to withdraw"
+                          value={withdrawAmount}
+                          onChange={handleWithdrawAmountChange}
+                        />
+                      </div>
+                      <Button onClick={handleInitiateWithdrawal} disabled={isInitiatingWithdrawal} className="w-full">
+                        {isInitiatingWithdrawal ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
+                            Withdrawing...
+                          </>
+                        ) : (
+                          'Withdraw Funds'
+                        )}
+                      </Button>
+                    </div>
+                  </DialogContent>
                 </Dialog>
               </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="bank-account" className="space-y-4">
-            {wallet.is_bank_verified ? (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  <h3 className="font-semibold text-green-800">Bank Account Verified</h3>
-                </div>
-                <div className="space-y-2 text-sm">
-                  <div><strong>Bank:</strong> {wallet.bank_name}</div>
-                  <div><strong>Account Number:</strong> {wallet.account_number}</div>
-                  <div><strong>Account Name:</strong> {wallet.account_name}</div>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="mt-3"
-                  onClick={() => setBankSetupDialogOpen(true)}
-                >
-                  Update Bank Account
-                </Button>
-              </div>
-            ) : (
-              <div className="text-center py-8">
-                <CreditCard className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Bank Account Setup</h3>
-                <p className="text-muted-foreground mb-6">
-                  Add your Nigerian bank account to withdraw earnings
-                </p>
-                <Button onClick={() => setBankSetupDialogOpen(true)}>
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Setup Bank Account
-                </Button>
-              </div>
             )}
-          </TabsContent>
+          </div>
+        </CardContent>
+      </Card>
 
-          <TabsContent value="history" className="space-y-4">
-            {withdrawalHistory.length === 0 ? (
-              <div className="text-center py-8">
-                <History className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No Withdrawal History</h3>
-                <p className="text-muted-foreground">
-                  Your withdrawal transactions will appear here
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {withdrawalHistory.map((withdrawal) => (
-                  <div key={withdrawal.id} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(withdrawal.status)}
-                        <span className="font-medium">₦{(withdrawal.amount / 100).toLocaleString()}</span>
-                      </div>
-                      <Badge className={getStatusColor(withdrawal.status)}>
-                        {withdrawal.status}
-                      </Badge>
-                    </div>
-                    <div className="text-sm text-muted-foreground space-y-1">
-                      <div>To: {withdrawal.bank_name} - {withdrawal.account_number}</div>
-                      <div>Date: {new Date(withdrawal.created_at).toLocaleString()}</div>
-                      {withdrawal.failure_reason && (
-                        <div className="text-red-600">Reason: {withdrawal.failure_reason}</div>
-                      )}
-                    </div>
+      {/* Withdrawal History */}
+      {withdrawalHistory.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Withdrawal History</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {withdrawalHistory.slice(0, 5).map((withdrawal) => (
+                <div key={withdrawal.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 bg-muted/50 rounded-lg gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm truncate">₦{withdrawal.amount.toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">{withdrawal.bank_name} • {withdrawal.account_number}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(withdrawal.created_at).toLocaleDateString()}</p>
                   </div>
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
-
-        {/* Bank Setup Dialog */}
-        <Dialog open={bankSetupDialogOpen} onOpenChange={setBankSetupDialogOpen}>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Setup Bank Account</DialogTitle>
-              <DialogDescription>
-                Add your Nigerian bank account details to withdraw earnings
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="bank">Select Bank</Label>
-                <Select value={selectedBank} onValueChange={setSelectedBank} disabled={isLoadingBanks}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={isLoadingBanks ? "Loading banks..." : "Select your bank"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {banks.map((bank) => (
-                      <SelectItem key={bank.code} value={bank.code}>
-                        {bank.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div>
-                <Label htmlFor="account-number">Account Number</Label>
-                <Input
-                  id="account-number"
-                  value={accountNumber}
-                  onChange={(e) => setAccountNumber(e.target.value)}
-                  placeholder="Enter your account number"
-                  maxLength={10}
-                />
-              </div>
-
-              {!isAccountVerified && selectedBank && accountNumber.length === 10 && (
-                <Button 
-                  onClick={handleVerifyAccount} 
-                  disabled={isVerifyingAccount}
-                  className="w-full"
-                >
-                  {isVerifyingAccount ? 'Verifying...' : 'Verify Account'}
-                </Button>
-              )}
-
-              {isAccountVerified && verifiedAccountName && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                  <div className="flex items-center gap-2 text-green-800">
-                    <CheckCircle className="h-4 w-4" />
-                    <span className="font-medium">Account Verified</span>
-                  </div>
-                  <p className="text-sm text-green-700 mt-1">
-                    Account Name: <strong>{verifiedAccountName}</strong>
-                  </p>
+                  <Badge 
+                    variant={
+                      withdrawal.status === 'completed' ? 'default' : 
+                      withdrawal.status === 'failed' ? 'destructive' : 
+                      'secondary'
+                    }
+                    className="text-xs"
+                  >
+                    {withdrawal.status}
+                  </Badge>
                 </div>
-              )}
+              ))}
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setBankSetupDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleCreateRecipient}
-                disabled={!isAccountVerified || isCreatingRecipient}
-              >
-                {isCreatingRecipient ? 'Setting up...' : 'Complete Setup'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Withdrawal Dialog */}
-        <Dialog open={withdrawDialogOpen} onOpenChange={setWithdrawDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Withdraw Funds</DialogTitle>
-              <DialogDescription>
-                Enter the amount you want to withdraw to your bank account.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="amount">Amount (₦)</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  placeholder="0.00"
-                  value={withdrawAmount}
-                  onChange={(e) => setWithdrawAmount(e.target.value)}
-                  max={wallet.available_balance / 100}
-                />
-                <p className="text-sm text-muted-foreground mt-1">
-                  Available: ₦{(wallet.available_balance / 100).toLocaleString()}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Minimum: ₦{(wallet.minimum_payout_amount / 100).toLocaleString()}
-                </p>
-              </div>
-              
-              {wallet.bank_name && (
-                <div className="bg-gray-50 rounded-lg p-3">
-                  <p className="text-sm text-gray-600">
-                    Withdrawing to: <strong>{wallet.bank_name}</strong><br/>
-                    Account: {wallet.account_number} ({wallet.account_name})
-                  </p>
-                </div>
-              )}
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setWithdrawDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button 
-                onClick={handleWithdraw}
-                disabled={
-                  !withdrawAmount || 
-                  parseFloat(withdrawAmount) <= 0 || 
-                  parseFloat(withdrawAmount) * 100 > wallet.available_balance ||
-                  parseFloat(withdrawAmount) * 100 < wallet.minimum_payout_amount ||
-                  isInitiatingWithdrawal
-                }
-              >
-                {isInitiatingWithdrawal ? 'Processing...' : 'Withdraw'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </CardContent>
-    </Card>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
-};
+}

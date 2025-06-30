@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdminEventContext } from '@/hooks/useAdminEventContext';
@@ -12,6 +13,13 @@ interface AdminWallet {
   total_earnings: number;
   withdrawn_amount: number;
   last_payout_at: string | null;
+  bank_name: string | null;
+  account_number: string | null;
+  account_name: string | null;
+  bank_code: string | null;
+  recipient_code: string | null;
+  is_bank_verified: boolean;
+  minimum_payout_amount: number;
   created_at: string;
   updated_at: string;
 }
@@ -59,6 +67,7 @@ export const useAdminWallet = () => {
           available_balance: 0,
           total_earnings: 0,
           withdrawn_amount: 0,
+          minimum_payout_amount: 100000, // 1000 NGN minimum
         })
         .select()
         .single();
@@ -82,7 +91,7 @@ export const useAdminWallet = () => {
     },
   });
 
-  // Withdraw funds mutation
+  // Legacy withdraw funds mutation (kept for backward compatibility)
   const withdrawFunds = useMutation({
     mutationFn: async (amount: number) => {
       if (!wallet || amount > wallet.available_balance) {

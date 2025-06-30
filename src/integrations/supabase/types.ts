@@ -11,34 +11,55 @@ export type Database = {
     Tables: {
       admin_wallets: {
         Row: {
+          account_name: string | null
+          account_number: string | null
           admin_id: string
           available_balance: number
+          bank_code: string | null
+          bank_name: string | null
           created_at: string
           event_id: string
           id: string
+          is_bank_verified: boolean | null
           last_payout_at: string | null
+          minimum_payout_amount: number | null
+          recipient_code: string | null
           total_earnings: number
           updated_at: string
           withdrawn_amount: number
         }
         Insert: {
+          account_name?: string | null
+          account_number?: string | null
           admin_id: string
           available_balance?: number
+          bank_code?: string | null
+          bank_name?: string | null
           created_at?: string
           event_id: string
           id?: string
+          is_bank_verified?: boolean | null
           last_payout_at?: string | null
+          minimum_payout_amount?: number | null
+          recipient_code?: string | null
           total_earnings?: number
           updated_at?: string
           withdrawn_amount?: number
         }
         Update: {
+          account_name?: string | null
+          account_number?: string | null
           admin_id?: string
           available_balance?: number
+          bank_code?: string | null
+          bank_name?: string | null
           created_at?: string
           event_id?: string
           id?: string
+          is_bank_verified?: boolean | null
           last_payout_at?: string | null
+          minimum_payout_amount?: number | null
+          recipient_code?: string | null
           total_earnings?: number
           updated_at?: string
           withdrawn_amount?: number
@@ -1354,6 +1375,62 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      withdrawal_requests: {
+        Row: {
+          account_name: string | null
+          account_number: string | null
+          admin_wallet_id: string
+          amount: number
+          bank_name: string | null
+          created_at: string | null
+          failure_reason: string | null
+          id: string
+          paystack_recipient_code: string | null
+          paystack_transfer_code: string | null
+          processed_at: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          account_name?: string | null
+          account_number?: string | null
+          admin_wallet_id: string
+          amount: number
+          bank_name?: string | null
+          created_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          paystack_recipient_code?: string | null
+          paystack_transfer_code?: string | null
+          processed_at?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: string | null
+          admin_wallet_id?: string
+          amount?: number
+          bank_name?: string | null
+          created_at?: string | null
+          failure_reason?: string | null
+          id?: string
+          paystack_recipient_code?: string | null
+          paystack_transfer_code?: string | null
+          processed_at?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "withdrawal_requests_admin_wallet_id_fkey"
+            columns: ["admin_wallet_id"]
+            isOneToOne: false
+            referencedRelation: "admin_wallets"
             referencedColumns: ["id"]
           },
         ]

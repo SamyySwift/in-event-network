@@ -95,23 +95,23 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-xl font-bold pr-8">{item.title}</DialogTitle>
           <Button
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="absolute right-4 top-4 p-1"
+            className="absolute right-4 top-4 p-1 z-10"
           >
             <X className="w-4 h-4" />
           </Button>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="flex-1 overflow-y-auto space-y-6 pr-2">
           {/* Event/Speaker Image */}
           {(item.image_url || item.speaker_photo) && (
-            <div className="w-full h-48 rounded-lg overflow-hidden">
+            <div className="w-full h-48 rounded-lg overflow-hidden flex-shrink-0">
               <img 
                 src={item.image_url || item.speaker_photo} 
                 alt={item.title}
@@ -169,10 +169,10 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
                   <img 
                     src={item.speaker_photo} 
                     alt={item.speaker_name}
-                    className="w-16 h-16 rounded-full object-cover"
+                    className="w-16 h-16 rounded-full object-cover flex-shrink-0"
                   />
                 )}
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-lg">{item.speaker_name}</h3>
                   {item.speaker_company && (
                     <p className="text-muted-foreground">{item.speaker_company}</p>
@@ -183,9 +183,9 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
               {item.speaker_bio && (
                 <div className="mt-4">
                   <h4 className="font-medium mb-2">About the Speaker</h4>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <div className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">
                     {item.speaker_bio}
-                  </p>
+                  </div>
                 </div>
               )}
 
@@ -197,9 +197,9 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
           {item.description && (
             <div>
               <h4 className="font-medium mb-2">Description</h4>
-              <p className="text-muted-foreground leading-relaxed">
+              <div className="text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">
                 {item.description}
-              </p>
+              </div>
             </div>
           )}
         </div>

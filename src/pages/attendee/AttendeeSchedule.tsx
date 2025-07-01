@@ -24,8 +24,8 @@ interface ScheduleItem {
   end_date?: string | null;
   start_time?: string | null;
   end_time?: string | null;
-  start_time_full?: string; // For backward compatibility
-  end_time_full?: string; // For backward compatibility
+  start_time_full?: string;
+  end_time_full?: string;
   start_time_only?: string | null;
   end_time_only?: string | null;
   location: string | null;
@@ -157,20 +157,17 @@ const AttendeeSchedule = () => {
     
     const combined: CombinedScheduleItem[] = [];
 
-    // Add speaker sessions
+    // Add ALL speaker sessions (including those without complete session info)
     if (speakers && speakers.length > 0) {
-      const speakersWithSessions = speakers.filter(speaker => 
-        speaker.session_time && speaker.session_title
-      );
-      console.log('Speakers with sessions:', speakersWithSessions.length);
+      console.log('Adding all speakers:', speakers.length);
       
-      speakersWithSessions.forEach(speaker => {
+      speakers.forEach(speaker => {
         combined.push({
           id: `speaker-${speaker.id}`,
-          title: speaker.session_title!,
+          title: speaker.session_title || 'To be announced',
           description: null,
-          start_time: speaker.session_time!,
-          start_time_full: speaker.session_time!,
+          start_time: speaker.session_time || undefined,
+          start_time_full: speaker.session_time || undefined,
           location: undefined,
           type: 'speaker',
           speaker_name: speaker.name,
@@ -251,7 +248,8 @@ const AttendeeSchedule = () => {
       return `Until ${endTimeStr}`;
     }
     
-    return '';
+    // Return "To be announced" for speakers without time
+    return 'To be announced';
   };
 
   const formatDateDisplay = (item: CombinedScheduleItem): string => {
@@ -284,7 +282,10 @@ const AttendeeSchedule = () => {
     
     // Use the primary time source for date filtering
     const timeStr = item.start_time || item.start_time_full;
-    if (!timeStr) return selectedDate === 'today'; // Default time-only items to today
+    if (!timeStr) {
+      // For speakers without time, show them in "today" filter so they're visible
+      return selectedDate === 'today';
+    }
     
     try {
       const sessionDate = parseISO(timeStr);
@@ -303,8 +304,8 @@ const AttendeeSchedule = () => {
     const timeStr = item.start_time || item.start_time_full;
     
     if (!timeStr) {
-      // For items without proper dates, group them under "Time-based Events"
-      const fallbackKey = 'time-only';
+      // For items without proper dates, group them under "Speakers - Time TBA"
+      const fallbackKey = 'speakers-tba';
       if (!groups[fallbackKey]) {
         groups[fallbackKey] = [];
       }
@@ -320,7 +321,7 @@ const AttendeeSchedule = () => {
       groups[date].push(item);
     } catch (error) {
       console.error('Error formatting date:', timeStr, error);
-      const fallbackKey = 'time-only';
+      const fallbackKey = 'speakers-tba';
       if (!groups[fallbackKey]) {
         groups[fallbackKey] = [];
       }
@@ -330,8 +331,8 @@ const AttendeeSchedule = () => {
   }, {} as Record<string, typeof filteredItems>);
 
   const formatDateHeader = (dateStr: string) => {
-    if (dateStr === 'time-only') {
-      return 'Time-based Events';
+    if (dateStr === 'speakers-tba') {
+      return 'Speakers - Time To Be Announced';
     }
     
     try {
@@ -594,15 +595,23 @@ const AttendeeSchedule = () => {
                               {/* Time Column */}
                               <div className="w-full sm:w-20 md:w-24 bg-gradient-to-b from-gray-50 to-gray-100 p-3 sm:p-4 flex flex-row sm:flex-col items-center justify-center border-b sm:border-b-0 sm:border-r">
                                 <div className="text-base sm:text-lg font-bold text-gray-900">
-                                  {timeDisplay ? timeDisplay.split(' - ')[0] : '00:00'}
+                                  {timeDisplay ? (
+                                    timeDisplay === 'To be announced' ? (
+                                      <span className="text-sm text-amber-600 font-medium">TBA</span>
+                                    ) : (
+                                      timeDisplay.split(' - ')[0]
+                                    )
+                                  ) : (
+                                    <span className="text-sm text-amber-600 font-medium">TBA</span>
+                                  )}
                                 </div>
-                                {timeDisplay && timeDisplay.includes(' - ') && (
+                                {timeDisplay && timeDisplay.includes(' - ') && timeDisplay !== 'To be announced' && (
                                   <div className="text-sm text-gray-500 ml-2 sm:ml-0">
                                     {timeDisplay.split(' - ')[1]}
                                   </div>
                                 )}
                                 {/* Duration display */}
-                                {durationDisplay && (
+                                {durationDisplay && timeDisplay !== 'To be announced' && (
                                   <div className="text-xs text-gray-400 mt-1 flex items-center">
                                     <Clock className="w-3 h-3 mr-1" />
                                     {durationDisplay}

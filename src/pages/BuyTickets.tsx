@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Ticket, Calendar, MapPin, Clock, LogIn, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { PaystackTicketPayment } from '@/components/payment/PaystackTicketPayment';
 
 interface TicketType {
   id: string;
@@ -38,6 +39,7 @@ export default function BuyTickets() {
   const [selectedTickets, setSelectedTickets] = useState<Record<string, number>>({});
   const [isProcessing, setIsProcessing] = useState(false);
   const [showUserInfoForm, setShowUserInfoForm] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
   const [userInfo, setUserInfo] = useState({
     fullName: '',
     email: currentUser?.email || '',
@@ -151,8 +153,37 @@ export default function BuyTickets() {
       return;
     }
 
+    const totalPrice = getTotalPrice();
+
+    // If total price is 0, proceed with free ticket creation
+    if (totalPrice === 0) {
+      await createTickets();
+    } else {
+      // Show payment interface for paid tickets
+      setShowPayment(true);
+    }
+  };
+
+  const handlePaymentSuccess = async (reference: string) => {
+    console.log('Payment successful, creating tickets with reference:', reference);
+    await createTickets(reference);
+    setShowPayment(false);
+  };
+
+  const handlePaymentClose = () => {
+    setShowPayment(false);
+    toast({
+      title: "Payment Cancelled",
+      description: "Your payment was cancelled. You can try again.",
+      variant: "destructive",
+    });
+  };
+
+  const createTickets = async (paymentReference?: string) => {
+    if (!eventData) return;
+
     setIsProcessing(true);
-    console.log('Starting ticket purchase process...');
+    console.log('Starting ticket creation process...');
 
     try {
       // Create ticket purchases for each selected ticket type
@@ -178,6 +209,7 @@ export default function BuyTickets() {
               guest_phone: userInfo.phone.substring(0, 20),
               price: ticketType.price,
               payment_status: 'completed',
+              payment_reference: paymentReference || null,
               qr_code_data: `${window.location.origin}/ticket-verify?ticket_number=`,
             });
           }
@@ -485,6 +517,41 @@ export default function BuyTickets() {
                   </Card>
                 )}
 
+                {/* Payment Interface */}
+                {showPayment && currentUser && eventData && (
+                  <Card className="border-green-200 bg-green-50">
+                    <CardContent className="pt-4">
+                      <div className="space-y-4">
+                        <h3 className="font-medium text-green-700">Complete Payment</h3>
+                        <PaystackTicketPayment
+                          eventId={eventData.event.id}
+                          eventName={eventData.event.name}
+                          tickets={eventData.ticketTypes
+                            .filter(t => selectedTickets[t.id] > 0)
+                            .map(t => ({
+                              ticketTypeId: t.id,
+                              quantity: selectedTickets[t.id],
+                              price: t.price,
+                              name: t.name
+                            }))}
+                          totalAmount={getTotalPrice()}
+                          userInfo={userInfo}
+                          onSuccess={handlePaymentSuccess}
+                          onClose={handlePaymentClose}
+                          disabled={isProcessing}
+                        />
+                        <Button 
+                          variant="outline" 
+                          onClick={() => setShowPayment(false)}
+                          className="w-full"
+                        >
+                          Cancel Payment
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
                 <div className="border-t pt-4">
                   <div className="space-y-2">
                     <div className="flex justify-between">
@@ -498,14 +565,16 @@ export default function BuyTickets() {
                   </div>
                 </div>
 
-                <Button
-                  onClick={handlePurchase}
-                  disabled={isProcessing || getTotalTickets() === 0 || !currentUser}
-                  className="w-full"
-                  size="lg"
-                >
-                  {isProcessing ? 'Processing...' : `Purchase ${getTotalTickets()} Ticket${getTotalTickets() !== 1 ? 's' : ''}`}
-                </Button>
+                {!showPayment && (
+                  <Button
+                    onClick={handlePurchase}
+                    disabled={isProcessing || getTotalTickets() === 0 || !currentUser}
+                    className="w-full"
+                    size="lg"
+                  >
+                    {isProcessing ? 'Processing...' : getTotalPrice() === 0 ? `Get ${getTotalTickets()} Free Ticket${getTotalTickets() !== 1 ? 's' : ''}` : `Purchase ${getTotalTickets()} Ticket${getTotalTickets() !== 1 ? 's' : ''}`}
+                  </Button>
+                )}
               </CardContent>
             </Card>
           </div>

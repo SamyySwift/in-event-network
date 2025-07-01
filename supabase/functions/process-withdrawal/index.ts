@@ -47,21 +47,28 @@ serve(async (req) => {
     switch (action) {
       case 'verify_account':
         console.log('Verifying account:', payload)
-        const verifyResponse = await fetch('https://api.paystack.co/bank/resolve', {
+        
+        // Fix: Construct the URL properly with query parameters
+        const verifyUrl = `https://api.paystack.co/bank/resolve?account_number=${payload.account_number}&bank_code=${payload.bank_code}`
+        console.log('Verify URL:', verifyUrl)
+        
+        const verifyResponse = await fetch(verifyUrl, {
           method: 'GET',
           headers: paystackHeaders,
-          ...{
-            url: `https://api.paystack.co/bank/resolve?account_number=${payload.account_number}&bank_code=${payload.bank_code}`
-          }
         })
         
         if (!verifyResponse.ok) {
           const error = await verifyResponse.json()
+          console.error('Paystack verification error:', error)
           throw new Error(error.message || 'Account verification failed')
         }
         
         result = await verifyResponse.json()
         console.log('Account verification result:', result)
+        
+        if (!result.status || !result.data) {
+          throw new Error('Invalid response from Paystack')
+        }
         
         // Update wallet with verified bank details
         const { error: updateError } = await supabase

@@ -127,40 +127,47 @@ export function ShareableTicketLink() {
           Share this link with potential attendees so they can purchase tickets directly.
         </p>
         
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <Input
             value={ticketUrl}
             readOnly
-            className="font-mono text-sm"
+            className="font-mono text-sm flex-1"
           />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={copyToClipboard}
-            className="shrink-0"
-          >
-            <Copy className="h-4 w-4" />
-            {copied ? 'Copied!' : 'Copy'}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={openInNewTab}
-            className="shrink-0"
-          >
-            <ExternalLink className="h-4 w-4" />
-            Preview
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={generateQRCode}
-            disabled={isGeneratingQR}
-            className="shrink-0"
-          >
-            <QrCode className="h-4 w-4" />
-            {isGeneratingQR ? 'Generating...' : 'Generate QR Code'}
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={copyToClipboard}
+              className="shrink-0"
+            >
+              <Copy className="h-4 w-4" />
+              <span className="ml-2">{copied ? 'Copied!' : 'Copy'}</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={openInNewTab}
+              className="shrink-0"
+            >
+              <ExternalLink className="h-4 w-4" />
+              <span className="ml-2">Preview</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={generateQRCode}
+              disabled={isGeneratingQR}
+              className="shrink-0"
+            >
+              <QrCode className="h-4 w-4" />
+              <span className="ml-2 hidden sm:inline">
+                {isGeneratingQR ? 'Generating...' : 'Generate QR'}
+              </span>
+              <span className="ml-2 sm:hidden">
+                {isGeneratingQR ? 'Generating...' : 'QR'}
+              </span>
+            </Button>
+          </div>
         </div>
 
         {qrCodeDataUrl && (

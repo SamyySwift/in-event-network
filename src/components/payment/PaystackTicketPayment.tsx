@@ -61,17 +61,43 @@ export function PaystackTicketPayment({
       onClose();
     },
     metadata: {
-      event_id: eventId,
-      event_name: eventName,
-      user_id: currentUser?.id,
-      user_name: userInfo.fullName,
-      phone: userInfo.phone,
-      tickets: tickets.map(t => ({
-        ticket_type_id: t.ticketTypeId,
-        quantity: t.quantity,
-        price: t.price,
-        name: t.name
-      }))
+      custom_fields: [
+        {
+          display_name: "Event ID",
+          variable_name: "event_id",
+          value: eventId
+        },
+        {
+          display_name: "Event Name",
+          variable_name: "event_name",
+          value: eventName
+        },
+        {
+          display_name: "User ID",
+          variable_name: "user_id",
+          value: currentUser?.id || ''
+        },
+        {
+          display_name: "User Name",
+          variable_name: "user_name",
+          value: userInfo.fullName
+        },
+        {
+          display_name: "Phone",
+          variable_name: "phone",
+          value: userInfo.phone
+        },
+        {
+          display_name: "Tickets",
+          variable_name: "tickets",
+          value: JSON.stringify(tickets.map(t => ({
+            ticket_type_id: t.ticketTypeId,
+            quantity: t.quantity,
+            price: t.price,
+            name: t.name
+          })))
+        }
+      ]
     }
   };
 

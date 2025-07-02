@@ -15,6 +15,7 @@ interface AuthContextType {
     password: string,
     role: "host" | "attendee"
   ) => Promise<{ error: Error | null }>;
+  signInWithGoogle: (role?: "host" | "attendee") => Promise<{ error: Error | null }>;
   logout: () => Promise<void>;
   updateUser: (user: Partial<User>) => Promise<void>;
 }
@@ -122,12 +123,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         .eq("id", supabaseUser.id)
         .single();
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
         console.error("Error fetching profile:", error);
         throw error;
       }
 
       if (data) {
+        // Profile exists
         const userProfile: User = {
           id: data.id,
           name: data.name || "",
@@ -150,11 +152,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         console.log("Profile loaded successfully:", userProfile);
         setCurrentUser(userProfile);
         setIsLoading(false);
+      } else {
+        // Profile doesn't exist (new Google user), create one
+        console.log("Creating new profile for Google user");
+        const pendingRole = localStorage.getItem('pendingGoogleRole') as "host" | "attendee" || "attendee";
+        localStorage.removeItem('pendingGoogleRole');
+        
+        const newProfile = {
+          id: supabaseUser.id,
+          name: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || '',
+          email: supabaseUser.email || '',
+          role: pendingRole,
+          photo_url: supabaseUser.user_metadata?.avatar_url || null,
+        };
+
+        const { error: insertError } = await supabase
+          .from("profiles")
+          .insert(newProfile);
+
+        if (insertError) {
+          console.error("Error creating profile:", insertError);
+          throw insertError;
+        }
+
+        const userProfile: User = {
+          id: newProfile.id,
+          name: newProfile.name,
+          email: newProfile.email,
+          role: newProfile.role,
+          photoUrl: newProfile.photo_url,
+          bio: null,
+          links: {
+            twitter: null,
+            facebook: null,
+            linkedin: null,
+            instagram: null,
+            snapchat: null,
+            tiktok: null,
+            github: null,
+            website: null,
+          },
+          niche: null,
+        };
+        
+        console.log("New profile created:", userProfile);
+        setCurrentUser(userProfile);
+        setIsLoading(false);
       }
     } catch (error) {
       console.error("Error fetching user profile:", error);
       setIsLoading(false);
-      // Don't throw here, just log the error and continue
     }
   };
 
@@ -323,12 +370,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
+  const signInWithGoogle = async (role: "host" | "attendee" = "attendee") => {
+    try {
+      setIsLoading(true);
+      console.log("Attempting Google sign-in with role:", role);
+      
+      // Store the role preference for after OAuth callback
+      localStorage.setItem('pendingGoogleRole', role);
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            role: role
+          }
+        }
+      });
+
+      if (error) {
+        console.error("Google sign-in error:", error);
+        localStorage.removeItem('pendingGoogleRole');
+        setIsLoading(false);
+        return { error };
+      }
+
+      // The actual sign-in will be handled by the OAuth callback
+      return { error: null };
+    } catch (error) {
+      console.error("Error with Google sign-in:", error);
+      localStorage.removeItem('pendingGoogleRole');
+      setIsLoading(false);
+      return { error: error as Error };
+    }
+  };
+
   const value: AuthContextType = {
     currentUser,
     isAuthenticated: !!currentUser,
     isLoading,
     login,
     register,
+    signInWithGoogle,
     logout,
     updateUser,
   };

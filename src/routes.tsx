@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
+import AuthCallback from "@/pages/AuthCallback";
 import Guide from "@/pages/Guide";
 import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
@@ -116,6 +117,10 @@ export const router = createBrowserRouter([
   {
     path: "/register",
     element: <Register />,
+  },
+  {
+    path: "/auth/callback",
+    element: <AuthCallback />,
   },
   {
     path: "/scan",

@@ -15,6 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, Network, Eye, EyeOff } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { FcGoogle } from "react-icons/fc";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -22,12 +23,11 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { login, currentUser, isLoading } = useAuth();
+  const { login, signInWithGoogle, currentUser, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
   // Handle redirect when user becomes authenticated
-  // Add similar logic to Login.tsx for users who already have accounts
   useEffect(() => {
     console.log("Login component - Auth state:", { currentUser, isLoading });
 
@@ -111,6 +111,24 @@ const Login = () => {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    setErrorMessage(null);
+    try {
+      setIsSubmitting(true);
+      const { error } = await signInWithGoogle("attendee"); // Default to attendee for login
+      
+      if (error) {
+        console.error("Google sign-in error:", error);
+        setErrorMessage("Failed to sign in with Google. Please try again.");
+      }
+      // Note: Don't set setIsSubmitting(false) here as the OAuth redirect will handle the flow
+    } catch (error) {
+      console.error("Google sign-in error:", error);
+      setErrorMessage("An unexpected error occurred. Please try again.");
+      setIsSubmitting(false);
+    }
+  };
+
   // Show loading state while checking authentication
   if (isLoading) {
     return (
@@ -138,7 +156,7 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen  flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="flex justify-center mb-8">
         <Link to="/" className="flex items-center">
           <img src="/logo.png" alt="Kconect Logo" className="h-8 w-auto" />
@@ -222,6 +240,27 @@ const Login = () => {
               >
                 {isSubmitting ? "Signing in..." : "Sign in"}
               </Button>
+              
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                </div>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleGoogleSignIn}
+                disabled={isSubmitting}
+              >
+                <FcGoogle className="mr-2 h-4 w-4" />
+                Sign in with Google
+              </Button>
+              
               <div className="text-center text-sm">
                 Don't have an account?{" "}
                 <Link

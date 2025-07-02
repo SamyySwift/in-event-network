@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useJoinEvent } from "@/hooks/useJoinEvent";
 import { AlertCircle, Network, Eye, EyeOff } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { FcGoogle } from "react-icons/fc";
 
 const Register = () => {
   const [searchParams] = useSearchParams();
@@ -36,10 +37,27 @@ const Register = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isJoiningEvent, setIsJoiningEvent] = useState(false);
 
-  const { register, currentUser, isLoading } = useAuth();
+  const { register, signInWithGoogle, currentUser, isLoading } = useAuth();
   const { joinEvent } = useJoinEvent();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const handleGoogleSignUp = async () => {
+    setErrorMessage(null);
+    try {
+      setIsSubmitting(true);
+      const { error } = await signInWithGoogle(role);
+      
+      if (error) {
+        console.error("Google sign-up error:", error);
+        setErrorMessage("Failed to sign up with Google. Please try again.");
+      }
+    } catch (error) {
+      console.error("Google sign-up error:", error);
+      setErrorMessage("An unexpected error occurred. Please try again.");
+      setIsSubmitting(false);
+    }
+  };
 
   // Handle redirect when user becomes authenticated after registration
   useEffect(() => {
@@ -345,6 +363,27 @@ const Register = () => {
               >
                 {isSubmitting ? "Creating account..." : "Create Account"}
               </Button>
+              
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                </div>
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleGoogleSignUp}
+                disabled={isSubmitting}
+              >
+                <FcGoogle className="mr-2 h-4 w-4" />
+                Sign up with Google
+              </Button>
+              
               <div className="text-center text-sm">
                 Already have an account?{" "}
                 <Link

@@ -101,6 +101,7 @@ const AttendeeRoute = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+// Remove the markdown comments and add the missing route:
 export const router = createBrowserRouter([
   {
     path: "/",

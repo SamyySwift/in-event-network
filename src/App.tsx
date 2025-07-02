@@ -10,6 +10,7 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import Landing from '@/pages/Landing';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
+import AuthCallback from '@/pages/AuthCallback';
 import Guide from '@/pages/Guide';
 import NotFound from '@/pages/NotFound';
 import ScanQR from '@/pages/ScanQR';
@@ -70,6 +71,7 @@ function App() {
               <Route path="/guide" element={<Guide />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/scan" element={<ScanQR />} />
               <Route path="/join/:eventKey" element={<Index />} />
               <Route path="/buy-tickets/:eventKey" element={<BuyTickets />} />

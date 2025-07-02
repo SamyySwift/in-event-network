@@ -163,7 +163,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           name: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || '',
           email: supabaseUser.email || '',
           role: pendingRole,
-          photo_url: supabaseUser.user_metadata?.avatar_url || null,
+          photo_url: supabaseUser.user_metadata?.avatar_url || null, // 👈 Google profile image
         };
 
         const { error: insertError } = await supabase

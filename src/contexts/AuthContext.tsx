@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
@@ -15,7 +14,9 @@ interface AuthContextType {
     password: string,
     role: "host" | "attendee"
   ) => Promise<{ error: Error | null }>;
-  signInWithGoogle: (role?: "host" | "attendee") => Promise<{ error: Error | null }>;
+  signInWithGoogle: (
+    role?: "host" | "attendee"
+  ) => Promise<{ error: Error | null }>;
   logout: () => Promise<void>;
   updateUser: (user: Partial<User>) => Promise<void>;
 }
@@ -43,7 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     const initializeAuth = async () => {
       try {
         console.log("Initializing auth...");
-        
+
         // Get initial session
         const { data, error } = await supabase.auth.getSession();
         if (error) {
@@ -80,7 +81,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("Auth state change:", event, session?.user?.id);
-      
+
       if (!mounted) return;
 
       try {
@@ -89,7 +90,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           if (!currentUser || currentUser.id !== session.user.id) {
             setIsLoading(true);
           }
-          
+
           // Defer profile fetching to avoid potential deadlocks
           setTimeout(async () => {
             if (mounted) {
@@ -116,19 +117,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const getUserProfile = async (supabaseUser: SupabaseUser) => {
     try {
       console.log("Fetching profile for user:", supabaseUser.id);
-      
+  
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", supabaseUser.id)
         .single();
-
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+  
+      if (error && error.code !== "PGRST116") {
+        // PGRST116 = no rows returned
         console.error("Error fetching profile:", error);
         throw error;
       }
-
+  
       if (data) {
+        // Profile exists - check if there's a pending role update from Google OAuth
+        const pendingRole = localStorage.getItem("pendingGoogleRole") as "host" | "attendee";
+        
+        if (pendingRole && pendingRole !== data.role) {
+          console.log(`Updating existing profile role from ${data.role} to ${pendingRole}`);
+          
+          // Update the role in the database
+          const { error: updateError } = await supabase
+            .from("profiles")
+            .update({ role: pendingRole })
+            .eq("id", supabaseUser.id);
+            
+          if (updateError) {
+            console.error("Error updating profile role:", updateError);
+          } else {
+            data.role = pendingRole; // Update local data
+          }
+          
+          localStorage.removeItem("pendingGoogleRole");
+        }
+        
         // Profile exists
         const userProfile: User = {
           id: data.id,
@@ -155,13 +178,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       } else {
         // Profile doesn't exist (new Google user), create one
         console.log("Creating new profile for Google user");
-        const pendingRole = localStorage.getItem('pendingGoogleRole') as "host" | "attendee" || "attendee";
-        localStorage.removeItem('pendingGoogleRole');
-        
+        const pendingRole =
+          (localStorage.getItem("pendingGoogleRole") as "host" | "attendee") ||
+          "attendee";
+        localStorage.removeItem("pendingGoogleRole");
+
         const newProfile = {
           id: supabaseUser.id,
-          name: supabaseUser.user_metadata?.full_name || supabaseUser.email?.split('@')[0] || '',
-          email: supabaseUser.email || '',
+          name:
+            supabaseUser.user_metadata?.full_name ||
+            supabaseUser.email?.split("@")[0] ||
+            "",
+          email: supabaseUser.email || "",
           role: pendingRole,
           photo_url: supabaseUser.user_metadata?.avatar_url || null,
         };
@@ -194,7 +222,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           },
           niche: null,
         };
-        
+
         console.log("New profile created:", userProfile);
         setCurrentUser(userProfile);
         setIsLoading(false);
@@ -209,10 +237,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       setIsLoading(true);
       console.log("Attempting login for:", email);
-      
+
       // Clear any existing session first
       await supabase.auth.signOut();
-      
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -242,10 +270,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       setIsLoading(true);
       console.log("Attempting registration for:", email, "with role:", role);
-      
+
       // Clear any existing session first
       await supabase.auth.signOut();
-      
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -265,16 +293,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (data.user) {
         console.log("Registration successful for:", data.user.id);
-        
+
         // Create or update profile with the specified role
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .upsert({
-            id: data.user.id,
-            name,
-            email,
-            role,
-          });
+        const { error: profileError } = await supabase.from("profiles").upsert({
+          id: data.user.id,
+          name,
+          email,
+          role,
+        });
 
         if (profileError) {
           console.error("Profile creation error:", profileError);
@@ -285,10 +311,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         // For development, automatically sign in the user after registration
         if (!data.session) {
           console.log("Attempting auto-login after registration...");
-          const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
+          const { data: loginData, error: loginError } =
+            await supabase.auth.signInWithPassword({
+              email,
+              password,
+            });
 
           if (loginError) {
             console.error("Auto-login error:", loginError);
@@ -374,23 +401,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       setIsLoading(true);
       console.log("Attempting Google sign-in with role:", role);
-      
+
       // Store the role preference for after OAuth callback
-      localStorage.setItem('pendingGoogleRole', role);
-      
+      localStorage.setItem("pendingGoogleRole", role);
+
       const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
+        provider: "google",
         options: {
           redirectTo: `${window.location.origin}/auth/callback`,
           queryParams: {
-            role: role
-          }
-        }
+            role: role,
+          },
+        },
       });
 
       if (error) {
         console.error("Google sign-in error:", error);
-        localStorage.removeItem('pendingGoogleRole');
+        localStorage.removeItem("pendingGoogleRole");
         setIsLoading(false);
         return { error };
       }
@@ -399,7 +426,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       return { error: null };
     } catch (error) {
       console.error("Error with Google sign-in:", error);
-      localStorage.removeItem('pendingGoogleRole');
+      localStorage.removeItem("pendingGoogleRole");
       setIsLoading(false);
       return { error: error as Error };
     }

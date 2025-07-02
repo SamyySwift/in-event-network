@@ -386,63 +386,60 @@ export default function AttendeeMyTickets() {
 
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+              <Card className="relative overflow-hidden border border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-purple-100 text-sm font-medium">Total Tickets</p>
-                      <p className="text-3xl font-bold">{tickets.length}</p>
+                      <p className="text-purple-600 text-sm font-medium">Total Tickets</p>
+                      <p className="text-3xl font-bold text-purple-900">{tickets.length}</p>
                     </div>
-                    <div className="bg-white/20 p-3 rounded-xl">
+                    <div className="bg-purple-500 p-3 rounded-xl text-white">
                       <Ticket className="h-6 w-6" />
                     </div>
                   </div>
-                  <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full"></div>
                 </CardContent>
               </Card>
 
-              <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-indigo-500 to-indigo-600 text-white">
+              <Card className="relative overflow-hidden border border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-indigo-100 text-sm font-medium">Checked In</p>
-                      <p className="text-3xl font-bold">{tickets.filter(t => t.check_in_status).length}</p>
+                      <p className="text-purple-600 text-sm font-medium">Checked In</p>
+                      <p className="text-3xl font-bold text-purple-900">{tickets.filter(t => t.check_in_status).length}</p>
                     </div>
-                    <div className="bg-white/20 p-3 rounded-xl">
+                    <div className="bg-purple-500 p-3 rounded-xl text-white">
                       <CheckCircle className="h-6 w-6" />
                     </div>
                   </div>
-                  <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full"></div>
                 </CardContent>
               </Card>
 
-              <Card className="relative overflow-hidden border-0 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
+              <Card className="relative overflow-hidden border border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-emerald-100 text-sm font-medium">Upcoming Events</p>
-                      <p className="text-3xl font-bold">
+                      <p className="text-purple-600 text-sm font-medium">Upcoming Events</p>
+                      <p className="text-3xl font-bold text-purple-900">
                         {tickets.filter(t => new Date(t.events.start_time) > new Date()).length}
                       </p>
                     </div>
-                    <div className="bg-white/20 p-3 rounded-xl">
+                    <div className="bg-purple-500 p-3 rounded-xl text-white">
                       <Calendar className="h-6 w-6" />
                     </div>
                   </div>
-                  <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-white/10 rounded-full"></div>
                 </CardContent>
               </Card>
             </div>
 
             {/* User Information Form Modal */}
             {showUserInfoForm && (
-              <Card className="mb-8 border-0 bg-gradient-to-r from-orange-50 to-orange-100 shadow-lg">
-                <CardHeader className="bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-t-lg">
+              <Card className="mb-8 border border-purple-200 bg-gradient-to-r from-purple-50 to-purple-100 shadow-lg">
+                <CardHeader className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-t-lg">
                   <CardTitle className="flex items-center gap-2">
                     <Users className="h-5 w-5" />
                     Complete Your Information
                   </CardTitle>
-                  <CardDescription className="text-orange-100">
+                  <CardDescription className="text-purple-100">
                     Please provide your information before purchasing tickets.
                   </CardDescription>
                 </CardHeader>
@@ -495,7 +492,7 @@ export default function AttendeeMyTickets() {
                         }
                       }}
                       disabled={purchaseTickets.isPending}
-                      className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700"
+                      className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
                     >
                       {purchaseTickets.isPending ? 'Processing...' : 'Continue with Purchase'}
                     </Button>
@@ -511,8 +508,8 @@ export default function AttendeeMyTickets() {
             )}
 
             {/* Purchase New Tickets Section */}
-            <Card className="mb-8 border-0 shadow-xl bg-gradient-to-br from-white to-purple-50">
-              <CardHeader className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-t-lg">
+            <Card className="mb-8 border border-purple-200 shadow-lg bg-gradient-to-br from-white to-purple-50">
+              <CardHeader className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-t-lg">
                 <CardTitle className="flex items-center gap-3 text-xl">
                   <div className="bg-white/20 p-2 rounded-lg">
                     <ShoppingCart className="h-6 w-6" />
@@ -534,7 +531,7 @@ export default function AttendeeMyTickets() {
                   <Button 
                     onClick={handleUrlSubmit} 
                     disabled={!ticketUrl.trim()}
-                    className="h-12 px-8 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 shadow-lg"
+                    className="h-12 px-8 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-lg"
                   >
                     <Sparkles className="h-4 w-4 mr-2" />
                     Explore Event
@@ -545,8 +542,8 @@ export default function AttendeeMyTickets() {
 
             {/* Purchase Form */}
             {showPurchaseForm && eventData && (
-              <Card className="mb-8 border-0 shadow-xl overflow-hidden">
-                <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-6 text-white">
+              <Card className="mb-8 border border-purple-200 shadow-xl overflow-hidden">
+                <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 text-white">
                   <div className="flex items-center gap-4">
                     <div className="bg-white/20 p-3 rounded-xl">
                       <Star className="h-8 w-8" />
@@ -560,21 +557,21 @@ export default function AttendeeMyTickets() {
                 
                 <CardContent className="p-6 space-y-6">
                   {/* Event Details */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-100">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl border border-purple-200">
                     <div className="flex items-center gap-3">
                       <div className="bg-purple-100 p-2 rounded-lg">
                         <Calendar className="h-5 w-5 text-purple-600" />
                       </div>
                       <span className="font-medium">{formatDate(eventData.event.start_time)}</span>
                     </div>
-                    {eventData.event.location && (
-                      <div className="flex items-center gap-3">
-                        <div className="bg-indigo-100 p-2 rounded-lg">
-                          <MapPin className="h-5 w-5 text-indigo-600" />
+                      {eventData.event.location && (
+                        <div className="flex items-center gap-3">
+                          <div className="bg-purple-100 p-2 rounded-lg">
+                            <MapPin className="h-5 w-5 text-purple-600" />
+                          </div>
+                          <span className="font-medium">{eventData.event.location}</span>
                         </div>
-                        <span className="font-medium">{eventData.event.location}</span>
-                      </div>
-                    )}
+                      )}
                   </div>
 
                   {/* Ticket Types */}
@@ -621,18 +618,18 @@ export default function AttendeeMyTickets() {
 
                   {/* Purchase Summary */}
                   {getTotalTickets() > 0 && (
-                    <Card className="border-2 border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
+                    <Card className="border-2 border-purple-200 bg-gradient-to-r from-purple-50 to-purple-100">
                       <CardContent className="p-6">
                         <div className="flex justify-between items-center mb-4">
-                          <span className="text-lg font-bold text-gray-800">
+                          <span className="text-lg font-bold text-purple-900">
                             Total: {getTotalTickets()} ticket{getTotalTickets() !== 1 ? 's' : ''}
                           </span>
-                          <span className="text-2xl font-bold text-green-600">₦{getTotalPrice().toLocaleString()}</span>
+                          <span className="text-2xl font-bold text-purple-600">₦{getTotalPrice().toLocaleString()}</span>
                         </div>
                         <Button 
                           onClick={handlePurchase}
                           disabled={purchaseTickets.isPending}
-                          className="w-full h-12 text-lg bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-lg"
+                          className="w-full h-12 text-lg bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-lg"
                         >
                           {purchaseTickets.isPending ? (
                             <div className="flex items-center gap-2">
@@ -654,8 +651,8 @@ export default function AttendeeMyTickets() {
             )}
 
             {/* My Existing Tickets */}
-            <Card className="border-0 shadow-xl bg-white">
-              <CardHeader className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-t-lg">
+            <Card className="border border-purple-200 shadow-xl bg-white">
+              <CardHeader className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-t-lg">
                 <CardTitle className="flex items-center gap-3 text-xl">
                   <div className="bg-white/20 p-2 rounded-lg">
                     <Ticket className="h-6 w-6" />
@@ -681,7 +678,7 @@ export default function AttendeeMyTickets() {
                     <p className="text-gray-600 mb-6">Start your journey by purchasing tickets to exciting events!</p>
                     <Button 
                       onClick={() => (document.querySelector('input[placeholder*="Paste"]') as HTMLInputElement)?.focus()}
-                      className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
+                      className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
                     >
                       <Plus className="h-4 w-4 mr-2" />
                       Get Your First Ticket

@@ -77,9 +77,9 @@ const TicketQRCode: React.FC<TicketQRCodeProps> = ({ ticket, onClose }) => {
   };
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader className="text-center">
-        <CardTitle className="flex items-center justify-center gap-2">
+    <Card className="w-full border-0 shadow-none">
+      <CardHeader className="text-center pb-4">
+        <CardTitle className="flex items-center justify-center gap-2 text-lg">
           <Ticket className="h-5 w-5" />
           Ticket QR Code
         </CardTitle>
@@ -101,7 +101,7 @@ const TicketQRCode: React.FC<TicketQRCodeProps> = ({ ticket, onClose }) => {
         </Badge>
       </CardHeader>
       
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 px-2 sm:px-6">
         {/* Event Information */}
         <div className="text-center space-y-2">
           <h3 className="font-semibold text-lg">{ticket.events.name}</h3>
@@ -115,15 +115,15 @@ const TicketQRCode: React.FC<TicketQRCodeProps> = ({ ticket, onClose }) => {
         {/* QR Code */}
         <div className="flex justify-center">
           {qrImageUrl ? (
-            <div className="border rounded-lg p-4 bg-white">
+            <div className="border rounded-lg p-2 sm:p-4 bg-white">
               <img 
                 src={qrImageUrl} 
                 alt="Ticket QR Code"
-                className="w-64 h-64"
+                className="w-48 h-48 sm:w-64 sm:h-64"
               />
             </div>
           ) : (
-            <div className="w-64 h-64 border rounded-lg flex items-center justify-center">
+            <div className="w-48 h-48 sm:w-64 sm:h-64 border rounded-lg flex items-center justify-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           )}
@@ -150,25 +150,25 @@ const TicketQRCode: React.FC<TicketQRCodeProps> = ({ ticket, onClose }) => {
         </div>
 
         {/* Instructions */}
-        <div className="bg-blue-50 p-3 rounded-lg text-sm">
-          <p className="text-blue-800">
+        <div className="bg-purple-50 p-3 rounded-lg text-sm">
+          <p className="text-purple-800">
             <strong>Instructions:</strong> Show this QR code to event staff for check-in. 
             The QR code contains your ticket verification information.
           </p>
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-3 pt-4">
           <Button 
             onClick={downloadQRCode} 
             variant="outline" 
-            className="flex-1"
+            className="w-full sm:flex-1 h-12 text-base"
             disabled={!qrImageUrl}
           >
             <Download className="h-4 w-4 mr-2" />
             Download
           </Button>
-          <Button onClick={onClose} variant="outline" className="flex-1">
+          <Button onClick={onClose} className="w-full sm:flex-1 h-12 text-base">
             Close
           </Button>
         </div>

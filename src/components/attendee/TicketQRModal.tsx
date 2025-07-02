@@ -37,11 +37,13 @@ const TicketQRModal: React.FC<TicketQRModalProps> = ({ isOpen, onClose, ticket }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
+      <DialogContent className="max-w-lg w-[95vw] max-h-[95vh] overflow-y-auto p-0">
+        <DialogHeader className="p-6 pb-2">
           <DialogTitle>Your Ticket</DialogTitle>
         </DialogHeader>
-        <TicketQRCode ticket={ticket} onClose={onClose} />
+        <div className="p-6 pt-0">
+          <TicketQRCode ticket={ticket} onClose={onClose} />
+        </div>
       </DialogContent>
     </Dialog>
   );

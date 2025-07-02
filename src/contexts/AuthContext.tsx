@@ -117,20 +117,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const getUserProfile = async (supabaseUser: SupabaseUser) => {
     try {
       console.log("Fetching profile for user:", supabaseUser.id);
-
+  
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", supabaseUser.id)
         .single();
-
+  
       if (error && error.code !== "PGRST116") {
         // PGRST116 = no rows returned
         console.error("Error fetching profile:", error);
         throw error;
       }
-
+  
       if (data) {
+        // Profile exists - check if there's a pending role update from Google OAuth
+        const pendingRole = localStorage.getItem("pendingGoogleRole") as "host" | "attendee";
+        
+        if (pendingRole && pendingRole !== data.role) {
+          console.log(`Updating existing profile role from ${data.role} to ${pendingRole}`);
+          
+          // Update the role in the database
+          const { error: updateError } = await supabase
+            .from("profiles")
+            .update({ role: pendingRole })
+            .eq("id", supabaseUser.id);
+            
+          if (updateError) {
+            console.error("Error updating profile role:", updateError);
+          } else {
+            data.role = pendingRole; // Update local data
+          }
+          
+          localStorage.removeItem("pendingGoogleRole");
+        }
+        
         // Profile exists
         const userProfile: User = {
           id: data.id,

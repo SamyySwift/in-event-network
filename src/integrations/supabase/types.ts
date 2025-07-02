@@ -1566,6 +1566,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      grant_attendee_dashboard_access: {
+        Args: { attendee_user_id: string; target_event_id: string }
+        Returns: Json
+      }
       is_event_host: {
         Args: { event_uuid: string }
         Returns: boolean

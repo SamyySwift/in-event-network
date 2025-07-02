@@ -14,41 +14,33 @@ export const useAdminCheckIns = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Helper function to grant attendee dashboard access
+  // Helper function to grant attendee dashboard access via admin check-in
   const grantAttendeeAccess = async (ticketData: any) => {
     try {
-      // Get the attendee's user ID from the ticket
       const attendeeUserId = ticketData.user_id;
       
       if (attendeeUserId && selectedEventId) {
-        // Call the same RPC function that's used for QR code event joining
-        // This ensures consistent behavior between both access methods
-        const { data: eventData, error: eventError } = await supabase
-          .from('events')
-          .select('event_key')
-          .eq('id', selectedEventId)
-          .single();
+        console.log('Granting dashboard access for attendee:', attendeeUserId);
+        
+        // Use the new admin-specific function to grant dashboard access
+        const { data, error } = await supabase.rpc('grant_attendee_dashboard_access', {
+          attendee_user_id: attendeeUserId,
+          target_event_id: selectedEventId
+        });
 
-        if (eventError) {
-          console.error('Error fetching event access key:', eventError);
-          return;
-        }
-
-        if (eventData?.event_key) {
-          // Use the join_event_by_access_key RPC to register the attendee
-          const { data, error } = await supabase.rpc('join_event_by_access_key', {
-            access_code: eventData.event_key
-          });
-
-          if (error) {
-            console.error('Error granting attendee access:', error);
-          } else {
-            console.log('Successfully granted attendee dashboard access:', data);
-          }
+        if (error) {
+          console.error('Error granting attendee dashboard access:', error);
+          throw new Error('Failed to grant dashboard access');
+        } else if ((data as any)?.success === false) {
+          console.error('Dashboard access grant failed:', (data as any).message);
+          throw new Error((data as any).message || 'Failed to grant dashboard access');
+        } else {
+          console.log('Successfully granted attendee dashboard access:', data);
         }
       }
     } catch (error) {
       console.error('Error in grantAttendeeAccess:', error);
+      throw error; // Re-throw to handle in calling function
     }
   };
 
@@ -165,10 +157,10 @@ export const useAdminCheckIns = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
-      // Get all unchecked tickets for the event
+      // Get all unchecked tickets for the event with user information
       const { data: uncheckedTickets, error: fetchError } = await supabase
         .from('event_tickets')
-        .select('id, ticket_number')
+        .select('id, ticket_number, user_id')
         .eq('event_id', selectedEventId)
         .eq('check_in_status', false);
 
@@ -205,6 +197,20 @@ export const useAdminCheckIns = () => {
         .insert(checkInRecords);
 
       if (checkInError) throw checkInError;
+
+      // Grant dashboard access for all attendees with user accounts
+      const attendeesWithAccounts = uncheckedTickets.filter(ticket => ticket.user_id);
+      for (const ticket of attendeesWithAccounts) {
+        try {
+          await supabase.rpc('grant_attendee_dashboard_access', {
+            attendee_user_id: ticket.user_id,
+            target_event_id: selectedEventId
+          });
+        } catch (error) {
+          console.error(`Failed to grant access for ticket ${ticket.ticket_number}:`, error);
+          // Continue with other tickets even if one fails
+        }
+      }
 
       return uncheckedTickets.length;
     },

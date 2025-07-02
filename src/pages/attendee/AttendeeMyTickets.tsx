@@ -680,7 +680,7 @@ export default function AttendeeMyTickets() {
                     <h3 className="text-xl font-bold text-gray-800 mb-2">No Tickets Yet</h3>
                     <p className="text-gray-600 mb-6">Start your journey by purchasing tickets to exciting events!</p>
                     <Button 
-                      onClick={() => document.querySelector('input[placeholder*="Paste"]')?.focus()}
+                      onClick={() => (document.querySelector('input[placeholder*="Paste"]') as HTMLInputElement)?.focus()}
                       className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700"
                     >
                       <Plus className="h-4 w-4 mr-2" />

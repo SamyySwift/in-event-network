@@ -83,28 +83,39 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
-
+  
     if (!email || !password) {
       setErrorMessage("Please fill in all fields");
       return;
     }
-
+  
     if (isSubmitting) return;
-
+  
     try {
       setIsSubmitting(true);
       console.log("Attempting login for:", email);
-      await login(email, password);
+      
+      // Get the result from login function
+      const result = await login(email, password);
+      
+      // Check if there was an error
+      if (result.error) {
+        console.error("Login error:", result.error);
+        setErrorMessage(
+          result.error.message || "Invalid email or password. Please try again."
+        );
+        return;
+      }
+      
       console.log("Login successful");
-
       toast({
         title: "Welcome back!",
         description: "You have been successfully signed in.",
       });
     } catch (error: any) {
-      console.error("Login error:", error);
+      console.error("Unexpected login error:", error);
       setErrorMessage(
-        error.message || "Invalid email or password. Please try again."
+        error.message || "An unexpected error occurred. Please try again."
       );
     } finally {
       setIsSubmitting(false);

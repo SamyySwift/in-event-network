@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { MapPin, Search, Info, Phone, Compass, Coffee, Home, Utensils, HeartPulse, Bath, Car, CircleHelp, Clock, Building, Wifi, Users, Camera, Music, Tv, Gamepad2, Heart, ShoppingBag, Bed, MessageCircle } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
@@ -293,153 +292,111 @@ const AttendeeMap = () => {
                       <p>No facilities found matching your criteria.</p>
                     </div>
                   ) : (
-                    <div className="space-y-6">
-                      {Object.keys(facilityTypeLabels).map(type => {
-                        const typeFacilities = filteredFacilities.filter(f => f.icon_type === type);
-                        if (typeFacilities.length === 0) return null;
-                        
-                        return (
-                          <div key={type} className="mb-6">
-                            <h3 className="text-base sm:text-lg font-semibold mb-3 flex items-center gap-2 flex-wrap">
-                              {facilityTypeLabels[type]}
-                              <Badge className={`text-xs ${facilityTypeColors[type] || facilityTypeColors.other}`}>
-                                {typeFacilities.length}
-                              </Badge>
-                            </h3>
-                            <div className={`grid gap-3 sm:gap-4 ${
-                              isMobile 
-                                ? 'grid-cols-1' 
-                                : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
-                            }`}>
-                              {typeFacilities.map(facility => (
-                                <div 
-                                  key={facility.id}
-                                  className={`border rounded-lg p-3 sm:p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer ${
-                                    selectedFacility?.id === facility.id
-                                      ? 'ring-2 ring-connect-500 bg-connect-50 dark:bg-connect-900/30'
-                                      : ''
-                                  }`}
-                                  onClick={() => setSelectedFacility(facility)}
-                                >
-                                  <div className="flex items-start gap-3 mb-3">
-                                    {facility.image_url ? (
-                                      <div className={`${isMobile ? 'w-12 h-12' : 'w-16 h-16'} rounded-lg overflow-hidden flex-shrink-0`}>
-                                        <img 
-                                          src={facility.image_url} 
-                                          alt={facility.name}
-                                          className="w-full h-full object-cover"
-                                        />
-                                      </div>
-                                    ) : (
-                                      <div className={`${isMobile ? 'p-2' : 'p-3'} rounded-full ${(facilityTypeColors[facility.icon_type] || facilityTypeColors.other).split(' ')[0]} ${(facilityTypeColors[facility.icon_type] || facilityTypeColors.other).split(' ')[1]}`}>
-                                        {getFacilityIcon(facility.icon_type)}
-                                      </div>
-                                    )}
-                                    <div className="flex-1 min-w-0">
-                                      <h4 className={`font-medium ${isMobile ? 'text-sm' : 'text-base lg:text-lg'} line-clamp-2`}>{facility.name}</h4>
-                                      <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-500 dark:text-gray-400 line-clamp-1`}>
-                                        {facility.location}
-                                      </p>
-                                    </div>
-                                  </div>
-                                  {(facility.contact_info || facility.description) && (
-                                    <>
-                                      <Separator className="my-2 sm:my-3" />
-                                      <div className={`${isMobile ? 'text-xs' : 'text-sm'} space-y-1 sm:space-y-2`}>
-                                        {facility.description && (
-                                          <p className="text-gray-600 dark:text-gray-300 line-clamp-2">
-                                            {facility.description}
-                                          </p>
-                                        )}
-                                        {facility.contact_info && facility.contact_type !== 'none' && (
-                                          <p className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                                            {getContactIcon(facility.contact_type)}
-                                            <span className="truncate">{facility.contact_info}</span>
-                                          </p>
-                                        )}
-                                      </div>
-                                    </>
-                                  )}
+                    <div className="space-y-4">
+                      {filteredFacilities.map(facility => (
+                        <div 
+                          key={facility.id}
+                          className={`border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer ${
+                            selectedFacility?.id === facility.id
+                              ? 'ring-2 ring-connect-500 bg-connect-50 dark:bg-connect-900/30'
+                              : ''
+                          }`}
+                          onClick={() => setSelectedFacility(facility)}
+                        >
+                          <div className="flex items-start gap-4 mb-3">
+                            {facility.image_url ? (
+                              <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                                <img 
+                                  src={facility.image_url} 
+                                  alt={facility.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            ) : (
+                              <div className={`p-3 rounded-full ${(facilityTypeColors[facility.icon_type] || facilityTypeColors.other).split(' ')[0]} ${(facilityTypeColors[facility.icon_type] || facilityTypeColors.other).split(' ')[1]}`}>
+                                {getFacilityIcon(facility.icon_type)}
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between mb-2">
+                                <h4 className="text-lg font-medium line-clamp-2">{facility.name}</h4>
+                                <Badge className={`text-xs ${facilityTypeColors[facility.icon_type] || facilityTypeColors.other}`}>
+                                  {facilityTypeLabels[facility.icon_type] || facility.icon_type}
+                                </Badge>
+                              </div>
+                              <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1 mb-2">
+                                <MapPin className="inline h-4 w-4 mr-1" />
+                                {facility.location}
+                              </p>
+                              {facility.description && (
+                                <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-3">
+                                  {facility.description}
+                                </p>
+                              )}
+                              {facility.contact_info && facility.contact_type !== 'none' && (
+                                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                                  {getContactIcon(facility.contact_type)}
+                                  <span>{facility.contact_info}</span>
                                 </div>
-                              ))}
+                              )}
                             </div>
                           </div>
-                        );
-                      })}
+                        </div>
+                      ))}
                     </div>
                   )}
                 </CardContent>
               </Card>
-              
-              {/* Selected facility details */}
-              {selectedFacility && (
-                <Card className="mt-6">
-                  <CardHeader className="pb-2">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
-                      <div className="flex-1">
-                        <CardTitle className={`${isMobile ? 'text-lg' : 'text-xl'}`}>{selectedFacility.name}</CardTitle>
-                        <CardDescription>
-                          <Badge
-                            className={`mt-1 text-xs ${facilityTypeColors[selectedFacility.icon_type] || facilityTypeColors.other}`}
-                          >
-                            {facilityTypeLabels[selectedFacility.icon_type] || selectedFacility.icon_type}
-                          </Badge>
-                        </CardDescription>
-                      </div>
-                      <Button
-                        size={isMobile ? "sm" : "default"}
-                        variant="outline"
-                        onClick={() => setSelectedFacility(null)}
-                        className="flex items-center gap-1 self-start"
-                      >
-                        Close Details
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {selectedFacility.image_url && (
-                      <div className={`w-full ${isMobile ? 'h-32' : 'h-48'} rounded-lg overflow-hidden`}>
-                        <img 
-                          src={selectedFacility.image_url} 
-                          alt={selectedFacility.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    )}
-                    <div className="space-y-2">
-                      {selectedFacility.location && (
-                        <div className="flex items-start gap-2">
-                          <MapPin className="h-4 w-4 text-gray-500 mt-1 flex-shrink-0" />
-                          <p className={`${isMobile ? 'text-sm' : 'text-base'}`}>{selectedFacility.location}</p>
-                        </div>
-                      )}
-                      {selectedFacility.description && (
-                        <div className="flex items-start gap-2">
-                          <Info className="h-4 w-4 text-gray-500 mt-1 flex-shrink-0" />
-                          <p className={`${isMobile ? 'text-sm' : 'text-base'}`}>{selectedFacility.description}</p>
-                        </div>
-                      )}
-                      {selectedFacility.contact_info && selectedFacility.contact_type !== 'none' && (
-                        <div className="flex items-start gap-2">
-                          {getContactIcon(selectedFacility.contact_type)}
-                          <p className={`${isMobile ? 'text-sm' : 'text-base'} break-all`}>{selectedFacility.contact_info}</p>
-                        </div>
-                      )}
-                      {selectedFacility.rules && (
-                        <div className="flex items-start gap-2">
-                          <Info className="h-4 w-4 text-gray-500 mt-1 flex-shrink-0" />
-                          <div>
-                            <p className={`font-medium ${isMobile ? 'text-sm' : 'text-base'}`}>Rules:</p>
-                            <p className={`${isMobile ? 'text-xs' : 'text-sm'} mt-1`}>{selectedFacility.rules}</p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
             </div>
           </div>
+
+          {/* Facility Detail Modal for Mobile */}
+          {isMobile && selectedFacility && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
+              <div className="bg-white dark:bg-gray-800 w-full rounded-t-2xl p-6 animate-slide-in-right">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-bold">{selectedFacility.name}</h3>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => setSelectedFacility(null)}
+                  >
+                    ✕
+                  </Button>
+                </div>
+                
+                {selectedFacility.image_url && (
+                  <div className="w-full h-48 rounded-lg overflow-hidden mb-4">
+                    <img 
+                      src={selectedFacility.image_url} 
+                      alt={selectedFacility.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm text-gray-600 dark:text-gray-300">{selectedFacility.location}</span>
+                  </div>
+                  
+                  {selectedFacility.description && (
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                      {selectedFacility.description}
+                    </p>
+                  )}
+                  
+                  {selectedFacility.contact_info && selectedFacility.contact_type !== 'none' && (
+                    <div className="flex items-center gap-2">
+                      {getContactIcon(selectedFacility.contact_type)}
+                      <span className="text-sm text-gray-600 dark:text-gray-300">{selectedFacility.contact_info}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </AttendeeRouteGuard>
     </AppLayout>

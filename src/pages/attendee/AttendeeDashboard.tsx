@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Users, MapPin, MessageSquare, Clock, Star, BookOpen, Wifi, WifiOff, ChevronRight, Zap, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -14,12 +14,35 @@ import AttendeeRouteGuard from '@/components/attendee/AttendeeRouteGuard';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useNetworking } from "@/hooks/useNetworking";
 import { UserPlus } from "lucide-react";
+import { ProfileCompletionPopup } from '@/components/attendee/ProfileCompletionPopup';
 
 const AttendeeDashboardContent = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const { hasJoinedEvent, isLoading: contextLoading } = useAttendeeEventContext();
   const { dashboardData, isLoading, error } = useDashboard();
+  const [showProfilePopup, setShowProfilePopup] = useState(false);
+
+  // Check if profile needs completion on first visit
+  useEffect(() => {
+    if (currentUser && hasJoinedEvent) {
+      const lastDismissed = localStorage.getItem('profileReminderDismissed');
+      const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+      
+      // Show popup if user hasn't dismissed it in the last 24 hours
+      if (!lastDismissed || parseInt(lastDismissed) < oneDayAgo) {
+        // Check if profile is incomplete
+        const isIncomplete = !currentUser.photoUrl || !currentUser.bio || !currentUser.niche || 
+                            !currentUser.links?.linkedin || !currentUser.links?.twitter;
+        
+        if (isIncomplete) {
+          // Show popup after a short delay
+          const timer = setTimeout(() => setShowProfilePopup(true), 2000);
+          return () => clearTimeout(timer);
+        }
+      }
+    }
+  }, [currentUser, hasJoinedEvent]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {

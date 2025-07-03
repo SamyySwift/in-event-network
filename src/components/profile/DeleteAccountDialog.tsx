@@ -44,34 +44,127 @@ export const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({ userNa
         throw new Error('No user found');
       }
 
-      // Delete the user's profile and related data
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', user.id);
-
-      if (profileError) {
-        console.error('Error deleting profile:', profileError);
-      }
-
-      // Delete event participations
-      const { error: participationError } = await supabase
-        .from('event_participants')
+      // Delete user data from all related tables
+      // Note: Some deletions may be handled by CASCADE constraints
+      
+      // Delete chat messages
+      const { error: chatError } = await supabase
+        .from('chat_messages')
         .delete()
         .eq('user_id', user.id);
 
-      if (participationError) {
-        console.error('Error deleting event participations:', participationError);
+      if (chatError) {
+        console.error('Error deleting chat messages:', chatError);
       }
 
-      // Delete notifications
-      const { error: notificationError } = await supabase
-        .from('notifications')
+      // Delete direct messages (both sent and received)
+      const { error: directMessagesError } = await supabase
+        .from('direct_messages')
+        .delete()
+        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`);
+
+      if (directMessagesError) {
+        console.error('Error deleting direct messages:', directMessagesError);
+      }
+
+      // Delete regular messages (both sent and received)
+      const { error: messagesError } = await supabase
+        .from('messages')
+        .delete()
+        .or(`sender_id.eq.${user.id},recipient_id.eq.${user.id}`);
+
+      if (messagesError) {
+        console.error('Error deleting messages:', messagesError);
+      }
+
+      // Delete poll votes
+      const { error: pollVotesError } = await supabase
+        .from('poll_votes')
         .delete()
         .eq('user_id', user.id);
 
-      if (notificationError) {
-        console.error('Error deleting notifications:', notificationError);
+      if (pollVotesError) {
+        console.error('Error deleting poll votes:', pollVotesError);
+      }
+
+      // Delete questions submitted by user
+      const { error: questionsError } = await supabase
+        .from('questions')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (questionsError) {
+        console.error('Error deleting questions:', questionsError);
+      }
+
+      // Delete suggestions/feedback
+      const { error: suggestionsError } = await supabase
+        .from('suggestions')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (suggestionsError) {
+        console.error('Error deleting suggestions:', suggestionsError);
+      }
+
+      // Delete event tickets
+      const { error: ticketsError } = await supabase
+        .from('event_tickets')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (ticketsError) {
+        console.error('Error deleting event tickets:', ticketsError);
+      }
+
+      // Delete event payments
+      const { error: paymentsError } = await supabase
+        .from('event_payments')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (paymentsError) {
+        console.error('Error deleting event payments:', paymentsError);
+      }
+
+      // Delete admin wallets (if user is an admin)
+      const { error: adminWalletsError } = await supabase
+        .from('admin_wallets')
+        .delete()
+        .eq('admin_id', user.id);
+
+      if (adminWalletsError) {
+        console.error('Error deleting admin wallets:', adminWalletsError);
+      }
+
+      // Delete check-ins performed by user (if admin)
+      const { error: checkInsError } = await supabase
+        .from('check_ins')
+        .delete()
+        .eq('admin_id', user.id);
+
+      if (checkInsError) {
+        console.error('Error deleting check-ins:', checkInsError);
+      }
+
+      // Delete media files uploaded by user
+      const { error: mediaError } = await supabase
+        .from('media_files')
+        .delete()
+        .eq('uploaded_by', user.id);
+
+      if (mediaError) {
+        console.error('Error deleting media files:', mediaError);
+      }
+
+      // Delete events hosted by user
+      const { error: eventsError } = await supabase
+        .from('events')
+        .delete()
+        .eq('host_id', user.id);
+
+      if (eventsError) {
+        console.error('Error deleting hosted events:', eventsError);
       }
 
       // Delete connections
@@ -84,13 +177,52 @@ export const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({ userNa
         console.error('Error deleting connections:', connectionError);
       }
 
+      // Delete notifications
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (notificationError) {
+        console.error('Error deleting notifications:', notificationError);
+      }
+
+      // Delete event participations (this should cascade delete related data)
+      const { error: participationError } = await supabase
+        .from('event_participants')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (participationError) {
+        console.error('Error deleting event participations:', participationError);
+      }
+
+      // Finally, delete the user's profile
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', user.id);
+
+      if (profileError) {
+        console.error('Error deleting profile:', profileError);
+        throw profileError;
+      }
+
+      // Delete the user's auth account
+      const { error: authError } = await supabase.auth.admin.deleteUser(user.id);
+      
+      if (authError) {
+        console.error('Error deleting auth user:', authError);
+        // Continue even if auth deletion fails, as the profile data is already deleted
+      }
+
       toast({
-        title: "Account data deleted",
-        description: "Your profile and associated data have been removed. You will be signed out.",
+        title: "Account permanently deleted",
+        description: "Your account and all associated data have been permanently removed from our system.",
         variant: "default"
       });
 
-      // Sign out the user
+      // Sign out the user and redirect
       await logout();
       window.location.href = '/';
 

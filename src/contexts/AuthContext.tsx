@@ -133,7 +133,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (data) {
         // Profile exists - check if there's a pending role update from Google OAuth
         const pendingRole = localStorage.getItem("pendingGoogleRole") as "host" | "attendee";
-        
+  
         if (pendingRole && pendingRole !== data.role) {
           console.log(`Updating existing profile role from ${data.role} to ${pendingRole}`);
           
@@ -145,10 +145,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
             
           if (updateError) {
             console.error("Error updating profile role:", updateError);
+            // Don't remove pendingRole if update failed
           } else {
             data.role = pendingRole; // Update local data
+            localStorage.removeItem("pendingGoogleRole");
           }
-          
+        } else {
+          // Remove pendingRole if no update needed
           localStorage.removeItem("pendingGoogleRole");
         }
         
@@ -341,6 +344,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       console.log("Logging out...");
       await supabase.auth.signOut();
       setCurrentUser(null);
+      
+      // Clear all auth-related localStorage items
+      localStorage.removeItem("pendingGoogleRole");
+      localStorage.removeItem("redirectAfterLogin");
+      localStorage.removeItem("pendingTicketingUrl");
+      sessionStorage.removeItem("pendingEventCode");
+      
       console.log("Logout successful");
     } catch (error) {
       console.error("Error logging out:", error);

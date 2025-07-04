@@ -19,15 +19,21 @@ const AuthCallback = () => {
         }
 
         if (data.session) {
-          // Wait a moment for the auth context to update
-          setTimeout(() => {
-            if (currentUser) {
+          // Wait for auth context to update with proper user data
+          const checkUserAndRedirect = () => {
+            if (currentUser && currentUser.role) {
               const redirectPath = currentUser.role === 'host' ? '/admin' : '/attendee';
               navigate(redirectPath, { replace: true });
-            } else {
+            } else if (currentUser === null) {
+              // Auth context has been updated but no user found
               navigate('/login', { replace: true });
+            } else {
+              // Still loading, check again
+              setTimeout(checkUserAndRedirect, 100);
             }
-          }, 1000);
+          };
+          
+          checkUserAndRedirect();
         } else {
           navigate('/login?error=no_session');
         }

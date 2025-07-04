@@ -4,7 +4,10 @@ interface AttendeeData {
   id: string;
   name: string | null;
   email: string | null;
+  phone?: string | null;
   role: string | null;
+  ticket_type?: string | null;
+  check_in_status?: string;
   event_name: string | null;
   joined_at: string;
 }
@@ -57,18 +60,21 @@ export const downloadFile = (content: string | Blob, filename: string, type: 'cs
   }
 };
 
-// Export attendees data - Fixed Excel functionality
+// Export attendees data - Enhanced with phone, ticket type, and check-in status
 export const exportAttendeesData = (attendees: AttendeeData[], eventName: string, format: 'csv' | 'excel') => {
   if (!attendees || attendees.length === 0) {
     throw new Error('No attendee data available to export');
   }
 
-  const headers = ['name', 'email', 'role', 'joined_at'];
-  const headerLabels = ['Name', 'Email', 'Role', 'Joined Date'];
+  const headers = ['name', 'email', 'phone', 'ticket_type', 'check_in_status', 'role', 'joined_at'];
+  const headerLabels = ['Full Name', 'Email', 'Phone Number', 'Ticket Type', 'Check-in Status', 'Role', 'Joined Date'];
   
   const processedData = attendees.map(attendee => ({
     name: attendee.name || 'N/A',
     email: attendee.email || 'N/A',
+    phone: attendee.phone || 'N/A',
+    ticket_type: attendee.ticket_type || 'N/A',
+    check_in_status: attendee.check_in_status || 'Not Checked In',
     role: attendee.role || 'attendee',
     joined_at: new Date(attendee.joined_at).toLocaleDateString()
   }));
@@ -81,10 +87,13 @@ export const exportAttendeesData = (attendees: AttendeeData[], eventName: string
     const csvContent = convertToCSV(processedData, headers);
     downloadFile(csvContent, `${filename}.csv`, 'csv');
   } else {
-    // Fixed Excel export
+    // Enhanced Excel export with all fields
     const worksheetData = processedData.map(item => ({
-      'Name': item.name,
+      'Full Name': item.name,
       'Email': item.email,
+      'Phone Number': item.phone,
+      'Ticket Type': item.ticket_type,
+      'Check-in Status': item.check_in_status,
       'Role': item.role,
       'Joined Date': item.joined_at
     }));
@@ -93,8 +102,11 @@ export const exportAttendeesData = (attendees: AttendeeData[], eventName: string
     
     // Set column widths
     const colWidths = [
-      { wch: 20 }, // Name
+      { wch: 20 }, // Full Name
       { wch: 30 }, // Email
+      { wch: 15 }, // Phone Number
+      { wch: 20 }, // Ticket Type
+      { wch: 15 }, // Check-in Status
       { wch: 15 }, // Role
       { wch: 15 }  // Joined Date
     ];

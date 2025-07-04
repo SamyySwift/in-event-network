@@ -27,6 +27,7 @@ import {
   BookOpen,
   Ticket,
   Scan,
+  Settings, // Add Settings icon
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -127,7 +128,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       href: "/admin",
       icon: <BarChart4 size={20} />,
     },
-
     {
       name: "Events",
       href: "/admin/events",
@@ -192,6 +192,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Notifications",
       href: "/admin/notifications",
       icon: <Bell size={20} />,
+    },
+    {
+      name: "Settings",
+      href: "/admin/settings",
+      icon: <Settings size={20} />,
     },
   ];
 
@@ -543,10 +548,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               )}
             </Button>
 
-            <Avatar
-              className="h-9 w-9 cursor-pointer ring-2 ring-primary/20 hover:ring-primary/40 transition-all"
-              onClick={() => navigate("/admin/profile")}
-            >
+            <Avatar className="h-9 w-9 cursor-pointer ring-2 ring-primary/20 hover:ring-primary/40 transition-all">
               {currentUser?.photoUrl ? (
                 <AvatarImage
                   src={currentUser.photoUrl}

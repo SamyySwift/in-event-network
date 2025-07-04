@@ -9,6 +9,7 @@ import AttendeeHero from './components/AttendeeHero';
 import AttendeeFilters from './components/AttendeeFilters';
 import AttendeesList from './components/AttendeesList';
 import AttendeeManagementSection from './components/AttendeeManagementSection';
+import { DownloadDataButtons } from '@/components/admin/DownloadDataButtons';
 
 const AdminAttendeesContent = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -43,6 +44,13 @@ const AdminAttendeesContent = () => {
       {/* Event Selector */}
       <div className="flex justify-between items-center">
         <EventSelector />
+        {/* Download buttons - only show when event is selected and has data */}
+        {selectedEventId && attendees.length > 0 && (
+          <DownloadDataButtons 
+            attendees={attendees} 
+            eventName={selectedEvent?.name || 'Event'} 
+          />
+        )}
       </div>
 
       {/* Show message when no event is selected */}

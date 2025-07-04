@@ -467,58 +467,8 @@ export default function BuyTickets() {
                 {/* Step-by-step Purchase Flow */}
                 {currentUser && getTotalTickets() > 0 && !showPayment && (
                   <div className="space-y-4">
-                    {/* Step 1: User Information */}
-                    {showUserInfoForm ? (
-                      <Card className="border-purple-200 bg-purple-50">
-                        <CardContent className="pt-4">
-                          <div className="flex items-center gap-2 text-purple-700 mb-3">
-                            <User className="h-4 w-4" />
-                            <span className="font-medium">Step 1: Your Information</span>
-                          </div>
-                          <div className="space-y-3">
-                            <div>
-                              <Label htmlFor="fullName">Full Name *</Label>
-                              <Input
-                                id="fullName"
-                                value={userInfo.fullName}
-                                onChange={(e) => setUserInfo(prev => ({ ...prev, fullName: e.target.value }))}
-                                placeholder="Enter your full name"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="email">Email *</Label>
-                              <Input
-                                id="email"
-                                type="email"
-                                value={userInfo.email}
-                                onChange={(e) => setUserInfo(prev => ({ ...prev, email: e.target.value }))}
-                                placeholder="Enter your email"
-                              />
-                            </div>
-                            <div>
-                              <Label htmlFor="phone">Phone Number *</Label>
-                              <Input
-                                id="phone"
-                                value={userInfo.phone}
-                                onChange={(e) => setUserInfo(prev => ({ ...prev, phone: e.target.value }))}
-                                placeholder="Enter your phone number"
-                              />
-                            </div>
-                            <div className="flex gap-2">
-                              <Button onClick={handleUserInfoSubmit} className="flex-1">
-                                Continue to Payment
-                              </Button>
-                              <Button 
-                                variant="outline" 
-                                onClick={() => setShowUserInfoForm(false)}
-                              >
-                                Cancel
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ) : (
+                    {/* Remove the entire showUserInfoForm conditional block here */}
+                    {!showUserInfoForm && (
                       <Card className="border-green-200 bg-green-50">
                         <CardContent className="pt-4">
                           <div className="flex items-center justify-between text-green-700 mb-2">
@@ -600,6 +550,59 @@ export default function BuyTickets() {
                   >
                     {isProcessing ? 'Processing...' : getTotalPrice() === 0 ? `Get ${getTotalTickets()} Free Ticket${getTotalTickets() !== 1 ? 's' : ''}` : `Purchase ${getTotalTickets()} Ticket${getTotalTickets() !== 1 ? 's' : ''}`}
                   </Button>
+                )}
+
+                {/* User Information Form - Now positioned below Purchase button */}
+                {currentUser && getTotalTickets() > 0 && showUserInfoForm && !showPayment && (
+                  <Card className="border-purple-200 bg-purple-50 mt-4">
+                    <CardContent className="pt-4">
+                      <div className="flex items-center gap-2 text-purple-700 mb-3">
+                        <User className="h-4 w-4" />
+                        <span className="font-medium">Your Information</span>
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <Label htmlFor="fullName">Full Name *</Label>
+                          <Input
+                            id="fullName"
+                            value={userInfo.fullName}
+                            onChange={(e) => setUserInfo(prev => ({ ...prev, fullName: e.target.value }))}
+                            placeholder="Enter your full name"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="email">Email *</Label>
+                          <Input
+                            id="email"
+                            type="email"
+                            value={userInfo.email}
+                            onChange={(e) => setUserInfo(prev => ({ ...prev, email: e.target.value }))}
+                            placeholder="Enter your email"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="phone">Phone Number *</Label>
+                          <Input
+                            id="phone"
+                            value={userInfo.phone}
+                            onChange={(e) => setUserInfo(prev => ({ ...prev, phone: e.target.value }))}
+                            placeholder="Enter your phone number"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <Button onClick={handleUserInfoSubmit} className="flex-1">
+                            Continue to Payment
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setShowUserInfoForm(false)}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 )}
               </CardContent>
             </Card>

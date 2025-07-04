@@ -18,6 +18,8 @@ import {
   Heart,
   MapPin,
   AlertCircle,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import AppLayout from "@/components/layouts/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -52,6 +54,10 @@ const AttendeeNetworking = () => {
     userPhoto?: string;
   } | null>(null);
 
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
   const {
     attendees: profiles,
     isLoading: loading,
@@ -74,6 +80,23 @@ const AttendeeNetworking = () => {
     filteredProfiles,
     clearAllFilters,
   } = useNetworkingFilters(profiles);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredProfiles.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const currentPageProfiles = filteredProfiles.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedNiches, selectedNetworkingPrefs, selectedTags]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top of the attendees section
+    document.getElementById('attendees-section')?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   const { sendConnectionRequest, getConnectionStatus, connections } =
     useNetworking();
@@ -537,9 +560,81 @@ const AttendeeNetworking = () => {
             onClearFilters={clearAllFilters}
           />
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-            {filteredProfiles.map((profile) => renderUserCard(profile, true))}
+          {/* Results summary */}
+          {filteredProfiles.length > 0 && (
+            <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
+              <span>
+                Showing {startIndex + 1}-{Math.min(endIndex, filteredProfiles.length)} of {filteredProfiles.length} attendees
+              </span>
+              <span>Page {currentPage} of {totalPages}</span>
+            </div>
+          )}
+          
+          <div id="attendees-section" className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+            {currentPageProfiles.map((profile) => renderUserCard(profile, true))}
           </div>
+          
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center items-center space-x-2 mt-8">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="flex items-center space-x-1"
+              >
+                <ChevronLeft size={16} />
+                <span>Previous</span>
+              </Button>
+              
+              <div className="flex space-x-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                  // Show first page, last page, current page, and pages around current page
+                  const showPage = 
+                    page === 1 || 
+                    page === totalPages || 
+                    (page >= currentPage - 1 && page <= currentPage + 1);
+                  
+                  if (!showPage) {
+                    // Show ellipsis for gaps
+                    if (page === currentPage - 2 || page === currentPage + 2) {
+                      return (
+                        <span key={page} className="px-2 py-1 text-gray-400">
+                          ...
+                        </span>
+                      );
+                    }
+                    return null;
+                  }
+                  
+                  return (
+                    <Button
+                      key={page}
+                      variant={currentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageChange(page)}
+                      className={currentPage === page ? "bg-connect-600 hover:bg-connect-700" : ""}
+                    >
+                      {page}
+                    </Button>
+                  );
+                })}
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="flex items-center space-x-1"
+              >
+                <span>Next</span>
+                <ChevronRight size={16} />
+              </Button>
+            </div>
+          )}
+          
           {filteredProfiles.length === 0 && (
             <div className="text-center py-16">
               <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-full flex items-center justify-center">

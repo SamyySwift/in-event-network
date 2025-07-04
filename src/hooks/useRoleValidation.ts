@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 
 export const useRoleValidation = () => {
-  const { currentUser, setCurrentUser } = useAuth();
+  const { currentUser, updateUser } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -20,8 +20,8 @@ export const useRoleValidation = () => {
         if (!error && data && data.role !== currentUser.role) {
           console.log(`Role mismatch detected. Local: ${currentUser.role}, DB: ${data.role}`);
           
-          // Update local user state
-          setCurrentUser({ ...currentUser, role: data.role });
+          // Update local user state using the available updateUser method
+          await updateUser({ role: data.role });
           
           // Redirect to correct dashboard
           const correctPath = data.role === 'host' ? '/admin' : '/attendee';
@@ -31,5 +31,5 @@ export const useRoleValidation = () => {
     };
 
     validateRole();
-  }, [currentUser, navigate]);
+  }, [currentUser, navigate, updateUser]);
 };

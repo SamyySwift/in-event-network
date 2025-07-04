@@ -116,7 +116,8 @@ const AdminProfile = () => {
     }
   };
 
-  if (!currentUser) {
+  if (!currentUser || authLoading) {
+    console.log('AdminProfile - Loading state:', { currentUser: !!currentUser, authLoading });
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -126,6 +127,8 @@ const AdminProfile = () => {
       </div>
     );
   }
+
+  console.log('AdminProfile - Rendering main content');
 
   return (
     <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">

@@ -98,24 +98,16 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
       <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-xl font-bold pr-8">{item.title}</DialogTitle>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="absolute right-4 top-4 p-1 z-10"
-          >
-            <X className="w-4 h-4" />
-          </Button>
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto space-y-6 pr-2">
           {/* Event/Speaker Image */}
           {(item.image_url || item.speaker_photo) && (
-            <div className="w-full h-48 rounded-lg overflow-hidden flex-shrink-0">
+            <div className="w-full h-64 rounded-lg overflow-hidden flex-shrink-0">
               <img 
                 src={item.image_url || item.speaker_photo} 
                 alt={item.title}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-top"
               />
             </div>
           )}

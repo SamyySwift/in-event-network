@@ -14,7 +14,11 @@ import { toast } from "sonner";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
 import { supabase } from "@/integrations/supabase/client";
 
+console.log('AdminProfile component loading...');
+
 const AdminProfile = () => {
+  console.log('AdminProfile component rendering...');
+  
   const { currentUser, updateUser, isLoading: authLoading } = useAuth();
   
   console.log('AdminProfile - currentUser:', currentUser);
@@ -132,6 +136,10 @@ const AdminProfile = () => {
 
   return (
     <div className="w-full max-w-7xl mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+      {/* Debug info */}
+      <div className="bg-yellow-100 p-2 text-xs">
+        Debug: User loaded - {currentUser?.name} ({currentUser?.email})
+      </div>
       {/* Header Section - Mobile Optimized */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-1">

@@ -41,10 +41,10 @@ export const convertToCSV = (data: any[], headers: string[]): string => {
   return csvContent;
 };
 
-// Download file
-export const downloadFile = (content: string, filename: string, type: 'csv' | 'excel') => {
+// Download file - Fixed to handle both CSV and Excel
+export const downloadFile = (content: string | Blob, filename: string, type: 'csv' | 'excel') => {
   if (type === 'csv') {
-    const blob = new Blob([content], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([content as string], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
@@ -53,11 +53,16 @@ export const downloadFile = (content: string, filename: string, type: 'csv' | 'e
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   }
 };
 
-// Export attendees data
+// Export attendees data - Fixed Excel functionality
 export const exportAttendeesData = (attendees: AttendeeData[], eventName: string, format: 'csv' | 'excel') => {
+  if (!attendees || attendees.length === 0) {
+    throw new Error('No attendee data available to export');
+  }
+
   const headers = ['name', 'email', 'role', 'joined_at'];
   const headerLabels = ['Name', 'Email', 'Role', 'Joined Date'];
   
@@ -69,23 +74,31 @@ export const exportAttendeesData = (attendees: AttendeeData[], eventName: string
   }));
 
   const timestamp = new Date().toISOString().split('T')[0];
-  const filename = `${eventName.replace(/[^a-z0-9]/gi, '_')}_attendees_${timestamp}`;
+  const sanitizedEventName = eventName.replace(/[^a-z0-9]/gi, '_');
+  const filename = `${sanitizedEventName}_attendees_${timestamp}`;
 
   if (format === 'csv') {
     const csvContent = convertToCSV(processedData, headers);
     downloadFile(csvContent, `${filename}.csv`, 'csv');
   } else {
-    // Excel export
-    const worksheet = XLSX.utils.json_to_sheet(processedData, { header: headers });
+    // Fixed Excel export
+    const worksheetData = processedData.map(item => ({
+      'Name': item.name,
+      'Email': item.email,
+      'Role': item.role,
+      'Joined Date': item.joined_at
+    }));
     
-    // Set column headers
-    const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
-    for (let col = range.s.c; col <= range.e.c; col++) {
-      const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
-      if (worksheet[cellAddress]) {
-        worksheet[cellAddress].v = headerLabels[col];
-      }
-    }
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+    
+    // Set column widths
+    const colWidths = [
+      { wch: 20 }, // Name
+      { wch: 30 }, // Email
+      { wch: 15 }, // Role
+      { wch: 15 }  // Joined Date
+    ];
+    worksheet['!cols'] = colWidths;
     
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Attendees');
@@ -93,15 +106,19 @@ export const exportAttendeesData = (attendees: AttendeeData[], eventName: string
   }
 };
 
-// Export tickets data
+// Export tickets data - Fixed Excel functionality
 export const exportTicketsData = (tickets: TicketData[], eventName: string, format: 'csv' | 'excel') => {
+  if (!tickets || tickets.length === 0) {
+    throw new Error('No ticket data available to export');
+  }
+
   const headers = ['ticket_number', 'ticket_type_name', 'price', 'attendee_name', 'attendee_email', 'check_in_status', 'checked_in_at', 'purchase_date'];
   const headerLabels = ['Ticket Number', 'Ticket Type', 'Price', 'Attendee Name', 'Attendee Email', 'Checked In', 'Check-in Date', 'Purchase Date'];
   
   const processedData = tickets.map(ticket => ({
     ticket_number: ticket.ticket_number,
     ticket_type_name: ticket.ticket_type_name,
-    price: `$${ticket.price.toFixed(2)}`,
+    price: `₦${ticket.price.toLocaleString()}`,
     attendee_name: ticket.user_name || ticket.guest_name || 'N/A',
     attendee_email: ticket.user_email || ticket.guest_email || 'N/A',
     check_in_status: ticket.check_in_status ? 'Yes' : 'No',
@@ -110,23 +127,39 @@ export const exportTicketsData = (tickets: TicketData[], eventName: string, form
   }));
 
   const timestamp = new Date().toISOString().split('T')[0];
-  const filename = `${eventName.replace(/[^a-z0-9]/gi, '_')}_tickets_${timestamp}`;
+  const sanitizedEventName = eventName.replace(/[^a-z0-9]/gi, '_');
+  const filename = `${sanitizedEventName}_tickets_${timestamp}`;
 
   if (format === 'csv') {
     const csvContent = convertToCSV(processedData, headers);
     downloadFile(csvContent, `${filename}.csv`, 'csv');
   } else {
-    // Excel export
-    const worksheet = XLSX.utils.json_to_sheet(processedData, { header: headers });
+    // Fixed Excel export
+    const worksheetData = processedData.map(item => ({
+      'Ticket Number': item.ticket_number,
+      'Ticket Type': item.ticket_type_name,
+      'Price': item.price,
+      'Attendee Name': item.attendee_name,
+      'Attendee Email': item.attendee_email,
+      'Checked In': item.check_in_status,
+      'Check-in Date': item.checked_in_at,
+      'Purchase Date': item.purchase_date
+    }));
     
-    // Set column headers
-    const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
-    for (let col = range.s.c; col <= range.e.c; col++) {
-      const cellAddress = XLSX.utils.encode_cell({ r: 0, c: col });
-      if (worksheet[cellAddress]) {
-        worksheet[cellAddress].v = headerLabels[col];
-      }
-    }
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+    
+    // Set column widths
+    const colWidths = [
+      { wch: 15 }, // Ticket Number
+      { wch: 20 }, // Ticket Type
+      { wch: 12 }, // Price
+      { wch: 20 }, // Attendee Name
+      { wch: 30 }, // Attendee Email
+      { wch: 12 }, // Checked In
+      { wch: 15 }, // Check-in Date
+      { wch: 15 }  // Purchase Date
+    ];
+    worksheet['!cols'] = colWidths;
     
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Tickets');

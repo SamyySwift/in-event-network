@@ -15,9 +15,10 @@ import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
 import { supabase } from "@/integrations/supabase/client";
 
 const AdminProfile = () => {
-  const { currentUser, updateUser } = useAuth();
+  const { currentUser, updateUser, isLoading: authLoading } = useAuth();
   
   console.log('AdminProfile - currentUser:', currentUser);
+  console.log('AdminProfile - authLoading:', authLoading);
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);

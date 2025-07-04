@@ -333,6 +333,14 @@ const AttendeeMap = () => {
                                   {facility.description}
                                 </p>
                               )}
+                              {facility.rules && (
+                                <div className="mb-3">
+                                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Rules:</p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+                                    {facility.rules}
+                                  </p>
+                                </div>
+                              )}
                               {facility.contact_info && facility.contact_type !== 'none' && (
                                 <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
                                   {getContactIcon(facility.contact_type)}

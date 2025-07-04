@@ -95,23 +95,24 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           {pathnames.slice(1).map((name, index) => {
             const routeTo = `/${pathnames.slice(0, index + 2).join("/")}`;
             const isLast = index === pathnames.slice(1).length - 1;
-            return isLast ? (
-              <BreadcrumbItem key={name}>
+            return (
+              <React.Fragment key={name}>
                 <BreadcrumbSeparator />
-                <BreadcrumbPage className="font-semibold">
-                  {name.charAt(0).toUpperCase() + name.slice(1)}
-                </BreadcrumbPage>
-              </BreadcrumbItem>
-            ) : (
-              <BreadcrumbItem key={name}>
-                <BreadcrumbSeparator />
-                <BreadcrumbLink
-                  href={routeTo}
-                  className="text-primary hover:text-primary-600 transition-colors"
-                >
-                  {name.charAt(0).toUpperCase() + name.slice(1)}
-                </BreadcrumbLink>
-              </BreadcrumbItem>
+                <BreadcrumbItem>
+                  {isLast ? (
+                    <BreadcrumbPage className="font-semibold">
+                      {name.charAt(0).toUpperCase() + name.slice(1)}
+                    </BreadcrumbPage>
+                  ) : (
+                    <BreadcrumbLink
+                      href={routeTo}
+                      className="text-primary hover:text-primary-600 transition-colors"
+                    >
+                      {name.charAt(0).toUpperCase() + name.slice(1)}
+                    </BreadcrumbLink>
+                  )}
+                </BreadcrumbItem>
+              </React.Fragment>
             );
           })}
         </BreadcrumbList>
@@ -126,6 +127,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       href: "/admin",
       icon: <BarChart4 size={20} />,
     },
+
     {
       name: "Events",
       href: "/admin/events",

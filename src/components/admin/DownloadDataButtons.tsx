@@ -184,16 +184,15 @@ export const DownloadDataButtons: React.FC<DownloadDataButtonsProps> = ({
   const isTicketsDisabled = isExporting !== null || isLoadingTickets || eventTickets.length === 0;
 
   return (
-    <Card className="w-full max-w-full">
-      <CardContent className="p-3 sm:p-4">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground shrink-0">
-            <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">Export Data:</span>
-            <span className="sm:hidden">Export:</span>
+    <Card className="w-full">
+      <CardContent className="p-3">
+        <div className="flex flex-col space-y-3">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Download className="h-4 w-4 flex-shrink-0" />
+            <span>Export Data</span>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row gap-2">
             {/* Attendees Export */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -201,33 +200,35 @@ export const DownloadDataButtons: React.FC<DownloadDataButtonsProps> = ({
                   variant="outline" 
                   size="sm" 
                   disabled={isAttendeesDisabled}
-                  className="flex items-center justify-center gap-2 w-full sm:w-auto sm:min-w-[140px] text-xs sm:text-sm"
+                  className="flex items-center justify-center gap-2 w-full sm:flex-1 text-xs"
                 >
                   {isExporting?.startsWith('attendees') ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
                   ) : (
-                    <Users className="h-4 w-4" />
+                    <Users className="h-4 w-4 flex-shrink-0" />
                   )}
-                  <span className="truncate">
+                  <span className="truncate min-w-0">
                     Attendees ({attendees.length})
                   </span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuLabel>Export Format</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuLabel className="text-xs">Export Format</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   onClick={() => handleExportAttendees('csv')}
                   disabled={isExporting !== null}
+                  className="text-xs"
                 >
-                  <FileText className="h-4 w-4 mr-2" />
+                  <FileText className="h-3 w-3 mr-2 flex-shrink-0" />
                   CSV File
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => handleExportAttendees('excel')}
                   disabled={isExporting !== null}
+                  className="text-xs"
                 >
-                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  <FileSpreadsheet className="h-3 w-3 mr-2 flex-shrink-0" />
                   Excel File
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -240,35 +241,37 @@ export const DownloadDataButtons: React.FC<DownloadDataButtonsProps> = ({
                   variant="outline" 
                   size="sm" 
                   disabled={isTicketsDisabled}
-                  className="flex items-center justify-center gap-2 w-full sm:w-auto sm:min-w-[140px] text-xs sm:text-sm"
+                  className="flex items-center justify-center gap-2 w-full sm:flex-1 text-xs"
                 >
                   {isExporting?.startsWith('tickets') ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
                   ) : isLoadingTickets ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin flex-shrink-0" />
                   ) : (
-                    <Ticket className="h-4 w-4" />
+                    <Ticket className="h-4 w-4 flex-shrink-0" />
                   )}
-                  <span className="truncate">
+                  <span className="truncate min-w-0">
                     Tickets ({isLoadingTickets ? '...' : eventTickets.length})
                   </span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuLabel>Export Format</DropdownMenuLabel>
+              <DropdownMenuContent align="end" className="w-40">
+                <DropdownMenuLabel className="text-xs">Export Format</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
                   onClick={() => handleExportTickets('csv')}
                   disabled={isExporting !== null || isLoadingTickets}
+                  className="text-xs"
                 >
-                  <FileText className="h-4 w-4 mr-2" />
+                  <FileText className="h-3 w-3 mr-2 flex-shrink-0" />
                   CSV File
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => handleExportTickets('excel')}
                   disabled={isExporting !== null || isLoadingTickets}
+                  className="text-xs"
                 >
-                  <FileSpreadsheet className="h-4 w-4 mr-2" />
+                  <FileSpreadsheet className="h-3 w-3 mr-2 flex-shrink-0" />
                   Excel File
                 </DropdownMenuItem>
               </DropdownMenuContent>

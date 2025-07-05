@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import EventSelector from '@/components/admin/EventSelector';
@@ -41,15 +42,19 @@ const AdminAttendeesContent = () => {
 
   return (
     <div className="space-y-8 animate-fade-in">
-      {/* Event Selector */}
-      <div className="flex justify-between items-center">
-        <EventSelector />
+      {/* Event Selector and Download buttons in a responsive layout */}
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex-1 min-w-0">
+          <EventSelector />
+        </div>
         {/* Download buttons - only show when event is selected and has data */}
         {selectedEventId && attendees.length > 0 && (
-          <DownloadDataButtons 
-            attendees={attendees} 
-            eventName={selectedEvent?.name || 'Event'} 
-          />
+          <div className="flex-shrink-0 w-full lg:w-auto lg:max-w-sm">
+            <DownloadDataButtons 
+              attendees={attendees} 
+              eventName={selectedEvent?.name || 'Event'} 
+            />
+          </div>
         )}
       </div>
 

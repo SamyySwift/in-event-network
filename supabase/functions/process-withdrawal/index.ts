@@ -141,13 +141,16 @@ serve(async (req) => {
 
         if (withdrawalError) throw withdrawalError
         
-        // Initiate transfer with Paystack
+        // Initiate transfer with Paystack (add 50 NGN transfer fee)
+        const transferFee = 5000 // 50 NGN in kobo
+        const totalAmountWithFee = payload.amount + transferFee
+        
         const transferResponse = await fetch('https://api.paystack.co/transfer', {
           method: 'POST',
           headers: paystackHeaders,
           body: JSON.stringify({
             source: 'balance',
-            amount: payload.amount, // Amount in kobo
+            amount: totalAmountWithFee, // Amount + fee in kobo
             recipient: payload.recipient_code,
             reason: `Wallet withdrawal - ${new Date().toISOString()}`,
           })
@@ -184,13 +187,14 @@ serve(async (req) => {
 
         if (transferUpdateError) throw transferUpdateError
         
-        // Update wallet balance if transfer is successful
+        // Update wallet balance if transfer is successful (deduct additional fee)
         if (result.data.status === 'success') {
+          const feeInNaira = transferFee / 100 // Convert fee to naira
           const { error: balanceUpdateError } = await supabase
             .from('admin_wallets')
             .update({
-              available_balance: payload.new_balance,
-              withdrawn_amount: payload.total_withdrawn + payload.amount,
+              available_balance: payload.new_balance - feeInNaira, // Deduct fee from available balance
+              withdrawn_amount: payload.total_withdrawn + (payload.amount / 100), // Store withdrawn amount in naira
               last_payout_at: new Date().toISOString()
             })
             .eq('id', payload.wallet_id)

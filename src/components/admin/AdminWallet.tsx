@@ -94,6 +94,9 @@ export function AdminWallet() {
     if (!wallet) return;
 
     const amount = parseFloat(withdrawAmount);
+    const transferFee = 50;
+    const totalDeducted = amount + transferFee;
+
     if (isNaN(amount) || amount <= 0) {
       toast({
         title: 'Invalid Amount',
@@ -103,10 +106,10 @@ export function AdminWallet() {
       return;
     }
 
-    if (amount > wallet.available_balance) {
+    if (totalDeducted > wallet.available_balance) {
       toast({
         title: 'Insufficient Balance',
-        description: 'You do not have sufficient balance to withdraw this amount',
+        description: `You need ₦${totalDeducted.toLocaleString()} (including ₦50 transfer fee) but only have ₦${wallet.available_balance.toLocaleString()} available`,
         variant: 'destructive',
       });
       return;
@@ -124,6 +127,7 @@ export function AdminWallet() {
         totalWithdrawn: wallet.withdrawn_amount,
       });
       setShowWithdrawDialog(false);
+      setWithdrawAmount('');
     } catch (error: any) {
       toast({
         title: 'Withdrawal Failed',
@@ -355,7 +359,26 @@ export function AdminWallet() {
                           value={withdrawAmount}
                           onChange={handleWithdrawAmountChange}
                         />
+                        <p className="text-xs text-muted-foreground">
+                          A transfer fee of ₦50 will be deducted from your available balance
+                        </p>
                       </div>
+                      {withdrawAmount && (
+                        <div className="bg-muted/50 p-3 rounded-lg text-sm">
+                          <div className="flex justify-between">
+                            <span>Withdrawal amount:</span>
+                            <span>₦{parseFloat(withdrawAmount).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between text-muted-foreground">
+                            <span>Transfer fee:</span>
+                            <span>₦50</span>
+                          </div>
+                          <div className="flex justify-between font-medium border-t pt-2 mt-2">
+                            <span>Total deducted:</span>
+                            <span>₦{(parseFloat(withdrawAmount || '0') + 50).toLocaleString()}</span>
+                          </div>
+                        </div>
+                      )}
                       <Button onClick={handleInitiateWithdrawal} disabled={isInitiatingWithdrawal} className="w-full">
                         {isInitiatingWithdrawal ? (
                           <>

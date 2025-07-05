@@ -361,7 +361,7 @@ const AttendeeMap = () => {
           {/* Facility Detail Modal for Mobile */}
           {isMobile && selectedFacility && (
             <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-              <div className="bg-white dark:bg-gray-800 w-full rounded-t-2xl p-6 animate-slide-in-right">
+              <div className="bg-white dark:bg-gray-800 w-full rounded-t-2xl p-6 animate-slide-in-right max-h-[80vh] overflow-y-auto">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xl font-bold">{selectedFacility.name}</h3>
                   <Button 
@@ -383,22 +383,37 @@ const AttendeeMap = () => {
                   </div>
                 )}
                 
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-gray-500" />
-                    <span className="text-sm text-gray-600 dark:text-gray-300">{selectedFacility.location}</span>
-                  </div>
+                <div className="space-y-4">
+                  {selectedFacility.location && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-gray-500" />
+                      <span className="text-sm text-gray-600 dark:text-gray-300">{selectedFacility.location}</span>
+                    </div>
+                  )}
                   
                   {selectedFacility.description && (
-                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                      {selectedFacility.description}
-                    </p>
+                    <div>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        {selectedFacility.description}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {selectedFacility.rules && (
+                    <div>
+                      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Rules:</h4>
+                      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                        <p className="text-sm text-gray-600 dark:text-gray-300">
+                          {selectedFacility.rules}
+                        </p>
+                      </div>
+                    </div>
                   )}
                   
                   {selectedFacility.contact_info && selectedFacility.contact_type !== 'none' && (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                       {getContactIcon(selectedFacility.contact_type)}
-                      <span className="text-sm text-gray-600 dark:text-gray-300">{selectedFacility.contact_info}</span>
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{selectedFacility.contact_info}</span>
                     </div>
                   )}
                 </div>

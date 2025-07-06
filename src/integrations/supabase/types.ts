@@ -1315,6 +1315,92 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_form_fields: {
+        Row: {
+          created_at: string | null
+          field_options: Json | null
+          field_order: number
+          field_type: string
+          helper_text: string | null
+          id: string
+          is_required: boolean | null
+          label: string
+          ticket_type_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          field_options?: Json | null
+          field_order?: number
+          field_type: string
+          helper_text?: string | null
+          id?: string
+          is_required?: boolean | null
+          label: string
+          ticket_type_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          field_options?: Json | null
+          field_order?: number
+          field_type?: string
+          helper_text?: string | null
+          id?: string
+          is_required?: boolean | null
+          label?: string
+          ticket_type_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_form_fields_ticket_type_id_fkey"
+            columns: ["ticket_type_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_form_responses: {
+        Row: {
+          created_at: string | null
+          form_field_id: string
+          id: string
+          response_value: Json
+          ticket_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          form_field_id: string
+          id?: string
+          response_value: Json
+          ticket_id: string
+        }
+        Update: {
+          created_at?: string | null
+          form_field_id?: string
+          id?: string
+          response_value?: Json
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_form_responses_form_field_id_fkey"
+            columns: ["form_field_id"]
+            isOneToOne: false
+            referencedRelation: "ticket_form_fields"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ticket_form_responses_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "event_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_types: {
         Row: {
           available_quantity: number

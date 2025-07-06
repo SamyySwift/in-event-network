@@ -11,8 +11,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { CheckCircle, Clock, User, Mail, Phone, Search, Users } from 'lucide-react';
+import { CheckCircle, Clock, User, Mail, Phone, Search, Users, FormInput } from 'lucide-react';
 import { useAdminCheckIns } from '@/hooks/useAdminCheckIns';
+import { EditTicketTypeFormDialog } from './EditTicketTypeFormDialog';
 
 interface Ticket {
   id: string;
@@ -39,6 +40,7 @@ interface TicketsTableProps {
 
 export function TicketsTable({ tickets }: TicketsTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTicketType, setSelectedTicketType] = useState<{id: string, name: string} | null>(null);
   const { bulkCheckInAll, isBulkCheckingIn } = useAdminCheckIns();
 
   // Filter tickets based on search term

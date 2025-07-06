@@ -289,6 +289,37 @@ export function CreateTicketTypeDialog({ open, onOpenChange }: CreateTicketTypeD
             />
           </div>
 
+          {/* Add Form to Ticket Section */}
+          <div className="border-t pt-6">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-sm font-medium">Custom Form Fields</Label>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Add custom fields to collect additional information during ticket purchase
+                  </p>
+                </div>
+                <Button 
+                  type="button"
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    // This will be handled after ticket creation
+                    console.log('Add form fields feature - coming after ticket creation');
+                  }}
+                  className="rounded-xl"
+                >
+                  Add Form to Ticket
+                </Button>
+              </div>
+              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+                <p className="text-xs text-amber-700">
+                  📝 Custom form fields can be added after the ticket type is created. You'll see the form builder option in your ticket management section.
+                </p>
+              </div>
+            </div>
+          </div>
+
           <DialogFooter className="gap-2">
             <Button 
               type="button" 

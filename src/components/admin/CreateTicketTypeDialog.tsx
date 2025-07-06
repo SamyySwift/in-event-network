@@ -27,6 +27,7 @@ import { Ticket, DollarSign, Hash, ToggleLeft, ToggleRight } from 'lucide-react'
 interface CreateTicketTypeDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onTicketCreated?: (ticketType: { id: string; name: string }) => void;
 }
 
 const ticketNameOptions = [
@@ -37,7 +38,7 @@ const ticketNameOptions = [
   'Custom'
 ];
 
-export function CreateTicketTypeDialog({ open, onOpenChange }: CreateTicketTypeDialogProps) {
+export function CreateTicketTypeDialog({ open, onOpenChange, onTicketCreated }: CreateTicketTypeDialogProps) {
   const [selectedTicketName, setSelectedTicketName] = useState('');
   const [customName, setCustomName] = useState('');
   const [description, setDescription] = useState('');
@@ -46,6 +47,7 @@ export function CreateTicketTypeDialog({ open, onOpenChange }: CreateTicketTypeD
   const [availableQuantity, setAvailableQuantity] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [selectedEventId, setSelectedEventId] = useState('');
+  const [shouldOpenFormBuilder, setShouldOpenFormBuilder] = useState(false);
 
   const { createTicketType } = useAdminTickets();
   const { adminEvents, selectedEventId: contextEventId } = useAdminEventContext();
@@ -69,6 +71,7 @@ export function CreateTicketTypeDialog({ open, onOpenChange }: CreateTicketTypeD
     setPrice('');
     setAvailableQuantity('');
     setIsActive(true);
+    setShouldOpenFormBuilder(false);
     // Keep the selected event if it's from context
     if (!contextEventId) {
       setSelectedEventId('');
@@ -91,7 +94,7 @@ export function CreateTicketTypeDialog({ open, onOpenChange }: CreateTicketTypeD
     const quantity = parseInt(availableQuantity) || 0;
 
     try {
-      await createTicketType.mutateAsync({
+      const result = await createTicketType.mutateAsync({
         name: ticketName,
         description: description.trim() || undefined,
         price: ticketPrice,
@@ -102,6 +105,12 @@ export function CreateTicketTypeDialog({ open, onOpenChange }: CreateTicketTypeD
       });
       
       onOpenChange(false);
+      
+      // If user clicked "Add Form to Ticket", notify parent to open form builder
+      if (shouldOpenFormBuilder && onTicketCreated && result) {
+        onTicketCreated({ id: result.id, name: ticketName });
+      }
+      
       resetForm();
     } catch (error) {
       console.error('Error creating ticket type:', error);
@@ -301,20 +310,19 @@ export function CreateTicketTypeDialog({ open, onOpenChange }: CreateTicketTypeD
                 </div>
                 <Button 
                   type="button"
-                  variant="outline" 
+                  variant={shouldOpenFormBuilder ? "default" : "outline"}
                   size="sm"
-                  onClick={() => {
-                    // This will be handled after ticket creation
-                    console.log('Add form fields feature - coming after ticket creation');
-                  }}
+                  onClick={() => setShouldOpenFormBuilder(!shouldOpenFormBuilder)}
                   className="rounded-xl"
                 >
-                  Add Form to Ticket
+                  {shouldOpenFormBuilder ? '✓ Form Builder Selected' : 'Add Form to Ticket'}
                 </Button>
               </div>
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-                <p className="text-xs text-amber-700">
-                  📝 Custom form fields can be added after the ticket type is created. You'll see the form builder option in your ticket management section.
+              <div className={`rounded-xl p-3 border ${shouldOpenFormBuilder ? 'bg-green-50 border-green-200' : 'bg-amber-50 border-amber-200'}`}>
+                <p className={`text-xs ${shouldOpenFormBuilder ? 'text-green-700' : 'text-amber-700'}`}>
+                  {shouldOpenFormBuilder 
+                    ? '✅ Form builder will open automatically after ticket creation' 
+                    : '📝 Custom form fields can be added after the ticket type is created. You\'ll see the form builder option in your ticket management section.'}
                 </p>
               </div>
             </div>

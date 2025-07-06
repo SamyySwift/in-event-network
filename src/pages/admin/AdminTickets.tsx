@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Ticket, DollarSign, Users, CheckCircle, Edit, Trash2 } from 'lucide-react';
+import { Plus, Ticket, DollarSign, Users, CheckCircle, Edit, Trash2, FormInput } from 'lucide-react';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAdminTickets } from '@/hooks/useAdminTickets';
 import { CreateTicketTypeDialog } from '@/components/admin/CreateTicketTypeDialog';
 import { EditTicketTypeDialog } from '@/components/admin/EditTicketTypeDialog';
+import { EditTicketTypeFormDialog } from '@/components/admin/EditTicketTypeFormDialog';
 import { DeleteTicketConfirmDialog } from '@/components/admin/DeleteTicketConfirmDialog';
 import { TicketsTable } from '@/components/admin/TicketsTable';
 import { ShareableTicketLink } from '@/components/admin/ShareableTicketLink';
@@ -16,9 +17,20 @@ export default function AdminTickets() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
   const [selectedTicketType, setSelectedTicketType] = useState<any>(null);
   
   const { ticketTypes, eventTickets, isLoadingTypes, isLoadingTickets, stats } = useAdminTickets();
+
+  const handleTicketCreated = (ticketType: { id: string; name: string }) => {
+    setSelectedTicketType(ticketType);
+    setFormDialogOpen(true);
+  };
+
+  const handleFormBuilder = (ticketType: any) => {
+    setSelectedTicketType(ticketType);
+    setFormDialogOpen(true);
+  };
 
   const handleEdit = (ticketType: any) => {
     setSelectedTicketType(ticketType);
@@ -159,6 +171,15 @@ export default function AdminTickets() {
                           <Button
                             variant="ghost"
                             size="sm"
+                            onClick={() => handleFormBuilder(ticketType)}
+                            className="h-8 w-8 p-0 hover:bg-purple-50 hover:text-purple-600 rounded-lg"
+                            title="Add Form Fields"
+                          >
+                            <FormInput className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             onClick={() => handleEdit(ticketType)}
                             className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600 rounded-lg"
                           >
@@ -219,12 +240,20 @@ export default function AdminTickets() {
         <CreateTicketTypeDialog
           open={createDialogOpen}
           onOpenChange={setCreateDialogOpen}
+          onTicketCreated={handleTicketCreated}
         />
         
         <EditTicketTypeDialog
           open={editDialogOpen}
           onOpenChange={setEditDialogOpen}
           ticketType={selectedTicketType}
+        />
+
+        <EditTicketTypeFormDialog
+          ticketTypeId={selectedTicketType?.id || ''}
+          ticketTypeName={selectedTicketType?.name || ''}
+          isOpen={formDialogOpen}
+          onClose={() => setFormDialogOpen(false)}
         />
         
         <DeleteTicketConfirmDialog

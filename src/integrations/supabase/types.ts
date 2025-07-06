@@ -1570,6 +1570,10 @@ export type Database = {
         Args: { attendee_user_id: string; target_event_id: string }
         Returns: Json
       }
+      increment_wallet_balance: {
+        Args: { p_admin_id: string; p_event_id: string; p_amount: number }
+        Returns: undefined
+      }
       is_event_host: {
         Args: { event_uuid: string }
         Returns: boolean

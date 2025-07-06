@@ -3,6 +3,7 @@ import React from 'react';
 import { PaystackButton } from 'react-paystack';
 import { usePaystackConfig } from '@/hooks/usePaystackConfig';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface TicketPaymentData {
   ticketTypeId: string;
@@ -52,9 +53,37 @@ export function PaystackTicketPayment({
     amount: totalAmount * 100, // Convert to kobo
     publicKey,
     text: `Pay ₦${totalAmount.toLocaleString()}`,
-    onSuccess: (reference: any) => {
+    onSuccess: async (reference: any) => {
       console.log('Payment successful:', reference);
-      onSuccess(reference.reference);
+      
+      try {
+        // Process ticket purchase through our backend
+        const { data, error } = await supabase.functions.invoke('process-ticket-purchase', {
+          body: {
+            eventId,
+            tickets,
+            userInfo: {
+              ...userInfo,
+              userId: currentUser?.id
+            },
+            paystackReference: reference.reference,
+            totalAmount: totalAmount * 100 // Amount in kobo
+          }
+        });
+
+        if (error) {
+          console.error('Ticket processing error:', error);
+          throw error;
+        }
+
+        console.log('Tickets created successfully:', data);
+        onSuccess(reference.reference);
+        
+      } catch (error) {
+        console.error('Failed to process ticket purchase:', error);
+        // Still call onSuccess to allow UI to handle the situation
+        onSuccess(reference.reference);
+      }
     },
     onClose: () => {
       console.log('Payment cancelled');

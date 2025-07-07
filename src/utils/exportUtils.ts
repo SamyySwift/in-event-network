@@ -60,6 +60,21 @@ export const downloadFile = (content: string | Blob, filename: string, type: 'cs
   }
 };
 
+// Generic CSV export function
+export const exportToCSV = (data: any[], filename: string) => {
+  if (!data || data.length === 0) {
+    throw new Error('No data available to export');
+  }
+
+  const headers = Object.keys(data[0]);
+  const csvContent = convertToCSV(data, headers);
+  
+  const timestamp = new Date().toISOString().split('T')[0];
+  const sanitizedFilename = filename.replace(/[^a-z0-9]/gi, '_');
+  
+  downloadFile(csvContent, `${sanitizedFilename}_${timestamp}.csv`, 'csv');
+};
+
 // Export attendees data - Enhanced with phone, ticket type, and check-in status
 export const exportAttendeesData = (attendees: AttendeeData[], eventName: string, format: 'csv' | 'excel') => {
   if (!attendees || attendees.length === 0) {

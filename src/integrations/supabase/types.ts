@@ -1279,6 +1279,115 @@ export type Database = {
           },
         ]
       }
+      sponsor_forms: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          event_id: string
+          form_description: string | null
+          form_fields: Json
+          form_title: string
+          id: string
+          is_active: boolean
+          shareable_link: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          event_id: string
+          form_description?: string | null
+          form_fields?: Json
+          form_title?: string
+          id?: string
+          is_active?: boolean
+          shareable_link?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          event_id?: string
+          form_description?: string | null
+          form_fields?: Json
+          form_title?: string
+          id?: string
+          is_active?: boolean
+          shareable_link?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_sponsor_forms_event"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sponsors: {
+        Row: {
+          additional_notes: string | null
+          contact_person_name: string
+          created_at: string
+          description: string | null
+          email: string
+          event_id: string
+          id: string
+          logo_url: string | null
+          organization_name: string
+          phone_number: string | null
+          social_media_links: Json | null
+          sponsorship_type: string
+          status: string
+          updated_at: string
+          website_link: string | null
+        }
+        Insert: {
+          additional_notes?: string | null
+          contact_person_name: string
+          created_at?: string
+          description?: string | null
+          email: string
+          event_id: string
+          id?: string
+          logo_url?: string | null
+          organization_name: string
+          phone_number?: string | null
+          social_media_links?: Json | null
+          sponsorship_type: string
+          status?: string
+          updated_at?: string
+          website_link?: string | null
+        }
+        Update: {
+          additional_notes?: string | null
+          contact_person_name?: string
+          created_at?: string
+          description?: string | null
+          email?: string
+          event_id?: string
+          id?: string
+          logo_url?: string | null
+          organization_name?: string
+          phone_number?: string | null
+          social_media_links?: Json | null
+          sponsorship_type?: string
+          status?: string
+          updated_at?: string
+          website_link?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_sponsors_event"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suggestions: {
         Row: {
           content: string

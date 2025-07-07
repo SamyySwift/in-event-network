@@ -25,6 +25,8 @@ import AdminQuestions from "@/pages/admin/AdminQuestions";
 import AdminSuggestions from "@/pages/admin/AdminSuggestions";
 import AdminNotifications from "@/pages/admin/AdminNotifications";
 import AdminProfile from "@/pages/admin/AdminProfile";
+import AdminSponsors from "@/pages/admin/AdminSponsors";
+import SponsorForm from "@/pages/SponsorForm";
 
 // Attendee Pages
 import AppLayout from "@/components/layouts/AppLayout";
@@ -238,6 +240,20 @@ export const router = createBrowserRouter([
         <AdminNotifications />
       </AdminRoute>
     ),
+  },
+  {
+    path: "/admin/sponsors",
+    element: (
+      <AdminRoute>
+        <AdminSponsors />
+      </AdminRoute>
+    ),
+  },
+  
+  // Public sponsor form route
+  {
+    path: "/sponsor-form/:formId",
+    element: <SponsorForm />,
   },
 
   // Host Routes (redirect to admin)

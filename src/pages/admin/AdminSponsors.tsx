@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Plus, Users, Clock, CheckCircle, FileText, Download, QrCode, Share, Edit, Trash2, Eye } from 'lucide-react';
-import AdminLayout from '@/components/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -66,17 +65,14 @@ export default function AdminSponsors() {
 
   if (isLoadingForms || isLoadingSponsors) {
     return (
-      <AdminLayout>
-        <div className="flex items-center justify-center min-h-96">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      </AdminLayout>
+      <div className="flex items-center justify-center min-h-96">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
     );
   }
 
   return (
-    <AdminLayout>
-      <div className="space-y-6 p-4 sm:p-6">
+    <div className="space-y-6 p-4 sm:p-6">
         {/* Modern Section Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
@@ -280,6 +276,5 @@ export default function AdminSponsors() {
           </DialogContent>
         </Dialog>
       </div>
-    </AdminLayout>
-  );
-}
+    );
+  }

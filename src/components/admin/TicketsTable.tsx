@@ -32,6 +32,16 @@ interface Ticket {
     name: string;
     email: string;
   };
+  // Add custom form responses
+  ticket_form_responses?: {
+    form_field_id: string;
+    response_value: any;
+    ticket_form_fields: {
+      label: string;
+      field_type: string;
+      field_options?: any;
+    };
+  }[];
 }
 
 interface TicketsTableProps {
@@ -107,48 +117,71 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Ticket Number</TableHead>
+              <TableHead>Ticket Info</TableHead>
               <TableHead>Attendee</TableHead>
               <TableHead>Contact</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Price</TableHead>
+              <TableHead>Custom Data</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Purchase Date</TableHead>
-              <TableHead>Check-in Time</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredTickets.map((ticket) => (
               <TableRow key={ticket.id}>
-                <TableCell className="font-mono text-sm">
-                  {ticket.ticket_number}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    <div>
-                      <div className="font-medium">
-                        {ticket.guest_name || ticket.profiles?.name || 'Unknown'}
-                      </div>
-                    </div>
-                  </div>
-                </TableCell>
                 <TableCell>
                   <div className="space-y-1">
-                    <div className="text-sm flex items-center">
-                      <Mail className="h-3 w-3 mr-1 text-muted-foreground" />
-                      <span className="text-muted-foreground">
-                        {ticket.guest_email || ticket.profiles?.email || 'No email'}
-                      </span>
-                    </div>
-                    {ticket.guest_phone && (
-                      <div className="text-sm flex items-center">
-                        <Phone className="h-3 w-3 mr-1 text-muted-foreground" />
-                        <span className="text-muted-foreground">{ticket.guest_phone}</span>
-                      </div>
-                    )}
+                    <p className="font-medium">{ticket.ticket_types.name}</p>
+                    <p className="text-xs text-gray-500 font-mono">#{ticket.ticket_number}</p>
+                    <p className="text-xs text-gray-500">₦{ticket.price.toLocaleString()}</p>
                   </div>
                 </TableCell>
+                
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-gray-400" />
+                    <span className="font-medium">
+                      {ticket.guest_name || ticket.profiles?.name || 'N/A'}
+                    </span>
+                  </div>
+                </TableCell>
+                
+                <TableCell>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Mail className="h-3 w-3 text-gray-400" />
+                      <span>{ticket.guest_email || ticket.profiles?.email || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Phone className="h-3 w-3 text-gray-400" />
+                      <span>{ticket.guest_phone || 'N/A'}</span>
+                    </div>
+                  </div>
+                </TableCell>
+                
+                <TableCell>
+                  {ticket.ticket_form_responses && ticket.ticket_form_responses.length > 0 ? (
+                    <div className="space-y-1 max-w-xs">
+                      {ticket.ticket_form_responses.slice(0, 2).map((response, idx) => (
+                        <div key={idx} className="text-xs">
+                          <span className="font-medium text-gray-600">
+                            {response.ticket_form_fields.label}:
+                          </span>
+                          <span className="ml-1 text-gray-800">
+                            {renderFormResponsePreview(response.response_value, response.ticket_form_fields.field_type)}
+                          </span>
+                        </div>
+                      ))}
+                      {ticket.ticket_form_responses.length > 2 && (
+                        <p className="text-xs text-gray-500 italic">
+                          +{ticket.ticket_form_responses.length - 2} more fields
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="text-gray-400 text-sm">No custom data</span>
+                  )}
+                </TableCell>
+                
                 <TableCell>
                   <Badge variant="outline">{ticket.ticket_types.name}</Badge>
                 </TableCell>
@@ -188,3 +221,19 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
     </div>
   );
 }
+
+const renderFormResponsePreview = (value: any, fieldType: string) => {
+  if (!value) return 'N/A';
+  
+  switch (fieldType) {
+    case 'checkboxes':
+      if (Array.isArray(value)) {
+        return value.slice(0, 2).join(', ') + (value.length > 2 ? '...' : '');
+      }
+      return String(value);
+    case 'paragraph':
+      return String(value).substring(0, 50) + (String(value).length > 50 ? '...' : '');
+    default:
+      return String(value).substring(0, 30) + (String(value).length > 30 ? '...' : '');
+  }
+};

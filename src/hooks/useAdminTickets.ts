@@ -1,7 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAdminEventContext } from "@/hooks/useAdminEventContext";
-import { useToast } from "@/hooks/use-toast";
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAdminEventContext } from '@/hooks/useAdminEventContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface TicketType {
   id: string;
@@ -14,43 +15,6 @@ interface TicketType {
   event_id: string;
   created_at: string;
   updated_at: string;
-}
-
-// Update the Ticket interface to handle the actual Supabase response structure
-interface Ticket {
-  id: string;
-  event_id: string;
-  ticket_type_id: string;
-  user_id?: string;
-  guest_name?: string;
-  guest_email?: string;
-  guest_phone?: string;
-  ticket_number: string;
-  price: number;
-  qr_code_data: string;
-  check_in_status: boolean;
-  checked_in_at?: string;
-  checked_in_by?: string;
-  purchase_date: string;
-  payment_status: string;
-  created_at: string;
-  updated_at: string;
-  ticket_types: {
-    name: string;
-  };
-  profiles?: {
-    name: string;
-    email: string;
-  } | null;
-  ticket_form_responses?: {
-    form_field_id: string;
-    response_value: any;
-    ticket_form_fields: {
-      label: string;
-      field_type: string;
-      field_options?: any;
-    };
-  }[];
 }
 
 interface EventTicket {
@@ -83,15 +47,15 @@ export const useAdminTickets = () => {
 
   // Fetch ticket types for the selected event
   const { data: ticketTypes = [], isLoading: isLoadingTypes } = useQuery({
-    queryKey: ["admin-ticket-types", selectedEventId],
+    queryKey: ['admin-ticket-types', selectedEventId],
     queryFn: async (): Promise<TicketType[]> => {
       if (!selectedEventId) return [];
 
       const { data, error } = await supabase
-        .from("ticket_types")
-        .select("*")
-        .eq("event_id", selectedEventId)
-        .order("created_at", { ascending: false });
+        .from('ticket_types')
+        .select('*')
+        .eq('event_id', selectedEventId)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data || [];
@@ -100,59 +64,52 @@ export const useAdminTickets = () => {
   });
 
   // Fetch event tickets for the selected event
-  // Fix the query to handle potential profile errors
   const { data: eventTickets = [], isLoading: isLoadingTickets } = useQuery({
-    queryKey: ["admin-event-tickets", selectedEventId],
-    queryFn: async () => {
+    queryKey: ['admin-event-tickets', selectedEventId],
+    queryFn: async (): Promise<EventTicket[]> => {
       if (!selectedEventId) return [];
 
       const { data, error } = await supabase
-        .from("event_tickets")
-        .select(
-          `
+        .from('event_tickets')
+        .select(`
           *,
-          ticket_types (name),
-          profiles (name, email),
-          ticket_form_responses (
-            form_field_id,
-            response_value,
-            ticket_form_fields (
-              label,
-              field_type,
-              field_options
-            )
-          )
-        `
-        )
-        .eq("event_id", selectedEventId)
-        .order("purchase_date", { ascending: false });
+          ticket_types (*)
+        `)
+        .eq('event_id', selectedEventId)
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-
-      // Process the data to handle profile errors
-      const processedData = (data || []).map((ticket) => ({
-        ...ticket,
-        profiles:
-          ticket.profiles &&
-          typeof ticket.profiles === "object" &&
-          ticket.profiles !== null &&
-          !("error" in (ticket.profiles ?? {}))
-            ? ticket.profiles
-            : null,
+      
+      // Fetch profile data separately to avoid join issues
+      const ticketsWithProfiles = await Promise.all((data || []).map(async (ticket) => {
+        if (ticket.user_id) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('name, email')
+            .eq('id', ticket.user_id)
+            .single();
+          
+          return {
+            ...ticket,
+            profiles: profile
+          };
+        }
+        return {
+          ...ticket,
+          profiles: null
+        };
       }));
 
-      return processedData as Ticket[];
+      return ticketsWithProfiles;
     },
     enabled: !!selectedEventId,
   });
 
   // Create ticket type mutation
   const createTicketType = useMutation({
-    mutationFn: async (
-      ticketType: Omit<TicketType, "id" | "created_at" | "updated_at">
-    ) => {
+    mutationFn: async (ticketType: Omit<TicketType, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
-        .from("ticket_types")
+        .from('ticket_types')
         .insert([ticketType])
         .select()
         .single();
@@ -161,7 +118,7 @@ export const useAdminTickets = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-ticket-types"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-ticket-types'] });
       toast({
         title: "Success",
         description: "Ticket type created successfully",
@@ -178,14 +135,11 @@ export const useAdminTickets = () => {
 
   // Update ticket type mutation
   const updateTicketType = useMutation({
-    mutationFn: async ({
-      id,
-      ...updates
-    }: Partial<TicketType> & { id: string }) => {
+    mutationFn: async ({ id, ...updates }: Partial<TicketType> & { id: string }) => {
       const { data, error } = await supabase
-        .from("ticket_types")
+        .from('ticket_types')
         .update(updates)
-        .eq("id", id)
+        .eq('id', id)
         .select()
         .single();
 
@@ -193,7 +147,7 @@ export const useAdminTickets = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-ticket-types"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-ticket-types'] });
       toast({
         title: "Success",
         description: "Ticket type updated successfully",
@@ -212,14 +166,14 @@ export const useAdminTickets = () => {
   const deleteTicketType = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from("ticket_types")
+        .from('ticket_types')
         .delete()
-        .eq("id", id);
+        .eq('id', id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-ticket-types"] });
+      queryClient.invalidateQueries({ queryKey: ['admin-ticket-types'] });
       toast({
         title: "Success",
         description: "Ticket type deleted successfully",
@@ -236,8 +190,7 @@ export const useAdminTickets = () => {
 
   const stats = {
     totalTickets: eventTickets.length,
-    checkedInTickets: eventTickets.filter((ticket) => ticket.check_in_status)
-      .length,
+    checkedInTickets: eventTickets.filter(ticket => ticket.check_in_status).length,
     totalRevenue: eventTickets.reduce((sum, ticket) => sum + ticket.price, 0),
     ticketTypes: ticketTypes.length,
   };

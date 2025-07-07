@@ -24,11 +24,10 @@ interface TicketData {
   check_in_status: boolean;
   checked_in_at?: string;
   purchase_date: string;
-  custom_form_data?: Record<string, any>;
 }
 
 // Convert data to CSV format
-const convertToCSV = (data: any[], headers: string[]): string => {
+export const convertToCSV = (data: any[], headers: string[]): string => {
   const csvContent = [
     headers.join(','),
     ...data.map(row => 
@@ -45,8 +44,8 @@ const convertToCSV = (data: any[], headers: string[]): string => {
   return csvContent;
 };
 
-// Download file helper
-const downloadFile = (content: string | Blob, filename: string, type: 'csv' | 'excel') => {
+// Download file - Fixed to handle both CSV and Excel
+export const downloadFile = (content: string | Blob, filename: string, type: 'csv' | 'excel') => {
   if (type === 'csv') {
     const blob = new Blob([content as string], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
@@ -61,7 +60,6 @@ const downloadFile = (content: string | Blob, filename: string, type: 'csv' | 'e
   }
 };
 
-<<<<<<< HEAD
 // Generic CSV export function
 export const exportToCSV = (data: any[], filename: string) => {
   if (!data || data.length === 0) {
@@ -78,36 +76,6 @@ export const exportToCSV = (data: any[], filename: string) => {
 };
 
 // Export attendees data - Enhanced with phone, ticket type, and check-in status
-=======
-// Helper function for CSV export
-const exportToCSV = (data: any[], headerLabels: string[], headers: string[], filename: string) => {
-  const csvContent = convertToCSV(data, headers);
-  downloadFile(csvContent, `${filename}.csv`, 'csv');
-};
-
-// Helper function for Excel export
-const exportToExcel = (data: any[], headerLabels: string[], headers: string[], filename: string, sheetName: string) => {
-  const worksheetData = data.map(item => {
-    const row: Record<string, any> = {};
-    headers.forEach((header, index) => {
-      row[headerLabels[index]] = item[header];
-    });
-    return row;
-  });
-  
-  const worksheet = XLSX.utils.json_to_sheet(worksheetData);
-  
-  // Set column widths
-  const colWidths = headerLabels.map(() => ({ wch: 20 }));
-  worksheet['!cols'] = colWidths;
-  
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
-  XLSX.writeFile(workbook, `${filename}.xlsx`);
-};
-
-// Export attendees data
->>>>>>> f15d207 (change)
 export const exportAttendeesData = (attendees: AttendeeData[], eventName: string, format: 'csv' | 'excel') => {
   if (!attendees || attendees.length === 0) {
     throw new Error('No attendee data available to export');
@@ -131,87 +99,97 @@ export const exportAttendeesData = (attendees: AttendeeData[], eventName: string
   const filename = `${sanitizedEventName}_attendees_${timestamp}`;
 
   if (format === 'csv') {
-    exportToCSV(processedData, headerLabels, headers, filename);
+    const csvContent = convertToCSV(processedData, headers);
+    downloadFile(csvContent, `${filename}.csv`, 'csv');
   } else {
-    exportToExcel(processedData, headerLabels, headers, filename, 'Attendees');
+    // Enhanced Excel export with all fields
+    const worksheetData = processedData.map(item => ({
+      'Full Name': item.name,
+      'Email': item.email,
+      'Phone Number': item.phone,
+      'Ticket Type': item.ticket_type,
+      'Check-in Status': item.check_in_status,
+      'Role': item.role,
+      'Joined Date': item.joined_at
+    }));
+    
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+    
+    // Set column widths
+    const colWidths = [
+      { wch: 20 }, // Full Name
+      { wch: 30 }, // Email
+      { wch: 15 }, // Phone Number
+      { wch: 20 }, // Ticket Type
+      { wch: 15 }, // Check-in Status
+      { wch: 15 }, // Role
+      { wch: 15 }  // Joined Date
+    ];
+    worksheet['!cols'] = colWidths;
+    
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Attendees');
+    XLSX.writeFile(workbook, `${filename}.xlsx`);
   }
 };
 
-// Export tickets data with custom form fields
-export const exportTicketsData = async (tickets: any[], eventName: string, format: 'csv' | 'excel') => {
+// Export tickets data - Fixed Excel functionality
+export const exportTicketsData = (tickets: TicketData[], eventName: string, format: 'csv' | 'excel') => {
   if (!tickets || tickets.length === 0) {
     throw new Error('No ticket data available to export');
   }
 
-  // Collect all unique custom form fields
-  const allFormFields = new Set<string>();
-  tickets.forEach(ticket => {
-    if (ticket.ticket_form_responses) {
-      ticket.ticket_form_responses.forEach((response: any) => {
-        allFormFields.add(response.ticket_form_fields.label);
-      });
-    }
-  });
-
-  const customFieldLabels = Array.from(allFormFields).sort();
+  const headers = ['ticket_number', 'ticket_type_name', 'price', 'attendee_name', 'attendee_email', 'check_in_status', 'checked_in_at', 'purchase_date'];
+  const headerLabels = ['Ticket Number', 'Ticket Type', 'Price', 'Attendee Name', 'Attendee Email', 'Checked In', 'Check-in Date', 'Purchase Date'];
   
-  const headers = [
-    'ticket_number', 'ticket_type', 'guest_name', 'guest_email', 'guest_phone',
-    'price', 'check_in_status', 'purchase_date', ...customFieldLabels
-  ];
-  
-  const headerLabels = [
-    'Ticket Number', 'Ticket Type', 'Guest Name', 'Email', 'Phone',
-    'Price', 'Check-in Status', 'Purchase Date', ...customFieldLabels
-  ];
-
-  const processedData = tickets.map(ticket => {
-    const customData: Record<string, any> = {};
-    
-    // Process custom form responses
-    if (ticket.ticket_form_responses) {
-      ticket.ticket_form_responses.forEach((response: any) => {
-        const fieldLabel = response.ticket_form_fields.label;
-        let value = response.response_value;
-        
-        // Format different field types for export
-        if (Array.isArray(value)) {
-          value = value.join(', ');
-        } else if (typeof value === 'object') {
-          value = JSON.stringify(value);
-        }
-        
-        customData[fieldLabel] = value || 'N/A';
-      });
-    }
-
-    // Ensure all custom fields have values
-    customFieldLabels.forEach(field => {
-      if (!(field in customData)) {
-        customData[field] = 'N/A';
-      }
-    });
-
-    return {
-      ticket_number: ticket.ticket_number || 'N/A',
-      ticket_type: ticket.ticket_types?.name || 'N/A',
-      guest_name: ticket.guest_name || ticket.profiles?.name || 'N/A',
-      guest_email: ticket.guest_email || ticket.profiles?.email || 'N/A',
-      guest_phone: ticket.guest_phone || 'N/A',
-      price: `₦${ticket.price?.toLocaleString() || '0'}`,
-      check_in_status: ticket.check_in_status ? 'Checked In' : 'Not Checked In',
-      purchase_date: new Date(ticket.purchase_date).toLocaleDateString(),
-      ...customData
-    };
-  });
+  const processedData = tickets.map(ticket => ({
+    ticket_number: ticket.ticket_number,
+    ticket_type_name: ticket.ticket_type_name,
+    price: `₦${ticket.price.toLocaleString()}`,
+    attendee_name: ticket.user_name || ticket.guest_name || 'N/A',
+    attendee_email: ticket.user_email || ticket.guest_email || 'N/A',
+    check_in_status: ticket.check_in_status ? 'Yes' : 'No',
+    checked_in_at: ticket.checked_in_at ? new Date(ticket.checked_in_at).toLocaleDateString() : 'N/A',
+    purchase_date: new Date(ticket.purchase_date).toLocaleDateString()
+  }));
 
   const timestamp = new Date().toISOString().split('T')[0];
   const sanitizedEventName = eventName.replace(/[^a-z0-9]/gi, '_');
   const filename = `${sanitizedEventName}_tickets_${timestamp}`;
 
   if (format === 'csv') {
-    exportToCSV(processedData, headerLabels, headers, filename);
+    const csvContent = convertToCSV(processedData, headers);
+    downloadFile(csvContent, `${filename}.csv`, 'csv');
   } else {
-    exportToExcel(processedData, headerLabels, headers, filename, 'Tickets');
+    // Fixed Excel export
+    const worksheetData = processedData.map(item => ({
+      'Ticket Number': item.ticket_number,
+      'Ticket Type': item.ticket_type_name,
+      'Price': item.price,
+      'Attendee Name': item.attendee_name,
+      'Attendee Email': item.attendee_email,
+      'Checked In': item.check_in_status,
+      'Check-in Date': item.checked_in_at,
+      'Purchase Date': item.purchase_date
+    }));
+    
+    const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+    
+    // Set column widths
+    const colWidths = [
+      { wch: 15 }, // Ticket Number
+      { wch: 20 }, // Ticket Type
+      { wch: 12 }, // Price
+      { wch: 20 }, // Attendee Name
+      { wch: 30 }, // Attendee Email
+      { wch: 12 }, // Checked In
+      { wch: 15 }, // Check-in Date
+      { wch: 15 }  // Purchase Date
+    ];
+    worksheet['!cols'] = colWidths;
+    
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Tickets');
+    XLSX.writeFile(workbook, `${filename}.xlsx`);
   }
 };

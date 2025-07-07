@@ -1,35 +1,17 @@
-import React, { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
-import AppLayout from "@/components/layouts/AppLayout";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import {
-  Ticket,
-  Calendar,
-  MapPin,
-  Clock,
-  QrCode,
-  CheckCircle,
-  Plus,
-  ShoppingCart,
-  Sparkles,
-  Users,
-  Star,
-} from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import TicketQRModal from "@/components/attendee/TicketQRModal";
+import React, { useState, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import AppLayout from '@/components/layouts/AppLayout';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Ticket, Calendar, MapPin, Clock, QrCode, CheckCircle, Plus, ShoppingCart, Sparkles, Users, Star } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import TicketQRModal from '@/components/attendee/TicketQRModal';
 
 interface MyTicket {
   id: string;
@@ -54,16 +36,6 @@ interface MyTicket {
     location?: string;
     banner_url?: string;
   };
-  // Add custom form responses
-  ticket_form_responses?: {
-    form_field_id: string;
-    response_value: any;
-    ticket_form_fields: {
-      label: string;
-      field_type: string;
-      field_options?: any;
-    };
-  }[];
 }
 
 interface TicketType {
@@ -89,30 +61,27 @@ export default function AttendeeMyTickets() {
   const { currentUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [ticketUrl, setTicketUrl] = useState("");
-  const [selectedTickets, setSelectedTickets] = useState<
-    Record<string, number>
-  >({});
+  const [ticketUrl, setTicketUrl] = useState('');
+  const [selectedTickets, setSelectedTickets] = useState<Record<string, number>>({});
   const [showPurchaseForm, setShowPurchaseForm] = useState(false);
   const [userInfo, setUserInfo] = useState({
-    fullName: "",
-    email: currentUser?.email || "",
-    phone: "",
+    fullName: '',
+    email: currentUser?.email || '',
+    phone: ''
   });
   const [showUserInfoForm, setShowUserInfoForm] = useState(false);
-
+  
   // QR Code modal state
-  const [selectedTicketForQR, setSelectedTicketForQR] =
-    useState<MyTicket | null>(null);
+  const [selectedTicketForQR, setSelectedTicketForQR] = useState<MyTicket | null>(null);
   const [showQRModal, setShowQRModal] = useState(false);
 
   // Check for pending ticketing URL on component mount
   useEffect(() => {
-    const pendingUrl = localStorage.getItem("pendingTicketingUrl");
+    const pendingUrl = localStorage.getItem('pendingTicketingUrl');
     if (pendingUrl) {
       setTicketUrl(pendingUrl);
-      localStorage.removeItem("pendingTicketingUrl");
-
+      localStorage.removeItem('pendingTicketingUrl');
+      
       // Automatically show the purchase form
       const key = extractEventKey(pendingUrl);
       if (key) {
@@ -131,10 +100,10 @@ export default function AttendeeMyTickets() {
 
   // Fetch my existing tickets
   const { data: tickets = [], isLoading: ticketsLoading } = useQuery({
-    queryKey: ["my-tickets", currentUser?.id],
+    queryKey: ['my-tickets', currentUser?.id],
     queryFn: async (): Promise<MyTicket[]> => {
       if (!currentUser?.id) return [];
-    
+
       const { data, error } = await supabase
         .from('event_tickets')
         .select(`
@@ -150,46 +119,37 @@ export default function AttendeeMyTickets() {
             end_time,
             location,
             banner_url
-          ),
-          ticket_form_responses (
-            form_field_id,
-            response_value,
-            ticket_form_fields (
-              label,
-              field_type,
-              field_options
-            )
           )
         `)
         .eq('user_id', currentUser.id)
         .order('purchase_date', { ascending: false });
-    
+
       if (error) throw error;
-      return data as MyTicket[];
+      return data || [];
     },
     enabled: !!currentUser?.id,
   });
 
   // Fetch event and ticket types when URL is provided
   const { data: eventData, isLoading: eventLoading } = useQuery({
-    queryKey: ["purchase-event", eventKey],
+    queryKey: ['purchase-event', eventKey],
     queryFn: async () => {
       if (!eventKey) return null;
 
       const { data: event, error: eventError } = await supabase
-        .from("events")
-        .select("*")
-        .eq("event_key", eventKey)
+        .from('events')
+        .select('*')
+        .eq('event_key', eventKey)
         .single();
 
       if (eventError) throw eventError;
 
       const { data: ticketTypes, error: ticketError } = await supabase
-        .from("ticket_types")
-        .select("*")
-        .eq("event_id", event.id)
-        .eq("is_active", true)
-        .gt("available_quantity", 0);
+        .from('ticket_types')
+        .select('*')
+        .eq('event_id', event.id)
+        .eq('is_active', true)
+        .gt('available_quantity', 0);
 
       if (ticketError) throw ticketError;
 
@@ -198,131 +158,93 @@ export default function AttendeeMyTickets() {
     enabled: !!eventKey,
   });
 
-  // Add form data state
-  const [customFormData, setCustomFormData] = useState<Record<string, Record<string, any>>>({});
-  
-  // Add form fields query for selected ticket types
-  const { data: formFieldsData } = useQuery({
-    queryKey: ['ticket-form-fields', Object.keys(selectedTickets)],
-    queryFn: async () => {
-      const ticketTypeIds = Object.keys(selectedTickets).filter(id => selectedTickets[id] > 0);
-      if (ticketTypeIds.length === 0) return {};
-  
-      const formFieldsMap: Record<string, any[]> = {};
-      
-      for (const ticketTypeId of ticketTypeIds) {
-        const { data, error } = await supabase
-          .from('ticket_form_fields')
-          .select('*')
-          .eq('ticket_type_id', ticketTypeId)
-          .order('field_order', { ascending: true });
-        
-        if (!error && data) {
-          formFieldsMap[ticketTypeId] = data;
-        }
-      }
-      
-      return formFieldsMap;
-    },
-    enabled: Object.values(selectedTickets).some(qty => qty > 0)
-  });
-  
   // Purchase tickets mutation
   const purchaseTickets = useMutation({
     mutationFn: async () => {
       if (!currentUser?.id || !eventData) {
         throw new Error('User or event data not available');
       }
-    
+  
       // Validate user information
       if (!userInfo.fullName.trim() || !userInfo.email.trim() || !userInfo.phone.trim()) {
         throw new Error('Please provide your full name, email, and phone number before purchasing.');
       }
-    
-      // Validate required custom form fields
-      if (formFieldsData) {
-        for (const [ticketTypeId, quantity] of Object.entries(selectedTickets)) {
-          if (quantity > 0 && formFieldsData[ticketTypeId]) {
-            const requiredFields = formFieldsData[ticketTypeId].filter((field: any) => field.is_required);
-            for (const field of requiredFields) {
-              if (!customFormData[ticketTypeId]?.[field.id]) {
-                throw new Error(`Please fill in the required field: ${field.label}`);
-              }
-            }
-          }
-        }
-      }
-    
+  
+      // Calculate total price to determine if this is a free ticket
       const totalPrice = getTotalPrice();
       const isFreeTicket = totalPrice === 0;
+  
       const ticketPurchases = [];
-      const formResponses = [];
-    
+      
       for (const [ticketTypeId, quantity] of Object.entries(selectedTickets)) {
         if (quantity > 0) {
           const ticketType = eventData.ticketTypes.find(t => t.id === ticketTypeId);
           if (!ticketType) continue;
-    
+  
           for (let i = 0; i < quantity; i++) {
             const ticketNumber = `TKT-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-            const ticketId = crypto.randomUUID();
-            
             ticketPurchases.push({
-              id: ticketId,
               ticket_number: ticketNumber,
               user_id: currentUser.id,
               ticket_type_id: ticketTypeId,
               event_id: eventData.event.id,
               price: ticketType.price,
-              guest_name: userInfo.fullName.substring(0, 100),
+              guest_name: userInfo.fullName.substring(0, 100), // Trim to prevent length issues
               guest_email: userInfo.email.substring(0, 100),
-              guest_phone: userInfo.phone.substring(0, 20),
+              guest_phone: userInfo.phone.substring(0, 20), // Trim phone to 20 chars
               qr_code_data: JSON.stringify({
                 ticketNumber,
                 eventId: eventData.event.id,
                 userId: currentUser.id,
                 ticketTypeId
               }),
+              // Add payment status for free tickets
               payment_status: isFreeTicket ? 'completed' : 'pending'
             });
-    
-            // Add form responses for this ticket
-            if (formFieldsData?.[ticketTypeId] && customFormData[ticketTypeId]) {
-              for (const field of formFieldsData[ticketTypeId]) {
-                const responseValue = customFormData[ticketTypeId][field.id];
-                if (responseValue !== undefined && responseValue !== null && responseValue !== '') {
-                  formResponses.push({
-                    ticket_id: ticketId,
-                    form_field_id: field.id,
-                    response_value: responseValue
-                  });
-                }
-              }
-            }
           }
         }
       }
-    
-      // Insert tickets
-      const { data: tickets, error: ticketError } = await supabase
+  
+      // For free tickets, insert directly without wallet operations
+      if (isFreeTicket) {
+        const { data: tickets, error } = await supabase
+          .from('event_tickets')
+          .insert(ticketPurchases)
+          .select();
+  
+        if (error) throw error;
+  
+        // Update available quantities
+        for (const [ticketTypeId, quantity] of Object.entries(selectedTickets)) {
+          if (quantity > 0) {
+            const { data: currentTicketType } = await supabase
+              .from('ticket_types')
+              .select('available_quantity')
+              .eq('id', ticketTypeId)
+              .single();
+  
+            if (currentTicketType) {
+              await supabase
+                .from('ticket_types')
+                .update({
+                  available_quantity: currentTicketType.available_quantity - quantity
+                })
+                .eq('id', ticketTypeId);
+            }
+          }
+        }
+  
+        return tickets;
+      }
+  
+      // For paid tickets, proceed with existing payment logic
+      const { data: tickets, error } = await supabase
         .from('event_tickets')
         .insert(ticketPurchases)
         .select();
-    
-      if (ticketError) throw ticketError;
-    
-      // Insert form responses
-      if (formResponses.length > 0) {
-        const { error: responseError } = await supabase
-          .from('ticket_form_responses')
-          .insert(formResponses);
-    
-        if (responseError) {
-          console.error('Error saving form responses:', responseError);
-          // Don't throw here as tickets are already created
-        }
-      }
-    
+  
+      if (error) throw error;
+  
       // Update available quantities
       for (const [ticketTypeId, quantity] of Object.entries(selectedTickets)) {
         if (quantity > 0) {
@@ -331,7 +253,7 @@ export default function AttendeeMyTickets() {
             .select('available_quantity')
             .eq('id', ticketTypeId)
             .single();
-    
+  
           if (currentTicketType) {
             await supabase
               .from('ticket_types')
@@ -342,7 +264,7 @@ export default function AttendeeMyTickets() {
           }
         }
       }
-    
+  
       return tickets;
     },
     onSuccess: () => {
@@ -351,13 +273,13 @@ export default function AttendeeMyTickets() {
         description: `${getTotalTickets()} ticket(s) purchased successfully.`,
       });
       setSelectedTickets({});
-      setTicketUrl("");
+      setTicketUrl('');
       setShowPurchaseForm(false);
       setShowUserInfoForm(false);
-      queryClient.invalidateQueries({ queryKey: ["my-tickets"] });
+      queryClient.invalidateQueries({ queryKey: ['my-tickets'] });
     },
     onError: (error: any) => {
-      if (error.message.includes("full name, email, and phone")) {
+      if (error.message.includes('full name, email, and phone')) {
         setShowUserInfoForm(true);
       }
       toast({
@@ -369,9 +291,9 @@ export default function AttendeeMyTickets() {
   });
 
   const handleQuantityChange = (ticketTypeId: string, quantity: number) => {
-    setSelectedTickets((prev) => ({
+    setSelectedTickets(prev => ({
       ...prev,
-      [ticketTypeId]: Math.max(0, quantity),
+      [ticketTypeId]: Math.max(0, quantity)
     }));
   };
 
@@ -379,7 +301,7 @@ export default function AttendeeMyTickets() {
     if (!eventData?.ticketTypes) return 0;
     return eventData.ticketTypes.reduce((total, ticket) => {
       const quantity = selectedTickets[ticket.id] || 0;
-      return total + ticket.price * quantity;
+      return total + (ticket.price * quantity);
     }, 0);
   };
 
@@ -412,15 +334,11 @@ export default function AttendeeMyTickets() {
 
   const handlePurchase = () => {
     // Check if user info is complete
-    if (
-      !userInfo.fullName.trim() ||
-      !userInfo.email.trim() ||
-      !userInfo.phone.trim()
-    ) {
+    if (!userInfo.fullName.trim() || !userInfo.email.trim() || !userInfo.phone.trim()) {
       setShowUserInfoForm(true);
       return;
     }
-
+    
     purchaseTickets.mutate();
   };
 
@@ -435,13 +353,13 @@ export default function AttendeeMyTickets() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      weekday: "short",
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+    return new Date(dateString).toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
 
@@ -461,8 +379,7 @@ export default function AttendeeMyTickets() {
                   My Event Tickets
                 </h1>
                 <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                  Manage your tickets, view QR codes, and discover new events to
-                  attend
+                  Manage your tickets, view QR codes, and discover new events to attend
                 </p>
               </div>
             </div>
@@ -473,12 +390,8 @@ export default function AttendeeMyTickets() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-purple-600 text-sm font-medium">
-                        Total Tickets
-                      </p>
-                      <p className="text-3xl font-bold text-purple-900">
-                        {tickets.length}
-                      </p>
+                      <p className="text-purple-600 text-sm font-medium">Total Tickets</p>
+                      <p className="text-3xl font-bold text-purple-900">{tickets.length}</p>
                     </div>
                     <div className="bg-purple-500 p-3 rounded-xl text-white">
                       <Ticket className="h-6 w-6" />
@@ -491,12 +404,8 @@ export default function AttendeeMyTickets() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-purple-600 text-sm font-medium">
-                        Checked In
-                      </p>
-                      <p className="text-3xl font-bold text-purple-900">
-                        {tickets.filter((t) => t.check_in_status).length}
-                      </p>
+                      <p className="text-purple-600 text-sm font-medium">Checked In</p>
+                      <p className="text-3xl font-bold text-purple-900">{tickets.filter(t => t.check_in_status).length}</p>
                     </div>
                     <div className="bg-purple-500 p-3 rounded-xl text-white">
                       <CheckCircle className="h-6 w-6" />
@@ -509,15 +418,9 @@ export default function AttendeeMyTickets() {
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-purple-600 text-sm font-medium">
-                        Upcoming Events
-                      </p>
+                      <p className="text-purple-600 text-sm font-medium">Upcoming Events</p>
                       <p className="text-3xl font-bold text-purple-900">
-                        {
-                          tickets.filter(
-                            (t) => new Date(t.events.start_time) > new Date()
-                          ).length
-                        }
+                        {tickets.filter(t => new Date(t.events.start_time) > new Date()).length}
                       </p>
                     </div>
                     <div className="bg-purple-500 p-3 rounded-xl text-white">
@@ -543,85 +446,58 @@ export default function AttendeeMyTickets() {
                 <CardContent className="p-6 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label htmlFor="fullName" className="text-sm font-medium">
-                        Full Name *
-                      </Label>
+                      <Label htmlFor="fullName" className="text-sm font-medium">Full Name *</Label>
                       <Input
                         id="fullName"
                         value={userInfo.fullName}
-                        onChange={(e) =>
-                          setUserInfo((prev) => ({
-                            ...prev,
-                            fullName: e.target.value,
-                          }))
-                        }
+                        onChange={(e) => setUserInfo(prev => ({ ...prev, fullName: e.target.value }))}
                         placeholder="Enter your full name"
                         className="mt-1"
                       />
                     </div>
                     <div>
-                      <Label htmlFor="phone" className="text-sm font-medium">
-                        Phone Number *
-                      </Label>
+                      <Label htmlFor="phone" className="text-sm font-medium">Phone Number *</Label>
                       <Input
                         id="phone"
                         value={userInfo.phone}
-                        onChange={(e) =>
-                          setUserInfo((prev) => ({
-                            ...prev,
-                            phone: e.target.value,
-                          }))
-                        }
+                        onChange={(e) => setUserInfo(prev => ({ ...prev, phone: e.target.value }))}
                         placeholder="Enter your phone number"
                         className="mt-1"
                       />
                     </div>
                   </div>
                   <div>
-                    <Label htmlFor="email" className="text-sm font-medium">
-                      Email *
-                    </Label>
+                    <Label htmlFor="email" className="text-sm font-medium">Email *</Label>
                     <Input
                       id="email"
                       type="email"
                       value={userInfo.email}
-                      onChange={(e) =>
-                        setUserInfo((prev) => ({
-                          ...prev,
-                          email: e.target.value,
-                        }))
-                      }
+                      onChange={(e) => setUserInfo(prev => ({ ...prev, email: e.target.value }))}
                       placeholder="Enter your email"
                       className="mt-1"
                     />
                   </div>
                   <div className="flex gap-3 pt-4">
-                    <Button
+                    <Button 
                       onClick={() => {
-                        if (
-                          userInfo.fullName.trim() &&
-                          userInfo.email.trim() &&
-                          userInfo.phone.trim()
-                        ) {
+                        if (userInfo.fullName.trim() && userInfo.email.trim() && userInfo.phone.trim()) {
                           setShowUserInfoForm(false);
                           purchaseTickets.mutate();
                         } else {
                           toast({
                             title: "Information Required",
                             description: "Please fill in all required fields.",
-                            variant: "destructive",
+                            variant: "destructive"
                           });
                         }
                       }}
                       disabled={purchaseTickets.isPending}
                       className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
                     >
-                      {purchaseTickets.isPending
-                        ? "Processing..."
-                        : "Continue with Purchase"}
+                      {purchaseTickets.isPending ? 'Processing...' : 'Continue with Purchase'}
                     </Button>
-                    <Button
-                      variant="outline"
+                    <Button 
+                      variant="outline" 
                       onClick={() => setShowUserInfoForm(false)}
                     >
                       Cancel
@@ -641,8 +517,7 @@ export default function AttendeeMyTickets() {
                   Discover New Events
                 </CardTitle>
                 <CardDescription className="text-purple-100">
-                  Enter a ticket purchase URL to explore and buy tickets for
-                  exciting events
+                  Enter a ticket purchase URL to explore and buy tickets for exciting events
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-6">
@@ -653,8 +528,8 @@ export default function AttendeeMyTickets() {
                     onChange={(e) => setTicketUrl(e.target.value)}
                     className="flex-1 h-12 text-base"
                   />
-                  <Button
-                    onClick={handleUrlSubmit}
+                  <Button 
+                    onClick={handleUrlSubmit} 
                     disabled={!ticketUrl.trim()}
                     className="h-12 px-8 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-lg"
                   >
@@ -674,16 +549,12 @@ export default function AttendeeMyTickets() {
                       <Star className="h-8 w-8" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold">
-                        {eventData.event.name}
-                      </h2>
-                      <p className="text-purple-100 mt-1">
-                        {eventData.event.description}
-                      </p>
+                      <h2 className="text-2xl font-bold">{eventData.event.name}</h2>
+                      <p className="text-purple-100 mt-1">{eventData.event.description}</p>
                     </div>
                   </div>
                 </div>
-
+                
                 <CardContent className="p-6 space-y-6">
                   {/* Event Details */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-gradient-to-r from-purple-50 to-purple-100 rounded-xl border border-purple-200">
@@ -691,20 +562,16 @@ export default function AttendeeMyTickets() {
                       <div className="bg-purple-100 p-2 rounded-lg">
                         <Calendar className="h-5 w-5 text-purple-600" />
                       </div>
-                      <span className="font-medium">
-                        {formatDate(eventData.event.start_time)}
-                      </span>
+                      <span className="font-medium">{formatDate(eventData.event.start_time)}</span>
                     </div>
-                    {eventData.event.location && (
-                      <div className="flex items-center gap-3">
-                        <div className="bg-purple-100 p-2 rounded-lg">
-                          <MapPin className="h-5 w-5 text-purple-600" />
+                      {eventData.event.location && (
+                        <div className="flex items-center gap-3">
+                          <div className="bg-purple-100 p-2 rounded-lg">
+                            <MapPin className="h-5 w-5 text-purple-600" />
+                          </div>
+                          <span className="font-medium">{eventData.event.location}</span>
                         </div>
-                        <span className="font-medium">
-                          {eventData.event.location}
-                        </span>
-                      </div>
-                    )}
+                      )}
                   </div>
 
                   {/* Ticket Types */}
@@ -715,53 +582,31 @@ export default function AttendeeMyTickets() {
                     </h3>
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                       {eventData.ticketTypes.map((ticket) => (
-                        <Card
-                          key={ticket.id}
-                          className="border-2 border-purple-100 hover:border-purple-300 transition-all duration-300 hover:shadow-lg"
-                        >
+                        <Card key={ticket.id} className="border-2 border-purple-100 hover:border-purple-300 transition-all duration-300 hover:shadow-lg">
                           <CardContent className="p-5">
                             <div className="flex justify-between items-start mb-4">
                               <div>
-                                <h4 className="font-bold text-lg text-gray-800">
-                                  {ticket.name}
-                                </h4>
+                                <h4 className="font-bold text-lg text-gray-800">{ticket.name}</h4>
                                 {ticket.description && (
-                                  <p className="text-gray-600 text-sm mt-1">
-                                    {ticket.description}
-                                  </p>
+                                  <p className="text-gray-600 text-sm mt-1">{ticket.description}</p>
                                 )}
                               </div>
                               <div className="text-right">
-                                <div className="text-2xl font-bold text-purple-600">
-                                  ₦{ticket.price.toLocaleString()}
-                                </div>
-                                <Badge
-                                  variant="outline"
-                                  className="mt-1 border-purple-200 text-purple-700"
-                                >
+                                <div className="text-2xl font-bold text-purple-600">₦{ticket.price.toLocaleString()}</div>
+                                <Badge variant="outline" className="mt-1 border-purple-200 text-purple-700">
                                   {ticket.available_quantity} left
                                 </Badge>
                               </div>
                             </div>
                             <div className="flex items-center gap-3">
-                              <Label
-                                htmlFor={`quantity-${ticket.id}`}
-                                className="font-medium"
-                              >
-                                Quantity:
-                              </Label>
+                              <Label htmlFor={`quantity-${ticket.id}`} className="font-medium">Quantity:</Label>
                               <Input
                                 id={`quantity-${ticket.id}`}
                                 type="number"
                                 min="0"
                                 max={ticket.available_quantity}
                                 value={selectedTickets[ticket.id] || 0}
-                                onChange={(e) =>
-                                  handleQuantityChange(
-                                    ticket.id,
-                                    parseInt(e.target.value) || 0
-                                  )
-                                }
+                                onChange={(e) => handleQuantityChange(ticket.id, parseInt(e.target.value) || 0)}
                                 className="w-24 text-center border-purple-200 focus:border-purple-400"
                               />
                             </div>
@@ -777,14 +622,11 @@ export default function AttendeeMyTickets() {
                       <CardContent className="p-6">
                         <div className="flex justify-between items-center mb-4">
                           <span className="text-lg font-bold text-purple-900">
-                            Total: {getTotalTickets()} ticket
-                            {getTotalTickets() !== 1 ? "s" : ""}
+                            Total: {getTotalTickets()} ticket{getTotalTickets() !== 1 ? 's' : ''}
                           </span>
-                          <span className="text-2xl font-bold text-purple-600">
-                            ₦{getTotalPrice().toLocaleString()}
-                          </span>
+                          <span className="text-2xl font-bold text-purple-600">₦{getTotalPrice().toLocaleString()}</span>
                         </div>
-                        <Button
+                        <Button 
                           onClick={handlePurchase}
                           disabled={purchaseTickets.isPending}
                           className="w-full h-12 text-lg bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 shadow-lg"
@@ -825,30 +667,17 @@ export default function AttendeeMyTickets() {
                 {ticketsLoading ? (
                   <div className="text-center py-12">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600 text-lg">
-                      Loading your amazing tickets...
-                    </p>
+                    <p className="text-gray-600 text-lg">Loading your amazing tickets...</p>
                   </div>
                 ) : tickets.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="bg-gradient-to-br from-purple-100 to-indigo-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
                       <Ticket className="h-12 w-12 text-purple-600" />
                     </div>
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">
-                      No Tickets Yet
-                    </h3>
-                    <p className="text-gray-600 mb-6">
-                      Start your journey by purchasing tickets to exciting
-                      events!
-                    </p>
-                    <Button
-                      onClick={() =>
-                        (
-                          document.querySelector(
-                            'input[placeholder*="Paste"]'
-                          ) as HTMLInputElement
-                        )?.focus()
-                      }
+                    <h3 className="text-xl font-bold text-gray-800 mb-2">No Tickets Yet</h3>
+                    <p className="text-gray-600 mb-6">Start your journey by purchasing tickets to exciting events!</p>
+                    <Button 
+                      onClick={() => (document.querySelector('input[placeholder*="Paste"]') as HTMLInputElement)?.focus()}
                       className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700"
                     >
                       <Plus className="h-4 w-4 mr-2" />
@@ -856,7 +685,6 @@ export default function AttendeeMyTickets() {
                     </Button>
                   </div>
                 ) : (
-                  // In the ticket display section around line 650-700
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {tickets.map((ticket, index) => (
                       <Card key={ticket.id} className="group hover:shadow-xl transition-all duration-300 border-2 border-gray-100 hover:border-purple-200 animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
@@ -870,21 +698,20 @@ export default function AttendeeMyTickets() {
                               <p className="text-xs text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded mt-1 inline-block">
                                 #{ticket.ticket_number}
                               </p>
+                              {ticket.guest_name && (
+                                <p className="text-sm font-medium text-indigo-700 mt-1 flex items-center gap-1">
+                                  <Users className="h-3 w-3" />
+                                  {ticket.guest_name}
+                                </p>
+                              )}
                             </div>
                             <div className="text-right">
-                              <div className="text-xl font-bold text-gray-800">
-                                ₦{ticket.price.toLocaleString()}
-                              </div>
-                              <Badge
-                                variant={
-                                  ticket.check_in_status
-                                    ? "default"
-                                    : "secondary"
-                                }
-                                className={
-                                  ticket.check_in_status
-                                    ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md"
-                                    : "bg-gray-100 text-gray-600"
+                              <div className="text-xl font-bold text-gray-800">₦{ticket.price.toLocaleString()}</div>
+                              <Badge 
+                                variant={ticket.check_in_status ? "default" : "secondary"}
+                                className={ticket.check_in_status 
+                                  ? "bg-gradient-to-r from-green-500 to-emerald-600 text-white shadow-md" 
+                                  : "bg-gray-100 text-gray-600"
                                 }
                               >
                                 {ticket.check_in_status ? (
@@ -901,13 +728,11 @@ export default function AttendeeMyTickets() {
                               </Badge>
                             </div>
                           </div>
-
+                          
                           <div className="grid grid-cols-1 gap-2 text-sm text-gray-600 mb-4 bg-gray-50 p-3 rounded-lg">
                             <div className="flex items-center gap-2">
                               <Calendar className="h-4 w-4 text-purple-500" />
-                              <span className="font-medium">
-                                {formatDate(ticket.events.start_time)}
-                              </span>
+                              <span className="font-medium">{formatDate(ticket.events.start_time)}</span>
                             </div>
                             {ticket.events.location && (
                               <div className="flex items-center gap-2">
@@ -917,20 +742,16 @@ export default function AttendeeMyTickets() {
                             )}
                             <div className="flex items-center gap-2">
                               <Clock className="h-4 w-4 text-gray-400" />
-                              <span>
-                                Purchased: {formatDate(ticket.purchase_date)}
-                              </span>
+                              <span>Purchased: {formatDate(ticket.purchase_date)}</span>
                             </div>
                             {ticket.checked_in_at && (
                               <div className="flex items-center gap-2">
                                 <CheckCircle className="h-4 w-4 text-green-500" />
-                                <span>
-                                  Checked in: {formatDate(ticket.checked_in_at)}
-                                </span>
+                                <span>Checked in: {formatDate(ticket.checked_in_at)}</span>
                               </div>
                             )}
                           </div>
-
+                          
                           <Button
                             variant="outline"
                             onClick={() => showQRCode(ticket)}
@@ -959,54 +780,3 @@ export default function AttendeeMyTickets() {
     </AppLayout>
   );
 }
-
-// Add this helper function before the main component
-const renderFormResponse = (value: any, fieldType: string, fieldOptions?: any) => {
-  if (!value) return <span className="text-gray-400 italic">No response</span>;
-
-  switch (fieldType) {
-    case 'multiple_choice':
-    case 'dropdown':
-      return <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded text-xs">{value}</span>;
-    
-    case 'checkboxes':
-      if (Array.isArray(value)) {
-        return (
-          <div className="flex flex-wrap gap-1">
-            {value.map((item, idx) => (
-              <span key={idx} className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
-                {item}
-              </span>
-            ))}
-          </div>
-        );
-      }
-      return <span>{value}</span>;
-    
-    case 'date':
-      return <span className="font-mono text-sm">{new Date(value).toLocaleDateString()}</span>;
-    
-    case 'time':
-      return <span className="font-mono text-sm">{value}</span>;
-    
-    case 'grid':
-      if (typeof value === 'object') {
-        return (
-          <div className="space-y-1">
-            {Object.entries(value).map(([key, val]) => (
-              <div key={key} className="text-xs">
-                <span className="font-medium">{key}:</span> {String(val)}
-              </div>
-            ))}
-          </div>
-        );
-      }
-      return <span>{String(value)}</span>;
-    
-    case 'paragraph':
-      return <p className="text-sm whitespace-pre-wrap">{value}</p>;
-    
-    default:
-      return <span>{String(value)}</span>;
-  }
-};

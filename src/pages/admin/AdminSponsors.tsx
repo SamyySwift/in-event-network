@@ -10,12 +10,14 @@ import { SponsorFormQRCode } from '@/components/admin/SponsorFormQRCode';
 import { SponsorsTable } from '@/components/admin/SponsorsTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { exportToCSV } from '@/utils/exportUtils';
-import { AdminEventProvider } from '@/hooks/useAdminEventContext';
+import { AdminEventProvider, useAdminEventContext } from '@/hooks/useAdminEventContext';
 
 function AdminSponsorsContent() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [selectedForm, setSelectedForm] = useState<any>(null);
+  
+  const { selectedEventId, adminEvents, isLoading: isEventLoading, error: eventError } = useAdminEventContext();
   
   const { 
     sponsorForms, 
@@ -26,6 +28,69 @@ function AdminSponsorsContent() {
     deleteSponsorForm,
     stats 
   } = useAdminSponsors();
+
+  console.log('AdminSponsorsContent - Debug Info:', {
+    selectedEventId,
+    adminEvents: adminEvents?.length || 0,
+    isEventLoading,
+    eventError,
+    isLoadingForms,
+    isLoadingSponsors,
+    sponsorFormsCount: sponsorForms?.length || 0,
+    sponsorsCount: sponsors?.length || 0
+  });
+
+  // Show loading state while events are loading
+  if (isEventLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-2">Loading events...</span>
+      </div>
+    );
+  }
+
+  // Show error state if there's an event loading error
+  if (eventError) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <p className="text-red-600 mb-2">Error loading events</p>
+          <p className="text-sm text-muted-foreground">{eventError.message}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if no events are available
+  if (!adminEvents || adminEvents.length === 0) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No Events Found</h3>
+          <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+            You need to create an event first before managing sponsors and partners
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show message if no event is selected
+  if (!selectedEventId) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No Event Selected</h3>
+          <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+            Please select an event to manage sponsors and partners
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const handleExportSponsors = () => {
     const exportData = sponsors.map(sponsor => ({
@@ -69,6 +134,7 @@ function AdminSponsorsContent() {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <span className="ml-2">Loading sponsor data...</span>
       </div>
     );
   }

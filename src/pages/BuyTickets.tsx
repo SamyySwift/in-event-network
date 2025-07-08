@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { Ticket, Calendar, MapPin, Clock, LogIn, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { PaystackTicketPayment } from '@/components/payment/PaystackTicketPayment';
+import { CustomFormRenderer } from '@/components/forms/CustomFormRenderer';
+import { useTicketFormFields, FormField } from '@/hooks/useTicketFormFields';
 
 interface TicketType {
   id: string;
@@ -19,6 +21,7 @@ interface TicketType {
   price: number;
   available_quantity: number;
   is_active: boolean;
+  formFields?: FormField[];
 }
 
 interface Event {
@@ -45,6 +48,7 @@ export default function BuyTickets() {
     email: currentUser?.email || '',
     phone: ''
   });
+  const [formResponses, setFormResponses] = useState<Record<string, Record<string, any>>>({});
 
   // Fetch event and ticket types
   const { data: eventData, isLoading: eventLoading } = useQuery({
@@ -81,7 +85,25 @@ export default function BuyTickets() {
 
       console.log('Ticket types found:', ticketTypes);
 
-      return { event, ticketTypes };
+      // Fetch form fields for each ticket type
+      const ticketTypesWithFields = await Promise.all(
+        ticketTypes.map(async (ticketType) => {
+          const { data: formFields, error: fieldsError } = await supabase
+            .from('ticket_form_fields')
+            .select('*')
+            .eq('ticket_type_id', ticketType.id)
+            .order('field_order', { ascending: true });
+
+          if (fieldsError) {
+            console.error('Form fields fetch error:', fieldsError);
+            return { ...ticketType, formFields: [] };
+          }
+
+          return { ...ticketType, formFields: formFields as FormField[] || [] };
+        })
+      );
+
+      return { event, ticketTypes: ticketTypesWithFields };
     },
     enabled: !!eventKey,
   });
@@ -231,6 +253,49 @@ export default function BuyTickets() {
 
       console.log('Tickets created successfully:', tickets);
 
+      // Insert form responses if any
+      if (tickets && tickets.length > 0) {
+        const formResponseInserts = [];
+        
+        for (const [ticketTypeId, quantity] of Object.entries(selectedTickets)) {
+          if (quantity > 0) {
+            const ticketType = eventData.ticketTypes.find(t => t.id === ticketTypeId);
+            const ticketResponses = formResponses[ticketTypeId];
+            
+            if (ticketType?.formFields && ticketResponses) {
+              // Find tickets for this ticket type
+              const ticketsForType = tickets.filter(t => t.ticket_type_id === ticketTypeId);
+              
+              for (const ticket of ticketsForType) {
+                for (const field of ticketType.formFields) {
+                  const responseValue = ticketResponses[field.id];
+                  if (responseValue !== undefined && responseValue !== null && responseValue !== '') {
+                    formResponseInserts.push({
+                      ticket_id: ticket.id,
+                      form_field_id: field.id,
+                      response_value: responseValue
+                    });
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        if (formResponseInserts.length > 0) {
+          const { error: responseError } = await supabase
+            .from('ticket_form_responses')
+            .insert(formResponseInserts);
+
+          if (responseError) {
+            console.error('Form responses insert error:', responseError);
+            // Don't throw here as tickets are already created
+          } else {
+            console.log('Form responses saved successfully');
+          }
+        }
+      }
+
       // Update available quantities
       for (const [ticketTypeId, quantity] of Object.entries(selectedTickets)) {
         if (quantity > 0) {
@@ -276,6 +341,7 @@ export default function BuyTickets() {
 
       // Reset form and redirect to attendee dashboard
       setSelectedTickets({});
+      setFormResponses({});
       setUserInfo({ fullName: '', email: currentUser?.email || '', phone: '' });
       setShowUserInfoForm(false);
       navigate('/attendee/my-tickets');
@@ -292,6 +358,28 @@ export default function BuyTickets() {
     }
   };
 
+  const validateFormResponses = () => {
+    if (!eventData?.ticketTypes) return { isValid: true, errors: {} };
+    
+    const errors: Record<string, string> = {};
+    
+    for (const ticketType of eventData.ticketTypes) {
+      const quantity = selectedTickets[ticketType.id] || 0;
+      if (quantity > 0 && ticketType.formFields) {
+        for (const field of ticketType.formFields) {
+          if (field.is_required) {
+            const response = formResponses[ticketType.id]?.[field.id];
+            if (!response || (Array.isArray(response) && response.length === 0) || response === '') {
+              errors[`${ticketType.id}-${field.id}`] = `${field.label} is required`;
+            }
+          }
+        }
+      }
+    }
+    
+    return { isValid: Object.keys(errors).length === 0, errors };
+  };
+
   const handleUserInfoSubmit = () => {
     if (!userInfo.fullName.trim() || !userInfo.email.trim() || !userInfo.phone.trim()) {
       toast({
@@ -301,6 +389,17 @@ export default function BuyTickets() {
       });
       return;
     }
+
+    const { isValid, errors } = validateFormResponses();
+    if (!isValid) {
+      toast({
+        title: "Missing Form Information",
+        description: "Please complete all required form fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setShowUserInfoForm(false);
     handlePurchase();
   };
@@ -429,6 +528,27 @@ export default function BuyTickets() {
                         </Button>
                       </div>
                     </div>
+
+                    {/* Custom Form Fields for this ticket type */}
+                    {(selectedTickets[ticket.id] || 0) > 0 && ticket.formFields && ticket.formFields.length > 0 && (
+                      <div className="mt-4 pt-4 border-t">
+                        <h4 className="font-medium mb-3">Additional Information Required</h4>
+                        <CustomFormRenderer
+                          formFields={ticket.formFields}
+                          values={formResponses[ticket.id] || {}}
+                          onChange={(fieldId, value) => {
+                            setFormResponses(prev => ({
+                              ...prev,
+                              [ticket.id]: {
+                                ...prev[ticket.id],
+                                [fieldId]: value
+                              }
+                            }));
+                          }}
+                          errors={validateFormResponses().errors}
+                        />
+                      </div>
+                    )}
                   </Card>
                 ))}
               </div>

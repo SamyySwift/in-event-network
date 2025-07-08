@@ -234,7 +234,8 @@ function AdminVendorHubContent() {
     setSubmissionsDialogOpen(true);
   };
 
-  const exportSubmissions = (formId: string) => {
+  // Enhance the exportSubmissions function to support Excel format
+  const exportSubmissions = (formId: string, format: 'csv' | 'excel' = 'csv') => {
     const formSubmissions = submissions.filter((s) => s.formId === formId);
     const form = vendorForms.find((f) => f.id === formId);
 
@@ -247,44 +248,45 @@ function AdminVendorHubContent() {
       return;
     }
 
-    // Create CSV content
-    const headers = [
-      "Submission Date",
-      "Vendor Name",
-      "Vendor Email",
-      ...form.fields.map((f) => f.label),
-    ];
-    const csvContent = [
-      headers.join(","),
-      ...formSubmissions.map((submission) =>
-        [
-          new Date(submission.submittedAt).toLocaleDateString(),
-          submission.vendorName,
-          submission.vendorEmail,
-          ...form.fields.map((field) => submission.responses[field.id] || ""),
-        ]
-          .map((cell) => `"${cell}"`)
-          .join(",")
-      ),
-    ].join("\n");
-
-    // Download CSV
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${form.title
-      .replace(/[^a-z0-9]/gi, "_")
-      .toLowerCase()}_submissions.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-
-    toast({
-      title: "Success",
-      description: "Submissions exported successfully",
+    // Prepare data for export
+    const exportData = formSubmissions.map(submission => {
+      const data: Record<string, any> = {
+        'Submission Date': new Date(submission.submittedAt).toLocaleDateString(),
+        'Vendor Name': submission.vendorName,
+        'Vendor Email': submission.vendorEmail,
+      };
+      
+      // Add all form fields
+      form.fields.forEach(field => {
+        data[field.label] = submission.responses[field.id] || '';
+      });
+      
+      return data;
     });
+
+    // Use the exportUtils function
+    const sanitizedTitle = form.title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+    const timestamp = new Date().toISOString().split('T')[0];
+    const filename = `${sanitizedTitle}_submissions_${timestamp}`;
+    
+    try {
+      // Import and use the exportToCSV utility
+      import('@/utils/exportUtils').then(({ exportToCSV }) => {
+        exportToCSV(exportData, filename);
+        
+        toast({
+          title: "Success",
+          description: `Submissions exported successfully as ${format.toUpperCase()}`,
+        });
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Export Failed",
+        description: "There was an error exporting the submissions",
+        variant: "destructive",
+      });
+    }
   };
 
   const getFormSubmissions = (formId: string) => {

@@ -194,11 +194,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       href: "/admin/notifications",
       icon: <Bell size={20} />,
     },
-    {
-      name: "Sponsors & Partners",
-      href: "/admin/sponsors",
-      icon: <Star size={20} />,
-    },
+    // Remove this navigation item
+    // {
+    //   name: "Sponsors & Partners",
+    //   href: "/admin/sponsors",
+    //   icon: <Star size={20} />,
+    // },
     {
       name: "Vendor Hub",
       href: "/admin/vendor-hub",

@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo } from "react";
-import AdminLayout from "@/components/layouts/AdminLayout";
+// Remove this import:
+// import AdminLayout from "@/components/layouts/AdminLayout";
 import QuestionStatsCards from "./components/QuestionStatsCards";
 import QuestionCard from "./components/QuestionCard";
 import EventSelector from "@/components/admin/EventSelector";
@@ -214,11 +215,9 @@ const QuestionsContent = () => {
 
 const AdminQuestions = () => {
   return (
-    <AdminLayout>
-      <AdminEventProvider>
-        <QuestionsContent />
-      </AdminEventProvider>
-    </AdminLayout>
+    <AdminEventProvider>
+      <QuestionsContent />
+    </AdminEventProvider>
   );
 };
 

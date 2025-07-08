@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
-import AdminLayout from '@/components/layouts/AdminLayout';
+// Remove this import:
+// import AdminLayout from '@/components/layouts/AdminLayout';
 import EventSelector from '@/components/admin/EventSelector';
 import { Loader } from 'lucide-react';
 import { useAdminAttendees } from '@/hooks/useAdminAttendees';
@@ -135,11 +136,9 @@ const AdminAttendeesContent = () => {
 
 const AdminAttendees = () => {
   return (
-    <AdminLayout>
-      <AdminEventProvider>
-        <AdminAttendeesContent />
-      </AdminEventProvider>
-    </AdminLayout>
+    <AdminEventProvider>
+      <AdminAttendeesContent />
+    </AdminEventProvider>
   );
 };
 

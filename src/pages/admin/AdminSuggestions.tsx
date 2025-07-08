@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import AdminLayout from "@/components/layouts/AdminLayout";
+// Remove this import:
+// import AdminLayout from "@/components/layouts/AdminLayout";
 import SuggestionStatsCards from "./components/SuggestionStatsCards";
 import SuggestionCard from "./components/SuggestionCard";
 import EventSelector from "@/components/admin/EventSelector";
@@ -407,11 +408,9 @@ const AdminSuggestionsContent = () => {
 };
 
 const AdminSuggestions = () => (
-  <AdminLayout>
-    <AdminEventProvider>
-      <AdminSuggestionsContent />
-    </AdminEventProvider>
-  </AdminLayout>
+  <AdminEventProvider>
+    <AdminSuggestionsContent />
+  </AdminEventProvider>
 );
 
 export default AdminSuggestions;

@@ -106,6 +106,11 @@ const AttendeeRoute = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+// Import the missing components at the top of the file
+import AdminTickets from "@/pages/admin/AdminTickets";
+import AdminCheckIn from "@/pages/admin/AdminCheckIn";
+import AdminSettings from "@/pages/admin/AdminSettings";
+
 // Remove the markdown comments and add the missing route:
 export const router = createBrowserRouter([
   {
@@ -392,7 +397,31 @@ export const router = createBrowserRouter([
     path: "*",
     element: <NotFound />,
   },
-  // Add this route to your router configuration
+  // Add these routes in the admin routes section
+  {
+    path: "/admin/tickets",
+    element: (
+      <AdminRoute>
+        <AdminTickets />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/admin/checkin",
+    element: (
+      <AdminRoute>
+        <AdminCheckIn />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/admin/settings",
+    element: (
+      <AdminRoute>
+        <AdminSettings />
+      </AdminRoute>
+    ),
+  },
   {
     path: "/vendor-form/:formId",
     element: <VendorForm />,

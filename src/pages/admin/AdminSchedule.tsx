@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import AdminLayout from "@/components/layouts/AdminLayout";
+// Remove this import:
+// import AdminLayout from "@/components/layouts/AdminLayout";
 import EventSelector from "@/components/admin/EventSelector";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -652,11 +653,9 @@ const AdminScheduleContent = () => {
 
 const AdminSchedule = () => {
   return (
-    <AdminLayout>
-      <AdminEventProvider>
-        <AdminScheduleContent />
-      </AdminEventProvider>
-    </AdminLayout>
+    <AdminEventProvider>
+      <AdminScheduleContent />
+    </AdminEventProvider>
   );
 };
 

@@ -1,6 +1,7 @@
 
 import React, { useState } from "react";
-import AdminLayout from "@/components/layouts/AdminLayout";
+// Remove this import:
+// import AdminLayout from "@/components/layouts/AdminLayout";
 import FacilityStatsCards from "./components/FacilityStatsCards";
 import FacilityCard from "./components/FacilityCard";
 import CreateFacilityDialog from "@/components/admin/CreateFacilityDialog";
@@ -279,11 +280,9 @@ const AdminFacilitiesContent = () => {
 };
 
 const AdminFacilities = () => (
-  <AdminLayout>
-    <AdminEventProvider>
-      <AdminFacilitiesContent />
-    </AdminEventProvider>
-  </AdminLayout>
+  <AdminEventProvider>
+    <AdminFacilitiesContent />
+  </AdminEventProvider>
 );
 
 export default AdminFacilities;

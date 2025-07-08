@@ -1,6 +1,7 @@
 
 import React, { useState, useMemo } from "react";
-import AdminLayout from "@/components/layouts/AdminLayout";
+// Remove this import:
+// import AdminLayout from "@/components/layouts/AdminLayout";
 import RuleStatsCards from "./components/RuleStatsCards";
 import RuleCard from "./components/RuleCard";
 import CreateRuleDialog from "@/components/admin/CreateRuleDialog";
@@ -166,11 +167,9 @@ const RulesContent = () => {
 };
 
 const AdminRules = () => (
-  <AdminLayout>
-    <AdminEventProvider>
-      <RulesContent />
-    </AdminEventProvider>
-  </AdminLayout>
+  <AdminEventProvider>
+    <RulesContent />
+  </AdminEventProvider>
 );
 
 export default AdminRules;

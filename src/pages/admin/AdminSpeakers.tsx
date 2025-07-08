@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import AdminLayout from '@/components/layouts/AdminLayout';
+// Remove this import:
+// import AdminLayout from '@/components/layouts/AdminLayout';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import EventSelector from '@/components/admin/EventSelector';
 import { Button } from '@/components/ui/button';
@@ -302,10 +303,10 @@ const AdminSpeakersContent = () => {
     </div>;
 };
 const AdminSpeakers = () => {
-  return <AdminLayout>
-      <AdminEventProvider>
-        <AdminSpeakersContent />
-      </AdminEventProvider>
-    </AdminLayout>;
+  return (
+    <AdminEventProvider>
+      <AdminSpeakersContent />
+    </AdminEventProvider>
+  );
 };
 export default AdminSpeakers;

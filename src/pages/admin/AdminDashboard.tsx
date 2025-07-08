@@ -1,19 +1,23 @@
-
-import React from 'react';
-import AdminLayout from '@/components/layouts/AdminLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { 
-  Users, 
-  Calendar, 
-  MessageSquare, 
+import React from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Users,
+  Calendar,
+  MessageSquare,
   User,
   BarChart4,
   TrendingUp,
-} from 'lucide-react';
-import { useAdminDashboard } from '@/hooks/useAdminDashboard';
-import { useAuth } from '@/contexts/AuthContext';
-import { AdminEventProvider } from '@/hooks/useAdminEventContext';
+} from "lucide-react";
+import { useAdminDashboard } from "@/hooks/useAdminDashboard";
+import { useAuth } from "@/contexts/AuthContext";
+import { AdminEventProvider } from "@/hooks/useAdminEventContext";
 import DashboardMetrics from "./components/DashboardMetrics";
 import EventPerformanceCard from "./components/EventPerformanceCard";
 import EventFocusCard from "./components/EventFocusCard";
@@ -24,48 +28,47 @@ const AdminDashboardContent = () => {
 
   const metrics = [
     {
-      title: 'Total Events',
+      title: "Total Events",
       value: dashboardData?.eventsCount,
       icon: Calendar,
-      gradient: 'from-blue-500 to-indigo-500',
+      gradient: "from-blue-500 to-indigo-500",
     },
     {
-      title: 'Total Attendees',
+      title: "Total Attendees",
       value: dashboardData?.attendeesCount,
       icon: Users,
-      gradient: 'from-green-400 to-emerald-500',
+      gradient: "from-green-400 to-emerald-500",
     },
     {
-      title: 'Total Speakers',
+      title: "Total Speakers",
       value: dashboardData?.speakersCount,
       icon: User,
-      gradient: 'from-purple-500 to-violet-400',
+      gradient: "from-purple-500 to-violet-400",
     },
     {
-      title: 'Total Questions',
+      title: "Total Questions",
       value: dashboardData?.questionsCount,
       icon: MessageSquare,
-      gradient: 'from-yellow-400 to-orange-500',
+      gradient: "from-yellow-400 to-orange-500",
     },
   ];
 
   // Remove Total Connections from extraMetrics
   const extraMetrics = [
     {
-      title: 'Event Performance',
-      value: dashboardData
-        ? `${dashboardData.performanceScore}%`
-        : undefined,
-      icon: 'trending-up',
-      gradient: 'from-rose-500 to-pink-400',
-      description: 'Calculated from attendee questions, poll engagement, suggestions submitted, and ratings. Higher score = more engaged event!',
-    }
+      title: "Event Performance",
+      value: dashboardData ? `${dashboardData.performanceScore}%` : undefined,
+      icon: "trending-up",
+      gradient: "from-rose-500 to-pink-400",
+      description:
+        "Calculated from attendee questions, poll engagement, suggestions submitted, and ratings. Higher score = more engaged event!",
+    },
   ];
 
   // Helper for rendering Lucide icons by name, so we stay inside allowed lucide list
   const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-    'trending-up': TrendingUp,
-    'bar-chart': BarChart4,
+    "trending-up": TrendingUp,
+    "bar-chart": BarChart4,
   };
 
   return (
@@ -78,7 +81,8 @@ const AdminDashboardContent = () => {
         <div className="relative">
           <h1 className="text-4xl font-bold tracking-tight">Admin Dashboard</h1>
           <p className="text-primary-700 mt-2 max-w-2xl">
-            Welcome back, {currentUser?.name || currentUser?.email}! Here's a comprehensive overview of your events.
+            Welcome back, {currentUser?.name || currentUser?.email}! Here's a
+            comprehensive overview of your events.
           </p>
           <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/10">
@@ -86,7 +90,9 @@ const AdminDashboardContent = () => {
               {isLoading ? (
                 <Skeleton className="h-8 w-12 mt-1 bg-white/20" />
               ) : (
-                <p className="text-3xl font-bold text-green-400">{dashboardData?.liveEventsCount || 0}</p>
+                <p className="text-3xl font-bold text-green-400">
+                  {dashboardData?.liveEventsCount || 0}
+                </p>
               )}
             </div>
             <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/10">
@@ -94,7 +100,9 @@ const AdminDashboardContent = () => {
               {isLoading ? (
                 <Skeleton className="h-8 w-12 mt-1 bg-white/20" />
               ) : (
-                <p className="text-3xl font-bold text-blue-500">{dashboardData?.upcomingEventsCount || 0}</p>
+                <p className="text-3xl font-bold text-blue-500">
+                  {dashboardData?.upcomingEventsCount || 0}
+                </p>
               )}
             </div>
           </div>
@@ -130,11 +138,9 @@ const AdminDashboardContent = () => {
 
 const AdminDashboard = () => {
   return (
-    <AdminLayout>
-      <AdminEventProvider>
-        <AdminDashboardContent />
-      </AdminEventProvider>
-    </AdminLayout>
+    <AdminEventProvider>
+      <AdminDashboardContent />
+    </AdminEventProvider>
   );
 };
 

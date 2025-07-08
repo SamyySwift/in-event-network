@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { QRCodeSVG } from "qrcode.react";
+import * as XLSX from "xlsx";
 
 interface VendorForm {
   id: string;
@@ -81,12 +82,14 @@ function AdminVendorHubContent() {
   const [selectedForm, setSelectedForm] = useState<VendorForm | null>(null);
   const [vendorForms, setVendorForms] = useState<VendorForm[]>([]);
   const [submissions, setSubmissions] = useState<VendorSubmission[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  
+  const [searchTerm, setSearchTerm] = useState("");
+
   // Add these missing state variables
   const [showQRDialog, setShowQRDialog] = useState(false);
-  const [selectedFormForQR, setSelectedFormForQR] = useState<string | null>(null);
-  
+  const [selectedFormForQR, setSelectedFormForQR] = useState<string | null>(
+    null
+  );
+
   // Form creation state
   const [formTitle, setFormTitle] = useState("");
   const [formDescription, setFormDescription] = useState("");
@@ -234,7 +237,10 @@ function AdminVendorHubContent() {
     setSubmissionsDialogOpen(true);
   };
 
-  const exportSubmissions = (formId: string) => {
+  const exportSubmissions = (
+    formId: string,
+    format: "csv" | "excel" = "csv"
+  ) => {
     const formSubmissions = submissions.filter((s) => s.formId === formId);
     const form = vendorForms.find((f) => f.id === formId);
 
@@ -247,43 +253,83 @@ function AdminVendorHubContent() {
       return;
     }
 
-    // Create CSV content
     const headers = [
       "Submission Date",
       "Vendor Name",
       "Vendor Email",
       ...form.fields.map((f) => f.label),
     ];
-    const csvContent = [
-      headers.join(","),
-      ...formSubmissions.map((submission) =>
-        [
-          new Date(submission.submittedAt).toLocaleDateString(),
-          submission.vendorName,
-          submission.vendorEmail,
-          ...form.fields.map((field) => submission.responses[field.id] || ""),
-        ]
-          .map((cell) => `"${cell}"`)
-          .join(",")
-      ),
-    ].join("\n");
 
-    // Download CSV
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${form.title
+    const timestamp = new Date().toISOString().split("T")[0];
+    const sanitizedFormTitle = form.title
       .replace(/[^a-z0-9]/gi, "_")
-      .toLowerCase()}_submissions.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+      .toLowerCase();
+    const filename = `${sanitizedFormTitle}_submissions_${timestamp}`;
+
+    if (format === "csv") {
+      // Create CSV content
+      const csvContent = [
+        headers.join(","),
+        ...formSubmissions.map((submission) =>
+          [
+            new Date(submission.submittedAt).toLocaleDateString(),
+            submission.vendorName,
+            submission.vendorEmail,
+            ...form.fields.map((field) => submission.responses[field.id] || ""),
+          ]
+            .map((cell) => `"${cell}"`)
+            .join(",")
+        ),
+      ].join("\n");
+
+      // Download CSV
+      const blob = new Blob([csvContent], { type: "text/csv" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${filename}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } else {
+      // Excel export
+      const worksheetData = formSubmissions.map((submission) => {
+        const rowData: Record<string, any> = {
+          "Submission Date": new Date(
+            submission.submittedAt
+          ).toLocaleDateString(),
+          "Vendor Name": submission.vendorName,
+          "Vendor Email": submission.vendorEmail,
+        };
+
+        // Add all form fields
+        form.fields.forEach((field) => {
+          rowData[field.label] = submission.responses[field.id] || "N/A";
+        });
+
+        return rowData;
+      });
+
+      const worksheet = XLSX.utils.json_to_sheet(worksheetData);
+
+      // Set column widths
+      const colWidths = [
+        { wch: 15 }, // Submission Date
+        { wch: 20 }, // Vendor Name
+        { wch: 30 }, // Vendor Email
+        ...form.fields.map(() => ({ wch: 20 })), // Form fields
+      ];
+      worksheet["!cols"] = colWidths;
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Vendor Submissions");
+      XLSX.writeFile(workbook, `${filename}.xlsx`);
+    }
 
     toast({
       title: "Success",
-      description: "Submissions exported successfully",
+      description: `Submissions exported successfully as ${format.toUpperCase()}`,
     });
   };
 
@@ -301,44 +347,47 @@ function AdminVendorHubContent() {
     const svg = document.getElementById(`qr-code-${formId}`);
     if (svg) {
       const svgData = new XMLSerializer().serializeToString(svg);
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
       const img = new Image();
-      
+
       canvas.width = 256;
       canvas.height = 256;
-      
+
       img.onload = () => {
         if (ctx) {
-          ctx.fillStyle = 'white';
+          ctx.fillStyle = "white";
           ctx.fillRect(0, 0, canvas.width, canvas.height);
           ctx.drawImage(img, 0, 0);
-          
-          const link = document.createElement('a');
-          link.download = `${formTitle.replace(/\s+/g, '_')}_QR_Code.png`;
+
+          const link = document.createElement("a");
+          link.download = `${formTitle.replace(/\s+/g, "_")}_QR_Code.png`;
           link.href = canvas.toDataURL();
           link.click();
         }
       };
-      
-      img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+
+      img.src = "data:image/svg+xml;base64," + btoa(svgData);
     }
   };
 
   const copyFormURL = (formId: string) => {
     const url = `${window.location.origin}/vendor-form/${formId}`;
-    navigator.clipboard.writeText(url).then(() => {
-      toast({
-        title: "Success",
-        description: "Form URL copied to clipboard!",
+    navigator.clipboard
+      .writeText(url)
+      .then(() => {
+        toast({
+          title: "Success",
+          description: "Form URL copied to clipboard!",
+        });
+      })
+      .catch(() => {
+        toast({
+          title: "Error",
+          description: "Failed to copy URL to clipboard.",
+          variant: "destructive",
+        });
       });
-    }).catch(() => {
-      toast({
-        title: "Error",
-        description: "Failed to copy URL to clipboard.",
-        variant: "destructive",
-      });
-    });
   };
 
   const filteredSubmissions = selectedForm
@@ -623,14 +672,22 @@ function AdminVendorHubContent() {
                         View Submissions
                       </Button>
 
-                      <Button
-                        onClick={() => exportSubmissions(form.id)}
-                        variant="outline"
-                        size="sm"
-                      >
-                        <Download size={16} className="mr-2" />
-                        Export
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <Download size={16} className="mr-2" />
+                            Export
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onClick={() => exportSubmissions(form.id, 'csv')}>
+                            Export as CSV
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => exportSubmissions(form.id, 'excel')}>
+                            Export as Excel
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
 
                       <Button
                         onClick={() => copyFormUrl(form.id)}
@@ -794,7 +851,8 @@ function AdminVendorHubContent() {
           <DialogHeader>
             <DialogTitle>QR Code for Vendor Form</DialogTitle>
             <DialogDescription>
-              Scan this QR code or share it to allow vendors to access the form directly.
+              Scan this QR code or share it to allow vendors to access the form
+              directly.
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center space-y-4">
@@ -826,7 +884,9 @@ function AdminVendorHubContent() {
                     <Button
                       size="sm"
                       onClick={() => {
-                        const form = vendorForms.find(f => f.id === selectedFormForQR);
+                        const form = vendorForms.find(
+                          (f) => f.id === selectedFormForQR
+                        );
                         if (form) {
                           downloadQRCode(selectedFormForQR, form.title);
                         }
@@ -857,4 +917,10 @@ const AdminVendorHub = () => {
 
 export default AdminVendorHub;
 
-
+// Add these imports at the top of the file
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";

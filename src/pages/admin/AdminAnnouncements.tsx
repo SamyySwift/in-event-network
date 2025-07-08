@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import AdminLayout from '@/components/layouts/AdminLayout';
+// Remove this import:
+// import AdminLayout from '@/components/layouts/AdminLayout';
 import EventSelector from '@/components/admin/EventSelector';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -287,11 +288,9 @@ const AdminAnnouncementsContent = () => {
 
 const AdminAnnouncements = () => {
   return (
-    <AdminLayout>
-      <AdminEventProvider>
-        <AdminAnnouncementsContent />
-      </AdminEventProvider>
-    </AdminLayout>
+    <AdminEventProvider>
+      <AdminAnnouncementsContent />
+    </AdminEventProvider>
   );
 };
 

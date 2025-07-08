@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react';
 import { QrCode, Scan, Ticket, Users, CheckCircle, Clock, UserCheck } from 'lucide-react';
-import AdminLayout from '@/components/layouts/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,8 +10,9 @@ import { Badge } from '@/components/ui/badge';
 import QRCodeScanner from '@/components/QRCodeScanner';
 import { useAdminCheckIns } from '@/hooks/useAdminCheckIns';
 import { useAdminTickets } from '@/hooks/useAdminTickets';
+import { AdminEventProvider } from '@/hooks/useAdminEventContext';
 
-export default function AdminCheckIn() {
+function AdminCheckInContent() {
   const [ticketNumber, setTicketNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [showScanner, setShowScanner] = useState(false);
@@ -51,18 +51,15 @@ export default function AdminCheckIn() {
 
   if (isLoadingTickets) {
     return (
-      <AdminLayout>
-        <div className="flex items-center justify-center min-h-96">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      </AdminLayout>
+      <div className="flex items-center justify-center min-h-96">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
     );
   }
 
   return (
-    <AdminLayout>
-      <div className="space-y-6 p-4 sm:p-6">
-        {/* Modern Section Header */}
+    <div className="space-y-6 p-4 sm:p-6">
+      {/* Modern Section Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 shadow-lg">
@@ -252,6 +249,13 @@ export default function AdminCheckIn() {
           </Card>
         </div>
       </div>
-    </AdminLayout>
+    );
+}
+
+export default function AdminCheckIn() {
+  return (
+    <AdminEventProvider>
+      <AdminCheckInContent />
+    </AdminEventProvider>
   );
 }

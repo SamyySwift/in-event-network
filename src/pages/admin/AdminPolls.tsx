@@ -1,6 +1,7 @@
 
 import React, { useState } from "react";
-import AdminLayout from "@/components/layouts/AdminLayout";
+// Remove this import:
+// import AdminLayout from "@/components/layouts/AdminLayout";
 import CreatePollDialog from "@/components/admin/CreatePollDialog";
 import EventSelector from "@/components/admin/EventSelector";
 import PollStatsCards from "./components/PollStatsCards";
@@ -157,11 +158,9 @@ const AdminPollsContent = () => {
 
 const AdminPolls = () => {
   return (
-    <AdminLayout>
-      <AdminEventProvider>
-        <AdminPollsContent />
-      </AdminEventProvider>
-    </AdminLayout>
+    <AdminEventProvider>
+      <AdminPollsContent />
+    </AdminEventProvider>
   );
 };
 

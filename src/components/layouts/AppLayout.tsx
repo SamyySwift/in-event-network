@@ -22,6 +22,7 @@ import {
   BarChart,
   Lightbulb,
   Ticket,
+  Store,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -76,6 +77,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       name: "Up Next",
       href: "/attendee/schedule",
       icon: <Calendar size={20} />,
+    },
+    {
+      name: "Marketplace",
+      href: "/attendee/marketplace",
+      icon: <Store size={20} />,
     },
     {
       name: "Q&A",

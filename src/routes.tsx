@@ -9,6 +9,7 @@ import Guide from "@/pages/Guide";
 import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
 import ScanQR from "@/pages/ScanQR";
+import VendorForm from "./pages/VendorForm";
 
 // Admin Pages
 import AdminLayout from "@/components/layouts/AdminLayout";
@@ -26,6 +27,7 @@ import AdminSuggestions from "@/pages/admin/AdminSuggestions";
 import AdminNotifications from "@/pages/admin/AdminNotifications";
 import AdminProfile from "@/pages/admin/AdminProfile";
 import AdminSponsors from "@/pages/admin/AdminSponsors";
+import AdminVendorHub from "@/pages/admin/AdminVendorHub";
 import SponsorForm from "@/pages/SponsorForm";
 
 // Attendee Pages
@@ -43,6 +45,7 @@ import AttendeeRules from "@/pages/attendee/AttendeeRules";
 import AttendeeNotifications from "@/pages/attendee/AttendeeNotifications";
 import AttendeeSearch from "@/pages/attendee/AttendeeSearch";
 import AttendeeOnboarding from "@/pages/attendee/AttendeeOnboarding";
+import AttendeeMarketplace from "./pages/attendee/AttendeeMarketplace";
 
 // Host Pages
 import HostDashboard from "@/pages/host/HostDashboard";
@@ -249,7 +252,15 @@ export const router = createBrowserRouter([
       </AdminRoute>
     ),
   },
-  
+  {
+    path: "/admin/vendor-hub",
+    element: (
+      <AdminRoute>
+        <AdminVendorHub />
+      </AdminRoute>
+    ),
+  },
+
   // Public sponsor form route
   {
     path: "/sponsor-form/:formId",
@@ -367,10 +378,23 @@ export const router = createBrowserRouter([
       </AttendeeRoute>
     ),
   },
+  {
+    path: "/attendee/marketplace",
+    element: (
+      <AttendeeRoute>
+        <AttendeeMarketplace />
+      </AttendeeRoute>
+    ),
+  },
 
   // Catch all route
   {
     path: "*",
     element: <NotFound />,
+  },
+  // Add this route to your router configuration
+  {
+    path: "/vendor-form/:formId",
+    element: <VendorForm />,
   },
 ]);

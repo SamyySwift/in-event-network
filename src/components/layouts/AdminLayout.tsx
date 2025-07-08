@@ -27,7 +27,8 @@ import {
   BookOpen,
   Ticket,
   Scan,
-  Settings, // Add Settings icon
+  Settings,
+  Store, // Add Store icon for Vendor Hub
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -197,6 +198,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Sponsors & Partners",
       href: "/admin/sponsors",
       icon: <Star size={20} />,
+    },
+    {
+      name: "Vendor Hub",
+      href: "/admin/vendor-hub",
+      icon: <Store size={20} />,
     },
     {
       name: "Settings",

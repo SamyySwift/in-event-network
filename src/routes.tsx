@@ -1,4 +1,3 @@
-// Remove these imports
 import React from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,11 +26,9 @@ import AdminQuestions from "@/pages/admin/AdminQuestions";
 import AdminSuggestions from "@/pages/admin/AdminSuggestions";
 import AdminNotifications from "@/pages/admin/AdminNotifications";
 import AdminProfile from "@/pages/admin/AdminProfile";
-// Remove this import
-// import AdminSponsors from "@/pages/admin/AdminSponsors";
+import AdminSponsors from "@/pages/admin/AdminSponsors";
 import AdminVendorHub from "@/pages/admin/AdminVendorHub";
-// Remove this import
-// import SponsorForm from "@/pages/SponsorForm";
+import SponsorForm from "@/pages/SponsorForm";
 
 // Attendee Pages
 import AppLayout from "@/components/layouts/AppLayout";
@@ -247,15 +244,14 @@ export const router = createBrowserRouter([
       </AdminRoute>
     ),
   },
-  // Remove this route
-  // {
-  //   path: "/admin/sponsors",
-  //   element: (
-  //     <AdminRoute>
-  //       <AdminSponsors />
-  //     </AdminRoute>
-  //   ),
-  // },
+  {
+    path: "/admin/sponsors",
+    element: (
+      <AdminRoute>
+        <AdminSponsors />
+      </AdminRoute>
+    ),
+  },
   {
     path: "/admin/vendor-hub",
     element: (
@@ -265,12 +261,11 @@ export const router = createBrowserRouter([
     ),
   },
 
-  // Remove this route
-  // // Public sponsor form route
-  // {
-  //   path: "/sponsor-form/:formId",
-  //   element: <SponsorForm />,
-  // },
+  // Public sponsor form route
+  {
+    path: "/sponsor-form/:formId",
+    element: <SponsorForm />,
+  },
 
   // Host Routes (redirect to admin)
   {

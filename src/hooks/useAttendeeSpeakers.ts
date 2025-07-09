@@ -3,12 +3,31 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+// Add Speaker interface with topic field
+interface Speaker {
+  id: string;
+  name: string;
+  title?: string;
+  company?: string;
+  bio: string;
+  photo_url?: string;
+  session_title?: string;
+  session_time?: string;
+  twitter_link?: string;
+  linkedin_link?: string;
+  website_link?: string;
+  topic?: string; // Add topic field
+  event_id?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export const useAttendeeSpeakers = () => {
   const { currentUser } = useAuth();
 
   const { data: speakers = [], isLoading, error } = useQuery({
     queryKey: ['attendee-speakers', currentUser?.id],
-    queryFn: async () => {
+    queryFn: async (): Promise<Speaker[]> => {
       if (!currentUser?.id) {
         throw new Error('User not authenticated');
       }
@@ -47,7 +66,7 @@ export const useAttendeeSpeakers = () => {
       }
 
       console.log('Speakers fetched successfully:', speakers?.length || 0);
-      return speakers || [];
+      return speakers as Speaker[] || [];
     },
     enabled: !!currentUser?.id,
     retry: 3,

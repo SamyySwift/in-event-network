@@ -24,7 +24,8 @@ type SpeakerFormData = {
   bio: string;
   session_title?: string;
   session_time?: string;
-  time_allocation?: string; // Add optional time allocation
+  time_allocation?: string;
+  topic?: string; // Add this line
   twitter_link?: string;
   linkedin_link?: string;
   website_link?: string;
@@ -231,28 +232,58 @@ const AdminSpeakersContent = () => {
               <form onSubmit={handleSubmit(onSubmit)} className="grid md:grid-cols-2 gap-6">
                 <div className="flex flex-col space-y-5">
                   <ImageUpload onImageSelect={handleImageSelect} currentImageUrl={imagePreview} label="Speaker Photo" />
-                  <div>
-                    <Label htmlFor="name">Name *</Label>
-                    <Input id="name" {...register("name", {
-                  required: "Name is required"
-                })} placeholder="Speaker name" className="mt-1" />
-                    {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="name">Name *</Label>
+                      <Input
+                        id="name"
+                        {...register('name', { required: 'Name is required' })}
+                        placeholder="Speaker name"
+                      />
+                      {errors.name && (
+                        <p className="text-sm text-red-500 mt-1">{errors.name.message}</p>
+                      )}
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="title">Title</Label>
+                      <Input
+                        id="title"
+                        {...register('title')}
+                        placeholder="Job title"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="company">Company</Label>
+                      <Input
+                        id="company"
+                        {...register('company')}
+                        placeholder="Company name"
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="topic">Speaker Topic</Label>
+                      <Input
+                        id="topic"
+                        {...register('topic')}
+                        placeholder="Topic or area of expertise"
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="title">Title/Role</Label>
-                    <Input id="title" {...register("title")} placeholder="Job title" className="mt-1" />
-                  </div>
-                  <div>
-                    <Label htmlFor="company">Organization</Label>
-                    <Input id="company" {...register("company")} placeholder="Company name" className="mt-1" />
-                  </div>
-                  <div>
-                    <Label htmlFor="bio">Bio *</Label>
-                    <Textarea id="bio" {...register("bio", {
-                  required: "Bio is required"
-                })} placeholder="Speaker biography" rows={3} className="mt-1" />
-                    {errors.bio && <p className="text-sm text-destructive">{errors.bio.message}</p>}
-                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="bio">Bio *</Label>
+                  <Textarea
+                    id="bio"
+                    {...register('bio', { required: 'Bio is required' })}
+                    placeholder="Speaker biography"
+                    rows={4}
+                  />
+                  {errors.bio && (
+                    <p className="text-sm text-red-500 mt-1">{errors.bio.message}</p>
+                  )}
                 </div>
                 <div className="flex flex-col space-y-5">
                   <div>

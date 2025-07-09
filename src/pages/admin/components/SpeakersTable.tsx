@@ -14,7 +14,8 @@ type Speaker = {
   photo_url?: string;
   session_title?: string;
   session_time?: string;
-  time_allocation?: string; // Add this line
+  time_allocation?: string;
+  topic?: string; // Add this line
 };
 
 interface SpeakersTableProps {
@@ -25,26 +26,37 @@ interface SpeakersTableProps {
 
 const columns = [
   {
+    accessorKey: "speaker",
     header: "Speaker",
-    accessorKey: "name",
-    cell: (value: string, row: any) => (
-      <div className="flex items-center gap-3">
-        <Avatar>
-          <AvatarImage src={row.photo_url} alt={row.name} />
-          <AvatarFallback>
-            {row.name?.at(0)?.toUpperCase() ?? "S"}
-          </AvatarFallback>
-        </Avatar>
-        <div>
-          <div className="font-medium">{row.name}</div>
-          <div className="text-sm text-muted-foreground">
-            {row.title && row.company
-              ? `${row.title} at ${row.company}`
-              : row.title || row.company || "Speaker"}
+    cell: ({ row }: { row: any }) => {
+      const speaker = row.original;
+      return (
+        <div className="flex items-center space-x-3">
+          <Avatar className="h-10 w-10">
+            <AvatarImage src={speaker.photo_url} alt={speaker.name} />
+            <AvatarFallback>
+              {speaker.name
+                .split(" ")
+                .map((n: string) => n[0])
+                .join("")}
+            </AvatarFallback>
+          </Avatar>
+          <div>
+            <div className="font-medium">{speaker.name}</div>
+            <div className="text-sm text-gray-500">
+              {speaker.title && speaker.company
+                ? `${speaker.title} at ${speaker.company}`
+                : speaker.title || speaker.company || ""}
+            </div>
+            {speaker.topic && (
+              <div className="text-sm text-blue-600 font-medium">
+                Topic: {speaker.topic}
+              </div>
+            )}
           </div>
         </div>
-      </div>
-    ),
+      );
+    },
   },
   {
     header: "Session",

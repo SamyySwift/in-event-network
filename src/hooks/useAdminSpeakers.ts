@@ -16,6 +16,7 @@ interface Speaker {
   twitter_link?: string;
   linkedin_link?: string;
   website_link?: string;
+  topic?: string; // Add this line
   event_id?: string;
   created_at: string;
   updated_at: string;
@@ -35,6 +36,7 @@ export const useAdminSpeakers = (eventId?: string) => {
 
       console.log('Fetching speakers for admin:', currentUser.id, 'event:', eventId);
 
+      // The query should automatically include the new topic field since we're using SELECT *
       let query = supabase
         .from('speakers')
         .select(`

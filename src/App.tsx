@@ -75,6 +75,7 @@ function App() {
               <Route path="/scan" element={<ScanQR />} />
               <Route path="/join/:eventKey" element={<Index />} />
               <Route path="/buy-tickets/:eventKey" element={<BuyTickets />} />
+              <Route path="/buy" element={<BuyTickets />} />
               <Route path="/privacy" element={<DataPrivacy />} />
               <Route path="/terms" element={<TermsOfService />} />
 

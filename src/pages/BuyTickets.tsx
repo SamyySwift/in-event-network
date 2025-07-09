@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -36,8 +36,8 @@ interface Event {
 
 export default function BuyTickets() {
   const { eventKey } = useParams<{ eventKey: string }>();
-  const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const { toast } = useToast();
   const [selectedTickets, setSelectedTickets] = useState<Record<string, number>>({});
   const [isProcessing, setIsProcessing] = useState(false);
@@ -50,14 +50,28 @@ export default function BuyTickets() {
   });
   const [formResponses, setFormResponses] = useState<Record<string, Record<string, any>>>({});
 
-  // Fetch event and ticket types
-  const { data: eventData, isLoading: eventLoading } = useQuery({
-    queryKey: ['public-event', eventKey],
+  // Handle case where no eventKey is provided (for /buy route)
+  useEffect(() => {
+    if (!eventKey) {
+      // Redirect to a page where user can select an event or show error
+      toast({
+        title: "Event Required",
+        description: "Please access this page through a valid event link.",
+        variant: "destructive",
+      });
+      navigate('/', { replace: true });
+      return;
+    }
+  }, [eventKey, navigate, toast]);
+
+  // Fetch event and ticket data
+  const { data: eventData, isLoading, error } = useQuery({
+    queryKey: ['event-tickets', eventKey],
     queryFn: async () => {
-      if (!eventKey) throw new Error('Event key is required');
-
-      console.log('Fetching event with key:', eventKey);
-
+      if (!eventKey) {
+        throw new Error('Event key is required');
+      }
+      
       const { data: event, error: eventError } = await supabase
         .from('events')
         .select('*')
@@ -106,7 +120,35 @@ export default function BuyTickets() {
       return { event, ticketTypes: ticketTypesWithFields };
     },
     enabled: !!eventKey,
+    retry: (failureCount, error) => {
+      // Don't retry if it's a 404 (event not found)
+      if (error?.message?.includes('not found')) {
+        return false;
+      }
+      return failureCount < 3;
+    },
   });
+
+  // Handle error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center text-red-600">Event Not Found</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center">
+            <p className="text-gray-600 mb-4">
+              The event you're looking for doesn't exist or may have been removed.
+            </p>
+            <Button onClick={() => navigate('/')} className="w-full">
+              Go to Homepage
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const handleQuantityChange = (ticketTypeId: string, quantity: number) => {
     const maxQuantity = eventData?.ticketTypes.find(t => t.id === ticketTypeId)?.available_quantity || 0;
@@ -405,7 +447,7 @@ export default function BuyTickets() {
     handlePurchase();
   };
 
-  if (eventLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

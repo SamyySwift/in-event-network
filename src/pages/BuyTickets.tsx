@@ -130,6 +130,7 @@ export default function BuyTickets() {
     return Object.values(selectedTickets).reduce((sum, qty) => sum + qty, 0);
   };
 
+  // In the handleLoginRedirect function (around line 130):
   const handleLoginRedirect = () => {
     localStorage.setItem('redirectAfterLogin', window.location.pathname);
     navigate('/login');

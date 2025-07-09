@@ -38,20 +38,17 @@ const Login = () => {
       );
 
       // Check for ticketing redirect first
+      // Replace the existing buy-tickets redirect logic (around lines 42-54) with:
       const redirectAfterLogin = localStorage.getItem('redirectAfterLogin');
       if (redirectAfterLogin && redirectAfterLogin.includes('/buy-tickets/')) {
-        // Extract event key from the buy-tickets URL
-        const eventKeyMatch = redirectAfterLogin.match(/\/buy-tickets\/([^\/\?]+)/);
-        if (eventKeyMatch) {
-          const eventKey = eventKeyMatch[1];
-          // Store the ticketing URL for the attendee dashboard
-          localStorage.setItem('pendingTicketingUrl', redirectAfterLogin);
-          localStorage.removeItem('redirectAfterLogin');
-          
-          // Redirect to attendee my-tickets page
-          navigate('/attendee/my-tickets', { replace: true });
-          return;
-        }
+      // Extract event key from the buy-tickets URL
+      const eventKeyMatch = redirectAfterLogin.match(/\/buy-tickets\/([^\/\?]+)/);
+      if (eventKeyMatch) {
+      localStorage.removeItem('redirectAfterLogin');
+      // Redirect directly to the buy-tickets page
+      navigate(redirectAfterLogin, { replace: true });
+      return;
+      }
       }
 
       // Check if there's a pending event to join

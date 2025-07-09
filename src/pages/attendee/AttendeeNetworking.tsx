@@ -21,7 +21,8 @@ import {
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
-import AppLayout from "@/components/layouts/AppLayout";
+// Remove this import:
+// import AppLayout from "@/components/layouts/AppLayout";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -95,7 +96,9 @@ const AttendeeNetworking = () => {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     // Scroll to top of the attendees section
-    document.getElementById('attendees-section')?.scrollIntoView({ behavior: 'smooth' });
+    document
+      .getElementById("attendees-section")
+      ?.scrollIntoView({ behavior: "smooth" });
   };
 
   const { sendConnectionRequest, getConnectionStatus, connections } =
@@ -383,132 +386,129 @@ const AttendeeNetworking = () => {
 
   if (loading) {
     return (
-      <AppLayout>
-        <div className="animate-fade-in max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-center items-center h-64">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-connect-600 border-t-transparent mx-auto"></div>
-              <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">
-                Loading amazing people...
-              </p>
-            </div>
+      <div className="animate-fade-in max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-connect-600 border-t-transparent mx-auto"></div>
+            <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">
+              Loading amazing people...
+            </p>
           </div>
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <AppLayout>
-        <div className="animate-fade-in max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-center items-center h-64">
-            <div className="text-center">
-              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                Error Loading Attendees
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                {error?.message || "Failed to load attendee data"}
-              </p>
-              <Button
-                onClick={() => window.location.reload()}
-                className="bg-connect-600 hover:bg-connect-700 text-white"
-              >
-                Try Again
-              </Button>
-            </div>
+      <div className="animate-fade-in max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              Error Loading Attendees
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              {error?.message || "Failed to load attendee data"}
+            </p>
+            <Button
+              onClick={() => window.location.reload()}
+              className="bg-connect-600 hover:bg-connect-700 text-white"
+            >
+              Try Again
+            </Button>
           </div>
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
   if (!currentEventId) {
     return (
-      <AppLayout>
-        <div className="animate-fade-in max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-center items-center h-64">
-            <div className="text-center">
-              <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                No Event Selected
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
-                Please join an event to start networking with other attendees
-              </p>
-              <Button
-                onClick={() => navigate("/scan")}
-                className="bg-connect-600 hover:bg-connect-700 text-white"
-              >
-                Join Event
-              </Button>
-            </div>
+      <div className="animate-fade-in max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-center">
+            <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              No Event Selected
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
+              Please join an event to start networking with other attendees
+            </p>
+            <Button
+              onClick={() => navigate("/scan")}
+              className="bg-connect-600 hover:bg-connect-700 text-white"
+            >
+              Join Event
+            </Button>
           </div>
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
   return (
-    <AppLayout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Modern Header with Purple Gradient */}
-        <div className="mb-8 relative overflow-hidden">
-          <div className="relative bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
-            {/* Background Pattern */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-transparent"></div>
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
-            
-            {/* Content */}
-            <div className="relative z-10">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  {/* Icon */}
-                  <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mb-4">
-                    <Users className="h-6 w-6 text-white" />
+    <>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Modern Header with Purple Gradient */}
+          <div className="mb-8 relative overflow-hidden">
+            <div className="relative bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
+              {/* Background Pattern */}
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-transparent"></div>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
+
+              {/* Content */}
+              <div className="relative z-10">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    {/* Icon */}
+                    <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mb-4">
+                      <Users className="h-6 w-6 text-white" />
+                    </div>
+
+                    {/* Title and Description */}
+                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
+                      Connect & Collaborate
+                    </h1>
+                    <p className="text-purple-100 text-sm sm:text-base lg:text-lg font-medium mb-4">
+                      Discover amazing people, build meaningful connections, and
+                      expand your professional network
+                    </p>
+
+                    {/* Stats */}
+                    <div className="flex flex-wrap gap-2 sm:gap-3">
+                      <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                        <span className="text-white text-xs sm:text-sm font-medium">
+                          {profiles.length} Attendees
+                        </span>
+                      </div>
+                      <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                        <span className="text-white text-xs sm:text-sm font-medium">
+                          {connectedUsers.length} Connections
+                        </span>
+                      </div>
+                      <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                        <span className="text-white text-xs sm:text-sm font-medium">
+                          Event Networking Hub
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                  
-                  {/* Title and Description */}
-                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
-                    Connect & Collaborate
-                  </h1>
-                  <p className="text-purple-100 text-sm sm:text-base lg:text-lg font-medium mb-4">
-                    Discover amazing people, build meaningful connections, and expand your professional network
-                  </p>
-                  
-                  {/* Stats */}
-                  <div className="flex flex-wrap gap-2 sm:gap-3">
-                    <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5">
-                      <span className="text-white text-xs sm:text-sm font-medium">
-                        {profiles.length} Attendees
-                      </span>
+
+                  {/* Right side decorative element */}
+                  <div className="hidden sm:block">
+                    <div className="w-16 h-16 lg:w-20 lg:h-20 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                      <Network className="h-8 w-8 lg:h-10 lg:w-10 text-white/80" />
                     </div>
-                    <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5">
-                      <span className="text-white text-xs sm:text-sm font-medium">
-                        {connectedUsers.length} Connections
-                      </span>
-                    </div>
-                    <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5">
-                      <span className="text-white text-xs sm:text-sm font-medium">
-                        Event Networking Hub
-                      </span>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Right side decorative element */}
-                <div className="hidden sm:block">
-                  <div className="w-16 h-16 lg:w-20 lg:h-20 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center">
-                    <Network className="h-8 w-8 lg:h-10 lg:w-10 text-white/80" />
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </Tabs>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
@@ -559,21 +559,30 @@ const AttendeeNetworking = () => {
             availableTags={availableTags}
             onClearFilters={clearAllFilters}
           />
-          
+
           {/* Results summary */}
           {filteredProfiles.length > 0 && (
             <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
               <span>
-                Showing {startIndex + 1}-{Math.min(endIndex, filteredProfiles.length)} of {filteredProfiles.length} attendees
+                Showing {startIndex + 1}-
+                {Math.min(endIndex, filteredProfiles.length)} of{" "}
+                {filteredProfiles.length} attendees
               </span>
-              <span>Page {currentPage} of {totalPages}</span>
+              <span>
+                Page {currentPage} of {totalPages}
+              </span>
             </div>
           )}
-          
-          <div id="attendees-section" className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-            {currentPageProfiles.map((profile) => renderUserCard(profile, true))}
+
+          <div
+            id="attendees-section"
+            className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8"
+          >
+            {currentPageProfiles.map((profile) =>
+              renderUserCard(profile, true)
+            )}
           </div>
-          
+
           {/* Pagination Controls */}
           {totalPages > 1 && (
             <div className="flex justify-center items-center space-x-2 mt-8">
@@ -587,41 +596,50 @@ const AttendeeNetworking = () => {
                 <ChevronLeft size={16} />
                 <span>Previous</span>
               </Button>
-              
+
               <div className="flex space-x-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                  // Show first page, last page, current page, and pages around current page
-                  const showPage = 
-                    page === 1 || 
-                    page === totalPages || 
-                    (page >= currentPage - 1 && page <= currentPage + 1);
-                  
-                  if (!showPage) {
-                    // Show ellipsis for gaps
-                    if (page === currentPage - 2 || page === currentPage + 2) {
-                      return (
-                        <span key={page} className="px-2 py-1 text-gray-400">
-                          ...
-                        </span>
-                      );
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => {
+                    // Show first page, last page, current page, and pages around current page
+                    const showPage =
+                      page === 1 ||
+                      page === totalPages ||
+                      (page >= currentPage - 1 && page <= currentPage + 1);
+
+                    if (!showPage) {
+                      // Show ellipsis for gaps
+                      if (
+                        page === currentPage - 2 ||
+                        page === currentPage + 2
+                      ) {
+                        return (
+                          <span key={page} className="px-2 py-1 text-gray-400">
+                            ...
+                          </span>
+                        );
+                      }
+                      return null;
                     }
-                    return null;
+
+                    return (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => handlePageChange(page)}
+                        className={
+                          currentPage === page
+                            ? "bg-connect-600 hover:bg-connect-700"
+                            : ""
+                        }
+                      >
+                        {page}
+                      </Button>
+                    );
                   }
-                  
-                  return (
-                    <Button
-                      key={page}
-                      variant={currentPage === page ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => handlePageChange(page)}
-                      className={currentPage === page ? "bg-connect-600 hover:bg-connect-700" : ""}
-                    >
-                      {page}
-                    </Button>
-                  );
-                })}
+                )}
               </div>
-              
+
               <Button
                 variant="outline"
                 size="sm"
@@ -634,7 +652,7 @@ const AttendeeNetworking = () => {
               </Button>
             </div>
           )}
-          
+
           {filteredProfiles.length === 0 && (
             <div className="text-center py-16">
               <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-full flex items-center justify-center">
@@ -660,9 +678,7 @@ const AttendeeNetworking = () => {
         <TabsContent value="connections" className="space-y-8">
           {connectedUsers.length > 0 ? (
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-              {connectedUsers.map((profile) =>
-                renderUserCard(profile, false)
-              )}
+              {connectedUsers.map((profile) => renderUserCard(profile, false))}
             </div>
           ) : (
             <div className="text-center py-16">
@@ -695,8 +711,8 @@ const AttendeeNetworking = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="messages">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+        <TabsContent value="messages" className="mt-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 h-[600px] flex flex-col">
             {selectedConversation ? (
               <DirectMessageThread
                 conversation={selectedConversation}
@@ -708,7 +724,7 @@ const AttendeeNetworking = () => {
           </div>
         </TabsContent>
       </Tabs>
-    </AppLayout>
+    </>
   );
 };
 

@@ -17,7 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import AppLayout from "@/components/layouts/AppLayout";
+
 import { ProfilePictureUpload } from "@/components/profile/ProfilePictureUpload";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
 import {
@@ -327,7 +327,7 @@ const AttendeeProfile = () => {
 
   if (!currentUser) {
     return (
-      <AppLayout>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="p-8 text-center">
           <h1 className="text-2xl font-bold">
             Please log in to view your profile
@@ -336,24 +336,24 @@ const AttendeeProfile = () => {
             Go to Login
           </Button>
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
   if (isLoading) {
     return (
-      <AppLayout>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-center items-center min-h-[400px]">
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
           </div>
         </div>
-      </AppLayout>
+      </div>
     );
   }
 
   return (
-    <AppLayout>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-2xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
@@ -1044,7 +1044,7 @@ const AttendeeProfile = () => {
           </SettingItem>
         </div>
       </div>
-    </AppLayout>
+    </div>
   );
 };
 

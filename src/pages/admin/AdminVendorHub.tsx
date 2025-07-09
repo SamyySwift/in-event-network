@@ -14,6 +14,8 @@ import {
   Eye,
   Search,
   Copy,
+  MoreVertical,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -47,6 +49,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { QRCodeSVG } from "qrcode.react";
 import * as XLSX from "xlsx";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface VendorForm {
   id: string;
@@ -414,24 +422,24 @@ function AdminVendorHubContent() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-6 px-2 sm:px-4 pb-6">
+      {/* Header - Improved mobile layout */}
+      <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Vendor Hub</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Vendor Hub</h1>
+          <p className="text-muted-foreground mt-1 text-sm sm:text-base">
             Create and manage vendor registration forms for your events
           </p>
         </div>
 
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="flex items-center gap-2">
+            <Button className="flex items-center gap-2 w-full sm:w-auto">
               <Plus size={16} />
               Create Vendor Form
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
             <DialogHeader>
               <DialogTitle>Create Vendor Registration Form</DialogTitle>
             </DialogHeader>
@@ -461,7 +469,7 @@ function AdminVendorHubContent() {
                 </div>
               </div>
 
-              {/* Form Fields */}
+              {/* Form Fields - Improved mobile layout */}
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-semibold">Form Fields</h3>
@@ -474,7 +482,7 @@ function AdminVendorHubContent() {
                 <div className="space-y-3">
                   {formFields.map((field, index) => (
                     <Card key={field.id} className="p-4">
-                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
                         <div>
                           <Label>Field Label</Label>
                           <Input
@@ -562,55 +570,55 @@ function AdminVendorHubContent() {
         </Dialog>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
+      {/* Stats Cards - Improved mobile layout */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-2 md:grid-cols-4 sm:gap-6">
+        <Card className="shadow-sm hover:shadow transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Forms</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Total Forms</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalForms}</div>
+            <div className="text-xl sm:text-2xl font-bold">{stats.totalForms}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-sm hover:shadow transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Forms</CardTitle>
+            <CardTitle className="text-xs sm:text-sm font-medium">Active Forms</CardTitle>
             <CheckCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.activeForms}</div>
+            <div className="text-xl sm:text-2xl font-bold">{stats.activeForms}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-sm hover:shadow transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-xs sm:text-sm font-medium">
               Total Submissions
             </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalSubmissions}</div>
+            <div className="text-xl sm:text-2xl font-bold">{stats.totalSubmissions}</div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="shadow-sm hover:shadow transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-xs sm:text-sm font-medium">
               Recent Submissions
             </CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.recentSubmissions}</div>
+            <div className="text-xl sm:text-2xl font-bold">{stats.recentSubmissions}</div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Forms List */}
-      <Card>
+      {/* Forms List - Improved mobile layout */}
+      <Card className="shadow-sm">
         <CardHeader>
           <CardTitle>Vendor Forms</CardTitle>
         </CardHeader>
@@ -632,8 +640,8 @@ function AdminVendorHubContent() {
           ) : (
             <div className="space-y-4">
               {vendorForms.map((form) => (
-                <Card key={form.id} className="p-4">
-                  <div className="flex justify-between items-start">
+                <Card key={form.id} className="p-4 shadow-sm hover:shadow transition-shadow">
+                  <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:justify-between sm:items-start">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
                         <h3 className="font-semibold">{form.title}</h3>
@@ -650,7 +658,7 @@ function AdminVendorHubContent() {
                         </p>
                       )}
 
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                         <span>{form.fields.length} fields</span>
                         <span>
                           {getFormSubmissions(form.id).length} submissions
@@ -662,70 +670,69 @@ function AdminVendorHubContent() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
+                    {/* Mobile-optimized action buttons */}
+                    <div className="flex flex-wrap gap-2 justify-end">
+                      {/* Primary actions visible on all screens */}
                       <Button
                         onClick={() => viewSubmissions(form)}
                         variant="outline"
                         size="sm"
+                        className="w-full sm:w-auto"
                       >
                         <Eye size={16} className="mr-2" />
                         View Submissions
                       </Button>
 
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" size="sm">
-                            <Download size={16} className="mr-2" />
-                            Export
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem onClick={() => exportSubmissions(form.id, 'csv')}>
-                            Export as CSV
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => exportSubmissions(form.id, 'excel')}>
-                            Export as Excel
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-
                       <Button
                         onClick={() => copyFormUrl(form.id)}
                         variant="outline"
                         size="sm"
+                        className="w-full sm:w-auto"
                       >
                         <Share size={16} className="mr-2" />
                         Share
                       </Button>
 
-                      <Button
-                        onClick={() => {
-                          setSelectedForm(form);
-                          setQrDialogOpen(true);
-                        }}
-                        variant="outline"
-                        size="sm"
-                      >
-                        <QrCode size={16} className="mr-2" />
-                        QR Code
-                      </Button>
-
-                      <Button
-                        onClick={() => toggleFormStatus(form.id)}
-                        variant="outline"
-                        size="sm"
-                      >
-                        {form.isActive ? "Deactivate" : "Activate"}
-                      </Button>
-
-                      <Button
-                        onClick={() => deleteForm(form.id)}
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 size={16} />
-                      </Button>
+                      {/* Secondary actions in dropdown on mobile */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                            <MoreVertical size={16} className="sm:hidden" />
+                            <span className="hidden sm:inline">More Actions</span>
+                            <ChevronDown size={16} className="hidden sm:inline ml-1" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                          <DropdownMenuItem onClick={() => exportSubmissions(form.id, 'csv')}>
+                            <Download size={16} className="mr-2" />
+                            Export as CSV
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => exportSubmissions(form.id, 'excel')}>
+                            <Download size={16} className="mr-2" />
+                            Export as Excel
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => {
+                              setSelectedForm(form);
+                              setQrDialogOpen(true);
+                            }}
+                          >
+                            <QrCode size={16} className="mr-2" />
+                            QR Code
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => toggleFormStatus(form.id)}>
+                            <CheckCircle size={16} className="mr-2" />
+                            {form.isActive ? "Deactivate" : "Activate"}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            onClick={() => deleteForm(form.id)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 size={16} className="mr-2" />
+                            Delete Form
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                 </Card>
@@ -735,39 +742,42 @@ function AdminVendorHubContent() {
         </CardContent>
       </Card>
 
-      {/* Submissions Dialog */}
+      {/* Submissions Dialog - Improved mobile layout */}
       <Dialog
         open={submissionsDialogOpen}
         onOpenChange={setSubmissionsDialogOpen}
       >
-        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-[95vw] sm:max-w-6xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Submissions for {selectedForm?.title}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-4">
-            {/* Search */}
-            <div className="flex items-center gap-2">
-              <Search size={16} className="text-muted-foreground" />
-              <Input
-                placeholder="Search by vendor name or email..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="max-w-sm"
-              />
+            {/* Search - Improved mobile layout */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <div className="relative flex-1">
+                <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search by vendor name or email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
               <Button
                 onClick={() =>
                   selectedForm && exportSubmissions(selectedForm.id)
                 }
                 variant="outline"
                 size="sm"
+                className="w-full sm:w-auto"
               >
                 <Download size={16} className="mr-2" />
                 Export All
               </Button>
             </div>
 
-            {/* Submissions Table */}
+            {/* Submissions Table - Mobile responsive */}
             {filteredSubmissions.length === 0 ? (
               <div className="text-center py-8">
                 <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
@@ -781,73 +791,77 @@ function AdminVendorHubContent() {
                 </p>
               </div>
             ) : (
-              <div className="border rounded-lg">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Submission Date</TableHead>
-                      <TableHead>Vendor Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      {selectedForm?.fields.slice(0, 3).map((field) => (
-                        <TableHead key={field.id}>{field.label}</TableHead>
-                      ))}
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredSubmissions.map((submission) => (
-                      <TableRow key={submission.id}>
-                        <TableCell>
-                          {new Date(
-                            submission.submittedAt
-                          ).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {submission.vendorName}
-                        </TableCell>
-                        <TableCell>{submission.vendorEmail}</TableCell>
-                        {selectedForm?.fields.slice(0, 3).map((field) => (
-                          <TableCell
-                            key={field.id}
-                            className="max-w-[200px] truncate"
-                          >
-                            {submission.responses[field.id] || "-"}
-                          </TableCell>
+              <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+                <div className="inline-block min-w-full align-middle">
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="whitespace-nowrap">Date</TableHead>
+                          <TableHead className="whitespace-nowrap">Vendor</TableHead>
+                          <TableHead className="whitespace-nowrap">Email</TableHead>
+                          {selectedForm?.fields.slice(0, 3).map((field) => (
+                            <TableHead key={field.id} className="whitespace-nowrap">{field.label}</TableHead>
+                          ))}
+                          <TableHead className="whitespace-nowrap">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredSubmissions.map((submission) => (
+                          <TableRow key={submission.id}>
+                            <TableCell className="whitespace-nowrap">
+                              {new Date(
+                                submission.submittedAt
+                              ).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell className="font-medium whitespace-nowrap">
+                              {submission.vendorName}
+                            </TableCell>
+                            <TableCell className="whitespace-nowrap">{submission.vendorEmail}</TableCell>
+                            {selectedForm?.fields.slice(0, 3).map((field) => (
+                              <TableCell
+                                key={field.id}
+                                className="max-w-[150px] truncate"
+                              >
+                                {submission.responses[field.id] || "-"}
+                              </TableCell>
+                            ))}
+                            <TableCell>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  // Show full submission details
+                                  const details = selectedForm?.fields
+                                    .map(
+                                      (field) =>
+                                        `${field.label}: ${
+                                          submission.responses[field.id] || "N/A"
+                                        }`
+                                    )
+                                    .join("\n");
+                                  alert(`Full Submission Details:\n\n${details}`);
+                                }}
+                              >
+                                <Eye size={16} className="mr-2" />
+                                Details
+                              </Button>
+                            </TableCell>
+                          </TableRow>
                         ))}
-                        <TableCell>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              // Show full submission details
-                              const details = selectedForm?.fields
-                                .map(
-                                  (field) =>
-                                    `${field.label}: ${
-                                      submission.responses[field.id] || "N/A"
-                                    }`
-                                )
-                                .join("\n");
-                              alert(`Full Submission Details:\n\n${details}`);
-                            }}
-                          >
-                            <Eye size={16} className="mr-2" />
-                            View Details
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
               </div>
             )}
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* QR Code Dialog - MOVED INSIDE the main div */}
+      {/* QR Code Dialog - Improved mobile layout */}
       <Dialog open={showQRDialog} onOpenChange={setShowQRDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md max-w-[95vw]">
           <DialogHeader>
             <DialogTitle>QR Code for Vendor Form</DialogTitle>
             <DialogDescription>
@@ -867,16 +881,16 @@ function AdminVendorHubContent() {
                     includeMargin={true}
                   />
                 </div>
-                <div className="text-center space-y-2">
-                  <p className="text-sm text-muted-foreground">
+                <div className="text-center space-y-2 w-full">
+                  <p className="text-sm text-muted-foreground break-all">
                     {`${window.location.origin}/vendor-form/${selectedFormForQR}`}
                   </p>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2 w-full">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => copyFormURL(selectedFormForQR)}
-                      className="flex items-center gap-1"
+                      className="flex items-center justify-center gap-1 w-full"
                     >
                       <Copy className="h-3 w-3" />
                       Copy Link
@@ -891,7 +905,7 @@ function AdminVendorHubContent() {
                           downloadQRCode(selectedFormForQR, form.title);
                         }
                       }}
-                      className="flex items-center gap-1"
+                      className="flex items-center justify-center gap-1 w-full"
                     >
                       <Download className="h-3 w-3" />
                       Download QR
@@ -916,11 +930,3 @@ const AdminVendorHub = () => {
 };
 
 export default AdminVendorHub;
-
-// Add these imports at the top of the file
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";

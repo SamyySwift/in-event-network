@@ -46,6 +46,7 @@ import AttendeeNotifications from "@/pages/attendee/AttendeeNotifications";
 import AttendeeSearch from "@/pages/attendee/AttendeeSearch";
 import AttendeeOnboarding from "@/pages/attendee/AttendeeOnboarding";
 import AttendeeMarketplace from "./pages/attendee/AttendeeMarketplace";
+import AttendeeMyTickets from "@/pages/attendee/AttendeeMyTickets";
 
 // Host Pages
 import HostDashboard from "@/pages/host/HostDashboard";
@@ -388,6 +389,14 @@ export const router = createBrowserRouter([
     element: (
       <AttendeeRoute>
         <AttendeeMarketplace />
+      </AttendeeRoute>
+    ),
+  },
+  {
+    path: "/attendee/my-tickets",
+    element: (
+      <AttendeeRoute>
+        <AttendeeMyTickets />
       </AttendeeRoute>
     ),
   },

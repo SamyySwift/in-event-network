@@ -1,64 +1,104 @@
-import React, { useState } from 'react';
-import AppLayout from '@/components/layouts/AppLayout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Megaphone, Clock, Loader, AlertCircle, Search, Filter, Bell, BellRing, Calendar, User, Eye, ChevronRight, Sparkles, TrendingUp } from 'lucide-react';
-import { useAttendeeAnnouncements } from '@/hooks/useAttendeeAnnouncements';
-import { AttendeeEventProvider } from '@/contexts/AttendeeEventContext';
-import AttendeeRouteGuard from '@/components/attendee/AttendeeRouteGuard';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import React, { useState } from "react";
+import AppLayout from "@/components/layouts/AppLayout";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Megaphone,
+  Clock,
+  Loader,
+  AlertCircle,
+  Search,
+  Filter,
+  Bell,
+  BellRing,
+  Calendar,
+  User,
+  Eye,
+  ChevronRight,
+  Sparkles,
+  TrendingUp,
+} from "lucide-react";
+import { useAttendeeAnnouncements } from "@/hooks/useAttendeeAnnouncements";
+import { AttendeeEventProvider } from "@/contexts/AttendeeEventContext";
+import AttendeeRouteGuard from "@/components/attendee/AttendeeRouteGuard";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const AttendeeAnnouncementsContent = () => {
   const { announcements, isLoading, error } = useAttendeeAnnouncements();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [priorityFilter, setPriorityFilter] = useState('all');
-  const [expandedAnnouncement, setExpandedAnnouncement] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [priorityFilter, setPriorityFilter] = useState("all");
+  const [expandedAnnouncement, setExpandedAnnouncement] = useState<
+    string | null
+  >(null);
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-gradient-to-r from-red-500 to-pink-500 text-white hover:from-red-600 hover:to-pink-600';
-      case 'normal': return 'bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600';
-      case 'low': return 'bg-gradient-to-r from-gray-500 to-slate-500 text-white hover:from-gray-600 hover:to-slate-600';
-      default: return 'bg-gradient-to-r from-gray-500 to-slate-500 text-white hover:from-gray-600 hover:to-slate-600';
+      case "high":
+        return "bg-gradient-to-r from-red-500 to-pink-500 text-white hover:from-red-600 hover:to-pink-600";
+      case "normal":
+        return "bg-gradient-to-r from-blue-500 to-indigo-500 text-white hover:from-blue-600 hover:to-indigo-600";
+      case "low":
+        return "bg-gradient-to-r from-gray-500 to-slate-500 text-white hover:from-gray-600 hover:to-slate-600";
+      default:
+        return "bg-gradient-to-r from-gray-500 to-slate-500 text-white hover:from-gray-600 hover:to-slate-600";
     }
   };
 
   const getPriorityGradient = (priority: string) => {
     switch (priority) {
-      case 'high': return 'from-red-50 to-pink-50 border-red-200';
-      case 'normal': return 'from-blue-50 to-indigo-50 border-blue-200';
-      case 'low': return 'from-gray-50 to-slate-50 border-gray-200';
-      default: return 'from-gray-50 to-slate-50 border-gray-200';
+      case "high":
+        return "from-red-50 to-pink-50 border-red-200";
+      case "normal":
+        return "from-blue-50 to-indigo-50 border-blue-200";
+      case "low":
+        return "from-gray-50 to-slate-50 border-gray-200";
+      default:
+        return "from-gray-50 to-slate-50 border-gray-200";
     }
   };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffInHours = Math.abs(now.getTime() - date.getTime()) / (1000 * 60 * 60);
-    
+    const diffInHours =
+      Math.abs(now.getTime() - date.getTime()) / (1000 * 60 * 60);
+
     if (diffInHours < 24) {
-      return date.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
+      return date.toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
       });
     } else {
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
+      return date.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       });
     }
   };
 
-  const filteredAnnouncements = announcements.filter(announcement => {
-    const matchesSearch = announcement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         announcement.content.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesPriority = priorityFilter === 'all' || announcement.priority === priorityFilter;
+  const filteredAnnouncements = announcements.filter((announcement) => {
+    const matchesSearch =
+      announcement.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      announcement.content.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesPriority =
+      priorityFilter === "all" || announcement.priority === priorityFilter;
     return matchesSearch && matchesPriority;
   });
 
@@ -97,8 +137,8 @@ const AttendeeAnnouncementsContent = () => {
           <AlertDescription className="text-red-700 font-medium">
             Error loading announcements: {error.message}
           </AlertDescription>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="mt-4 w-full border-red-200 text-red-600 hover:bg-red-50"
             onClick={() => window.location.reload()}
           >
@@ -116,11 +156,14 @@ const AttendeeAnnouncementsContent = () => {
       <div className="relative overflow-hidden bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="absolute inset-0 opacity-30">
-          <div className="w-full h-full bg-repeat" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
-          }}></div>
+          <div
+            className="w-full h-full bg-repeat"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }}
+          ></div>
         </div>
-        
+
         <div className="relative z-10 max-w-7xl mx-auto px-6 py-12 sm:py-16">
           <div className="text-center">
             <div className="flex justify-center mb-6">
@@ -133,14 +176,15 @@ const AttendeeAnnouncementsContent = () => {
                 </div>
               </div>
             </div>
-            
+
             <h1 className="text-4xl sm:text-5xl font-bold mb-4 tracking-tight">
               Event Announcements
             </h1>
             <p className="text-xl opacity-90 max-w-2xl mx-auto mb-8">
-              Stay connected with the latest updates, important news, and exciting developments from your event
+              Stay connected with the latest updates, important news, and
+              exciting developments from your event
             </p>
-            
+
             <div className="flex items-center justify-center gap-6 text-sm opacity-80">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
@@ -157,7 +201,7 @@ const AttendeeAnnouncementsContent = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-white/10 to-transparent"></div>
       </div>
 
@@ -177,7 +221,10 @@ const AttendeeAnnouncementsContent = () => {
                   />
                 </div>
                 <div className="flex gap-3">
-                  <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                  <Select
+                    value={priorityFilter}
+                    onValueChange={setPriorityFilter}
+                  >
                     <SelectTrigger className="w-40 h-12 border-0 bg-white/80 backdrop-blur-sm shadow-sm">
                       <Filter className="h-4 w-4 mr-2" />
                       <SelectValue placeholder="Filter by priority" />
@@ -204,21 +251,22 @@ const AttendeeAnnouncementsContent = () => {
                   <Megaphone className="h-10 w-10 text-gray-400" />
                 </div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-3">
-                  {searchTerm || priorityFilter !== 'all' ? 'No Results Found' : 'No Announcements Yet'}
+                  {searchTerm || priorityFilter !== "all"
+                    ? "No Results Found"
+                    : "No Announcements Yet"}
                 </h3>
                 <p className="text-gray-600 leading-relaxed">
-                  {searchTerm || priorityFilter !== 'all' 
-                    ? 'Try adjusting your search terms or filters to find what you\'re looking for.'
-                    : 'Check back later for important updates and announcements from the event organizers.'
-                  }
+                  {searchTerm || priorityFilter !== "all"
+                    ? "Try adjusting your search terms or filters to find what you're looking for."
+                    : "Check back later for important updates and announcements from the event organizers."}
                 </p>
-                {(searchTerm || priorityFilter !== 'all') && (
-                  <Button 
-                    variant="outline" 
+                {(searchTerm || priorityFilter !== "all") && (
+                  <Button
+                    variant="outline"
                     className="mt-4"
                     onClick={() => {
-                      setSearchTerm('');
-                      setPriorityFilter('all');
+                      setSearchTerm("");
+                      setPriorityFilter("all");
                     }}
                   >
                     Clear Filters
@@ -230,9 +278,11 @@ const AttendeeAnnouncementsContent = () => {
         ) : (
           <div className="space-y-6">
             {filteredAnnouncements.map((announcement, index) => (
-              <Card 
-                key={announcement.id} 
-                className={`group border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden bg-gradient-to-r ${getPriorityGradient(announcement.priority)} backdrop-blur-sm hover:-translate-y-1 animate-fade-in`}
+              <Card
+                key={announcement.id}
+                className={`group border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden bg-gradient-to-r ${getPriorityGradient(
+                  announcement.priority
+                )} backdrop-blur-sm hover:-translate-y-1 animate-fade-in`}
                 style={{ animationDelay: `${index * 100}ms` }}
               >
                 {/* Organized Card Header */}
@@ -241,7 +291,11 @@ const AttendeeAnnouncementsContent = () => {
                     {/* Left: Title + Priority */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className={`text-xs font-bold px-2 py-1 rounded-lg uppercase tracking-wide shadow-sm ${getPriorityColor(announcement.priority)}`}>
+                        <span
+                          className={`text-xs font-bold px-2 py-1 rounded-lg uppercase tracking-wide shadow-sm ${getPriorityColor(
+                            announcement.priority
+                          )}`}
+                        >
                           {announcement.priority}
                         </span>
                         {announcement.send_immediately && (
@@ -262,8 +316,16 @@ const AttendeeAnnouncementsContent = () => {
                       className="ml-2 shrink-0 h-8 w-18 px-2 text-indigo-600/80 font-medium hover:text-indigo-800"
                     >
                       <Eye className="h-4 w-4 mr-1" />
-                      {expandedAnnouncement === announcement.id ? 'Less' : 'More'}
-                      <ChevronRight className={`h-4 w-4 ml-1 transition-transform ${expandedAnnouncement === announcement.id ? 'rotate-90' : ''}`} />
+                      {expandedAnnouncement === announcement.id
+                        ? "Less"
+                        : "More"}
+                      <ChevronRight
+                        className={`h-4 w-4 ml-1 transition-transform ${
+                          expandedAnnouncement === announcement.id
+                            ? "rotate-90"
+                            : ""
+                        }`}
+                      />
                     </Button>
                   </div>
                   {/* Meta info row */}
@@ -279,15 +341,17 @@ const AttendeeAnnouncementsContent = () => {
                     </div>
                   </div>
                 </CardHeader>
-                
+
                 <CardContent className="bg-white/95 backdrop-blur-md">
                   <div className="prose prose-sm max-w-none text-gray-700 leading-relaxed mt-0">
                     {expandedAnnouncement === announcement.id ? (
-                      announcement.content.split('\n').map((paragraph, index) => (
-                        <p key={index} className="mb-3 last:mb-0">
-                          {paragraph}
-                        </p>
-                      ))
+                      announcement.content
+                        .split("\n")
+                        .map((paragraph, index) => (
+                          <p key={index} className="mb-3 last:mb-0">
+                            {paragraph}
+                          </p>
+                        ))
                     ) : (
                       <p className="line-clamp-2 mb-0">
                         {announcement.content.length > 150
@@ -296,28 +360,30 @@ const AttendeeAnnouncementsContent = () => {
                       </p>
                     )}
                   </div>
-                  
+
                   {/* Announcement image shows only when expanded */}
-                  {announcement.image_url && expandedAnnouncement === announcement.id && (
-                    <div className="mt-6">
-                      <img 
-                        src={announcement.image_url} 
-                        alt="Announcement" 
-                        className="w-full h-auto rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
-                      />
-                    </div>
-                  )}
+                  {announcement.image_url &&
+                    expandedAnnouncement === announcement.id && (
+                      <div className="mt-6">
+                        <img
+                          src={announcement.image_url}
+                          alt="Announcement"
+                          className="w-full h-auto rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+                        />
+                      </div>
+                    )}
 
                   {/* "Read more" button if not expanded */}
-                  {announcement.content.length > 150 && expandedAnnouncement !== announcement.id && (
-                    <Button
-                      variant="link"
-                      onClick={() => toggleExpanded(announcement.id)}
-                      className="mt-2 p-0 h-auto text-indigo-600 hover:text-indigo-800 font-medium"
-                    >
-                      Read more <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  )}
+                  {announcement.content.length > 150 &&
+                    expandedAnnouncement !== announcement.id && (
+                      <Button
+                        variant="link"
+                        onClick={() => toggleExpanded(announcement.id)}
+                        className="mt-2 p-0 h-auto text-indigo-600 hover:text-indigo-800 font-medium"
+                      >
+                        Read more <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    )}
                 </CardContent>
               </Card>
             ))}
@@ -330,13 +396,12 @@ const AttendeeAnnouncementsContent = () => {
 
 const AttendeeAnnouncements = () => {
   return (
-    <AppLayout>
-      <AttendeeEventProvider>
-        <AttendeeRouteGuard>
-          <AttendeeAnnouncementsContent />
-        </AttendeeRouteGuard>
-      </AttendeeEventProvider>
-    </AppLayout>
+    // Remove the AppLayout wrapper
+    <AttendeeEventProvider>
+      <AttendeeRouteGuard>
+        <AttendeeAnnouncementsContent />
+      </AttendeeRouteGuard>
+    </AttendeeEventProvider>
   );
 };
 

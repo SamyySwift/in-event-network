@@ -15,7 +15,8 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import AppLayout from "@/components/layouts/AppLayout";
+// Remove this import:
+// import AppLayout from "@/components/layouts/AppLayout";
 import {
   Card,
   CardContent,
@@ -709,13 +710,11 @@ const SuggestedConnectionsCards = ({
 
 const AttendeeDashboard = () => {
   return (
-    <AppLayout>
-      <AttendeeEventProvider>
-        <AttendeeRouteGuard requireEvent={false}>
-          <AttendeeDashboardContent />
-        </AttendeeRouteGuard>
-      </AttendeeEventProvider>
-    </AppLayout>
+    <AttendeeEventProvider>
+      <AttendeeRouteGuard requireEvent={false}>
+        <AttendeeDashboardContent />
+      </AttendeeRouteGuard>
+    </AttendeeEventProvider>
   );
 };
 

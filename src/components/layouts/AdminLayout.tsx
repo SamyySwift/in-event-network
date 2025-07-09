@@ -28,7 +28,7 @@ import {
   Ticket,
   Scan,
   Settings,
-  Store, // Add Store icon for Vendor Hub
+  Store,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -122,92 +122,187 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     );
   };
 
-  // Admin navigation links
+  // Admin navigation links with groups
+  // In the adminNavigation array, update the icon styling to use rounded-md instead of fully rounded
   const adminNavigation = [
+    // Main group
     {
       name: "Dashboard",
       href: "/admin",
-      icon: <BarChart4 size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5  rounded-md bg-purple-100">
+          <BarChart4 size={14} className="text-purple-600" />
+        </div>
+      ),
     },
     {
       name: "Events",
       href: "/admin/events",
-      icon: <Calendar size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+          <Calendar size={14} className="text-purple-600" />
+        </div>
+      ),
     },
     {
       name: "Tickets",
       href: "/admin/tickets",
-      icon: <Ticket size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+          <Ticket size={14} className="text-purple-600" />
+        </div>
+      ),
     },
     {
       name: "Check-In",
       href: "/admin/checkin",
-      icon: <Scan size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+          <Scan size={14} className="text-purple-600" />
+        </div>
+      ),
     },
+
+    // Separator
+    { type: "separator" },
+
+    // Attendee management group
     {
       name: "Attendees",
       href: "/admin/attendees",
-      icon: <Users size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+          <Users size={14} className="text-purple-600" />
+        </div>
+      ),
     },
     {
       name: "Speakers",
       href: "/admin/speakers",
-      icon: <User size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+          <User size={14} className="text-purple-600" />
+        </div>
+      ),
     },
+
+    // Separator
+    { type: "separator" },
+
+    // Content management group
     {
       name: "Announcements",
       href: "/admin/announcements",
-      icon: <Megaphone size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+          <Megaphone size={14} className="text-purple-600" />
+        </div>
+      ),
     },
     {
       name: "Schedule",
       href: "/admin/schedule",
-      icon: <Clock size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+          <Clock size={14} className="text-purple-600" />
+        </div>
+      ),
     },
     {
       name: "Polls & Surveys",
       href: "/admin/polls",
-      icon: <BarChart size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+          <BarChart size={14} className="text-purple-600" />
+        </div>
+      ),
     },
     {
       name: "Facilities",
       href: "/admin/facilities",
-      icon: <MapPin size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+          <MapPin size={14} className="text-purple-600" />
+        </div>
+      ),
     },
+
+    // Separator
+    { type: "separator" },
+
+    // Engagement group
     {
       name: "Event Rules",
       href: "/admin/rules",
-      icon: <BookText size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+          <BookText size={14} className="text-purple-600" />
+        </div>
+      ),
     },
     {
       name: "Questions",
       href: "/admin/questions",
-      icon: <MessageSquare size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+          <MessageSquare size={14} className="text-purple-600" />
+        </div>
+      ),
     },
     {
       name: "Suggestions",
       href: "/admin/suggestions",
-      icon: <MessageCircle size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+          <MessageCircle size={14} className="text-purple-600" />
+        </div>
+      ),
     },
     {
       name: "Notifications",
       href: "/admin/notifications",
-      icon: <Bell size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+          <Bell size={14} className="text-purple-600" />
+        </div>
+      ),
     },
+
+    // Separator
+    { type: "separator" },
+
+    // Partners group
     {
       name: "Sponsors & Partners",
       href: "/admin/sponsors",
-      icon: <Star size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+          <Star size={14} className="text-purple-600" />
+        </div>
+      ),
     },
     {
       name: "Vendor Hub",
       href: "/admin/vendor-hub",
-      icon: <Store size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+          <Store size={14} className="text-purple-600" />
+        </div>
+      ),
     },
+
+    // Separator
+    { type: "separator" },
+
+    // Settings group
     {
       name: "Settings",
       href: "/admin/settings",
-      icon: <Settings size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+          <Settings size={14} className="text-purple-600" />
+        </div>
+      ),
     },
   ];
 
@@ -256,27 +351,44 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       )}
 
       <nav className="flex-1 py-2 px-2 space-y-1 overflow-y-auto">
-        {adminNavigation.map((item) => (
-          <Button
-            key={item.name}
-            variant={isActive(item.href) ? "secondary" : "ghost"}
-            className={`w-full justify-start ${
-              isActive(item.href)
-                ? "bg-primary/10 text-primary hover:bg-primary/20"
-                : "text-sidebar-foreground hover:bg-sidebar-accent/50"
-            }`}
-            onClick={() => {
-              navigate(item.href);
-              setMobileSidebarOpen(false);
-            }}
-          >
-            <span className="mr-3">{item.icon}</span>
-            <span className="flex-1 text-left">{item.name}</span>
-            {isActive(item.href) && (
-              <ChevronRight size={16} className="ml-auto opacity-70" />
-            )}
-          </Button>
-        ))}
+        {adminNavigation.map((item, index) => {
+          // Render separator
+          if (item.type === "separator") {
+            return (
+              <div
+                key={`separator-${index}`}
+                className="h-px bg-gray-200 dark:bg-gray-700 my-3 mx-2"
+              />
+            );
+          }
+
+          // Render navigation button
+          return (
+            // For mobile navigation - update the text color to match the icon color
+            <Button
+              key={item.name}
+              variant={isActive(item.href) ? "secondary" : "ghost"}
+              className={`w-full justify-start ${
+                isActive(item.href)
+                  ? "bg-primary/10 text-purple-600 hover:bg-primary/20"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+              }`}
+              onClick={() => {
+                navigate(item.href);
+                setMobileSidebarOpen(false);
+              }}
+            >
+              <span className="mr-3">{item.icon}</span>
+              <span className="flex-1 text-left">{item.name}</span>
+              {isActive(item.href) && (
+                <ChevronRight
+                  size={16}
+                  className="ml-auto opacity-70 text-purple-600"
+                />
+              )}
+            </Button>
+          );
+        })}
 
         {currentUser && (
           <Button
@@ -440,37 +552,50 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </div>
 
         <nav className="flex-1 py-2 px-2 space-y-1 overflow-y-auto scrollbar-hide">
-          {adminNavigation.map((item) => (
-            <Button
-              key={item.name}
-              variant={isActive(item.href) ? "secondary" : "ghost"}
-              className={`w-full ${
-                sidebarOpen ? "justify-start" : "justify-center"
-              } ${
-                isActive(item.href)
-                  ? "bg-primary/10 text-primary hover:bg-primary/20"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent/50"
-              }`}
-              onClick={() => navigate(item.href)}
-              title={sidebarOpen ? "" : item.name}
-            >
-              <span
-                className={`${sidebarOpen ? "mr-3" : ""} ${
+          {adminNavigation.map((item, index) => {
+            // Render separator
+            if (item.type === "separator") {
+              return (
+                <div
+                  key={`separator-${index}`}
+                  className="h-px bg-gray-200 dark:bg-gray-700 my-3 mx-2"
+                />
+              );
+            }
+
+            // Render navigation button
+            return (
+              <Button
+                key={item.name}
+                variant={isActive(item.href) ? "secondary" : "ghost"}
+                className={`w-full ${
+                  sidebarOpen ? "justify-start" : "justify-center"
+                } ${
                   isActive(item.href)
-                    ? "text-primary-700"
-                    : "text-muted-foreground"
+                    ? "bg-primary/10 text-primary hover:bg-primary/20"
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/50"
                 }`}
+                onClick={() => navigate(item.href)}
+                title={sidebarOpen ? "" : item.name}
               >
-                {item.icon}
-              </span>
-              {sidebarOpen && (
-                <span className="flex-1 text-left">{item.name}</span>
-              )}
-              {sidebarOpen && isActive(item.href) && (
-                <ChevronRight size={16} className="ml-auto opacity-70" />
-              )}
-            </Button>
-          ))}
+                <span
+                  className={`${sidebarOpen ? "mr-3" : ""} ${
+                    isActive(item.href)
+                      ? "text-primary-700"
+                      : "text-muted-foreground"
+                  }`}
+                >
+                  {item.icon}
+                </span>
+                {sidebarOpen && (
+                  <span className="flex-1 text-left">{item.name}</span>
+                )}
+                {sidebarOpen && isActive(item.href) && (
+                  <ChevronRight size={16} className="ml-auto opacity-70" />
+                )}
+              </Button>
+            );
+          })}
 
           {currentUser && (
             <Button

@@ -365,7 +365,8 @@ export default function AttendeeMyTickets() {
       return;
     }
 
-    setShowPurchaseForm(true);
+    // Navigate to the BuyTickets page instead of showing the purchase form
+    window.location.href = `/buy-tickets/${key}`;
   };
 
   const handlePurchase = () => {

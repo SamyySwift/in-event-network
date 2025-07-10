@@ -271,6 +271,10 @@ export default function BuyTickets() {
           console.log(`Creating ${quantity} tickets for type:`, ticketType.name);
 
           for (let i = 0; i < quantity; i++) {
+            // Generate payment reference for free tickets
+            const finalPaymentReference = paymentReference || 
+              (ticketType.price === 0 ? `FREE_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` : null);
+            
             ticketPurchases.push({
               event_id: eventData.event.id,
               ticket_type_id: ticketTypeId,
@@ -280,7 +284,7 @@ export default function BuyTickets() {
               guest_phone: userInfo.phone.substring(0, 20),
               price: ticketType.price,
               payment_status: 'completed',
-              payment_reference: paymentReference || null,
+              payment_reference: finalPaymentReference,
               qr_code_data: `${window.location.origin}/ticket-verify?ticket_number=`,
             });
           }

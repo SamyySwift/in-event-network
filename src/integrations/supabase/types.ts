@@ -1212,6 +1212,7 @@ export type Database = {
           start_time: string | null
           time_allocation: string | null
           title: string | null
+          topic: string | null
           twitter_link: string | null
           updated_at: string
           website_link: string | null
@@ -1234,6 +1235,7 @@ export type Database = {
           start_time?: string | null
           time_allocation?: string | null
           title?: string | null
+          topic?: string | null
           twitter_link?: string | null
           updated_at?: string
           website_link?: string | null
@@ -1256,6 +1258,7 @@ export type Database = {
           start_time?: string | null
           time_allocation?: string | null
           title?: string | null
+          topic?: string | null
           twitter_link?: string | null
           updated_at?: string
           website_link?: string | null

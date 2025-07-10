@@ -22,6 +22,15 @@ const AuthCallback = () => {
           // Wait for auth context to update with proper user data
           const checkUserAndRedirect = () => {
             if (currentUser && currentUser.role) {
+              // Check for ticket purchase redirect first
+              const redirectAfterLogin = localStorage.getItem('redirectAfterLogin');
+              if (redirectAfterLogin && redirectAfterLogin.includes('/buy-tickets/')) {
+                localStorage.removeItem('redirectAfterLogin');
+                navigate(redirectAfterLogin, { replace: true });
+                return;
+              }
+              
+              // Default redirect based on role
               const redirectPath = currentUser.role === 'host' ? '/admin' : '/attendee';
               navigate(redirectPath, { replace: true });
             } else if (currentUser === null) {

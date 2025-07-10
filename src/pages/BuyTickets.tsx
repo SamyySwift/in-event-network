@@ -50,8 +50,14 @@ export default function BuyTickets() {
   });
   const [formResponses, setFormResponses] = useState<Record<string, Record<string, any>>>({});
 
-  // Handle case where no eventKey is provided (for /buy route)
+  // Handle redirect after login and eventKey validation
   useEffect(() => {
+    // Clear the redirect flag if this component is loading after a redirect
+    const redirectAfterLogin = localStorage.getItem('redirectAfterLogin');
+    if (redirectAfterLogin && window.location.pathname === redirectAfterLogin) {
+      localStorage.removeItem('redirectAfterLogin');
+    }
+
     if (!eventKey) {
       // Redirect to a page where user can select an event or show error
       toast({

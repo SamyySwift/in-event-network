@@ -10,6 +10,7 @@ import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
 import ScanQR from "@/pages/ScanQR";
 import VendorForm from "./pages/VendorForm";
+import BuyTickets from "@/pages/BuyTickets";
 
 // Admin Pages
 import AdminLayout from "@/components/layouts/AdminLayout";
@@ -141,6 +142,14 @@ export const router = createBrowserRouter([
   {
     path: "/index",
     element: <Index />,
+  },
+  {
+    path: "/buy-tickets/:eventKey",
+    element: <BuyTickets />,
+  },
+  {
+    path: "/buy",
+    element: <BuyTickets />,
   },
 
   // Admin Routes

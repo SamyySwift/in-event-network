@@ -1,3 +1,4 @@
+/// <reference types="https://deno.land/x/deno@v1.28.0/lib/deno.d.ts" />
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -78,17 +79,24 @@ serve(async (req) => {
     }
 
     // Create tickets
-    const ticketPromises = []
+    // Create tickets with unique QR codes
+    const ticketPromises: Promise<any>[] = []
     
     for (const ticket of tickets) {
       for (let i = 0; i < ticket.quantity; i++) {
+        // Generate truly unique QR code
+        const uniqueId = crypto.randomUUID()
+        const timestamp = Date.now()
+        const randomSuffix = Math.random().toString(36).substring(2, 15)
+        const uniqueQRCode = `${eventId}-${ticket.ticketTypeId}-${timestamp}-${uniqueId}-${randomSuffix}-${i}`
+        
         const ticketData = {
           event_id: eventId,
           user_id: userInfo.userId || null,
           ticket_type_id: ticket.ticketTypeId,
           price: ticket.price,
           payment_status: 'completed',
-          qr_code_data: `${eventId}-${ticket.ticketTypeId}-${Date.now()}-${i}`,
+          qr_code_data: uniqueQRCode,
           guest_name: userInfo.userId ? null : userInfo.fullName,
           guest_email: userInfo.userId ? null : userInfo.email,
           guest_phone: userInfo.userId ? null : userInfo.phone,
@@ -101,7 +109,9 @@ serve(async (req) => {
     }
 
     const ticketResults = await Promise.all(ticketPromises)
-    const createdTickets = ticketResults.map(result => result.data).filter(Boolean)
+    const createdTickets = ticketResults
+      .map((result: any) => result.data)
+      .filter((ticket: any) => ticket !== null)
 
     if (createdTickets.length === 0) {
       throw new Error('Failed to create tickets')

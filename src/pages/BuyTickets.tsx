@@ -252,10 +252,10 @@ export default function BuyTickets() {
 
   const createTickets = async (paymentReference?: string) => {
     if (!eventData) return;
-
+  
     setIsProcessing(true);
     console.log('Starting ticket creation process...');
-
+  
     try {
       // Create ticket purchases for each selected ticket type
       const ticketPurchases = [];
@@ -267,13 +267,18 @@ export default function BuyTickets() {
             console.error('Ticket type not found:', ticketTypeId);
             continue;
           }
-
+  
           console.log(`Creating ${quantity} tickets for type:`, ticketType.name);
-
+  
           for (let i = 0; i < quantity; i++) {
             // Generate payment reference for free tickets
             const finalPaymentReference = paymentReference || 
               (ticketType.price === 0 ? `FREE_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` : null);
+            
+            // Generate truly unique QR code using crypto.randomUUID()
+            const uniqueId = crypto.randomUUID();
+            const timestamp = Date.now();
+            const uniqueQRCode = `${eventData.event.id}-${ticketTypeId}-${timestamp}-${uniqueId}-${i}`;
             
             ticketPurchases.push({
               event_id: eventData.event.id,
@@ -285,27 +290,54 @@ export default function BuyTickets() {
               price: ticketType.price,
               payment_status: 'completed',
               payment_reference: finalPaymentReference,
-              qr_code_data: `${window.location.origin}/ticket-verify?ticket_number=`,
+              qr_code_data: uniqueQRCode,
             });
           }
         }
       }
-
+  
       console.log('Inserting tickets:', ticketPurchases);
-
-      // Insert tickets
-      const { data: tickets, error } = await supabase
-        .from('event_tickets')
-        .insert(ticketPurchases)
-        .select();
-
-      if (error) {
-        console.error('Ticket insert error:', error);
-        throw error;
+  
+      // Insert tickets with retry logic for duplicate key errors
+      let tickets;
+      let retryCount = 0;
+      const maxRetries = 3;
+      
+      while (retryCount < maxRetries) {
+        try {
+          const { data, error } = await supabase
+            .from('event_tickets')
+            .insert(ticketPurchases)
+            .select();
+            
+          if (error) {
+            // If it's a duplicate key error, regenerate QR codes and retry
+            if (error.message.includes('duplicate key value violates unique constraint') && retryCount < maxRetries - 1) {
+              console.log(`Duplicate key error, retrying... (attempt ${retryCount + 1})`);
+              
+              // Regenerate QR codes for all tickets
+              ticketPurchases.forEach((ticket, index) => {
+                const uniqueId = crypto.randomUUID();
+                const timestamp = Date.now();
+                ticket.qr_code_data = `${ticket.event_id}-${ticket.ticket_type_id}-${timestamp}-${uniqueId}-${index}`;
+              });
+              
+              retryCount++;
+              continue;
+            }
+            throw error;
+          }
+          
+          tickets = data;
+          break;
+        } catch (err) {
+          if (retryCount === maxRetries - 1) {
+            throw err;
+          }
+          retryCount++;
+        }
       }
-
-      console.log('Tickets created successfully:', tickets);
-
+  
       // Insert form responses if any
       if (tickets && tickets.length > 0) {
         const formResponseInserts = [];
@@ -384,12 +416,70 @@ export default function BuyTickets() {
         }
       }
 
+      // Add this state near the top of the component
+      const [showSuccessModal, setShowSuccessModal] = useState(false);
+      const [purchasedTicketCount, setPurchasedTicketCount] = useState(0);
+      
+      // Update the success handling in createTickets function
+      // Replace the existing success toast with:
+      console.log('Purchase completed successfully');
+      
+      // Set success modal data
+      setPurchasedTicketCount(getTotalTickets());
+      setShowSuccessModal(true);
+      
+      // Reset form
+      setSelectedTickets({});
+      setFormResponses({});
+      setUserInfo({ fullName: '', email: currentUser?.email || '', phone: '' });
+      setShowUserInfoForm(false);
+      
+      // Add this JSX before the closing div in the return statement:
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <Ticket className="w-8 h-8 text-green-600" />
+              </div>
+              <CardTitle className="text-green-600">Purchase Successful!</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-gray-600">
+                Congratulations! You have successfully purchased {purchasedTicketCount} ticket(s) for {eventData?.event.name}.
+              </p>
+              <p className="text-sm text-gray-500">
+                Your tickets have been added to your account and you will receive a confirmation email shortly.
+              </p>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    navigate('/attendee/my-tickets');
+                  }}
+                  className="flex-1"
+                >
+                  View My Tickets
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowSuccessModal(false)}
+                  className="flex-1"
+                >
+                  Continue Shopping
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
       console.log('Purchase completed successfully');
 
-      // Show success message
+      // Enhanced success message with confirmation
       toast({
-        title: "Tickets Purchased Successfully!",
-        description: `${getTotalTickets()} ticket(s) purchased successfully.`,
+        title: "🎉 Tickets Purchased Successfully!",
+        description: `Congratulations! ${getTotalTickets()} ticket(s) have been successfully purchased and added to your account. You can view them in 'My Tickets'.`,
+        duration: 6000,
       });
 
       // Reset form and redirect to attendee dashboard
@@ -397,7 +487,11 @@ export default function BuyTickets() {
       setFormResponses({});
       setUserInfo({ fullName: '', email: currentUser?.email || '', phone: '' });
       setShowUserInfoForm(false);
-      navigate('/attendee/my-tickets');
+      
+      // Show confirmation before redirect
+      setTimeout(() => {
+        navigate('/attendee/my-tickets');
+      }, 2000);
 
     } catch (error: any) {
       console.error('Purchase failed:', error);

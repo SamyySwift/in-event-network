@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUpload } from '@/components/ui/image-upload';
+import { RefreshCw } from 'lucide-react'; // Add this import
 import { useForm } from 'react-hook-form';
 import { useAdminSpeakers } from '@/hooks/useAdminSpeakers';
 import { useAdminEventContext, AdminEventProvider } from '@/hooks/useAdminEventContext';
@@ -40,12 +41,13 @@ const AdminSpeakersContent = () => {
     selectedEvent
   } = useAdminEventContext();
   const {
-    speakers,
+    speakers = [], // Provide default empty array
     isLoading,
-    error, // Add error handling
+    error,
     createSpeaker,
     updateSpeaker,
-    deleteSpeaker
+    deleteSpeaker,
+    refetch
   } = useAdminSpeakers(selectedEventId || undefined);
   const {
     toast
@@ -169,32 +171,25 @@ const AdminSpeakersContent = () => {
       </div>;
   }
 
-  // Add error handling
+  // Add better error handling in the render
   if (error) {
-    return <div className="space-y-8 animate-fade-in">
-        <div className="flex justify-between items-center">
-          <EventSelector />
-        </div>
-        
-        <div className="text-center py-12">
-          <div className="p-4 rounded-full bg-red-100 inline-block mb-4">
-            <svg className="h-8 w-8 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 15.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Speakers</h3>
-          <p className="text-gray-600 mb-4">
-            {error.message || 'There was an error loading the speakers. Please try again.'}
+    return (
+      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+        <div className="text-center">
+          <svg className="mx-auto h-12 w-12 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 19.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+          <h3 className="mt-2 text-sm font-medium text-gray-900">Error loading speakers</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            {error instanceof Error ? error.message : 'An unexpected error occurred'}
           </p>
-          <Button 
-            onClick={() => window.location.reload()} 
-            variant="outline"
-            className="mx-auto"
-          >
-            Retry
-          </Button>
         </div>
-      </div>;
+        <Button onClick={() => refetch()} variant="outline">
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Try Again
+        </Button>
+      </div>
+    );
   }
   return <div className="space-y-8 animate-fade-in">
       {/* Event Selector */}

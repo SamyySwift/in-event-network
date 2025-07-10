@@ -1,85 +1,105 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
-interface Speaker {
+export interface Speaker {
   id: string;
   name: string;
-  title?: string;
-  company?: string;
   bio: string;
+  company?: string;
+  topic?: string;
   photo_url?: string;
   session_title?: string;
   session_time?: string;
-  twitter_link?: string;
+  start_date?: string;
+  start_time?: string;
+  end_date?: string;
+  end_time?: string;
+  time_allocation?: string;
+  title?: string;
   linkedin_link?: string;
+  twitter_link?: string;
   website_link?: string;
-  topic?: string; // Add this line
   event_id?: string;
   created_at: string;
   updated_at: string;
 }
 
 export const useAdminSpeakers = (eventId?: string) => {
-  const { currentUser } = useAuth();
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: speakers = [], isLoading, error } = useQuery({
-    queryKey: ['admin-speakers', currentUser?.id, eventId],
+  const {
+    data: speakers = [], // Provide default empty array
+    isLoading,
+    error,
+    refetch
+  } = useQuery({
+    queryKey: ['admin-speakers', eventId],
     queryFn: async (): Promise<Speaker[]> => {
-      if (!currentUser?.id) {
-        throw new Error('User not authenticated');
-      }
+      try {
+        console.log('Fetching speakers for eventId:', eventId);
+        
+        // First, get events owned by current user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          throw new Error('User not authenticated');
+        }
 
-      console.log('Fetching speakers for admin:', currentUser.id, 'event:', eventId);
+        const { data: events, error: eventsError } = await supabase
+          .from('events')
+          .select('id')
+          .eq('host_id', user.id);
 
-      // Simplified query - first get events owned by the admin
-      const { data: adminEvents, error: eventsError } = await supabase
-        .from('events')
-        .select('id')
-        .eq('host_id', currentUser.id);
+        if (eventsError) {
+          console.error('Error fetching events:', eventsError);
+          throw eventsError;
+        }
 
-      if (eventsError) {
-        console.error('Error fetching admin events:', eventsError);
-        throw eventsError;
-      }
+        if (!events || events.length === 0) {
+          console.log('No events found for user');
+          return [];
+        }
 
-      if (!adminEvents || adminEvents.length === 0) {
-        console.log('No events found for admin');
-        return [];
-      }
+        const eventIds = events.map(event => event.id);
+        console.log('Found event IDs:', eventIds);
 
-      const eventIds = adminEvents.map(event => event.id);
+        // Build the speakers query
+        let query = supabase
+          .from('speakers')
+          .select('*')
+          .in('event_id', eventIds)
+          .order('created_at', { ascending: false });
 
-      // Now get speakers for those events
-      let query = supabase
-        .from('speakers')
-        .select('*')
-        .in('event_id', eventIds);
+        // Filter by specific event if provided
+        if (eventId) {
+          query = query.eq('event_id', eventId);
+        }
 
-      if (eventId) {
-        query = query.eq('event_id', eventId);
-      }
+        const { data: speakers, error: speakersError } = await query;
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+        if (speakersError) {
+          console.error('Error fetching speakers:', speakersError);
+          throw speakersError;
+        }
 
-      if (error) {
-        console.error('Error fetching admin speakers:', error);
+        console.log('Fetched speakers:', speakers);
+        return speakers || []; // Ensure we always return an array
+      } catch (error) {
+        console.error('Error in useAdminSpeakers:', error);
+        toast.error('Failed to load speakers. Please try again.');
         throw error;
       }
-
-      console.log('Admin speakers fetched:', data?.length || 0);
-      return data as Speaker[];
     },
-    enabled: !!currentUser?.id,
+    retry: 1
+    // Removed onError - it's deprecated in React Query v4+
   });
 
   const createSpeakerMutation = useMutation({
     mutationFn: async (speakerData: Omit<Speaker, 'id' | 'created_at' | 'updated_at'> & { event_id: string }) => {
-      if (!currentUser?.id) {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.id) {
         throw new Error('User not authenticated');
       }
 
@@ -94,7 +114,7 @@ export const useAdminSpeakers = (eventId?: string) => {
         .from('events')
         .select('host_id')
         .eq('id', speakerData.event_id)
-        .eq('host_id', currentUser.id)
+        .eq('host_id', user.id)
         .single();
 
       if (eventError || !event) {
@@ -105,7 +125,7 @@ export const useAdminSpeakers = (eventId?: string) => {
         .from('speakers')
         .insert([{
           ...speakerData,
-          created_by: currentUser.id
+          created_by: user.id
         }])
         .select()
         .single();
@@ -119,17 +139,10 @@ export const useAdminSpeakers = (eventId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-speakers'] });
-      toast({
-        title: 'Speaker Created',
-        description: 'The speaker has been added successfully.',
-      });
+      toast.success('Speaker created successfully!');
     },
     onError: (error) => {
-      toast({
-        title: 'Error',
-        description: `Failed to create speaker: ${error.message}`,
-        variant: 'destructive',
-      });
+      toast.error(`Failed to create speaker: ${error.message}`);
     },
   });
 
@@ -152,17 +165,10 @@ export const useAdminSpeakers = (eventId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-speakers'] });
-      toast({
-        title: 'Speaker Updated',
-        description: 'The speaker has been updated successfully.',
-      });
+      toast.success('Speaker updated successfully!');
     },
     onError: (error) => {
-      toast({
-        title: 'Error',
-        description: `Failed to update speaker: ${error.message}`,
-        variant: 'destructive',
-      });
+      toast.error(`Failed to update speaker: ${error.message}`);
     },
   });
 
@@ -181,18 +187,10 @@ export const useAdminSpeakers = (eventId?: string) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-speakers'] });
-      toast({
-        title: 'Speaker Deleted',
-        description: 'The speaker has been removed successfully.',
-        variant: 'destructive',
-      });
+      toast.success('Speaker deleted successfully!');
     },
     onError: (error) => {
-      toast({
-        title: 'Error',
-        description: `Failed to delete speaker: ${error.message}`,
-        variant: 'destructive',
-      });
+      toast.error(`Failed to delete speaker: ${error.message}`);
     },
   });
 
@@ -200,6 +198,7 @@ export const useAdminSpeakers = (eventId?: string) => {
     speakers,
     isLoading,
     error,
+    refetch,
     createSpeaker: createSpeakerMutation.mutate,
     updateSpeaker: updateSpeakerMutation.mutate,
     deleteSpeaker: deleteSpeakerMutation.mutate,

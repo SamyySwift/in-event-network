@@ -185,8 +185,8 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
             </div>
           )}
 
-          {/* Description */}
-          {item.description && (
+          {/* Description - Only show for non-speaker items or if speaker has specific session description */}
+          {item.description && item.type !== 'speaker' && (
             <div>
               <h4 className="font-medium mb-2">Description</h4>
               <div className="text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">

@@ -175,13 +175,13 @@ const AttendeeSchedule = () => {
   useEffect(() => {
     const combined: CombinedScheduleItem[] = [];
 
-    // Add speakers with topic support
+    // Add speakers with topic support - FIX: Don't duplicate bio in description
     if (speakers && speakers.length > 0) {
       speakers.forEach((speaker) => {
         combined.push({
           id: `speaker-${speaker.id}`,
           title: speaker.session_title || "Session Topic TBA",
-          description: speaker.bio,
+          description: null, // Don't use bio as description to avoid duplication
           start_time: speaker.session_time || undefined,
           start_time_full: speaker.session_time || undefined,
           location: undefined,
@@ -193,7 +193,7 @@ const AttendeeSchedule = () => {
           speaker_twitter: speaker.twitter_link,
           speaker_linkedin: speaker.linkedin_link,
           speaker_website: speaker.website_link,
-          speaker_topic: speaker.topic, // Include topic field
+          speaker_topic: speaker.topic,
         });
       });
     }
@@ -661,10 +661,10 @@ const AttendeeSchedule = () => {
                           >
                             <CardContent className="p-0">
                               <div className="flex flex-col lg:flex-row">
-                                {/* Time Column */}
-                                <div className="w-full lg:w-32 bg-gradient-to-br from-gray-50 to-gray-100 p-6 flex flex-row lg:flex-col items-center justify-center border-b lg:border-b-0 lg:border-r">
+                                {/* Time Column - Improved Mobile Layout */}
+                                <div className="w-full lg:w-32 bg-gradient-to-br from-gray-50 to-gray-100 p-4 lg:p-6 flex flex-row lg:flex-col items-center justify-center border-b lg:border-b-0 lg:border-r">
                                   <div className="text-center">
-                                    <div className="text-lg font-bold text-gray-900 mb-1">
+                                    <div className="text-base lg:text-lg font-bold text-gray-900 mb-1">
                                       {timeDisplay === "Time TBA" ? (
                                         <span className="text-sm text-amber-600 font-medium px-2 py-1 bg-amber-50 rounded-full">
                                           TBA
@@ -675,7 +675,7 @@ const AttendeeSchedule = () => {
                                     </div>
                                     {timeDisplay.includes(" - ") &&
                                       timeDisplay !== "Time TBA" && (
-                                        <div className="text-sm text-gray-500">
+                                        <div className="text-xs lg:text-sm text-gray-500">
                                           {timeDisplay.split(" - ")[1]}
                                         </div>
                                       )}
@@ -689,11 +689,12 @@ const AttendeeSchedule = () => {
                                   </div>
                                 </div>
 
-                                {/* Main Content */}
-                                <div className="flex-1 p-6">
-                                  <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4">
-                                    <div className="flex-1">
-                                      <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-indigo-600 transition-colors">
+                                {/* Main Content - Improved Layout */}
+                                <div className="flex-1 p-4 lg:p-6">
+                                  <div className="flex flex-col space-y-4">
+                                    {/* Title and Topic */}
+                                    <div>
+                                      <h3 className="text-lg lg:text-xl font-semibold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-2">
                                         {item.title}
                                       </h3>
 
@@ -701,72 +702,64 @@ const AttendeeSchedule = () => {
                                       {item.type === "speaker" &&
                                         item.speaker_topic && (
                                           <div className="mb-3">
-                                            <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
+                                            <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0 text-xs">
                                               <Tag className="w-3 h-3 mr-1" />
                                               {item.speaker_topic}
                                             </Badge>
                                           </div>
                                         )}
-
-                                      {item.description && (
-                                        <p className="text-gray-600 mb-4 line-clamp-2 text-base">
-                                          {item.description}
-                                        </p>
-                                      )}
-
-                                      {/* Meta Information */}
-                                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-4">
-                                        {dateDisplay && (
-                                          <div className="flex items-center gap-1">
-                                            <Calendar className="h-4 w-4" />
-                                            <span>{dateDisplay}</span>
-                                          </div>
-                                        )}
-                                        {item.location && (
-                                          <div className="flex items-center gap-1">
-                                            <MapPin className="h-4 w-4" />
-                                            <span>{item.location}</span>
-                                          </div>
-                                        )}
-                                      </div>
-
-                                      {/* Badges */}
-                                      <div className="flex flex-wrap gap-2 mb-4">
-                                        {getTypeBadge(item.type)}
-                                        {getPriorityBadge(item.priority)}
-                                        {durationDisplay && (
-                                          <Badge
-                                            variant="outline"
-                                            className="text-xs"
-                                          >
-                                            <Clock className="w-3 h-3 mr-1" />
-                                            {durationDisplay}
-                                          </Badge>
-                                        )}
-                                      </div>
-
-                                      {renderSocialLinks(item)}
                                     </div>
 
-                                    {/* Speaker/Image Section */}
-                                    {item.type === "speaker" &&
-                                      item.speaker_name && (
-                                        <div className="flex items-center gap-4 xl:flex-col xl:items-center xl:text-center bg-gray-50 rounded-xl p-4">
-                                          <Avatar className="h-16 w-16 xl:h-20 xl:w-20 ring-4 ring-white shadow-lg">
+                                    {/* Description - Only show if not a speaker or if speaker has session description */}
+                                    {item.description && item.type !== "speaker" && (
+                                      <p className="text-gray-600 text-sm lg:text-base line-clamp-2">
+                                        {item.description}
+                                      </p>
+                                    )}
+
+                                    {/* Speaker Bio Preview - Show brief bio for speakers */}
+                                    {item.type === "speaker" && item.speaker_bio && (
+                                      <p className="text-gray-600 text-sm lg:text-base line-clamp-2">
+                                        {item.speaker_bio}
+                                      </p>
+                                    )}
+
+                                    {/* Meta Information */}
+                                    <div className="flex flex-wrap items-center gap-3 text-xs lg:text-sm text-gray-500">
+                                      {dateDisplay && (
+                                        <div className="flex items-center gap-1">
+                                          <Calendar className="h-3 w-3 lg:h-4 lg:w-4" />
+                                          <span>{dateDisplay}</span>
+                                        </div>
+                                      )}
+                                      {item.location && (
+                                        <div className="flex items-center gap-1">
+                                          <MapPin className="h-3 w-3 lg:h-4 lg:w-4" />
+                                          <span className="truncate max-w-[150px]">{item.location}</span>
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Bottom Section - Speaker Info and Badges */}
+                                    <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+                                      {/* Speaker Info */}
+                                      {item.type === "speaker" && item.speaker_name && (
+                                        <div className="flex items-center gap-3 bg-gray-50 rounded-lg p-3 flex-1">
+                                          <Avatar className="h-12 w-12 ring-2 ring-white shadow-sm">
                                             <AvatarImage
                                               src={item.speaker_photo}
                                               alt={item.speaker_name}
                                             />
-                                            <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-lg font-semibold">
+                                            <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-sm font-semibold">
                                               {item.speaker_name.charAt(0)}
                                             </AvatarFallback>
                                           </Avatar>
-                                          <div className="xl:mt-3">
-                                            <p className="font-semibold text-gray-900 text-lg">
+                                          <div className="flex-1 min-w-0">
+                                            <p className="font-semibold text-gray-900 text-sm lg:text-base truncate">
                                               {item.speaker_name}
                                             </p>
                                             {item.speaker_company && (
-                                              <p className="text-sm text-gray-600 mt-1">
+                                              <p className="text-xs lg:text-sm text-gray-600 truncate">
                                                 {item.speaker_company}
                                               </p>
                                             )}
@@ -774,16 +767,24 @@ const AttendeeSchedule = () => {
                                         </div>
                                       )}
 
-                                    {item.type === "schedule" &&
-                                      item.image_url && (
-                                        <div className="xl:flex-shrink-0">
-                                          <img
-                                            src={item.image_url}
-                                            alt={item.title}
-                                            className="w-full xl:w-24 h-32 xl:h-24 rounded-xl object-cover shadow-md"
-                                          />
+                                      {/* Badges and Social Links */}
+                                      <div className="flex flex-col gap-2">
+                                        {/* Badges */}
+                                        <div className="flex flex-wrap gap-2">
+                                          {getTypeBadge(item.type)}
+                                          {getPriorityBadge(item.priority)}
+                                          {durationDisplay && (
+                                            <Badge variant="outline" className="text-xs">
+                                              <Clock className="w-3 h-3 mr-1" />
+                                              {durationDisplay}
+                                            </Badge>
+                                          )}
                                         </div>
-                                      )}
+
+                                        {/* Social Links */}
+                                        {renderSocialLinks(item)}
+                                      </div>
+                                    </div>
                                   </div>
                                 </div>
                               </div>

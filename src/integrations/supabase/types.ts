@@ -1810,9 +1810,23 @@ export type Database = {
       }
     }
     Functions: {
+      admin_update_user_role: {
+        Args: { target_email: string; new_role: string }
+        Returns: Json
+      }
       can_access_event_data: {
         Args: { event_uuid: string }
         Returns: boolean
+      }
+      debug_user_role: {
+        Args: { user_email: string }
+        Returns: {
+          user_id: string
+          email: string
+          role: string
+          name: string
+          created_at: string
+        }[]
       }
       generate_ticket_number: {
         Args: Record<PropertyKey, never>

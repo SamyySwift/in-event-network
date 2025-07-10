@@ -241,8 +241,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setIsLoading(true);
       console.log("Attempting login for:", email);
 
-      // Clear any existing session first
-      await supabase.auth.signOut();
+      // Clear any existing session and cached auth data first
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        console.warn("Failed to clear previous session:", err);
+      }
+      
+      // Clear localStorage auth items
+      localStorage.removeItem("pendingGoogleRole");
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -342,7 +354,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     setIsLoading(true);
     try {
       console.log("Logging out...");
-      await supabase.auth.signOut();
+      
+      // Clear all auth-related data first
       setCurrentUser(null);
       
       // Clear all auth-related localStorage items
@@ -350,6 +363,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       localStorage.removeItem("redirectAfterLogin");
       localStorage.removeItem("pendingTicketingUrl");
       sessionStorage.removeItem("pendingEventCode");
+      
+      // Clear any cached user data that might persist
+      localStorage.removeItem("supabase.auth.token");
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      // Sign out from Supabase (try both local and global scope)
+      try {
+        await supabase.auth.signOut({ scope: 'global' });
+      } catch (err) {
+        console.warn("Global signout failed, trying local:", err);
+        await supabase.auth.signOut();
+      }
       
       console.log("Logout successful");
     } catch (error) {

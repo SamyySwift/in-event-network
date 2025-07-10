@@ -22,6 +22,8 @@ import {
   Clock,
   Lock,
   CalendarIcon,
+  BarChart3,
+  Activity,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
@@ -39,6 +41,7 @@ import {
 } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 
 type EventFormData = {
   name: string;
@@ -196,444 +199,478 @@ const AdminEvents = () => {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader className="h-8 w-8 animate-spin text-primary" />
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-4">
+          <Loader className="h-8 w-8 animate-spin text-primary mx-auto" />
+          <p className="text-muted-foreground">Loading events...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-fade-in px-4 sm:px-6 lg:px-8">
-      {/* Hero Section */}
-      <div className="p-4 sm:p-6 lg:p-8 rounded-2xl bg-gradient-to-br from-blue-600 via-primary-500 to-blue-400 text-white shadow-2xl shadow-primary/20 relative overflow-hidden">
-        <div className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full opacity-50"></div>
-        <div className="absolute -bottom-12 -left-12 w-36 h-36 bg-white/10 rounded-full opacity-50"></div>
-
-        <div className="relative">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-3 rounded-xl bg-white/20 backdrop-blur-sm">
-              <Calendar className="h-6 w-6 sm:h-8 sm:w-8 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-white">
-                Event Management
-              </h1>
-              <p className="text-white/80 mt-1 text-sm sm:text-base">
-                Create and manage your events
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mt-6 sm:mt-8">
-            <div className="bg-white/10 backdrop-blur-sm p-4 sm:p-6 rounded-xl border border-white/20">
-              <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12 max-w-7xl">
+        {/* Header Section */}
+        <div className="mb-8 sm:mb-12">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-lg shadow-blue-500/25">
+                  <Calendar className="h-6 w-6 text-white" />
+                </div>
                 <div>
-                  <p className="text-xs sm:text-sm text-white/70">
-                    Total Events
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground">
+                    Event Management
+                  </h1>
+                  <p className="text-muted-foreground text-sm sm:text-base mt-1">
+                    Create, manage, and monitor your events
                   </p>
-                  <p className="text-2xl sm:text-3xl font-bold text-white">
-                    {events.length}
-                  </p>
-                </div>
-                <div className="p-2 sm:p-3 rounded-lg bg-green-500/20">
-                  <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-green-200" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-sm p-4 sm:p-6 rounded-xl border border-white/20">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm text-white/70">
-                    Live Events
-                  </p>
-                  <p className="text-2xl sm:text-3xl font-bold text-green-200">
-                    {liveEvents.length}
-                  </p>
-                </div>
-                <div className="p-2 sm:p-3 rounded-lg bg-green-500/20">
-                  <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-green-200" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-sm p-4 sm:p-6 rounded-xl border border-white/20 sm:col-span-2 lg:col-span-1">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs sm:text-sm text-white/70">
-                    Upcoming Events
-                  </p>
-                  <p className="text-2xl sm:text-3xl font-bold text-blue-200">
-                    {upcomingEvents.length}
-                  </p>
-                </div>
-                <div className="p-2 sm:p-3 rounded-lg bg-blue-500/20">
-                  <Users className="h-5 w-5 sm:h-6 sm:w-6 text-blue-200" />
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 lg:gap-8">
-          {/* Event Creation/Edit Form */}
-          <Card className="glass-card hover:shadow-xl hover:shadow-primary/10 transition-all duration-300">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-400 shadow-md shadow-blue-500/20">
-                  <Plus className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg sm:text-xl">
-                    {editingEvent ? "Edit Event" : "Create New Event"}
-                  </CardTitle>
-                  <CardDescription className="text-muted-foreground text-sm">
-                    {editingEvent
-                      ? "Update event information"
-                      : "Add a new event to the schedule"}
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6">
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm font-medium">
-                    Event Name *
-                  </Label>
-                  <Input
-                    id="name"
-                    {...register("name", {
-                      required: "Event name is required",
-                    })}
-                    placeholder="Enter event name"
-                    className="bg-background/50 border-primary/20 focus:border-primary/50 transition-colors"
-                  />
-                  {errors.name?.message && (
-                    <p className="text-sm text-destructive">
-                      {errors.name.message}
+        {/* Statistics Overview */}
+        <div className="mb-8 sm:mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+            <Card className="border-0 shadow-sm bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Total Events
                     </p>
-                  )}
+                    <p className="text-2xl font-bold text-foreground">
+                      {events.length}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-900/30">
+                    <BarChart3 className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
                 </div>
+              </CardContent>
+            </Card>
 
-                <div className="space-y-2">
-                  <Label htmlFor="description" className="text-sm font-medium">
-                    Description
-                  </Label>
-                  <Textarea
-                    id="description"
-                    {...register("description")}
-                    placeholder="Enter event description"
-                    rows={3}
-                    className="bg-background/50 border-primary/20 focus:border-primary/50 transition-colors"
-                  />
+            <Card className="border-0 shadow-sm bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Live Events
+                    </p>
+                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+                      {liveEvents.length}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-green-100 dark:bg-green-900/30">
+                    <Activity className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  </div>
                 </div>
+              </CardContent>
+            </Card>
 
-                {/* Start Date & Time */}
-                <div className="space-y-4">
-                  <Label className="text-sm font-medium">
-                    Start Date & Time *
-                  </Label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">
-                        Start Date
-                      </Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full justify-start text-left font-normal bg-background/50 border-primary/20 focus:border-primary/50",
-                              !startDate && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {startDate ? (
-                              format(startDate, "PPP")
-                            ) : (
-                              <span>Pick start date</span>
-                            )}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <CalendarComponent
-                            mode="single"
-                            selected={startDate}
-                            onSelect={(date) => setValue("start_date", date)}
-                            initialFocus
-                            className="pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
+            <Card className="border-0 shadow-sm bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Upcoming
+                    </p>
+                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                      {upcomingEvents.length}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-blue-100 dark:bg-blue-900/30">
+                    <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-0 shadow-sm bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Completed
+                    </p>
+                    <p className="text-2xl font-bold text-slate-600 dark:text-slate-400">
+                      {events.length - liveEvents.length - upcomingEvents.length}
+                    </p>
+                  </div>
+                  <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800">
+                    <Users className="h-5 w-5 text-slate-600 dark:text-slate-400" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 lg:gap-8">
+          {/* Event Creation Form - Left Side */}
+          <div className="xl:col-span-2">
+            <Card className="border-0 shadow-lg bg-white dark:bg-slate-900">
+              <CardHeader className="pb-6">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 shadow-md">
+                    <Plus className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl font-semibold">
+                      {editingEvent ? "Edit Event" : "Create New Event"}
+                    </CardTitle>
+                    <CardDescription className="text-sm text-muted-foreground mt-1">
+                      {editingEvent
+                        ? "Update event information"
+                        : "Add a new event to your schedule"}
+                    </CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                  {/* Event Details Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent flex-1" />
+                      <span className="text-xs font-medium text-muted-foreground px-3">EVENT DETAILS</span>
+                      <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent flex-1" />
                     </div>
+
                     <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">
-                        Start Time
+                      <Label htmlFor="name" className="text-sm font-medium">
+                        Event Name *
                       </Label>
                       <Input
-                        type="time"
-                        {...register("start_time", {
-                          required: "Start time is required",
+                        id="name"
+                        {...register("name", {
+                          required: "Event name is required",
                         })}
-                        className="bg-background/50 border-primary/20 focus:border-primary/50 transition-colors"
+                        placeholder="Enter event name"
+                        className="h-11 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
+                      />
+                      {errors.name?.message && (
+                        <p className="text-sm text-red-500">
+                          {errors.name.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="description" className="text-sm font-medium">
+                        Description
+                      </Label>
+                      <Textarea
+                        id="description"
+                        {...register("description")}
+                        placeholder="Enter event description"
+                        rows={3}
+                        className="border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-400 transition-colors resize-none"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="location" className="text-sm font-medium">
+                        Location
+                      </Label>
+                      <Input
+                        id="location"
+                        {...register("location")}
+                        placeholder="Enter event location"
+                        className="h-11 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-400 transition-colors"
                       />
                     </div>
                   </div>
-                  {errors.start_time?.message && (
-                    <p className="text-sm text-destructive">
-                      Start date and time are required
-                    </p>
-                  )}
-                </div>
 
-                {/* End Date & Time */}
-                <div className="space-y-4">
-                  <Label className="text-sm font-medium">
-                    End Date & Time *
-                  </Label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">
-                        End Date
-                      </Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant={"outline"}
-                            className={cn(
-                              "w-full justify-start text-left font-normal bg-background/50 border-primary/20 focus:border-primary/50",
-                              !endDate && "text-muted-foreground"
-                            )}
-                          >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {endDate ? (
-                              format(endDate, "PPP")
-                            ) : (
-                              <span>Pick end date</span>
-                            )}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <CalendarComponent
-                            mode="single"
-                            selected={endDate}
-                            onSelect={(date) => setValue("end_date", date)}
-                            initialFocus
-                            className="pointer-events-auto"
-                          />
-                        </PopoverContent>
-                      </Popover>
+                  {/* Date & Time Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent flex-1" />
+                      <span className="text-xs font-medium text-muted-foreground px-3">SCHEDULE</span>
+                      <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent flex-1" />
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs text-muted-foreground">
-                        End Time
-                      </Label>
-                      <Input
-                        type="time"
-                        {...register("end_time", {
-                          required: "End time is required",
-                        })}
-                        className="bg-background/50 border-primary/20 focus:border-primary/50 transition-colors"
-                      />
-                    </div>
-                  </div>
-                  {errors.end_time?.message && (
-                    <p className="text-sm text-destructive">
-                      End date and time are required
-                    </p>
-                  )}
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="location" className="text-sm font-medium">
-                    Location
-                  </Label>
-                  <Input
-                    id="location"
-                    {...register("location")}
-                    placeholder="Enter event location"
-                    className="bg-background/50 border-primary/20 focus:border-primary/50 transition-colors"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium">
-                    Event Banner Image (Optional)
-                  </Label>
-                  <ImageUpload onImageSelect={setSelectedImage} label="" />
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                  <Button
-                    type="submit"
-                    className="flex-1 bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 shadow-md hover:shadow-lg"
-                    disabled={isCreating || isUpdating}
-                  >
-                    {(isCreating || isUpdating) && (
-                      <Loader className="h-4 w-4 mr-2 animate-spin" />
-                    )}
-                    <Plus className="h-4 w-4 mr-2" />
-                    {editingEvent ? "Update Event" : "Create Event"}
-                  </Button>
-                  {editingEvent && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleCancel}
-                      className="border-primary/20 hover:bg-primary/5"
-                    >
-                      Cancel
-                    </Button>
-                  )}
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-
-          {/* Events List */}
-          <Card className="glass-card hover:shadow-xl hover:shadow-primary/10 transition-all duration-300">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500 to-violet-400 shadow-md shadow-purple-500/20">
-                  <Calendar className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-lg sm:text-xl">
-                    Your Events
-                  </CardTitle>
-                  <CardDescription className="text-muted-foreground text-sm">
-                    {events.length} events in your schedule
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="px-4 sm:px-6">
-              {events.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="p-4 rounded-full bg-primary/10 inline-block mb-4">
-                    <Calendar className="h-8 w-8 text-primary" />
-                  </div>
-                  <p className="text-muted-foreground text-lg mb-2">
-                    No events scheduled yet
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Create your first event using the form on the left
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-                  {events.map((event) => (
-                    <div
-                      key={event.id}
-                      className="group p-3 sm:p-4 rounded-xl border border-primary/10 bg-gradient-to-br from-background to-primary/5 hover:from-primary/5 hover:to-primary/10 transition-all duration-300 hover:shadow-lg"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-3">
-                            <h3 className="font-semibold text-base sm:text-lg text-foreground group-hover:text-primary transition-colors truncate">
-                              {event.name}
-                            </h3>
-                            <div className="flex flex-wrap gap-2">
-                              {isEventLive(
-                                event.start_time,
-                                event.end_time
-                              ) && (
-                                <Badge className="bg-gradient-to-r from-green-500 to-emerald-400 text-white border-0 shadow-md text-xs">
-                                  <div className="w-2 h-2 bg-white rounded-full animate-pulse mr-1"></div>
-                                  Live
-                                </Badge>
+                    {/* Start Date & Time */}
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium">Start Date & Time *</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "h-11 justify-start text-left font-normal border-slate-200 dark:border-slate-700",
+                                !startDate && "text-muted-foreground"
                               )}
-                              {isEventUpcoming(event.start_time) && (
-                                <Badge className="bg-gradient-to-r from-blue-500 to-cyan-400 text-white border-0 shadow-md text-xs">
-                                  <Clock className="w-3 h-3 mr-1" />
-                                  Upcoming
-                                </Badge>
-                              )}
-                              {!isEventPaid(event.id) && (
-                                <Badge
-                                  variant="outline"
-                                  className="border-amber-500 text-amber-600 text-xs"
-                                >
-                                  <Lock className="w-3 h-3 mr-1" />
-                                  Payment Required
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-
-                          {event.description && (
-                            <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                              {event.description}
-                            </p>
-                          )}
-
-                          {event.banner_url && (
-                            <div className="mb-3 rounded-lg overflow-hidden shadow-md">
-                              <img
-                                src={event.banner_url}
-                                alt="Event Banner"
-                                className="w-full h-24 sm:h-32 object-cover hover:scale-105 transition-transform duration-300"
-                              />
-                            </div>
-                          )}
-
-                          <div className="flex flex-col gap-2 text-xs text-muted-foreground mb-3">
-                            <div className="flex items-center gap-2">
-                              <div className="p-1 rounded bg-primary/10 flex-shrink-0">
-                                <Calendar className="h-3 w-3 text-primary" />
-                              </div>
-                              <span className="font-medium text-xs break-all">
-                                {formatDate(event.start_time)} -{" "}
-                                {formatDate(event.end_time)}
-                              </span>
-                            </div>
-                            {event.location && (
-                              <div className="flex items-center gap-2">
-                                <div className="p-1 rounded bg-orange-100 dark:bg-orange-900 flex-shrink-0">
-                                  <MapPin className="h-3 w-3 text-orange-600" />
-                                </div>
-                                <span className="text-xs truncate">
-                                  {event.location}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* QR Code / Payment Section */}
-                          <EventQRCode
-                            eventId={event.id}
-                            eventName={event.name}
-                          />
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 ml-2 flex-shrink-0">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(event)}
-                            disabled={isUpdating}
-                            className="hover:bg-primary/10 hover:text-primary transition-colors h-8 w-8"
-                          >
-                            <Pencil className="h-3 w-3 sm:h-4 sm:w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(event.id)}
-                            disabled={isDeleting}
-                            className="hover:bg-destructive/10 hover:text-destructive transition-colors h-8 w-8"
-                          >
-                            <Trash2 className="h-3 w-3 sm:h-4 sm:w-4" />
-                          </Button>
-                        </div>
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {startDate ? format(startDate, "PPP") : "Pick start date"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <CalendarComponent
+                              mode="single"
+                              selected={startDate}
+                              onSelect={(date) => setValue("start_date", date)}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <Input
+                          type="time"
+                          {...register("start_time", {
+                            required: "Start time is required",
+                          })}
+                          className="h-11 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-400"
+                        />
                       </div>
                     </div>
-                  ))}
+
+                    {/* End Date & Time */}
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium">End Date & Time *</Label>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "h-11 justify-start text-left font-normal border-slate-200 dark:border-slate-700",
+                                !endDate && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {endDate ? format(endDate, "PPP") : "Pick end date"}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <CalendarComponent
+                              mode="single"
+                              selected={endDate}
+                              onSelect={(date) => setValue("end_date", date)}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <Input
+                          type="time"
+                          {...register("end_time", {
+                            required: "End time is required",
+                          })}
+                          className="h-11 border-slate-200 dark:border-slate-700 focus:border-blue-500 dark:focus:border-blue-400"
+                        />
+                      </div>
+                    </div>
+
+                    {(errors.start_time?.message || errors.end_time?.message) && (
+                      <p className="text-sm text-red-500">
+                        Start and end date/time are required
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Media Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent flex-1" />
+                      <span className="text-xs font-medium text-muted-foreground px-3">MEDIA</span>
+                      <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent flex-1" />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium">
+                        Event Banner Image (Optional)
+                      </Label>
+                      <ImageUpload onImageSelect={setSelectedImage} label="" />
+                    </div>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-6 border-t border-slate-100 dark:border-slate-800">
+                    <Button
+                      type="submit"
+                      className="flex-1 h-11 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-md hover:shadow-lg transition-all"
+                      disabled={isCreating || isUpdating}
+                    >
+                      {(isCreating || isUpdating) && (
+                        <Loader className="h-4 w-4 mr-2 animate-spin" />
+                      )}
+                      <Plus className="h-4 w-4 mr-2" />
+                      {editingEvent ? "Update Event" : "Create Event"}
+                    </Button>
+                    {editingEvent && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleCancel}
+                        className="border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800"
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Events List - Right Side */}
+          <div className="xl:col-span-3">
+            <Card className="border-0 shadow-lg bg-white dark:bg-slate-900">
+              <CardHeader className="pb-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-gradient-to-br from-purple-500 to-purple-600 shadow-md">
+                      <Calendar className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl font-semibold">
+                        Your Events
+                      </CardTitle>
+                      <CardDescription className="text-sm text-muted-foreground mt-1">
+                        {events.length} {events.length === 1 ? 'event' : 'events'} in your schedule
+                      </CardDescription>
+                    </div>
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent>
+                {events.length === 0 ? (
+                  <div className="text-center py-16">
+                    <div className="p-4 rounded-full bg-slate-100 dark:bg-slate-800 inline-block mb-6">
+                      <Calendar className="h-8 w-8 text-slate-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-foreground mb-2">
+                      No events scheduled yet
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
+                      Create your first event using the form to get started with event management
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4 max-h-[800px] overflow-y-auto pr-2">
+                    {events.map((event) => (
+                      <div
+                        key={event.id}
+                        className="group p-6 rounded-xl border border-slate-200 dark:border-slate-700 bg-gradient-to-br from-white to-slate-50 dark:from-slate-900 dark:to-slate-800 hover:shadow-md transition-all duration-200"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0 space-y-4">
+                            {/* Event Header */}
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                              <div className="space-y-2">
+                                <h3 className="font-semibold text-lg text-foreground group-hover:text-blue-600 transition-colors">
+                                  {event.name}
+                                </h3>
+                                <div className="flex flex-wrap gap-2">
+                                  {isEventLive(event.start_time, event.end_time) && (
+                                    <Badge className="bg-gradient-to-r from-green-500 to-green-600 text-white border-0 shadow-sm">
+                                      <div className="w-2 h-2 bg-white rounded-full animate-pulse mr-1.5"></div>
+                                      Live
+                                    </Badge>
+                                  )}
+                                  {isEventUpcoming(event.start_time) && (
+                                    <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0 shadow-sm">
+                                      <Clock className="w-3 h-3 mr-1.5" />
+                                      Upcoming
+                                    </Badge>
+                                  )}
+                                  {!isEventPaid(event.id) && (
+                                    <Badge variant="outline" className="border-amber-500 text-amber-600">
+                                      <Lock className="w-3 h-3 mr-1.5" />
+                                      Payment Required
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex gap-2 flex-shrink-0">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleEdit(event)}
+                                  disabled={isUpdating}
+                                  className="hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 transition-colors"
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDelete(event.id)}
+                                  disabled={isDeleting}
+                                  className="hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 transition-colors"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </div>
+
+                            {/* Event Description */}
+                            {event.description && (
+                              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                                {event.description}
+                              </p>
+                            )}
+
+                            {/* Event Banner */}
+                            {event.banner_url && (
+                              <div className="rounded-lg overflow-hidden shadow-sm">
+                                <img
+                                  src={event.banner_url}
+                                  alt="Event Banner"
+                                  className="w-full h-32 object-cover hover:scale-105 transition-transform duration-300"
+                                />
+                              </div>
+                            )}
+
+                            {/* Event Details */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                                <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex-shrink-0">
+                                  <Calendar className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="text-xs font-medium text-muted-foreground mb-1">Schedule</p>
+                                  <p className="text-sm font-medium text-foreground truncate">
+                                    {formatDate(event.start_time)}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    to {formatDate(event.end_time)}
+                                  </p>
+                                </div>
+                              </div>
+                              {event.location && (
+                                <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                                  <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30 flex-shrink-0">
+                                    <MapPin className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-medium text-muted-foreground mb-1">Location</p>
+                                    <p className="text-sm font-medium text-foreground truncate">
+                                      {event.location}
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+
+                            {/* QR Code Section */}
+                            <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                              <EventQRCode eventId={event.id} eventName={event.name} />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>

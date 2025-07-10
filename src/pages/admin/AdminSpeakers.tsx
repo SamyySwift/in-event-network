@@ -42,6 +42,7 @@ const AdminSpeakersContent = () => {
   const {
     speakers,
     isLoading,
+    error, // Add error handling
     createSpeaker,
     updateSpeaker,
     deleteSpeaker
@@ -165,6 +166,34 @@ const AdminSpeakersContent = () => {
     return <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
         <p className="text-muted-foreground">Loading speakers...</p>
+      </div>;
+  }
+
+  // Add error handling
+  if (error) {
+    return <div className="space-y-8 animate-fade-in">
+        <div className="flex justify-between items-center">
+          <EventSelector />
+        </div>
+        
+        <div className="text-center py-12">
+          <div className="p-4 rounded-full bg-red-100 inline-block mb-4">
+            <svg className="h-8 w-8 text-red-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 15.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Speakers</h3>
+          <p className="text-gray-600 mb-4">
+            {error.message || 'There was an error loading the speakers. Please try again.'}
+          </p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            variant="outline"
+            className="mx-auto"
+          >
+            Retry
+          </Button>
+        </div>
       </div>;
   }
   return <div className="space-y-8 animate-fade-in">
@@ -329,7 +358,32 @@ const AdminSpeakersContent = () => {
           </Card>}
 
         {/* Table with Modern Styling */}
-        {selectedEventId && <SpeakersTable speakers={speakers} onEdit={handleEdit} onDelete={handleDelete} />}
+        {selectedEventId && (
+          <>
+            {speakers.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="p-4 rounded-full bg-primary/10 inline-block mb-4">
+                  <svg className="h-8 w-8 text-primary" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6 2a4 4 0 11-8 0 4 4 0 008 0zm6-8v2m0 4v2m0-8a4 4 0 10-8 0 4 4 0 008 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Speakers Yet</h3>
+                <p className="text-gray-600 mb-4">
+                  Get started by adding your first speaker to {selectedEvent?.name}.
+                </p>
+                <Button 
+                  onClick={() => setIsCreating(true)} 
+                  variant="gradient"
+                  className="mx-auto"
+                >
+                  Add First Speaker
+                </Button>
+              </div>
+            ) : (
+              <SpeakersTable speakers={speakers} onEdit={handleEdit} onDelete={handleDelete} />
+            )}
+          </>
+        )}
       </div>
     </div>;
 };

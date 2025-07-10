@@ -36,14 +36,29 @@ export const useAdminSpeakers = (eventId?: string) => {
 
       console.log('Fetching speakers for admin:', currentUser.id, 'event:', eventId);
 
-      // The query should automatically include the new topic field since we're using SELECT *
+      // Simplified query - first get events owned by the admin
+      const { data: adminEvents, error: eventsError } = await supabase
+        .from('events')
+        .select('id')
+        .eq('host_id', currentUser.id);
+
+      if (eventsError) {
+        console.error('Error fetching admin events:', eventsError);
+        throw eventsError;
+      }
+
+      if (!adminEvents || adminEvents.length === 0) {
+        console.log('No events found for admin');
+        return [];
+      }
+
+      const eventIds = adminEvents.map(event => event.id);
+
+      // Now get speakers for those events
       let query = supabase
         .from('speakers')
-        .select(`
-          *,
-          events!inner(host_id)
-        `)
-        .eq('events.host_id', currentUser.id);
+        .select('*')
+        .in('event_id', eventIds);
 
       if (eventId) {
         query = query.eq('event_id', eventId);

@@ -118,42 +118,8 @@ serve(async (req) => {
     }
 
     // Credit organizer wallet if payment amount > 0
-    if (totalAmount > 0) {
-      const amountInNaira = totalAmount / 100
-
-      const { error: walletError } = await supabase
-        .from('admin_wallets')
-        .upsert({
-          admin_id: event.host_id,
-          event_id: eventId,
-          total_earnings: amountInNaira,
-          available_balance: amountInNaira,
-        }, {
-          onConflict: 'admin_id,event_id'
-        })
-        .select()
-        .single()
-
-      // If wallet doesn't exist, the upsert will create it
-      // If it exists, we need to update it manually
-      if (walletError && walletError.code === 'PGRST116') {
-        // Wallet doesn't exist, so upsert should have created it
-        console.log('New wallet created for organizer')
-      } else if (walletError) {
-        // Try to update existing wallet
-        const { error: updateError } = await supabase
-          .rpc('increment_wallet_balance', {
-            p_admin_id: event.host_id,
-            p_event_id: eventId,
-            p_amount: amountInNaira
-          })
-
-        if (updateError) {
-          console.error('Error updating wallet:', updateError)
-          // Don't fail the entire transaction, but log the error
-        }
-      }
-    }
+    // The wallet will be updated automatically by the trigger function
+    console.log('Wallet will be updated by trigger for event:', eventId, 'amount:', totalAmount);
 
     return new Response(
       JSON.stringify({ 

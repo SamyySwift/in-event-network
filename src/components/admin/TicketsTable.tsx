@@ -32,6 +32,15 @@ interface Ticket {
     name: string;
     email: string;
   };
+  form_responses?: Array<{
+    id: string;
+    response_value: any;
+    ticket_form_fields: {
+      label: string;
+      field_type: string;
+      field_order: number;
+    };
+  }>;
 }
 
 interface TicketsTableProps {
@@ -111,6 +120,7 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
               <TableHead>Attendee</TableHead>
               <TableHead>Contact</TableHead>
               <TableHead>Type</TableHead>
+              <TableHead>Form Data</TableHead>
               <TableHead>Price</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Purchase Date</TableHead>
@@ -151,6 +161,35 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
                 </TableCell>
                 <TableCell>
                   <Badge variant="outline">{ticket.ticket_types.name}</Badge>
+                </TableCell>
+                <TableCell>
+                  {ticket.form_responses && ticket.form_responses.length > 0 ? (
+                    <div className="space-y-1">
+                      {ticket.form_responses.slice(0, 2).map((response) => (
+                        <div key={response.id} className="text-xs">
+                          <span className="font-medium text-muted-foreground">
+                            {response.ticket_form_fields.label}:
+                          </span>{' '}
+                          <span className="text-foreground">
+                            {typeof response.response_value === 'string' 
+                              ? response.response_value 
+                              : JSON.stringify(response.response_value)
+                            }
+                          </span>
+                        </div>
+                      ))}
+                      {ticket.form_responses.length > 2 && (
+                        <div className="text-xs text-muted-foreground">
+                          +{ticket.form_responses.length - 2} more
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex items-center text-muted-foreground text-sm">
+                      <FormInput className="h-3 w-3 mr-1" />
+                      No form data
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell>₦{ticket.price.toLocaleString()}</TableCell>
                 <TableCell>

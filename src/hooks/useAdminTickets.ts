@@ -38,6 +38,15 @@ interface EventTicket {
     name: string;
     email: string;
   } | null;
+  form_responses?: Array<{
+    id: string;
+    response_value: any;
+    ticket_form_fields: {
+      label: string;
+      field_type: string;
+      field_order: number;
+    };
+  }>;
 }
 
 export const useAdminTickets = () => {
@@ -80,27 +89,46 @@ export const useAdminTickets = () => {
 
       if (error) throw error;
       
-      // Fetch profile data separately to avoid join issues
-      const ticketsWithProfiles = await Promise.all((data || []).map(async (ticket) => {
+      // Fetch profile data and form responses separately
+      const ticketsWithDetails = await Promise.all((data || []).map(async (ticket) => {
+        let profile = null;
+        let formResponses: any[] = [];
+
         if (ticket.user_id) {
-          const { data: profile } = await supabase
+          const { data: profileData } = await supabase
             .from('profiles')
             .select('name, email')
             .eq('id', ticket.user_id)
             .single();
-          
-          return {
-            ...ticket,
-            profiles: profile
-          };
+          profile = profileData;
         }
+
+        // Fetch form responses for this ticket
+        const { data: formData } = await supabase
+          .from('ticket_form_responses')
+          .select(`
+            *,
+            ticket_form_fields (
+              label,
+              field_type,
+              field_order
+            )
+          `)
+          .eq('ticket_id', ticket.id)
+          .order('ticket_form_fields.field_order');
+
+        if (formData) {
+          formResponses = formData;
+        }
+        
         return {
           ...ticket,
-          profiles: null
+          profiles: profile,
+          form_responses: formResponses
         };
       }));
 
-      return ticketsWithProfiles;
+      return ticketsWithDetails;
     },
     enabled: !!selectedEventId,
   });

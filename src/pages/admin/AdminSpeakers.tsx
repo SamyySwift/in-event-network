@@ -135,7 +135,8 @@ const AdminSpeakersContent = () => {
     setValue('bio', speaker.bio);
     setValue('session_title', speaker.session_title || '');
     setValue('session_time', speaker.session_time ? new Date(speaker.session_time).toISOString().slice(0, 16) : '');
-    setValue('time_allocation', speaker.time_allocation || ''); // Add this line
+    setValue('time_allocation', speaker.time_allocation || '');
+    setValue('topic', speaker.topic || '');
     setValue('twitter_link', speaker.twitter_link || '');
     setValue('linkedin_link', speaker.linkedin_link || '');
     setValue('website_link', speaker.website_link || '');

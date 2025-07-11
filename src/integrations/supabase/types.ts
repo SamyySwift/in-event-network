@@ -529,6 +529,7 @@ export type Database = {
           guest_name: string | null
           guest_phone: string | null
           id: string
+          payment_reference: string | null
           payment_status: string | null
           price: number
           purchase_date: string
@@ -548,6 +549,7 @@ export type Database = {
           guest_name?: string | null
           guest_phone?: string | null
           id?: string
+          payment_reference?: string | null
           payment_status?: string | null
           price?: number
           purchase_date?: string
@@ -567,6 +569,7 @@ export type Database = {
           guest_name?: string | null
           guest_phone?: string | null
           id?: string
+          payment_reference?: string | null
           payment_status?: string | null
           price?: number
           purchase_date?: string

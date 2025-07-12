@@ -24,6 +24,7 @@ interface TicketData {
   check_in_status: boolean;
   checked_in_at?: string;
   purchase_date: string;
+  form_data?: Record<string, any>;
 }
 
 // Convert data to CSV format
@@ -139,19 +140,38 @@ export const exportTicketsData = (tickets: TicketData[], eventName: string, form
     throw new Error('No ticket data available to export');
   }
 
-  const headers = ['ticket_number', 'ticket_type_name', 'price', 'attendee_name', 'attendee_email', 'check_in_status', 'checked_in_at', 'purchase_date'];
-  const headerLabels = ['Ticket Number', 'Ticket Type', 'Price', 'Attendee Name', 'Attendee Email', 'Checked In', 'Check-in Date', 'Purchase Date'];
+  // Get all form field names from all tickets to create dynamic headers
+  const allFormFields = new Set<string>();
+  tickets.forEach(ticket => {
+    if (ticket.form_data) {
+      Object.keys(ticket.form_data).forEach(field => allFormFields.add(field));
+    }
+  });
+
+  const baseHeaders = ['ticket_number', 'ticket_type_name', 'price', 'attendee_name', 'attendee_email', 'check_in_status', 'checked_in_at', 'purchase_date'];
+  const formHeaders = Array.from(allFormFields);
+  const headers = [...baseHeaders, ...formHeaders];
   
-  const processedData = tickets.map(ticket => ({
-    ticket_number: ticket.ticket_number,
-    ticket_type_name: ticket.ticket_type_name,
-    price: `₦${ticket.price.toLocaleString()}`,
-    attendee_name: ticket.user_name || ticket.guest_name || 'N/A',
-    attendee_email: ticket.user_email || ticket.guest_email || 'N/A',
-    check_in_status: ticket.check_in_status ? 'Yes' : 'No',
-    checked_in_at: ticket.checked_in_at ? new Date(ticket.checked_in_at).toLocaleDateString() : 'N/A',
-    purchase_date: new Date(ticket.purchase_date).toLocaleDateString()
-  }));
+  const processedData = tickets.map(ticket => {
+    const baseData = {
+      ticket_number: ticket.ticket_number,
+      ticket_type_name: ticket.ticket_type_name,
+      price: `₦${ticket.price.toLocaleString()}`,
+      attendee_name: ticket.user_name || ticket.guest_name || 'N/A',
+      attendee_email: ticket.user_email || ticket.guest_email || 'N/A',
+      check_in_status: ticket.check_in_status ? 'Yes' : 'No',
+      checked_in_at: ticket.checked_in_at ? new Date(ticket.checked_in_at).toLocaleDateString() : 'N/A',
+      purchase_date: new Date(ticket.purchase_date).toLocaleDateString()
+    };
+
+    // Add form data
+    const formData: Record<string, any> = {};
+    formHeaders.forEach(field => {
+      formData[field] = ticket.form_data?.[field] || 'N/A';
+    });
+
+    return { ...baseData, ...formData };
+  });
 
   const timestamp = new Date().toISOString().split('T')[0];
   const sanitizedEventName = eventName.replace(/[^a-z0-9]/gi, '_');
@@ -161,22 +181,32 @@ export const exportTicketsData = (tickets: TicketData[], eventName: string, form
     const csvContent = convertToCSV(processedData, headers);
     downloadFile(csvContent, `${filename}.csv`, 'csv');
   } else {
-    // Fixed Excel export
-    const worksheetData = processedData.map(item => ({
-      'Ticket Number': item.ticket_number,
-      'Ticket Type': item.ticket_type_name,
-      'Price': item.price,
-      'Attendee Name': item.attendee_name,
-      'Attendee Email': item.attendee_email,
-      'Checked In': item.check_in_status,
-      'Check-in Date': item.checked_in_at,
-      'Purchase Date': item.purchase_date
-    }));
+    // Fixed Excel export with form data
+    const worksheetData = processedData.map(item => {
+      const baseExcelData = {
+        'Ticket Number': item.ticket_number,
+        'Ticket Type': item.ticket_type_name,
+        'Price': item.price,
+        'Attendee Name': item.attendee_name,
+        'Attendee Email': item.attendee_email,
+        'Checked In': item.check_in_status,
+        'Check-in Date': item.checked_in_at,
+        'Purchase Date': item.purchase_date
+      };
+
+      // Add form data with proper headers
+      const formExcelData: Record<string, any> = {};
+      formHeaders.forEach(field => {
+        formExcelData[field] = item[field];
+      });
+
+      return { ...baseExcelData, ...formExcelData };
+    });
     
     const worksheet = XLSX.utils.json_to_sheet(worksheetData);
     
-    // Set column widths
-    const colWidths = [
+    // Set column widths - base columns + form columns
+    const baseColWidths = [
       { wch: 15 }, // Ticket Number
       { wch: 20 }, // Ticket Type
       { wch: 12 }, // Price
@@ -186,7 +216,8 @@ export const exportTicketsData = (tickets: TicketData[], eventName: string, form
       { wch: 15 }, // Check-in Date
       { wch: 15 }  // Purchase Date
     ];
-    worksheet['!cols'] = colWidths;
+    const formColWidths = formHeaders.map(() => ({ wch: 20 })); // 20 width for each form field
+    worksheet['!cols'] = [...baseColWidths, ...formColWidths];
     
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Tickets');

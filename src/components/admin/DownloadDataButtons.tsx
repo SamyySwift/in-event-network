@@ -149,19 +149,37 @@ export const DownloadDataButtons: React.FC<DownloadDataButtonsProps> = ({
 
     setIsExporting(`tickets-${format}`);
     try {
-      const ticketsData = eventTickets.map(ticket => ({
-        id: ticket.id,
-        ticket_number: ticket.ticket_number,
-        ticket_type_name: ticket.ticket_types?.name || 'Unknown',
-        price: ticket.price,
-        user_name: ticket.profiles?.name,
-        user_email: ticket.profiles?.email,
-        guest_name: ticket.guest_name,
-        guest_email: ticket.guest_email,
-        check_in_status: ticket.check_in_status,
-        checked_in_at: ticket.checked_in_at,
-        purchase_date: ticket.purchase_date
-      }));
+      const ticketsData = eventTickets.map(ticket => {
+        // Process form responses into a readable format
+        const formData: Record<string, any> = {};
+        if (ticket.form_responses && Array.isArray(ticket.form_responses)) {
+          ticket.form_responses.forEach((response: any) => {
+            if (response.ticket_form_fields?.label) {
+              let value = response.response_value;
+              // Handle different response value types
+              if (typeof value === 'object' && value !== null) {
+                value = Array.isArray(value) ? value.join(', ') : JSON.stringify(value);
+              }
+              formData[response.ticket_form_fields.label] = value || 'N/A';
+            }
+          });
+        }
+
+        return {
+          id: ticket.id,
+          ticket_number: ticket.ticket_number,
+          ticket_type_name: ticket.ticket_types?.name || 'Unknown',
+          price: ticket.price,
+          user_name: ticket.profiles?.name,
+          user_email: ticket.profiles?.email,
+          guest_name: ticket.guest_name,
+          guest_email: ticket.guest_email,
+          check_in_status: ticket.check_in_status,
+          checked_in_at: ticket.checked_in_at,
+          purchase_date: ticket.purchase_date,
+          form_data: formData
+        };
+      });
 
       await exportTicketsData(ticketsData, eventName, format);
       toast({

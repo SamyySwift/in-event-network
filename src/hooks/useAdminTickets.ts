@@ -114,11 +114,13 @@ export const useAdminTickets = () => {
               field_order
             )
           `)
-          .eq('ticket_id', ticket.id)
-          .order('ticket_form_fields.field_order');
+          .eq('ticket_id', ticket.id);
 
         if (formData) {
-          formResponses = formData;
+          // Sort the form responses by field order
+          formResponses = formData.sort((a, b) => 
+            (a.ticket_form_fields?.field_order || 0) - (b.ticket_form_fields?.field_order || 0)
+          );
         }
         
         return {

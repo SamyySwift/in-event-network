@@ -224,16 +224,18 @@ export function CreateTicketTypeDialog({ open, onOpenChange, onTicketCreated }: 
               </button>
               <button
                 type="button"
-                onClick={() => setTicketType('paid')}
-                className={`flex-1 p-3 rounded-xl border-2 transition-all duration-200 flex items-center justify-center gap-2 ${
-                  ticketType === 'paid'
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
+                disabled={true}
+                className="flex-1 p-3 rounded-xl border-2 transition-all duration-200 flex items-center justify-center gap-2 border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
+                title="Paid tickets are currently disabled"
               >
                 <ToggleRight className="w-4 h-4" />
-                Paid
+                Paid (Disabled)
               </button>
+            </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
+              <p className="text-sm text-amber-700">
+                💡 <strong>Paid tickets are currently disabled.</strong> Only free tickets can be created at this time.
+              </p>
             </div>
           </div>
 

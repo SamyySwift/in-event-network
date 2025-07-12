@@ -76,8 +76,8 @@ export function EditTicketTypeDialog({ open, onOpenChange, ticketType }: EditTic
       
       setDescription(ticketType.description || '');
       setTicketTypeState(ticketType.price > 0 ? 'paid' : 'free');
-      setPrice(ticketType.price.toString());
-      setAvailableQuantity(ticketType.available_quantity.toString());
+      setPrice(ticketType.price?.toString() || '0');
+      setAvailableQuantity(ticketType.available_quantity?.toString() || '0');
       setIsActive(ticketType.is_active);
       setSelectedEventId(ticketType.event_id);
     }

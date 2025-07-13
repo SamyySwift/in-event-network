@@ -43,13 +43,6 @@ import { EventCard } from "@/components/attendee/EventCard";
 import { ConnectionNotificationDropdown } from "@/components/attendee/ConnectionNotificationDropdown";
 import { useAttendeeFacilities } from "@/hooks/useAttendeeFacilities";
 import * as LucideIcons from "lucide-react";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from "@/components/ui/carousel";
 
 const AttendeeDashboardContent = () => {
   const navigate = useNavigate();
@@ -695,84 +688,58 @@ const SuggestedConnectionsCards = ({
   suggestedConnections: any[];
 }) => {
   const { sendConnectionRequest, getConnectionStatus } = useNetworking();
-  const [api, setApi] = React.useState<any>();
-  
-  // Auto-scroll functionality
-  React.useEffect(() => {
-    if (!api) return;
-
-    const interval = setInterval(() => {
-      api.scrollNext();
-    }, 3000); // Auto-scroll every 3 seconds
-
-    return () => clearInterval(interval);
-  }, [api]);
 
   return (
-    <div className="relative">
-      <Carousel
-        opts={{
-          align: "start",
-          loop: true,
-          skipSnaps: false,
-          dragFree: true,
-        }}
-        className="w-full"
-        setApi={setApi}
-      >
-        <CarouselContent className="-ml-2 md:-ml-4">
-          {suggestedConnections.map((connection) => {
-            const status = getConnectionStatus(connection.id);
-            const isConnected = status?.status === "accepted";
-            const isPending = status?.status === "pending";
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      {suggestedConnections.map((connection) => {
+        const status = getConnectionStatus(connection.id);
+        const isConnected = status?.status === "accepted";
+        const isPending = status?.status === "pending";
 
-            return (
-              <CarouselItem key={connection.id} className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3">
-                <Card className="group overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white backdrop-blur-sm hover:-translate-y-1 relative z-10 h-full">
-                  <CardContent className="p-6 bg-white/95 backdrop-blur-sm">
-                    <div className="flex items-center space-x-4 mb-4">
-                      <Avatar className="h-14 w-14 border-2 border-white shadow-md">
-                        {connection.photo_url ? (
-                          <AvatarImage
-                            src={connection.photo_url}
-                            alt={connection.name}
-                          />
-                        ) : (
-                          <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-lg font-semibold">
-                            {connection.name
-                              ?.split(" ")
-                              .map((n) => n[0])
-                              .join("") || "?"}
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-gray-900 truncate">
-                          {connection.name || "Unknown"}
-                        </h3>
-                        <p className="text-sm text-gray-500 truncate">
-                          {connection.niche || connection.company || "Professional"}
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      size="sm"
-                      className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 flex items-center justify-center"
-                      onClick={() => sendConnectionRequest(connection.id)}
-                      disabled={isConnected || isPending}
-                    >
-                      <UserPlus className="mr-2 h-4 w-4" />
-                      {isPending ? "Pending" : isConnected ? "Connected" : "Connect"}
-                    </Button>
-                  </CardContent>
-                </Card>
-              </CarouselItem>
-            );
-          })}
-        </CarouselContent>
-        <CarouselPrevious className="hidden md:flex -left-4 bg-white/80 backdrop-blur-sm border-gray-200 hover:bg-white" />
-        <CarouselNext className="hidden md:flex -right-4 bg-white/80 backdrop-blur-sm border-gray-200 hover:bg-white" />
-      </Carousel>
+        return (
+          <Card
+            key={connection.id}
+            className="group overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white backdrop-blur-sm hover:-translate-y-1 relative z-10"
+          >
+            <CardContent className="p-6 bg-white/95 backdrop-blur-sm">
+              <div className="flex items-center space-x-4 mb-4">
+                <Avatar className="h-14 w-14 border-2 border-white shadow-md">
+                  {connection.photo_url ? (
+                    <AvatarImage
+                      src={connection.photo_url}
+                      alt={connection.name}
+                    />
+                  ) : (
+                    <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-lg font-semibold">
+                      {connection.name
+                        ?.split(" ")
+                        .map((n) => n[0])
+                        .join("") || "?"}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-gray-900 truncate">
+                    {connection.name || "Unknown"}
+                  </h3>
+                  <p className="text-sm text-gray-500 truncate">
+                    {connection.niche || connection.company || "Professional"}
+                  </p>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 flex items-center justify-center"
+                onClick={() => sendConnectionRequest(connection.id)}
+                disabled={isConnected || isPending}
+              >
+                <UserPlus className="mr-2 h-4 w-4" />
+                {isPending ? "Pending" : isConnected ? "Connected" : "Connect"}
+              </Button>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 };

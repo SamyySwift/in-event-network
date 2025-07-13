@@ -16,6 +16,8 @@ import { useAdminEventContext, AdminEventProvider } from '@/hooks/useAdminEventC
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { useFormPersistence } from '@/hooks/useFormPersistence';
+import { useEffect } from 'react';
 import SpeakerStatsCards from './components/SpeakerStatsCards';
 import SpeakersTable from './components/SpeakersTable';
 type SpeakerFormData = {
@@ -55,15 +57,34 @@ const AdminSpeakersContent = () => {
   const {
     currentUser
   } = useAuth();
+  const form = useForm<SpeakerFormData>();
   const {
     register,
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: {
       errors
     }
-  } = useForm<SpeakerFormData>();
+  } = form;
+
+  // Form persistence
+  const { saveFormData, clearSavedData, hasSavedData } = useFormPersistence(
+    'speaker-form',
+    form,
+    isCreating && !editingSpeaker
+  );
+
+  // Watch form values for auto-save
+  const watchedValues = watch();
+
+  // Auto-save form data when values change
+  useEffect(() => {
+    if (isCreating && !editingSpeaker) {
+      saveFormData(watchedValues);
+    }
+  }, [watchedValues, saveFormData, isCreating, editingSpeaker]);
 
   // Calculate some simple speaker stats
   const totalSpeakers = speakers.length;
@@ -117,6 +138,8 @@ const AdminSpeakersContent = () => {
       setSelectedImage(null);
       setImagePreview('');
       setIsCreating(false);
+      // Clear saved form data after successful submission
+      clearSavedData();
     } catch (error) {
       toast({
         title: "Error",
@@ -152,6 +175,10 @@ const AdminSpeakersContent = () => {
     setSelectedImage(null);
     setImagePreview('');
     reset();
+    // Clear saved form data when canceling
+    if (!editingSpeaker) {
+      clearSavedData();
+    }
   };
   const handleImageSelect = (file: File | null) => {
     setSelectedImage(file);
@@ -248,9 +275,21 @@ const AdminSpeakersContent = () => {
         {/* Add/Edit Speaker Form */}
         {isCreating && selectedEventId && <Card className="mb-6 glass-card bg-gradient-to-br from-white/90 via-primary-50/70 to-primary-100/60 transition-all animate-fade-in shadow-lg">
             <CardHeader>
-              <CardTitle>{editingSpeaker ? 'Edit Speaker' : 'Add New Speaker'}</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                {editingSpeaker ? 'Edit Speaker' : 'Add New Speaker'}
+                {!editingSpeaker && hasSavedData && (
+                  <span className="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded-full">
+                    Draft Restored
+                  </span>
+                )}
+              </CardTitle>
               <CardDescription>
                 {editingSpeaker ? 'Update speaker information' : 'Add a speaker to the event'}
+                {!editingSpeaker && hasSavedData && (
+                  <span className="block text-amber-600 text-sm mt-1">
+                    Your previous work has been restored automatically
+                  </span>
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent>

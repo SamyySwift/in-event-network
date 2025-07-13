@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotificationCount } from "@/hooks/useNotificationCount";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { AdminFormPersistenceProvider } from "@/hooks/useAdminFormPersistence";
 import {
   Calendar,
   Users,
@@ -409,299 +410,301 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   );
 
   return (
-    <div className="min-h-screen bg-background flex flex-col md:flex-row">
-      {/* Mobile Header */}
-      <header className="md:hidden bg-sidebar glass shadow-lg shadow-primary/5 border-b border-sidebar-border py-3 px-4 flex items-center justify-between sticky top-0 z-50">
-        <div className="flex items-center space-x-3">
-          <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
-            <SheetTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-sidebar-foreground hover:bg-sidebar-accent"
+    <AdminFormPersistenceProvider>
+      <div className="min-h-screen bg-background flex flex-col md:flex-row">
+        {/* Mobile Header */}
+        <header className="md:hidden bg-sidebar glass shadow-lg shadow-primary/5 border-b border-sidebar-border py-3 px-4 flex items-center justify-between sticky top-0 z-50">
+          <div className="flex items-center space-x-3">
+            <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
+              <SheetTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-sidebar-foreground hover:bg-sidebar-accent"
+                >
+                  <Menu size={20} />
+                </Button>
+              </SheetTrigger>
+              <SheetContent
+                side="left"
+                className="w-[280px] bg-sidebar border-sidebar-border"
               >
-                <Menu size={20} />
-              </Button>
-            </SheetTrigger>
-            <SheetContent
-              side="left"
-              className="w-[280px] bg-sidebar border-sidebar-border"
-            >
-              <MobileSidebarContent />
-            </SheetContent>
-          </Sheet>
-          {/* Removed duplicate title from mobile header */}
-        </div>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate("/admin/notifications")}
-          className="relative"
-        >
-          <Bell size={20} className="text-primary" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 h-5 w-5 bg-primary text-primary-foreground rounded-full text-xs flex items-center justify-center">
-              {unreadCount > 99 ? "99+" : unreadCount}
-            </span>
-          )}
-        </Button>
-      </header>
-
-      {/* Sidebar Navigation for Desktop */}
-      <aside
-        className={`${
-          sidebarOpen ? "w-64" : "w-20"
-        } hidden md:flex flex-col bg-sidebar glass shadow-lg shadow-primary/5 fixed h-full transition-all duration-300 ease-in-out z-30`}
-      >
-        <div
-          className={`p-4 border-b border-sidebar-border flex ${
-            sidebarOpen ? "justify-between" : "justify-center"
-          }`}
-        >
-          <div
-            className={`flex items-center ${
-              sidebarOpen ? "" : "justify-center"
-            }`}
-          >
-            {sidebarOpen && (
-              <>
-                <img
-                  src="/logo.png"
-                  alt="Kconect Logo"
-                  className="h-8 w-8 mr-2"
-                />
-                <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                  Kconect
-                </span>
-              </>
-            )}
-            {!sidebarOpen && (
-              <img src="/logo.png" alt="Kconect Logo" className="h-8 w-8" />
-            )}
+                <MobileSidebarContent />
+              </SheetContent>
+            </Sheet>
+            {/* Removed duplicate title from mobile header */}
           </div>
 
           <Button
             variant="ghost"
-            size="sm"
-            className="text-sidebar-foreground hover:bg-sidebar-accent"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
+            size="icon"
+            onClick={() => navigate("/admin/notifications")}
+            className="relative"
           >
-            <PanelLeft
-              size={18}
-              className={`transition-transform duration-300 ${
-                sidebarOpen ? "" : "rotate-180"
-              }`}
-            />
+            <Bell size={20} className="text-primary" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-5 w-5 bg-primary text-primary-foreground rounded-full text-xs flex items-center justify-center">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
           </Button>
-        </div>
+        </header>
 
-        {currentUser && (
+        {/* Sidebar Navigation for Desktop */}
+        <aside
+          className={`${
+            sidebarOpen ? "w-64" : "w-20"
+          } hidden md:flex flex-col bg-sidebar glass shadow-lg shadow-primary/5 fixed h-full transition-all duration-300 ease-in-out z-30`}
+        >
           <div
-            className={`${
-              sidebarOpen ? "px-4" : "px-2"
-            } py-4 border-b border-sidebar-border`}
+            className={`p-4 border-b border-sidebar-border flex ${
+              sidebarOpen ? "justify-between" : "justify-center"
+            }`}
           >
             <div
-              className={`flex ${
-                sidebarOpen ? "items-center" : "justify-center"
-              } space-x-3`}
+              className={`flex items-center ${
+                sidebarOpen ? "" : "justify-center"
+              }`}
             >
-              <Avatar className="h-10 w-10 ring-2 ring-primary/20">
-                {currentUser.photoUrl ? (
+              {sidebarOpen && (
+                <>
+                  <img
+                    src="/logo.png"
+                    alt="Kconect Logo"
+                    className="h-8 w-8 mr-2"
+                  />
+                  <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                    Kconect
+                  </span>
+                </>
+              )}
+              {!sidebarOpen && (
+                <img src="/logo.png" alt="Kconect Logo" className="h-8 w-8" />
+              )}
+            </div>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-sidebar-foreground hover:bg-sidebar-accent"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+            >
+              <PanelLeft
+                size={18}
+                className={`transition-transform duration-300 ${
+                  sidebarOpen ? "" : "rotate-180"
+                }`}
+              />
+            </Button>
+          </div>
+
+          {currentUser && (
+            <div
+              className={`${
+                sidebarOpen ? "px-4" : "px-2"
+              } py-4 border-b border-sidebar-border`}
+            >
+              <div
+                className={`flex ${
+                  sidebarOpen ? "items-center" : "justify-center"
+                } space-x-3`}
+              >
+                <Avatar className="h-10 w-10 ring-2 ring-primary/20">
+                  {currentUser.photoUrl ? (
+                    <AvatarImage
+                      src={currentUser.photoUrl}
+                      alt={currentUser.name}
+                    />
+                  ) : (
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {currentUser.name.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+
+                {sidebarOpen && (
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-sidebar-foreground truncate">
+                      {currentUser.name}
+                    </p>
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] font-normal px-1.5 bg-primary/10 hover:bg-primary/20 text-primary border-primary/20"
+                    >
+                      Administrator
+                    </Badge>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className={`${sidebarOpen ? "px-3" : "px-2"} py-2`}>
+            {sidebarOpen && (
+              <div className="relative mb-3">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search..."
+                  className="pl-8 bg-sidebar-accent border-sidebar-border text-sm h-9"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            )}
+          </div>
+
+          <nav className="flex-1 py-2 px-2 space-y-1 overflow-y-auto scrollbar-hide">
+            {adminNavigation.map((item, index) => {
+              // Render separator
+              if (item.type === "separator") {
+                return (
+                  <div
+                    key={`separator-${index}`}
+                    className="h-px bg-gray-200 dark:bg-gray-700 my-3 mx-2"
+                  />
+                );
+              }
+
+              // Render navigation button
+              return (
+                <Button
+                  key={item.name}
+                  variant={isActive(item.href) ? "secondary" : "ghost"}
+                  className={`w-full ${
+                    sidebarOpen ? "justify-start" : "justify-center"
+                  } ${
+                    isActive(item.href)
+                      ? "bg-primary/10 text-primary hover:bg-primary/20"
+                      : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                  }`}
+                  onClick={() => navigate(item.href)}
+                  title={sidebarOpen ? "" : item.name}
+                >
+                  <span
+                    className={`${sidebarOpen ? "mr-3" : ""} ${
+                      isActive(item.href)
+                        ? "text-primary-700"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    {item.icon}
+                  </span>
+                  {sidebarOpen && (
+                    <span className="flex-1 text-left">{item.name}</span>
+                  )}
+                  {sidebarOpen && isActive(item.href) && (
+                    <ChevronRight size={16} className="ml-auto opacity-70" />
+                  )}
+                </Button>
+              );
+            })}
+
+            {currentUser && (
+              <Button
+                variant="ghost"
+                className={`w-full ${
+                  sidebarOpen ? "justify-start" : "justify-center"
+                } text-sidebar-foreground mt-4 hover:text-destructive hover:bg-destructive/10`}
+                onClick={() => {
+                  logout();
+                  navigate("/");
+                }}
+                title={sidebarOpen ? "" : "Logout"}
+              >
+                <span className={sidebarOpen ? "mr-3" : ""}>
+                  <LogOut size={20} />
+                </span>
+                {sidebarOpen && "Logout"}
+              </Button>
+            )}
+          </nav>
+
+          {sidebarOpen && (
+            <div className="mt-auto p-4 border-t border-sidebar-border">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start text-sidebar-foreground"
+                onClick={toggleTheme}
+              >
+                {theme === "light" ? (
+                  <>
+                    <Moon size={16} className="mr-2" />
+                    <span>Dark Mode</span>
+                  </>
+                ) : (
+                  <>
+                    <Sun size={16} className="mr-2" />
+                    <span>Light Mode</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+        </aside>
+
+        {/* Main Content */}
+        <main
+          className={`flex-1 ${
+            sidebarOpen ? "md:ml-64" : "md:ml-20"
+          } transition-all duration-300 ease-in-out`}
+        >
+          {/* Desktop Header */}
+          <header className="hidden md:flex h-16 bg-card glass-effect border-b px-6 items-center justify-between sticky top-0 z-20 shadow-sm">
+            <div className="flex items-center">{generateBreadcrumbs()}</div>
+
+            <div className="flex items-center space-x-4">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={toggleTheme}
+                className="bg-card border-primary/20 hover:bg-accent"
+              >
+                {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
+              </Button>
+
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => navigate("/admin/notifications")}
+                className={`relative bg-card ${
+                  isActive("/admin/notifications")
+                    ? "border-primary/30 ring-1 ring-primary/30"
+                    : "border-primary/20"
+                } hover:bg-accent`}
+              >
+                <Bell
+                  size={18}
+                  className={
+                    isActive("/admin/notifications") ? "text-primary" : ""
+                  }
+                />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 h-5 w-5 bg-primary text-primary-foreground rounded-full text-xs flex items-center justify-center">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                  )}
+              </Button>
+
+              <Avatar className="h-9 w-9 cursor-pointer ring-2 ring-primary/20 hover:ring-primary/40 transition-all">
+                {currentUser?.photoUrl ? (
                   <AvatarImage
                     src={currentUser.photoUrl}
                     alt={currentUser.name}
                   />
                 ) : (
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    {currentUser.name.charAt(0).toUpperCase()}
+                  <AvatarFallback className="bg-primary text-white">
+                    {currentUser?.name.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 )}
               </Avatar>
-
-              {sidebarOpen && (
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-sidebar-foreground truncate">
-                    {currentUser.name}
-                  </p>
-                  <Badge
-                    variant="outline"
-                    className="text-[10px] font-normal px-1.5 bg-primary/10 hover:bg-primary/20 text-primary border-primary/20"
-                  >
-                    Administrator
-                  </Badge>
-                </div>
-              )}
             </div>
-          </div>
-        )}
+          </header>
 
-        <div className={`${sidebarOpen ? "px-3" : "px-2"} py-2`}>
-          {sidebarOpen && (
-            <div className="relative mb-3">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search..."
-                className="pl-8 bg-sidebar-accent border-sidebar-border text-sm h-9"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          )}
-        </div>
-
-        <nav className="flex-1 py-2 px-2 space-y-1 overflow-y-auto scrollbar-hide">
-          {adminNavigation.map((item, index) => {
-            // Render separator
-            if (item.type === "separator") {
-              return (
-                <div
-                  key={`separator-${index}`}
-                  className="h-px bg-gray-200 dark:bg-gray-700 my-3 mx-2"
-                />
-              );
-            }
-
-            // Render navigation button
-            return (
-              <Button
-                key={item.name}
-                variant={isActive(item.href) ? "secondary" : "ghost"}
-                className={`w-full ${
-                  sidebarOpen ? "justify-start" : "justify-center"
-                } ${
-                  isActive(item.href)
-                    ? "bg-primary/10 text-primary hover:bg-primary/20"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent/50"
-                }`}
-                onClick={() => navigate(item.href)}
-                title={sidebarOpen ? "" : item.name}
-              >
-                <span
-                  className={`${sidebarOpen ? "mr-3" : ""} ${
-                    isActive(item.href)
-                      ? "text-primary-700"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  {item.icon}
-                </span>
-                {sidebarOpen && (
-                  <span className="flex-1 text-left">{item.name}</span>
-                )}
-                {sidebarOpen && isActive(item.href) && (
-                  <ChevronRight size={16} className="ml-auto opacity-70" />
-                )}
-              </Button>
-            );
-          })}
-
-          {currentUser && (
-            <Button
-              variant="ghost"
-              className={`w-full ${
-                sidebarOpen ? "justify-start" : "justify-center"
-              } text-sidebar-foreground mt-4 hover:text-destructive hover:bg-destructive/10`}
-              onClick={() => {
-                logout();
-                navigate("/");
-              }}
-              title={sidebarOpen ? "" : "Logout"}
-            >
-              <span className={sidebarOpen ? "mr-3" : ""}>
-                <LogOut size={20} />
-              </span>
-              {sidebarOpen && "Logout"}
-            </Button>
-          )}
-        </nav>
-
-        {sidebarOpen && (
-          <div className="mt-auto p-4 border-t border-sidebar-border">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full justify-start text-sidebar-foreground"
-              onClick={toggleTheme}
-            >
-              {theme === "light" ? (
-                <>
-                  <Moon size={16} className="mr-2" />
-                  <span>Dark Mode</span>
-                </>
-              ) : (
-                <>
-                  <Sun size={16} className="mr-2" />
-                  <span>Light Mode</span>
-                </>
-              )}
-            </Button>
-          </div>
-        )}
-      </aside>
-
-      {/* Main Content */}
-      <main
-        className={`flex-1 ${
-          sidebarOpen ? "md:ml-64" : "md:ml-20"
-        } transition-all duration-300 ease-in-out`}
-      >
-        {/* Desktop Header */}
-        <header className="hidden md:flex h-16 bg-card glass-effect border-b px-6 items-center justify-between sticky top-0 z-20 shadow-sm">
-          <div className="flex items-center">{generateBreadcrumbs()}</div>
-
-          <div className="flex items-center space-x-4">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={toggleTheme}
-              className="bg-card border-primary/20 hover:bg-accent"
-            >
-              {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
-            </Button>
-
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => navigate("/admin/notifications")}
-              className={`relative bg-card ${
-                isActive("/admin/notifications")
-                  ? "border-primary/30 ring-1 ring-primary/30"
-                  : "border-primary/20"
-              } hover:bg-accent`}
-            >
-              <Bell
-                size={18}
-                className={
-                  isActive("/admin/notifications") ? "text-primary" : ""
-                }
-              />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 h-5 w-5 bg-primary text-primary-foreground rounded-full text-xs flex items-center justify-center">
-                  {unreadCount > 99 ? "99+" : unreadCount}
-                </span>
-              )}
-            </Button>
-
-            <Avatar className="h-9 w-9 cursor-pointer ring-2 ring-primary/20 hover:ring-primary/40 transition-all">
-              {currentUser?.photoUrl ? (
-                <AvatarImage
-                  src={currentUser.photoUrl}
-                  alt={currentUser.name}
-                />
-              ) : (
-                <AvatarFallback className="bg-primary text-white">
-                  {currentUser?.name.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              )}
-            </Avatar>
-          </div>
-        </header>
-
-        <div className="p-6">{children}</div>
-      </main>
-    </div>
+          <div className="p-6">{children}</div>
+        </main>
+      </div>
+    </AdminFormPersistenceProvider>
   );
 };
 

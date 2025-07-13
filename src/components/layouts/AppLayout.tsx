@@ -74,7 +74,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       icon: <UserPlus size={20} />,
     },
     {
-      name: "Up Next",
+      name: "Event Schedule",
       href: "/attendee/schedule",
       icon: <Calendar size={20} />,
     },
@@ -89,7 +89,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       icon: <MessageSquare size={20} />,
     },
     {
-      name: "Find Way",
+      name: "Event Facilities",
       href: "/attendee/map",
       icon: <MapPin size={20} />,
     },

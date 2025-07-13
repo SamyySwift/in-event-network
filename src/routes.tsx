@@ -12,6 +12,7 @@ import ScanQR from "@/pages/ScanQR";
 import VendorForm from "./pages/VendorForm";
 import BuyTickets from "@/pages/BuyTickets";
 import JoinEvent from "@/pages/JoinEvent";
+import Discovery from "@/pages/Discovery";
 
 // Admin Pages
 import AdminLayout from "@/components/layouts/AdminLayout";
@@ -124,6 +125,10 @@ export const router = createBrowserRouter([
   {
     path: "/guide",
     element: <Guide />,
+  },
+  {
+    path: "/discovery",
+    element: <Discovery />,
   },
   {
     path: "/login",

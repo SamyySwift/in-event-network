@@ -259,11 +259,10 @@ function HeroGeometric({
               <Button
                 size="lg"
                 className="bg-gradient-to-r   rounded-full from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white shadow-2xl shadow-purple-500/30 border-0 px-8 py-8 text-lg  transform hover:scale-105 transition-all duration-600"
-                onClick={() => setShowScanner(true)}
-                disabled={isJoining}
+                onClick={() => navigate("/discovery")}
               >
-                <ScanQrCode className="mr-2" />
-                {isJoining ? "Joining..." : "Scan Event"}
+                <Zap className="mr-2" />
+                Discovery
               </Button>
               <Button
                 size="lg"

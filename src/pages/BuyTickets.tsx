@@ -43,6 +43,8 @@ export default function BuyTickets() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showUserInfoForm, setShowUserInfoForm] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [purchasedTicketCount, setPurchasedTicketCount] = useState(0);
   const [userInfo, setUserInfo] = useState({
     fullName: '',
     email: currentUser?.email || '',
@@ -417,11 +419,7 @@ export default function BuyTickets() {
       }
 
       // Add this state near the top of the component
-      const [showSuccessModal, setShowSuccessModal] = useState(false);
-      const [purchasedTicketCount, setPurchasedTicketCount] = useState(0);
-      
-      // Update the success handling in createTickets function
-      // Replace the existing success toast with:
+      // Handle successful ticket creation
       console.log('Purchase completed successfully');
       
       // Set success modal data
@@ -433,65 +431,6 @@ export default function BuyTickets() {
       setFormResponses({});
       setUserInfo({ fullName: '', email: currentUser?.email || '', phone: '' });
       setShowUserInfoForm(false);
-      
-      // Add this JSX before the closing div in the return statement:
-      {showSuccessModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md">
-            <CardHeader className="text-center">
-              <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
-                <Ticket className="w-8 h-8 text-green-600" />
-              </div>
-              <CardTitle className="text-green-600">Purchase Successful!</CardTitle>
-            </CardHeader>
-            <CardContent className="text-center space-y-4">
-              <p className="text-gray-600">
-                Congratulations! You have successfully purchased {purchasedTicketCount} ticket(s) for {eventData?.event.name}.
-              </p>
-              <p className="text-sm text-gray-500">
-                Your tickets have been added to your account and you will receive a confirmation email shortly.
-              </p>
-              <div className="flex gap-2">
-                <Button 
-                  onClick={() => {
-                    setShowSuccessModal(false);
-                    navigate('/attendee/my-tickets');
-                  }}
-                  className="flex-1"
-                >
-                  View My Tickets
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setShowSuccessModal(false)}
-                  className="flex-1"
-                >
-                  Continue Shopping
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-      console.log('Purchase completed successfully');
-
-      // Enhanced success message with confirmation
-      toast({
-        title: "🎉 Tickets Purchased Successfully!",
-        description: `Congratulations! ${getTotalTickets()} ticket(s) have been successfully purchased and added to your account. You can view them in 'My Tickets'.`,
-        duration: 6000,
-      });
-
-      // Reset form and redirect to attendee dashboard
-      setSelectedTickets({});
-      setFormResponses({});
-      setUserInfo({ fullName: '', email: currentUser?.email || '', phone: '' });
-      setShowUserInfoForm(false);
-      
-      // Show confirmation before redirect
-      setTimeout(() => {
-        navigate('/attendee/my-tickets');
-      }, 2000);
 
     } catch (error: any) {
       console.error('Purchase failed:', error);
@@ -876,6 +815,46 @@ export default function BuyTickets() {
           </div>
         </div>
       </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <Ticket className="w-8 h-8 text-green-600" />
+              </div>
+              <CardTitle className="text-green-600">Purchase Successful!</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-gray-600">
+                Congratulations! You have successfully purchased {purchasedTicketCount} ticket(s) for {eventData?.event.name}.
+              </p>
+              <p className="text-sm text-gray-500">
+                Your tickets have been added to your account and you can view them in your dashboard.
+              </p>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={() => {
+                    setShowSuccessModal(false);
+                    navigate('/attendee/my-tickets');
+                  }}
+                  className="flex-1"
+                >
+                  View My Tickets
+                </Button>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowSuccessModal(false)}
+                  className="flex-1"
+                >
+                  Continue Shopping
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

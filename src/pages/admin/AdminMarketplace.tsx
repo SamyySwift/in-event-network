@@ -17,10 +17,11 @@ import {
   Building
 } from 'lucide-react';
 import { useAdminSponsors } from '@/hooks/useAdminSponsors';
+import { AdminEventProvider } from '@/hooks/useAdminEventContext';
 import { CreateSponsorFormDialog } from '@/components/admin/CreateSponsorFormDialog';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 
-const AdminMarketplace = () => {
+const AdminMarketplaceContent = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [createFormDialogOpen, setCreateFormDialogOpen] = useState(false);
@@ -276,6 +277,14 @@ const AdminMarketplace = () => {
         onOpenChange={setCreateFormDialogOpen}
       />
     </div>
+  );
+};
+
+const AdminMarketplace = () => {
+  return (
+    <AdminEventProvider>
+      <AdminMarketplaceContent />
+    </AdminEventProvider>
   );
 };
 

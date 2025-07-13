@@ -22,7 +22,7 @@ import {
   DollarSign
 } from 'lucide-react';
 import { useAdminSponsors } from '@/hooks/useAdminSponsors';
-import { AdminEventProvider } from '@/hooks/useAdminEventContext';
+import { AdminEventProvider, useAdminEventContext } from '@/hooks/useAdminEventContext';
 import { CreateMarketplaceEntryDialog } from '@/components/admin/CreateMarketplaceEntryDialog';
 import { MarketplaceQRCode } from '@/components/admin/MarketplaceQRCode';
 
@@ -33,6 +33,7 @@ const AdminMarketplaceContent = () => {
   const [createEntryDialogOpen, setCreateEntryDialogOpen] = useState(false);
   const [selectedEntryForQR, setSelectedEntryForQR] = useState<any>(null);
 
+  const { selectedEvent } = useAdminEventContext();
   const { 
     sponsors, 
     sponsorForms, 

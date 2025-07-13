@@ -1340,54 +1340,81 @@ export type Database = {
       sponsors: {
         Row: {
           additional_notes: string | null
+          call_number: string | null
+          category: string
           contact_person_name: string
           created_at: string
           description: string | null
           email: string
           event_id: string
+          facebook_link: string | null
           id: string
+          instagram_handle: string | null
+          linkedin_link: string | null
           logo_url: string | null
           organization_name: string
           phone_number: string | null
+          products: Json | null
+          qr_code_data: string | null
           social_media_links: Json | null
           sponsorship_type: string
           status: string
+          twitter_link: string | null
           updated_at: string
           website_link: string | null
+          whatsapp_number: string | null
         }
         Insert: {
           additional_notes?: string | null
+          call_number?: string | null
+          category?: string
           contact_person_name: string
           created_at?: string
           description?: string | null
           email: string
           event_id: string
+          facebook_link?: string | null
           id?: string
+          instagram_handle?: string | null
+          linkedin_link?: string | null
           logo_url?: string | null
           organization_name: string
           phone_number?: string | null
+          products?: Json | null
+          qr_code_data?: string | null
           social_media_links?: Json | null
           sponsorship_type: string
           status?: string
+          twitter_link?: string | null
           updated_at?: string
           website_link?: string | null
+          whatsapp_number?: string | null
         }
         Update: {
           additional_notes?: string | null
+          call_number?: string | null
+          category?: string
           contact_person_name?: string
           created_at?: string
           description?: string | null
           email?: string
           event_id?: string
+          facebook_link?: string | null
           id?: string
+          instagram_handle?: string | null
+          linkedin_link?: string | null
           logo_url?: string | null
           organization_name?: string
           phone_number?: string | null
+          products?: Json | null
+          qr_code_data?: string | null
           social_media_links?: Json | null
           sponsorship_type?: string
           status?: string
+          twitter_link?: string | null
           updated_at?: string
           website_link?: string | null
+          whatsapp_number?: string | null
         }
         Relationships: [
           {
@@ -1830,6 +1857,10 @@ export type Database = {
           name: string
           created_at: string
         }[]
+      }
+      generate_sponsor_qr_data: {
+        Args: { sponsor_id: string }
+        Returns: string
       }
       generate_ticket_number: {
         Args: Record<PropertyKey, never>

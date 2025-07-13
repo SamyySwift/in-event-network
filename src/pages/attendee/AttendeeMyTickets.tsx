@@ -89,6 +89,7 @@ export default function AttendeeMyTickets() {
     phone: "",
   });
   const [showUserInfoForm, setShowUserInfoForm] = useState(false);
+  const [activeTab, setActiveTab] = useState("all");
 
   // QR Code modal state
   const [selectedTicketForQR, setSelectedTicketForQR] =
@@ -404,100 +405,236 @@ export default function AttendeeMyTickets() {
     });
   };
 
+  const getFilteredTickets = () => {
+    const now = new Date();
+    switch (activeTab) {
+      case "upcoming":
+        return tickets.filter((t) => new Date(t.events.start_time) > now);
+      case "past":
+        return tickets.filter((t) => new Date(t.events.end_time) < now);
+      case "checked-in":
+        return tickets.filter((t) => t.check_in_status);
+      default:
+        return tickets;
+    }
+  };
+
+  const filteredTickets = getFilteredTickets();
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-indigo-50">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-6xl mx-auto">
-          {/* Hero Section */}
-          <div className="text-center mb-12 relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-indigo-600/10 blur-3xl rounded-full"></div>
-            <div className="relative">
-              <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl mb-6 shadow-lg">
-                <Ticket className="h-10 w-10 text-white" />
-              </div>
-              <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent mb-4">
-                My Event Tickets
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-6 max-w-4xl">
+        {/* Modern Header */}
+        <div className="flex flex-col space-y-6 mb-8">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center justify-center w-12 h-12 bg-primary rounded-2xl">
+              <Ticket className="h-6 w-6 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                My Tickets
               </h1>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Manage your tickets, view QR codes, and discover new events to
-                attend
+              <p className="text-muted-foreground">
+                Manage and view your event tickets
               </p>
             </div>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-            <Card className="relative overflow-hidden border border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-purple-600 text-sm font-medium">
-                      Total Tickets
-                    </p>
-                    <p className="text-3xl font-bold text-purple-900">
-                      {tickets.length}
-                    </p>
-                  </div>
-                  <div className="bg-purple-500 p-3 rounded-xl text-white">
-                    <Ticket className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="relative overflow-hidden border border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-purple-600 text-sm font-medium">
-                      Checked In
-                    </p>
-                    <p className="text-3xl font-bold text-purple-900">
-                      {tickets.filter((t) => t.check_in_status).length}
-                    </p>
-                  </div>
-                  <div className="bg-purple-500 p-3 rounded-xl text-white">
-                    <CheckCircle className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="relative overflow-hidden border border-purple-200 bg-gradient-to-br from-purple-50 to-purple-100">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-purple-600 text-sm font-medium">
-                      Upcoming Events
-                    </p>
-                    <p className="text-3xl font-bold text-purple-900">
-                      {
-                        tickets.filter(
-                          (t) => new Date(t.events.start_time) > new Date()
-                        ).length
-                      }
-                    </p>
-                  </div>
-                  <div className="bg-purple-500 p-3 rounded-xl text-white">
-                    <Calendar className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="bg-card border rounded-xl p-4">
+              <div className="text-2xl font-bold text-foreground">{tickets.length}</div>
+              <div className="text-sm text-muted-foreground">Total</div>
+            </div>
+            <div className="bg-card border rounded-xl p-4">
+              <div className="text-2xl font-bold text-green-600">
+                {tickets.filter((t) => new Date(t.events.start_time) > new Date()).length}
+              </div>
+              <div className="text-sm text-muted-foreground">Upcoming</div>
+            </div>
+            <div className="bg-card border rounded-xl p-4">
+              <div className="text-2xl font-bold text-blue-600">
+                {tickets.filter((t) => t.check_in_status).length}
+              </div>
+              <div className="text-sm text-muted-foreground">Checked In</div>
+            </div>
+            <div className="bg-card border rounded-xl p-4">
+              <div className="text-2xl font-bold text-orange-600">
+                {tickets.filter((t) => new Date(t.events.end_time) < new Date()).length}
+              </div>
+              <div className="text-sm text-muted-foreground">Past</div>
+            </div>
           </div>
 
-          {/* User Information Form Modal */}
-          {showUserInfoForm && (
-            <Card className="mb-8 border border-purple-200 bg-gradient-to-r from-purple-500 to-purple-100 shadow-lg">
-              <CardHeader className="bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-t-lg">
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" />
-                  Complete Your Information
-                </CardTitle>
-                <CardDescription className="text-purple-100">
-                  Please provide your information before purchasing tickets.
-                </CardDescription>
-              </CardHeader>
+          {/* Filter Tabs */}
+          <div className="flex space-x-2 p-1 bg-muted rounded-lg overflow-x-auto">
+            {[
+              { key: "all", label: "All Tickets" },
+              { key: "upcoming", label: "Upcoming" },
+              { key: "past", label: "Past" },
+              { key: "checked-in", label: "Checked In" },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+                  activeTab === tab.key
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Tickets List */}
+        <div className="space-y-4">
+          {ticketsLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : filteredTickets.length === 0 ? (
+            <div className="text-center py-12 space-y-4">
+              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
+                <Ticket className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold mb-2">No tickets found</h3>
+                <p className="text-muted-foreground">
+                  {activeTab === "all" 
+                    ? "You haven't purchased any tickets yet." 
+                    : `No ${activeTab.replace('-', ' ')} tickets.`}
+                </p>
+              </div>
+              <Button 
+                onClick={() => setTicketUrl("")}
+                variant="outline"
+                className="mt-4"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Purchase Tickets
+              </Button>
+            </div>
+          ) : (
+            filteredTickets.map((ticket) => (
+              <Card key={ticket.id} className="border hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                  <div className="flex flex-col space-y-4">
+                    {/* Ticket Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-3 sm:space-y-0">
+                      <div className="space-y-2">
+                        <h3 className="text-lg font-semibold line-clamp-1">
+                          {ticket.events.name}
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                          <Badge variant="secondary">
+                            {ticket.ticket_types.name}
+                          </Badge>
+                          <Badge 
+                            variant={ticket.check_in_status ? "default" : "outline"}
+                            className={ticket.check_in_status ? "bg-green-100 text-green-800 border-green-200" : ""}
+                          >
+                            {ticket.check_in_status ? (
+                              <div className="flex items-center gap-1">
+                                <CheckCircle className="h-3 w-3" />
+                                Checked In
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                Not Checked In
+                              </div>
+                            )}
+                          </Badge>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => showQRCode(ticket)}
+                        size="sm"
+                        className="w-full sm:w-auto"
+                      >
+                        <QrCode className="h-4 w-4 mr-2" />
+                        View QR Code
+                      </Button>
+                    </div>
+
+                    {/* Ticket Details */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        <span>{formatDate(ticket.events.start_time)}</span>
+                      </div>
+                      {ticket.events.location && (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <MapPin className="h-4 w-4" />
+                          <span className="line-clamp-1">{ticket.events.location}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <span className="font-medium">#{ticket.ticket_number}</span>
+                      </div>
+                    </div>
+
+                    {/* Guest Info */}
+                    {ticket.guest_name && (
+                      <div className="bg-muted/30 rounded-lg p-3">
+                        <div className="text-sm">
+                          <span className="font-medium">Guest:</span> {ticket.guest_name}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+
+        {/* Purchase Ticket URL Input */}
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5" />
+              Purchase New Tickets
+            </CardTitle>
+            <CardDescription>
+              Enter a ticket purchase URL to buy tickets for a new event
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Input
+                placeholder="Paste event ticket URL here..."
+                value={ticketUrl}
+                onChange={(e) => setTicketUrl(e.target.value)}
+                className="flex-1"
+              />
+              <Button 
+                onClick={handleUrlSubmit}
+                disabled={!ticketUrl.trim()}
+                className="w-full sm:w-auto"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Purchase Tickets
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* User Information Form Modal */}
+        {showUserInfoForm && (
+          <Card className="mt-8 border-amber-200 bg-amber-50">
+            <CardHeader className="bg-amber-100 rounded-t-lg">
+              <CardTitle className="flex items-center gap-2 text-amber-800">
+                <Users className="h-5 w-5" />
+                Complete Your Information
+              </CardTitle>
+              <CardDescription className="text-amber-700">
+                Please provide your information before purchasing tickets.
+              </CardDescription>
+            </CardHeader>
               <CardContent className="p-6 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>

@@ -79,11 +79,6 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       icon: <Calendar size={20} />,
     },
     {
-      name: "Marketplace",
-      href: "/attendee/marketplace",
-      icon: <Store size={20} />,
-    },
-    {
       name: "Q&A",
       href: "/attendee/questions",
       icon: <MessageSquare size={20} />,

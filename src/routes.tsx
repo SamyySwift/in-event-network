@@ -30,7 +30,7 @@ import AdminNotifications from "@/pages/admin/AdminNotifications";
 import AdminProfile from "@/pages/admin/AdminProfile";
 import AdminSponsors from "@/pages/admin/AdminSponsors";
 import AdminVendorHub from "@/pages/admin/AdminVendorHub";
-import AdminMarketplace from "@/pages/admin/AdminMarketplace";
+
 import SponsorForm from "@/pages/SponsorForm";
 
 // Attendee Pages
@@ -48,7 +48,7 @@ import AttendeeRules from "@/pages/attendee/AttendeeRules";
 import AttendeeNotifications from "@/pages/attendee/AttendeeNotifications";
 import AttendeeSearch from "@/pages/attendee/AttendeeSearch";
 import AttendeeOnboarding from "@/pages/attendee/AttendeeOnboarding";
-import AttendeeMarketplace from "./pages/attendee/AttendeeMarketplace";
+
 import AttendeeMyTickets from "@/pages/attendee/AttendeeMyTickets";
 
 // Host Pages
@@ -285,14 +285,6 @@ export const router = createBrowserRouter([
       </AdminRoute>
     ),
   },
-  {
-    path: "/admin/marketplace",
-    element: (
-      <AdminRoute>
-        <AdminMarketplace />
-      </AdminRoute>
-    ),
-  },
 
   // Public sponsor form route
   {
@@ -408,14 +400,6 @@ export const router = createBrowserRouter([
     element: (
       <AttendeeRoute>
         <AttendeeOnboarding />
-      </AttendeeRoute>
-    ),
-  },
-  {
-    path: "/attendee/marketplace",
-    element: (
-      <AttendeeRoute>
-        <AttendeeMarketplace />
       </AttendeeRoute>
     ),
   },

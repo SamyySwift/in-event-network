@@ -120,6 +120,23 @@ export const useNetworking = () => {
       return;
     }
 
+    // Check if connection already exists
+    const existingConnection = getConnectionStatus(recipientId);
+    if (existingConnection) {
+      const statusMessage = {
+        'pending': 'You already have a pending connection request with this user.',
+        'accepted': 'You are already connected with this user.',
+        'rejected': 'Your previous connection request was declined.'
+      }[existingConnection.status];
+
+      toast({
+        title: "Connection Request Not Sent",
+        description: statusMessage,
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       console.log('Sending connection request from', currentUser.id, 'to', recipientId);
       

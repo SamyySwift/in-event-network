@@ -253,7 +253,7 @@ const AttendeeQuestions = () => {
                     <SelectItem value="general">General Question</SelectItem>
                     {sessions.map((session) => (
                       <SelectItem key={session.id} value={session.id}>
-                        <div className="flex flex-col py-1">
+                        <div className="flex flex-col">
                           <span className="font-medium">
                             {session.session_title ||
                               `${session.name}'s Session`}

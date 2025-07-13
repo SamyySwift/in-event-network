@@ -26,6 +26,8 @@ import {
   Sparkles,
   Users,
   Star,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import TicketQRModal from "@/components/attendee/TicketQRModal";
@@ -550,14 +552,24 @@ export default function AttendeeMyTickets() {
                           </Badge>
                         </div>
                       </div>
-                      <Button
-                        onClick={() => showQRCode(ticket)}
-                        size="sm"
-                        className="w-full sm:w-auto"
-                      >
-                        <QrCode className="h-4 w-4 mr-2" />
-                        View QR Code
-                      </Button>
+                      <div className="flex gap-2 w-full sm:w-auto">
+                        <Button
+                          onClick={() => showQRCode(ticket)}
+                          size="sm"
+                          className="flex-1 sm:flex-none"
+                        >
+                          <QrCode className="h-4 w-4 mr-2" />
+                          View QR Code
+                        </Button>
+                        <Button
+                          onClick={() => handleDeleteTicket(ticket.id)}
+                          size="sm"
+                          variant="destructive"
+                          className="px-3"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
 
                     {/* Ticket Details */}

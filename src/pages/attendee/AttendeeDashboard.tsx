@@ -40,6 +40,9 @@ import { useNetworking } from "@/hooks/useNetworking";
 import { UserPlus } from "lucide-react";
 import { ProfileCompletionPopup } from "@/components/attendee/ProfileCompletionPopup";
 import { EventCard } from "@/components/attendee/EventCard";
+import { ConnectionNotificationDropdown } from "@/components/attendee/ConnectionNotificationDropdown";
+import { useAttendeeFacilities } from "@/hooks/useAttendeeFacilities";
+import * as LucideIcons from "lucide-react";
 
 const AttendeeDashboardContent = () => {
   const navigate = useNavigate();
@@ -47,6 +50,7 @@ const AttendeeDashboardContent = () => {
   const { hasJoinedEvent, isLoading: contextLoading } =
     useAttendeeEventContext();
   const { dashboardData, isLoading, error } = useDashboard();
+  const { facilities } = useAttendeeFacilities();
   const [showProfilePopup, setShowProfilePopup] = useState(false);
 
   // Check if profile needs completion on first visit
@@ -201,13 +205,16 @@ const AttendeeDashboardContent = () => {
                   Your event experience, updated in real-time
                 </p>
               </div>
-              <Button
-                onClick={() => navigate("/scan")}
-                className="bg-white/20 hover:bg-white/30 border border-white/30 backdrop-blur-sm w-full sm:w-auto z-10"
-              >
-                <Zap className="mr-2 h-4 w-4" />
-                <span className="truncate">Scan New Event</span>
-              </Button>
+              <div className="flex gap-3">
+                <ConnectionNotificationDropdown />
+                <Button
+                  onClick={() => navigate("/scan")}
+                  className="bg-white/20 hover:bg-white/30 border border-white/30 backdrop-blur-sm w-full sm:w-auto z-10"
+                >
+                  <Zap className="mr-2 h-4 w-4" />
+                  <span className="truncate">Scan New Event</span>
+                </Button>
+              </div>
             </div>
           </div>
           <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-white/10 rounded-full z-0"></div>
@@ -372,7 +379,7 @@ const AttendeeDashboardContent = () => {
                     <Star className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <CardTitle className="text-xl">Next Session</CardTitle>
+                    <CardTitle className="text-xl">Event Schedule</CardTitle>
                     <CardDescription>Upcoming activities</CardDescription>
                   </div>
                 </div>
@@ -561,12 +568,22 @@ const AttendeeDashboardContent = () => {
                 gradient: "from-purple-500 to-violet-600",
               },
               {
-                name: "Find Way",
+                name: "Event Facilities",
                 href: "/attendee/map",
                 icon: MapPin,
                 gradient: "from-red-500 to-pink-600",
               },
-            ].map((action) => (
+            ].map((action) => {
+              // Get dynamic icon for facilities
+              let IconComponent = action.icon;
+              if (action.name === "Event Facilities" && facilities.length > 0) {
+                const firstFacility = facilities[0];
+                if (firstFacility.icon_type && (LucideIcons as any)[firstFacility.icon_type]) {
+                  IconComponent = (LucideIcons as any)[firstFacility.icon_type];
+                }
+              }
+              
+              return (
               <Card
                 key={action.name}
                 className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-0 shadow-lg overflow-hidden bg-white backdrop-blur-sm hover:-translate-y-1 relative z-10"
@@ -578,7 +595,7 @@ const AttendeeDashboardContent = () => {
                     <div
                       className={`w-12 h-12 bg-gradient-to-br ${action.gradient} rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300`}
                     >
-                      <action.icon className="h-6 w-6 text-white" />
+                      <IconComponent className="h-6 w-6 text-white" />
                     </div>
                     <p className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
                       {action.name}
@@ -587,7 +604,8 @@ const AttendeeDashboardContent = () => {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+            );
+            })}
           </div>
         </div>
 

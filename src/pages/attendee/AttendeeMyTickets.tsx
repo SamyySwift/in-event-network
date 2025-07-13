@@ -1058,6 +1058,5 @@ export default function AttendeeMyTickets() {
           />
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }

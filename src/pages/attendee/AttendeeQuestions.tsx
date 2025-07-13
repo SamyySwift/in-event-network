@@ -249,12 +249,12 @@ const AttendeeQuestions = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Choose a session (optional)" />
                   </SelectTrigger>
-                  <SelectContent className="bg-white dark:bg-gray-800 z-30">
-                    <SelectItem value="general">General Question</SelectItem>
+                  <SelectContent className="bg-white dark:bg-gray-800 z-30 p-1">
+                    <SelectItem value="general" className="py-2">General Question</SelectItem>
                     {sessions.map((session) => (
-                      <SelectItem key={session.id} value={session.id}>
+                      <SelectItem key={session.id} value={session.id} className="py-2">
                         <div className="flex flex-col">
-                          <span className="font-medium">
+                          <span className="font-medium text-sm">
                             {session.session_title ||
                               `${session.name}'s Session`}
                           </span>

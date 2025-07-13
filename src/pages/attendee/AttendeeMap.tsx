@@ -40,67 +40,73 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { useAttendeeFacilities } from "@/hooks/useAttendeeFacilities";
 import { useIsMobile } from "@/hooks/use-mobile";
+import FacilityIcon from "@/pages/admin/components/FacilityIcon";
 
-// Icon mapping for facility types
-const facilityIcons = {
-  building: Building,
-  wifi: Wifi,
-  parking: Car,
-  coffee: Coffee,
-  restaurant: Utensils,
-  conference: Users,
-  photography: Camera,
-  music: Music,
-  entertainment: Tv,
-  gaming: Gamepad2,
-  health: HeartPulse,
-  shopping: ShoppingBag,
-  restroom: Bath,
-  accommodation: Bed,
-};
-
-// Facility type colors for badges
+// Facility type colors for visual distinction - updated to match admin icon types
 const facilityTypeColors: Record<string, string> = {
-  restroom: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  coffee: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  restaurant:
-    "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  building:
-    "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-  parking:
-    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-  wifi: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  conference: "bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200",
-  photography:
-    "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
-  music: "bg-pink-100 text-pink-800 dark:bg-pink-900 dark:text-pink-200",
-  entertainment:
-    "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
-  gaming: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-  health: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-  shopping:
-    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-  accommodation:
-    "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  ambulance: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+  hospital: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+  car: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  "map-pin": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  building: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
+  coffee: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200",
+  shield: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  wifi: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+  phone: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  user: "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
+  bath: "bg-cyan-100 text-cyan-800 dark:bg-cyan-900 dark:text-cyan-200",
+  "chef-hat": "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+  utensils: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+  home: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  dumbbell: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+  music: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+  "gamepad-2": "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200",
+  archive: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
+  "archive-restore": "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
+  box: "bg-brown-100 text-brown-800 dark:bg-brown-900 dark:text-brown-200",
+  landmark: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+  warehouse: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
+  siren: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+  "alert-triangle": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+  presentation: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+  monitor: "bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-200",
+  sofa: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+  wine: "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+  "arrow-up": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
   other: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
 };
 
-// Facility type labels
+// Facility type labels - updated to match admin icon types
 const facilityTypeLabels: Record<string, string> = {
-  restroom: "Restroom",
-  coffee: "Coffee",
-  restaurant: "Restaurant",
+  ambulance: "Ambulance",
+  hospital: "Hospital", 
+  car: "Parking",
+  "map-pin": "Location",
   building: "Building",
-  parking: "Parking",
+  coffee: "Coffee",
+  shield: "Security",
   wifi: "WiFi",
-  conference: "Conference",
-  photography: "Photography",
+  phone: "Phone",
+  user: "Information",
+  bath: "Restroom",
+  "chef-hat": "Kitchen",
+  utensils: "Restaurant",
+  home: "Accommodation",
+  dumbbell: "Fitness",
   music: "Music",
-  entertainment: "Entertainment",
-  gaming: "Gaming",
-  health: "Health",
-  shopping: "Shopping",
-  accommodation: "Accommodation",
+  "gamepad-2": "Gaming",
+  archive: "Storage",
+  "archive-restore": "Archive",
+  box: "Storage",
+  landmark: "Landmark",
+  warehouse: "Warehouse",
+  siren: "Emergency",
+  "alert-triangle": "Warning",
+  presentation: "Conference",
+  monitor: "Technology",
+  sofa: "Lounge",
+  wine: "Bar",
+  "arrow-up": "Elevator",
   other: "Other",
 };
 
@@ -128,12 +134,6 @@ const AttendeeMap = () => {
   const facilityTypes = Array.from(
     new Set(facilities.map((f) => f.icon_type).filter(Boolean))
   );
-
-  const getFacilityIcon = (iconType?: string) => {
-    const IconComponent =
-      facilityIcons[iconType as keyof typeof facilityIcons] || Building;
-    return <IconComponent size={20} />;
-  };
 
   const getContactIcon = (contactType?: string) => {
     switch (contactType) {
@@ -336,7 +336,10 @@ const AttendeeMap = () => {
                               ).split(" ")[1]
                             }`}
                           >
-                            {getFacilityIcon(facility.icon_type)}
+                            <FacilityIcon 
+                              iconType={facility.icon_type} 
+                              className="h-5 w-5" 
+                            />
                           </div>
                           <div className="flex-1 min-w-0">
                             <h4 className="font-medium text-sm truncate">
@@ -407,7 +410,10 @@ const AttendeeMap = () => {
                                 ).split(" ")[1]
                               }`}
                             >
-                              {getFacilityIcon(facility.icon_type)}
+                              <FacilityIcon 
+                                iconType={facility.icon_type} 
+                                className="h-6 w-6" 
+                              />
                             </div>
                           )}
                           <div className="flex-1 min-w-0">

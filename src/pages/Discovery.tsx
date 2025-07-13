@@ -2,8 +2,10 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar, MapPin, Users, Clock, ExternalLink } from "lucide-react";
+import { Calendar, MapPin, Users, Clock, ExternalLink, Filter } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
@@ -22,6 +24,9 @@ interface Event {
 
 const Discovery = () => {
   const [events, setEvents] = useState<Event[]>([]);
+  const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
+  const [locations, setLocations] = useState<string[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<string>("all");
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -29,6 +34,10 @@ const Discovery = () => {
   useEffect(() => {
     fetchEvents();
   }, []);
+
+  useEffect(() => {
+    filterEventsByLocation();
+  }, [events, selectedLocation]);
 
   const fetchEvents = async () => {
     try {
@@ -46,6 +55,9 @@ const Discovery = () => {
         });
       } else {
         setEvents(data || []);
+        // Extract unique locations for filter
+        const uniqueLocations = [...new Set(data?.map(event => event.location).filter(Boolean) as string[])];
+        setLocations(uniqueLocations);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -56,6 +68,14 @@ const Discovery = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const filterEventsByLocation = () => {
+    if (selectedLocation === "all") {
+      setFilteredEvents(events);
+    } else {
+      setFilteredEvents(events.filter(event => event.location === selectedLocation));
     }
   };
 
@@ -73,18 +93,6 @@ const Discovery = () => {
       hour: "2-digit",
       minute: "2-digit",
     });
-  };
-
-  const handleJoinEvent = (eventKey: string | null) => {
-    if (eventKey) {
-      navigate(`/join/${eventKey}`);
-    } else {
-      toast({
-        title: "Event Not Available",
-        description: "This event doesn't have a join code available.",
-        variant: "destructive",
-      });
-    }
   };
 
   const handleBuyTickets = (eventKey: string | null) => {
@@ -148,20 +156,42 @@ const Discovery = () => {
               Discover Events
             </span>
           </h1>
-          <p className="text-xl text-white/60 max-w-3xl mx-auto">
+          <p className="text-xl text-white/60 max-w-3xl mx-auto mb-8">
             Find and join amazing events happening around you. Connect with like-minded people and expand your network.
           </p>
+          
+          {/* Filter Section */}
+          <div className="flex justify-center items-center gap-4 max-w-md mx-auto">
+            <Filter className="h-5 w-5 text-cyan-400" />
+            <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+              <SelectTrigger className="bg-black/40 border-white/20 text-white">
+                <SelectValue placeholder="Filter by location" />
+              </SelectTrigger>
+              <SelectContent className="bg-black/90 border-white/20">
+                <SelectItem value="all" className="text-white">All Locations</SelectItem>
+                {locations.map((location) => (
+                  <SelectItem key={location} value={location} className="text-white">
+                    {location}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
-        {events.length === 0 ? (
+        {filteredEvents.length === 0 ? (
           <div className="text-center py-12">
             <Calendar className="h-16 w-16 text-white/30 mx-auto mb-4" />
-            <h3 className="text-2xl font-semibold text-white/80 mb-2">No Events Available</h3>
-            <p className="text-white/60">Check back later for upcoming events.</p>
+            <h3 className="text-2xl font-semibold text-white/80 mb-2">
+              {events.length === 0 ? "No Events Available" : "No Events Found"}
+            </h3>
+            <p className="text-white/60">
+              {events.length === 0 ? "Check back later for upcoming events." : "Try selecting a different location."}
+            </p>
           </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events.map((event) => (
+            {filteredEvents.map((event) => (
               <Card key={event.id} className="bg-black/40 backdrop-blur-xl border border-white/20 hover:border-white/40 transition-all duration-300 transform hover:scale-105">
                 {event.banner_url && (
                   <div className="aspect-video w-full overflow-hidden rounded-t-lg">
@@ -214,13 +244,6 @@ const Discovery = () => {
                   </div>
 
                   <div className="flex flex-col gap-2 pt-4">
-                    <Button
-                      onClick={() => handleJoinEvent(event.event_key)}
-                      className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white"
-                    >
-                      <Users className="h-4 w-4 mr-2" />
-                      Join Event
-                    </Button>
                     <Button
                       onClick={() => handleBuyTickets(event.event_key)}
                       className="w-full bg-white/10 hover:bg-white/20 text-white border border-white/50 hover:border-white/70 backdrop-blur-sm"

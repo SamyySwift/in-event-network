@@ -25,9 +25,17 @@ interface Event {
 const Discovery = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
-  const [locations, setLocations] = useState<string[]>([]);
-  const [selectedLocation, setSelectedLocation] = useState<string>("all");
+  const [selectedLocation, setSelectedLocation] = useState<string>("Abuja");
   const [loading, setLoading] = useState(true);
+  
+  // Nigerian states
+  const nigerianStates = [
+    "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno", 
+    "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "Gombe", "Imo", "Jigawa", 
+    "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi", "Kwara", "Lagos", "Nasarawa", "Niger", 
+    "Ogun", "Ondo", "Osun", "Oyo", "Plateau", "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara",
+    "Abuja" // FCT
+  ];
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -55,9 +63,6 @@ const Discovery = () => {
         });
       } else {
         setEvents(data || []);
-        // Extract unique locations for filter
-        const uniqueLocations = [...new Set(data?.map(event => event.location).filter(Boolean) as string[])];
-        setLocations(uniqueLocations);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -72,10 +77,12 @@ const Discovery = () => {
   };
 
   const filterEventsByLocation = () => {
-    if (selectedLocation === "all") {
+    if (selectedLocation === "All States") {
       setFilteredEvents(events);
     } else {
-      setFilteredEvents(events.filter(event => event.location === selectedLocation));
+      setFilteredEvents(events.filter(event => 
+        event.location?.toLowerCase().includes(selectedLocation.toLowerCase())
+      ));
     }
   };
 
@@ -165,13 +172,13 @@ const Discovery = () => {
             <Filter className="h-5 w-5 text-cyan-400" />
             <Select value={selectedLocation} onValueChange={setSelectedLocation}>
               <SelectTrigger className="bg-black/40 border-white/20 text-white">
-                <SelectValue placeholder="Filter by location" />
+                <SelectValue placeholder="Filter by state" />
               </SelectTrigger>
               <SelectContent className="bg-black/90 border-white/20">
-                <SelectItem value="all" className="text-white">All Locations</SelectItem>
-                {locations.map((location) => (
-                  <SelectItem key={location} value={location} className="text-white">
-                    {location}
+                <SelectItem value="All States" className="text-white">All States</SelectItem>
+                {nigerianStates.map((state) => (
+                  <SelectItem key={state} value={state} className="text-white">
+                    {state}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -186,7 +193,7 @@ const Discovery = () => {
               {events.length === 0 ? "No Events Available" : "No Events Found"}
             </h3>
             <p className="text-white/60">
-              {events.length === 0 ? "Check back later for upcoming events." : "Try selecting a different location."}
+              {events.length === 0 ? "Check back later for upcoming events." : `Try selecting a different state or "All States".`}
             </p>
           </div>
         ) : (

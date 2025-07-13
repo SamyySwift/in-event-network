@@ -329,6 +329,42 @@ export default function AttendeeMyTickets() {
     },
   });
 
+  // Delete ticket mutation
+  const deleteTicketMutation = useMutation({
+    mutationFn: async (ticketId: string) => {
+      const { error } = await supabase
+        .from("event_tickets")
+        .delete()
+        .eq("id", ticketId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Ticket deleted",
+        description: "The ticket has been successfully removed.",
+      });
+      
+      // Refetch tickets
+      queryClient.invalidateQueries({ queryKey: ["my-tickets"] });
+    },
+    onError: (error) => {
+      console.error("Delete error:", error);
+      toast({
+        title: "Error deleting ticket",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Handle delete ticket
+  const handleDeleteTicket = (ticketId: string) => {
+    if (window.confirm("Are you sure you want to delete this ticket? This action cannot be undone.")) {
+      deleteTicketMutation.mutate(ticketId);
+    }
+  };
+
   const handleQuantityChange = (ticketTypeId: string, quantity: number) => {
     setSelectedTickets((prev) => ({
       ...prev,

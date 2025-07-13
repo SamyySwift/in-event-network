@@ -52,6 +52,7 @@ const Discovery = () => {
       const { data, error } = await supabase
         .from("events")
         .select("*")
+        .gt("end_time", new Date().toISOString())
         .order("start_time", { ascending: true });
 
       if (error) {

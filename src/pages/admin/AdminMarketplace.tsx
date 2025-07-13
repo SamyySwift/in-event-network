@@ -110,6 +110,11 @@ const AdminMarketplaceContent = () => {
     );
   }
 
+  // Debug info - remove this after testing
+  console.log('Selected Event:', selectedEvent);
+  console.log('Sponsors data:', sponsors);
+  console.log('Is loading:', isLoadingSponsors);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">

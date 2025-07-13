@@ -221,7 +221,7 @@ const AttendeeDashboardContent = () => {
           <div className="absolute -top-8 -left-8 w-24 h-24 bg-white/5 rounded-full z-0"></div>
         </div>
 
-        {/* Event Card - Show current event details */}
+        {/* Event Card - Enhanced single event display */}
         {(currentEvent || upcomingEvents?.[0]) && (
           <div className="mb-8">
             <EventCard 
@@ -231,156 +231,20 @@ const AttendeeDashboardContent = () => {
           </div>
         )}
 
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
-          {/* Current/Next Event Card */}
+        {/* Enhanced Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* Featured Session Card */}
           <div className="lg:col-span-2">
             <Card className="border-0 shadow-xl bg-white backdrop-blur-sm overflow-hidden group hover:shadow-2xl transition-all duration-300 relative z-10">
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-50/90 to-indigo-50/90 z-0"></div>
-              <CardHeader className="relative z-20 pb-4 bg-white/50 backdrop-blur-sm">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    {currentEvent ? (
-                      <>
-                        <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center">
-                          <Wifi className="h-6 w-6 text-white" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-2xl">Live Event</CardTitle>
-                          <CardDescription>You're attending now</CardDescription>
-                        </div>
-                      </>
-                    ) : (
-                      <>
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                          <Calendar className="h-6 w-6 text-white" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-2xl">Next Event</CardTitle>
-                          <CardDescription>Coming up next</CardDescription>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                  <Badge
-                    className={`${
-                      currentEvent ? "bg-green-500" : "bg-blue-500"
-                    } text-white border-0 z-10`}
-                  >
-                    {currentEvent ? "LIVE" : "UPCOMING"}
-                  </Badge>
-                </div>
-              </CardHeader>
-
-              <CardContent className="relative z-20 pb-6 bg-white/80 backdrop-blur-sm">
-                {currentEvent || upcomingEvents?.[0] ? (
-                  <>
-                    <h3 className="text-2xl font-bold mb-4 text-gray-900">
-                      {(currentEvent || upcomingEvents?.[0])?.name}
-                    </h3>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-3 text-gray-700">
-                        <Clock className="h-5 w-5 text-indigo-500" />
-                        <span className="font-medium">
-                          {currentEvent
-                            ? `Started: ${formatTime(
-                                currentEvent.start_time
-                              )} - Ends: ${formatTime(currentEvent.end_time)}`
-                            : `Starts: ${formatDate(
-                                upcomingEvents[0].start_time
-                              )}`}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3 text-gray-700">
-                        <MapPin className="h-5 w-5 text-indigo-500" />
-                        <span className="font-medium">
-                          {(currentEvent || upcomingEvents?.[0])?.location ||
-                            "Online Event"}
-                        </span>
-                      </div>
-                      {(currentEvent || upcomingEvents?.[0])?.description && (
-                        <p className="text-gray-600 mt-4 leading-relaxed">
-                          {(currentEvent || upcomingEvents?.[0])?.description}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Show additional upcoming events */}
-                    {!currentEvent && upcomingEvents.length > 1 && (
-                      <div className="mt-6 pt-4 border-t border-gray-200">
-                        <h4 className="text-sm font-semibold text-gray-900 mb-3">
-                          Other Upcoming Events
-                        </h4>
-                        <div className="space-y-2">
-                          {upcomingEvents.slice(1, 3).map((event) => (
-                            <div
-                              key={event.id}
-                              className="flex items-center justify-between p-2 bg-gray-50 rounded-lg"
-                            >
-                              <div>
-                                <p className="text-sm font-medium text-gray-900">
-                                  {event.name}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                  {formatDate(event.start_time)}
-                                </p>
-                              </div>
-                              <Badge variant="outline" className="text-xs">
-                                {event.location || "Online"}
-                              </Badge>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="text-center py-8">
-                    <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      No Events Scheduled
-                    </h3>
-                    <p className="text-gray-500">
-                      Check back later for upcoming events
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-
-              {(currentEvent || upcomingEvents?.[0]) && (
-                <CardFooter className="relative z-20 flex flex-col sm:flex-row gap-3 bg-white/90 backdrop-blur-sm">
-                  <Button
-                    variant="outline"
-                    onClick={() => navigate("/attendee/map")}
-                    className="flex-1 w-full sm:w-auto"
-                  >
-                    <MapPin className="mr-2 h-4 w-4" />
-                    <span className="truncate">Find Your Way</span>
-                  </Button>
-                  <Button
-                    onClick={() => navigate("/attendee/schedule")}
-                    className="flex-1 w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
-                  >
-                    <Calendar className="mr-2 h-4 w-4" />
-                    <span className="truncate">View Schedule</span>
-                  </Button>
-                </CardFooter>
-              )}
-            </Card>
-          </div>
-
-          {/* Next Session Card */}
-          <div>
-            <Card className="border-0 shadow-xl bg-white backdrop-blur-sm overflow-hidden group hover:shadow-2xl transition-all duration-300 relative z-10">
-              <div className="absolute inset-0 bg-gradient-to-br from-yellow-50/90 to-orange-50/90 z-0"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-50/90 to-yellow-50/90 z-0"></div>
               <CardHeader className="relative z-20 pb-4 bg-white/50 backdrop-blur-sm">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-600 rounded-xl flex items-center justify-center">
-                    <Star className="h-6 w-6 text-white" />
+                  <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-yellow-600 rounded-xl flex items-center justify-center">
+                    <Star className="h-7 w-7 text-white" />
                   </div>
                   <div>
-                    <CardTitle className="text-xl">Event Schedule</CardTitle>
-                    <CardDescription>Upcoming activities</CardDescription>
+                    <CardTitle className="text-2xl">Featured Session</CardTitle>
+                    <CardDescription className="text-base">What's happening next at the event</CardDescription>
                   </div>
                 </div>
               </CardHeader>

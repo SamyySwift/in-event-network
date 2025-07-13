@@ -222,9 +222,8 @@ const Discovery = () => {
                       Join Event
                     </Button>
                     <Button
-                      variant="outline"
                       onClick={() => handleBuyTickets(event.event_key)}
-                      className="w-full border-white/30 text-white hover:bg-white/10"
+                      className="w-full bg-white/10 hover:bg-white/20 text-white border border-white/50 hover:border-white/70 backdrop-blur-sm"
                     >
                       Buy Tickets
                     </Button>

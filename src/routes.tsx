@@ -419,10 +419,10 @@ export const router = createBrowserRouter([
     ),
   },
 
-  // Catch all route
+  // Catch all route - redirect to landing instead of 404
   {
     path: "*",
-    element: <NotFound />,
+    element: <Navigate to="/" replace />,
   },
   // Add these routes in the admin routes section
   {

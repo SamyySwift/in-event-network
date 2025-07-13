@@ -24,8 +24,17 @@ const ScanQR = () => {
       let accessCode = '';
       let eventId = '';
   
+      // Check if it's a /join/ URL format
+      if (decodedText.includes('/join/')) {
+        const url = new URL(decodedText);
+        const pathParts = url.pathname.split('/');
+        const joinIndex = pathParts.indexOf('join');
+        if (joinIndex !== -1 && pathParts[joinIndex + 1]) {
+          accessCode = pathParts[joinIndex + 1];
+        }
+      }
       // Check if it's a URL with access code parameter
-      if (decodedText.includes('code=')) {
+      else if (decodedText.includes('code=')) {
         const url = new URL(decodedText);
         accessCode = url.searchParams.get('code') || '';
       }
@@ -58,7 +67,7 @@ const ScanQR = () => {
   
             // Navigate to dashboard after a short delay
             setTimeout(() => {
-              navigate('/attendee/dashboard', { replace: true });
+              navigate('/attendee', { replace: true });
             }, 2000);
           },
           onError: (error: any) => {

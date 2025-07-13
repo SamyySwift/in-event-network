@@ -185,7 +185,7 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
               <div id="qr-canvas" className="w-full flex justify-center">
                 <QRCodeGenerator
                   eventName={eventName}
-                  eventUrl={`${window.location.origin}/register?code=${userProfile.access_key}`}
+                  eventUrl={`${window.location.origin}/join/${userProfile.access_key}`}
                 />
               </div>
             ) : (

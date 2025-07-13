@@ -107,7 +107,7 @@ const Register = () => {
                 data?.event_name || "event"
               } successfully!`,
             });
-            navigate("/attendee/dashboard", { replace: true });
+            navigate("/attendee", { replace: true });
           },
           onError: (error: any) => {
             console.error("Failed to join event after registration:", error);
@@ -118,7 +118,7 @@ const Register = () => {
                 "Your account was created, but we couldn't join the event. Please scan the QR code again.",
               variant: "destructive",
             });
-            navigate("/attendee/dashboard", { replace: true });
+            navigate("/attendee", { replace: true });
           },
         });
       } else {

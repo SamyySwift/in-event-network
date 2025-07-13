@@ -11,6 +11,7 @@ import NotFound from "@/pages/NotFound";
 import ScanQR from "@/pages/ScanQR";
 import VendorForm from "./pages/VendorForm";
 import BuyTickets from "@/pages/BuyTickets";
+import JoinEvent from "@/pages/JoinEvent";
 
 // Admin Pages
 import AdminLayout from "@/components/layouts/AdminLayout";
@@ -150,6 +151,14 @@ export const router = createBrowserRouter([
   {
     path: "/buy",
     element: <BuyTickets />,
+  },
+  {
+    path: "/join/:code",
+    element: <JoinEvent />,
+  },
+  {
+    path: "/join",
+    element: <JoinEvent />,
   },
 
   // Admin Routes

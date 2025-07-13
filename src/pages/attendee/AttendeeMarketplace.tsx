@@ -3,8 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Phone, MessageCircle, Instagram, ExternalLink, Store } from 'lucide-react';
+import { Search, Phone, MessageCircle, Instagram, ExternalLink, Store, Building, Globe, Mail, Heart } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAttendeeSponsors } from '@/hooks/useAttendeeSponsors';
 
 interface VendorSubmission {
   id: string;
@@ -30,8 +31,12 @@ interface VendorForm {
 const AttendeeMarketplaceContent = () => {
   const [vendors, setVendors] = useState<VendorSubmission[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'sponsors' | 'vendors'>('sponsors');
   const { toast } = useToast();
+  
+  // Get sponsors from database
+  const { sponsors, isLoading: isLoadingSponsors } = useAttendeeSponsors();
+  const [isLoadingVendors, setIsLoadingVendors] = useState(true);
 
   useEffect(() => {
     loadVendorSubmissions();
@@ -66,7 +71,7 @@ const AttendeeMarketplaceContent = () => {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setIsLoadingVendors(false);
     }
   };
 
@@ -74,6 +79,11 @@ const AttendeeMarketplaceContent = () => {
     const businessName = vendor.responses['Business Name'] || vendor.responses['business_name'] || '';
     const description = vendor.responses['Product/Service Description'] || vendor.responses['description'] || '';
     const searchText = `${businessName} ${description}`.toLowerCase();
+    return searchText.includes(searchTerm.toLowerCase());
+  });
+
+  const filteredSponsors = sponsors.filter(sponsor => {
+    const searchText = `${sponsor.organization_name} ${sponsor.description || ''} ${sponsor.sponsorship_type}`.toLowerCase();
     return searchText.includes(searchTerm.toLowerCase());
   });
 
@@ -127,7 +137,10 @@ const AttendeeMarketplaceContent = () => {
     };
   };
 
-  if (loading) {
+  const isLoading = activeTab === 'sponsors' ? isLoadingSponsors : isLoadingVendors;
+  const currentItems = activeTab === 'sponsors' ? filteredSponsors : filteredVendors;
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
@@ -145,96 +158,198 @@ const AttendeeMarketplaceContent = () => {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Marketplace</h1>
           <p className="text-muted-foreground">
-            Discover and connect with event vendors
+            Discover sponsors, partners and vendors for this event
           </p>
         </div>
         <Badge variant="secondary" className="w-fit">
-          {filteredVendors.length} {filteredVendors.length === 1 ? 'Vendor' : 'Vendors'}
+          {currentItems.length} {activeTab === 'sponsors' ? 
+            (currentItems.length === 1 ? 'Sponsor' : 'Sponsors') : 
+            (currentItems.length === 1 ? 'Vendor' : 'Vendors')
+          }
         </Badge>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex gap-2 border-b">
+        <Button
+          variant={activeTab === 'sponsors' ? 'default' : 'ghost'}
+          onClick={() => setActiveTab('sponsors')}
+          className="rounded-b-none"
+        >
+          <Building className="h-4 w-4 mr-2" />
+          Sponsors & Partners ({filteredSponsors.length})
+        </Button>
+        <Button
+          variant={activeTab === 'vendors' ? 'default' : 'ghost'}
+          onClick={() => setActiveTab('vendors')}
+          className="rounded-b-none"
+        >
+          <Store className="h-4 w-4 mr-2" />
+          Vendors ({filteredVendors.length})
+        </Button>
       </div>
 
       {/* Search */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
         <Input
-          placeholder="Search vendors by business name or service..."
+          placeholder={activeTab === 'sponsors' ? 
+            "Search sponsors by organization or service..." : 
+            "Search vendors by business name or service..."
+          }
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="pl-10"
         />
       </div>
 
-      {/* Vendors Grid */}
-      {filteredVendors.length === 0 ? (
+      {/* Content Grid */}
+      {currentItems.length === 0 ? (
         <div className="text-center py-12">
-          <Store className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          {activeTab === 'sponsors' ? (
+            <Building className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          ) : (
+            <Store className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          )}
           <h3 className="text-lg font-medium mb-2">
-            {searchTerm ? 'No vendors found' : 'No vendors available'}
+            {searchTerm ? 
+              `No ${activeTab} found` : 
+              `No ${activeTab} available`
+            }
           </h3>
           <p className="text-muted-foreground">
             {searchTerm 
               ? 'Try adjusting your search terms'
-              : 'Check back later for vendor listings'}
+              : `Check back later for ${activeTab} listings`}
           </p>
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {filteredVendors.map((vendor) => {
-            const vendorInfo = getVendorInfo(vendor);
-            return (
-              <Card key={vendor.id} className="hover:shadow-lg transition-shadow">
+          {activeTab === 'sponsors' ? (
+            filteredSponsors.map((sponsor) => (
+              <Card key={sponsor.id} className="hover:shadow-lg transition-shadow">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Store className="h-5 w-5 text-primary" />
-                    {vendorInfo.businessName}
+                    <Building className="h-5 w-5 text-primary" />
+                    {sponsor.organization_name}
                   </CardTitle>
                   <CardDescription className="line-clamp-3">
-                    {vendorInfo.description}
+                    {sponsor.description || 'Partner organization for this event'}
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="text-xs">
+                      {sponsor.sponsorship_type}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs text-green-600 border-green-600">
+                      <Heart className="h-3 w-3 mr-1" />
+                      Partner
+                    </Badge>
+                  </div>
+                  
                   <div className="flex flex-wrap gap-2">
-                    {vendorInfo.phone && (
+                    {sponsor.email && (
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleCall(vendorInfo.phone)}
+                        onClick={() => window.open(`mailto:${sponsor.email}`)}
+                        className="flex items-center gap-1"
+                      >
+                        <Mail className="h-3 w-3" />
+                        Email
+                      </Button>
+                    )}
+                    {sponsor.phone_number && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleCall(sponsor.phone_number)}
                         className="flex items-center gap-1"
                       >
                         <Phone className="h-3 w-3" />
                         Call
                       </Button>
                     )}
-                    {vendorInfo.whatsapp && (
+                    {sponsor.website_link && (
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => handleWhatsApp(vendorInfo.whatsapp)}
-                        className="flex items-center gap-1 text-green-600 border-green-600 hover:bg-green-50"
+                        onClick={() => window.open(sponsor.website_link, '_blank')}
+                        className="flex items-center gap-1"
                       >
-                        <MessageCircle className="h-3 w-3" />
-                        WhatsApp
-                      </Button>
-                    )}
-                    {vendorInfo.instagram && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleInstagram(vendorInfo.instagram)}
-                        className="flex items-center gap-1 text-pink-600 border-pink-600 hover:bg-pink-50"
-                      >
-                        <Instagram className="h-3 w-3" />
-                        Instagram
+                        <Globe className="h-3 w-3" />
+                        Website
                       </Button>
                     )}
                   </div>
-                  <div className="mt-3 text-xs text-muted-foreground">
-                    Listed {new Date(vendor.submittedAt).toLocaleDateString()}
-                  </div>
+                  
+                  {sponsor.contact_person_name && (
+                    <div className="text-sm text-muted-foreground">
+                      Contact: {sponsor.contact_person_name}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
-            );
-          })}
+            ))
+          ) : (
+            filteredVendors.map((vendor) => {
+              const vendorInfo = getVendorInfo(vendor);
+              return (
+                <Card key={vendor.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Store className="h-5 w-5 text-primary" />
+                      {vendorInfo.businessName}
+                    </CardTitle>
+                    <CardDescription className="line-clamp-3">
+                      {vendorInfo.description}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {vendorInfo.phone && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleCall(vendorInfo.phone)}
+                          className="flex items-center gap-1"
+                        >
+                          <Phone className="h-3 w-3" />
+                          Call
+                        </Button>
+                      )}
+                      {vendorInfo.whatsapp && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleWhatsApp(vendorInfo.whatsapp)}
+                          className="flex items-center gap-1 text-green-600 border-green-600 hover:bg-green-50"
+                        >
+                          <MessageCircle className="h-3 w-3" />
+                          WhatsApp
+                        </Button>
+                      )}
+                      {vendorInfo.instagram && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleInstagram(vendorInfo.instagram)}
+                          className="flex items-center gap-1 text-pink-600 border-pink-600 hover:bg-pink-50"
+                        >
+                          <Instagram className="h-3 w-3" />
+                          Instagram
+                        </Button>
+                      )}
+                    </div>
+                    <div className="mt-3 text-xs text-muted-foreground">
+                      Listed {new Date(vendor.submittedAt).toLocaleDateString()}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })
+          )}
         </div>
       )}
     </div>

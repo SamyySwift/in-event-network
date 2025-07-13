@@ -30,6 +30,7 @@ import AdminNotifications from "@/pages/admin/AdminNotifications";
 import AdminProfile from "@/pages/admin/AdminProfile";
 import AdminSponsors from "@/pages/admin/AdminSponsors";
 import AdminVendorHub from "@/pages/admin/AdminVendorHub";
+import AdminMarketplace from "@/pages/admin/AdminMarketplace";
 import SponsorForm from "@/pages/SponsorForm";
 
 // Attendee Pages
@@ -281,6 +282,14 @@ export const router = createBrowserRouter([
     element: (
       <AdminRoute>
         <AdminVendorHub />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/admin/marketplace",
+    element: (
+      <AdminRoute>
+        <AdminMarketplace />
       </AdminRoute>
     ),
   },

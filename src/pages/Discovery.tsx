@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Calendar, MapPin, Users, Clock, ExternalLink, Filter } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { EventDetailModal } from "@/components/events/EventDetailModal";
 
 interface Event {
   id: string;
@@ -27,6 +28,9 @@ const Discovery = () => {
   const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
   const [selectedLocation, setSelectedLocation] = useState<string>("Abuja");
   const [loading, setLoading] = useState(true);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [attendeeCounts, setAttendeeCounts] = useState<Record<string, number>>({});
   
   // Nigerian states
   const nigerianStates = [
@@ -46,6 +50,12 @@ const Discovery = () => {
   useEffect(() => {
     filterEventsByLocation();
   }, [events, selectedLocation]);
+
+  useEffect(() => {
+    if (events.length > 0) {
+      fetchAttendeeCounts();
+    }
+  }, [events]);
 
   const fetchEvents = async () => {
     try {
@@ -78,10 +88,15 @@ const Discovery = () => {
   };
 
   const filterEventsByLocation = () => {
+    // Only show events that have at least one image (banner_url or logo_url)
+    const eventsWithImages = events.filter(event => 
+      event.banner_url || event.logo_url
+    );
+    
     if (selectedLocation === "All States") {
-      setFilteredEvents(events);
+      setFilteredEvents(eventsWithImages);
     } else {
-      setFilteredEvents(events.filter(event => 
+      setFilteredEvents(eventsWithImages.filter(event => 
         event.location?.toLowerCase().includes(selectedLocation.toLowerCase())
       ));
     }
@@ -103,6 +118,28 @@ const Discovery = () => {
     });
   };
 
+  const fetchAttendeeCounts = async () => {
+    const counts: Record<string, number> = {};
+    
+    for (const event of events) {
+      try {
+        const { count, error } = await supabase
+          .from("event_tickets")
+          .select("*", { count: "exact", head: true })
+          .eq("event_id", event.id)
+          .eq("payment_status", "completed");
+
+        if (!error) {
+          counts[event.id] = count || 0;
+        }
+      } catch (error) {
+        console.error("Error fetching attendee count for event:", event.id, error);
+      }
+    }
+    
+    setAttendeeCounts(counts);
+  };
+
   const handleBuyTickets = (eventKey: string | null) => {
     if (eventKey) {
       navigate(`/buy-tickets/${eventKey}`);
@@ -113,6 +150,11 @@ const Discovery = () => {
         variant: "destructive",
       });
     }
+  };
+
+  const handleEventClick = (event: Event) => {
+    setSelectedEvent(event);
+    setModalOpen(true);
   };
 
   if (loading) {
@@ -200,7 +242,11 @@ const Discovery = () => {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredEvents.map((event) => (
-              <Card key={event.id} className="bg-black/40 backdrop-blur-xl border border-white/20 hover:border-white/40 transition-all duration-300 transform hover:scale-105">
+              <Card 
+                key={event.id} 
+                className="bg-black/40 backdrop-blur-xl border border-white/20 hover:border-white/40 transition-all duration-300 transform hover:scale-105 cursor-pointer"
+                onClick={() => handleEventClick(event)}
+              >
                 {event.banner_url && (
                   <div className="aspect-video w-full overflow-hidden rounded-t-lg">
                     <img
@@ -249,11 +295,19 @@ const Discovery = () => {
                         <span className="line-clamp-1">{event.location}</span>
                       </div>
                     )}
+                    {/* Attendee Count */}
+                    <div className="flex items-center text-sm text-white/80">
+                      <Users className="h-4 w-4 mr-2 text-yellow-400" />
+                      <span>{attendeeCounts[event.id] || 0} attending</span>
+                    </div>
                   </div>
 
                   <div className="flex flex-col gap-2 pt-4">
                     <Button
-                      onClick={() => handleBuyTickets(event.event_key)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleBuyTickets(event.event_key);
+                      }}
                       className="w-full bg-white/10 hover:bg-white/20 text-white border border-white/50 hover:border-white/70 backdrop-blur-sm"
                     >
                       Buy Tickets
@@ -261,7 +315,10 @@ const Discovery = () => {
                     {event.website && (
                       <Button
                         variant="ghost"
-                        onClick={() => window.open(event.website!, "_blank")}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          window.open(event.website!, "_blank");
+                        }}
                         className="w-full text-white/80 hover:text-white hover:bg-white/10"
                       >
                         <ExternalLink className="h-4 w-4 mr-2" />
@@ -274,6 +331,13 @@ const Discovery = () => {
             ))}
           </div>
         )}
+
+        {/* Event Detail Modal */}
+        <EventDetailModal
+          event={selectedEvent}
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+        />
       </main>
     </div>
   );

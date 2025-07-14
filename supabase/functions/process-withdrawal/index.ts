@@ -31,7 +31,7 @@ serve(async (req) => {
     }
 
     const { action, ...payload } = await req.json()
-    const paystackSecretKey = Deno.env.get('PAYSTACK_TEST_SECRET') || Deno.env.get('PAYSTACK_LIVE_SECRET')
+    const paystackSecretKey = Deno.env.get('PAYSTACK_LIVE_SECRET')
     
     if (!paystackSecretKey) {
       throw new Error('Paystack secret key not configured')

@@ -1,11 +1,7 @@
-
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import { Network, Instagram, Mail } from "lucide-react";
 
 const LandingFooter: React.FC = () => {
-  const navigate = useNavigate();
-
   // Smooth scroll function
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -55,12 +51,12 @@ const LandingFooter: React.FC = () => {
                 </button>
               </li>
               <li>
-                <button
-                  onClick={() => navigate("/guide")}
-                  className="text-white/60 hover:text-cyan-400 transition-colors text-left"
+                <a
+                  href="/guide"
+                  className="text-white/60 hover:text-cyan-400 transition-colors"
                 >
                   Guide
-                </button>
+                </a>
               </li>
             </ul>
           </div>
@@ -69,20 +65,20 @@ const LandingFooter: React.FC = () => {
             <h3 className="font-semibold text-lg mb-4 text-white">Legal</h3>
             <ul className="space-y-2">
               <li>
-                <button
-                  onClick={() => navigate("/privacy")}
-                  className="text-white/60 hover:text-cyan-400 transition-colors text-left"
+                <a
+                  href="/privacy"
+                  className="text-white/60 hover:text-cyan-400 transition-colors"
                 >
                   Data Privacy
-                </button>
+                </a>
               </li>
               <li>
-                <button
-                  onClick={() => navigate("/terms")}
-                  className="text-white/60 hover:text-cyan-400 transition-colors text-left"
+                <a
+                  href="/terms"
+                  className="text-white/60 hover:text-cyan-400 transition-colors"
                 >
                   Terms of Service
-                </button>
+                </a>
               </li>
             </ul>
           </div>

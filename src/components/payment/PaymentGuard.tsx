@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Lock, CreditCard, Sparkles } from 'lucide-react';
@@ -20,7 +19,6 @@ const PaymentGuard: React.FC<PaymentGuardProps> = ({
   children,
   feature = "this feature"
 }) => {
-  const navigate = useNavigate();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const { isEventPaid, isLoadingPayments } = usePayment();
 
@@ -75,7 +73,7 @@ const PaymentGuard: React.FC<PaymentGuardProps> = ({
         eventName={eventName}
         onPaymentSuccess={() => {
           // Refresh the page or trigger a re-render
-          navigate(0); // Refresh current route without full page reload
+          window.location.reload();
         }}
       />
     </>

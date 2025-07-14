@@ -1,5 +1,4 @@
-
-import { createContext, useContext, useCallback, ReactNode, useEffect, useState } from 'react';
+import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
 
 // Define the shape of form data that can be persisted
 interface FormData {
@@ -11,7 +10,6 @@ interface AdminFormPersistenceContextType {
   setFormData: (formKey: string, data: FormData) => void;
   clearFormData: (formKey: string) => void;
   hasFormData: (formKey: string) => boolean;
-  clearAllFormData: () => void;
 }
 
 const AdminFormPersistenceContext = createContext<AdminFormPersistenceContextType | undefined>(undefined);
@@ -25,76 +23,36 @@ export const useAdminFormPersistence = () => {
 };
 
 export const AdminFormPersistenceProvider = ({ children }: { children: ReactNode }) => {
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  // Hydrate from localStorage on mount
-  useEffect(() => {
-    setIsHydrated(true);
-  }, []);
+  const [formStorage, setFormStorage] = useState<Record<string, FormData>>({});
 
   const getFormData = useCallback((formKey: string): FormData | null => {
-    if (!isHydrated) return null;
-    try {
-      const saved = localStorage.getItem(`admin_form_${formKey}`);
-      return saved ? JSON.parse(saved) : null;
-    } catch (error) {
-      console.error('Error reading form data from localStorage:', error);
-      return null;
-    }
-  }, [isHydrated]);
+    return formStorage[formKey] || null;
+  }, [formStorage]);
 
   const setFormData = useCallback((formKey: string, data: FormData) => {
-    if (!isHydrated) return;
-    try {
-      localStorage.setItem(`admin_form_${formKey}`, JSON.stringify(data));
-      console.log(`Auto-saved form data for: ${formKey}`);
-    } catch (error) {
-      console.error('Error saving form data to localStorage:', error);
-    }
-  }, [isHydrated]);
+    setFormStorage(prev => ({
+      ...prev,
+      [formKey]: data
+    }));
+  }, []);
 
   const clearFormData = useCallback((formKey: string) => {
-    if (!isHydrated) return;
-    try {
-      localStorage.removeItem(`admin_form_${formKey}`);
-      console.log(`Cleared form data for: ${formKey}`);
-    } catch (error) {
-      console.error('Error clearing form data from localStorage:', error);
-    }
-  }, [isHydrated]);
+    setFormStorage(prev => {
+      const newStorage = { ...prev };
+      delete newStorage[formKey];
+      return newStorage;
+    });
+  }, []);
 
   const hasFormData = useCallback((formKey: string): boolean => {
-    if (!isHydrated) return false;
-    try {
-      const saved = localStorage.getItem(`admin_form_${formKey}`);
-      return saved !== null && saved !== 'null';
-    } catch (error) {
-      console.error('Error checking form data in localStorage:', error);
-      return false;
-    }
-  }, [isHydrated]);
-
-  const clearAllFormData = useCallback(() => {
-    if (!isHydrated) return;
-    try {
-      const keys = Object.keys(localStorage);
-      keys.forEach(key => {
-        if (key.startsWith('admin_form_')) {
-          localStorage.removeItem(key);
-        }
-      });
-      console.log('Cleared all admin form data');
-    } catch (error) {
-      console.error('Error clearing all form data:', error);
-    }
-  }, [isHydrated]);
+    return Boolean(formStorage[formKey]);
+  }, [formStorage]);
 
   const value = {
     getFormData,
     setFormData,
     clearFormData,
     hasFormData,
-    clearAllFormData,
   };
 
   return (

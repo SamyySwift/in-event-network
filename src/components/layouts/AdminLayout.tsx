@@ -67,26 +67,6 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Debug page refresh issues
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      console.log("Page is about to refresh/navigate away from:", location.pathname);
-      console.log("Event:", e);
-    };
-
-    const handleUnload = () => {
-      console.log("Page is refreshing/unloading from:", location.pathname);
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('unload', handleUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('unload', handleUnload);
-    };
-  }, [location.pathname]);
-
   // Toggle theme functionality
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
@@ -108,13 +88,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       <Breadcrumb className="mb-6">
         <BreadcrumbList>
           <BreadcrumbItem>
-            <button 
-              onClick={() => navigate("/admin")}
-              className="flex items-center text-primary hover:text-primary-600 transition-colors"
-            >
-              <BarChart4 size={16} className="mr-1" />
-              Dashboard
-            </button>
+            <BreadcrumbLink href="/admin">
+              <span className="flex items-center text-primary hover:text-primary-600 transition-colors">
+                <BarChart4 size={16} className="mr-1" />
+                Dashboard
+              </span>
+            </BreadcrumbLink>
           </BreadcrumbItem>
           {pathnames.slice(1).map((name, index) => {
             const routeTo = `/${pathnames.slice(0, index + 2).join("/")}`;
@@ -128,12 +107,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                       {name.charAt(0).toUpperCase() + name.slice(1)}
                     </BreadcrumbPage>
                   ) : (
-                    <button
-                      onClick={() => navigate(routeTo)}
+                    <BreadcrumbLink
+                      href={routeTo}
                       className="text-primary hover:text-primary-600 transition-colors"
                     >
                       {name.charAt(0).toUpperCase() + name.slice(1)}
-                    </button>
+                    </BreadcrumbLink>
                   )}
                 </BreadcrumbItem>
               </React.Fragment>

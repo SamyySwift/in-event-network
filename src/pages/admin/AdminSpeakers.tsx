@@ -274,7 +274,7 @@ const AdminSpeakersContent = () => {
       </div>
     );
   }
-  return <div className="space-y-8">
+  return <div className="space-y-8 animate-fade-in">
       {/* Event Selector */}
       <div className="flex justify-between items-center">
         <EventSelector />
@@ -328,7 +328,7 @@ const AdminSpeakersContent = () => {
           </div>}
 
         {/* Add/Edit Speaker Form */}
-        {isCreating && selectedEventId && <Card className="mb-6 glass-card bg-gradient-to-br from-white/90 via-primary-50/70 to-primary-100/60 transition-all shadow-lg">
+        {isCreating && selectedEventId && <Card className="mb-6 glass-card bg-gradient-to-br from-white/90 via-primary-50/70 to-primary-100/60 transition-all animate-fade-in shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 {editingSpeaker ? 'Edit Speaker' : 'Add New Speaker'}

@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Scanner } from '@yudiel/react-qr-scanner';
 import { AlertCircle, Camera } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -18,7 +17,6 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
   width = '100%',
   height = '300px',
 }) => {
-  const navigate = useNavigate();
   const [permissionDenied, setPermissionDenied] = useState(false);
   const [error, setError] = useState<string>('');
 
@@ -52,8 +50,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
   const requestPermissionAgain = () => {
     setPermissionDenied(false);
     setError('');
-    // Instead of reloading, navigate to refresh state
-    navigate(0);
+    window.location.reload();
   };
 
   if (permissionDenied || error) {

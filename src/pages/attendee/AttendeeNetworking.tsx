@@ -412,7 +412,7 @@ const AttendeeNetworking = () => {
               {error?.message || "Failed to load attendee data"}
             </p>
             <Button
-              onClick={() => navigate(0)}
+              onClick={() => window.location.reload()}
               className="bg-connect-600 hover:bg-connect-700 text-white"
             >
               Try Again

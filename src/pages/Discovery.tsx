@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +32,7 @@ const Discovery = () => {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [attendeeCounts, setAttendeeCounts] = useState<Record<string, number>>({});
+  const [countLoading, setCountLoading] = useState<Record<string, boolean>>({});
   
   // Nigerian states
   const nigerianStates = [
@@ -56,6 +58,13 @@ const Discovery = () => {
       fetchAttendeeCounts();
     }
   }, [events]);
+
+  // Refresh attendee counts when modal closes
+  useEffect(() => {
+    if (!modalOpen && selectedEvent) {
+      refreshAttendeeCount(selectedEvent.id);
+    }
+  }, [modalOpen, selectedEvent]);
 
   const fetchEvents = async () => {
     try {
@@ -120,6 +129,12 @@ const Discovery = () => {
 
   const fetchAttendeeCounts = async () => {
     const counts: Record<string, number> = {};
+    const loadingStates: Record<string, boolean> = {};
+    
+    for (const event of events) {
+      loadingStates[event.id] = true;
+    }
+    setCountLoading(loadingStates);
     
     for (const event of events) {
       try {
@@ -132,12 +147,39 @@ const Discovery = () => {
         if (!error) {
           counts[event.id] = count || 0;
         }
+        loadingStates[event.id] = false;
       } catch (error) {
         console.error("Error fetching attendee count for event:", event.id, error);
+        loadingStates[event.id] = false;
       }
     }
     
     setAttendeeCounts(counts);
+    setCountLoading(loadingStates);
+  };
+
+  const refreshAttendeeCount = async (eventId: string) => {
+    setCountLoading(prev => ({ ...prev, [eventId]: true }));
+    
+    try {
+      const { count, error } = await supabase
+        .from("event_tickets")
+        .select("*", { count: "exact", head: true })
+        .eq("event_id", eventId)
+        .eq("payment_status", "completed");
+
+      if (!error) {
+        setAttendeeCounts(prev => ({ ...prev, [eventId]: count || 0 }));
+      }
+    } catch (error) {
+      console.error("Error refreshing attendee count for event:", eventId, error);
+    } finally {
+      setCountLoading(prev => ({ ...prev, [eventId]: false }));
+    }
+  };
+
+  const handleAttendeeCountUpdate = (eventId: string, count: number) => {
+    setAttendeeCounts(prev => ({ ...prev, [eventId]: count }));
   };
 
   const handleBuyTickets = (eventKey: string | null) => {
@@ -295,10 +337,12 @@ const Discovery = () => {
                         <span className="line-clamp-1">{event.location}</span>
                       </div>
                     )}
-                    {/* Attendee Count */}
+                    {/* Attendee Count with improved accuracy */}
                     <div className="flex items-center text-sm text-white/80">
                       <Users className="h-4 w-4 mr-2 text-yellow-400" />
-                      <span>{attendeeCounts[event.id] || 0} attending</span>
+                      <span>
+                        {countLoading[event.id] ? "Loading..." : `${attendeeCounts[event.id] || 0} attending`}
+                      </span>
                     </div>
                   </div>
 
@@ -332,11 +376,12 @@ const Discovery = () => {
           </div>
         )}
 
-        {/* Event Detail Modal */}
+        {/* Event Detail Modal with improved attendance updates */}
         <EventDetailModal
           event={selectedEvent}
           open={modalOpen}
           onOpenChange={setModalOpen}
+          onAttendeeCountUpdate={handleAttendeeCountUpdate}
         />
       </main>
     </div>

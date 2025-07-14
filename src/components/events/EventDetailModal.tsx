@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -24,12 +25,14 @@ interface EventDetailModalProps {
   event: Event | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onAttendeeCountUpdate?: (eventId: string, count: number) => void;
 }
 
 export const EventDetailModal: React.FC<EventDetailModalProps> = ({
   event,
   open,
   onOpenChange,
+  onAttendeeCountUpdate,
 }) => {
   const [attendeeCount, setAttendeeCount] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -56,7 +59,12 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
       if (error) {
         console.error("Error fetching attendee count:", error);
       } else {
-        setAttendeeCount(count || 0);
+        const newCount = count || 0;
+        setAttendeeCount(newCount);
+        // Update parent component's count
+        if (onAttendeeCountUpdate) {
+          onAttendeeCountUpdate(event.id, newCount);
+        }
       }
     } catch (error) {
       console.error("Error:", error);
@@ -105,9 +113,9 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
           </DialogTitle>
         </DialogHeader>
 
-        {/* Event Image */}
+        {/* Event Image - Fixed centering */}
         {event.banner_url && (
-          <div className="relative aspect-video w-full overflow-hidden rounded-lg -mx-6 -mt-2">
+          <div className="relative aspect-video w-full overflow-hidden rounded-lg">
             <img
               src={event.banner_url}
               alt={event.name}

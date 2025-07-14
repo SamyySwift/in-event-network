@@ -150,7 +150,18 @@ export function PaystackWithdrawalModal({ open, onOpenChange }: PaystackWithdraw
       
       setVerifiedAccountName(result.account_name);
       setBankForm(prev => ({ ...prev, accountName: result.account_name }));
-      setStep('review');
+      
+      toast({
+        title: 'Success',
+        description: 'Bank account verified successfully',
+      });
+      
+      // Move to amount step if not already set, otherwise go to review
+      if (!amount) {
+        setStep('amount');
+      } else {
+        setStep('review');
+      }
     } catch (error: any) {
       setError(error.message || 'Failed to verify bank account');
       toast({

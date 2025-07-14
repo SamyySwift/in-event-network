@@ -6,7 +6,7 @@ interface FormData {
   [key: string]: any;
 }
 
-interface AdminFormPersistenceContextType {
+interface AttendeeFormPersistenceContextType {
   getFormData: (formKey: string) => FormData | null;
   setFormData: (formKey: string, data: FormData) => void;
   clearFormData: (formKey: string) => void;
@@ -14,17 +14,17 @@ interface AdminFormPersistenceContextType {
   clearAllFormData: () => void;
 }
 
-const AdminFormPersistenceContext = createContext<AdminFormPersistenceContextType | undefined>(undefined);
+const AttendeeFormPersistenceContext = createContext<AttendeeFormPersistenceContextType | undefined>(undefined);
 
-export const useAdminFormPersistence = () => {
-  const context = useContext(AdminFormPersistenceContext);
+export const useAttendeeFormPersistence = () => {
+  const context = useContext(AttendeeFormPersistenceContext);
   if (!context) {
-    throw new Error('useAdminFormPersistence must be used within AdminFormPersistenceProvider');
+    throw new Error('useAttendeeFormPersistence must be used within AttendeeFormPersistenceProvider');
   }
   return context;
 };
 
-export const AdminFormPersistenceProvider = ({ children }: { children: ReactNode }) => {
+export const AttendeeFormPersistenceProvider = ({ children }: { children: ReactNode }) => {
   const [isHydrated, setIsHydrated] = useState(false);
 
   // Hydrate from localStorage on mount
@@ -35,10 +35,10 @@ export const AdminFormPersistenceProvider = ({ children }: { children: ReactNode
   const getFormData = useCallback((formKey: string): FormData | null => {
     if (!isHydrated) return null;
     try {
-      const saved = localStorage.getItem(`admin_form_${formKey}`);
+      const saved = localStorage.getItem(`attendee_form_${formKey}`);
       return saved ? JSON.parse(saved) : null;
     } catch (error) {
-      console.error('Error reading form data from localStorage:', error);
+      console.error('Error reading attendee form data from localStorage:', error);
       return null;
     }
   }, [isHydrated]);
@@ -46,30 +46,30 @@ export const AdminFormPersistenceProvider = ({ children }: { children: ReactNode
   const setFormData = useCallback((formKey: string, data: FormData) => {
     if (!isHydrated) return;
     try {
-      localStorage.setItem(`admin_form_${formKey}`, JSON.stringify(data));
-      console.log(`Auto-saved form data for: ${formKey}`);
+      localStorage.setItem(`attendee_form_${formKey}`, JSON.stringify(data));
+      console.log(`Auto-saved attendee form data for: ${formKey}`);
     } catch (error) {
-      console.error('Error saving form data to localStorage:', error);
+      console.error('Error saving attendee form data to localStorage:', error);
     }
   }, [isHydrated]);
 
   const clearFormData = useCallback((formKey: string) => {
     if (!isHydrated) return;
     try {
-      localStorage.removeItem(`admin_form_${formKey}`);
-      console.log(`Cleared form data for: ${formKey}`);
+      localStorage.removeItem(`attendee_form_${formKey}`);
+      console.log(`Cleared attendee form data for: ${formKey}`);
     } catch (error) {
-      console.error('Error clearing form data from localStorage:', error);
+      console.error('Error clearing attendee form data from localStorage:', error);
     }
   }, [isHydrated]);
 
   const hasFormData = useCallback((formKey: string): boolean => {
     if (!isHydrated) return false;
     try {
-      const saved = localStorage.getItem(`admin_form_${formKey}`);
+      const saved = localStorage.getItem(`attendee_form_${formKey}`);
       return saved !== null && saved !== 'null';
     } catch (error) {
-      console.error('Error checking form data in localStorage:', error);
+      console.error('Error checking attendee form data in localStorage:', error);
       return false;
     }
   }, [isHydrated]);
@@ -79,13 +79,13 @@ export const AdminFormPersistenceProvider = ({ children }: { children: ReactNode
     try {
       const keys = Object.keys(localStorage);
       keys.forEach(key => {
-        if (key.startsWith('admin_form_')) {
+        if (key.startsWith('attendee_form_')) {
           localStorage.removeItem(key);
         }
       });
-      console.log('Cleared all admin form data');
+      console.log('Cleared all attendee form data');
     } catch (error) {
-      console.error('Error clearing all form data:', error);
+      console.error('Error clearing all attendee form data:', error);
     }
   }, [isHydrated]);
 
@@ -98,8 +98,8 @@ export const AdminFormPersistenceProvider = ({ children }: { children: ReactNode
   };
 
   return (
-    <AdminFormPersistenceContext.Provider value={value}>
+    <AttendeeFormPersistenceContext.Provider value={value}>
       {children}
-    </AdminFormPersistenceContext.Provider>
+    </AttendeeFormPersistenceContext.Provider>
   );
 };

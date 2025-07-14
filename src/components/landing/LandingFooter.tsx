@@ -1,7 +1,11 @@
+
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { Network, Instagram, Mail } from "lucide-react";
 
 const LandingFooter: React.FC = () => {
+  const navigate = useNavigate();
+
   // Smooth scroll function
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -52,8 +56,8 @@ const LandingFooter: React.FC = () => {
               </li>
               <li>
                 <button
-                  onClick={() => window.location.href = "/guide"}
-                  className="text-white/60 hover:text-cyan-400 transition-colors"
+                  onClick={() => navigate("/guide")}
+                  className="text-white/60 hover:text-cyan-400 transition-colors text-left"
                 >
                   Guide
                 </button>
@@ -66,7 +70,7 @@ const LandingFooter: React.FC = () => {
             <ul className="space-y-2">
               <li>
                 <button
-                  onClick={() => window.location.href = "/privacy"}
+                  onClick={() => navigate("/privacy")}
                   className="text-white/60 hover:text-cyan-400 transition-colors text-left"
                 >
                   Data Privacy
@@ -74,7 +78,7 @@ const LandingFooter: React.FC = () => {
               </li>
               <li>
                 <button
-                  onClick={() => window.location.href = "/terms"}
+                  onClick={() => navigate("/terms")}
                   className="text-white/60 hover:text-cyan-400 transition-colors text-left"
                 >
                   Terms of Service

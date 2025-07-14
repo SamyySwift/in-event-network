@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, Suspense } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Calendar,
@@ -15,8 +15,6 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-// Remove this import:
-// import AppLayout from "@/components/layouts/AppLayout";
 import {
   Card,
   CardContent,
@@ -38,11 +36,17 @@ import AttendeeRouteGuard from "@/components/attendee/AttendeeRouteGuard";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNetworking } from "@/hooks/useNetworking";
 import { UserPlus } from "lucide-react";
-import { ProfileCompletionPopup } from "@/components/attendee/ProfileCompletionPopup";
 import { EventCard } from "@/components/attendee/EventCard";
 import { ConnectionNotificationDropdown } from "@/components/attendee/ConnectionNotificationDropdown";
 import { useAttendeeFacilities } from "@/hooks/useAttendeeFacilities";
 import * as LucideIcons from "lucide-react";
+
+// Lazy load the ProfileCompletionPopup to reduce initial bundle size
+const ProfileCompletionPopup = React.lazy(() => 
+  import("@/components/attendee/ProfileCompletionPopup").then(module => ({
+    default: module.ProfileCompletionPopup
+  }))
+);
 
 const AttendeeDashboardContent = () => {
   const navigate = useNavigate();
@@ -53,30 +57,30 @@ const AttendeeDashboardContent = () => {
   const { facilities } = useAttendeeFacilities();
   const [showProfilePopup, setShowProfilePopup] = useState(false);
 
-  // Check if profile needs completion and show popup every time until complete or dismissed forever
-  useEffect(() => {
-    if (currentUser && hasJoinedEvent) {
-      // Check if user has dismissed forever
-      const neverShow = localStorage.getItem("profileReminderNeverShow");
-      if (neverShow === "true") return;
+  // Memoize profile completion check to avoid unnecessary recalculation
+  const shouldShowProfilePopup = useMemo(() => {
+    if (!currentUser || !hasJoinedEvent) return false;
+    
+    const neverShow = localStorage.getItem("profileReminderNeverShow");
+    if (neverShow === "true") return false;
 
-      // Check if profile is incomplete (any of these fields missing)
-      const isIncomplete =
-        !currentUser.photoUrl ||
-        !currentUser.bio ||
-        !currentUser.niche ||
-        !currentUser.links?.linkedin ||
-        !currentUser.links?.twitter;
-
-      if (isIncomplete) {
-        // Show popup after a short delay every time the dashboard loads (until profile is complete or dismissed forever)
-        const timer = setTimeout(() => setShowProfilePopup(true), 2000);
-        return () => clearTimeout(timer);
-      }
-    }
+    return !currentUser.photoUrl ||
+           !currentUser.bio ||
+           !currentUser.niche ||
+           !currentUser.links?.linkedin ||
+           !currentUser.links?.twitter;
   }, [currentUser, hasJoinedEvent]);
 
-  const formatDate = (dateString: string) => {
+  // Reduced delay for profile popup to improve perceived performance
+  useEffect(() => {
+    if (shouldShowProfilePopup) {
+      const timer = setTimeout(() => setShowProfilePopup(true), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [shouldShowProfilePopup]);
+
+  // Memoize date formatting functions to avoid recreation on every render
+  const formatDate = useMemo(() => (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       weekday: "short",
       month: "short",
@@ -84,14 +88,14 @@ const AttendeeDashboardContent = () => {
       hour: "numeric",
       minute: "2-digit",
     });
-  };
+  }, []);
 
-  const formatTime = (dateString: string) => {
+  const formatTime = useMemo(() => (dateString: string) => {
     return new Date(dateString).toLocaleTimeString("en-US", {
       hour: "numeric",
       minute: "2-digit",
     });
-  };
+  }, []);
 
   // Show loading state while checking event context
   if (contextLoading || isLoading) {
@@ -529,13 +533,12 @@ const AttendeeDashboardContent = () => {
         )}
       </div>
 
-      <ProfileCompletionPopup
-        isOpen={showProfilePopup}
-        onClose={() => {
-          setShowProfilePopup(false);
-          localStorage.setItem("profileReminderDismissed", Date.now().toString());
-        }}
-      />
+      <Suspense fallback={null}>
+        <ProfileCompletionPopup
+          isOpen={showProfilePopup}
+          onClose={() => setShowProfilePopup(false)}
+        />
+      </Suspense>
     </>
   );
 };

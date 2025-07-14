@@ -45,113 +45,111 @@ export const useDashboard = () => {
         };
       }
 
-      // Get the current event details
-      const { data: currentEventData } = await supabase
-        .from('events')
-        .select('*')
-        .eq('id', userProfile.current_event_id)
-        .single();
+      // Use Promise.all to run parallel queries for better performance
+      const [
+        currentEventResponse,
+        upcomingEventsResponse,
+        announcementsResponse,
+        speakersResponse,
+        upcomingSessionsResponse,
+        suggestedConnectionsResponse
+      ] = await Promise.all([
+        // Get current event details
+        supabase
+          .from('events')
+          .select('*')
+          .eq('id', userProfile.current_event_id)
+          .single(),
+        
+        // Get upcoming events from the same host
+        supabase
+          .from('events')
+          .select('*, profiles!events_host_id_fkey(id)')
+          .eq('id', userProfile.current_event_id)
+          .single()
+          .then(async ({ data: eventData }) => {
+            if (!eventData?.host_id) return { data: [] };
+            return supabase
+              .from('events')
+              .select('*')
+              .eq('host_id', eventData.host_id)
+              .gt('start_time', now)
+              .order('start_time', { ascending: true })
+              .limit(3);
+          }),
 
-      if (!currentEventData) {
-        return {
-          currentEvent: null,
-          upcomingEvents: [],
-          nextSession: null,
-          upcomingSessions: [],
-          recentAnnouncements: [],
-          suggestedConnections: [],
-        };
-      }
+        // Get recent announcements for current event
+        supabase
+          .from('announcements')
+          .select('*')
+          .eq('event_id', userProfile.current_event_id)
+          .order('created_at', { ascending: false })
+          .limit(3),
 
-      const hostId = currentEventData.host_id;
+        // Get next speaker session
+        supabase
+          .from('speakers')
+          .select('*')
+          .eq('event_id', userProfile.current_event_id)
+          .not('session_time', 'is', null)
+          .gt('session_time', now)
+          .order('session_time', { ascending: true })
+          .limit(1),
 
-      // Check if current event is live
-      const isCurrentEventLive = currentEventData.start_time <= now && currentEventData.end_time >= now;
-      const currentEvent = isCurrentEventLive ? currentEventData : null;
+        // Get upcoming schedule items
+        supabase
+          .from('schedule_items')
+          .select('*')
+          .eq('event_id', userProfile.current_event_id)
+          .gt('start_time', now)
+          .order('start_time', { ascending: true })
+          .limit(3),
 
-      // Get upcoming events from the same host only
-      const { data: upcomingEvents } = await supabase
-        .from('events')
-        .select('*')
-        .eq('host_id', hostId)
-        .gt('start_time', now)
-        .order('start_time', { ascending: true })
-        .limit(5);
+        // Get suggested connections from same event
+        supabase
+          .from('event_participants')
+          .select(`
+            user_id,
+            profiles:user_id (
+              id,
+              name,
+              role,
+              company,
+              bio,
+              niche,
+              photo_url,
+              networking_preferences,
+              tags,
+              twitter_link,
+              linkedin_link
+            )
+          `)
+          .eq('event_id', userProfile.current_event_id)
+          .neq('user_id', currentUser.id)
+          .limit(3)
+      ]);
 
-      // Get recent announcements for events from this host only
-      const { data: hostEvents } = await supabase
-        .from('events')
-        .select('id')
-        .eq('host_id', hostId);
+      const currentEventData = currentEventResponse.data;
+      const isCurrentEventLive = currentEventData && 
+        currentEventData.start_time <= now && 
+        currentEventData.end_time >= now;
 
-      const eventIds = hostEvents?.map(e => e.id) || [];
-
-      const { data: announcements } = await supabase
-        .from('announcements')
-        .select('*')
-        .in('event_id', eventIds)
-        .order('created_at', { ascending: false })
-        .limit(3);
-
-      // Get speakers for upcoming sessions from this host's events only
-      const { data: speakers } = await supabase
-        .from('speakers')
-        .select('*')
-        .in('event_id', eventIds)
-        .not('session_time', 'is', null)
-        .gt('session_time', now)
-        .order('session_time', { ascending: true })
-        .limit(1);
-
-      // Get upcoming schedule items/sessions from this host's events
-      const { data: upcomingSessions } = await supabase
-        .from('schedule_items')
-        .select('*')
-        .in('event_id', eventIds)
-        .gt('start_time', now)
-        .order('start_time', { ascending: true })
-        .limit(5);
-
-      // Get suggested connections from attendees of the same host's events
-      const { data: sameHostAttendees } = await supabase
-        .from('event_participants')
-        .select(`
-          user_id,
-          profiles:user_id (
-            id,
-            name,
-            role,
-            company,
-            bio,
-            niche,
-            photo_url,
-            networking_preferences,
-            tags,
-            twitter_link,
-            linkedin_link,
-            github_link,
-            instagram_link,
-            website_link,
-            created_at
-          )
-        `)
-        .in('event_id', eventIds)
-        .neq('user_id', currentUser.id)
-        .limit(6);
-
-      const suggestedConnections = sameHostAttendees?.map((participant: any) => participant.profiles).filter(Boolean) || [];
+      const suggestedConnections = suggestedConnectionsResponse.data
+        ?.map((participant: any) => participant.profiles)
+        .filter(Boolean) || [];
 
       return {
-        currentEvent,
-        upcomingEvents: upcomingEvents || [],
-        nextSession: speakers?.[0] || null,
-        upcomingSessions: upcomingSessions || [],
-        recentAnnouncements: announcements || [],
+        currentEvent: isCurrentEventLive ? currentEventData : null,
+        upcomingEvents: upcomingEventsResponse.data || [],
+        nextSession: speakersResponse.data?.[0] || null,
+        upcomingSessions: upcomingSessionsResponse.data || [],
+        recentAnnouncements: announcementsResponse.data || [],
         suggestedConnections: suggestedConnections.slice(0, 3),
       };
     },
     enabled: !!currentUser,
-    // Remove refetchInterval: live updates now handled with realtime
+    staleTime: 30000, // Consider data fresh for 30 seconds
+    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
   });
 
   // Add realtime effect

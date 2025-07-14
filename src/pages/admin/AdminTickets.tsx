@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Ticket, DollarSign, Users, CheckCircle, Edit, Trash2, FormInput } from 'lucide-react';
+import { Plus, Ticket, DollarSign, Users, CheckCircle, Edit, Trash2, FormInput, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -75,61 +75,62 @@ function AdminTicketsContent() {
         </Button>
       </div>
 
-      {/* Admin Wallet Section */}
-      <div className="w-full">
-        <AdminWallet />
+      {/* Revenue Overview & Wallet Management */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Revenue Stats */}
+        <Card className="rounded-xl border-0 shadow-md">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-green-600" />
+              Ticket Sales Revenue
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Total Revenue</p>
+                <p className="text-2xl font-bold text-green-600">₦{stats.totalRevenue.toLocaleString()}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Tickets Sold</p>
+                <p className="text-2xl font-bold">{stats.totalTickets}</p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Checked In</p>
+                <p className="text-lg font-semibold text-blue-600">{stats.checkedInTickets}</p>
+                <p className="text-xs text-muted-foreground">
+                  {stats.totalTickets > 0 ? Math.round((stats.checkedInTickets / stats.totalTickets) * 100) : 0}% attendance
+                </p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Ticket Types</p>
+                <p className="text-lg font-semibold">{stats.ticketTypes}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Shareable Link */}
+        <div className="space-y-6">
+          <ShareableTicketLink />
+        </div>
       </div>
 
-      {/* Shareable Link Card */}
-      <div className="w-full">
-        <ShareableTicketLink />
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <Card className="rounded-xl border-0 shadow-md hover:shadow-lg transition-all duration-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Tickets</CardTitle>
-            <Ticket className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">{stats.totalTickets}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-xl border-0 shadow-md hover:shadow-lg transition-all duration-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Checked In</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.checkedInTickets}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {stats.totalTickets > 0 ? Math.round((stats.checkedInTickets / stats.totalTickets) * 100) : 0}% attendance
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-xl border-0 shadow-md hover:shadow-lg transition-all duration-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">₦{stats.totalRevenue.toLocaleString()}</div>
-          </CardContent>
-        </Card>
-
-        <Card className="rounded-xl border-0 shadow-md hover:shadow-lg transition-all duration-200">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Ticket Types</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">{stats.ticketTypes}</div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* Wallet Management Section */}
+      <Card className="rounded-xl border-0 shadow-md">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5 text-purple-600" />
+            Earnings & Withdrawals
+          </CardTitle>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage your earnings from ticket sales and process withdrawals via Paystack
+          </p>
+        </CardHeader>
+        <CardContent>
+          <AdminWallet />
+        </CardContent>
+      </Card>
 
       {/* Ticket Types */}
       <Card className="rounded-xl border-0 shadow-md">

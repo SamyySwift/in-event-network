@@ -50,16 +50,14 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
     
     setLoading(true);
     try {
-      const { count, error } = await supabase
-        .from("event_tickets")
-        .select("*", { count: "exact", head: true })
-        .eq("event_id", event.id)
-        .eq("payment_status", "completed");
+      const { data, error } = await supabase
+        .rpc("get_event_attendance_count", { event_uuid: event.id });
 
       if (error) {
         console.error("Error fetching attendee count:", error);
+        setAttendeeCount(0);
       } else {
-        const newCount = count || 0;
+        const newCount = data || 0;
         setAttendeeCount(newCount);
         // Update parent component's count
         if (onAttendeeCountUpdate) {
@@ -68,6 +66,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
       }
     } catch (error) {
       console.error("Error:", error);
+      setAttendeeCount(0);
     } finally {
       setLoading(false);
     }

@@ -17,7 +17,6 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { useFormPersistence } from "@/hooks/useFormPersistence";
 
 import { ProfilePictureUpload } from "@/components/profile/ProfilePictureUpload";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
@@ -168,51 +167,6 @@ const AttendeeProfile = () => {
   const [selectedNetworking, setSelectedNetworking] = useState<string[]>([]);
   const [customNetworkingPref, setCustomNetworkingPref] = useState("");
 
-  // Form persistence for auto-save
-  const formData = {
-    profileData,
-    selectedNiche,
-    selectedNetworking,
-    newTag,
-    customNetworkingPref,
-  };
-
-  const { saveFormData, clearSavedData } = useFormPersistence(
-    `attendee-profile-${currentUser?.id}`,
-    { 
-      watch: () => formData,
-      setValue: () => {},
-      getValues: () => formData
-    } as any,
-    isEditing
-  );
-
-  // Auto-save when form data changes
-  useEffect(() => {
-    if (isEditing) {
-      saveFormData(formData);
-    }
-  }, [profileData, selectedNiche, selectedNetworking, newTag, customNetworkingPref, isEditing, saveFormData]);
-
-  // Restore saved data when starting to edit
-  useEffect(() => {
-    if (isEditing && currentUser?.id) {
-      const savedData = localStorage.getItem(`attendee-profile-${currentUser.id}`);
-      if (savedData) {
-        try {
-          const parsed = JSON.parse(savedData);
-          if (parsed.profileData) setProfileData(parsed.profileData);
-          if (parsed.selectedNiche) setSelectedNiche(parsed.selectedNiche);
-          if (parsed.selectedNetworking) setSelectedNetworking(parsed.selectedNetworking);
-          if (parsed.newTag) setNewTag(parsed.newTag);
-          if (parsed.customNetworkingPref) setCustomNetworkingPref(parsed.customNetworkingPref);
-        } catch (error) {
-          console.error("Error restoring saved profile data:", error);
-        }
-      }
-    }
-  }, [isEditing, currentUser?.id]);
-
   // ... existing code ...
   useEffect(() => {
     const loadProfileData = async () => {
@@ -355,8 +309,6 @@ const AttendeeProfile = () => {
       });
 
       setIsEditing(false);
-      // Clear saved form data after successful save
-      clearSavedData();
       toast({
         title: "Profile updated",
         description: "Your profile has been updated successfully",

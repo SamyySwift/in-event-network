@@ -72,35 +72,35 @@ const AdminDashboardContent = () => {
   };
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <div className="space-y-4 md:space-y-8 animate-fade-in">
       {/* Hero Section */}
-      <div className="p-8 rounded-2xl bg-gradient-to-br from-blue-100 to-primary-100 text-primary-900 shadow-2xl shadow-primary/20 relative overflow-hidden">
+      <div className="p-4 md:p-8 rounded-xl md:rounded-2xl bg-gradient-to-br from-blue-100 to-primary-100 text-primary-900 shadow-2xl shadow-primary/20 relative overflow-hidden">
         <div className="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full opacity-50"></div>
         <div className="absolute -bottom-12 -left-12 w-36 h-36 bg-white/5 rounded-full opacity-50"></div>
 
         <div className="relative">
-          <h1 className="text-4xl font-bold tracking-tight">Admin Dashboard</h1>
-          <p className="text-primary-700 mt-2 max-w-2xl">
+          <h1 className="text-2xl md:text-4xl font-bold tracking-tight">Admin Dashboard</h1>
+          <p className="text-primary-700 mt-2 text-sm md:text-base max-w-2xl">
             Welcome back, {currentUser?.name || currentUser?.email}! Here's a
             comprehensive overview of your events.
           </p>
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/10">
-              <p className="text-sm text-primary-700">Live Events</p>
+          <div className="mt-4 md:mt-6 grid grid-cols-2 gap-3 md:gap-6">
+            <div className="bg-white/10 backdrop-blur-sm p-3 md:p-4 rounded-lg border border-white/10">
+              <p className="text-xs md:text-sm text-primary-700">Live Events</p>
               {isLoading ? (
-                <Skeleton className="h-8 w-12 mt-1 bg-white/20" />
+                <Skeleton className="h-6 md:h-8 w-8 md:w-12 mt-1 bg-white/20" />
               ) : (
-                <p className="text-3xl font-bold text-green-400">
+                <p className="text-xl md:text-3xl font-bold text-green-400">
                   {dashboardData?.liveEventsCount || 0}
                 </p>
               )}
             </div>
-            <div className="bg-white/10 backdrop-blur-sm p-4 rounded-lg border border-white/10">
-              <p className="text-sm text-primary-700">Upcoming Events</p>
+            <div className="bg-white/10 backdrop-blur-sm p-3 md:p-4 rounded-lg border border-white/10">
+              <p className="text-xs md:text-sm text-primary-700">Upcoming Events</p>
               {isLoading ? (
-                <Skeleton className="h-8 w-12 mt-1 bg-white/20" />
+                <Skeleton className="h-6 md:h-8 w-8 md:w-12 mt-1 bg-white/20" />
               ) : (
-                <p className="text-3xl font-bold text-blue-500">
+                <p className="text-xl md:text-3xl font-bold text-blue-500">
                   {dashboardData?.upcomingEventsCount || 0}
                 </p>
               )}

@@ -17,7 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { useFormPersistence } from "@/hooks/useFormPersistence";
+
 
 import { ProfilePictureUpload } from "@/components/profile/ProfilePictureUpload";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
@@ -168,31 +168,38 @@ const AttendeeProfile = () => {
   const [selectedNetworking, setSelectedNetworking] = useState<string[]>([]);
   const [customNetworkingPref, setCustomNetworkingPref] = useState("");
 
-  // Form persistence for auto-save
-  const formData = {
-    profileData,
-    selectedNiche,
-    selectedNetworking,
-    newTag,
-    customNetworkingPref,
+  // Auto-save functionality
+  const saveFormData = (data: any) => {
+    if (!currentUser?.id) return;
+    try {
+      localStorage.setItem(`attendee-profile-${currentUser.id}`, JSON.stringify(data));
+    } catch (error) {
+      console.error("Error saving form data:", error);
+    }
   };
 
-  const { saveFormData, clearSavedData } = useFormPersistence(
-    `attendee-profile-${currentUser?.id}`,
-    { 
-      watch: () => formData,
-      setValue: () => {},
-      getValues: () => formData
-    } as any,
-    isEditing
-  );
+  const clearSavedData = () => {
+    if (!currentUser?.id) return;
+    try {
+      localStorage.removeItem(`attendee-profile-${currentUser.id}`);
+    } catch (error) {
+      console.error("Error clearing saved data:", error);
+    }
+  };
 
   // Auto-save when form data changes
   useEffect(() => {
     if (isEditing) {
+      const formData = {
+        profileData,
+        selectedNiche,
+        selectedNetworking,
+        newTag,
+        customNetworkingPref,
+      };
       saveFormData(formData);
     }
-  }, [profileData, selectedNiche, selectedNetworking, newTag, customNetworkingPref, isEditing, saveFormData]);
+  }, [profileData, selectedNiche, selectedNetworking, newTag, customNetworkingPref, isEditing, currentUser?.id]);
 
   // Restore saved data when starting to edit
   useEffect(() => {

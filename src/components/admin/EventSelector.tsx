@@ -36,13 +36,13 @@ const EventSelector = () => {
   }
 
   return (
-    <div className="flex items-center gap-3">
-      <div className="flex items-center gap-2 text-sm font-medium">
-        <Calendar className="h-4 w-4" />
+    <div className="space-y-2 md:space-y-3">
+      <div className="flex items-center gap-2 text-xs md:text-sm font-medium">
+        <Calendar className="h-3 w-3 md:h-4 md:w-4" />
         Managing Event:
       </div>
       <Select value={selectedEventId || ''} onValueChange={setSelectedEventId}>
-        <SelectTrigger className="w-64">
+        <SelectTrigger className="w-full">
           <SelectValue placeholder="Select an event to manage" />
         </SelectTrigger>
         <SelectContent>

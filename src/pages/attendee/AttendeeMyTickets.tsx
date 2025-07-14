@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -77,6 +78,7 @@ interface Event {
 }
 
 export default function AttendeeMyTickets() {
+  const navigate = useNavigate();
   const { currentUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -405,7 +407,7 @@ export default function AttendeeMyTickets() {
     }
 
     // Navigate to the BuyTickets page instead of showing the purchase form
-    window.location.href = `/buy-tickets/${key}`;
+    navigate(`/buy-tickets/${key}`);
   };
 
   const handlePurchase = () => {

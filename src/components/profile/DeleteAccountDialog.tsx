@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,6 +25,7 @@ interface DeleteAccountDialogProps {
 }
 
 export const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({ userName }) => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
@@ -68,7 +70,7 @@ export const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({ userNa
   
       // Sign out and redirect
       await logout();
-      window.location.href = '/';
+      navigate('/', { replace: true });
   
     } catch (error) {
       console.error('Error deleting account:', error);

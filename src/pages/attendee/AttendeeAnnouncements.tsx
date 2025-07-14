@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layouts/AppLayout";
 import {
   Card,
@@ -39,6 +40,7 @@ import {
 } from "@/components/ui/select";
 
 const AttendeeAnnouncementsContent = () => {
+  const navigate = useNavigate();
   const { announcements, isLoading, error } = useAttendeeAnnouncements();
   const [searchTerm, setSearchTerm] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("all");
@@ -140,7 +142,7 @@ const AttendeeAnnouncementsContent = () => {
           <Button
             variant="outline"
             className="mt-4 w-full border-red-200 text-red-600 hover:bg-red-50"
-            onClick={() => window.location.reload()}
+            onClick={() => navigate(0)}
           >
             Try Again
           </Button>

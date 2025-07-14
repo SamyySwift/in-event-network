@@ -127,7 +127,7 @@ const AttendeeDashboardContent = () => {
             </h3>
             <p className="text-gray-500 mb-4">Unable to load dashboard data</p>
             <Button
-              onClick={() => window.location.reload()}
+              onClick={() => navigate(0)}
               className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
             >
               Retry Connection

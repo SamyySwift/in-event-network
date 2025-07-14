@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Ticket, DollarSign, Users, CheckCircle, Edit, Trash2, FormInput, CreditCard } from 'lucide-react';
+import { Plus, Ticket, DollarSign, Users, CheckCircle, Edit, Trash2, FormInput } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +10,6 @@ import { EditTicketTypeFormDialog } from '@/components/admin/EditTicketTypeFormD
 import { DeleteTicketConfirmDialog } from '@/components/admin/DeleteTicketConfirmDialog';
 import { TicketsTable } from '@/components/admin/TicketsTable';
 import { ShareableTicketLink } from '@/components/admin/ShareableTicketLink';
-import { AdminWallet } from '@/components/admin/AdminWallet';
 import { AdminEventProvider } from '@/hooks/useAdminEventContext';
 
 function AdminTicketsContent() {
@@ -116,21 +115,6 @@ function AdminTicketsContent() {
         </div>
       </div>
 
-      {/* Wallet Management Section */}
-      <Card className="rounded-xl border-0 shadow-md">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CreditCard className="h-5 w-5 text-purple-600" />
-            Earnings & Withdrawals
-          </CardTitle>
-          <p className="text-sm text-muted-foreground mt-1">
-            Manage your earnings from ticket sales and process withdrawals via Paystack
-          </p>
-        </CardHeader>
-        <CardContent>
-          <AdminWallet />
-        </CardContent>
-      </Card>
 
       {/* Ticket Types */}
       <Card className="rounded-xl border-0 shadow-md">

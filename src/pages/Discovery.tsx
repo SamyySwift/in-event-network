@@ -199,6 +199,14 @@ const Discovery = () => {
     setModalOpen(true);
   };
 
+  const handleModalClose = (open: boolean) => {
+    setModalOpen(open);
+    if (!open && selectedEvent) {
+      // Refresh the attendee count when the modal closes
+      refreshAttendeeCount(selectedEvent.id);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-950 via-purple-950 to-blue-950">
@@ -380,7 +388,7 @@ const Discovery = () => {
         <EventDetailModal
           event={selectedEvent}
           open={modalOpen}
-          onOpenChange={setModalOpen}
+          onOpenChange={handleModalClose}
           onAttendeeCountUpdate={handleAttendeeCountUpdate}
         />
       </main>

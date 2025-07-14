@@ -224,17 +224,20 @@ export function CreateTicketTypeDialog({ open, onOpenChange, onTicketCreated }: 
               </button>
               <button
                 type="button"
-                disabled={true}
-                className="flex-1 p-3 rounded-xl border-2 transition-all duration-200 flex items-center justify-center gap-2 border-gray-200 bg-gray-100 text-gray-400 cursor-not-allowed"
-                title="Paid tickets are currently disabled"
+                onClick={() => setTicketType('paid')}
+                className={`flex-1 p-3 rounded-xl border-2 transition-all duration-200 flex items-center justify-center gap-2 ${
+                  ticketType === 'paid'
+                    ? 'border-blue-500 bg-blue-50 text-blue-700'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
               >
                 <ToggleRight className="w-4 h-4" />
-                Paid (Disabled)
+                Paid
               </button>
             </div>
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
-              <p className="text-sm text-amber-700">
-                💡 <strong>Paid tickets are currently disabled.</strong> Only free tickets can be created at this time.
+            <div className="bg-green-50 border border-green-200 rounded-xl p-3">
+              <p className="text-sm text-green-700">
+                💡 <strong>Paid tickets are now enabled!</strong> You can create both free and paid tickets using Paystack payment processing.
               </p>
             </div>
           </div>

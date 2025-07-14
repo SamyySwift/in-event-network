@@ -17,6 +17,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAdminEventContext, AdminEventProvider } from "@/hooks/useAdminEventContext";
 import ScheduleStatsCards from "./components/ScheduleStatsCards";
 import ScheduleItemCard from "./components/ScheduleItemCard";
+import ScheduleFilters from "@/components/admin/ScheduleFilters";
+import { isToday, isTomorrow, parseISO } from "date-fns";
 
 interface ScheduleItem {
   id: string;
@@ -58,6 +60,13 @@ const AdminScheduleContent = () => {
   const [editingItem, setEditingItem] = useState<ScheduleItem | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+  
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDate, setSelectedDate] = useState("all");
+  const [selectedType, setSelectedType] = useState("all");
+  const [selectedPriority, setSelectedPriority] = useState("all");
+  
   const { toast } = useToast();
   const { currentUser } = useAuth();
   const { selectedEventId, selectedEvent } = useAdminEventContext();
@@ -82,10 +91,47 @@ const AdminScheduleContent = () => {
   const watchStartTime = watch("start_time");
   const watchEndTime = watch("end_time");
 
+  // Filter schedule items
+  const filteredScheduleItems = scheduleItems.filter((item) => {
+    const matchesSearch = 
+      item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.location?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesType = selectedType === "all" || item.type === selectedType;
+    const matchesPriority = selectedPriority === "all" || item.priority === selectedPriority;
+
+    const matchesDate = (() => {
+      if (selectedDate === "all") return true;
+      
+      if (selectedDate.startsWith("date-")) {
+        const targetDate = selectedDate.replace("date-", "");
+        const itemDate = item.start_date || (item.start_time ? item.start_time.slice(0, 10) : null);
+        return itemDate === targetDate;
+      }
+
+      const itemDate = item.start_date || (item.start_time ? item.start_time.slice(0, 10) : null);
+      if (!itemDate) return selectedDate === "tba";
+
+      try {
+        const date = parseISO(itemDate);
+        if (selectedDate === "today") return isToday(date);
+        if (selectedDate === "tomorrow") return isTomorrow(date);
+        if (selectedDate === "tba") return false;
+      } catch {
+        return selectedDate === "tba";
+      }
+
+      return true;
+    })();
+
+    return matchesSearch && matchesType && matchesPriority && matchesDate;
+  });
+
   // Stats for cards
-  const total = scheduleItems.length;
-  const sessions = scheduleItems.filter(i => i.type === "session").length;
-  const breaks = scheduleItems.filter(i => i.type === "break").length;
+  const total = filteredScheduleItems.length;
+  const sessions = filteredScheduleItems.filter(i => i.type === "session").length;
+  const breaks = filteredScheduleItems.filter(i => i.type === "break").length;
 
   const uploadImage = async (file: File): Promise<string> => {
     const fileExt = file.name.split(".").pop();
@@ -401,6 +447,19 @@ const AdminScheduleContent = () => {
             </div>
           </div>
 
+          {/* Schedule Filters */}
+          <ScheduleFilters
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
+            selectedType={selectedType}
+            onTypeChange={setSelectedType}
+            selectedPriority={selectedPriority}
+            onPriorityChange={setSelectedPriority}
+            scheduleItems={scheduleItems}
+          />
+
           {/* Schedule Form */}
           <Card className="mb-6 glass-card bg-gradient-to-br from-white/90 via-primary-50/70 to-primary-100/60 transition-all animate-fade-in shadow-lg">
             <CardHeader>
@@ -623,7 +682,7 @@ const AdminScheduleContent = () => {
             <CardHeader>
               <CardTitle>Current Schedule</CardTitle>
               <CardDescription>
-                {scheduleItems.length} items scheduled for {selectedEvent?.name}
+                {filteredScheduleItems.length} of {scheduleItems.length} items scheduled for {selectedEvent?.name}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -631,9 +690,13 @@ const AdminScheduleContent = () => {
                 <p className="text-center text-muted-foreground py-8">
                   No schedule items created yet. Add schedule items above to see them here.
                 </p>
+              ) : filteredScheduleItems.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  No schedule items match your current filters. Try adjusting the filters above.
+                </p>
               ) : (
                 <div className="space-y-4">
-                  {scheduleItems.map((item) => (
+                  {filteredScheduleItems.map((item) => (
                     <ScheduleItemCard
                       key={item.id}
                       item={item}

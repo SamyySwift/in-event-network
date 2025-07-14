@@ -20,6 +20,8 @@ import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { useEffect } from 'react';
 import SpeakerStatsCards from './components/SpeakerStatsCards';
 import SpeakersTable from './components/SpeakersTable';
+import SpeakerFilters from '@/components/admin/SpeakerFilters';
+import { isToday, isTomorrow, parseISO } from "date-fns";
 type SpeakerFormData = {
   name: string;
   title?: string;
@@ -38,6 +40,12 @@ const AdminSpeakersContent = () => {
   const [editingSpeaker, setEditingSpeaker] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
+  
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedDate, setSelectedDate] = useState("all");
+  const [selectedStatus, setSelectedStatus] = useState("all");
+  const [selectedTopic, setSelectedTopic] = useState("all");
   const {
     selectedEventId,
     selectedEvent
@@ -86,9 +94,56 @@ const AdminSpeakersContent = () => {
     }
   }, [watchedValues, saveFormData, isCreating, editingSpeaker]);
 
+  // Filter speakers
+  const filteredSpeakers = speakers.filter((speaker) => {
+    const matchesSearch = 
+      speaker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      speaker.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      speaker.bio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      speaker.topic?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      speaker.session_title?.toLowerCase().includes(searchTerm.toLowerCase());
+
+    const matchesStatus = (() => {
+      if (selectedStatus === "all") return true;
+      if (selectedStatus === "confirmed") return !!speaker.session_title;
+      if (selectedStatus === "pending") return !speaker.session_title;
+      if (selectedStatus === "with_topic") return !!speaker.topic;
+      if (selectedStatus === "no_topic") return !speaker.topic;
+      return true;
+    })();
+
+    const matchesTopic = selectedTopic === "all" || speaker.topic === selectedTopic;
+
+    const matchesDate = (() => {
+      if (selectedDate === "all") return true;
+      
+      if (selectedDate.startsWith("date-")) {
+        const targetDate = selectedDate.replace("date-", "");
+        const speakerDate = speaker.session_time ? speaker.session_time.slice(0, 10) : null;
+        return speakerDate === targetDate;
+      }
+
+      const speakerDate = speaker.session_time ? speaker.session_time.slice(0, 10) : null;
+      if (!speakerDate) return selectedDate === "tba";
+
+      try {
+        const date = parseISO(speakerDate);
+        if (selectedDate === "today") return isToday(date);
+        if (selectedDate === "tomorrow") return isTomorrow(date);
+        if (selectedDate === "tba") return false;
+      } catch {
+        return selectedDate === "tba";
+      }
+
+      return true;
+    })();
+
+    return matchesSearch && matchesStatus && matchesTopic && matchesDate;
+  });
+
   // Calculate some simple speaker stats
-  const totalSpeakers = speakers.length;
-  const sessions = speakers.filter(s => s.session_title).length;
+  const totalSpeakers = filteredSpeakers.length;
+  const sessions = filteredSpeakers.filter(s => s.session_title).length;
   const uploadImage = async (file: File): Promise<string> => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${currentUser?.id}/speakers/${Date.now()}.${fileExt}`;
@@ -392,6 +447,21 @@ const AdminSpeakersContent = () => {
             </CardContent>
           </Card>}
 
+        {/* Speaker Filters */}
+        {selectedEventId && (
+          <SpeakerFilters
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
+            selectedStatus={selectedStatus}
+            onStatusChange={setSelectedStatus}
+            selectedTopic={selectedTopic}
+            onTopicChange={setSelectedTopic}
+            speakers={speakers}
+          />
+        )}
+
         {/* Table with Modern Styling */}
         {selectedEventId && (
           <>
@@ -414,8 +484,20 @@ const AdminSpeakersContent = () => {
                   Add First Speaker
                 </Button>
               </div>
+            ) : filteredSpeakers.length === 0 ? (
+              <div className="text-center py-12">
+                <div className="p-4 rounded-full bg-primary/10 inline-block mb-4">
+                  <svg className="h-8 w-8 text-primary" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6 2a4 4 0 11-8 0 4 4 0 008 0zm6-8v2m0 4v2m0-8a4 4 0 10-8 0 4 4 0 008 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No Speakers Match Your Filters</h3>
+                <p className="text-gray-600 mb-4">
+                  Try adjusting the filters above to find speakers.
+                </p>
+              </div>
             ) : (
-              <SpeakersTable speakers={speakers} onEdit={handleEdit} onDelete={handleDelete} />
+              <SpeakersTable speakers={filteredSpeakers} onEdit={handleEdit} onDelete={handleDelete} />
             )}
           </>
         )}

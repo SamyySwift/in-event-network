@@ -53,31 +53,25 @@ const AttendeeDashboardContent = () => {
   const { facilities } = useAttendeeFacilities();
   const [showProfilePopup, setShowProfilePopup] = useState(false);
 
-  // Check if profile needs completion on first visit
+  // Check if profile needs completion and show popup every time until complete or dismissed
   useEffect(() => {
     if (currentUser && hasJoinedEvent) {
       // Check if user has dismissed forever
       const neverShow = localStorage.getItem("profileReminderNeverShow");
       if (neverShow === "true") return;
 
-      const lastDismissed = localStorage.getItem("profileReminderDismissed");
-      const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+      // Check if profile is incomplete
+      const isIncomplete =
+        !currentUser.photoUrl ||
+        !currentUser.bio ||
+        !currentUser.niche ||
+        !currentUser.links?.linkedin ||
+        !currentUser.links?.twitter;
 
-      // Show popup if user hasn't dismissed it in the last 24 hours
-      if (!lastDismissed || parseInt(lastDismissed) < oneDayAgo) {
-        // Check if profile is incomplete
-        const isIncomplete =
-          !currentUser.photoUrl ||
-          !currentUser.bio ||
-          !currentUser.niche ||
-          !currentUser.links?.linkedin ||
-          !currentUser.links?.twitter;
-
-        if (isIncomplete) {
-          // Show popup after a short delay
-          const timer = setTimeout(() => setShowProfilePopup(true), 2000);
-          return () => clearTimeout(timer);
-        }
+      if (isIncomplete) {
+        // Show popup after a short delay every time the dashboard loads
+        const timer = setTimeout(() => setShowProfilePopup(true), 2000);
+        return () => clearTimeout(timer);
       }
     }
   }, [currentUser, hasJoinedEvent]);

@@ -61,17 +61,12 @@ export function ProfileCompletionPopup({ isOpen, onClose }: ProfileCompletionPop
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md max-w-[95vw] mx-auto">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-              </div>
-              <span className="text-base sm:text-xl">Boost Your Visibility!</span>
-            </DialogTitle>
-            <Button variant="ghost" size="sm" onClick={onClose} className="h-8 w-8 p-0">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center">
+              <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+            </div>
+            <span className="text-base sm:text-xl">Boost Your Visibility!</span>
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 sm:space-y-6">

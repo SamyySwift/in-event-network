@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { useAdminWallet } from '@/hooks/useAdminWallet';
 import { useAdminWithdrawals } from '@/hooks/useAdminWithdrawals';
 import { useToast } from '@/hooks/use-toast';
+import { PaystackWithdrawalModal } from './PaystackWithdrawalModal';
 
 export function AdminWallet() {
   const { wallet, isLoading, createWallet, hasWallet } = useAdminWallet();
@@ -26,7 +27,7 @@ export function AdminWallet() {
   const { toast } = useToast();
 
   const [showSetupDialog, setShowSetupDialog] = useState(false);
-  const [showWithdrawDialog, setShowWithdrawDialog] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [bankForm, setBankForm] = useState({
     bankCode: '',
     bankName: '',
@@ -126,7 +127,7 @@ export function AdminWallet() {
         currentBalance: wallet.available_balance,
         totalWithdrawn: wallet.withdrawn_amount,
       });
-      setShowWithdrawDialog(false);
+      setShowWithdrawModal(false);
       setWithdrawAmount('');
     } catch (error: any) {
       toast({
@@ -335,63 +336,15 @@ export function AdminWallet() {
                   <p className="text-xs text-green-700">{wallet.account_number} • {wallet.account_name}</p>
                 </div>
                 
-                <Dialog open={showWithdrawDialog} onOpenChange={setShowWithdrawDialog}>
-                  <DialogTrigger asChild>
-                    <Button 
-                      disabled={!wallet?.available_balance || wallet.available_balance < wallet.minimum_payout_amount}
-                      className="sm:w-auto"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Withdraw
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Withdraw Funds</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div className="grid gap-2">
-                        <Label htmlFor="amount">Amount (₦)</Label>
-                        <Input
-                          type="number"
-                          id="amount"
-                          placeholder="Enter amount to withdraw"
-                          value={withdrawAmount}
-                          onChange={handleWithdrawAmountChange}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          A transfer fee of ₦50 will be deducted from your available balance
-                        </p>
-                      </div>
-                      {withdrawAmount && (
-                        <div className="bg-muted/50 p-3 rounded-lg text-sm">
-                          <div className="flex justify-between">
-                            <span>Withdrawal amount:</span>
-                            <span>₦{parseFloat(withdrawAmount).toLocaleString()}</span>
-                          </div>
-                          <div className="flex justify-between text-muted-foreground">
-                            <span>Transfer fee:</span>
-                            <span>₦50</span>
-                          </div>
-                          <div className="flex justify-between font-medium border-t pt-2 mt-2">
-                            <span>Total deducted:</span>
-                            <span>₦{(parseFloat(withdrawAmount || '0') + 50).toLocaleString()}</span>
-                          </div>
-                        </div>
-                      )}
-                      <Button onClick={handleInitiateWithdrawal} disabled={isInitiatingWithdrawal} className="w-full">
-                        {isInitiatingWithdrawal ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary mr-2"></div>
-                            Withdrawing...
-                          </>
-                        ) : (
-                          'Withdraw Funds'
-                        )}
-                      </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <Button 
+                  onClick={() => setShowWithdrawModal(true)}
+                  disabled={!wallet?.available_balance || wallet.available_balance < wallet.minimum_payout_amount}
+                  className="sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                  size="lg"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Withdraw via Paystack
+                </Button>
               </div>
             )}
           </div>
@@ -429,6 +382,12 @@ export function AdminWallet() {
           </CardContent>
         </Card>
       )}
+
+      {/* Paystack Withdrawal Modal */}
+      <PaystackWithdrawalModal 
+        open={showWithdrawModal} 
+        onOpenChange={setShowWithdrawModal} 
+      />
     </div>
   );
 }

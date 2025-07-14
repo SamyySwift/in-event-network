@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 // Remove this import:
 // import AdminLayout from '@/components/layouts/AdminLayout';
 import EventSelector from '@/components/admin/EventSelector';
@@ -35,7 +35,7 @@ const AdminAnnouncementsContent = () => {
   const { selectedEvent, selectedEventId } = useAdminEventContext();
   const { announcements, isLoading, createAnnouncement, updateAnnouncement, deleteAnnouncement, isCreating, isUpdating, isDeleting } = useAdminAnnouncements();
 
-  const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = useForm<AnnouncementFormData>({
+  const form = useForm<AnnouncementFormData>({
     defaultValues: {
       title: "",
       content: "",
@@ -43,6 +43,25 @@ const AdminAnnouncementsContent = () => {
       send_immediately: false,
     },
   });
+
+  const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = form;
+
+  // Form persistence
+  const { saveFormData, clearSavedData, hasSavedData } = useFormPersistence(
+    'announcement-form',
+    form,
+    !editingAnnouncement
+  );
+
+  // Watch form values for auto-save
+  const watchedValues = watch();
+
+  // Auto-save form data when values change
+  useEffect(() => {
+    if (!editingAnnouncement) {
+      saveFormData(watchedValues);
+    }
+  }, [watchedValues, saveFormData, editingAnnouncement]);
 
   // Metrics for stats cards
   const total = announcements.length;
@@ -63,6 +82,8 @@ const AdminAnnouncementsContent = () => {
     }
     reset();
     setSelectedImage(null);
+    // Clear saved form data after successful submission
+    clearSavedData();
   };
 
   const handleEdit = (announcement: any) => {
@@ -84,6 +105,10 @@ const AdminAnnouncementsContent = () => {
     setEditingAnnouncement(null);
     setSelectedImage(null);
     reset();
+    // Clear saved form data when canceling
+    if (!editingAnnouncement) {
+      clearSavedData();
+    }
   };
 
   if (isLoading) {

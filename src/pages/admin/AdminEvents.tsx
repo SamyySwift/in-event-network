@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 // Remove this line:
 // import AdminLayout from "@/components/layouts/AdminLayout";
 import {
@@ -71,14 +71,7 @@ const AdminEvents = () => {
   } = useAdminEvents();
   const { isEventPaid } = usePayment();
 
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    reset,
-    watch,
-    formState: { errors },
-  } = useForm<EventFormData>({
+  const form = useForm<EventFormData>({
     defaultValues: {
       name: "",
       description: "",
@@ -89,6 +82,32 @@ const AdminEvents = () => {
       location: "",
     },
   });
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    reset,
+    watch,
+    formState: { errors },
+  } = form;
+
+  // Form persistence
+  const { saveFormData, clearSavedData, hasSavedData } = useFormPersistence(
+    'event-form',
+    form,
+    !editingEvent
+  );
+
+  // Watch form values for auto-save
+  const watchedValues = watch();
+
+  // Auto-save form data when values change
+  useEffect(() => {
+    if (!editingEvent) {
+      saveFormData(watchedValues);
+    }
+  }, [watchedValues, saveFormData, editingEvent]);
 
   const startDate = watch("start_date");
   const endDate = watch("end_date");
@@ -138,6 +157,8 @@ const AdminEvents = () => {
     }
     reset();
     setSelectedImage(null);
+    // Clear saved form data after successful submission
+    clearSavedData();
   };
 
   const handleEdit = (event: any) => {
@@ -166,6 +187,10 @@ const AdminEvents = () => {
     setEditingEvent(null);
     setSelectedImage(null);
     reset();
+    // Clear saved form data when canceling
+    if (!editingEvent) {
+      clearSavedData();
+    }
   };
 
   const formatDate = (dateString: string) => {

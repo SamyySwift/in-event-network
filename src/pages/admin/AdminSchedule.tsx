@@ -71,7 +71,7 @@ const AdminScheduleContent = () => {
   const { toast } = useToast();
   const { currentUser } = useAuth();
   const { selectedEventId, selectedEvent } = useAdminEventContext();
-  const { register, handleSubmit, control, reset, watch, formState: { errors } } = useForm<ScheduleFormData>({
+  const form = useForm<ScheduleFormData>({
     defaultValues: {
       title: "",
       description: "",
@@ -85,6 +85,25 @@ const AdminScheduleContent = () => {
       priority: "medium"
     }
   });
+
+  const { register, handleSubmit, control, reset, watch, formState: { errors } } = form;
+
+  // Form persistence
+  const { saveFormData, clearSavedData, hasSavedData } = useFormPersistence(
+    'schedule-form',
+    form,
+    !editingItem
+  );
+
+  // Watch form values for auto-save
+  const watchedValues = watch();
+
+  // Auto-save form data when values change
+  useEffect(() => {
+    if (!editingItem) {
+      saveFormData(watchedValues);
+    }
+  }, [watchedValues, saveFormData, editingItem]);
 
   // Watch form values to enable conditional logic
   const watchStartDate = watch("start_date");
@@ -281,6 +300,8 @@ const AdminScheduleContent = () => {
       setEditingItem(null);
       setSelectedImage(null);
       setImagePreview('');
+      // Clear saved form data after successful submission
+      clearSavedData();
       fetchScheduleItems();
     } catch (error) {
       toast({
@@ -667,6 +688,10 @@ const AdminScheduleContent = () => {
                             type: 'general',
                             priority: 'medium'
                           });
+                          // Clear saved form data when canceling
+                          if (!editingItem) {
+                            clearSavedData();
+                          }
                         }}
                       >
                         Cancel

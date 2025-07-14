@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
+import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { Badge } from "@/components/ui/badge";
 import { useAdminEvents } from "@/hooks/useAdminEvents";
 import { useAuth } from "@/contexts/AuthContext";

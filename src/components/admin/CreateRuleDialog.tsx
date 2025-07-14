@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useForm } from "react-hook-form";
+import { useFormPersistence } from "@/hooks/useFormPersistence";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 
@@ -41,9 +42,7 @@ const CreateRuleDialog: React.FC<CreateRuleDialogProps> = ({
   isSubmitting,
   editingRule,
 }) => {
-  const {
-    register, handleSubmit, setValue, reset, watch, formState: { errors }
-  } = useForm<FormData>({
+  const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: editingRule || {
       title: "",
@@ -52,6 +51,17 @@ const CreateRuleDialog: React.FC<CreateRuleDialogProps> = ({
       priority: "medium"
     },
   });
+
+  const {
+    register, handleSubmit, setValue, reset, watch, formState: { errors }
+  } = form;
+
+  // Form persistence
+  const { clearSavedData } = useFormPersistence(
+    'rule-form',
+    form,
+    !editingRule
+  );
 
   useEffect(() => {
     if (editingRule) {
@@ -75,6 +85,7 @@ const CreateRuleDialog: React.FC<CreateRuleDialogProps> = ({
   const internalOnSubmit = (data: FormData) => {
     onSubmit(data);
     reset();
+    clearSavedData();
     setOpen(false);
   };
 

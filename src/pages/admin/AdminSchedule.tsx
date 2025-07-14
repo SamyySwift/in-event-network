@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ImageUpload } from "@/components/ui/image-upload";
 import { Calendar, Plus, AlertTriangle, Loader, Building } from "lucide-react";
 import { useForm, Controller } from "react-hook-form";
+import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";

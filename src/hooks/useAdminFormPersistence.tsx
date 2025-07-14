@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useCallback, ReactNode } from 'react';
 
 // Define the shape of form data that can be persisted
 interface FormData {
@@ -23,30 +23,58 @@ export const useAdminFormPersistence = () => {
 };
 
 export const AdminFormPersistenceProvider = ({ children }: { children: ReactNode }) => {
-  const [formStorage, setFormStorage] = useState<Record<string, FormData>>({});
+  const STORAGE_KEY = 'admin-form-persistence';
 
   const getFormData = useCallback((formKey: string): FormData | null => {
-    return formStorage[formKey] || null;
-  }, [formStorage]);
+    try {
+      const storage = localStorage.getItem(STORAGE_KEY);
+      if (!storage) return null;
+      
+      const parsedStorage = JSON.parse(storage);
+      return parsedStorage[formKey] || null;
+    } catch (error) {
+      console.error('Error reading form data from localStorage:', error);
+      return null;
+    }
+  }, []);
 
   const setFormData = useCallback((formKey: string, data: FormData) => {
-    setFormStorage(prev => ({
-      ...prev,
-      [formKey]: data
-    }));
+    try {
+      const storage = localStorage.getItem(STORAGE_KEY);
+      const parsedStorage = storage ? JSON.parse(storage) : {};
+      
+      parsedStorage[formKey] = data;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(parsedStorage));
+    } catch (error) {
+      console.error('Error saving form data to localStorage:', error);
+    }
   }, []);
 
   const clearFormData = useCallback((formKey: string) => {
-    setFormStorage(prev => {
-      const newStorage = { ...prev };
-      delete newStorage[formKey];
-      return newStorage;
-    });
+    try {
+      const storage = localStorage.getItem(STORAGE_KEY);
+      if (!storage) return;
+      
+      const parsedStorage = JSON.parse(storage);
+      delete parsedStorage[formKey];
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(parsedStorage));
+    } catch (error) {
+      console.error('Error clearing form data from localStorage:', error);
+    }
   }, []);
 
   const hasFormData = useCallback((formKey: string): boolean => {
-    return Boolean(formStorage[formKey]);
-  }, [formStorage]);
+    try {
+      const storage = localStorage.getItem(STORAGE_KEY);
+      if (!storage) return false;
+      
+      const parsedStorage = JSON.parse(storage);
+      return Boolean(parsedStorage[formKey] && Object.keys(parsedStorage[formKey]).length > 0);
+    } catch (error) {
+      console.error('Error checking form data in localStorage:', error);
+      return false;
+    }
+  }, []);
 
   const value = {
     getFormData,

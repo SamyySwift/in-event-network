@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Send, Pencil, Trash2, Loader, Plus, Upload, Phone, AlertTriangle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useAdminAnnouncements } from '@/hooks/useAdminAnnouncements';
+import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminEventContext, AdminEventProvider } from '@/hooks/useAdminEventContext';
 import { ImageUpload } from '@/components/ui/image-upload';

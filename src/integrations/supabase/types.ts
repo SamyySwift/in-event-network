@@ -1882,6 +1882,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_event_attendance_count: {
+        Args: { event_uuid: string }
+        Returns: number
+      }
       get_event_attendees_with_profiles: {
         Args: { p_event_id: string }
         Returns: {

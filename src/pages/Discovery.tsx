@@ -137,19 +137,21 @@ const Discovery = () => {
     setCountLoading(loadingStates);
     
     for (const event of events) {
+      loadingStates[event.id] = true;
       try {
-        const { count, error } = await supabase
-          .from("event_tickets")
-          .select("*", { count: "exact", head: true })
-          .eq("event_id", event.id)
-          .eq("payment_status", "completed");
+        const { data, error } = await supabase
+          .rpc("get_event_attendance_count", { event_uuid: event.id });
 
-        if (!error) {
-          counts[event.id] = count || 0;
+        if (!error && data !== null) {
+          counts[event.id] = data;
+        } else {
+          console.error("Error fetching attendee count for event:", event.id, error);
+          counts[event.id] = 0;
         }
         loadingStates[event.id] = false;
       } catch (error) {
         console.error("Error fetching attendee count for event:", event.id, error);
+        counts[event.id] = 0;
         loadingStates[event.id] = false;
       }
     }
@@ -162,14 +164,11 @@ const Discovery = () => {
     setCountLoading(prev => ({ ...prev, [eventId]: true }));
     
     try {
-      const { count, error } = await supabase
-        .from("event_tickets")
-        .select("*", { count: "exact", head: true })
-        .eq("event_id", eventId)
-        .eq("payment_status", "completed");
+      const { data, error } = await supabase
+        .rpc("get_event_attendance_count", { event_uuid: eventId });
 
-      if (!error) {
-        setAttendeeCounts(prev => ({ ...prev, [eventId]: count || 0 }));
+      if (!error && data !== null) {
+        setAttendeeCounts(prev => ({ ...prev, [eventId]: data }));
       }
     } catch (error) {
       console.error("Error refreshing attendee count for event:", eventId, error);

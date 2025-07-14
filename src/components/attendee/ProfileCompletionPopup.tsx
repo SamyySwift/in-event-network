@@ -46,8 +46,7 @@ export function ProfileCompletionPopup({ isOpen, onClose }: ProfileCompletionPop
   };
 
   const handleRemindLater = () => {
-    // Set a flag to remind later (24 hours)
-    localStorage.setItem('profileReminderDismissed', Date.now().toString());
+    // Simply close the popup - it will appear again on next visit since we removed the time-based logic
     onClose();
   };
 

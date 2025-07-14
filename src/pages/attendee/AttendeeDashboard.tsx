@@ -53,14 +53,14 @@ const AttendeeDashboardContent = () => {
   const { facilities } = useAttendeeFacilities();
   const [showProfilePopup, setShowProfilePopup] = useState(false);
 
-  // Check if profile needs completion and show popup every time until complete or dismissed
+  // Check if profile needs completion and show popup every time until complete or dismissed forever
   useEffect(() => {
     if (currentUser && hasJoinedEvent) {
       // Check if user has dismissed forever
       const neverShow = localStorage.getItem("profileReminderNeverShow");
       if (neverShow === "true") return;
 
-      // Check if profile is incomplete
+      // Check if profile is incomplete (any of these fields missing)
       const isIncomplete =
         !currentUser.photoUrl ||
         !currentUser.bio ||
@@ -69,7 +69,7 @@ const AttendeeDashboardContent = () => {
         !currentUser.links?.twitter;
 
       if (isIncomplete) {
-        // Show popup after a short delay every time the dashboard loads
+        // Show popup after a short delay every time the dashboard loads (until profile is complete or dismissed forever)
         const timer = setTimeout(() => setShowProfilePopup(true), 2000);
         return () => clearTimeout(timer);
       }

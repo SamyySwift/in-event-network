@@ -61,7 +61,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event, isLive = false }) =
       
       {/* Event image/banner */}
       {(event.banner_url || event.logo_url) && (
-        <div className="relative h-48 w-full -mx-4 -mt-4 overflow-hidden">
+        <div className="relative h-32 overflow-hidden">
           <img
             src={event.banner_url || event.logo_url}
             alt={event.name}

@@ -103,7 +103,7 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
         <div className="flex-1 overflow-y-auto space-y-6 pr-2">
           {/* Event/Speaker Image */}
           {(item.image_url || item.speaker_photo) && (
-            <div className="w-full h-64 -mx-6 -mt-6 overflow-hidden flex-shrink-0">
+            <div className="w-full h-64 rounded-lg overflow-hidden flex-shrink-0">
               <img 
                 src={item.image_url || item.speaker_photo} 
                 alt={item.title}

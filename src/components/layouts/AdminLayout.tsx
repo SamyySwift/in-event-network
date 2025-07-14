@@ -67,6 +67,26 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [searchQuery, setSearchQuery] = useState("");
 
+  // Debug page refresh issues
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      console.log("Page is about to refresh/navigate away from:", location.pathname);
+      console.log("Event:", e);
+    };
+
+    const handleUnload = () => {
+      console.log("Page is refreshing/unloading from:", location.pathname);
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('unload', handleUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('unload', handleUnload);
+    };
+  }, [location.pathname]);
+
   // Toggle theme functionality
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";

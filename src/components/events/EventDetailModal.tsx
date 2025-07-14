@@ -111,7 +111,7 @@ export const EventDetailModal: React.FC<EventDetailModalProps> = ({
             <img
               src={event.banner_url}
               alt={event.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-cover object-center"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
           </div>

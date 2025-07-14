@@ -88,12 +88,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       <Breadcrumb className="mb-6">
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/admin">
-              <span className="flex items-center text-primary hover:text-primary-600 transition-colors">
-                <BarChart4 size={16} className="mr-1" />
-                Dashboard
-              </span>
-            </BreadcrumbLink>
+            <button 
+              onClick={() => navigate("/admin")}
+              className="flex items-center text-primary hover:text-primary-600 transition-colors"
+            >
+              <BarChart4 size={16} className="mr-1" />
+              Dashboard
+            </button>
           </BreadcrumbItem>
           {pathnames.slice(1).map((name, index) => {
             const routeTo = `/${pathnames.slice(0, index + 2).join("/")}`;
@@ -107,12 +108,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                       {name.charAt(0).toUpperCase() + name.slice(1)}
                     </BreadcrumbPage>
                   ) : (
-                    <BreadcrumbLink
-                      href={routeTo}
+                    <button
+                      onClick={() => navigate(routeTo)}
                       className="text-primary hover:text-primary-600 transition-colors"
                     >
                       {name.charAt(0).toUpperCase() + name.slice(1)}
-                    </BreadcrumbLink>
+                    </button>
                   )}
                 </BreadcrumbItem>
               </React.Fragment>

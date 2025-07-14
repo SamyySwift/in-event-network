@@ -51,12 +51,12 @@ const LandingFooter: React.FC = () => {
                 </button>
               </li>
               <li>
-                <a
-                  href="/guide"
+                <button
+                  onClick={() => window.location.href = "/guide"}
                   className="text-white/60 hover:text-cyan-400 transition-colors"
                 >
                   Guide
-                </a>
+                </button>
               </li>
             </ul>
           </div>
@@ -65,20 +65,20 @@ const LandingFooter: React.FC = () => {
             <h3 className="font-semibold text-lg mb-4 text-white">Legal</h3>
             <ul className="space-y-2">
               <li>
-                <a
-                  href="/privacy"
-                  className="text-white/60 hover:text-cyan-400 transition-colors"
+                <button
+                  onClick={() => window.location.href = "/privacy"}
+                  className="text-white/60 hover:text-cyan-400 transition-colors text-left"
                 >
                   Data Privacy
-                </a>
+                </button>
               </li>
               <li>
-                <a
-                  href="/terms"
-                  className="text-white/60 hover:text-cyan-400 transition-colors"
+                <button
+                  onClick={() => window.location.href = "/terms"}
+                  className="text-white/60 hover:text-cyan-400 transition-colors text-left"
                 >
                   Terms of Service
-                </a>
+                </button>
               </li>
             </ul>
           </div>

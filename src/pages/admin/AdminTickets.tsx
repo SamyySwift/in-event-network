@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Plus, Ticket, DollarSign, Users, CheckCircle, Edit, Trash2, FormInput, TrendingUp, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -12,6 +13,7 @@ import { ShareableTicketLink } from '@/components/admin/ShareableTicketLink';
 import { WithdrawalButton } from '@/components/admin/WithdrawalButton';
 import { AdminEventProvider } from '@/hooks/useAdminEventContext';
 import { useAdminTickets } from '@/hooks/useAdminTickets';
+import { useAdminWallet } from '@/hooks/useAdminWallet';
 
 function AdminTicketsContent() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -27,6 +29,8 @@ function AdminTicketsContent() {
     isLoadingTickets,
     stats
   } = useAdminTickets();
+
+  const { wallet, isLoading: isLoadingWallet } = useAdminWallet();
 
   if (isLoadingTypes || isLoadingTickets) {
     return (
@@ -118,7 +122,18 @@ function AdminTicketsContent() {
                 <Plus className="h-4 w-4" />
                 Create Ticket Type
               </Button>
-              <WithdrawalButton />
+              {wallet && (
+                <WithdrawalButton
+                  walletId={wallet.id}
+                  availableBalance={wallet.available_balance}
+                  totalWithdrawn={wallet.withdrawn_amount}
+                  bankName={wallet.bank_name || undefined}
+                  accountNumber={wallet.account_number || undefined}
+                  accountName={wallet.account_name || undefined}
+                  recipientCode={wallet.recipient_code || undefined}
+                  isBankVerified={wallet.is_bank_verified || false}
+                />
+              )}
             </div>
             <ShareableTicketLink />
           </div>

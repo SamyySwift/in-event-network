@@ -144,7 +144,7 @@ export const WithdrawalButton: React.FC<WithdrawalButtonProps> = ({
     }
   };
 
-  const canWithdraw = availableBalance > 0 && availableBalance >= 100; // Minimum ₦100
+  const canWithdraw = availableBalance > 0 && availableBalance >= 10; // Minimum ₦10
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -300,11 +300,11 @@ export const WithdrawalButton: React.FC<WithdrawalButtonProps> = ({
                     value={withdrawalAmount}
                     onChange={(e) => setWithdrawalAmount(e.target.value)}
                     placeholder="Enter amount to withdraw"
-                    min="100"
+                    min="10"
                     max={availableBalance}
                   />
                   <p className="text-sm text-muted-foreground mt-1">
-                    Minimum withdrawal: ₦100
+                    Minimum withdrawal: ₦10
                   </p>
                 </div>
 
@@ -326,7 +326,7 @@ export const WithdrawalButton: React.FC<WithdrawalButtonProps> = ({
                   </Button>
                   <Button
                     onClick={handleWithdrawal}
-                    disabled={!withdrawalAmount || parseFloat(withdrawalAmount) < 100 || 
+                    disabled={!withdrawalAmount || parseFloat(withdrawalAmount) < 10 || 
                              parseFloat(withdrawalAmount) > availableBalance || isInitiatingWithdrawal}
                     className="flex-1"
                   >

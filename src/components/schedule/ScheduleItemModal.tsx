@@ -27,8 +27,10 @@ interface ScheduleItemModalProps {
     speaker_twitter?: string;
     speaker_linkedin?: string;
     speaker_website?: string;
+    speaker_topic?: string;
     priority?: string;
     image_url?: string;
+    time_allocation?: string | null; // Add time allocation
   } | null;
   isOpen: boolean;
   onClose: () => void;
@@ -121,6 +123,13 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
                   {formatTime(item.start_time)}
                   {item.end_time && ` - ${formatTime(item.end_time)}`}
                 </span>
+              </div>
+            )}
+            
+            {item.time_allocation && (
+              <div className="flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                <span>Duration: {item.time_allocation}</span>
               </div>
             )}
             

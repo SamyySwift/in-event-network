@@ -194,6 +194,7 @@ const AttendeeSchedule = () => {
           speaker_linkedin: speaker.linkedin_link,
           speaker_website: speaker.website_link,
           speaker_topic: speaker.topic,
+          time_allocation: speaker.time_allocation, // Add time allocation from speaker
         });
       });
     }

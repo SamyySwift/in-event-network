@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-// Add Speaker interface with topic field
+// Add Speaker interface with topic and time_allocation fields
 interface Speaker {
   id: string;
   name: string;
@@ -13,6 +13,7 @@ interface Speaker {
   photo_url?: string;
   session_title?: string;
   session_time?: string;
+  time_allocation?: string; // Add time_allocation field
   twitter_link?: string;
   linkedin_link?: string;
   website_link?: string;

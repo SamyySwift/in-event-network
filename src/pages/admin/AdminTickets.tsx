@@ -123,16 +123,28 @@ function AdminTicketsContent() {
                 Create Ticket Type
               </Button>
               {wallet && (
-                <WithdrawalButton
-                  walletId={wallet.id}
-                  availableBalance={wallet.available_balance}
-                  totalWithdrawn={wallet.withdrawn_amount}
-                  bankName={wallet.bank_name || undefined}
-                  accountNumber={wallet.account_number || undefined}
-                  accountName={wallet.account_name || undefined}
-                  recipientCode={wallet.recipient_code || undefined}
-                  isBankVerified={wallet.is_bank_verified || false}
-                />
+                <>
+                  {console.log('DEBUG: Wallet data for withdrawal button:', {
+                    walletId: wallet.id,
+                    availableBalance: wallet.available_balance,
+                    totalWithdrawn: wallet.withdrawn_amount,
+                    bankName: wallet.bank_name,
+                    accountNumber: wallet.account_number,
+                    accountName: wallet.account_name,
+                    recipientCode: wallet.recipient_code,
+                    isBankVerified: wallet.is_bank_verified
+                  })}
+                  <WithdrawalButton
+                    walletId={wallet.id}
+                    availableBalance={wallet.available_balance}
+                    totalWithdrawn={wallet.withdrawn_amount}
+                    bankName={wallet.bank_name || undefined}
+                    accountNumber={wallet.account_number || undefined}
+                    accountName={wallet.account_name || undefined}
+                    recipientCode={wallet.recipient_code || undefined}
+                    isBankVerified={wallet.is_bank_verified || false}
+                  />
+                </>
               )}
             </div>
             <ShareableTicketLink />

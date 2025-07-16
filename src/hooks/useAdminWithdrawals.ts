@@ -9,6 +9,7 @@ interface WithdrawalRequest {
   id: string;
   admin_wallet_id: string;
   amount: number;
+  amount_naira: number;
   status: 'pending' | 'processing' | 'completed' | 'failed';
   paystack_transfer_code?: string;
   bank_name: string;
@@ -26,6 +27,12 @@ interface Bank {
   country: string;
 }
 
+interface AccountVerificationResult {
+  success: boolean;
+  account_name: string;
+  message: string;
+}
+
 export const useAdminWithdrawals = () => {
   const { selectedEventId } = useAdminEventContext();
   const { currentUser } = useAuth();
@@ -38,6 +45,8 @@ export const useAdminWithdrawals = () => {
     queryFn: async (): Promise<WithdrawalRequest[]> => {
       if (!currentUser?.id || !selectedEventId) return [];
 
+      console.log('Fetching withdrawal history for user:', currentUser.id, 'event:', selectedEventId);
+
       const { data: wallet } = await supabase
         .from('admin_wallets')
         .select('id')
@@ -45,7 +54,10 @@ export const useAdminWithdrawals = () => {
         .eq('event_id', selectedEventId)
         .single();
 
-      if (!wallet) return [];
+      if (!wallet) {
+        console.log('No wallet found for user');
+        return [];
+      }
 
       const { data, error } = await supabase
         .from('withdrawal_requests')
@@ -53,7 +65,12 @@ export const useAdminWithdrawals = () => {
         .eq('admin_wallet_id', wallet.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching withdrawal history:', error);
+        throw error;
+      }
+
+      console.log('Withdrawal history fetched:', data?.length, 'records');
       return data as WithdrawalRequest[];
     },
     enabled: !!currentUser?.id && !!selectedEventId,
@@ -63,12 +80,19 @@ export const useAdminWithdrawals = () => {
   const { data: banks = [], isLoading: isLoadingBanks } = useQuery({
     queryKey: ['nigerian-banks'],
     queryFn: async (): Promise<Bank[]> => {
+      console.log('Fetching Nigerian banks...');
+      
       const { data, error } = await supabase.functions.invoke('process-withdrawal', {
         body: { action: 'get_banks' }
       });
 
-      if (error) throw error;
-      return data.data || [];
+      if (error) {
+        console.error('Error fetching banks:', error);
+        throw error;
+      }
+
+      console.log('Banks fetched successfully:', data?.data?.length, 'banks');
+      return data?.data || [];
     },
     staleTime: 1000 * 60 * 60, // Cache for 1 hour
   });
@@ -79,7 +103,13 @@ export const useAdminWithdrawals = () => {
       accountNumber: string;
       bankCode: string;
       bankName: string;
-    }) => {
+    }): Promise<AccountVerificationResult> => {
+      if (!selectedEventId) {
+        throw new Error('No event selected');
+      }
+
+      console.log('Verifying account:', { accountNumber, bankCode, bankName });
+
       const { data, error } = await supabase.functions.invoke('process-withdrawal', {
         body: {
           action: 'verify_account',
@@ -90,17 +120,28 @@ export const useAdminWithdrawals = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Account verification error:', error);
+        throw new Error(error.message || 'Failed to verify account');
+      }
+
+      if (!data?.success) {
+        console.error('Account verification failed:', data);
+        throw new Error(data?.message || 'Account verification failed');
+      }
+
+      console.log('Account verified successfully:', data);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['admin-wallet'] });
       toast({
         title: 'Success',
-        description: 'Bank account verified successfully',
+        description: `Account verified: ${data.account_name}`,
       });
     },
     onError: (error: any) => {
+      console.error('Account verification failed:', error);
       toast({
         title: 'Verification Failed',
         description: error.message || 'Failed to verify bank account',
@@ -116,6 +157,12 @@ export const useAdminWithdrawals = () => {
       accountNumber: string;
       bankCode: string;
     }) => {
+      if (!selectedEventId) {
+        throw new Error('No event selected');
+      }
+
+      console.log('Creating recipient:', { accountName, accountNumber, bankCode });
+
       const { data, error } = await supabase.functions.invoke('process-withdrawal', {
         body: {
           action: 'create_recipient',
@@ -126,10 +173,20 @@ export const useAdminWithdrawals = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Recipient creation error:', error);
+        throw new Error(error.message || 'Failed to create recipient');
+      }
+
+      if (!data?.success) {
+        console.error('Recipient creation failed:', data);
+        throw new Error(data?.message || 'Failed to create recipient');
+      }
+
+      console.log('Recipient created successfully:', data);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['admin-wallet'] });
       toast({
         title: 'Success',
@@ -137,6 +194,7 @@ export const useAdminWithdrawals = () => {
       });
     },
     onError: (error: any) => {
+      console.error('Recipient creation failed:', error);
       toast({
         title: 'Error',
         description: error.message || 'Failed to create recipient',
@@ -166,6 +224,30 @@ export const useAdminWithdrawals = () => {
       currentBalance: number;
       totalWithdrawn: number;
     }) => {
+      console.log('Initiating withdrawal:', { 
+        walletId, 
+        amount, 
+        bankName, 
+        accountNumber, 
+        accountName,
+        currentBalance,
+        totalWithdrawn
+      });
+
+      // Validate withdrawal amount
+      if (amount <= 0) {
+        throw new Error('Withdrawal amount must be greater than zero');
+      }
+
+      if (amount > currentBalance) {
+        throw new Error('Insufficient balance for withdrawal');
+      }
+
+      // Check minimum withdrawal amount (₦100)
+      if (amount < 100) {
+        throw new Error('Minimum withdrawal amount is ₦100');
+      }
+
       const { data, error } = await supabase.functions.invoke('process-withdrawal', {
         body: {
           action: 'initiate_transfer',
@@ -176,22 +258,33 @@ export const useAdminWithdrawals = () => {
           account_name: accountName,
           recipient_code: recipientCode,
           new_balance: currentBalance - amount,
-          total_withdrawn: totalWithdrawn,
+          total_withdrawn: totalWithdrawn + amount,
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Withdrawal initiation error:', error);
+        throw new Error(error.message || 'Failed to process withdrawal');
+      }
+
+      if (!data?.success) {
+        console.error('Withdrawal initiation failed:', data);
+        throw new Error(data?.error || 'Withdrawal failed');
+      }
+
+      console.log('Withdrawal initiated successfully:', data);
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['admin-wallet'] });
       queryClient.invalidateQueries({ queryKey: ['withdrawal-history'] });
       toast({
         title: 'Withdrawal Initiated',
-        description: 'Your withdrawal request has been processed',
+        description: data.message || 'Your withdrawal request has been processed',
       });
     },
     onError: (error: any) => {
+      console.error('Withdrawal failed:', error);
       toast({
         title: 'Withdrawal Failed',
         description: error.message || 'Failed to process withdrawal',

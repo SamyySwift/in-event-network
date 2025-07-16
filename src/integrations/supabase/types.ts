@@ -1721,6 +1721,7 @@ export type Database = {
           account_number: string | null
           admin_wallet_id: string
           amount: number
+          amount_naira: number | null
           bank_name: string | null
           created_at: string | null
           failure_reason: string | null
@@ -1736,6 +1737,7 @@ export type Database = {
           account_number?: string | null
           admin_wallet_id: string
           amount: number
+          amount_naira?: number | null
           bank_name?: string | null
           created_at?: string | null
           failure_reason?: string | null
@@ -1751,6 +1753,7 @@ export type Database = {
           account_number?: string | null
           admin_wallet_id?: string
           amount?: number
+          amount_naira?: number | null
           bank_name?: string | null
           created_at?: string | null
           failure_reason?: string | null

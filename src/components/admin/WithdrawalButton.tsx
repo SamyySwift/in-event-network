@@ -1,298 +1,350 @@
+
 import React, { useState } from 'react';
-import { Download, Plus, X, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import { useAdminWallet } from '@/hooks/useAdminWallet';
 import { useAdminWithdrawals } from '@/hooks/useAdminWithdrawals';
+import { Loader2, CreditCard, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
-export function WithdrawalButton() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [bankForm, setBankForm] = useState({
-    accountNumber: '',
-    bankCode: '',
-    bankName: '',
-    accountName: ''
-  });
-  const [withdrawAmount, setWithdrawAmount] = useState('');
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const { toast } = useToast();
+interface WithdrawalButtonProps {
+  walletId: string;
+  availableBalance: number;
+  totalWithdrawn: number;
+  bankName?: string;
+  accountNumber?: string;
+  accountName?: string;
+  recipientCode?: string;
+  isBankVerified?: boolean;
+}
 
-  const { wallet, hasWallet } = useAdminWallet();
-  const { 
-    withdrawalHistory, 
-    banks, 
-    verifyAccount, 
-    createRecipient, 
-    initiateWithdrawal 
+export const WithdrawalButton: React.FC<WithdrawalButtonProps> = ({
+  walletId,
+  availableBalance,
+  totalWithdrawn,
+  bankName: existingBankName,
+  accountNumber: existingAccountNumber,
+  accountName: existingAccountName,
+  recipientCode: existingRecipientCode,
+  isBankVerified: existingIsBankVerified,
+}) => {
+  const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<'bank' | 'amount' | 'confirm'>('bank');
+  const [accountNumber, setAccountNumber] = useState(existingAccountNumber || '');
+  const [selectedBankCode, setSelectedBankCode] = useState('');
+  const [selectedBankName, setSelectedBankName] = useState(existingBankName || '');
+  const [verifiedAccountName, setVerifiedAccountName] = useState(existingAccountName || '');
+  const [recipientCode, setRecipientCode] = useState(existingRecipientCode || '');
+  const [withdrawalAmount, setWithdrawalAmount] = useState('');
+  const [isBankVerified, setIsBankVerified] = useState(existingIsBankVerified || false);
+
+  const {
+    banks,
+    isLoadingBanks,
+    verifyAccount,
+    createRecipient,
+    initiateWithdrawal,
+    isVerifyingAccount,
+    isCreatingRecipient,
+    isInitiatingWithdrawal,
   } = useAdminWithdrawals();
 
-  const handleBankInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setBankForm(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleBankSelect = (value: string) => {
-    const selectedBank = banks?.find(bank => bank.code === value);
-    if (selectedBank) {
-      setBankForm(prev => ({
-        ...prev,
-        bankCode: selectedBank.code,
-        bankName: selectedBank.name
-      }));
-    }
-  };
-
-  const handleVerifyAccount = async () => {
-    if (!bankForm.accountNumber || !bankForm.bankCode) {
-      toast({
-        title: "Missing Information",
-        description: "Please enter account number and select a bank",
-        variant: "destructive"
-      });
+  const handleBankVerification = async () => {
+    if (!accountNumber || !selectedBankCode || !selectedBankName) {
       return;
     }
 
-    setIsVerifying(true);
     try {
+      console.log('Verifying bank account:', { accountNumber, selectedBankCode, selectedBankName });
+      
       const result = await verifyAccount.mutateAsync({
-        accountNumber: bankForm.accountNumber,
-        bankCode: bankForm.bankCode,
-        bankName: bankForm.bankName
+        accountNumber,
+        bankCode: selectedBankCode,
+        bankName: selectedBankName,
       });
 
-      if (result.account_name) {
-        setBankForm(prev => ({ ...prev, accountName: result.account_name }));
-        toast({
-          title: "Account Verified",
-          description: `Account verified for ${result.account_name}`,
-        });
+      console.log('Bank verification result:', result);
+      
+      if (result.success && result.account_name) {
+        setVerifiedAccountName(result.account_name);
+        setIsBankVerified(true);
+        console.log('Account verified successfully:', result.account_name);
       }
     } catch (error) {
-      toast({
-        title: "Verification Failed",
-        description: "Could not verify account. Please check the details.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsVerifying(false);
+      console.error('Bank verification failed:', error);
     }
   };
 
-  const handleWithdraw = async () => {
-    if (!wallet || !bankForm.accountName || !withdrawAmount) {
-      toast({
-        title: "Missing Information",
-        description: "Please verify your account and enter withdrawal amount",
-        variant: "destructive"
-      });
+  const handleCreateRecipient = async () => {
+    if (!verifiedAccountName || !accountNumber || !selectedBankCode) {
       return;
     }
 
-    const amount = parseInt(withdrawAmount);
-    if (amount <= 0 || amount > wallet.available_balance) {
-      toast({
-        title: "Invalid Amount",
-        description: `Amount must be between ₦1 and ₦${wallet.available_balance.toLocaleString()}`,
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsProcessing(true);
     try {
-      // Create recipient if needed
-      let recipientCode = wallet.recipient_code;
-      if (!recipientCode) {
-        const recipientResult = await createRecipient.mutateAsync({
-          accountName: bankForm.accountName,
-          accountNumber: bankForm.accountNumber,
-          bankCode: bankForm.bankCode
-        });
-        recipientCode = recipientResult.recipient_code;
+      console.log('Creating recipient:', { verifiedAccountName, accountNumber, selectedBankCode });
+      
+      const result = await createRecipient.mutateAsync({
+        accountName: verifiedAccountName,
+        accountNumber,
+        bankCode: selectedBankCode,
+      });
+
+      console.log('Recipient creation result:', result);
+      
+      if (result.success && result.recipient_code) {
+        setRecipientCode(result.recipient_code);
+        setStep('amount');
+        console.log('Recipient created successfully:', result.recipient_code);
       }
-
-      // Initiate withdrawal
-      await initiateWithdrawal.mutateAsync({
-        walletId: wallet.id,
-        amount,
-        bankName: bankForm.bankName,
-        accountNumber: bankForm.accountNumber,
-        accountName: bankForm.accountName,
-        recipientCode: recipientCode,
-        currentBalance: wallet.available_balance,
-        totalWithdrawn: wallet.withdrawn_amount
-      });
-
-      toast({
-        title: "Withdrawal Successful",
-        description: `₦${amount.toLocaleString()} has been transferred to your account`,
-      });
-
-      setIsDialogOpen(false);
-      setWithdrawAmount('');
     } catch (error) {
-      toast({
-        title: "Withdrawal Failed",
-        description: "Failed to process withdrawal. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsProcessing(false);
+      console.error('Recipient creation failed:', error);
     }
   };
+
+  const handleWithdrawal = async () => {
+    const amount = parseFloat(withdrawalAmount);
+    
+    if (!amount || amount <= 0 || !recipientCode || !verifiedAccountName) {
+      return;
+    }
+
+    try {
+      console.log('Processing withdrawal:', {
+        walletId,
+        amount,
+        selectedBankName,
+        accountNumber,
+        verifiedAccountName,
+        recipientCode,
+        availableBalance,
+        totalWithdrawn
+      });
+
+      await initiateWithdrawal.mutateAsync({
+        walletId,
+        amount,
+        bankName: selectedBankName,
+        accountNumber,
+        accountName: verifiedAccountName,
+        recipientCode,
+        currentBalance: availableBalance,
+        totalWithdrawn,
+      });
+
+      // Reset form and close dialog on success
+      setOpen(false);
+      setStep('bank');
+      setWithdrawalAmount('');
+      console.log('Withdrawal completed successfully');
+    } catch (error) {
+      console.error('Withdrawal failed:', error);
+    }
+  };
+
+  const canWithdraw = availableBalance > 0 && availableBalance >= 100; // Minimum ₦100
 
   return (
-    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Download className="h-4 w-4" />
-          Withdraw
+        <Button 
+          disabled={!canWithdraw}
+          className="w-full"
+          onClick={() => {
+            console.log('Withdrawal button clicked:', { 
+              canWithdraw, 
+              availableBalance, 
+              isBankVerified: existingIsBankVerified 
+            });
+            
+            if (existingIsBankVerified && existingRecipientCode) {
+              setStep('amount');
+            } else {
+              setStep('bank');
+            }
+          }}
+        >
+          <CreditCard className="w-4 h-4 mr-2" />
+          Withdraw Funds
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Withdraw Earnings</DialogTitle>
+          <DialogTitle>Withdraw Funds</DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Withdrawal Form */}
-          <div className="space-y-6">
+        {step === 'bank' && (
+          <div className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Bank Account Details</CardTitle>
+                <CardTitle className="text-sm">Bank Account Setup</CardTitle>
+                <CardDescription>
+                  Verify your bank account to enable withdrawals
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
                   <Label htmlFor="bank">Select Bank</Label>
-                  <Select onValueChange={handleBankSelect}>
+                  <Select value={selectedBankCode} onValueChange={(value) => {
+                    setSelectedBankCode(value);
+                    const bank = banks.find(b => b.code === value);
+                    setSelectedBankName(bank?.name || '');
+                    console.log('Bank selected:', { code: value, name: bank?.name });
+                  }}>
                     <SelectTrigger>
                       <SelectValue placeholder="Choose your bank" />
                     </SelectTrigger>
                     <SelectContent>
-                      {banks?.map((bank) => (
-                        <SelectItem key={bank.code} value={bank.code}>
-                          {bank.name}
-                        </SelectItem>
-                      ))}
+                      {isLoadingBanks ? (
+                        <div className="flex items-center justify-center p-4">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span className="ml-2">Loading banks...</span>
+                        </div>
+                      ) : (
+                        banks.map((bank) => (
+                          <SelectItem key={bank.code} value={bank.code}>
+                            {bank.name}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <Label htmlFor="accountNumber">Account Number</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="accountNumber"
-                      name="accountNumber"
-                      value={bankForm.accountNumber}
-                      onChange={handleBankInputChange}
-                      placeholder="Enter 10-digit account number"
-                      maxLength={10}
-                    />
-                    <Button 
-                      onClick={handleVerifyAccount}
-                      disabled={isVerifying || !bankForm.accountNumber || !bankForm.bankCode}
-                      variant="outline"
-                    >
-                      {isVerifying ? "Verifying..." : "Verify"}
-                    </Button>
-                  </div>
+                  <Label htmlFor="account-number">Account Number</Label>
+                  <Input
+                    id="account-number"
+                    value={accountNumber}
+                    onChange={(e) => {
+                      setAccountNumber(e.target.value);
+                      setIsBankVerified(false);
+                      setVerifiedAccountName('');
+                    }}
+                    placeholder="Enter your account number"
+                    maxLength={10}
+                  />
                 </div>
 
-                {bankForm.accountName && (
-                  <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600" />
-                      <span className="text-green-800 font-medium">{bankForm.accountName}</span>
-                    </div>
-                  </div>
+                {!isBankVerified ? (
+                  <Button
+                    onClick={handleBankVerification}
+                    disabled={!accountNumber || !selectedBankCode || isVerifyingAccount}
+                    className="w-full"
+                  >
+                    {isVerifyingAccount ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Verifying...
+                      </>
+                    ) : (
+                      'Verify Account'
+                    )}
+                  </Button>
+                ) : (
+                  <Alert>
+                    <CheckCircle2 className="h-4 w-4" />
+                    <AlertDescription>
+                      Account verified: <strong>{verifiedAccountName}</strong>
+                    </AlertDescription>
+                  </Alert>
                 )}
 
-                <div>
-                  <Label htmlFor="amount">Withdrawal Amount</Label>
-                  <Input
-                    id="amount"
-                    value={withdrawAmount}
-                    onChange={(e) => setWithdrawAmount(e.target.value)}
-                    placeholder="Enter amount to withdraw"
-                    type="number"
-                    min="1"
-                    max={wallet?.available_balance || 0}
-                  />
-                  {wallet && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Available balance: ₦{wallet.available_balance.toLocaleString()}
-                    </p>
-                  )}
-                </div>
+                {isBankVerified && !recipientCode && (
+                  <Button
+                    onClick={handleCreateRecipient}
+                    disabled={isCreatingRecipient}
+                    className="w-full"
+                  >
+                    {isCreatingRecipient ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Setting up...
+                      </>
+                    ) : (
+                      'Setup Withdrawal'
+                    )}
+                  </Button>
+                )}
 
-                <Button 
-                  onClick={handleWithdraw}
-                  disabled={isProcessing || !bankForm.accountName || !withdrawAmount}
-                  className="w-full"
-                >
-                  {isProcessing ? "Processing..." : "Withdraw Funds"}
-                </Button>
+                {recipientCode && (
+                  <Button
+                    onClick={() => setStep('amount')}
+                    className="w-full"
+                  >
+                    Continue to Withdrawal
+                  </Button>
+                )}
               </CardContent>
             </Card>
           </div>
+        )}
 
-          {/* Transaction History */}
-          <div>
+        {step === 'amount' && (
+          <div className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Transaction History</CardTitle>
+                <CardTitle className="text-sm">Withdrawal Amount</CardTitle>
+                <CardDescription>
+                  Available Balance: ₦{availableBalance.toLocaleString()}
+                </CardDescription>
               </CardHeader>
-              <CardContent>
-                {withdrawalHistory && withdrawalHistory.length > 0 ? (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Status</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {withdrawalHistory.map((withdrawal) => (
-                        <TableRow key={withdrawal.id}>
-                          <TableCell>₦{withdrawal.amount.toLocaleString()}</TableCell>
-                          <TableCell>
-                            {new Date(withdrawal.created_at || '').toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <Badge 
-                              variant={
-                                withdrawal.status === 'completed' ? 'default' :
-                                withdrawal.status === 'failed' ? 'destructive' : 'secondary'
-                              }
-                            >
-                              {withdrawal.status}
-                            </Badge>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                ) : (
-                  <p className="text-muted-foreground text-center py-4">
-                    No withdrawal history yet
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="amount">Amount (₦)</Label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    value={withdrawalAmount}
+                    onChange={(e) => setWithdrawalAmount(e.target.value)}
+                    placeholder="Enter amount to withdraw"
+                    min="100"
+                    max={availableBalance}
+                  />
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Minimum withdrawal: ₦100
                   </p>
+                </div>
+
+                {verifiedAccountName && (
+                  <Alert>
+                    <AlertDescription>
+                      Withdrawing to: <strong>{verifiedAccountName}</strong> ({selectedBankName})
+                    </AlertDescription>
+                  </Alert>
                 )}
+
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setStep('bank')}
+                    className="flex-1"
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    onClick={handleWithdrawal}
+                    disabled={!withdrawalAmount || parseFloat(withdrawalAmount) < 100 || 
+                             parseFloat(withdrawalAmount) > availableBalance || isInitiatingWithdrawal}
+                    className="flex-1"
+                  >
+                    {isInitiatingWithdrawal ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      'Withdraw'
+                    )}
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
   );
-}
+};

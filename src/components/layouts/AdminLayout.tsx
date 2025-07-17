@@ -6,6 +6,7 @@ import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { supabase } from '@/integrations/supabase/client';
 import {
   LayoutDashboard,
@@ -135,6 +136,13 @@ export function AdminLayout() {
     return sectionPermissions[section] || false;
   };
 
+  // Get current page title based on route
+  const getCurrentPageTitle = () => {
+    const currentPath = location.pathname;
+    const navItem = navigationItems.find(item => isActiveRoute(item.href));
+    return navItem ? navItem.label : 'Admin Dashboard';
+  };
+
   const NavigationContent = () => (
     <div className="flex flex-col h-full">
       <div className="p-4">
@@ -226,11 +234,6 @@ export function AdminLayout() {
 
       {/* Mobile Sidebar */}
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-        <SheetTrigger asChild className="lg:hidden">
-          <Button variant="ghost" size="sm" className="fixed top-4 left-4 z-40">
-            <Menu className="h-5 w-5" />
-          </Button>
-        </SheetTrigger>
         <SheetContent side="left" className="w-64 p-0">
           <NavigationContent />
         </SheetContent>
@@ -238,6 +241,50 @@ export function AdminLayout() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header */}
+        <header className="bg-card border-b border-border px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              {/* Mobile menu trigger */}
+              <SheetTrigger asChild className="lg:hidden">
+                <Button variant="ghost" size="sm">
+                  <Menu className="h-5 w-5" />
+                </Button>
+              </SheetTrigger>
+              
+              <div>
+                <h1 className="text-2xl font-bold text-foreground">
+                  {getCurrentPageTitle()}
+                </h1>
+                {selectedEvent && (
+                  <p className="text-sm text-muted-foreground">
+                    {selectedEvent.name}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4">
+              <ThemeToggle />
+              
+              {/* User menu */}
+              <div className="flex items-center space-x-2">
+                <div className="h-8 w-8 bg-primary rounded-full flex items-center justify-center">
+                  <User className="h-4 w-4 text-primary-foreground" />
+                </div>
+                <div className="hidden md:block">
+                  <p className="text-sm font-medium text-foreground">
+                    {currentUser?.email?.split('@')[0]}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {userRole === 'host' ? 'Event Host' : 'Team Member'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
         <main className="flex-1 overflow-y-auto">
           <Outlet />
         </main>

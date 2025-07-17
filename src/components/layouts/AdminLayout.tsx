@@ -246,11 +246,14 @@ export function AdminLayout() {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               {/* Mobile menu trigger */}
-              <SheetTrigger asChild className="lg:hidden">
-                <Button variant="ghost" size="sm">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="lg:hidden"
+                onClick={() => setIsMobileMenuOpen(true)}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
               
               <div>
                 <h1 className="text-2xl font-bold text-foreground">

@@ -19,7 +19,6 @@ import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 import { AddTeamMemberDialog } from '@/components/admin/team/AddTeamMemberDialog';
 import { TeamMemberCard } from '@/components/admin/team/TeamMemberCard';
 import { InvitationCard } from '@/components/admin/team/InvitationCard';
-import AdminPageHeader from '@/components/admin/AdminPageHeader';
 
 export default function AdminTeamManagement() {
   const { selectedEvent } = useAdminEventContext();
@@ -61,10 +60,10 @@ export default function AdminTeamManagement() {
   if (!selectedEvent) {
     return (
       <div className="container mx-auto p-6">
-        <AdminPageHeader
-          title="Team Management"
-          description="Manage your event team members and permissions"
-        />
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold tracking-tight">Team Management</h1>
+          <p className="text-muted-foreground mt-1">Manage your event team members and permissions</p>
+        </div>
         <Card>
           <CardContent className="p-6">
             <p className="text-muted-foreground">Please select an event to manage team members.</p>
@@ -76,16 +75,17 @@ export default function AdminTeamManagement() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <AdminPageHeader
-        title="Team Management"
-        description="Manage your event team members and their dashboard permissions"
-        action={
-          <AddTeamMemberDialog
-            onAddMember={(data) => createInvitation.mutate(data)}
-            isLoading={createInvitation.isPending}
-          />
-        }
-      />
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Team Management</h1>
+          <p className="text-muted-foreground mt-1">Manage your event team members and their dashboard permissions</p>
+        </div>
+        
+        <AddTeamMemberDialog
+          onAddMember={(data) => createInvitation.mutate(data)}
+          isLoading={createInvitation.isPending}
+        />
+      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">

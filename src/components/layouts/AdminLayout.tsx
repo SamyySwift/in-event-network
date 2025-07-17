@@ -188,7 +188,7 @@ export function AdminLayout() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">
-              {currentUser?.user_metadata?.name || currentUser?.email}
+              {currentUser?.email}
             </p>
             <p className="text-xs text-muted-foreground truncate">
               {userRole === 'host' ? 'Event Host' : 'Team Member'}
@@ -245,3 +245,5 @@ export function AdminLayout() {
     </div>
   );
 }
+
+export default AdminLayout;

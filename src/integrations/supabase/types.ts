@@ -965,6 +965,7 @@ export type Database = {
           role: string | null
           snapchat_link: string | null
           tags: string[] | null
+          team_member_for_event: string | null
           tiktok_link: string | null
           twitter_link: string | null
           updated_at: string
@@ -990,6 +991,7 @@ export type Database = {
           role?: string | null
           snapchat_link?: string | null
           tags?: string[] | null
+          team_member_for_event?: string | null
           tiktok_link?: string | null
           twitter_link?: string | null
           updated_at?: string
@@ -1015,6 +1017,7 @@ export type Database = {
           role?: string | null
           snapchat_link?: string | null
           tags?: string[] | null
+          team_member_for_event?: string | null
           tiktok_link?: string | null
           twitter_link?: string | null
           updated_at?: string
@@ -1024,6 +1027,13 @@ export type Database = {
           {
             foreignKeyName: "profiles_current_event_id_fkey"
             columns: ["current_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_team_member_for_event_fkey"
+            columns: ["team_member_for_event"]
             isOneToOne: false
             referencedRelation: "events"
             referencedColumns: ["id"]
@@ -1462,6 +1472,145 @@ export type Database = {
         }
         Relationships: []
       }
+      team_invitations: {
+        Row: {
+          admin_id: string
+          allowed_sections: Database["public"]["Enums"]["dashboard_section"][]
+          created_at: string
+          email: string
+          event_id: string
+          expires_at: string | null
+          id: string
+          status: string
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          admin_id: string
+          allowed_sections?: Database["public"]["Enums"]["dashboard_section"][]
+          created_at?: string
+          email: string
+          event_id: string
+          expires_at?: string | null
+          id?: string
+          status?: string
+          token: string
+          updated_at?: string
+        }
+        Update: {
+          admin_id?: string
+          allowed_sections?: Database["public"]["Enums"]["dashboard_section"][]
+          created_at?: string
+          email?: string
+          event_id?: string
+          expires_at?: string | null
+          id?: string
+          status?: string
+          token?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_invitations_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_invitations_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_invitations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_members: {
+        Row: {
+          admin_id: string
+          allowed_sections: Database["public"]["Enums"]["dashboard_section"][]
+          created_at: string
+          event_id: string
+          expires_at: string | null
+          id: string
+          invited_at: string
+          is_active: boolean
+          joined_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          admin_id: string
+          allowed_sections?: Database["public"]["Enums"]["dashboard_section"][]
+          created_at?: string
+          event_id: string
+          expires_at?: string | null
+          id?: string
+          invited_at?: string
+          is_active?: boolean
+          joined_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          admin_id?: string
+          allowed_sections?: Database["public"]["Enums"]["dashboard_section"][]
+          created_at?: string
+          event_id?: string
+          expires_at?: string | null
+          id?: string
+          invited_at?: string
+          is_active?: boolean
+          joined_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ticket_form_fields: {
         Row: {
           created_at: string | null
@@ -1861,6 +2010,10 @@ export type Database = {
           created_at: string
         }[]
       }
+      generate_invite_token: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       generate_sponsor_qr_data: {
         Args: { sponsor_id: string }
         Returns: string
@@ -1931,9 +2084,17 @@ export type Database = {
         Args: { attendee_user_id: string; target_event_id: string }
         Returns: Json
       }
+      has_section_access: {
+        Args: { section_name: string; target_event_id?: string }
+        Returns: boolean
+      }
       increment_wallet_balance: {
         Args: { p_admin_id: string; p_event_id: string; p_amount: number }
         Returns: undefined
+      }
+      is_admin_for_event: {
+        Args: { event_uuid: string }
+        Returns: boolean
       }
       is_event_host: {
         Args: { event_uuid: string }
@@ -1957,7 +2118,24 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      dashboard_section:
+        | "dashboard"
+        | "events"
+        | "tickets"
+        | "checkin"
+        | "attendees"
+        | "speakers"
+        | "announcements"
+        | "schedule"
+        | "polls"
+        | "facilities"
+        | "rules"
+        | "questions"
+        | "suggestions"
+        | "notifications"
+        | "sponsors"
+        | "vendor-hub"
+        | "settings"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2084,6 +2262,26 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      dashboard_section: [
+        "dashboard",
+        "events",
+        "tickets",
+        "checkin",
+        "attendees",
+        "speakers",
+        "announcements",
+        "schedule",
+        "polls",
+        "facilities",
+        "rules",
+        "questions",
+        "suggestions",
+        "notifications",
+        "sponsors",
+        "vendor-hub",
+        "settings",
+      ],
+    },
   },
 } as const

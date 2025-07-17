@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -48,13 +47,15 @@ export default function AdminTeamManagement() {
   const activeMembers = teamMembers.filter(m => m.is_active && (!m.expires_at || new Date(m.expires_at) > new Date()));
   const pendingInvitations = invitations.filter(i => i.status === 'pending' && (!i.expires_at || new Date(i.expires_at) > new Date()));
 
-  const handleUpdateTeamMember = (data: {
-    memberId: string;
+  const handleUpdateTeamMember = (memberId: string, data: {
     allowed_sections?: string[];
     expires_at?: string | null;
     is_active?: boolean;
   }) => {
-    updateTeamMember.mutate(data);
+    updateTeamMember.mutate({
+      memberId,
+      ...data
+    });
   };
 
   if (!selectedEvent) {
@@ -201,7 +202,7 @@ export default function AdminTeamManagement() {
                       key={member.id}
                       member={member}
                       onUpdate={handleUpdateTeamMember}
-                      onRemove={removeTeamMember.mutate}
+                      onRemove={(memberId: string) => removeTeamMember.mutate(memberId)}
                     />
                   ))}
                 </div>
@@ -233,8 +234,8 @@ export default function AdminTeamManagement() {
                     <InvitationCard
                       key={invitation.id}
                       invitation={invitation}
-                      onResend={resendInvitation.mutate}
-                      onRevoke={revokeInvitation.mutate}
+                      onResend={(invitationId: string) => resendInvitation.mutate(invitationId)}
+                      onRevoke={(invitationId: string) => revokeInvitation.mutate(invitationId)}
                     />
                   ))}
                 </div>

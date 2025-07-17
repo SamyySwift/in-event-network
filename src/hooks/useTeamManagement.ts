@@ -4,6 +4,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import type { Database } from '@/integrations/supabase/types';
+
+type DashboardSection = Database['public']['Enums']['dashboard_section'];
 
 export interface TeamInvitation {
   id: string;
@@ -11,7 +14,7 @@ export interface TeamInvitation {
   email: string;
   event_id: string;
   token: string;
-  allowed_sections: string[];
+  allowed_sections: DashboardSection[];
   expires_at: string | null;
   status: 'pending' | 'accepted' | 'revoked';
   created_at: string;
@@ -23,7 +26,7 @@ export interface TeamMember {
   user_id: string;
   admin_id: string;
   event_id: string;
-  allowed_sections: string[];
+  allowed_sections: DashboardSection[];
   expires_at: string | null;
   is_active: boolean;
   invited_at: string;
@@ -38,27 +41,27 @@ export interface TeamMember {
 }
 
 export const DASHBOARD_SECTIONS = [
-  { value: 'dashboard', label: 'Dashboard Overview' },
-  { value: 'events', label: 'Event Management' },
-  { value: 'tickets', label: 'Tickets & Sales' },
-  { value: 'checkin', label: 'Check-in Management' },
-  { value: 'attendees', label: 'Attendee Management' },
-  { value: 'speakers', label: 'Speaker Management' },
-  { value: 'announcements', label: 'Announcements' },
-  { value: 'schedule', label: 'Event Schedule' },
-  { value: 'polls', label: 'Polls & Surveys' },
-  { value: 'facilities', label: 'Facilities & Venues' },
-  { value: 'rules', label: 'Event Rules' },
-  { value: 'questions', label: 'Q&A Management' },
-  { value: 'suggestions', label: 'Feedback & Suggestions' },
-  { value: 'notifications', label: 'Notifications' },
-  { value: 'sponsors', label: 'Sponsors & Partners' },
-  { value: 'vendor-hub', label: 'Vendor Hub' },
-  { value: 'settings', label: 'Event Settings' },
+  { value: 'dashboard' as const, label: 'Dashboard Overview' },
+  { value: 'events' as const, label: 'Event Management' },
+  { value: 'tickets' as const, label: 'Tickets & Sales' },
+  { value: 'checkin' as const, label: 'Check-in Management' },
+  { value: 'attendees' as const, label: 'Attendee Management' },
+  { value: 'speakers' as const, label: 'Speaker Management' },
+  { value: 'announcements' as const, label: 'Announcements' },
+  { value: 'schedule' as const, label: 'Event Schedule' },
+  { value: 'polls' as const, label: 'Polls & Surveys' },
+  { value: 'facilities' as const, label: 'Facilities & Venues' },
+  { value: 'rules' as const, label: 'Event Rules' },
+  { value: 'questions' as const, label: 'Q&A Management' },
+  { value: 'suggestions' as const, label: 'Feedback & Suggestions' },
+  { value: 'notifications' as const, label: 'Notifications' },
+  { value: 'sponsors' as const, label: 'Sponsors & Partners' },
+  { value: 'vendor-hub' as const, label: 'Vendor Hub' },
+  { value: 'settings' as const, label: 'Event Settings' },
 ] as const;
 
 export function useTeamManagement(eventId: string) {
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   const queryClient = useQueryClient();
 
   // Get team invitations
@@ -74,7 +77,7 @@ export function useTeamManagement(eventId: string) {
       if (error) throw error;
       return data as TeamInvitation[];
     },
-    enabled: !!user && !!eventId,
+    enabled: !!currentUser && !!eventId,
   });
 
   // Get team members
@@ -97,7 +100,7 @@ export function useTeamManagement(eventId: string) {
       if (error) throw error;
       return data as TeamMember[];
     },
-    enabled: !!user && !!eventId,
+    enabled: !!currentUser && !!eventId,
   });
 
   // Create invitation mutation
@@ -110,10 +113,10 @@ export function useTeamManagement(eventId: string) {
       const { data: result, error } = await supabase
         .from('team_invitations')
         .insert({
-          admin_id: user!.id,
+          admin_id: currentUser!.id,
           event_id: eventId,
           email: data.email,
-          allowed_sections: data.allowed_sections,
+          allowed_sections: data.allowed_sections as DashboardSection[],
           expires_at: data.expires_at || null,
           token: crypto.randomUUID(), // Will be replaced by DB function
         })
@@ -185,7 +188,7 @@ export function useTeamManagement(eventId: string) {
       const { error } = await supabase
         .from('team_members')
         .update({
-          allowed_sections: data.allowed_sections,
+          allowed_sections: data.allowed_sections as DashboardSection[],
           expires_at: data.expires_at,
           is_active: data.is_active,
         })

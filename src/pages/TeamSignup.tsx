@@ -18,13 +18,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { DASHBOARD_SECTIONS } from '@/hooks/useTeamManagement';
+import type { Database } from '@/integrations/supabase/types';
+
+type DashboardSection = Database['public']['Enums']['dashboard_section'];
 
 interface InvitationData {
   id: string;
   email: string;
   event_id: string;
   admin_id: string;
-  allowed_sections: string[];
+  allowed_sections: DashboardSection[];
   expires_at: string | null;
   event: {
     name: string;
@@ -39,7 +42,7 @@ interface InvitationData {
 export default function TeamSignup() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   const token = searchParams.get('token');
 
   const [invitation, setInvitation] = useState<InvitationData | null>(null);
@@ -64,10 +67,10 @@ export default function TeamSignup() {
 
   useEffect(() => {
     // If user is already logged in, try to accept the invitation
-    if (user && invitation && !isSigningUp) {
+    if (currentUser && invitation && !isSigningUp) {
       acceptInvitation();
     }
-  }, [user, invitation]);
+  }, [currentUser, invitation]);
 
   const fetchInvitation = async () => {
     try {
@@ -144,14 +147,14 @@ export default function TeamSignup() {
   };
 
   const acceptInvitation = async () => {
-    if (!invitation || !user) return;
+    if (!invitation || !currentUser) return;
 
     try {
       // Create team member record
       const { error: memberError } = await supabase
         .from('team_members')
         .insert({
-          user_id: user.id,
+          user_id: currentUser.id,
           admin_id: invitation.admin_id,
           event_id: invitation.event_id,
           allowed_sections: invitation.allowed_sections,
@@ -176,7 +179,7 @@ export default function TeamSignup() {
           current_event_id: invitation.event_id,
           team_member_for_event: invitation.event_id 
         })
-        .eq('id', user.id);
+        .eq('id', currentUser.id);
 
       if (profileError) throw profileError;
 
@@ -234,7 +237,7 @@ export default function TeamSignup() {
   if (!invitation) return null;
 
   // If user is already logged in and accepting invitation
-  if (user && isSigningUp) {
+  if (currentUser && isSigningUp) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Card className="w-full max-w-md">
@@ -250,7 +253,7 @@ export default function TeamSignup() {
   }
 
   // If user is already logged in, show acceptance confirmation
-  if (user) {
+  if (currentUser) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Card className="w-full max-w-2xl">
@@ -269,7 +272,7 @@ export default function TeamSignup() {
     );
   }
 
-  const getSectionLabel = (value: string) => {
+  const getSectionLabel = (value: DashboardSection) => {
     return DASHBOARD_SECTIONS.find(s => s.value === value)?.label || value;
   };
 

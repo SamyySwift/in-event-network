@@ -1,3 +1,4 @@
+
 import {
   createBrowserRouter,
   createRoutesFromElements,
@@ -7,17 +8,7 @@ import {
 import App from "./App";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import Profile from "./pages/Profile";
-import Home from "./pages/Home";
-import Events from "./pages/Events";
-import EventDetails from "./pages/EventDetails";
-import PublicProfile from "./pages/PublicProfile";
-import Messages from "./pages/Messages";
-import Connections from "./pages/Connections";
-import NotFound from "./pages/NotFound";
-import AdminLayout from "./components/layouts/AdminLayout";
+import { AdminLayout } from "./components/layouts/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminEvents from "./pages/admin/AdminEvents";
 import AdminAttendees from "./pages/admin/AdminAttendees";
@@ -43,19 +34,6 @@ import AdminTeamManagement from "@/pages/admin/AdminTeamManagement";
 const router = createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<App />}>
-      <Route index element={<Home />} />
-      <Route path="login" element={<Login />} />
-      <Route path="register" element={<Register />} />
-      <Route path="forgot-password" element={<ForgotPassword />} />
-      <Route path="reset-password" element={<ResetPassword />} />
-      <Route path="profile" element={<Profile />} />
-      <Route path="events" element={<Events />} />
-      <Route path="events/:eventId" element={<EventDetails />} />
-      <Route path="profile/:profileId" element={<PublicProfile />} />
-      <Route path="messages" element={<Messages />} />
-      <Route path="connections" element={<Connections />} />
-      <Route path="*" element={<NotFound />} />
-
       <Route path="/admin" element={<AdminLayout />}>
         <Route index element={<AdminDashboard />} />
         <Route path="dashboard" element={<AdminDashboard />} />

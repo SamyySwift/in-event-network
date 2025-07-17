@@ -19,10 +19,10 @@ import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 import { AddTeamMemberDialog } from '@/components/admin/team/AddTeamMemberDialog';
 import { TeamMemberCard } from '@/components/admin/team/TeamMemberCard';
 import { InvitationCard } from '@/components/admin/team/InvitationCard';
-import { AdminPageHeader } from '@/components/admin/AdminPageHeader';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 
 export default function AdminTeamManagement() {
-  const { currentEvent } = useAdminEventContext();
+  const { selectedEvent } = useAdminEventContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState('members');
 
@@ -35,7 +35,7 @@ export default function AdminTeamManagement() {
     revokeInvitation,
     updateTeamMember,
     removeTeamMember,
-  } = useTeamManagement(currentEvent?.id || '');
+  } = useTeamManagement(selectedEvent?.id || '');
 
   const filteredMembers = teamMembers.filter(member =>
     member.user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -49,7 +49,16 @@ export default function AdminTeamManagement() {
   const activeMembers = teamMembers.filter(m => m.is_active && (!m.expires_at || new Date(m.expires_at) > new Date()));
   const pendingInvitations = invitations.filter(i => i.status === 'pending' && (!i.expires_at || new Date(i.expires_at) > new Date()));
 
-  if (!currentEvent) {
+  const handleUpdateTeamMember = (data: {
+    memberId: string;
+    allowed_sections?: string[];
+    expires_at?: string | null;
+    is_active?: boolean;
+  }) => {
+    updateTeamMember.mutate(data);
+  };
+
+  if (!selectedEvent) {
     return (
       <div className="container mx-auto p-6">
         <AdminPageHeader
@@ -191,7 +200,7 @@ export default function AdminTeamManagement() {
                     <TeamMemberCard
                       key={member.id}
                       member={member}
-                      onUpdate={updateTeamMember.mutate}
+                      onUpdate={handleUpdateTeamMember}
                       onRemove={removeTeamMember.mutate}
                     />
                   ))}

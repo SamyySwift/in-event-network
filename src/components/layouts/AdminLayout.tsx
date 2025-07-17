@@ -30,7 +30,7 @@ import {
   Lock,
   UserCog
 } from 'lucide-react';
-import { EventSelector } from '@/components/admin/EventSelector';
+import EventSelector from '@/components/admin/EventSelector';
 
 interface NavigationItem {
   label: string;
@@ -61,8 +61,8 @@ const navigationItems: NavigationItem[] = [
 ];
 
 export function AdminLayout() {
-  const { user, logout } = useAuth();
-  const { currentEvent } = useAdminEventContext();
+  const { currentUser, logout } = useAuth();
+  const { selectedEvent } = useAdminEventContext();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -72,14 +72,14 @@ export function AdminLayout() {
   // Fetch user role and permissions
   useEffect(() => {
     const fetchPermissions = async () => {
-      if (!user || !currentEvent) return;
+      if (!currentUser || !selectedEvent) return;
 
       try {
         // Get user role
         const { data: profile } = await supabase
           .from('profiles')
           .select('role')
-          .eq('id', user.id)
+          .eq('id', currentUser.id)
           .single();
 
         if (profile) {
@@ -95,7 +95,7 @@ export function AdminLayout() {
             const { data: hasAccess } = await supabase
               .rpc('has_section_access', { 
                 section_name: item.section,
-                target_event_id: currentEvent.id 
+                target_event_id: selectedEvent.id 
               });
             permissions[item.section] = hasAccess || false;
           }
@@ -115,7 +115,7 @@ export function AdminLayout() {
     };
 
     fetchPermissions();
-  }, [user, currentEvent]);
+  }, [currentUser, selectedEvent]);
 
   const handleLogout = async () => {
     try {
@@ -188,7 +188,7 @@ export function AdminLayout() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium truncate">
-              {user?.user_metadata?.name || user?.email}
+              {currentUser?.user_metadata?.name || currentUser?.email}
             </p>
             <p className="text-xs text-muted-foreground truncate">
               {userRole === 'host' ? 'Event Host' : 'Team Member'}

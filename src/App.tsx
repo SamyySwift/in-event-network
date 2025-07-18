@@ -35,6 +35,10 @@ import AdminNotifications from '@/pages/admin/AdminNotifications';
 import AdminSettings from '@/pages/admin/AdminSettings';
 import AdminTickets from '@/pages/admin/AdminTickets';
 import AdminCheckIn from '@/pages/admin/AdminCheckIn';
+import AdminTeamManagement from '@/pages/admin/AdminTeamManagement';
+import AdminSponsors from '@/pages/admin/AdminSponsors';
+import AdminVendorHub from '@/pages/admin/AdminVendorHub';
+import AdminProfile from '@/pages/admin/AdminProfile';
 
 // Attendee pages
 import AttendeeDashboard from '@/pages/attendee/AttendeeDashboard';
@@ -89,7 +93,7 @@ function App() {
                 element={
                   <ProtectedRoute requiredRole="host">
                     <AdminEventProvider>
-                      <AdminLayout>
+                       <AdminLayout>
                         <Routes>
                           <Route path="" element={<AdminDashboard />} />
                           <Route path="dashboard" element={<AdminDashboard />} />
@@ -107,8 +111,12 @@ function App() {
                           <Route path="settings" element={<AdminSettings />} />
                           <Route path="tickets" element={<AdminTickets />} />
                           <Route path="checkin" element={<AdminCheckIn />} />
+                          <Route path="team-management" element={<AdminTeamManagement />} />
+                          <Route path="sponsors" element={<AdminSponsors />} />
+                          <Route path="vendor-hub" element={<AdminVendorHub />} />
+                          <Route path="profile" element={<AdminProfile />} />
                         </Routes>
-                      </AdminLayout>
+                       </AdminLayout>
                     </AdminEventProvider>
                   </ProtectedRoute>
                 }

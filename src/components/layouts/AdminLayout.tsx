@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Outlet, useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 import { Button } from '@/components/ui/button';
@@ -33,6 +33,10 @@ import {
 } from 'lucide-react';
 import EventSelector from '@/components/admin/EventSelector';
 
+interface AdminLayoutProps {
+  children: React.ReactNode;
+}
+
 interface NavigationItem {
   label: string;
   href: string;
@@ -61,7 +65,7 @@ const navigationItems: NavigationItem[] = [
   { label: 'Settings', href: '/admin/settings', icon: Settings, section: 'settings' },
 ];
 
-export function AdminLayout() {
+export function AdminLayout({ children }: AdminLayoutProps) {
   const { currentUser, logout } = useAuth();
   const { selectedEvent } = useAdminEventContext();
   const navigate = useNavigate();
@@ -289,7 +293,7 @@ export function AdminLayout() {
         </header>
 
         <main className="flex-1 overflow-y-auto">
-          <Outlet />
+          {children}
         </main>
       </div>
     </div>

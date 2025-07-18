@@ -63,6 +63,7 @@ import AttendeeMyTickets from '@/pages/attendee/AttendeeMyTickets';
 import AdminLayout from '@/components/layouts/AdminLayout';
 import AppLayout from '@/components/layouts/AppLayout';
 import Discovery from '@/pages/Discovery';
+import TeamSignup from '@/pages/TeamSignup';
 
 const queryClient = new QueryClient();
 
@@ -86,6 +87,7 @@ function App() {
               <Route path="/buy" element={<BuyTickets />} />
               <Route path="/privacy" element={<DataPrivacy />} />
               <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/team-signup" element={<TeamSignup />} />
 
               {/* Admin routes - now wrapped in AdminEventProvider and AdminLayout */}
               <Route

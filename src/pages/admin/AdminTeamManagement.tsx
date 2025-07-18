@@ -75,7 +75,7 @@ export default function AdminTeamManagement() {
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto overflow-auto">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Team Management</h1>

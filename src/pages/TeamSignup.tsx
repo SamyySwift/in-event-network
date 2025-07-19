@@ -184,9 +184,8 @@ export default function TeamSignup() {
       if (profileError) throw profileError;
 
       toast.success('Welcome to the team! Redirecting to dashboard...');
-      setTimeout(() => {
-        navigate('/admin/dashboard');
-      }, 2000);
+      // Immediate redirect instead of delay
+      navigate('/admin/dashboard');
     } catch (error: any) {
       console.error('Error accepting invitation:', error);
       toast.error('Failed to accept invitation');

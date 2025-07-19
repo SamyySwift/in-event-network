@@ -159,7 +159,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         )}
       </div>
       
-      <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-4 space-y-1 overflow-y-auto scrollbar-hide">
         {navigationItems.map((item) => {
           const hasAccessToSection = hasAccess(item.section);
           const Icon = item.icon;
@@ -228,10 +228,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   );
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background overflow-hidden">
       {/* Desktop Sidebar */}
       <div className="hidden lg:flex lg:flex-shrink-0">
-        <div className="flex flex-col w-64 border-r bg-card">
+        <div className="flex flex-col w-64 border-r bg-card overflow-hidden">
           <NavigationContent />
         </div>
       </div>
@@ -246,38 +246,38 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="bg-card border-b border-border px-6 py-4">
+        <header className="bg-card border-b border-border px-4 md:px-6 py-3 md:py-4 flex-shrink-0">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 md:space-x-4 min-w-0 flex-1">
               {/* Mobile menu trigger */}
               <Button 
                 variant="ghost" 
                 size="sm" 
-                className="lg:hidden"
+                className="lg:hidden flex-shrink-0"
                 onClick={() => setIsMobileMenuOpen(true)}
               >
                 <Menu className="h-5 w-5" />
               </Button>
               
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">
+              <div className="min-w-0 flex-1">
+                <h1 className="text-lg md:text-2xl font-bold text-foreground truncate">
                   {getCurrentPageTitle()}
                 </h1>
                 {selectedEvent && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs md:text-sm text-muted-foreground truncate">
                     {selectedEvent.name}
                   </p>
                 )}
               </div>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
               <ThemeToggle />
               
               {/* User menu */}
               <div className="flex items-center space-x-2">
-                <div className="h-8 w-8 bg-primary rounded-full flex items-center justify-center">
-                  <User className="h-4 w-4 text-primary-foreground" />
+                <div className="h-6 w-6 md:h-8 md:w-8 bg-primary rounded-full flex items-center justify-center">
+                  <User className="h-3 w-3 md:h-4 md:w-4 text-primary-foreground" />
                 </div>
                 <div className="hidden md:block">
                   <p className="text-sm font-medium text-foreground">
@@ -292,8 +292,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto">
-          {children}
+        <main className="flex-1 overflow-y-auto scrollbar-hide px-4 md:px-6 py-4 md:py-6">
+          <div className="max-w-full">
+            {children}
+          </div>
         </main>
       </div>
     </div>

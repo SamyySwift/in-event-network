@@ -82,7 +82,7 @@ export default function TeamSignup() {
           admin:profiles!admin_id(name, email)
         `)
         .eq('token', token)
-        .eq('status', 'pending')
+        .in('status', ['pending', 'accepted'])
         .single();
 
       if (error) throw error;
@@ -160,14 +160,18 @@ export default function TeamSignup() {
           allowed_sections: invitation.allowed_sections,
           expires_at: invitation.expires_at,
           joined_at: new Date().toISOString(),
+          is_active: true, // Auto-activate team member upon signup
         });
 
       if (memberError) throw memberError;
 
-      // Mark invitation as accepted
+      // Mark invitation as accepted but keep it usable during validity period
       const { error: inviteError } = await supabase
         .from('team_invitations')
-        .update({ status: 'accepted' })
+        .update({ 
+          status: 'accepted',
+          updated_at: new Date().toISOString()
+        })
         .eq('id', invitation.id);
 
       if (inviteError) throw inviteError;

@@ -68,7 +68,9 @@ export default function TeamSignup() {
   useEffect(() => {
     // If user is already logged in, try to accept the invitation
     if (currentUser && invitation && !isSigningUp) {
-      acceptInvitation();
+      setTimeout(() => {
+        acceptInvitation();
+      }, 100); // Small delay to ensure auth state is fully set
     }
   }, [currentUser, invitation]);
 
@@ -150,20 +152,32 @@ export default function TeamSignup() {
     if (!invitation || !currentUser) return;
 
     try {
-      // Create team member record
-      const { error: memberError } = await supabase
-        .from('team_members')
-        .insert({
-          user_id: currentUser.id,
-          admin_id: invitation.admin_id,
-          event_id: invitation.event_id,
-          allowed_sections: invitation.allowed_sections,
-          expires_at: invitation.expires_at,
-          joined_at: new Date().toISOString(),
-          is_active: true, // Auto-activate team member upon signup
-        });
+      setIsSigningUp(true);
 
-      if (memberError) throw memberError;
+      // First check if team member record already exists
+      const { data: existingMember } = await supabase
+        .from('team_members')
+        .select('id')
+        .eq('user_id', currentUser.id)
+        .eq('event_id', invitation.event_id)
+        .single();
+
+      if (!existingMember) {
+        // Create team member record
+        const { error: memberError } = await supabase
+          .from('team_members')
+          .insert({
+            user_id: currentUser.id,
+            admin_id: invitation.admin_id,
+            event_id: invitation.event_id,
+            allowed_sections: invitation.allowed_sections,
+            expires_at: invitation.expires_at,
+            joined_at: new Date().toISOString(),
+            is_active: true, // Auto-activate team member upon signup
+          });
+
+        if (memberError) throw memberError;
+      }
 
       // Mark invitation as accepted but keep it usable during validity period
       const { error: inviteError } = await supabase
@@ -188,13 +202,13 @@ export default function TeamSignup() {
       if (profileError) throw profileError;
 
       toast.success('Welcome to the team! Redirecting to dashboard...');
-      // Force immediate redirect with window.location for complete reload
-      setTimeout(() => {
-        window.location.href = '/admin/dashboard';
-      }, 500);
+      
+      // Use navigate for proper route handling instead of window.location
+      navigate('/admin/dashboard', { replace: true });
     } catch (error: any) {
       console.error('Error accepting invitation:', error);
       toast.error('Failed to accept invitation');
+      setIsSigningUp(false);
     }
   };
 

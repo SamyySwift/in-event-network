@@ -393,79 +393,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
     setIsLoading(true);
     try {
-      const profileData: any = {};
-      
-      // Only include fields that have values
-      if (userData.name !== undefined) profileData.name = userData.name;
-      if (userData.email !== undefined) profileData.email = userData.email;
-      if (userData.role !== undefined) profileData.role = userData.role;
-      if (userData.photoUrl !== undefined) profileData.photo_url = userData.photoUrl;
-      if (userData.bio !== undefined) profileData.bio = userData.bio;
-      if (userData.niche !== undefined) profileData.niche = userData.niche;
+      const profileData: any = {
+        name: userData.name,
+        email: userData.email,
+        role: userData.role,
+        photo_url: userData.photoUrl,
+        bio: userData.bio,
+        niche: userData.niche,
+      };
 
       if (userData.links) {
-        if (userData.links.twitter !== undefined)
+        if (userData.links.twitter)
           profileData.twitter_link = userData.links.twitter;
-        if (userData.links.facebook !== undefined)
+        if (userData.links.facebook)
           profileData.facebook_link = userData.links.facebook;
-        if (userData.links.linkedin !== undefined)
+        if (userData.links.linkedin)
           profileData.linkedin_link = userData.links.linkedin;
-        if (userData.links.instagram !== undefined)
+        if (userData.links.instagram)
           profileData.instagram_link = userData.links.instagram;
-        if (userData.links.snapchat !== undefined)
+        if (userData.links.snapchat)
           profileData.snapchat_link = userData.links.snapchat;
-        if (userData.links.tiktok !== undefined)
+        if (userData.links.tiktok)
           profileData.tiktok_link = userData.links.tiktok;
-        if (userData.links.github !== undefined)
+        if (userData.links.github)
           profileData.github_link = userData.links.github;
-        if (userData.links.website !== undefined)
+        if (userData.links.website)
           profileData.website_link = userData.links.website;
       }
 
-      // Only update if there are changes
-      if (Object.keys(profileData).length > 0) {
-        const { error } = await supabase
-          .from("profiles")
-          .update(profileData)
-          .eq("id", currentUser.id);
+      const { error } = await supabase
+        .from("profiles")
+        .update(profileData)
+        .eq("id", currentUser.id);
 
-        if (error) throw error;
+      if (error) throw error;
 
-        // If role was updated, refresh the complete profile to get latest team member status
-        if (userData.role && userData.role !== currentUser.role) {
-          const { data: refreshedProfile } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", currentUser.id)
-            .single();
-
-          if (refreshedProfile) {
-            const updatedUser: User = {
-              id: refreshedProfile.id,
-              name: refreshedProfile.name || "",
-              email: refreshedProfile.email || currentUser.email,
-              role: (refreshedProfile.role as "host" | "attendee") || "attendee",
-              photoUrl: refreshedProfile.photo_url,
-              bio: refreshedProfile.bio,
-              links: {
-                twitter: refreshedProfile.twitter_link,
-                facebook: refreshedProfile.facebook_link,
-                linkedin: refreshedProfile.linkedin_link,
-                instagram: refreshedProfile.instagram_link,
-                snapchat: refreshedProfile.snapchat_link,
-                tiktok: refreshedProfile.tiktok_link,
-                github: refreshedProfile.github_link,
-                website: refreshedProfile.website_link,
-              },
-              niche: refreshedProfile.niche,
-            };
-            setCurrentUser(updatedUser);
-            return;
-          }
-        }
-      }
-
-      // For non-role updates, just update the local state
       setCurrentUser({ ...currentUser, ...userData });
     } catch (error) {
       console.error("Error updating profile:", error);

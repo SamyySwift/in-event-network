@@ -15,6 +15,7 @@ export interface AuthUser extends User {
   photoUrl?: string;
   photo_url?: string;
   networking_preferences?: string[];
+  networkingPreferences?: string[]; // Add alias for compatibility
   tags?: string[];
   customTags?: string[];
   links?: {
@@ -111,6 +112,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         photoUrl: profile.photo_url,
         photo_url: profile.photo_url,
         networking_preferences: profile.networking_preferences,
+        networkingPreferences: profile.networking_preferences, // Map to alias for compatibility
         tags: profile.tags,
         customTags: profile.tags, // Map tags to customTags for compatibility
         links: {
@@ -230,6 +232,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (updates.photoUrl) dbUpdates.photo_url = updates.photoUrl;
       if (updates.photo_url) dbUpdates.photo_url = updates.photo_url;
       if (updates.networking_preferences) dbUpdates.networking_preferences = updates.networking_preferences;
+      if (updates.networkingPreferences) dbUpdates.networking_preferences = updates.networkingPreferences; // Handle alias
       if (updates.tags) dbUpdates.tags = updates.tags;
       if (updates.customTags) dbUpdates.tags = updates.customTags; // Map customTags to tags
       if (updates.networking_visible !== undefined) dbUpdates.networking_visible = updates.networking_visible;

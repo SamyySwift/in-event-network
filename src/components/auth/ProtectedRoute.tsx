@@ -50,14 +50,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     console.log(`Access denied: User role ${currentUser.role} != required ${requiredRole}`);
     
     // Redirect based on user's actual role
-    const redirectPath = currentUser.role === 'host' || currentUser.role === 'team_member' ? '/admin/dashboard' : '/attendee/dashboard';
+    const redirectPath = currentUser.role === 'host' || currentUser.role === 'team_member' ? '/admin' : '/attendee';
     return <Navigate to={redirectPath} replace />;
-  }
-
-  // Special handling for admin routes - allow both hosts and team members
-  if (location.pathname.startsWith('/admin') && currentUser.role && !['host', 'team_member'].includes(currentUser.role)) {
-    console.log(`Access denied to admin: User role ${currentUser.role} not authorized for admin access`);
-    return <Navigate to="/attendee/dashboard" replace />;
   }
 
   console.log('Access granted');

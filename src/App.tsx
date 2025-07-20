@@ -89,11 +89,11 @@ function App() {
               <Route path="/terms" element={<TermsOfService />} />
               <Route path="/team-signup" element={<TeamSignup />} />
 
-              {/* Admin routes - now wrapped in AdminEventProvider and AdminLayout */}
+              {/* Admin routes - accessible by hosts and team members */}
               <Route
                 path="/admin/*"
                 element={
-                  <ProtectedRoute requiredRole="host">
+                  <ProtectedRoute>
                     <AdminEventProvider>
                        <AdminLayout>
                         <Routes>

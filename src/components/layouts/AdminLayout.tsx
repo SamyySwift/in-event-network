@@ -115,7 +115,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           
           setSectionPermissions(permissions);
         } else {
-          // Hosts have access to everything
+          // Non-host/non-team members have no access
           const permissions: Record<string, boolean> = {};
           navigationItems.forEach(item => {
             permissions[item.section] = false;

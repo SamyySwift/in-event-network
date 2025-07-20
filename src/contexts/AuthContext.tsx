@@ -16,6 +16,7 @@ export interface AuthUser extends User {
   photo_url?: string;
   networking_preferences?: string[];
   tags?: string[];
+  customTags?: string[];
   links?: {
     twitter?: string;
     facebook?: string;
@@ -38,8 +39,10 @@ interface AuthContextType {
   currentUser: AuthUser | null;
   session: Session | null;
   loading: boolean;
+  isLoading: boolean; // Add alias for compatibility
   login: (email: string, password: string) => Promise<{ error: any }>;
-  register: (email: string, password: string, name: string, eventCode?: string) => Promise<{ error: any }>;
+  register: (name: string, email: string, password: string, role: string) => Promise<{ error: any }>;
+  signInWithGoogle: (role: string) => Promise<{ error: any }>;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<AuthUser>) => Promise<void>;
 }
@@ -109,6 +112,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         photo_url: profile.photo_url,
         networking_preferences: profile.networking_preferences,
         tags: profile.tags,
+        customTags: profile.tags, // Map tags to customTags for compatibility
         links: {
           twitter: profile.twitter_link,
           linkedin: profile.linkedin_link,
@@ -175,13 +179,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return { error };
   };
 
-  const register = async (email: string, password: string, name: string, eventCode?: string) => {
+  const register = async (name: string, email: string, password: string, role: string) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name, eventCode },
+        data: { name, role },
         emailRedirectTo: `${window.location.origin}/`,
+      },
+    });
+    return { error };
+  };
+
+  const signInWithGoogle = async (role: string) => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
       },
     });
     return { error };
@@ -213,6 +231,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       if (updates.photo_url) dbUpdates.photo_url = updates.photo_url;
       if (updates.networking_preferences) dbUpdates.networking_preferences = updates.networking_preferences;
       if (updates.tags) dbUpdates.tags = updates.tags;
+      if (updates.customTags) dbUpdates.tags = updates.customTags; // Map customTags to tags
       if (updates.networking_visible !== undefined) dbUpdates.networking_visible = updates.networking_visible;
       if (updates.role) dbUpdates.role = updates.role;
       if (updates.current_event_id) dbUpdates.current_event_id = updates.current_event_id;
@@ -247,8 +266,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     currentUser,
     session,
     loading,
+    isLoading: loading, // Provide alias for compatibility
     login,
     register,
+    signInWithGoogle,
     logout,
     updateUser,
   };

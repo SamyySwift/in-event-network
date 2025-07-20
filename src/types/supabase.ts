@@ -1,4 +1,3 @@
-
 export type Json =
   | string
   | number
@@ -419,85 +418,6 @@ export type Database = {
         }
         Relationships: []
       }
-      team_invitations: {
-        Row: {
-          id: string;
-          admin_id: string;
-          email: string;
-          event_id: string;
-          token: string;
-          allowed_sections: string[];
-          expires_at: string | null;
-          status: string;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          admin_id: string;
-          email: string;
-          event_id: string;
-          token: string;
-          allowed_sections?: string[];
-          expires_at?: string | null;
-          status?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          admin_id?: string;
-          email?: string;
-          event_id?: string;
-          token?: string;
-          allowed_sections?: string[];
-          expires_at?: string | null;
-          status?: string;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
-      team_members: {
-        Row: {
-          id: string;
-          user_id: string;
-          admin_id: string;
-          event_id: string;
-          allowed_sections: string[];
-          expires_at: string | null;
-          is_active: boolean;
-          invited_at: string;
-          joined_at: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          user_id: string;
-          admin_id: string;
-          event_id: string;
-          allowed_sections?: string[];
-          expires_at?: string | null;
-          is_active?: boolean;
-          invited_at?: string;
-          joined_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          id?: string;
-          user_id?: string;
-          admin_id?: string;
-          event_id?: string;
-          allowed_sections?: string[];
-          expires_at?: string | null;
-          is_active?: boolean;
-          invited_at?: string;
-          joined_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-      };
     };
     Views: {
       conversations: {
@@ -644,39 +564,13 @@ export type Database = {
         Args: { user_uuid: string; event_uuid: string }
         Returns: boolean
       }
-      has_section_access: {
-        Args: { section_name: string; target_event_id?: string };
-        Returns: boolean;
-      };
-      is_admin_for_event: {
-        Args: { event_uuid: string };
-        Returns: boolean;
-      };
-      generate_invite_token: {
-        Args: Record<PropertyKey, never>;
-        Returns: string;
-      };
     };
     Enums: {
-      dashboard_section: 
-        | 'dashboard'
-        | 'events'
-        | 'tickets'
-        | 'checkin'
-        | 'attendees'
-        | 'speakers'
-        | 'announcements'
-        | 'schedule'
-        | 'polls'
-        | 'facilities'
-        | 'rules'
-        | 'questions'
-        | 'suggestions'
-        | 'notifications'
-        | 'sponsors'
-        | 'vendor-hub'
-        | 'settings';
+      [_ in never]: never
     };
+    CompositeTypes: {
+      [_ in never]: never
+    }
   };
 }
 
@@ -768,6 +662,21 @@ export type Enums<
   ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof Database },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
+  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {

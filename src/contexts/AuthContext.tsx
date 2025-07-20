@@ -5,9 +5,33 @@ import { supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 export interface AuthUser extends User {
-  role?: string;
+  role?: 'host' | 'attendee' | 'team_member';
   current_event_id?: string;
   team_member_for_event?: string;
+  name?: string;
+  bio?: string;
+  niche?: string;
+  company?: string;
+  photoUrl?: string;
+  photo_url?: string;
+  networking_preferences?: string[];
+  tags?: string[];
+  links?: {
+    twitter?: string;
+    facebook?: string;
+    linkedin?: string;
+    instagram?: string;
+    snapchat?: string;
+    tiktok?: string;
+    github?: string;
+    website?: string;
+  };
+  twitter_link?: string;
+  linkedin_link?: string;
+  github_link?: string;
+  instagram_link?: string;
+  website_link?: string;
+  networking_visible?: boolean;
 }
 
 interface AuthContextType {
@@ -15,7 +39,7 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<{ error: any }>;
-  register: (email: string, password: string, name: string) => Promise<{ error: any }>;
+  register: (email: string, password: string, name: string, eventCode?: string) => Promise<{ error: any }>;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<AuthUser>) => Promise<void>;
 }
@@ -43,7 +67,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('role, current_event_id, team_member_for_event, name, email')
+        .select(`
+          role, 
+          current_event_id, 
+          team_member_for_event, 
+          name, 
+          email,
+          bio,
+          niche,
+          company,
+          photo_url,
+          networking_preferences,
+          tags,
+          twitter_link,
+          linkedin_link,
+          github_link,
+          instagram_link,
+          website_link,
+          networking_visible
+        `)
         .eq('id', userId)
         .single();
 
@@ -52,11 +94,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return null;
       }
 
+      if (!session?.user) return null;
+
       return {
-        ...session?.user,
+        ...session.user,
         role: profile.role,
         current_event_id: profile.current_event_id,
         team_member_for_event: profile.team_member_for_event,
+        name: profile.name,
+        bio: profile.bio,
+        niche: profile.niche,
+        company: profile.company,
+        photoUrl: profile.photo_url,
+        photo_url: profile.photo_url,
+        networking_preferences: profile.networking_preferences,
+        tags: profile.tags,
+        links: {
+          twitter: profile.twitter_link,
+          linkedin: profile.linkedin_link,
+          github: profile.github_link,
+          instagram: profile.instagram_link,
+          website: profile.website_link,
+        },
+        twitter_link: profile.twitter_link,
+        linkedin_link: profile.linkedin_link,
+        github_link: profile.github_link,
+        instagram_link: profile.instagram_link,
+        website_link: profile.website_link,
+        networking_visible: profile.networking_visible,
       } as AuthUser;
     } catch (error) {
       console.error('Error in refreshUserProfile:', error);
@@ -110,12 +175,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return { error };
   };
 
-  const register = async (email: string, password: string, name: string) => {
+  const register = async (email: string, password: string, name: string, eventCode?: string) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name },
+        data: { name, eventCode },
         emailRedirectTo: `${window.location.origin}/`,
       },
     });
@@ -137,10 +202,35 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (!currentUser) return;
 
     try {
+      // Map the updates to database column names
+      const dbUpdates: any = {};
+      
+      if (updates.name) dbUpdates.name = updates.name;
+      if (updates.bio) dbUpdates.bio = updates.bio;
+      if (updates.niche) dbUpdates.niche = updates.niche;
+      if (updates.company) dbUpdates.company = updates.company;
+      if (updates.photoUrl) dbUpdates.photo_url = updates.photoUrl;
+      if (updates.photo_url) dbUpdates.photo_url = updates.photo_url;
+      if (updates.networking_preferences) dbUpdates.networking_preferences = updates.networking_preferences;
+      if (updates.tags) dbUpdates.tags = updates.tags;
+      if (updates.networking_visible !== undefined) dbUpdates.networking_visible = updates.networking_visible;
+      if (updates.role) dbUpdates.role = updates.role;
+      if (updates.current_event_id) dbUpdates.current_event_id = updates.current_event_id;
+      if (updates.team_member_for_event) dbUpdates.team_member_for_event = updates.team_member_for_event;
+      
+      // Handle links object
+      if (updates.links) {
+        if (updates.links.twitter) dbUpdates.twitter_link = updates.links.twitter;
+        if (updates.links.linkedin) dbUpdates.linkedin_link = updates.links.linkedin;
+        if (updates.links.github) dbUpdates.github_link = updates.links.github;
+        if (updates.links.instagram) dbUpdates.instagram_link = updates.links.instagram;
+        if (updates.links.website) dbUpdates.website_link = updates.links.website;
+      }
+
       // Update in database
       const { error } = await supabase
         .from('profiles')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', currentUser.id);
 
       if (error) throw error;

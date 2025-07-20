@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'host' | 'attendee';
+  requiredRole?: 'host' | 'attendee' | 'team_member';
   redirectTo?: string;
 }
 
@@ -14,7 +14,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredRole,
   redirectTo = '/login'
 }) => {
-  const { currentUser, isLoading } = useAuth();
+  const { currentUser, loading } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -22,13 +22,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       currentUser: currentUser?.email, 
       userRole: currentUser?.role,
       requiredRole,
-      isLoading,
+      loading,
       path: location.pathname
     });
-  }, [currentUser, requiredRole, isLoading, location.pathname]);
+  }, [currentUser, requiredRole, loading, location.pathname]);
 
   // Show loading while checking authentication
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
         <div className="text-center">
@@ -50,7 +50,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     console.log(`Access denied: User role ${currentUser.role} != required ${requiredRole}`);
     
     // Redirect based on user's actual role
-    const redirectPath = currentUser.role === 'host' ? '/admin' : '/attendee';
+    const redirectPath = currentUser.role === 'host' || currentUser.role === 'team_member' ? '/admin' : '/attendee';
     return <Navigate to={redirectPath} replace />;
   }
 

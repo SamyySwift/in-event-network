@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -9,54 +10,80 @@ export const useRoleValidation = () => {
 
   useEffect(() => {
     const validateRole = async () => {
-      if (currentUser) {
-        try {
-          // Fetch fresh role and team member status from database
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('role, team_member_for_event, current_event_id')
-            .eq('id', currentUser.id)
-            .single();
+      if (!currentUser) return;
 
-          if (profileError) {
-            console.error('Error fetching profile data:', profileError);
-            return;
-          }
+      try {
+        // Fetch fresh user data from database
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('role, team_member_for_event, current_event_id')
+          .eq('id', currentUser.id)
+          .single();
 
-          // Check if role needs updating
-          if (profileData.role !== currentUser.role) {
-            console.log(`Role mismatch detected. Local: ${currentUser.role}, DB: ${profileData.role}`);
-            await updateUser({ role: profileData.role });
-          }
-          
-          // Check if user is an active team member
+        if (profileError) {
+          console.error('Error fetching profile data:', profileError);
+          return;
+        }
+
+        // Update local user data if it's different
+        if (profileData.role !== currentUser.role || 
+            profileData.current_event_id !== currentUser.current_event_id) {
+          console.log(`Updating user data. Role: ${profileData.role}, Event: ${profileData.current_event_id}`);
+          await updateUser({ 
+            role: profileData.role,
+            current_event_id: profileData.current_event_id 
+          });
+        }
+
+        // Check team member status for team_member role
+        let isActiveTeamMember = false;
+        if (profileData.role === 'team_member') {
           const { data: teamMemberData } = await supabase
             .from('team_members')
             .select('id, event_id, is_active, expires_at')
             .eq('user_id', currentUser.id)
             .eq('is_active', true)
-            .gt('expires_at', new Date().toISOString())
-            .or('expires_at.is.null')
-            .maybeSingle();
+            .or('expires_at.is.null,expires_at.gt.' + new Date().toISOString())
+            .single();
 
-          // Determine correct dashboard based on role and team member status
-          const isHost = profileData.role === 'host';
-          const isActiveTeamMember = teamMemberData && teamMemberData.is_active;
-          const shouldAccessAdmin = isHost || isActiveTeamMember;
+          isActiveTeamMember = !!teamMemberData;
           
-          const currentPath = window.location.pathname;
-          
-          // Only redirect if we're on the wrong dashboard
-          if (shouldAccessAdmin && currentPath.startsWith('/attendee')) {
-            console.log('Redirecting team member/host to admin dashboard');
-            navigate('/admin/dashboard', { replace: true });
-          } else if (!shouldAccessAdmin && currentPath.startsWith('/admin')) {
-            console.log('Redirecting regular user to attendee dashboard');
-            navigate('/attendee/dashboard', { replace: true });
+          // Ensure current_event_id matches team member event
+          if (teamMemberData && profileData.current_event_id !== teamMemberData.event_id) {
+            await supabase
+              .from('profiles')
+              .update({ current_event_id: teamMemberData.event_id })
+              .eq('id', currentUser.id);
+              
+            await updateUser({ current_event_id: teamMemberData.event_id });
           }
-        } catch (error) {
-          console.error('Error in role validation:', error);
         }
+
+        // Determine correct dashboard access
+        const isHost = profileData.role === 'host';
+        const shouldAccessAdmin = isHost || isActiveTeamMember;
+        
+        const currentPath = window.location.pathname;
+        
+        // Route team members and hosts to admin dashboard
+        if (shouldAccessAdmin && currentPath.startsWith('/attendee')) {
+          console.log('Redirecting team member/host to admin dashboard');
+          navigate('/admin/dashboard', { replace: true });
+        } 
+        // Route regular attendees to attendee dashboard
+        else if (!shouldAccessAdmin && profileData.role === 'attendee' && currentPath.startsWith('/admin')) {
+          console.log('Redirecting regular attendee to attendee dashboard');
+          navigate('/attendee/dashboard', { replace: true });
+        }
+        // Handle users without proper role/event assignment
+        else if (!profileData.role || !profileData.current_event_id) {
+          console.log('User missing role or event assignment, redirecting to home');
+          if (currentPath.startsWith('/admin') || currentPath.startsWith('/attendee')) {
+            navigate('/', { replace: true });
+          }
+        }
+      } catch (error) {
+        console.error('Error in role validation:', error);
       }
     };
 

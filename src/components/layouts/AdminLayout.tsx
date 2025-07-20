@@ -91,8 +91,16 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           setUserRole(profile.role);
         }
 
-        // If not a host, check team member permissions
-        if (profile?.role !== 'host') {
+        // Check permissions based on role
+        if (profile?.role === 'host') {
+          // Hosts have access to everything
+          const permissions: Record<string, boolean> = {};
+          navigationItems.forEach(item => {
+            permissions[item.section] = true;
+          });
+          setSectionPermissions(permissions);
+        } else if (profile?.role === 'team_member') {
+          // Team members have limited access based on their allowed sections
           const permissions: Record<string, boolean> = {};
           
           // Check each section permission
@@ -110,7 +118,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           // Hosts have access to everything
           const permissions: Record<string, boolean> = {};
           navigationItems.forEach(item => {
-            permissions[item.section] = true;
+            permissions[item.section] = false;
           });
           setSectionPermissions(permissions);
         }
@@ -136,7 +144,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   };
 
   const hasAccess = (section: string) => {
-    if (userRole === 'host') return true;
     return sectionPermissions[section] || false;
   };
 
@@ -147,12 +154,23 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     return navItem ? navItem.label : 'Admin Dashboard';
   };
 
+  const getUserRoleDisplay = () => {
+    switch (userRole) {
+      case 'host':
+        return 'Event Host';
+      case 'team_member':
+        return 'Team Member';
+      default:
+        return 'Admin';
+    }
+  };
+
   const NavigationContent = () => (
     <div className="flex flex-col h-full">
       <div className="p-4">
         <h2 className="text-lg font-semibold mb-4">Admin Dashboard</h2>
         <EventSelector />
-        {userRole && userRole !== 'host' && (
+        {userRole && userRole === 'team_member' && (
           <Badge variant="outline" className="mt-2">
             Team Member
           </Badge>
@@ -203,7 +221,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
               {currentUser?.email}
             </p>
             <p className="text-xs text-muted-foreground truncate">
-              {userRole === 'host' ? 'Event Host' : 'Team Member'}
+              {getUserRoleDisplay()}
             </p>
           </div>
         </div>
@@ -284,7 +302,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                     {currentUser?.email?.split('@')[0]}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {userRole === 'host' ? 'Event Host' : 'Team Member'}
+                    {getUserRoleDisplay()}
                   </p>
                 </div>
               </div>

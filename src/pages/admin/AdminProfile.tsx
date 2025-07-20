@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -30,7 +29,7 @@ console.log("AdminProfile component loading...");
 const AdminProfile = () => {
   console.log("AdminProfile component rendering...");
 
-  const { currentUser, updateUser, loading: authLoading } = useAuth();
+  const { currentUser, updateUser, isLoading: authLoading } = useAuth();
 
   console.log("AdminProfile - currentUser:", currentUser);
   console.log("AdminProfile - authLoading:", authLoading);
@@ -434,19 +433,19 @@ const AdminProfile = () => {
             <CardContent className="space-y-4">
               <div className="flex items-center space-x-4">
                 <Avatar className="h-16 w-16">
-                  {currentUser.photoUrl || currentUser.photo_url ? (
+                  {currentUser.photoUrl ? (
                     <AvatarImage
-                      src={currentUser.photoUrl || currentUser.photo_url}
-                      alt={currentUser.name || 'User'}
+                      src={currentUser.photoUrl}
+                      alt={currentUser.name}
                     />
                   ) : (
                     <AvatarFallback className="bg-primary text-white text-lg">
-                      {(currentUser.name || currentUser.email || 'U').charAt(0).toUpperCase()}
+                      {currentUser.name?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   )}
                 </Avatar>
                 <div className="space-y-1">
-                  <h3 className="font-medium">{currentUser.name || 'No name set'}</h3>
+                  <h3 className="font-medium">{currentUser.name}</h3>
                   <p className="text-sm text-muted-foreground">
                     {currentUser.email}
                   </p>
@@ -490,7 +489,7 @@ const AdminProfile = () => {
                 Once you delete your account, there is no going back. Please be
                 certain.
               </p>
-              <DeleteAccountDialog userName={currentUser.name || currentUser.email || 'User'} />
+              <DeleteAccountDialog userName={currentUser.name} />
             </CardContent>
           </Card>
         </div>

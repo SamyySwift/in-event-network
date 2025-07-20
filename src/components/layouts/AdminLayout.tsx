@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -77,7 +76,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   // Fetch user role and permissions
   useEffect(() => {
     const fetchPermissions = async () => {
-      if (!currentUser || !selectedEvent) return;
+      if (!currentUser) return;
 
       try {
         // Get user role
@@ -91,19 +90,21 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           setUserRole(profile.role);
         }
 
-        // Check permissions based on role
+        // Hosts have access to everything - no need to check permissions
         if (profile?.role === 'host') {
-          // Hosts have access to everything
           const permissions: Record<string, boolean> = {};
           navigationItems.forEach(item => {
             permissions[item.section] = true;
           });
           setSectionPermissions(permissions);
-        } else if (profile?.role === 'team_member') {
-          // Team members have limited access based on their allowed sections
+          return;
+        }
+
+        // Team members have limited access based on their allowed sections
+        if (profile?.role === 'team_member' && selectedEvent) {
           const permissions: Record<string, boolean> = {};
           
-          // Check each section permission
+          // Check each section permission for team members
           for (const item of navigationItems) {
             const { data: hasAccess } = await supabase
               .rpc('has_section_access', { 
@@ -115,7 +116,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           
           setSectionPermissions(permissions);
         } else {
-          // Hosts have access to everything
+          // For any other role, grant no access (shouldn't happen in admin layout)
           const permissions: Record<string, boolean> = {};
           navigationItems.forEach(item => {
             permissions[item.section] = false;
@@ -124,6 +125,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         }
       } catch (error) {
         console.error('Error fetching permissions:', error);
+        // On error, default to no access for safety
+        const permissions: Record<string, boolean> = {};
+        navigationItems.forEach(item => {
+          permissions[item.section] = false;
+        });
+        setSectionPermissions(permissions);
       }
     };
 
@@ -144,7 +151,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   };
 
   const hasAccess = (section: string) => {
-    return sectionPermissions[section] || false;
+    // Default to true if permissions haven't loaded yet to prevent flickering
+    return sectionPermissions[section] !== undefined ? sectionPermissions[section] : true;
   };
 
   // Get current page title based on route

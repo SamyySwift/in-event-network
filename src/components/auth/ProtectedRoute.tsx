@@ -45,12 +45,34 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
+  // For admin routes, allow both hosts and team members
+  if (location.pathname.startsWith('/admin')) {
+    if (currentUser.role === 'host' || currentUser.role === 'team_member') {
+      console.log('Access granted to admin area for host/team member');
+      return <>{children}</>;
+    } else {
+      console.log('Access denied to admin area - redirecting attendee');
+      return <Navigate to="/attendee/dashboard" replace />;
+    }
+  }
+
+  // For attendee routes, only allow attendees (not hosts or team members)
+  if (location.pathname.startsWith('/attendee')) {
+    if (currentUser.role === 'attendee') {
+      console.log('Access granted to attendee area');
+      return <>{children}</>;
+    } else {
+      console.log('Access denied to attendee area - redirecting admin');
+      return <Navigate to="/admin/dashboard" replace />;
+    }
+  }
+
   // If specific role required, check if user has it
   if (requiredRole && currentUser.role !== requiredRole) {
     console.log(`Access denied: User role ${currentUser.role} != required ${requiredRole}`);
     
     // Redirect based on user's actual role
-    const redirectPath = currentUser.role === 'host' || currentUser.role === 'team_member' ? '/admin' : '/attendee';
+    const redirectPath = currentUser.role === 'host' || currentUser.role === 'team_member' ? '/admin/dashboard' : '/attendee/dashboard';
     return <Navigate to={redirectPath} replace />;
   }
 

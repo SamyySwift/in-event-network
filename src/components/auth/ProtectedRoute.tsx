@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'host' | 'attendee' | 'admin';
+  requiredRole?: 'host' | 'attendee';
   redirectTo?: string;
 }
 
@@ -45,28 +45,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
-  // Handle admin routes (for both hosts and team members)
-  if (requiredRole === 'admin' || location.pathname.startsWith('/admin')) {
-    if (currentUser.role !== 'host' && currentUser.role !== 'team_member') {
-      console.log(`Admin access denied: User role ${currentUser.role} not allowed`);
-      const redirectPath = currentUser.role === 'attendee' ? '/attendee' : '/';
-      return <Navigate to={redirectPath} replace />;
-    }
-  }
-
-  // Handle attendee routes
-  if (requiredRole === 'attendee' && location.pathname.startsWith('/attendee')) {
-    if (currentUser.role !== 'attendee') {
-      console.log(`Attendee access denied: User role ${currentUser.role} not allowed`);
-      const redirectPath = currentUser.role === 'host' || currentUser.role === 'team_member' ? '/admin' : '/';
-      return <Navigate to={redirectPath} replace />;
-    }
-  }
-
-  // Handle host-only routes
-  if (requiredRole === 'host' && currentUser.role !== 'host') {
-    console.log(`Host access denied: User role ${currentUser.role} != required host`);
-    const redirectPath = currentUser.role === 'attendee' ? '/attendee' : '/admin';
+  // If specific role required, check if user has it
+  if (requiredRole && currentUser.role !== requiredRole) {
+    console.log(`Access denied: User role ${currentUser.role} != required ${requiredRole}`);
+    
+    // Redirect based on user's actual role
+    const redirectPath = currentUser.role === 'host' ? '/admin' : '/attendee';
     return <Navigate to={redirectPath} replace />;
   }
 

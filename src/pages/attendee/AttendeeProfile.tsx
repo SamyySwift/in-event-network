@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -151,7 +150,7 @@ const AttendeeProfile = () => {
     bio: "",
     niche: "",
     company: "",
-    tags: [] as string[],
+    customTags: [] as string[],
     networkingPreferences: [] as string[],
     networkingVisible: true,
     links: {
@@ -221,7 +220,7 @@ const AttendeeProfile = () => {
     }
   }, [isEditing, currentUser?.id]);
 
-  // Load profile data
+  // ... existing code ...
   useEffect(() => {
     const loadProfileData = async () => {
       if (!currentUser?.id) return;
@@ -244,7 +243,7 @@ const AttendeeProfile = () => {
             bio: profile.bio || "",
             niche: profile.niche || "",
             company: profile.company || "",
-            tags: profile.tags || [],
+            customTags: profile.tags || [],
             networkingPreferences: profile.networking_preferences || [],
             networkingVisible: profile.networking_visible ?? true,
             links: {
@@ -277,10 +276,10 @@ const AttendeeProfile = () => {
   }, [currentUser?.id, toast]);
 
   const handleAddTag = () => {
-    if (newTag.trim() && !profileData.tags.includes(newTag.trim())) {
+    if (newTag.trim() && !profileData.customTags.includes(newTag.trim())) {
       setProfileData({
         ...profileData,
-        tags: [...profileData.tags, newTag.trim()],
+        customTags: [...profileData.customTags, newTag.trim()],
       });
       setNewTag("");
     }
@@ -289,7 +288,7 @@ const AttendeeProfile = () => {
   const handleRemoveTag = (tag: string) => {
     setProfileData({
       ...profileData,
-      tags: profileData.tags.filter((t) => t !== tag),
+      customTags: profileData.customTags.filter((t) => t !== tag),
     });
   };
 
@@ -335,7 +334,7 @@ const AttendeeProfile = () => {
           bio: profileData.bio,
           niche: selectedNiche,
           company: profileData.company,
-          tags: profileData.tags,
+          tags: profileData.customTags,
           networking_preferences: selectedNetworking,
           networking_visible: profileData.networkingVisible,
           twitter_link: profileData.links.twitter,
@@ -357,8 +356,8 @@ const AttendeeProfile = () => {
         photoUrl: profileData.photoUrl,
         bio: profileData.bio,
         niche: selectedNiche,
-        tags: profileData.tags,
-        networking_preferences: selectedNetworking,
+        customTags: profileData.customTags,
+        networkingPreferences: selectedNetworking,
         links: profileData.links,
       });
 
@@ -791,7 +790,7 @@ const AttendeeProfile = () => {
                   </Button>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {profileData.tags.map((tag) => (
+                  {profileData.customTags.map((tag) => (
                     <Badge
                       key={tag}
                       variant="secondary"
@@ -824,8 +823,8 @@ const AttendeeProfile = () => {
               </div>
             ) : (
               <div className="flex flex-wrap gap-2">
-                {profileData.tags.length > 0 ? (
-                  profileData.tags.map((tag) => (
+                {profileData.customTags.length > 0 ? (
+                  profileData.customTags.map((tag) => (
                     <Badge
                       key={tag}
                       variant="secondary"

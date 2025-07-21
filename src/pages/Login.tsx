@@ -68,13 +68,11 @@ const Login = () => {
         return;
       }
   
-      // Normal redirect based on role
+      // Normal redirect
       if (currentUser.role === "host") {
-        navigate("/admin/dashboard", { replace: true });
-      } else if (currentUser.role === "team_member") {
-        navigate("/admin/dashboard", { replace: true });
+        navigate("/admin", { replace: true });
       } else {
-        navigate("/attendee/dashboard", { replace: true });
+        navigate("/attendee", { replace: true });
       }
     }
   }, [currentUser, isLoading, navigate]);

@@ -75,12 +75,17 @@ export const useRoleValidation = () => {
           console.log('Redirecting regular attendee to attendee dashboard');
           navigate('/attendee/dashboard', { replace: true });
         }
-        // Handle users without proper role assignment (but don't redirect hosts without events)
+        // Handle users without proper role/event assignment
         else if (!profileData.role) {
           console.log('User missing role assignment, redirecting to home');
           if (currentPath.startsWith('/admin') || currentPath.startsWith('/attendee')) {
             navigate('/', { replace: true });
           }
+        }
+        // Handle users without event assignment (but allow access if they have a role)
+        else if (!profileData.current_event_id && profileData.role) {
+          console.log('User has role but no current event');
+          // Don't redirect - let them access the dashboard to see/select events
         }
       } catch (error) {
         console.error('Error in role validation:', error);

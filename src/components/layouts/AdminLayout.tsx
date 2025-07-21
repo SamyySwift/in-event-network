@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -76,7 +77,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   // Fetch user role and permissions
   useEffect(() => {
     const fetchPermissions = async () => {
-      if (!currentUser) return;
+      if (!currentUser || !selectedEvent) return;
 
       try {
         // Get user role
@@ -102,27 +103,19 @@ export function AdminLayout({ children }: AdminLayoutProps) {
           // Team members have limited access based on their allowed sections
           const permissions: Record<string, boolean> = {};
           
-          // Only check permissions if we have a selected event
-          if (selectedEvent) {
-            // Check each section permission
-            for (const item of navigationItems) {
-              const { data: hasAccess } = await supabase
-                .rpc('has_section_access', { 
-                  section_name: item.section,
-                  target_event_id: selectedEvent.id 
-                });
-              permissions[item.section] = hasAccess || false;
-            }
-          } else {
-            // If no event selected, show all sections as locked
-            navigationItems.forEach(item => {
-              permissions[item.section] = false;
-            });
+          // Check each section permission
+          for (const item of navigationItems) {
+            const { data: hasAccess } = await supabase
+              .rpc('has_section_access', { 
+                section_name: item.section,
+                target_event_id: selectedEvent.id 
+              });
+            permissions[item.section] = hasAccess || false;
           }
           
           setSectionPermissions(permissions);
         } else {
-          // Other roles have no access
+          // Non-host/non-team members have no access
           const permissions: Record<string, boolean> = {};
           navigationItems.forEach(item => {
             permissions[item.section] = false;
@@ -151,9 +144,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   };
 
   const hasAccess = (section: string) => {
-    // Hosts always have access
-    if (userRole === 'host') return true;
-    // Team members check their specific permissions
     return sectionPermissions[section] || false;
   };
 

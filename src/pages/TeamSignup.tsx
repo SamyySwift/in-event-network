@@ -10,12 +10,12 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
   Users, 
   Shield, 
+  CheckCircle, 
   AlertTriangle,
   Loader2
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTeamMemberAuth } from '@/hooks/useTeamMemberAuth';
 import { toast } from 'sonner';
 import { DASHBOARD_SECTIONS } from '@/hooks/useTeamManagement';
 import type { Database } from '@/integrations/supabase/types';
@@ -43,13 +43,12 @@ export default function TeamSignup() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const { acceptInvitation } = useTeamMemberAuth();
   const token = searchParams.get('token');
 
   const [invitation, setInvitation] = useState<InvitationData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isSigningUp, setIsSigningUp] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -67,9 +66,9 @@ export default function TeamSignup() {
   }, [token]);
 
   useEffect(() => {
-    // If user is already logged in and we have invitation data, process it
-    if (currentUser && invitation && !isProcessing) {
-      handleExistingUser();
+    // If user is already logged in, try to accept the invitation
+    if (currentUser && invitation && !isSigningUp) {
+      acceptInvitation();
     }
   }, [currentUser, invitation]);
 
@@ -83,7 +82,7 @@ export default function TeamSignup() {
           admin:profiles!admin_id(name, email)
         `)
         .eq('token', token)
-        .in('status', ['pending', 'accepted'])
+        .eq('status', 'pending')
         .single();
 
       if (error) throw error;
@@ -104,27 +103,11 @@ export default function TeamSignup() {
     }
   };
 
-  const handleExistingUser = async () => {
-    if (!invitation || !currentUser || isProcessing) return;
-
-    setIsProcessing(true);
-    try {
-      await acceptInvitation(invitation);
-      toast.success('Welcome to the team! Redirecting to dashboard...');
-      navigate('/admin/dashboard', { replace: true });
-    } catch (error: any) {
-      console.error('Error accepting invitation:', error);
-      toast.error('Failed to accept invitation: ' + error.message);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!invitation) return;
 
-    setIsProcessing(true);
+    setIsSigningUp(true);
     try {
       // Sign up the user
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -141,18 +124,72 @@ export default function TeamSignup() {
       if (authError) throw authError;
 
       if (authData.user) {
-        // Wait for auth state to be established, then the useEffect will handle invitation acceptance
-        toast.success('Account created successfully! Setting up your team access...');
+        // Update profile
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ 
+            name: formData.name,
+            team_member_for_event: invitation.event_id
+          })
+          .eq('id', authData.user.id);
+
+        if (profileError) throw profileError;
+
+        // Accept the invitation will be handled by the useEffect
+        toast.success('Account created successfully! Accepting invitation...');
       }
     } catch (error: any) {
       console.error('Signup error:', error);
       toast.error(error.message || 'Failed to create account');
-      setIsProcessing(false);
+    } finally {
+      setIsSigningUp(false);
     }
   };
 
-  const getSectionLabel = (value: DashboardSection) => {
-    return DASHBOARD_SECTIONS.find(s => s.value === value)?.label || value;
+  const acceptInvitation = async () => {
+    if (!invitation || !currentUser) return;
+
+    try {
+      // Create team member record
+      const { error: memberError } = await supabase
+        .from('team_members')
+        .insert({
+          user_id: currentUser.id,
+          admin_id: invitation.admin_id,
+          event_id: invitation.event_id,
+          allowed_sections: invitation.allowed_sections,
+          expires_at: invitation.expires_at,
+          joined_at: new Date().toISOString(),
+        });
+
+      if (memberError) throw memberError;
+
+      // Mark invitation as accepted
+      const { error: inviteError } = await supabase
+        .from('team_invitations')
+        .update({ status: 'accepted' })
+        .eq('id', invitation.id);
+
+      if (inviteError) throw inviteError;
+
+      // Update user's current event and team member status
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ 
+          current_event_id: invitation.event_id,
+          team_member_for_event: invitation.event_id 
+        })
+        .eq('id', currentUser.id);
+
+      if (profileError) throw profileError;
+
+      toast.success('Welcome to the team! Redirecting to dashboard...');
+      // Immediate redirect instead of delay
+      navigate('/admin/dashboard');
+    } catch (error: any) {
+      console.error('Error accepting invitation:', error);
+      toast.error('Failed to accept invitation');
+    }
   };
 
   if (loading) {
@@ -198,15 +235,15 @@ export default function TeamSignup() {
 
   if (!invitation) return null;
 
-  // Show processing state for existing users
-  if (currentUser && isProcessing) {
+  // If user is already logged in and accepting invitation
+  if (currentUser && isSigningUp) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Card className="w-full max-w-md">
           <CardContent className="p-6">
             <div className="flex items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin" />
-              <span className="ml-2">Setting up your team access...</span>
+              <span className="ml-2">Accepting invitation...</span>
             </div>
           </CardContent>
         </Card>
@@ -214,64 +251,30 @@ export default function TeamSignup() {
     );
   }
 
-  // If user is already logged in but not processing, show the acceptance form
+  // If user is already logged in, show acceptance confirmation
   if (currentUser) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Card className="w-full max-w-2xl">
           <CardHeader>
             <div className="flex items-center">
-              <Users className="h-6 w-6 text-blue-500 mr-2" />
-              <CardTitle>Join Event Team</CardTitle>
+              <CheckCircle className="h-6 w-6 text-green-500 mr-2" />
+              <CardTitle>Invitation Accepted!</CardTitle>
             </div>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h3 className="font-semibold text-blue-900 mb-2">You've been invited to join:</h3>
-              <p className="text-lg font-medium">{invitation.event.name}</p>
-              {invitation.event.description && (
-                <p className="text-sm text-muted-foreground mt-1">{invitation.event.description}</p>
-              )}
-              <p className="text-sm text-blue-700 mt-2">
-                Invited by: {invitation.admin.name || invitation.admin.email}
-              </p>
-            </div>
-
-            <div>
-              <div className="flex items-center mb-3">
-                <Shield className="h-5 w-5 text-gray-500 mr-2" />
-                <h3 className="font-semibold">Your Dashboard Access</h3>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {invitation.allowed_sections.map((section) => (
-                  <Badge key={section} variant="outline">
-                    {getSectionLabel(section)}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            <Button 
-              onClick={handleExistingUser}
-              className="w-full" 
-              disabled={isProcessing}
-            >
-              {isProcessing ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Setting Up Access...
-                </>
-              ) : (
-                'Accept Invitation & Access Dashboard'
-              )}
-            </Button>
+          <CardContent className="space-y-4">
+            <p>You've successfully joined the team for <strong>{invitation.event.name}</strong>!</p>
+            <p>You'll be redirected to the dashboard shortly...</p>
           </CardContent>
         </Card>
       </div>
     );
   }
 
-  // Show signup form for new users
+  const getSectionLabel = (value: DashboardSection) => {
+    return DASHBOARD_SECTIONS.find(s => s.value === value)?.label || value;
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <Card className="w-full max-w-2xl">
@@ -360,9 +363,9 @@ export default function TeamSignup() {
             <Button 
               type="submit" 
               className="w-full" 
-              disabled={isProcessing || !formData.name || !formData.password}
+              disabled={isSigningUp || !formData.name || !formData.password}
             >
-              {isProcessing ? (
+              {isSigningUp ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   Creating Account...

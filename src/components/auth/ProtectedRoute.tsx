@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: 'host' | 'attendee' | 'team_member';
+  requiredRole?: 'host' | 'attendee';
   redirectTo?: string;
 }
 
@@ -14,7 +14,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requiredRole,
   redirectTo = '/login'
 }) => {
-  const { currentUser, loading } = useAuth();
+  const { currentUser, isLoading } = useAuth();
   const location = useLocation();
 
   useEffect(() => {
@@ -22,13 +22,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       currentUser: currentUser?.email, 
       userRole: currentUser?.role,
       requiredRole,
-      loading,
+      isLoading,
       path: location.pathname
     });
-  }, [currentUser, requiredRole, loading, location.pathname]);
+  }, [currentUser, requiredRole, isLoading, location.pathname]);
 
   // Show loading while checking authentication
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
         <div className="text-center">
@@ -50,14 +50,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     console.log(`Access denied: User role ${currentUser.role} != required ${requiredRole}`);
     
     // Redirect based on user's actual role
-    const redirectPath = currentUser.role === 'host' || currentUser.role === 'team_member' ? '/admin/dashboard' : '/attendee/dashboard';
+    const redirectPath = currentUser.role === 'host' ? '/admin' : '/attendee';
     return <Navigate to={redirectPath} replace />;
-  }
-
-  // Special handling for admin routes - allow both hosts and team members
-  if (location.pathname.startsWith('/admin') && currentUser.role && !['host', 'team_member'].includes(currentUser.role)) {
-    console.log(`Access denied to admin: User role ${currentUser.role} not authorized for admin access`);
-    return <Navigate to="/attendee/dashboard" replace />;
   }
 
   console.log('Access granted');

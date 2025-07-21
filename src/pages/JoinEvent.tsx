@@ -12,7 +12,7 @@ const JoinEvent = () => {
   const [searchParams] = useSearchParams();
   const codeFromParam = searchParams.get('code');
   const navigate = useNavigate();
-  const { currentUser, loading: authLoading } = useAuth();
+  const { currentUser, isLoading: authLoading } = useAuth();
   const { joinEvent, isJoining } = useJoinEvent();
   const { toast } = useToast();
   const [joinStatus, setJoinStatus] = useState<'loading' | 'success' | 'error' | 'unauthorized'>('loading');

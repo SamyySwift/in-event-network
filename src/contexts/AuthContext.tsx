@@ -39,10 +39,10 @@ interface AuthContextType {
   loading: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<{ error: any }>;
-  register: (email: string, password: string, name: string, role?: string) => Promise<{ error: any }>;
+  register: (name: string, email: string, password: string, role?: string) => Promise<{ error: any }>;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<AuthUser>) => Promise<void>;
-  signInWithGoogle?: () => Promise<{ error: any }>;
+  signInWithGoogle: (role?: string) => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -180,7 +180,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return { error };
   };
 
-  const register = async (email: string, password: string, name: string, role: string = 'attendee') => {
+  const register = async (name: string, email: string, password: string, role: string = 'attendee') => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -257,11 +257,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = async (role: string = 'attendee') => {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: {
+          role: role,
+        },
       },
     });
     return { error };

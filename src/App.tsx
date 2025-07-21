@@ -35,6 +35,10 @@ import AdminNotifications from '@/pages/admin/AdminNotifications';
 import AdminSettings from '@/pages/admin/AdminSettings';
 import AdminTickets from '@/pages/admin/AdminTickets';
 import AdminCheckIn from '@/pages/admin/AdminCheckIn';
+import AdminTeamManagement from '@/pages/admin/AdminTeamManagement';
+import AdminSponsors from '@/pages/admin/AdminSponsors';
+import AdminVendorHub from '@/pages/admin/AdminVendorHub';
+import AdminProfile from '@/pages/admin/AdminProfile';
 
 // Attendee pages
 import AttendeeDashboard from '@/pages/attendee/AttendeeDashboard';
@@ -56,6 +60,10 @@ import { AdminEventProvider } from '@/hooks/useAdminEventContext';
 import DataPrivacy from '@/pages/DataPrivacy';
 import TermsOfService from '@/pages/TermsOfService';
 import AttendeeMyTickets from '@/pages/attendee/AttendeeMyTickets';
+import AdminLayout from '@/components/layouts/AdminLayout';
+import AppLayout from '@/components/layouts/AppLayout';
+import Discovery from '@/pages/Discovery';
+import TeamSignup from '@/pages/TeamSignup';
 
 const queryClient = new QueryClient();
 
@@ -69,6 +77,7 @@ function App() {
               {/* Public routes */}
               <Route path="/" element={<Landing />} />
               <Route path="/guide" element={<Guide />} />
+              <Route path="/discovery" element={<Discovery />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
@@ -78,36 +87,44 @@ function App() {
               <Route path="/buy" element={<BuyTickets />} />
               <Route path="/privacy" element={<DataPrivacy />} />
               <Route path="/terms" element={<TermsOfService />} />
+              <Route path="/team-signup" element={<TeamSignup />} />
 
-              {/* Admin routes - now wrapped in AdminEventProvider */}
+              {/* Admin routes - accessible to both hosts and team members */}
               <Route
                 path="/admin/*"
                 element={
-                  <ProtectedRoute requiredRole="host">
+                  <ProtectedRoute requiredRole="admin">
                     <AdminEventProvider>
-                      <Routes>
-                        <Route path="" element={<AdminDashboard />} />
-                        <Route path="events" element={<AdminEvents />} />
-                        <Route path="attendees" element={<AdminAttendees />} />
-                        <Route path="speakers" element={<AdminSpeakers />} />
-                        <Route path="announcements" element={<AdminAnnouncements />} />
-                        <Route path="schedule" element={<AdminSchedule />} />
-                        <Route path="polls" element={<AdminPolls />} />
-                        <Route path="facilities" element={<AdminFacilities />} />
-                        <Route path="rules" element={<AdminRules />} />
-                        <Route path="questions" element={<AdminQuestions />} />
-                        <Route path="suggestions" element={<AdminSuggestions />} />
-                        <Route path="notifications" element={<AdminNotifications />} />
-                        <Route path="settings" element={<AdminSettings />} />
-                        <Route path="tickets" element={<AdminTickets />} />
-                        <Route path="checkin" element={<AdminCheckIn />} />
-                      </Routes>
+                       <AdminLayout>
+                        <Routes>
+                          <Route path="" element={<AdminDashboard />} />
+                          <Route path="dashboard" element={<AdminDashboard />} />
+                          <Route path="events" element={<AdminEvents />} />
+                          <Route path="attendees" element={<AdminAttendees />} />
+                          <Route path="speakers" element={<AdminSpeakers />} />
+                          <Route path="announcements" element={<AdminAnnouncements />} />
+                          <Route path="schedule" element={<AdminSchedule />} />
+                          <Route path="polls" element={<AdminPolls />} />
+                          <Route path="facilities" element={<AdminFacilities />} />
+                          <Route path="rules" element={<AdminRules />} />
+                          <Route path="questions" element={<AdminQuestions />} />
+                          <Route path="suggestions" element={<AdminSuggestions />} />
+                          <Route path="notifications" element={<AdminNotifications />} />
+                          <Route path="settings" element={<AdminSettings />} />
+                          <Route path="tickets" element={<AdminTickets />} />
+                          <Route path="checkin" element={<AdminCheckIn />} />
+                          <Route path="team-management" element={<AdminTeamManagement />} />
+                          <Route path="sponsors" element={<AdminSponsors />} />
+                          <Route path="vendor-hub" element={<AdminVendorHub />} />
+                          <Route path="profile" element={<AdminProfile />} />
+                        </Routes>
+                       </AdminLayout>
                     </AdminEventProvider>
                   </ProtectedRoute>
                 }
               />
 
-              {/* Host routes */}
+              {/* Host routes - host only */}
               <Route
                 path="/host"
                 element={
@@ -117,13 +134,15 @@ function App() {
                 }
               />
 
-              {/* Attendee routes - wrapped with AttendeeEventProvider */}
+              {/* Attendee routes - wrapped with AttendeeEventProvider and AppLayout */}
               <Route
                 path="/attendee"
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeDashboard />
+                      <AppLayout>
+                        <AttendeeDashboard />
+                      </AppLayout>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -133,7 +152,9 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeDashboard />
+                      <AppLayout>
+                        <AttendeeDashboard />
+                      </AppLayout>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -141,17 +162,23 @@ function App() {
               <Route
                 path="/attendee/my-tickets"
                 element={
-                <ProtectedRoute requiredRole="attendee">
-                  <AttendeeMyTickets />
-                </ProtectedRoute>
-              }
-            />
+                  <AttendeeEventProvider>
+                    <ProtectedRoute requiredRole="attendee">
+                      <AppLayout>
+                        <AttendeeMyTickets />
+                      </AppLayout>
+                    </ProtectedRoute>
+                  </AttendeeEventProvider>
+                }
+              />
               <Route
                 path="/attendee/profile"
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeProfile />
+                      <AppLayout>
+                        <AttendeeProfile />
+                      </AppLayout>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -161,7 +188,9 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeNetworking />
+                      <AppLayout>
+                        <AttendeeNetworking />
+                      </AppLayout>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -171,7 +200,9 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeAnnouncements />
+                      <AppLayout>
+                        <AttendeeAnnouncements />
+                      </AppLayout>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -181,7 +212,9 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeSchedule />
+                      <AppLayout>
+                        <AttendeeSchedule />
+                      </AppLayout>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -191,7 +224,9 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeePolls />
+                      <AppLayout>
+                        <AttendeePolls />
+                      </AppLayout>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -201,7 +236,9 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeQuestions />
+                      <AppLayout>
+                        <AttendeeQuestions />
+                      </AppLayout>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -211,7 +248,9 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeSuggestions />
+                      <AppLayout>
+                        <AttendeeSuggestions />
+                      </AppLayout>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -221,7 +260,9 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeRules />
+                      <AppLayout>
+                        <AttendeeRules />
+                      </AppLayout>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -231,7 +272,9 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeNotifications />
+                      <AppLayout>
+                        <AttendeeNotifications />
+                      </AppLayout>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -241,7 +284,9 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeOnboarding />
+                      <AppLayout>
+                        <AttendeeOnboarding />
+                      </AppLayout>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -251,7 +296,9 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeMap />
+                      <AppLayout>
+                        <AttendeeMap />
+                      </AppLayout>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -261,7 +308,9 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeSearch />
+                      <AppLayout>
+                        <AttendeeSearch />
+                      </AppLayout>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }

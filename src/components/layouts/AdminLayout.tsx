@@ -30,6 +30,7 @@ import {
   Scan,
   Settings,
   Store,
+  DollarSign,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -160,6 +161,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       icon: (
         <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
           <Scan size={14} className="text-purple-600" />
+        </div>
+      ),
+    },
+    {
+      name: "Wallet",
+      href: "/admin/wallet",
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+          <DollarSign size={14} className="text-purple-600" />
         </div>
       ),
     },

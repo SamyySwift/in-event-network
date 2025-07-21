@@ -30,10 +30,12 @@ type SpeakerFormData = {
   session_title?: string;
   session_time?: string;
   time_allocation?: string;
-  topic?: string; // Add this line
+  topic?: string;
   twitter_link?: string;
   linkedin_link?: string;
   website_link?: string;
+  instagram_link?: string;
+  tiktok_link?: string;
 };
 const AdminSpeakersContent = () => {
   const [isCreating, setIsCreating] = useState(false);
@@ -218,6 +220,8 @@ const AdminSpeakersContent = () => {
     setValue('twitter_link', speaker.twitter_link || '');
     setValue('linkedin_link', speaker.linkedin_link || '');
     setValue('website_link', speaker.website_link || '');
+    setValue('instagram_link', speaker.instagram_link || '');
+    setValue('tiktok_link', speaker.tiktok_link || '');
   };
   const handleDelete = (speaker: any) => {
     if (confirm('Are you sure you want to delete this speaker?')) {
@@ -433,6 +437,14 @@ const AdminSpeakersContent = () => {
                   <div>
                     <Label htmlFor="website_link">Website</Label>
                     <Input id="website_link" {...register("website_link")} placeholder="https://website.com" className="mt-1" />
+                  </div>
+                  <div>
+                    <Label htmlFor="instagram_link">Instagram</Label>
+                    <Input id="instagram_link" {...register("instagram_link")} placeholder="https://instagram.com/username" className="mt-1" />
+                  </div>
+                  <div>
+                    <Label htmlFor="tiktok_link">TikTok</Label>
+                    <Input id="tiktok_link" {...register("tiktok_link")} placeholder="https://tiktok.com/@username" className="mt-1" />
                   </div>
                   <div className="flex gap-2 pt-4">
                     <Button type="submit" className="flex-1">

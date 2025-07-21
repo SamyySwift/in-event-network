@@ -13,7 +13,6 @@ import { ShareableTicketLink } from '@/components/admin/ShareableTicketLink';
 import { WithdrawalButton } from '@/components/admin/WithdrawalButton';
 import { AdminEventProvider } from '@/hooks/useAdminEventContext';
 import { useAdminTickets } from '@/hooks/useAdminTickets';
-import { useAdminWallet } from '@/hooks/useAdminWallet';
 
 function AdminTicketsContent() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -30,7 +29,7 @@ function AdminTicketsContent() {
     stats
   } = useAdminTickets();
 
-  const { wallet, isLoading: isLoadingWallet } = useAdminWallet();
+  
 
   if (isLoadingTypes || isLoadingTickets) {
     return (
@@ -122,30 +121,6 @@ function AdminTicketsContent() {
                 <Plus className="h-4 w-4" />
                 Create Ticket Type
               </Button>
-              {wallet && (
-                <>
-                  {console.log('DEBUG: Wallet data for withdrawal button:', {
-                    walletId: wallet.id,
-                    availableBalance: wallet.available_balance,
-                    totalWithdrawn: wallet.withdrawn_amount,
-                    bankName: wallet.bank_name,
-                    accountNumber: wallet.account_number,
-                    accountName: wallet.account_name,
-                    recipientCode: wallet.recipient_code,
-                    isBankVerified: wallet.is_bank_verified
-                  })}
-                  <WithdrawalButton
-                    walletId={wallet.id}
-                    availableBalance={wallet.available_balance}
-                    totalWithdrawn={wallet.withdrawn_amount}
-                    bankName={wallet.bank_name || undefined}
-                    accountNumber={wallet.account_number || undefined}
-                    accountName={wallet.account_name || undefined}
-                    recipientCode={wallet.recipient_code || undefined}
-                    isBankVerified={wallet.is_bank_verified || false}
-                  />
-                </>
-              )}
             </div>
             <ShareableTicketLink />
           </div>

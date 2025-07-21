@@ -115,6 +115,7 @@ const AttendeeRoute = ({ children }: { children: React.ReactNode }) => {
 import AdminTickets from "@/pages/admin/AdminTickets";
 import AdminCheckIn from "@/pages/admin/AdminCheckIn";
 import AdminSettings from "@/pages/admin/AdminSettings";
+import AdminWallet from "@/pages/admin/AdminWallet";
 
 // Remove the markdown comments and add the missing route:
 export const router = createBrowserRouter([
@@ -444,6 +445,14 @@ export const router = createBrowserRouter([
     element: (
       <AdminRoute>
         <AdminSettings />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/admin/wallet",
+    element: (
+      <AdminRoute>
+        <AdminWallet />
       </AdminRoute>
     ),
   },

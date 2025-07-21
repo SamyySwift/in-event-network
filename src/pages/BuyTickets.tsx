@@ -159,8 +159,8 @@ export default function BuyTickets() {
   }
 
   const handleQuantityChange = (ticketTypeId: string, quantity: number) => {
-    const maxQuantity = eventData?.ticketTypes.find(t => t.id === ticketTypeId)?.available_quantity || 0;
-    const newQuantity = Math.max(0, Math.min(quantity, maxQuantity));
+    // Limit to maximum 1 ticket per purchase
+    const newQuantity = Math.max(0, Math.min(quantity, 1));
     
     setSelectedTickets(prev => ({
       ...prev,
@@ -200,6 +200,24 @@ export default function BuyTickets() {
       });
       handleLoginRedirect();
       return;
+    }
+
+    // Check if user is admin/host for this event
+    if (eventData?.event) {
+      const { data: eventDetails, error: eventError } = await supabase
+        .from('events')
+        .select('host_id')
+        .eq('id', eventData.event.id)
+        .single();
+
+      if (!eventError && eventDetails?.host_id === currentUser.id) {
+        toast({
+          title: "Admin Purchase Not Allowed",
+          description: "Event admins cannot purchase tickets for their own event",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     if (getTotalTickets() === 0) {

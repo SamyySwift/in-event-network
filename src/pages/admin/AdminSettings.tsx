@@ -1,240 +1,221 @@
-import React from "react";
-import AdminLayout from "@/components/layouts/AdminLayout";
-import { useAuth } from "@/contexts/AuthContext";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Settings, Bell, User, CheckCircle, Trash2 } from "lucide-react";
-import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
-import { AdminEventProvider } from "@/hooks/useAdminEventContext";
 
-function AdminSettingsContent() {
-  const { currentUser } = useAuth();
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { 
+  Settings as SettingsIcon, 
+  Bell, 
+  Shield, 
+  Database, 
+  Palette,
+  Globe,
+  Save
+} from 'lucide-react';
 
+export default function AdminSettings() {
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto overflow-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage your application settings and preferences
-          </p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Settings</h1>
+          <p className="text-muted-foreground mt-1">Manage your event settings and preferences</p>
         </div>
       </div>
 
-      <Tabs defaultValue="general" className="space-y-4">
-        <TabsList className="grid grid-cols-3 w-full md:w-auto">
-          <TabsTrigger value="general" className="flex items-center gap-2">
-            <Settings size={16} />
-            <span className="hidden sm:inline">General</span>
-          </TabsTrigger>
-          <TabsTrigger
-            value="notifications"
-            className="flex items-center gap-2"
-          >
-            <Bell size={16} />
-            <span className="hidden sm:inline">Notifications</span>
-          </TabsTrigger>
-          <TabsTrigger value="profile" className="flex items-center gap-2">
-            <User size={16} />
-            <span className="hidden sm:inline">Profile</span>
-          </TabsTrigger>
-        </TabsList>
-
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* General Settings */}
-        <TabsContent value="general" className="space-y-4">
+        <div className="lg:col-span-2 space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Event Details</CardTitle>
-              <CardDescription>
-                Configure the basic information for your event
-              </CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <SettingsIcon className="h-5 w-5" />
+                General Settings
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="event-name">Event Name</Label>
-                  <Input
-                    id="event-name"
-                    defaultValue="Annual Tech Conference 2025"
-                  />
+                  <Input id="event-name" placeholder="Enter event name" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="event-website">Event Website</Label>
-                  <Input
-                    id="event-website"
-                    type="url"
-                    defaultValue="https://techconf2025.com"
-                  />
+                  <Label htmlFor="event-code">Event Code</Label>
+                  <Input id="event-code" placeholder="EVENT2024" />
                 </div>
               </div>
-
+              
               <div className="space-y-2">
-                <Label htmlFor="event-description">Description</Label>
-                <Input
-                  id="event-description"
-                  defaultValue="The largest tech conference in the region"
-                />
+                <Label htmlFor="description">Event Description</Label>
+                <Input id="description" placeholder="Brief description of your event" />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="start-date">Start Date</Label>
-                  <Input
-                    id="start-date"
-                    type="date"
-                    defaultValue="2025-06-15"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="end-date">End Date</Label>
-                  <Input
-                    id="end-date"
-                    type="date"
-                    defaultValue="2025-06-17"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="timezone">Timezone</Label>
-                  <Input id="timezone" defaultValue="America/Los_Angeles" />
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter className="justify-between border-t pt-5">
-              <div className="text-sm text-muted-foreground">
-                Last updated: June 1, 2025
-              </div>
-              <Button>
-                <CheckCircle size={16} className="mr-2" />
-                Save Changes
-              </Button>
-            </CardFooter>
-          </Card>
+              <Separator />
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Regional Settings</CardTitle>
-              <CardDescription>
-                Configure language and localization preferences
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="language">Default Language</Label>
-                  <Input id="language" defaultValue="English (US)" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="date-format">Date Format</Label>
-                  <Input id="date-format" defaultValue="MM/DD/YYYY" />
-                </div>
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch id="auto-timezone" defaultChecked />
-                <Label htmlFor="auto-timezone">
-                  Auto-detect attendee timezone
-                </Label>
-              </div>
-            </CardContent>
-            <CardFooter className="justify-end border-t pt-5">
-              <Button>Save Changes</Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
-
-        {/* Notifications Settings */}
-        <TabsContent value="notifications" className="space-y-4">
-          // ... existing code ...
-        </TabsContent>
-
-        {/* Profile Settings */}
-        <TabsContent value="profile" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Profile</CardTitle>
-              <CardDescription>
-                Welcome{" "}
-                {currentUser?.name || currentUser?.email}.
-                Manage your profile settings
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex flex-col items-center space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={currentUser?.photoUrl} />
-                  <AvatarFallback>
-                    {currentUser?.email?.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="space-y-1 text-center sm:text-left">
-                  <h3 className="text-xl font-semibold">
-                    {currentUser?.name || currentUser?.email}
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {currentUser?.email}
-                  </p>
-                  <div className="flex justify-center sm:justify-start">
-                    <Button size="sm" variant="outline" className="mt-2">
-                      Change Avatar
-                    </Button>
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Event Features</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Enable Networking</Label>
+                      <p className="text-sm text-muted-foreground">Allow attendees to connect with each other</p>
+                    </div>
+                    <Switch />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Enable Chat</Label>
+                      <p className="text-sm text-muted-foreground">Allow attendees to chat during the event</p>
+                    </div>
+                    <Switch />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Enable Q&A</Label>
+                      <p className="text-sm text-muted-foreground">Allow attendees to ask questions</p>
+                    </div>
+                    <Switch />
                   </div>
                 </div>
               </div>
+            </CardContent>
+          </Card>
 
-              <Separator />
-
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium">Account Information</h3>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    defaultValue={currentUser?.email}
-                    disabled
-                  />
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Bell className="h-5 w-5" />
+                Notification Settings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Email Notifications</Label>
+                    <p className="text-sm text-muted-foreground">Receive updates via email</p>
+                  </div>
+                  <Switch defaultChecked />
                 </div>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                <h3 className="text-sm font-medium text-destructive">Danger Zone</h3>
-                <div className="border border-destructive/20 rounded-md p-4 bg-destructive/5">
-                  <h4 className="font-medium mb-2">Delete Your Account</h4>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Permanently delete your account and all associated data. This action cannot be undone.
-                  </p>
-                  <DeleteAccountDialog userName={currentUser?.name || currentUser?.email || ""} />
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Push Notifications</Label>
+                    <p className="text-sm text-muted-foreground">Receive browser notifications</p>
+                  </div>
+                  <Switch />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>New Registration Alerts</Label>
+                    <p className="text-sm text-muted-foreground">Get notified when someone registers</p>
+                  </div>
+                  <Switch defaultChecked />
                 </div>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </div>
+
+        {/* Quick Actions & Info */}
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Shield className="h-5 w-5" />
+                Security
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Two-Factor Auth</Label>
+                    <p className="text-xs text-muted-foreground">Enable 2FA for security</p>
+                  </div>
+                  <Switch />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Private Event</Label>
+                    <p className="text-xs text-muted-foreground">Require invitation to join</p>
+                  </div>
+                  <Switch />
+                </div>
+              </div>
+              <Button variant="outline" className="w-full">
+                <Shield className="h-4 w-4 mr-2" />
+                Security Settings
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Palette className="h-5 w-5" />
+                Appearance
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Theme</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button variant="outline" size="sm">Light</Button>
+                  <Button variant="outline" size="sm">Dark</Button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Primary Color</Label>
+                <div className="flex gap-2">
+                  <div className="w-8 h-8 rounded-full bg-blue-500 border-2 border-white shadow-md"></div>
+                  <div className="w-8 h-8 rounded-full bg-green-500 border-2 border-white shadow-md"></div>
+                  <div className="w-8 h-8 rounded-full bg-purple-500 border-2 border-white shadow-md"></div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="h-5 w-5" />
+                Data & Storage
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-sm space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Storage Used</span>
+                  <span>2.4 GB</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Attendees</span>
+                  <span>1,245</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Messages</span>
+                  <span>8,592</span>
+                </div>
+              </div>
+              <Button variant="outline" className="w-full">
+                <Database className="h-4 w-4 mr-2" />
+                Export Data
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-4 sm:justify-end">
+        <Button variant="outline" className="w-full sm:w-auto">Cancel</Button>
+        <Button className="w-full sm:w-auto">
+          <Save className="h-4 w-4 mr-2" />
+          Save Changes
+        </Button>
+      </div>
     </div>
   );
 }
-
-const AdminSettings = () => {
-  return (
-    <AdminEventProvider>
-      <AdminSettingsContent />
-    </AdminEventProvider>
-  );
-};
-
-export default AdminSettings;

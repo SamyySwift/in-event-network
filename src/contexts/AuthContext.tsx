@@ -6,18 +6,43 @@ import { toast } from 'sonner';
 
 export interface AuthUser extends User {
   role?: string;
+  name?: string;
+  bio?: string;
+  niche?: string;
+  company?: string;
+  photoUrl?: string;
+  photo_url?: string;
   current_event_id?: string;
   team_member_for_event?: string;
+  networking_visible?: boolean;
+  tags?: string[];
+  networking_preferences?: string[];
+  links?: {
+    website?: string;
+    twitter?: string;
+    linkedin?: string;
+    facebook?: string;
+    instagram?: string;
+    github?: string;
+  };
+  twitter_link?: string;
+  linkedin_link?: string;
+  facebook_link?: string;
+  instagram_link?: string;
+  github_link?: string;
+  website_link?: string;
 }
 
 interface AuthContextType {
   currentUser: AuthUser | null;
   session: Session | null;
   loading: boolean;
+  isLoading: boolean;
   login: (email: string, password: string) => Promise<{ error: any }>;
-  register: (email: string, password: string, name: string) => Promise<{ error: any }>;
+  register: (email: string, password: string, name: string, role?: string) => Promise<{ error: any }>;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<AuthUser>) => Promise<void>;
+  signInWithGoogle?: () => Promise<{ error: any }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,7 +68,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('role, current_event_id, team_member_for_event, name, email')
+        .select(`
+          role, 
+          name, 
+          email, 
+          bio, 
+          niche, 
+          company, 
+          photo_url, 
+          current_event_id, 
+          team_member_for_event,
+          networking_visible,
+          tags,
+          networking_preferences,
+          twitter_link,
+          linkedin_link,
+          facebook_link,
+          instagram_link,
+          github_link,
+          website_link
+        `)
         .eq('id', userId)
         .single();
 
@@ -52,11 +96,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return null;
       }
 
+      const user = session?.user;
+      if (!user) return null;
+
       return {
-        ...session?.user,
+        ...user,
         role: profile.role,
+        name: profile.name,
+        bio: profile.bio,
+        niche: profile.niche,
+        company: profile.company,
+        photoUrl: profile.photo_url,
+        photo_url: profile.photo_url,
         current_event_id: profile.current_event_id,
         team_member_for_event: profile.team_member_for_event,
+        networking_visible: profile.networking_visible,
+        tags: profile.tags,
+        networking_preferences: profile.networking_preferences,
+        links: {
+          website: profile.website_link,
+          twitter: profile.twitter_link,
+          linkedin: profile.linkedin_link,
+          facebook: profile.facebook_link,
+          instagram: profile.instagram_link,
+          github: profile.github_link,
+        },
+        twitter_link: profile.twitter_link,
+        linkedin_link: profile.linkedin_link,
+        facebook_link: profile.facebook_link,
+        instagram_link: profile.instagram_link,
+        github_link: profile.github_link,
+        website_link: profile.website_link,
       } as AuthUser;
     } catch (error) {
       console.error('Error in refreshUserProfile:', error);
@@ -110,12 +180,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return { error };
   };
 
-  const register = async (email: string, password: string, name: string) => {
+  const register = async (email: string, password: string, name: string, role: string = 'attendee') => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name },
+        data: { name, role },
         emailRedirectTo: `${window.location.origin}/`,
       },
     });
@@ -137,10 +207,44 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     if (!currentUser) return;
 
     try {
+      // Map updates to database columns
+      const dbUpdates: any = {};
+      
+      if (updates.name !== undefined) dbUpdates.name = updates.name;
+      if (updates.bio !== undefined) dbUpdates.bio = updates.bio;
+      if (updates.niche !== undefined) dbUpdates.niche = updates.niche;
+      if (updates.company !== undefined) dbUpdates.company = updates.company;
+      if (updates.photoUrl !== undefined) dbUpdates.photo_url = updates.photoUrl;
+      if (updates.photo_url !== undefined) dbUpdates.photo_url = updates.photo_url;
+      if (updates.current_event_id !== undefined) dbUpdates.current_event_id = updates.current_event_id;
+      if (updates.team_member_for_event !== undefined) dbUpdates.team_member_for_event = updates.team_member_for_event;
+      if (updates.networking_visible !== undefined) dbUpdates.networking_visible = updates.networking_visible;
+      if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
+      if (updates.networking_preferences !== undefined) dbUpdates.networking_preferences = updates.networking_preferences;
+      if (updates.role !== undefined) dbUpdates.role = updates.role;
+      
+      // Handle links object
+      if (updates.links) {
+        if (updates.links.website !== undefined) dbUpdates.website_link = updates.links.website;
+        if (updates.links.twitter !== undefined) dbUpdates.twitter_link = updates.links.twitter;
+        if (updates.links.linkedin !== undefined) dbUpdates.linkedin_link = updates.links.linkedin;
+        if (updates.links.facebook !== undefined) dbUpdates.facebook_link = updates.links.facebook;
+        if (updates.links.instagram !== undefined) dbUpdates.instagram_link = updates.links.instagram;
+        if (updates.links.github !== undefined) dbUpdates.github_link = updates.links.github;
+      }
+      
+      // Handle direct link updates
+      if (updates.twitter_link !== undefined) dbUpdates.twitter_link = updates.twitter_link;
+      if (updates.linkedin_link !== undefined) dbUpdates.linkedin_link = updates.linkedin_link;
+      if (updates.facebook_link !== undefined) dbUpdates.facebook_link = updates.facebook_link;
+      if (updates.instagram_link !== undefined) dbUpdates.instagram_link = updates.instagram_link;
+      if (updates.github_link !== undefined) dbUpdates.github_link = updates.github_link;
+      if (updates.website_link !== undefined) dbUpdates.website_link = updates.website_link;
+
       // Update in database
       const { error } = await supabase
         .from('profiles')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', currentUser.id);
 
       if (error) throw error;
@@ -153,14 +257,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const signInWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    return { error };
+  };
+
   const value: AuthContextType = {
     currentUser,
     session,
     loading,
+    isLoading: loading,
     login,
     register,
     logout,
     updateUser,
+    signInWithGoogle,
   };
 
   return (

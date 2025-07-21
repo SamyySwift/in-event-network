@@ -113,24 +113,6 @@
 
   body {
     @apply bg-background text-foreground font-geist;
-    /* Enable smooth scrolling */
-    scroll-behavior: smooth;
-    /* Prevent horizontal overflow */
-    overflow-x: hidden;
-  }
-  
-  /* Ensure proper mobile viewport handling */
-  html {
-    scroll-behavior: smooth;
-    /* Fix viewport scaling on mobile */
-    -webkit-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-  }
-  
-  /* Smooth scrolling for all scrollable elements */
-  * {
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
   }
 
   ::selection {

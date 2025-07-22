@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -39,6 +39,7 @@ export default function BuyTickets() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [selectedTickets, setSelectedTickets] = useState<Record<string, number>>({});
   const [isProcessing, setIsProcessing] = useState(false);
   const [showUserInfoForm, setShowUserInfoForm] = useState(false);
@@ -229,11 +230,15 @@ export default function BuyTickets() {
       return;
     }
 
-    // Check if user info is required and not provided
-    if (!userInfo.fullName.trim() || !userInfo.email.trim() || !userInfo.phone.trim()) {
-      setShowUserInfoForm(true);
-      return;
-    }
+    // Auto-populate user info from profile if available
+    const finalUserInfo = {
+      fullName: userInfo.fullName.trim() || 'User',
+      email: userInfo.email.trim() || currentUser?.email || '',
+      phone: userInfo.phone.trim() || ''
+    };
+    
+    // Update userInfo state
+    setUserInfo(finalUserInfo);
 
     if (!eventData) {
       toast({
@@ -244,7 +249,10 @@ export default function BuyTickets() {
       return;
     }
 
-    const totalPrice = getTotalPrice();
+      const totalPrice = getTotalPrice();
+
+    // Update userInfo to final values
+    setUserInfo(finalUserInfo);
 
     // If total price is 0, proceed with free ticket creation
     if (totalPrice === 0) {
@@ -300,13 +308,19 @@ export default function BuyTickets() {
             const timestamp = Date.now();
             const uniqueQRCode = `${eventData.event.id}-${ticketTypeId}-${timestamp}-${uniqueId}-${i}`;
             
+            const finalUserInfo = {
+              fullName: userInfo.fullName || 'User',
+              email: userInfo.email || currentUser?.email || '',
+              phone: userInfo.phone || ''
+            };
+
             ticketPurchases.push({
               event_id: eventData.event.id,
               ticket_type_id: ticketTypeId,
               user_id: currentUser.id,
-              guest_name: userInfo.fullName.substring(0, 100),
-              guest_email: userInfo.email.substring(0, 255),
-              guest_phone: userInfo.phone.substring(0, 20),
+              guest_name: finalUserInfo.fullName.substring(0, 100),
+              guest_email: finalUserInfo.email.substring(0, 255),
+              guest_phone: finalUserInfo.phone.substring(0, 20),
               price: ticketType.price,
               payment_status: 'completed',
               payment_reference: finalPaymentReference,
@@ -447,8 +461,15 @@ export default function BuyTickets() {
       // Reset form
       setSelectedTickets({});
       setFormResponses({});
-      setUserInfo({ fullName: '', email: currentUser?.email || '', phone: '' });
+      setUserInfo({ 
+        fullName: '', 
+        email: currentUser?.email || '', 
+        phone: '' 
+      });
       setShowUserInfoForm(false);
+
+      // Refresh the ticket types data to show updated quantities
+      queryClient.invalidateQueries({ queryKey: ['event-tickets', eventKey] });
 
     } catch (error: any) {
       console.error('Purchase failed:', error);
@@ -485,15 +506,6 @@ export default function BuyTickets() {
   };
 
   const handleUserInfoSubmit = () => {
-    if (!userInfo.fullName.trim() || !userInfo.email.trim() || !userInfo.phone.trim()) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
     const { isValid, errors } = validateFormResponses();
     if (!isValid) {
       toast({
@@ -691,29 +703,26 @@ export default function BuyTickets() {
                 {/* Step-by-step Purchase Flow */}
                 {currentUser && getTotalTickets() > 0 && !showPayment && (
                   <div className="space-y-4">
-                    {/* Remove the entire showUserInfoForm conditional block here */}
-                    {!showUserInfoForm && (
-                      <Card className="border-green-200 bg-green-50">
-                        <CardContent className="pt-4">
-                          <div className="flex items-center justify-between text-green-700 mb-2">
-                            <div className="flex items-center gap-2">
-                              <User className="h-4 w-4" />
-                              <span className="font-medium">Ready to Purchase</span>
-                            </div>
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => setShowUserInfoForm(true)}
-                            >
-                              Edit Info
-                            </Button>
+                    <Card className="border-green-200 bg-green-50">
+                      <CardContent className="pt-4">
+                        <div className="flex items-center justify-between text-green-700 mb-2">
+                          <div className="flex items-center gap-2">
+                            <User className="h-4 w-4" />
+                            <span className="font-medium">Ready to Purchase</span>
                           </div>
-                          <p className="text-sm text-green-600">
-                            All information provided. Click purchase to continue.
-                          </p>
-                        </CardContent>
-                      </Card>
-                    )}
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setShowUserInfoForm(true)}
+                          >
+                            Edit Info (Optional)
+                          </Button>
+                        </div>
+                        <p className="text-sm text-green-600">
+                          Using your account information. Click purchase to continue.
+                        </p>
+                      </CardContent>
+                    </Card>
                   </div>
                 )}
 
@@ -776,17 +785,17 @@ export default function BuyTickets() {
                   </Button>
                 )}
 
-                {/* User Information Form - Now positioned below Purchase button */}
+                {/* Optional User Information Form */}
                 {currentUser && getTotalTickets() > 0 && showUserInfoForm && !showPayment && (
                   <Card className="border-purple-200 bg-purple-50 mt-4">
                     <CardContent className="pt-4">
                       <div className="flex items-center gap-2 text-purple-700 mb-3">
                         <User className="h-4 w-4" />
-                        <span className="font-medium">Your Information</span>
+                        <span className="font-medium">Edit Your Information (Optional)</span>
                       </div>
                       <div className="space-y-3">
                         <div>
-                          <Label htmlFor="fullName">Full Name *</Label>
+                          <Label htmlFor="fullName">Full Name</Label>
                           <Input
                             id="fullName"
                             value={userInfo.fullName}
@@ -795,7 +804,7 @@ export default function BuyTickets() {
                           />
                         </div>
                         <div>
-                          <Label htmlFor="email">Email *</Label>
+                          <Label htmlFor="email">Email</Label>
                           <Input
                             id="email"
                             type="email"
@@ -805,7 +814,7 @@ export default function BuyTickets() {
                           />
                         </div>
                         <div>
-                          <Label htmlFor="phone">Phone Number *</Label>
+                          <Label htmlFor="phone">Phone Number</Label>
                           <Input
                             id="phone"
                             value={userInfo.phone}
@@ -815,7 +824,7 @@ export default function BuyTickets() {
                         </div>
                         <div className="flex gap-2">
                           <Button onClick={handleUserInfoSubmit} className="flex-1">
-                            Continue to Payment
+                            Save & Continue
                           </Button>
                           <Button 
                             variant="outline" 

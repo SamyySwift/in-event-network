@@ -26,6 +26,11 @@ type AnnouncementFormData = {
   priority: 'high' | 'normal' | 'low';
   send_immediately: boolean;
   image?: File;
+  twitter_link?: string;
+  instagram_link?: string;
+  facebook_link?: string;
+  tiktok_link?: string;
+  website_link?: string;
 };
 
 const AdminAnnouncementsContent = () => {
@@ -41,6 +46,11 @@ const AdminAnnouncementsContent = () => {
       content: "",
       priority: "normal",
       send_immediately: false,
+      twitter_link: "",
+      instagram_link: "",
+      facebook_link: "",
+      tiktok_link: "",
+      website_link: "",
     },
   });
 
@@ -92,6 +102,11 @@ const AdminAnnouncementsContent = () => {
     setValue('content', announcement.content);
     setValue('priority', announcement.priority);
     setValue('send_immediately', announcement.send_immediately);
+    setValue('twitter_link', announcement.twitter_link || '');
+    setValue('instagram_link', announcement.instagram_link || '');
+    setValue('facebook_link', announcement.facebook_link || '');
+    setValue('tiktok_link', announcement.tiktok_link || '');
+    setValue('website_link', announcement.website_link || '');
     setSelectedImage(null);
   };
 
@@ -229,6 +244,38 @@ const AdminAnnouncementsContent = () => {
                       onImageSelect={setSelectedImage}
                       label="Announcement Image (Optional)"
                     />
+                    
+                    {/* Social Media Links Section */}
+                    <div className="border rounded-lg p-4 bg-muted/30">
+                      <Label className="text-sm font-medium mb-3 block">Social Media Links (Optional)</Label>
+                      <div className="grid grid-cols-1 gap-3">
+                        <Input
+                          {...register("twitter_link")}
+                          placeholder="Twitter/X Link"
+                          className="text-sm"
+                        />
+                        <Input
+                          {...register("instagram_link")}
+                          placeholder="Instagram Link"
+                          className="text-sm"
+                        />
+                        <Input
+                          {...register("facebook_link")}
+                          placeholder="Facebook Link"
+                          className="text-sm"
+                        />
+                        <Input
+                          {...register("tiktok_link")}
+                          placeholder="TikTok Link"
+                          className="text-sm"
+                        />
+                        <Input
+                          {...register("website_link")}
+                          placeholder="Website Link"
+                          className="text-sm"
+                        />
+                      </div>
+                    </div>
                   </div>
                   <div className="flex flex-col space-y-5">
                     <div>

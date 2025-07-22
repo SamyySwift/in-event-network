@@ -27,6 +27,8 @@ interface ScheduleItemModalProps {
     speaker_twitter?: string;
     speaker_linkedin?: string;
     speaker_website?: string;
+    speaker_instagram?: string;
+    speaker_tiktok?: string;
     speaker_topic?: string;
     priority?: string;
     image_url?: string;
@@ -59,6 +61,10 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
         return <Linkedin className="w-4 h-4" />;
       case 'website':
         return <Globe className="w-4 h-4" />;
+      case 'instagram':
+        return <User className="w-4 h-4" />; // Using User icon as placeholder for Instagram
+      case 'tiktok':
+        return <ExternalLink className="w-4 h-4" />; // Using ExternalLink as placeholder for TikTok
       default:
         return <ExternalLink className="w-4 h-4" />;
     }
@@ -71,6 +77,8 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
     if (item.speaker_twitter) socialLinks.push({ platform: 'x', url: item.speaker_twitter });
     if (item.speaker_linkedin) socialLinks.push({ platform: 'linkedin', url: item.speaker_linkedin });
     if (item.speaker_website) socialLinks.push({ platform: 'website', url: item.speaker_website });
+    if (item.speaker_instagram) socialLinks.push({ platform: 'instagram', url: item.speaker_instagram });
+    if (item.speaker_tiktok) socialLinks.push({ platform: 'tiktok', url: item.speaker_tiktok });
 
     if (socialLinks.length === 0) return null;
 

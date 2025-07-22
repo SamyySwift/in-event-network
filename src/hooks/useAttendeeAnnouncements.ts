@@ -14,6 +14,11 @@ interface Announcement {
   created_at: string;
   updated_at: string;
   event_id?: string;
+  twitter_link?: string;
+  instagram_link?: string;
+  facebook_link?: string;
+  tiktok_link?: string;
+  website_link?: string;
 }
 
 export const useAttendeeAnnouncements = () => {

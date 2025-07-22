@@ -25,6 +25,9 @@ import {
   ChevronRight,
   Sparkles,
   TrendingUp,
+  ExternalLink,
+  Globe,
+  Play,
 } from "lucide-react";
 import { useAttendeeAnnouncements } from "@/hooks/useAttendeeAnnouncements";
 import { AttendeeEventProvider } from "@/contexts/AttendeeEventContext";
@@ -373,7 +376,78 @@ const AttendeeAnnouncementsContent = () => {
                       </div>
                     )}
 
-                  {/* "Read more" button if not expanded */}
+                   {/* Social Media Links - Show when expanded */}
+                   {expandedAnnouncement === announcement.id && (
+                     <>
+                       {(announcement.twitter_link || announcement.instagram_link || announcement.facebook_link || announcement.tiktok_link || announcement.website_link) && (
+                         <div className="mt-4 pt-4 border-t border-gray-200">
+                           <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                             <ExternalLink className="h-4 w-4" />
+                             <span>Connect & Follow:</span>
+                           </div>
+                           <div className="flex flex-wrap gap-2">
+                             {announcement.twitter_link && (
+                               <Button
+                                 variant="outline"
+                                 size="sm"
+                                 className="h-8 px-3 text-xs"
+                                 onClick={() => window.open(announcement.twitter_link, '_blank')}
+                               >
+                                 <User className="h-3 w-3 mr-1" />
+                                 Twitter/X
+                               </Button>
+                             )}
+                             {announcement.instagram_link && (
+                               <Button
+                                 variant="outline"
+                                 size="sm"
+                                 className="h-8 px-3 text-xs"
+                                 onClick={() => window.open(announcement.instagram_link, '_blank')}
+                               >
+                                 <User className="h-3 w-3 mr-1" />
+                                 Instagram
+                               </Button>
+                             )}
+                             {announcement.facebook_link && (
+                               <Button
+                                 variant="outline"
+                                 size="sm"
+                                 className="h-8 px-3 text-xs"
+                                 onClick={() => window.open(announcement.facebook_link, '_blank')}
+                               >
+                                 <User className="h-3 w-3 mr-1" />
+                                 Facebook
+                               </Button>
+                             )}
+                             {announcement.tiktok_link && (
+                               <Button
+                                 variant="outline"
+                                 size="sm"
+                                 className="h-8 px-3 text-xs"
+                                 onClick={() => window.open(announcement.tiktok_link, '_blank')}
+                               >
+                                 <Play className="h-3 w-3 mr-1" />
+                                 TikTok
+                               </Button>
+                             )}
+                             {announcement.website_link && (
+                               <Button
+                                 variant="outline"
+                                 size="sm"
+                                 className="h-8 px-3 text-xs"
+                                 onClick={() => window.open(announcement.website_link, '_blank')}
+                               >
+                                 <Globe className="h-3 w-3 mr-1" />
+                                 Website
+                               </Button>
+                             )}
+                           </div>
+                         </div>
+                       )}
+                     </>
+                   )}
+
+                   {/* "Read more" button if not expanded */}
                   {announcement.content.length > 150 &&
                     expandedAnnouncement !== announcement.id && (
                       <Button

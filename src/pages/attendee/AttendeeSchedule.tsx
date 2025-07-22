@@ -77,6 +77,8 @@ interface CombinedScheduleItem {
   speaker_twitter?: string;
   speaker_linkedin?: string;
   speaker_website?: string;
+  speaker_instagram?: string;
+  speaker_tiktok?: string;
   speaker_topic?: string; // Add topic field
   priority?: string;
   image_url?: string;
@@ -193,6 +195,8 @@ const AttendeeSchedule = () => {
           speaker_twitter: speaker.twitter_link,
           speaker_linkedin: speaker.linkedin_link,
           speaker_website: speaker.website_link,
+          speaker_instagram: speaker.instagram_link,
+          speaker_tiktok: speaker.tiktok_link,
           speaker_topic: speaker.topic,
           time_allocation: speaker.time_allocation, // Add time allocation from speaker
         });
@@ -377,6 +381,10 @@ const AttendeeSchedule = () => {
         return <Linkedin className="w-3 h-3" />;
       case "website":
         return <Globe className="w-3 h-3" />;
+      case "instagram":
+        return <User className="w-3 h-3" />; // Using User icon as placeholder for Instagram
+      case "tiktok":
+        return <Play className="w-3 h-3" />; // Using Play icon as placeholder for TikTok
       default:
         return <ExternalLink className="w-3 h-3" />;
     }
@@ -392,6 +400,10 @@ const AttendeeSchedule = () => {
       socialLinks.push({ platform: "linkedin", url: item.speaker_linkedin });
     if (item.speaker_website)
       socialLinks.push({ platform: "website", url: item.speaker_website });
+    if (item.speaker_instagram)
+      socialLinks.push({ platform: "instagram", url: item.speaker_instagram });
+    if (item.speaker_tiktok)
+      socialLinks.push({ platform: "tiktok", url: item.speaker_tiktok });
 
     if (socialLinks.length === 0) return null;
 

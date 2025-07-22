@@ -147,36 +147,51 @@ export type Database = {
           created_at: string
           created_by: string | null
           event_id: string | null
+          facebook_link: string | null
           id: string
           image_url: string | null
+          instagram_link: string | null
           priority: string | null
           send_immediately: boolean | null
+          tiktok_link: string | null
           title: string
+          twitter_link: string | null
           updated_at: string
+          website_link: string | null
         }
         Insert: {
           content: string
           created_at?: string
           created_by?: string | null
           event_id?: string | null
+          facebook_link?: string | null
           id?: string
           image_url?: string | null
+          instagram_link?: string | null
           priority?: string | null
           send_immediately?: boolean | null
+          tiktok_link?: string | null
           title: string
+          twitter_link?: string | null
           updated_at?: string
+          website_link?: string | null
         }
         Update: {
           content?: string
           created_at?: string
           created_by?: string | null
           event_id?: string | null
+          facebook_link?: string | null
           id?: string
           image_url?: string | null
+          instagram_link?: string | null
           priority?: string | null
           send_immediately?: boolean | null
+          tiktok_link?: string | null
           title?: string
+          twitter_link?: string | null
           updated_at?: string
+          website_link?: string | null
         }
         Relationships: [
           {

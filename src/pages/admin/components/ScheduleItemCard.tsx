@@ -124,65 +124,73 @@ const ScheduleItemCard: React.FC<ScheduleItemCardProps> = ({
 
   return (
     <Card className="glass-card hover:shadow-md transition-shadow">
-      <CardHeader className="pb-2 flex flex-row gap-4 items-center">
-        {item.image_url && (
-          <img
-            src={item.image_url}
-            alt={item.title}
-            className="w-16 h-16 object-cover rounded border border-primary/30"
-          />
-        )}
-        <div className="flex-1">
-          <CardTitle className="text-lg">{item.title}</CardTitle>
-          <CardDescription className="mt-1">{item.description}</CardDescription>
-          
-          {/* Date and Time Information */}
-          <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground mt-2">
-            {dateDisplay && (
-              <div className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                <span>{dateDisplay}</span>
-              </div>
+      <CardHeader className="pb-2">
+        {/* Mobile-friendly layout */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          {/* Image and title section */}
+          <div className="flex gap-4 flex-1 min-w-0">
+            {item.image_url && (
+              <img
+                src={item.image_url}
+                alt={item.title}
+                className="w-16 h-16 object-cover rounded border border-primary/30 flex-shrink-0"
+              />
             )}
-            
-            {timeDisplay && (
-              <div className="flex items-center gap-1">
-                <Clock className="h-4 w-4" />
-                <span>{timeDisplay}</span>
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-lg break-words">{item.title}</CardTitle>
+              <CardDescription className="mt-1 break-words">{item.description}</CardDescription>
+              
+              {/* Date and Time Information */}
+              <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground mt-2">
+                {dateDisplay && (
+                  <div className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4 flex-shrink-0" />
+                    <span className="break-words">{dateDisplay}</span>
+                  </div>
+                )}
+                
+                {timeDisplay && (
+                  <div className="flex items-center gap-1">
+                    <Clock className="h-4 w-4 flex-shrink-0" />
+                    <span className="break-words">{timeDisplay}</span>
+                  </div>
+                )}
+                
+                {item.location && (
+                  <div className="flex items-center gap-1">
+                    <MapPin className="h-4 w-4 flex-shrink-0" />
+                    <span className="break-words">{item.location}</span>
+                  </div>
+                )}
               </div>
-            )}
-            
-            {item.location && (
-              <div className="flex items-center gap-1">
-                <MapPin className="h-4 w-4" />
-                <span>{item.location}</span>
+              
+              {/* Badges */}
+              <div className="flex flex-wrap gap-2 mt-2">
+                {getTypeBadge(item.type)}
+                {getPriorityBadge(item.priority)}
+                {durationDisplay && (
+                  <Badge variant="outline" className="text-xs">
+                    {durationDisplay}
+                  </Badge>
+                )}
               </div>
-            )}
+            </div>
           </div>
           
-          {/* Badges */}
-          <div className="flex gap-2 mt-2">
-            {getTypeBadge(item.type)}
-            {getPriorityBadge(item.priority)}
-            {durationDisplay && (
-              <Badge variant="outline" className="text-xs">
-                {durationDisplay}
-              </Badge>
-            )}
+          {/* Action buttons */}
+          <div className="flex flex-row sm:flex-col gap-2 justify-end flex-shrink-0">
+            <Button variant="outline" size="icon" onClick={() => onEdit(item)} className="h-9 w-9">
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button 
+              variant="outline"
+              className="text-destructive border-destructive/20 hover:bg-destructive/10 h-9 w-9"
+              size="icon"
+              onClick={() => onDelete(item)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
-        </div>
-        <div className="flex flex-col gap-2">
-          <Button variant="outline" size="icon" onClick={() => onEdit(item)}>
-            <Edit className="h-4 w-4" />
-          </Button>
-          <Button 
-            variant="outline"
-            className="text-destructive border-destructive/20 hover:bg-destructive/10"
-            size="icon"
-            onClick={() => onDelete(item)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
         </div>
       </CardHeader>
     </Card>

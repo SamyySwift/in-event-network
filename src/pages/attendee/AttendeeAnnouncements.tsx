@@ -29,6 +29,8 @@ import {
   Globe,
   Play,
 } from "lucide-react";
+import { FaInstagram, FaTiktok, FaFacebook } from 'react-icons/fa';
+import { FaXTwitter } from 'react-icons/fa6';
 import { useAttendeeAnnouncements } from "@/hooks/useAttendeeAnnouncements";
 import { AttendeeEventProvider } from "@/contexts/AttendeeEventContext";
 import AttendeeRouteGuard from "@/components/attendee/AttendeeRouteGuard";
@@ -386,50 +388,50 @@ const AttendeeAnnouncementsContent = () => {
                              <span>Connect & Follow:</span>
                            </div>
                            <div className="flex flex-wrap gap-2">
-                             {announcement.twitter_link && (
-                               <Button
-                                 variant="outline"
-                                 size="sm"
-                                 className="h-8 px-3 text-xs"
-                                 onClick={() => window.open(announcement.twitter_link, '_blank')}
-                               >
-                                 <User className="h-3 w-3 mr-1" />
-                                 Twitter/X
-                               </Button>
-                             )}
-                             {announcement.instagram_link && (
-                               <Button
-                                 variant="outline"
-                                 size="sm"
-                                 className="h-8 px-3 text-xs"
-                                 onClick={() => window.open(announcement.instagram_link, '_blank')}
-                               >
-                                 <User className="h-3 w-3 mr-1" />
-                                 Instagram
-                               </Button>
-                             )}
-                             {announcement.facebook_link && (
-                               <Button
-                                 variant="outline"
-                                 size="sm"
-                                 className="h-8 px-3 text-xs"
-                                 onClick={() => window.open(announcement.facebook_link, '_blank')}
-                               >
-                                 <User className="h-3 w-3 mr-1" />
-                                 Facebook
-                               </Button>
-                             )}
-                             {announcement.tiktok_link && (
-                               <Button
-                                 variant="outline"
-                                 size="sm"
-                                 className="h-8 px-3 text-xs"
-                                 onClick={() => window.open(announcement.tiktok_link, '_blank')}
-                               >
-                                 <Play className="h-3 w-3 mr-1" />
-                                 TikTok
-                               </Button>
-                             )}
+                              {announcement.twitter_link && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 px-3 text-xs"
+                                  onClick={() => window.open(announcement.twitter_link, '_blank')}
+                                >
+                                  <FaXTwitter className="h-3 w-3 mr-1" />
+                                  Twitter/X
+                                </Button>
+                              )}
+                              {announcement.instagram_link && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 px-3 text-xs"
+                                  onClick={() => window.open(announcement.instagram_link, '_blank')}
+                                >
+                                  <FaInstagram className="h-3 w-3 mr-1" />
+                                  Instagram
+                                </Button>
+                              )}
+                              {announcement.facebook_link && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 px-3 text-xs"
+                                  onClick={() => window.open(announcement.facebook_link, '_blank')}
+                                >
+                                  <FaFacebook className="h-3 w-3 mr-1" />
+                                  Facebook
+                                </Button>
+                              )}
+                              {announcement.tiktok_link && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 px-3 text-xs"
+                                  onClick={() => window.open(announcement.tiktok_link, '_blank')}
+                                >
+                                  <FaTiktok className="h-3 w-3 mr-1" />
+                                  TikTok
+                                </Button>
+                              )}
                              {announcement.website_link && (
                                <Button
                                  variant="outline"

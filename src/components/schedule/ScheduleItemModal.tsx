@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Calendar, Clock, MapPin, User, X, ExternalLink, Linkedin, Globe } from 'lucide-react';
+import { FaInstagram, FaTiktok } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -62,9 +63,9 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
       case 'website':
         return <Globe className="w-4 h-4" />;
       case 'instagram':
-        return <User className="w-4 h-4" />; // Using User icon as placeholder for Instagram
+        return <FaInstagram className="w-4 h-4" />;
       case 'tiktok':
-        return <ExternalLink className="w-4 h-4" />; // Using ExternalLink as placeholder for TikTok
+        return <FaTiktok className="w-4 h-4" />;
       default:
         return <ExternalLink className="w-4 h-4" />;
     }

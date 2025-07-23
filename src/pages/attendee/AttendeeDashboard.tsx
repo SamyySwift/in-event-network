@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Zap,
   TrendingUp,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,6 +57,7 @@ const AttendeeDashboardContent = () => {
   const { dashboardData, isLoading, error } = useDashboard();
   const { facilities } = useAttendeeFacilities();
   const [showProfilePopup, setShowProfilePopup] = useState(false);
+  const [expandedAnnouncements, setExpandedAnnouncements] = useState<Set<string>>(new Set());
 
   // Memoize profile completion check to avoid unnecessary recalculation
   const shouldShowProfilePopup = useMemo(() => {
@@ -96,6 +98,22 @@ const AttendeeDashboardContent = () => {
       minute: "2-digit",
     });
   }, []);
+
+  const toggleAnnouncementExpanded = (announcementId: string) => {
+    setExpandedAnnouncements(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(announcementId)) {
+        newSet.delete(announcementId);
+      } else {
+        newSet.add(announcementId);
+      }
+      return newSet;
+    });
+  };
+
+  const truncateContent = (content: string, maxLength: number = 150) => {
+    return content.length > maxLength ? content.substring(0, maxLength) + "..." : content;
+  };
 
   // Show loading state while checking event context
   if (contextLoading || isLoading) {
@@ -366,9 +384,29 @@ const AttendeeDashboardContent = () => {
                         <h3 className="font-semibold text-lg text-gray-900 mb-2 break-words">
                           {announcement.title}
                         </h3>
-                        <p className="text-gray-600 leading-relaxed break-words">
-                          {announcement.content}
-                        </p>
+                        <div className="text-gray-600 leading-relaxed break-words">
+                          {expandedAnnouncements.has(announcement.id) ? (
+                            announcement.content.split('\n').map((paragraph, index) => (
+                              <p key={index} className="mb-2 last:mb-0">
+                                {paragraph}
+                              </p>
+                            ))
+                          ) : (
+                            <p>{truncateContent(announcement.content)}</p>
+                          )}
+                          
+                          {announcement.content.length > 150 && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => toggleAnnouncementExpanded(announcement.id)}
+                              className="mt-2 h-auto p-1 text-blue-600 hover:text-blue-800 font-medium"
+                            >
+                              <Eye className="h-3 w-3 mr-1" />
+                              {expandedAnnouncements.has(announcement.id) ? "See less" : "See more"}
+                            </Button>
+                          )}
+                        </div>
                       </div>
                       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 flex-shrink-0">
                         <Badge

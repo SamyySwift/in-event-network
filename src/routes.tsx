@@ -31,6 +31,7 @@ import AdminNotifications from "@/pages/admin/AdminNotifications";
 import AdminProfile from "@/pages/admin/AdminProfile";
 import AdminSponsors from "@/pages/admin/AdminSponsors";
 import AdminVendorHub from "@/pages/admin/AdminVendorHub";
+import AdminHighlights from "@/pages/admin/AdminHighlights";
 
 import SponsorForm from "@/pages/SponsorForm";
 import SponsorshipPartnership from "@/pages/SponsorshipPartnership";
@@ -243,6 +244,14 @@ export const router = createBrowserRouter([
     element: (
       <AdminRoute>
         <AdminFacilities />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/admin/highlights",
+    element: (
+      <AdminRoute>
+        <AdminHighlights />
       </AdminRoute>
     ),
   },

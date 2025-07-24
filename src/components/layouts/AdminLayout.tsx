@@ -31,6 +31,7 @@ import {
   Settings,
   Store,
   DollarSign,
+  Camera, // Add this import for highlights icon
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -234,6 +235,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       icon: (
         <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
           <MapPin size={14} className="text-purple-600" />
+        </div>
+      ),
+    },
+    {
+      name: "Highlights",
+      href: "/admin/highlights",
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+          <Camera size={14} className="text-purple-600" />
         </div>
       ),
     },

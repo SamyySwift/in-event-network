@@ -28,8 +28,10 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, Image, Video } from 'lucide-react';
+import { Plus, Trash2, Image, Video, Upload, X } from 'lucide-react';
 import { HighlightWithMedia, useAdminHighlights } from '@/hooks/useAdminHighlights';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface ManageHighlightMediaDialogProps {
   highlight: HighlightWithMedia;
@@ -42,31 +44,86 @@ export const ManageHighlightMediaDialog = ({
   open, 
   onOpenChange 
 }: ManageHighlightMediaDialogProps) => {
-  const [mediaUrl, setMediaUrl] = useState('');
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
   const [duration, setDuration] = useState(5);
   const [deleteMediaId, setDeleteMediaId] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const { addHighlightMedia, removeHighlightMedia } = useAdminHighlights();
 
-  const handleAddMedia = (e: React.FormEvent) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file size
+      const maxSize = mediaType === 'image' ? 5 * 1024 * 1024 : 50 * 1024 * 1024; // 5MB for images, 50MB for videos
+      if (file.size > maxSize) {
+        toast.error(`${mediaType === 'image' ? 'Image' : 'Video'} must be less than ${mediaType === 'image' ? '5MB' : '50MB'}`);
+        return;
+      }
+      
+      // Validate file type
+      const expectedType = mediaType === 'image' ? 'image/' : 'video/';
+      if (!file.type.startsWith(expectedType)) {
+        toast.error(`Please select a ${mediaType} file`);
+        return;
+      }
+      
+      setMediaFile(file);
+    }
+  };
+
+  const uploadFile = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `highlights/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('event-media')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data } = supabase.storage
+      .from('event-media')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  };
+
+  const handleAddMedia = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!mediaUrl.trim()) return;
+    if (!mediaFile) {
+      toast.error('Please select a file');
+      return;
+    }
 
-    const nextOrder = Math.max(...highlight.highlight_media.map(m => m.media_order), -1) + 1;
+    setIsUploading(true);
+    
+    try {
+      const mediaUrl = await uploadFile(mediaFile);
+      const nextOrder = Math.max(...highlight.highlight_media.map(m => m.media_order), -1) + 1;
 
-    addHighlightMedia.mutate({
-      highlight_id: highlight.id,
-      media_url: mediaUrl.trim(),
-      media_type: mediaType,
-      media_order: nextOrder,
-      duration_seconds: duration,
-    });
+      await addHighlightMedia.mutateAsync({
+        highlight_id: highlight.id,
+        media_url: mediaUrl,
+        media_type: mediaType,
+        media_order: nextOrder,
+        duration_seconds: duration,
+      });
 
-    // Reset form
-    setMediaUrl('');
-    setMediaType('image');
-    setDuration(5);
+      // Reset form
+      setMediaFile(null);
+      setMediaType('image');
+      setDuration(5);
+    } catch (error) {
+      console.error('Error adding media:', error);
+      toast.error('Failed to add media');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleDeleteMedia = () => {
@@ -96,20 +153,11 @@ export const ManageHighlightMediaDialog = ({
                 <form onSubmit={handleAddMedia} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="media-url">Media URL</Label>
-                      <Input
-                        id="media-url"
-                        value={mediaUrl}
-                        onChange={(e) => setMediaUrl(e.target.value)}
-                        placeholder="https://example.com/media.jpg"
-                        type="url"
-                        required
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
                       <Label htmlFor="media-type">Media Type</Label>
-                      <Select value={mediaType} onValueChange={(value: 'image' | 'video') => setMediaType(value)}>
+                      <Select value={mediaType} onValueChange={(value: 'image' | 'video') => {
+                        setMediaType(value);
+                        setMediaFile(null); // Reset file when type changes
+                      }}>
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
@@ -119,30 +167,62 @@ export const ManageHighlightMediaDialog = ({
                         </SelectContent>
                       </Select>
                     </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="duration">Duration (seconds)</Label>
+                      <Input
+                        id="duration"
+                        type="number"
+                        min={1}
+                        max={30}
+                        value={duration}
+                        onChange={(e) => setDuration(parseInt(e.target.value) || 5)}
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="duration">Duration (seconds)</Label>
-                    <Input
-                      id="duration"
-                      type="number"
-                      min={1}
-                      max={30}
-                      value={duration}
-                      onChange={(e) => setDuration(parseInt(e.target.value) || 5)}
-                    />
+                    <Label htmlFor="media-file">{mediaType === 'image' ? 'Image' : 'Video'} File</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="media-file"
+                        type="file"
+                        accept={mediaType === 'image' ? 'image/*' : 'video/*'}
+                        onChange={handleFileChange}
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => document.getElementById('media-file')?.click()}
+                        className="w-full"
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        {mediaFile ? mediaFile.name : `Choose ${mediaType === 'image' ? 'Image' : 'Video'}`}
+                      </Button>
+                      {mediaFile && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setMediaFile(null)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground">
-                      How long this media should be displayed (1-30 seconds)
+                      Maximum {mediaType === 'image' ? '5MB for images' : '50MB for videos'}. Duration: 1-30 seconds.
                     </p>
                   </div>
 
                   <Button 
                     type="submit" 
-                    disabled={addHighlightMedia.isPending || !mediaUrl.trim()}
+                    disabled={isUploading || !mediaFile}
                     className="w-full"
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Media
+                    {isUploading ? 'Uploading...' : 'Add Media'}
                   </Button>
                 </form>
               </CardContent>
@@ -177,9 +257,11 @@ export const ManageHighlightMediaDialog = ({
                               className="object-cover w-full h-full"
                             />
                           ) : (
-                            <div className="flex items-center justify-center w-full h-full">
-                              <Video className="h-8 w-8 text-muted-foreground" />
-                            </div>
+                            <video
+                              src={media.media_url}
+                              className="object-cover w-full h-full"
+                              controls
+                            />
                           )}
                           <div className="absolute top-2 left-2">
                             <Badge variant="secondary" className="text-xs">

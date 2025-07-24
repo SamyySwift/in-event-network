@@ -18,8 +18,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Plus } from 'lucide-react';
+import { Plus, Upload, X } from 'lucide-react';
 import { useAdminHighlights } from '@/hooks/useAdminHighlights';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const categories = [
   'Behind the Scenes',
@@ -35,33 +37,88 @@ export const CreateHighlightDialog = () => {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState('');
-  const [coverImageUrl, setCoverImageUrl] = useState('');
+  const [coverImage, setCoverImage] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const { createHighlight } = useAdminHighlights();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file size (5MB for images)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image must be less than 5MB');
+        return;
+      }
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file');
+        return;
+      }
+      
+      setCoverImage(file);
+    }
+  };
+
+  const uploadFile = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random()}.${fileExt}`;
+    const filePath = `highlights/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('event-media')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data } = supabase.storage
+      .from('event-media')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!title.trim()) return;
 
-    createHighlight.mutate({
-      title: title.trim(),
-      category: category || null,
-      cover_image_url: coverImageUrl || null,
-      is_published: false,
-      display_order: 0,
-    });
+    setIsUploading(true);
+    
+    try {
+      let coverImageUrl = null;
+      
+      if (coverImage) {
+        coverImageUrl = await uploadFile(coverImage);
+      }
 
-    // Reset form
-    setTitle('');
-    setCategory('');
-    setCoverImageUrl('');
-    setOpen(false);
+      await createHighlight.mutateAsync({
+        title: title.trim(),
+        category: category || null,
+        cover_image_url: coverImageUrl,
+        is_published: false,
+        display_order: 0,
+      });
+
+      // Reset form
+      setTitle('');
+      setCategory('');
+      setCoverImage(null);
+      setOpen(false);
+    } catch (error) {
+      console.error('Error creating highlight:', error);
+      toast.error('Failed to create highlight');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button className="w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           Create Highlight
         </Button>
@@ -102,16 +159,37 @@ export const CreateHighlightDialog = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="cover">Cover Image URL (Optional)</Label>
-            <Input
-              id="cover"
-              value={coverImageUrl}
-              onChange={(e) => setCoverImageUrl(e.target.value)}
-              placeholder="https://example.com/image.jpg"
-              type="url"
-            />
+            <Label htmlFor="cover">Cover Image (Optional)</Label>
+            <div className="flex items-center gap-2">
+              <Input
+                id="cover"
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => document.getElementById('cover')?.click()}
+                className="w-full"
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {coverImage ? coverImage.name : 'Choose Image'}
+              </Button>
+              {coverImage && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setCoverImage(null)}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
             <p className="text-xs text-muted-foreground">
-              If not provided, the first media item will be used as cover
+              Maximum 5MB. If not provided, the first media item will be used as cover.
             </p>
           </div>
 
@@ -125,9 +203,9 @@ export const CreateHighlightDialog = () => {
             </Button>
             <Button 
               type="submit" 
-              disabled={createHighlight.isPending || !title.trim()}
+              disabled={isUploading || !title.trim()}
             >
-              Create Highlight
+              {isUploading ? 'Creating...' : 'Create Highlight'}
             </Button>
           </DialogFooter>
         </form>

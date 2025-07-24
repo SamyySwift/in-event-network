@@ -47,12 +47,15 @@ export const CreateHighlightDialog = () => {
       // Validate file size (5MB for images)
       if (file.size > 5 * 1024 * 1024) {
         toast.error('Image must be less than 5MB');
+        e.target.value = ''; // Clear the input
         return;
       }
       
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        toast.error('Please select an image file');
+      // Validate file type - be more specific about allowed formats
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        toast.error('Please select a valid image file (JPEG, PNG, GIF, or WebP)');
+        e.target.value = ''; // Clear the input
         return;
       }
       
@@ -61,29 +64,41 @@ export const CreateHighlightDialog = () => {
   };
 
   const uploadFile = async (file: File): Promise<string> => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random()}.${fileExt}`;
-    const filePath = `highlights/${fileName}`;
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `highlights/${fileName}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from('event-media')
-      .upload(filePath, file);
+      const { error: uploadError } = await supabase.storage
+        .from('event-media')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
 
-    if (uploadError) {
-      throw uploadError;
+      if (uploadError) {
+        console.error('Upload error:', uploadError);
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
+
+      const { data } = supabase.storage
+        .from('event-media')
+        .getPublicUrl(filePath);
+
+      return data.publicUrl;
+    } catch (error) {
+      console.error('File upload error:', error);
+      throw error;
     }
-
-    const { data } = supabase.storage
-      .from('event-media')
-      .getPublicUrl(filePath);
-
-    return data.publicUrl;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title.trim()) return;
+    if (!title.trim()) {
+      toast.error('Please enter a title for the highlight');
+      return;
+    }
 
     setIsUploading(true);
     
@@ -91,7 +106,14 @@ export const CreateHighlightDialog = () => {
       let coverImageUrl = null;
       
       if (coverImage) {
-        coverImageUrl = await uploadFile(coverImage);
+        try {
+          coverImageUrl = await uploadFile(coverImage);
+        } catch (uploadError) {
+          console.error('Image upload failed:', uploadError);
+          toast.error('Failed to upload image. Please try again.');
+          setIsUploading(false);
+          return;
+        }
       }
 
       await createHighlight.mutateAsync({
@@ -106,10 +128,14 @@ export const CreateHighlightDialog = () => {
       setTitle('');
       setCategory('');
       setCoverImage(null);
+      // Clear the file input
+      const fileInput = document.getElementById('cover') as HTMLInputElement;
+      if (fileInput) fileInput.value = '';
       setOpen(false);
+      toast.success('Highlight created successfully!');
     } catch (error) {
       console.error('Error creating highlight:', error);
-      toast.error('Failed to create highlight');
+      toast.error('Failed to create highlight. Please try again.');
     } finally {
       setIsUploading(false);
     }
@@ -164,7 +190,7 @@ export const CreateHighlightDialog = () => {
               <Input
                 id="cover"
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
                 onChange={handleFileChange}
                 className="hidden"
               />
@@ -173,6 +199,7 @@ export const CreateHighlightDialog = () => {
                 variant="outline"
                 onClick={() => document.getElementById('cover')?.click()}
                 className="w-full"
+                disabled={isUploading}
               >
                 <Upload className="h-4 w-4 mr-2" />
                 {coverImage ? coverImage.name : 'Choose Image'}
@@ -182,14 +209,19 @@ export const CreateHighlightDialog = () => {
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => setCoverImage(null)}
+                  onClick={() => {
+                    setCoverImage(null);
+                    const fileInput = document.getElementById('cover') as HTMLInputElement;
+                    if (fileInput) fileInput.value = '';
+                  }}
+                  disabled={isUploading}
                 >
                   <X className="h-4 w-4" />
                 </Button>
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              Maximum 5MB. If not provided, the first media item will be used as cover.
+              Maximum 5MB. Supported formats: JPEG, PNG, GIF, WebP. If not provided, the first media item will be used as cover.
             </p>
           </div>
 

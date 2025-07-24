@@ -743,6 +743,75 @@ export type Database = {
           },
         ]
       }
+      highlight_media: {
+        Row: {
+          created_at: string
+          duration_seconds: number | null
+          highlight_id: string
+          id: string
+          media_order: number
+          media_type: string
+          media_url: string
+        }
+        Insert: {
+          created_at?: string
+          duration_seconds?: number | null
+          highlight_id: string
+          id?: string
+          media_order?: number
+          media_type: string
+          media_url: string
+        }
+        Update: {
+          created_at?: string
+          duration_seconds?: number | null
+          highlight_id?: string
+          id?: string
+          media_order?: number
+          media_type?: string
+          media_url?: string
+        }
+        Relationships: []
+      }
+      highlights: {
+        Row: {
+          category: string | null
+          cover_image_url: string | null
+          created_at: string
+          created_by: string | null
+          display_order: number
+          event_id: string
+          id: string
+          is_published: boolean
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          event_id: string
+          id?: string
+          is_published?: boolean
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          cover_image_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          display_order?: number
+          event_id?: string
+          id?: string
+          is_published?: boolean
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       media_files: {
         Row: {
           created_at: string | null

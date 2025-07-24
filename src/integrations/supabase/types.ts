@@ -1321,6 +1321,56 @@ export type Database = {
           },
         ]
       }
+      sponsor_form_fields: {
+        Row: {
+          created_at: string
+          field_options: Json | null
+          field_order: number
+          field_type: string
+          form_id: string
+          helper_text: string | null
+          id: string
+          is_required: boolean
+          label: string
+          placeholder: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          field_options?: Json | null
+          field_order?: number
+          field_type: string
+          form_id: string
+          helper_text?: string | null
+          id?: string
+          is_required?: boolean
+          label: string
+          placeholder?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          field_options?: Json | null
+          field_order?: number
+          field_type?: string
+          form_id?: string
+          helper_text?: string | null
+          id?: string
+          is_required?: boolean
+          label?: string
+          placeholder?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sponsor_form_fields_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "sponsor_forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sponsor_forms: {
         Row: {
           created_at: string

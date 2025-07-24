@@ -1,26 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import type { Database } from '@/integrations/supabase/types';
 
-export interface SponsorFormField {
-  id: string;
-  form_id: string;
-  field_type: 'text' | 'email' | 'tel' | 'url' | 'textarea' | 'select' | 'checkboxes' | 'date' | 'time' | 'file' | 'number';
-  label: string;
-  placeholder?: string;
-  helper_text?: string;
-  is_required: boolean;
-  field_order: number;
-  field_options?: {
-    options?: Array<{ id: string; label: string; value: string }>;
-    accept?: string; // For file fields
-    multiple?: boolean;
-    min?: number;
-    max?: number;
-  };
-  created_at: string;
-  updated_at: string;
-}
+export type SponsorFormField = Database['public']['Tables']['sponsor_form_fields']['Row'];
+type SponsorFormFieldInsert = Database['public']['Tables']['sponsor_form_fields']['Insert'];
+type SponsorFormFieldUpdate = Database['public']['Tables']['sponsor_form_fields']['Update'];
 
 export function useSponsorFormFields(formId: string) {
   const { toast } = useToast();
@@ -50,7 +35,7 @@ export function useSponsorFormFields(formId: string) {
 
   // Create form field
   const createField = useMutation({
-    mutationFn: async (fieldData: Omit<SponsorFormField, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (fieldData: SponsorFormFieldInsert) => {
       const { data, error } = await supabase
         .from('sponsor_form_fields')
         .insert([fieldData])
@@ -79,7 +64,7 @@ export function useSponsorFormFields(formId: string) {
 
   // Update form field
   const updateField = useMutation({
-    mutationFn: async (fieldData: Partial<SponsorFormField> & { id: string }) => {
+    mutationFn: async (fieldData: SponsorFormFieldUpdate & { id: string }) => {
       const { id, ...updateData } = fieldData;
       const { data, error } = await supabase
         .from('sponsor_form_fields')

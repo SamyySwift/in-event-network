@@ -5,29 +5,6 @@ import DoDontCard from "./components/DoDontCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAttendeeRules } from "@/hooks/useAttendeeRules";
 
-const dosAndDonts = {
-  dos: [
-    "Wear your badge visibly at all times",
-    "Arrive early for sessions to secure seating",
-    "Use the Q&A function in the app for questions",
-    "Network respectfully with other attendees",
-    "Keep your phone on silent during sessions",
-    "Follow staff directions during emergencies",
-    "Share feedback through official channels",
-    "Respect other attendees' privacy and personal space",
-  ],
-  donts: [
-    "Record sessions without explicit permission",
-    "Enter restricted areas without proper access",
-    "Leave personal items unattended",
-    "Engage in disruptive behavior during sessions",
-    "Share other attendees' contact info without permission",
-    "Block pathways or emergency exits",
-    "Bring outside food or drinks into session rooms",
-    "Use the event Wi-Fi for large downloads or streaming",
-  ],
-};
-
 const AttendeeRules = () => {
   const { rules, isLoading, error } = useAttendeeRules();
   const [search, setSearch] = useState("");
@@ -105,9 +82,6 @@ const AttendeeRules = () => {
           </CardContent>
         </Card>
       </div>
-
-      {/* Dashboard-style Do's and Don'ts */}
-      <DoDontCard dos={dosAndDonts.dos} donts={dosAndDonts.donts} />
     </div>
   );
 };

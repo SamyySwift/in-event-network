@@ -88,7 +88,7 @@ export default function RuleCard({ title, content, category, priority, created_a
           ${open ? "max-h-60 opacity-100 py-2 scale-y-100" : "max-h-0 opacity-0 scale-y-95"}
         `}
         >
-          <p className="mb-2">{content}</p>
+          <p className="mb-2 whitespace-pre-wrap">{content}</p>
           <span className="block mt-1.5 text-xs text-muted-foreground">
             {format(new Date(created_at), "MMM d, yyyy")}
           </span>

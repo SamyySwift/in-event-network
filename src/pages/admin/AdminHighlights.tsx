@@ -5,9 +5,10 @@ import { HighlightCard } from '@/components/admin/HighlightCard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAdminHighlights } from '@/hooks/useAdminHighlights';
+import { AdminEventProvider } from '@/hooks/useAdminEventContext';
 import { Star, Image, Video, Eye } from 'lucide-react';
 
-const AdminHighlights = () => {
+const AdminHighlightsContent = () => {
   const { highlights, isLoading } = useAdminHighlights();
 
   const totalHighlights = highlights.length;
@@ -127,6 +128,14 @@ const AdminHighlights = () => {
         </Card>
       </div>
     </AdminLayout>
+  );
+};
+
+const AdminHighlights = () => {
+  return (
+    <AdminEventProvider>
+      <AdminHighlightsContent />
+    </AdminEventProvider>
   );
 };
 

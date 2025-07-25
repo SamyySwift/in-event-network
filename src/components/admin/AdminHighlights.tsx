@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Calendar, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAdminHighlights } from '@/hooks/useAdminHighlights';
+import { CreateHighlightDialog } from './CreateHighlightDialog';
 
 interface AdminHighlightsContentProps {
   selectedEventId: string | null;
@@ -12,7 +13,8 @@ const AdminHighlightsContent: React.FC<AdminHighlightsContentProps> = ({
 }) => {
   const { highlights, isLoading, createHighlight, deleteHighlight } =
     useAdminHighlights();
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  // Remove this unused state since CreateHighlightDialog manages its own state
+  // const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -77,13 +79,7 @@ const AdminHighlightsContent: React.FC<AdminHighlightsContentProps> = ({
               </span>
             </p>
           </div>
-          <Button
-            onClick={() => setIsCreateDialogOpen(true)}
-            className="mt-4 sm:mt-0 bg-purple-600 hover:bg-purple-700"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Create Highlight
-          </Button>
+          <CreateHighlightDialog />
         </div>
       </div>
 
@@ -123,10 +119,7 @@ const AdminHighlightsContent: React.FC<AdminHighlightsContentProps> = ({
             <p className="text-gray-500 mb-4 max-w-sm mx-auto">
               Create your first highlight to showcase special moments from your event.
             </p>
-            <Button onClick={() => setIsCreateDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Create Highlight
-            </Button>
+            <CreateHighlightDialog />
           </div>
         ) : (
           <div className="grid gap-4 sm:gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">

@@ -94,7 +94,6 @@ export const EditHighlightDialog = ({ highlight, open, onOpenChange }: EditHighl
                 <SelectValue placeholder="Select a category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No category</SelectItem>
                 {categories.map((cat) => (
                   <SelectItem key={cat} value={cat}>
                     {cat}

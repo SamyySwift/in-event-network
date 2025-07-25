@@ -168,12 +168,12 @@ export const HighlightViewer = ({
               <img
                 src={currentMedia.media_url}
                 alt={`${currentHighlight.title} - ${currentMediaIndex + 1}`}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
             ) : (
               <video
                 src={currentMedia.media_url}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
                 autoPlay
                 muted
                 loop

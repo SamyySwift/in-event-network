@@ -49,7 +49,7 @@ export const HighlightCard = ({ highlight }: HighlightCardProps) => {
 
   const coverImage = highlight.cover_image_url || 
     highlight.highlight_media.find(m => m.media_type === 'image')?.media_url ||
-    null; // Remove the dummy Unsplash URL
+    'https://images.unsplash.com/photo-1605810230434-7631ac76ec81?w=400&h=300&fit=crop';
 
   const mediaCount = highlight.highlight_media.length;
   const imageCount = highlight.highlight_media.filter(m => m.media_type === 'image').length;

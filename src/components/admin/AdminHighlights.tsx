@@ -73,7 +73,7 @@ const AdminHighlightsContent: React.FC<AdminHighlightsContentProps> = ({
             <p className="mt-2 text-sm text-gray-600">
               Create and manage Instagram-style highlight reels for{" "}
               <span className="font-medium text-purple-600">
-                your event
+                ABUJA EDUCATORS CONFERENCE
               </span>
             </p>
           </div>

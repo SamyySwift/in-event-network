@@ -68,23 +68,23 @@ export const CreateHighlightDialog = () => {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       const filePath = `highlights/${fileName}`;
-  
+
       const { error: uploadError } = await supabase.storage
         .from('event-media')
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false
         });
-  
+
       if (uploadError) {
         console.error('Upload error:', uploadError);
         throw new Error(`Upload failed: ${uploadError.message}`);
       }
-  
+
       const { data } = supabase.storage
         .from('event-media')
         .getPublicUrl(filePath);
-  
+
       return data.publicUrl;
     } catch (error) {
       console.error('File upload error:', error);

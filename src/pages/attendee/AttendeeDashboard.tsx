@@ -40,6 +40,7 @@ import { UserPlus } from "lucide-react";
 import { EventCard } from "@/components/attendee/EventCard";
 import { ConnectionNotificationDropdown } from "@/components/attendee/ConnectionNotificationDropdown";
 import { useAttendeeFacilities } from "@/hooks/useAttendeeFacilities";
+import { HighlightsSection } from "@/components/attendee/HighlightsSection";
 import * as LucideIcons from "lucide-react";
 
 // Lazy load the ProfileCompletionPopup to reduce initial bundle size
@@ -247,7 +248,10 @@ const AttendeeDashboardContent = () => {
           </div>
         )}
 
-        {/* Enhanced Content Grid */}
+        {/* Event Highlights */}
+        <div className="mb-8">
+          <HighlightsSection />
+        </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Featured Session Card */}
           <div className="lg:col-span-2">

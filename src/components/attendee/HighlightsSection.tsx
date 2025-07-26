@@ -83,11 +83,6 @@ export const HighlightsSection = () => {
                       <p className="text-xs font-medium truncate">
                         {highlight.title}
                       </p>
-                      {highlight.category && (
-                        <Badge variant="secondary" className="text-[10px] mt-1 px-1 py-0.5">
-                          {highlight.category}
-                        </Badge>
-                      )}
                     </div>
                   </button>
                 </div>

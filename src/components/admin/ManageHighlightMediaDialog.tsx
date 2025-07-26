@@ -54,10 +54,10 @@ export const ManageHighlightMediaDialog = ({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Validate file size
-      const maxSize = mediaType === 'image' ? 5 * 1024 * 1024 : 50 * 1024 * 1024; // 5MB for images, 50MB for videos
+      // Validate file size - 5MB for both images and videos
+      const maxSize = 5 * 1024 * 1024; // 5MB for both images and videos
       if (file.size > maxSize) {
-        toast.error(`${mediaType === 'image' ? 'Image' : 'Video'} must be less than ${mediaType === 'image' ? '5MB' : '50MB'}`);
+        toast.error(`${mediaType === 'image' ? 'Image' : 'Video'} must be less than 5MB`);
         return;
       }
       
@@ -78,7 +78,7 @@ export const ManageHighlightMediaDialog = ({
     const filePath = `highlights/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
-      .from('event-media')
+      .from('media')
       .upload(filePath, file);
 
     if (uploadError) {
@@ -86,7 +86,7 @@ export const ManageHighlightMediaDialog = ({
     }
 
     const { data } = supabase.storage
-      .from('event-media')
+      .from('media')
       .getPublicUrl(filePath);
 
     return data.publicUrl;
@@ -173,10 +173,19 @@ export const ManageHighlightMediaDialog = ({
                       <Input
                         id="duration"
                         type="number"
-                        min={1}
+                        min={5}
                         max={30}
                         value={duration}
-                        onChange={(e) => setDuration(parseInt(e.target.value) || 5)}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          if (val >= 5 && val <= 30) {
+                            setDuration(val);
+                          } else if (val < 5) {
+                            setDuration(5);
+                          } else if (val > 30) {
+                            setDuration(30);
+                          }
+                        }}
                       />
                     </div>
                   </div>
@@ -212,7 +221,7 @@ export const ManageHighlightMediaDialog = ({
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      Maximum {mediaType === 'image' ? '5MB for images' : '50MB for videos'}. Duration: 1-30 seconds.
+                      Maximum 5MB for all media files. Duration: 5-30 seconds.
                     </p>
                   </div>
 

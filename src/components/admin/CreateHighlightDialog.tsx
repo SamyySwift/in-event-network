@@ -70,7 +70,7 @@ export const CreateHighlightDialog = () => {
       const filePath = `highlights/${fileName}`;
   
       const { error: uploadError } = await supabase.storage
-        .from('event-media')
+        .from('media')
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false
@@ -82,7 +82,7 @@ export const CreateHighlightDialog = () => {
       }
   
       const { data } = supabase.storage
-        .from('event-media')
+        .from('media')
         .getPublicUrl(filePath);
   
       return data.publicUrl;

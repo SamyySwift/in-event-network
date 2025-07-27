@@ -48,6 +48,7 @@ export function CreateTicketTypeDialog({ open, onOpenChange, onTicketCreated }: 
   const [isActive, setIsActive] = useState(true);
   const [selectedEventId, setSelectedEventId] = useState('');
   const [shouldOpenFormBuilder, setShouldOpenFormBuilder] = useState(false);
+  const [maxTicketsPerUser, setMaxTicketsPerUser] = useState(1);
 
   const { createTicketType } = useAdminTickets();
   const { adminEvents, selectedEventId: contextEventId } = useAdminEventContext();
@@ -72,6 +73,7 @@ export function CreateTicketTypeDialog({ open, onOpenChange, onTicketCreated }: 
     setAvailableQuantity('');
     setIsActive(true);
     setShouldOpenFormBuilder(false);
+    setMaxTicketsPerUser(1);
     // Keep the selected event if it's from context
     if (!contextEventId) {
       setSelectedEventId('');
@@ -100,6 +102,7 @@ export function CreateTicketTypeDialog({ open, onOpenChange, onTicketCreated }: 
         price: ticketPrice,
         max_quantity: 1, // Fixed as per requirements
         available_quantity: quantity,
+        max_tickets_per_user: maxTicketsPerUser,
         is_active: isActive,
         event_id: selectedEventId,
       });
@@ -279,10 +282,24 @@ export function CreateTicketTypeDialog({ open, onOpenChange, onTicketCreated }: 
             />
           </div>
 
-          {/* Max Quantity Info */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
-            <p className="text-sm text-blue-700">
-              <strong>Max Quantity per Purchase:</strong> 1 (Fixed)
+          {/* Max Tickets Per User */}
+          <div className="space-y-2">
+            <Label htmlFor="maxTicketsPerUser" className="text-sm font-medium flex items-center gap-2">
+              <Hash className="w-4 h-4" />
+              Max Tickets Per User
+            </Label>
+            <Input
+              id="maxTicketsPerUser"
+              type="number"
+              placeholder="1"
+              value={maxTicketsPerUser}
+              onChange={(e) => setMaxTicketsPerUser(parseInt(e.target.value) || 1)}
+              min="1"
+              max="10"
+              className="rounded-xl border-2 transition-all duration-200 focus:border-primary/50"
+            />
+            <p className="text-xs text-muted-foreground">
+              Maximum number of tickets one user can purchase at a time (1-10)
             </p>
           </div>
 

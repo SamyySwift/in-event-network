@@ -11,6 +11,7 @@ interface TicketType {
   price: number;
   max_quantity?: number;
   available_quantity: number;
+  max_tickets_per_user?: number;
   is_active: boolean;
   event_id: string;
   created_at: string;

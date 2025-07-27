@@ -540,10 +540,12 @@ export type Database = {
           checked_in_by: string | null
           created_at: string
           event_id: string
+          first_name: string | null
           guest_email: string | null
           guest_name: string | null
           guest_phone: string | null
           id: string
+          last_name: string | null
           payment_reference: string | null
           payment_status: string | null
           price: number
@@ -560,10 +562,12 @@ export type Database = {
           checked_in_by?: string | null
           created_at?: string
           event_id: string
+          first_name?: string | null
           guest_email?: string | null
           guest_name?: string | null
           guest_phone?: string | null
           id?: string
+          last_name?: string | null
           payment_reference?: string | null
           payment_status?: string | null
           price?: number
@@ -580,10 +584,12 @@ export type Database = {
           checked_in_by?: string | null
           created_at?: string
           event_id?: string
+          first_name?: string | null
           guest_email?: string | null
           guest_name?: string | null
           guest_phone?: string | null
           id?: string
+          last_name?: string | null
           payment_reference?: string | null
           payment_status?: string | null
           price?: number
@@ -1847,6 +1853,7 @@ export type Database = {
           id: string
           is_active: boolean
           max_quantity: number | null
+          max_tickets_per_user: number
           name: string
           price: number
           updated_at: string
@@ -1860,6 +1867,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           max_quantity?: number | null
+          max_tickets_per_user?: number
           name: string
           price?: number
           updated_at?: string
@@ -1873,6 +1881,7 @@ export type Database = {
           id?: string
           is_active?: boolean
           max_quantity?: number | null
+          max_tickets_per_user?: number
           name?: string
           price?: number
           updated_at?: string

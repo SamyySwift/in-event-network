@@ -47,7 +47,8 @@ export default function BuyTickets() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [purchasedTicketCount, setPurchasedTicketCount] = useState(0);
   const [userInfo, setUserInfo] = useState({
-    fullName: '',
+    firstName: '',
+    lastName: '',
     email: currentUser?.email || '',
     phone: ''
   });
@@ -232,7 +233,8 @@ export default function BuyTickets() {
 
     // Auto-populate user info from profile if available
     const finalUserInfo = {
-      fullName: userInfo.fullName.trim() || 'User',
+      firstName: userInfo.firstName.trim() || '',
+      lastName: userInfo.lastName.trim() || '',
       email: userInfo.email.trim() || currentUser?.email || '',
       phone: userInfo.phone.trim() || ''
     };
@@ -308,8 +310,9 @@ export default function BuyTickets() {
             const timestamp = Date.now();
             const uniqueQRCode = `${eventData.event.id}-${ticketTypeId}-${timestamp}-${uniqueId}-${i}`;
             
+            const fullName = `${userInfo.firstName} ${userInfo.lastName}`.trim() || 'User';
             const finalUserInfo = {
-              fullName: userInfo.fullName || 'User',
+              fullName: fullName,
               email: userInfo.email || currentUser?.email || '',
               phone: userInfo.phone || ''
             };
@@ -318,6 +321,8 @@ export default function BuyTickets() {
               event_id: eventData.event.id,
               ticket_type_id: ticketTypeId,
               user_id: currentUser.id,
+              first_name: userInfo.firstName || '',
+              last_name: userInfo.lastName || '',
               guest_name: finalUserInfo.fullName.substring(0, 100),
               guest_email: finalUserInfo.email.substring(0, 255),
               guest_phone: finalUserInfo.phone.substring(0, 20),
@@ -462,7 +467,8 @@ export default function BuyTickets() {
       setSelectedTickets({});
       setFormResponses({});
       setUserInfo({ 
-        fullName: '', 
+        firstName: '', 
+        lastName: '',
         email: currentUser?.email || '', 
         phone: '' 
       });
@@ -744,7 +750,11 @@ export default function BuyTickets() {
                               name: t.name
                             }))}
                           totalAmount={getTotalPrice()}
-                          userInfo={userInfo}
+                          userInfo={{
+                            fullName: `${userInfo.firstName} ${userInfo.lastName}`.trim() || 'User',
+                            email: userInfo.email,
+                            phone: userInfo.phone
+                          }}
                           onSuccess={handlePaymentSuccess}
                           onClose={handlePaymentClose}
                           disabled={isProcessing}
@@ -795,12 +805,21 @@ export default function BuyTickets() {
                       </div>
                       <div className="space-y-3">
                         <div>
-                          <Label htmlFor="fullName">Full Name</Label>
+                          <Label htmlFor="firstName">First Name</Label>
                           <Input
-                            id="fullName"
-                            value={userInfo.fullName}
-                            onChange={(e) => setUserInfo(prev => ({ ...prev, fullName: e.target.value }))}
-                            placeholder="Enter your full name"
+                            id="firstName"
+                            value={userInfo.firstName}
+                            onChange={(e) => setUserInfo(prev => ({ ...prev, firstName: e.target.value }))}
+                            placeholder="Enter your first name"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="lastName">Last Name</Label>
+                          <Input
+                            id="lastName"
+                            value={userInfo.lastName}
+                            onChange={(e) => setUserInfo(prev => ({ ...prev, lastName: e.target.value }))}
+                            placeholder="Enter your last name"
                           />
                         </div>
                         <div>

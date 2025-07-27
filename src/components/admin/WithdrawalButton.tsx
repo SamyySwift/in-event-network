@@ -152,6 +152,11 @@ export const WithdrawalButton: React.FC<WithdrawalButtonProps> = ({
         <Button 
           disabled={!canWithdraw}
           className="w-full"
+          title={!canWithdraw ? 
+            availableBalance < 10 ? 'Minimum withdrawal amount is ₦10' : 
+            'No funds available for withdrawal' : 
+            'Click to withdraw funds'
+          }
           onClick={() => {
             console.log('Withdrawal button clicked:', { 
               canWithdraw, 
@@ -167,7 +172,10 @@ export const WithdrawalButton: React.FC<WithdrawalButtonProps> = ({
           }}
         >
           <CreditCard className="w-4 h-4 mr-2" />
-          Withdraw Funds
+          {!canWithdraw ? 
+            (availableBalance < 10 ? 'Insufficient Balance' : 'No Funds Available') : 
+            'Withdraw Funds'
+          }
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">

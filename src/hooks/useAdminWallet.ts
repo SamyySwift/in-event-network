@@ -151,7 +151,7 @@ export const useAdminWallet = () => {
           available_balance: 0,
           total_earnings: 0,
           withdrawn_amount: 0,
-          minimum_payout_amount: 10000, // ₦100 minimum (in kobo, but we store in naira now)
+          minimum_payout_amount: 10, // ₦10 minimum (stored in naira)
         })
         .select()
         .single();

@@ -16,6 +16,7 @@ import {
   Play,
   Tag,
 } from "lucide-react";
+import { FaInstagram, FaTiktok } from 'react-icons/fa';
 import AttendeeRouteGuard from "@/components/attendee/AttendeeRouteGuard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -80,6 +81,7 @@ interface CombinedScheduleItem {
   speaker_instagram?: string;
   speaker_tiktok?: string;
   speaker_topic?: string; // Add topic field
+  speaker_title?: string; // Add speaker title field (renamed to avoid conflict)
   priority?: string;
   image_url?: string;
   time_allocation?: string | null;
@@ -198,6 +200,7 @@ const AttendeeSchedule = () => {
           speaker_instagram: speaker.instagram_link,
           speaker_tiktok: speaker.tiktok_link,
           speaker_topic: speaker.topic,
+          speaker_title: speaker.title, // Add speaker title field
           time_allocation: speaker.time_allocation, // Add time allocation from speaker
         });
       });
@@ -382,9 +385,9 @@ const AttendeeSchedule = () => {
       case "website":
         return <Globe className="w-3 h-3" />;
       case "instagram":
-        return <User className="w-3 h-3" />; // Using User icon as placeholder for Instagram
+        return <FaInstagram className="w-3 h-3" />;
       case "tiktok":
-        return <Play className="w-3 h-3" />; // Using Play icon as placeholder for TikTok
+        return <FaTiktok className="w-3 h-3" />;
       default:
         return <ExternalLink className="w-3 h-3" />;
     }
@@ -767,16 +770,19 @@ const AttendeeSchedule = () => {
                                               {item.speaker_name.charAt(0)}
                                             </AvatarFallback>
                                           </Avatar>
-                                          <div className="flex-1 min-w-0">
-                                            <p className="font-semibold text-gray-900 text-sm lg:text-base truncate">
-                                              {item.speaker_name}
-                                            </p>
-                                            {item.speaker_company && (
-                                              <p className="text-xs lg:text-sm text-gray-600 truncate">
-                                                {item.speaker_company}
-                                              </p>
-                                            )}
-                                          </div>
+                                           <div className="flex-1 min-w-0">
+                                             <p className="font-semibold text-gray-900 text-sm lg:text-base truncate">
+                                               {item.speaker_name}
+                                             </p>
+                                             {(item.speaker_company || item.speaker_title) && (
+                                               <p className="text-xs lg:text-sm text-gray-600 truncate">
+                                                 {item.speaker_title && item.speaker_company 
+                                                   ? `${item.speaker_title} at ${item.speaker_company}`
+                                                   : item.speaker_title || item.speaker_company
+                                                 }
+                                               </p>
+                                             )}
+                                           </div>
                                         </div>
                                       )}
 

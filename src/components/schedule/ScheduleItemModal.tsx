@@ -31,6 +31,7 @@ interface ScheduleItemModalProps {
     speaker_instagram?: string;
     speaker_tiktok?: string;
     speaker_topic?: string;
+    speaker_title?: string; // Add speaker title field
     priority?: string;
     image_url?: string;
     time_allocation?: string | null; // Add time allocation
@@ -184,8 +185,13 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
                 )}
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-lg">{item.speaker_name}</h3>
-                  {item.speaker_company && (
-                    <p className="text-muted-foreground">{item.speaker_company}</p>
+                  {(item.speaker_company || item.speaker_title) && (
+                    <p className="text-muted-foreground">
+                      {item.speaker_title && item.speaker_company 
+                        ? `${item.speaker_title} at ${item.speaker_company}`
+                        : item.speaker_title || item.speaker_company
+                      }
+                    </p>
                   )}
                 </div>
               </div>

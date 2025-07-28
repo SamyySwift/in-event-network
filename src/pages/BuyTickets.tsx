@@ -11,8 +11,10 @@ import { Badge } from '@/components/ui/badge';
 import { Ticket, Calendar, MapPin, Clock, LogIn, User } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { PaystackTicketPayment } from '@/components/payment/PaystackTicketPayment';
-import { CustomFormRenderer } from '@/components/forms/CustomFormRenderer';
-import { useTicketFormFields, FormField } from '@/hooks/useTicketFormFields';
+import { EnhancedTicketPurchaseForm } from '@/components/forms/EnhancedTicketPurchaseForm';
+import { useFormPersistence } from '@/hooks/useFormPersistence';
+import { useForm } from 'react-hook-form';
+import { FormField } from '@/hooks/useTicketFormFields';
 
 interface TicketType {
   id: string;
@@ -20,8 +22,21 @@ interface TicketType {
   description?: string;
   price: number;
   available_quantity: number;
+  max_tickets_per_user: number;
   is_active: boolean;
   formFields?: FormField[];
+}
+
+interface TicketPurchaseInfo {
+  ticketTypeId: string;
+  quantity: number;
+  attendees: Array<{
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+    formResponses?: Record<string, any>;
+  }>;
 }
 
 interface Event {
@@ -42,17 +57,47 @@ export default function BuyTickets() {
   const queryClient = useQueryClient();
   const [selectedTickets, setSelectedTickets] = useState<Record<string, number>>({});
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showUserInfoForm, setShowUserInfoForm] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [purchasedTicketCount, setPurchasedTicketCount] = useState(0);
-  const [userInfo, setUserInfo] = useState({
-    firstName: '',
-    lastName: '',
-    email: currentUser?.email || '',
-    phone: ''
+  const [purchaseData, setPurchaseData] = useState<TicketPurchaseInfo[]>([]);
+
+  // Form persistence for preventing data loss on login redirects
+  const form = useForm({
+    defaultValues: {
+      selectedTickets: {},
+      purchaseData: []
+    }
   });
-  const [formResponses, setFormResponses] = useState<Record<string, Record<string, any>>>({});
+
+  const { saveFormData, clearSavedData, hasSavedData } = useFormPersistence(
+    `ticket-purchase-${eventKey}`,
+    form,
+    true
+  );
+
+  // Restore form data after login redirect
+  useEffect(() => {
+    if (currentUser && hasSavedData) {
+      const savedData = localStorage.getItem(`form-persistence`);
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          const ticketData = parsed[`ticket-purchase-${eventKey}`];
+          if (ticketData) {
+            if (ticketData.selectedTickets) {
+              setSelectedTickets(ticketData.selectedTickets);
+            }
+            if (ticketData.purchaseData) {
+              setPurchaseData(ticketData.purchaseData);
+            }
+          }
+        } catch (error) {
+          console.error('Error restoring form data:', error);
+        }
+      }
+    }
+  }, [currentUser, eventKey, hasSavedData]);
 
   // Handle redirect after login and eventKey validation
   useEffect(() => {
@@ -161,29 +206,48 @@ export default function BuyTickets() {
   }
 
   const handleQuantityChange = (ticketTypeId: string, quantity: number) => {
-    // Limit to maximum 1 ticket per purchase
-    const newQuantity = Math.max(0, Math.min(quantity, 1));
+    const newTickets = {
+      ...selectedTickets,
+      [ticketTypeId]: quantity
+    };
     
-    setSelectedTickets(prev => ({
-      ...prev,
-      [ticketTypeId]: newQuantity
-    }));
+    setSelectedTickets(newTickets);
+    
+    // Save to localStorage for persistence
+    if (currentUser) {
+      form.setValue('selectedTickets', newTickets);
+      saveFormData({ selectedTickets: newTickets, purchaseData });
+    }
+  };
+
+  const handlePurchaseDataChange = (newPurchaseData: TicketPurchaseInfo[]) => {
+    setPurchaseData(newPurchaseData);
+    
+    // Save to localStorage for persistence
+    if (currentUser) {
+      form.setValue('purchaseData', newPurchaseData);
+      saveFormData({ selectedTickets, purchaseData: newPurchaseData });
+    }
   };
 
   const getTotalPrice = () => {
     if (!eventData?.ticketTypes) return 0;
-    return eventData.ticketTypes.reduce((total, ticket) => {
-      const quantity = selectedTickets[ticket.id] || 0;
-      return total + (ticket.price * quantity);
+    return purchaseData.reduce((total, purchase) => {
+      const ticketType = eventData.ticketTypes.find(t => t.id === purchase.ticketTypeId);
+      if (ticketType) {
+        return total + (ticketType.price * purchase.quantity);
+      }
+      return total;
     }, 0);
   };
 
   const getTotalTickets = () => {
-    return Object.values(selectedTickets).reduce((sum, qty) => sum + qty, 0);
+    return purchaseData.reduce((total, purchase) => total + purchase.quantity, 0);
   };
 
-  // In the handleLoginRedirect function (around line 130):
   const handleLoginRedirect = () => {
+    // Save current form data before redirect
+    saveFormData({ selectedTickets, purchaseData });
     localStorage.setItem('redirectAfterLogin', window.location.pathname);
     navigate('/login');
   };
@@ -231,16 +295,31 @@ export default function BuyTickets() {
       return;
     }
 
-    // Auto-populate user info from profile if available
-    const finalUserInfo = {
-      firstName: userInfo.firstName.trim() || '',
-      lastName: userInfo.lastName.trim() || '',
-      email: userInfo.email.trim() || currentUser?.email || '',
-      phone: userInfo.phone.trim() || ''
-    };
-    
-    // Update userInfo state
-    setUserInfo(finalUserInfo);
+    // Validate all attendee information
+    const missingInfo = [];
+    for (const purchase of purchaseData) {
+      for (let i = 0; i < purchase.attendees.length; i++) {
+        const attendee = purchase.attendees[i];
+        if (!attendee.firstName.trim()) {
+          missingInfo.push(`First name for attendee ${i + 1}`);
+        }
+        if (!attendee.lastName.trim()) {
+          missingInfo.push(`Last name for attendee ${i + 1}`);
+        }
+        if (!attendee.email.trim()) {
+          missingInfo.push(`Email for attendee ${i + 1}`);
+        }
+      }
+    }
+
+    if (missingInfo.length > 0) {
+      toast({
+        title: "Missing Information",
+        description: `Please fill in: ${missingInfo.join(', ')}`,
+        variant: "destructive",
+      });
+      return;
+    }
 
     if (!eventData) {
       toast({
@@ -251,10 +330,7 @@ export default function BuyTickets() {
       return;
     }
 
-      const totalPrice = getTotalPrice();
-
-    // Update userInfo to final values
-    setUserInfo(finalUserInfo);
+    const totalPrice = getTotalPrice();
 
     // If total price is 0, proceed with free ticket creation
     if (totalPrice === 0) {
@@ -287,51 +363,44 @@ export default function BuyTickets() {
     console.log('Starting ticket creation process...');
   
     try {
-      // Create ticket purchases for each selected ticket type
+      // Create ticket purchases for each purchase
       const ticketPurchases = [];
       
-      for (const [ticketTypeId, quantity] of Object.entries(selectedTickets)) {
-        if (quantity > 0) {
-          const ticketType = eventData.ticketTypes.find(t => t.id === ticketTypeId);
-          if (!ticketType) {
-            console.error('Ticket type not found:', ticketTypeId);
-            continue;
-          }
-  
-          console.log(`Creating ${quantity} tickets for type:`, ticketType.name);
-  
-          for (let i = 0; i < quantity; i++) {
-            // Generate payment reference for free tickets
-            const finalPaymentReference = paymentReference || 
-              (ticketType.price === 0 ? `FREE_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` : null);
-            
-            // Generate truly unique QR code using crypto.randomUUID()
-            const uniqueId = crypto.randomUUID();
-            const timestamp = Date.now();
-            const uniqueQRCode = `${eventData.event.id}-${ticketTypeId}-${timestamp}-${uniqueId}-${i}`;
-            
-            const fullName = `${userInfo.firstName} ${userInfo.lastName}`.trim() || 'User';
-            const finalUserInfo = {
-              fullName: fullName,
-              email: userInfo.email || currentUser?.email || '',
-              phone: userInfo.phone || ''
-            };
+      for (const purchase of purchaseData) {
+        const ticketType = eventData.ticketTypes.find(t => t.id === purchase.ticketTypeId);
+        if (!ticketType) {
+          console.error('Ticket type not found:', purchase.ticketTypeId);
+          continue;
+        }
 
-            ticketPurchases.push({
-              event_id: eventData.event.id,
-              ticket_type_id: ticketTypeId,
-              user_id: currentUser.id,
-              first_name: userInfo.firstName || '',
-              last_name: userInfo.lastName || '',
-              guest_name: finalUserInfo.fullName.substring(0, 100),
-              guest_email: finalUserInfo.email.substring(0, 255),
-              guest_phone: finalUserInfo.phone.substring(0, 20),
-              price: ticketType.price,
-              payment_status: 'completed',
-              payment_reference: finalPaymentReference,
-              qr_code_data: uniqueQRCode,
-            });
-          }
+        console.log(`Creating ${purchase.quantity} tickets for type:`, ticketType.name);
+
+        for (let i = 0; i < purchase.attendees.length; i++) {
+          const attendee = purchase.attendees[i];
+          
+          // Generate payment reference for free tickets
+          const finalPaymentReference = paymentReference || 
+            (ticketType.price === 0 ? `FREE_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` : null);
+          
+          // Generate truly unique QR code using crypto.randomUUID()
+          const uniqueId = crypto.randomUUID();
+          const timestamp = Date.now();
+          const uniqueQRCode = `${eventData.event.id}-${purchase.ticketTypeId}-${timestamp}-${uniqueId}-${i}`;
+
+          ticketPurchases.push({
+            event_id: eventData.event.id,
+            ticket_type_id: purchase.ticketTypeId,
+            user_id: currentUser.id,
+            first_name: attendee.firstName.trim(),
+            last_name: attendee.lastName.trim(),
+            guest_name: `${attendee.firstName} ${attendee.lastName}`.trim().substring(0, 100),
+            guest_email: attendee.email.trim().substring(0, 255),
+            guest_phone: (attendee.phone || '').trim().substring(0, 20),
+            price: ticketType.price,
+            payment_status: 'completed',
+            payment_reference: finalPaymentReference,
+            qr_code_data: uniqueQRCode,
+          });
         }
       }
   
@@ -381,18 +450,20 @@ export default function BuyTickets() {
       if (tickets && tickets.length > 0) {
         const formResponseInserts = [];
         
-        for (const [ticketTypeId, quantity] of Object.entries(selectedTickets)) {
-          if (quantity > 0) {
-            const ticketType = eventData.ticketTypes.find(t => t.id === ticketTypeId);
-            const ticketResponses = formResponses[ticketTypeId];
+        for (const purchase of purchaseData) {
+          const ticketType = eventData.ticketTypes.find(t => t.id === purchase.ticketTypeId);
+          
+          if (ticketType?.formFields) {
+            // Find tickets for this ticket type
+            const ticketsForType = tickets.filter(t => t.ticket_type_id === purchase.ticketTypeId);
             
-            if (ticketType?.formFields && ticketResponses) {
-              // Find tickets for this ticket type
-              const ticketsForType = tickets.filter(t => t.ticket_type_id === ticketTypeId);
+            for (let i = 0; i < purchase.attendees.length; i++) {
+              const attendee = purchase.attendees[i];
+              const ticket = ticketsForType[i];
               
-              for (const ticket of ticketsForType) {
+              if (ticket && attendee.formResponses) {
                 for (const field of ticketType.formFields) {
-                  const responseValue = ticketResponses[field.id];
+                  const responseValue = attendee.formResponses[field.id];
                   if (responseValue !== undefined && responseValue !== null && responseValue !== '') {
                     formResponseInserts.push({
                       ticket_id: ticket.id,
@@ -421,36 +492,35 @@ export default function BuyTickets() {
       }
 
       // Update available quantities
-      for (const [ticketTypeId, quantity] of Object.entries(selectedTickets)) {
-        if (quantity > 0) {
-          console.log(`Updating quantity for ticket type ${ticketTypeId}, reducing by ${quantity}`);
+      for (const purchase of purchaseData) {
+        const quantity = purchase.quantity;
+        console.log(`Updating quantity for ticket type ${purchase.ticketTypeId}, reducing by ${quantity}`);
+        
+        // Get current quantity first
+        const { data: currentTicketType, error: fetchError } = await supabase
+          .from('ticket_types')
+          .select('available_quantity')
+          .eq('id', purchase.ticketTypeId)
+          .single();
+
+        if (fetchError) {
+          console.error('Error fetching current ticket type:', fetchError);
+          continue;
+        }
+
+        if (currentTicketType) {
+          const newQuantity = currentTicketType.available_quantity - quantity;
+          console.log(`Updating available quantity from ${currentTicketType.available_quantity} to ${newQuantity}`);
           
-          // Get current quantity first
-          const { data: currentTicketType, error: fetchError } = await supabase
+          const { error: updateError } = await supabase
             .from('ticket_types')
-            .select('available_quantity')
-            .eq('id', ticketTypeId)
-            .single();
+            .update({
+              available_quantity: Math.max(0, newQuantity)
+            })
+            .eq('id', purchase.ticketTypeId);
 
-          if (fetchError) {
-            console.error('Error fetching current ticket type:', fetchError);
-            continue;
-          }
-
-          if (currentTicketType) {
-            const newQuantity = currentTicketType.available_quantity - quantity;
-            console.log(`Updating available quantity from ${currentTicketType.available_quantity} to ${newQuantity}`);
-            
-            const { error: updateError } = await supabase
-              .from('ticket_types')
-              .update({
-                available_quantity: Math.max(0, newQuantity)
-              })
-              .eq('id', ticketTypeId);
-
-            if (updateError) {
-              console.error('Error updating ticket quantity:', updateError);
-            }
+          if (updateError) {
+            console.error('Error updating ticket quantity:', updateError);
           }
         }
       }
@@ -463,16 +533,10 @@ export default function BuyTickets() {
       setPurchasedTicketCount(getTotalTickets());
       setShowSuccessModal(true);
       
-      // Reset form
+      // Reset form and clear persistence
       setSelectedTickets({});
-      setFormResponses({});
-      setUserInfo({ 
-        firstName: '', 
-        lastName: '',
-        email: currentUser?.email || '', 
-        phone: '' 
-      });
-      setShowUserInfoForm(false);
+      setPurchaseData([]);
+      clearSavedData();
 
       // Refresh the ticket types data to show updated quantities
       queryClient.invalidateQueries({ queryKey: ['event-tickets', eventKey] });
@@ -489,42 +553,6 @@ export default function BuyTickets() {
     }
   };
 
-  const validateFormResponses = () => {
-    if (!eventData?.ticketTypes) return { isValid: true, errors: {} };
-    
-    const errors: Record<string, string> = {};
-    
-    for (const ticketType of eventData.ticketTypes) {
-      const quantity = selectedTickets[ticketType.id] || 0;
-      if (quantity > 0 && ticketType.formFields) {
-        for (const field of ticketType.formFields) {
-          if (field.is_required) {
-            const response = formResponses[ticketType.id]?.[field.id];
-            if (!response || (Array.isArray(response) && response.length === 0) || response === '') {
-              errors[`${ticketType.id}-${field.id}`] = `${field.label} is required`;
-            }
-          }
-        }
-      }
-    }
-    
-    return { isValid: Object.keys(errors).length === 0, errors };
-  };
-
-  const handleUserInfoSubmit = () => {
-    const { isValid, errors } = validateFormResponses();
-    if (!isValid) {
-      toast({
-        title: "Missing Form Information",
-        description: "Please complete all required form fields",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setShowUserInfoForm(false);
-    handlePurchase();
-  };
 
   if (isLoading) {
     return (
@@ -590,10 +618,8 @@ export default function BuyTickets() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Ticket Selection */}
+          {/* Enhanced Ticket Purchase Form */}
           <div className="lg:col-span-2">
-            <h2 className="text-2xl font-semibold mb-6">Select Tickets</h2>
-            
             {ticketTypes.length === 0 ? (
               <Card>
                 <CardContent className="py-8 text-center">
@@ -602,78 +628,13 @@ export default function BuyTickets() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="space-y-4">
-                {ticketTypes.map((ticket) => (
-                  <Card key={ticket.id} className="p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h3 className="text-xl font-semibold">{ticket.name}</h3>
-                        {ticket.description && (
-                          <p className="text-muted-foreground mt-1">{ticket.description}</p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold">₦{ticket.price.toLocaleString()}</div>
-                        <Badge variant="outline">
-                          {ticket.available_quantity} available
-                        </Badge>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center gap-4">
-                      <Label htmlFor={`quantity-${ticket.id}`}>Quantity:</Label>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleQuantityChange(ticket.id, (selectedTickets[ticket.id] || 0) - 1)}
-                          disabled={!selectedTickets[ticket.id]}
-                        >
-                          -
-                        </Button>
-                        <Input
-                          id={`quantity-${ticket.id}`}
-                          type="number"
-                          min="0"
-                          max={ticket.available_quantity}
-                          value={selectedTickets[ticket.id] || 0}
-                          onChange={(e) => handleQuantityChange(ticket.id, parseInt(e.target.value) || 0)}
-                          className="w-20 text-center"
-                        />
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleQuantityChange(ticket.id, (selectedTickets[ticket.id] || 0) + 1)}
-                          disabled={(selectedTickets[ticket.id] || 0) >= ticket.available_quantity}
-                        >
-                          +
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Custom Form Fields for this ticket type */}
-                    {(selectedTickets[ticket.id] || 0) > 0 && ticket.formFields && ticket.formFields.length > 0 && (
-                      <div className="mt-4 pt-4 border-t">
-                        <h4 className="font-medium mb-3">Additional Information Required</h4>
-                        <CustomFormRenderer
-                          formFields={ticket.formFields}
-                          values={formResponses[ticket.id] || {}}
-                          onChange={(fieldId, value) => {
-                            setFormResponses(prev => ({
-                              ...prev,
-                              [ticket.id]: {
-                                ...prev[ticket.id],
-                                [fieldId]: value
-                              }
-                            }));
-                          }}
-                          errors={validateFormResponses().errors}
-                        />
-                      </div>
-                    )}
-                  </Card>
-                ))}
-              </div>
+              <EnhancedTicketPurchaseForm
+                ticketTypes={ticketTypes}
+                selectedTickets={selectedTickets}
+                onTicketQuantityChange={handleQuantityChange}
+                onPurchaseDataChange={handlePurchaseDataChange}
+                currentUserEmail={currentUser?.email}
+              />
             )}
           </div>
 
@@ -711,21 +672,12 @@ export default function BuyTickets() {
                   <div className="space-y-4">
                     <Card className="border-green-200 bg-green-50">
                       <CardContent className="pt-4">
-                        <div className="flex items-center justify-between text-green-700 mb-2">
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4" />
-                            <span className="font-medium">Ready to Purchase</span>
-                          </div>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => setShowUserInfoForm(true)}
-                          >
-                            Edit Info (Optional)
-                          </Button>
+                        <div className="flex items-center gap-2 text-green-700 mb-2">
+                          <User className="h-4 w-4" />
+                          <span className="font-medium">Ready to Purchase</span>
                         </div>
                         <p className="text-sm text-green-600">
-                          Using your account information. Click purchase to continue.
+                          All attendee information completed. Click purchase to continue.
                         </p>
                       </CardContent>
                     </Card>
@@ -741,19 +693,22 @@ export default function BuyTickets() {
                         <PaystackTicketPayment
                           eventId={eventData.event.id}
                           eventName={eventData.event.name}
-                          tickets={eventData.ticketTypes
-                            .filter(t => selectedTickets[t.id] > 0)
-                            .map(t => ({
-                              ticketTypeId: t.id,
-                              quantity: selectedTickets[t.id],
-                              price: t.price,
-                              name: t.name
-                            }))}
+                          tickets={purchaseData.map(purchase => {
+                            const ticketType = eventData.ticketTypes.find(t => t.id === purchase.ticketTypeId);
+                            return {
+                              ticketTypeId: purchase.ticketTypeId,
+                              quantity: purchase.quantity,
+                              price: ticketType?.price || 0,
+                              name: ticketType?.name || ''
+                            };
+                          })}
                           totalAmount={getTotalPrice()}
                           userInfo={{
-                            fullName: `${userInfo.firstName} ${userInfo.lastName}`.trim() || 'User',
-                            email: userInfo.email,
-                            phone: userInfo.phone
+                            fullName: purchaseData[0]?.attendees[0] 
+                              ? `${purchaseData[0].attendees[0].firstName} ${purchaseData[0].attendees[0].lastName}`.trim() 
+                              : currentUser?.email || 'User',
+                            email: purchaseData[0]?.attendees[0]?.email || currentUser?.email || '',
+                            phone: purchaseData[0]?.attendees[0]?.phone || ''
                           }}
                           onSuccess={handlePaymentSuccess}
                           onClose={handlePaymentClose}
@@ -795,67 +750,6 @@ export default function BuyTickets() {
                   </Button>
                 )}
 
-                {/* Optional User Information Form */}
-                {currentUser && getTotalTickets() > 0 && showUserInfoForm && !showPayment && (
-                  <Card className="border-purple-200 bg-purple-50 mt-4">
-                    <CardContent className="pt-4">
-                      <div className="flex items-center gap-2 text-purple-700 mb-3">
-                        <User className="h-4 w-4" />
-                        <span className="font-medium">Edit Your Information (Optional)</span>
-                      </div>
-                      <div className="space-y-3">
-                        <div>
-                          <Label htmlFor="firstName">First Name</Label>
-                          <Input
-                            id="firstName"
-                            value={userInfo.firstName}
-                            onChange={(e) => setUserInfo(prev => ({ ...prev, firstName: e.target.value }))}
-                            placeholder="Enter your first name"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="lastName">Last Name</Label>
-                          <Input
-                            id="lastName"
-                            value={userInfo.lastName}
-                            onChange={(e) => setUserInfo(prev => ({ ...prev, lastName: e.target.value }))}
-                            placeholder="Enter your last name"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="email">Email</Label>
-                          <Input
-                            id="email"
-                            type="email"
-                            value={userInfo.email}
-                            onChange={(e) => setUserInfo(prev => ({ ...prev, email: e.target.value }))}
-                            placeholder="Enter your email"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="phone">Phone Number</Label>
-                          <Input
-                            id="phone"
-                            value={userInfo.phone}
-                            onChange={(e) => setUserInfo(prev => ({ ...prev, phone: e.target.value }))}
-                            placeholder="Enter your phone number"
-                          />
-                        </div>
-                        <div className="flex gap-2">
-                          <Button onClick={handleUserInfoSubmit} className="flex-1">
-                            Save & Continue
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            onClick={() => setShowUserInfoForm(false)}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
               </CardContent>
             </Card>
           </div>

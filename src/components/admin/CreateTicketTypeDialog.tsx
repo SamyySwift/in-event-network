@@ -49,6 +49,10 @@ export function CreateTicketTypeDialog({ open, onOpenChange, onTicketCreated }: 
   const [selectedEventId, setSelectedEventId] = useState('');
   const [shouldOpenFormBuilder, setShouldOpenFormBuilder] = useState(false);
   const [maxTicketsPerUser, setMaxTicketsPerUser] = useState(1);
+  const [includeFeesInPrice, setIncludeFeesInPrice] = useState(false);
+  const [serviceFeePercentage, setServiceFeePercentage] = useState(5.0);
+  const [gatewayFeePercentage, setGatewayFeePercentage] = useState(1.5);
+  const [gatewayFixedFee, setGatewayFixedFee] = useState(100);
 
   const { createTicketType } = useAdminTickets();
   const { adminEvents, selectedEventId: contextEventId } = useAdminEventContext();
@@ -64,6 +68,46 @@ export function CreateTicketTypeDialog({ open, onOpenChange, onTicketCreated }: 
     return selectedTicketName === 'Custom' ? customName : selectedTicketName;
   };
 
+  // Calculate fee breakdown
+  const calculateFees = (basePrice: number) => {
+    if (ticketType === 'free' || basePrice === 0) {
+      return {
+        displayPrice: 0,
+        organizerReceives: 0,
+        serviceFee: 0,
+        gatewayFee: 0,
+        totalFees: 0
+      };
+    }
+
+    if (includeFeesInPrice) {
+      // Fees are deducted from the price
+      const serviceFee = Math.round(basePrice * serviceFeePercentage / 100);
+      const gatewayFee = Math.round(basePrice * gatewayFeePercentage / 100) + gatewayFixedFee;
+      const totalFees = serviceFee + gatewayFee;
+      
+      return {
+        displayPrice: basePrice,
+        organizerReceives: basePrice - totalFees,
+        serviceFee,
+        gatewayFee,
+        totalFees
+      };
+    } else {
+      // Organizer absorbs fees
+      return {
+        displayPrice: basePrice,
+        organizerReceives: basePrice,
+        serviceFee: 0,
+        gatewayFee: 0,
+        totalFees: 0
+      };
+    }
+  };
+
+  const currentPrice = parseFloat(price) || 0;
+  const feeBreakdown = calculateFees(currentPrice * 100); // Convert to kobo
+
   const resetForm = () => {
     setSelectedTicketName('');
     setCustomName('');
@@ -74,6 +118,10 @@ export function CreateTicketTypeDialog({ open, onOpenChange, onTicketCreated }: 
     setIsActive(true);
     setShouldOpenFormBuilder(false);
     setMaxTicketsPerUser(1);
+    setIncludeFeesInPrice(false);
+    setServiceFeePercentage(5.0);
+    setGatewayFeePercentage(1.5);
+    setGatewayFixedFee(100);
     // Keep the selected event if it's from context
     if (!contextEventId) {
       setSelectedEventId('');
@@ -92,7 +140,7 @@ export function CreateTicketTypeDialog({ open, onOpenChange, onTicketCreated }: 
       return;
     }
 
-    const ticketPrice = ticketType === 'free' ? 0 : parseFloat(price) || 0;
+    const ticketPrice = ticketType === 'free' ? 0 : parseFloat(price) * 100 || 0; // Convert to kobo
     const quantity = parseInt(availableQuantity) || 0;
 
     try {
@@ -105,6 +153,10 @@ export function CreateTicketTypeDialog({ open, onOpenChange, onTicketCreated }: 
         max_tickets_per_user: maxTicketsPerUser,
         is_active: isActive,
         event_id: selectedEventId,
+        include_fees_in_price: includeFeesInPrice,
+        service_fee_percentage: serviceFeePercentage,
+        payment_gateway_fee_percentage: gatewayFeePercentage,
+        payment_gateway_fixed_fee: gatewayFixedFee * 100, // Convert to kobo
       });
       
       onOpenChange(false);
@@ -247,21 +299,117 @@ export function CreateTicketTypeDialog({ open, onOpenChange, onTicketCreated }: 
 
           {/* Price (only show if paid) */}
           {ticketType === 'paid' && (
-            <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
-              <Label htmlFor="price" className="text-sm font-medium flex items-center gap-2">
-                <DollarSign className="w-4 h-4" />
-                Price (₦)
-              </Label>
-              <Input
-                id="price"
-                type="number"
-                placeholder="0.00"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                min="0"
-                step="0.01"
-                className="rounded-xl border-2 transition-all duration-200 focus:border-primary/50"
-              />
+            <div className="space-y-4 animate-in slide-in-from-top-2 duration-200">
+              <div className="space-y-2">
+                <Label htmlFor="price" className="text-sm font-medium flex items-center gap-2">
+                  <DollarSign className="w-4 h-4" />
+                  Ticket Price (₦)
+                </Label>
+                <Input
+                  id="price"
+                  type="number"
+                  placeholder="1000"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  min="0"
+                  step="1"
+                  className="rounded-xl border-2 transition-all duration-200 focus:border-primary/50"
+                />
+              </div>
+
+              {/* Fee Management Toggle */}
+              <div className="space-y-4 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-sm font-medium text-blue-900">Include Fees in Ticket Price</Label>
+                    <p className="text-xs text-blue-700 mt-1">
+                      Choose how to handle service charges and payment gateway fees
+                    </p>
+                  </div>
+                  <Switch
+                    checked={includeFeesInPrice}
+                    onCheckedChange={setIncludeFeesInPrice}
+                  />
+                </div>
+
+                {/* Fee Configuration */}
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs text-blue-800">Service Fee (%)</Label>
+                      <Input
+                        type="number"
+                        value={serviceFeePercentage}
+                        onChange={(e) => setServiceFeePercentage(parseFloat(e.target.value) || 5.0)}
+                        min="0"
+                        max="10"
+                        step="0.1"
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs text-blue-800">Gateway Fee (%)</Label>
+                      <Input
+                        type="number"
+                        value={gatewayFeePercentage}
+                        onChange={(e) => setGatewayFeePercentage(parseFloat(e.target.value) || 1.5)}
+                        min="0"
+                        max="5"
+                        step="0.1"
+                        className="h-8 text-xs"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-blue-800">Gateway Fixed Fee (₦)</Label>
+                    <Input
+                      type="number"
+                      value={gatewayFixedFee}
+                      onChange={(e) => setGatewayFixedFee(parseInt(e.target.value) || 100)}
+                      min="0"
+                      step="10"
+                      className="h-8 text-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Fee Breakdown */}
+                {currentPrice > 0 && (
+                  <div className="bg-white p-3 rounded-lg border space-y-2">
+                    <h4 className="text-xs font-medium text-blue-900 mb-2">Pricing Breakdown</h4>
+                    <div className="space-y-1 text-xs">
+                      <div className="flex justify-between">
+                        <span>Attendee pays:</span>
+                        <span className="font-medium">₦{(feeBreakdown.displayPrice / 100).toFixed(2)}</span>
+                      </div>
+                      {includeFeesInPrice && (
+                        <>
+                          <div className="flex justify-between text-red-600">
+                            <span>Service fee ({serviceFeePercentage}%):</span>
+                            <span>-₦{(feeBreakdown.serviceFee / 100).toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between text-red-600">
+                            <span>Gateway fee:</span>
+                            <span>-₦{(feeBreakdown.gatewayFee / 100).toFixed(2)}</span>
+                          </div>
+                          <hr className="my-1" />
+                        </>
+                      )}
+                      <div className="flex justify-between font-medium text-green-600">
+                        <span>You receive:</span>
+                        <span>₦{(feeBreakdown.organizerReceives / 100).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className={`text-xs p-2 rounded-lg ${includeFeesInPrice ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'}`}>
+                  {includeFeesInPrice 
+                    ? `⚠️ Fees will be deducted from the ticket price. Attendees see ₦${currentPrice} but you receive less after fees.`
+                    : `✅ You absorb all fees. Attendees pay ₦${currentPrice} and you receive the full amount.`
+                  }
+                </div>
+              </div>
             </div>
           )}
 

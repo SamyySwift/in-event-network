@@ -235,8 +235,7 @@ export default function BuyTickets() {
     return purchaseData.reduce((total, purchase) => {
       const ticketType = eventData.ticketTypes.find(t => t.id === purchase.ticketTypeId);
       if (ticketType) {
-        const ticketPrice = ticketType.display_price || ticketType.price;
-        return total + (ticketPrice * purchase.quantity);
+        return total + (ticketType.price * purchase.quantity);
       }
       return total;
     }, 0);
@@ -699,7 +698,7 @@ export default function BuyTickets() {
                             return {
                               ticketTypeId: purchase.ticketTypeId,
                               quantity: purchase.quantity,
-                              price: ticketType?.display_price || ticketType?.price || 0,
+                              price: ticketType?.price || 0,
                               name: ticketType?.name || ''
                             };
                           })}
@@ -735,7 +734,7 @@ export default function BuyTickets() {
                     </div>
                     <div className="flex justify-between font-semibold text-lg">
                       <span>Total:</span>
-                      <span>₦{(getTotalPrice() / 100).toLocaleString()}</span>
+                      <span>₦{getTotalPrice().toLocaleString()}</span>
                     </div>
                   </div>
                 </div>

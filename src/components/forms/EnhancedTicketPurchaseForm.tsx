@@ -18,9 +18,6 @@ interface TicketType {
   max_tickets_per_user: number;
   is_active: boolean;
   formFields?: FormField[];
-  display_price?: number;
-  organizer_receives?: number;
-  include_fees_in_price?: boolean;
 }
 
 interface AttendeeInfo {
@@ -133,8 +130,7 @@ export function EnhancedTicketPurchaseForm({
     return purchaseData.reduce((total, purchase) => {
       const ticketType = ticketTypes.find(t => t.id === purchase.ticketTypeId);
       if (ticketType) {
-        const ticketPrice = ticketType.display_price || ticketType.price;
-        return total + (ticketPrice * purchase.quantity);
+        return total + (ticketType.price * purchase.quantity);
       }
       return total;
     }, 0);
@@ -161,7 +157,7 @@ export function EnhancedTicketPurchaseForm({
                 <div className="flex items-center gap-2 mb-1">
                   <h4 className="font-medium">{ticketType.name}</h4>
                   {ticketType.price > 0 ? (
-                    <Badge variant="default">₦{((ticketType.display_price || ticketType.price) / 100).toLocaleString()}</Badge>
+                    <Badge variant="default">₦{ticketType.price}</Badge>
                   ) : (
                     <Badge variant="secondary">Free</Badge>
                   )}
@@ -317,7 +313,7 @@ export function EnhancedTicketPurchaseForm({
               </div>
               <div className="flex justify-between text-lg font-medium">
                 <span>Total Price:</span>
-                <span>₦{(getTotalPrice() / 100).toLocaleString()}</span>
+                <span>₦{getTotalPrice()}</span>
               </div>
             </div>
           </CardContent>

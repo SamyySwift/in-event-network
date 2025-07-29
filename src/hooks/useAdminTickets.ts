@@ -16,12 +16,6 @@ interface TicketType {
   event_id: string;
   created_at: string;
   updated_at: string;
-  include_fees_in_price?: boolean;
-  service_fee_percentage?: number;
-  payment_gateway_fee_percentage?: number;
-  payment_gateway_fixed_fee?: number;
-  display_price?: number;
-  organizer_receives?: number;
 }
 
 interface EventTicket {

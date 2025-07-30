@@ -86,7 +86,7 @@ function AdminTicketsContent() {
                 <DollarSign className="h-5 w-5 text-green-600" />
                 <span className="text-sm text-muted-foreground">Revenue</span>
               </div>
-              <div className="text-2xl font-bold text-green-600">₦{stats.totalRevenue.toLocaleString()}</div>
+              <div className="text-2xl font-bold text-green-600">₦{(stats.totalRevenue / 100).toLocaleString()}</div>
             </div>
             <div className="bg-card border rounded-xl p-4 hover:shadow-md transition-shadow">
               <div className="flex items-center gap-2 mb-2">
@@ -209,7 +209,7 @@ function AdminTicketsContent() {
                         <div className="space-y-3">
                           <div className="flex justify-between items-center">
                             <span className="text-sm text-muted-foreground">Price:</span>
-                            <span className="font-bold text-lg text-green-600">₦{ticketType.price.toLocaleString()}</span>
+                            <span className="font-bold text-lg text-green-600">₦{(ticketType.price / 100).toLocaleString()}</span>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-sm text-muted-foreground">Available:</span>

@@ -76,7 +76,7 @@ export const AdminWallet: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(wallet?.available_balance || 0)}
+              {formatCurrency((wallet?.available_balance || 0) / 100)}
             </div>
             <p className="text-xs text-muted-foreground">
               Ready for withdrawal
@@ -91,7 +91,7 @@ export const AdminWallet: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(wallet?.total_earnings || 0)}
+              {formatCurrency((wallet?.total_earnings || 0) / 100)}
             </div>
             <p className="text-xs text-muted-foreground">
               From ticket sales
@@ -106,7 +106,7 @@ export const AdminWallet: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(wallet?.withdrawn_amount || 0)}
+              {formatCurrency((wallet?.withdrawn_amount || 0) / 100)}
             </div>
             <p className="text-xs text-muted-foreground">
               Successfully withdrawn
@@ -128,8 +128,8 @@ export const AdminWallet: React.FC = () => {
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>
-                Minimum withdrawal amount is {formatCurrency((wallet?.minimum_payout_amount || 100000) / 100)}.
-                Current balance: {formatCurrency(wallet?.available_balance || 0)}
+                Minimum withdrawal amount is {formatCurrency((wallet?.minimum_payout_amount || 1000) / 100)}.
+                Current balance: {formatCurrency((wallet?.available_balance || 0) / 100)}
               </AlertDescription>
             </Alert>
           )}

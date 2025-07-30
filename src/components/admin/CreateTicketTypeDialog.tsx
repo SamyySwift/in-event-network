@@ -80,27 +80,27 @@ export function CreateTicketTypeDialog({ open, onOpenChange, onTicketCreated }: 
       };
     }
 
+    const serviceFee = Math.round(basePrice * serviceFeePercentage / 100);
+    const gatewayFee = Math.round(basePrice * gatewayFeePercentage / 100) + gatewayFixedFee;
+    const totalFees = serviceFee + gatewayFee;
+
     if (includeFeesInPrice) {
-      // Fees are deducted from the price
-      const serviceFee = Math.round(basePrice * serviceFeePercentage / 100);
-      const gatewayFee = Math.round(basePrice * gatewayFeePercentage / 100) + gatewayFixedFee;
-      const totalFees = serviceFee + gatewayFee;
-      
+      // Fees are added on top - attendee pays more, organizer gets full base price
+      return {
+        displayPrice: basePrice + totalFees,
+        organizerReceives: basePrice,
+        serviceFee,
+        gatewayFee,
+        totalFees
+      };
+    } else {
+      // Organizer absorbs fees - attendee pays base price, organizer gets less
       return {
         displayPrice: basePrice,
         organizerReceives: basePrice - totalFees,
         serviceFee,
         gatewayFee,
         totalFees
-      };
-    } else {
-      // Organizer absorbs fees
-      return {
-        displayPrice: basePrice,
-        organizerReceives: basePrice,
-        serviceFee: 0,
-        gatewayFee: 0,
-        totalFees: 0
       };
     }
   };
@@ -403,10 +403,10 @@ export function CreateTicketTypeDialog({ open, onOpenChange, onTicketCreated }: 
                   </div>
                 )}
 
-                <div className={`text-xs p-2 rounded-lg ${includeFeesInPrice ? 'bg-orange-100 text-orange-800' : 'bg-green-100 text-green-800'}`}>
+                <div className={`text-xs p-2 rounded-lg ${includeFeesInPrice ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}`}>
                   {includeFeesInPrice 
-                    ? `⚠️ Fees will be deducted from the ticket price. Attendees see ₦${currentPrice} but you receive less after fees.`
-                    : `✅ You absorb all fees. Attendees pay ₦${currentPrice} and you receive the full amount.`
+                    ? `✅ Fees are added on top. Attendees pay ₦${(feeBreakdown.displayPrice / 100).toFixed(2)} and you receive ₦${currentPrice}.`
+                    : `⚠️ You absorb all fees. Attendees pay ₦${currentPrice} and you receive ₦${(feeBreakdown.organizerReceives / 100).toFixed(2)}.`
                   }
                 </div>
               </div>

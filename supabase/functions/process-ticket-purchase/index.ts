@@ -65,7 +65,7 @@ serve(async (req) => {
       .insert({
         event_id: eventId,
         user_id: userInfo.userId || null,
-        amount: totalAmount / 100, // Convert from kobo to naira
+        amount: totalAmount, // Keep in kobo for consistency
         currency: 'NGN',
         paystack_reference: paystackReference,
         status: 'success'

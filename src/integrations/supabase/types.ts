@@ -1849,13 +1849,19 @@ export type Database = {
           created_at: string
           created_by: string | null
           description: string | null
+          display_price: number | null
           event_id: string
           id: string
+          include_fees_in_price: boolean | null
           is_active: boolean
           max_quantity: number | null
           max_tickets_per_user: number
           name: string
+          organizer_receives: number | null
+          payment_gateway_fee_percentage: number | null
+          payment_gateway_fixed_fee: number | null
           price: number
+          service_fee_percentage: number | null
           updated_at: string
         }
         Insert: {
@@ -1863,13 +1869,19 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          display_price?: number | null
           event_id: string
           id?: string
+          include_fees_in_price?: boolean | null
           is_active?: boolean
           max_quantity?: number | null
           max_tickets_per_user?: number
           name: string
+          organizer_receives?: number | null
+          payment_gateway_fee_percentage?: number | null
+          payment_gateway_fixed_fee?: number | null
           price?: number
+          service_fee_percentage?: number | null
           updated_at?: string
         }
         Update: {
@@ -1877,13 +1889,19 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           description?: string | null
+          display_price?: number | null
           event_id?: string
           id?: string
+          include_fees_in_price?: boolean | null
           is_active?: boolean
           max_quantity?: number | null
           max_tickets_per_user?: number
           name?: string
+          organizer_receives?: number | null
+          payment_gateway_fee_percentage?: number | null
+          payment_gateway_fixed_fee?: number | null
           price?: number
+          service_fee_percentage?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -2144,6 +2162,22 @@ export type Database = {
       admin_update_user_role: {
         Args: { target_email: string; new_role: string }
         Returns: Json
+      }
+      calculate_ticket_pricing: {
+        Args: {
+          base_price: number
+          include_fees?: boolean
+          service_fee_pct?: number
+          gateway_fee_pct?: number
+          gateway_fixed_fee?: number
+        }
+        Returns: {
+          display_price: number
+          organizer_receives: number
+          total_fees: number
+          service_fee: number
+          gateway_fee: number
+        }[]
       }
       can_access_event_data: {
         Args: { event_uuid: string }

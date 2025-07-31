@@ -22,6 +22,7 @@ interface TicketType {
   payment_gateway_fixed_fee?: number;
   display_price?: number;
   organizer_receives?: number;
+  requires_login?: boolean;
 }
 
 interface EventTicket {

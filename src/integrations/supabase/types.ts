@@ -1861,6 +1861,7 @@ export type Database = {
           payment_gateway_fee_percentage: number | null
           payment_gateway_fixed_fee: number | null
           price: number
+          requires_login: boolean
           service_fee_percentage: number | null
           updated_at: string
         }
@@ -1881,6 +1882,7 @@ export type Database = {
           payment_gateway_fee_percentage?: number | null
           payment_gateway_fixed_fee?: number | null
           price?: number
+          requires_login?: boolean
           service_fee_percentage?: number | null
           updated_at?: string
         }
@@ -1901,6 +1903,7 @@ export type Database = {
           payment_gateway_fee_percentage?: number | null
           payment_gateway_fixed_fee?: number | null
           price?: number
+          requires_login?: boolean
           service_fee_percentage?: number | null
           updated_at?: string
         }

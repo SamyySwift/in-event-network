@@ -15,6 +15,7 @@ import { EnhancedTicketPurchaseForm } from '@/components/forms/EnhancedTicketPur
 import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { useForm } from 'react-hook-form';
 import { FormField } from '@/hooks/useTicketFormFields';
+import { GuestTicketDisplay } from '@/components/GuestTicketDisplay';
 
 interface TicketType {
   id: string;
@@ -24,6 +25,7 @@ interface TicketType {
   available_quantity: number;
   max_tickets_per_user: number;
   is_active: boolean;
+  requires_login?: boolean;
   formFields?: FormField[];
 }
 
@@ -61,6 +63,9 @@ export default function BuyTickets() {
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [purchasedTicketCount, setPurchasedTicketCount] = useState(0);
   const [purchaseData, setPurchaseData] = useState<TicketPurchaseInfo[]>([]);
+  const [showGuestTickets, setShowGuestTickets] = useState(false);
+  const [guestTickets, setGuestTickets] = useState<any[]>([]);
+  const [guestPurchaseEmail, setGuestPurchaseEmail] = useState('');
 
   // Form persistence for preventing data loss on login redirects
   const form = useForm({
@@ -259,7 +264,13 @@ export default function BuyTickets() {
     console.log('Selected tickets:', selectedTickets);
     console.log('Total tickets:', getTotalTickets());
 
-    if (!currentUser) {
+    // Check if any ticket requires login
+    const requiresLogin = purchaseData.some(purchase => {
+      const ticketType = eventData?.ticketTypes.find(t => t.id === purchase.ticketTypeId);
+      return ticketType?.requires_login !== false; // Default to requiring login
+    });
+
+    if (requiresLogin && !currentUser) {
       toast({
         title: "Login Required",
         description: "Please log in to purchase tickets",
@@ -298,6 +309,8 @@ export default function BuyTickets() {
 
     // Validate all attendee information
     const missingInfo = [];
+    const emailsUsed = new Set<string>();
+    
     for (const purchase of purchaseData) {
       for (let i = 0; i < purchase.attendees.length; i++) {
         const attendee = purchase.attendees[i];
@@ -309,6 +322,28 @@ export default function BuyTickets() {
         }
         if (!attendee.email.trim()) {
           missingInfo.push(`Email for attendee ${i + 1}`);
+        } else {
+          // Check for duplicate emails
+          const email = attendee.email.trim().toLowerCase();
+          if (emailsUsed.has(email)) {
+            missingInfo.push(`Duplicate email: ${attendee.email}`);
+          } else {
+            emailsUsed.add(email);
+            // Check if email is already used for this event
+            if (!requiresLogin) {
+              setGuestPurchaseEmail(email);
+              // Check for duplicate emails in existing tickets
+              const { data: existingTickets } = await supabase
+                .from('event_tickets')
+                .select('guest_email')
+                .eq('event_id', eventData?.event.id)
+                .eq('guest_email', email);
+                
+              if (existingTickets && existingTickets.length > 0) {
+                missingInfo.push(`Email ${email} already used for this event`);
+              }
+            }
+          }
         }
       }
     }
@@ -391,7 +426,7 @@ export default function BuyTickets() {
           ticketPurchases.push({
             event_id: eventData.event.id,
             ticket_type_id: purchase.ticketTypeId,
-            user_id: currentUser.id,
+            user_id: currentUser?.id || null, // Allow null for guest purchases
             first_name: attendee.firstName.trim(),
             last_name: attendee.lastName.trim(),
             guest_name: `${attendee.firstName} ${attendee.lastName}`.trim().substring(0, 100),
@@ -530,9 +565,21 @@ export default function BuyTickets() {
       // Handle successful ticket creation
       console.log('Purchase completed successfully');
       
-      // Set success modal data
-      setPurchasedTicketCount(getTotalTickets());
-      setShowSuccessModal(true);
+      // Check if any tickets don't require login (guest purchases)
+      const hasGuestTickets = purchaseData.some(purchase => {
+        const ticketType = eventData.ticketTypes.find(t => t.id === purchase.ticketTypeId);
+        return ticketType?.requires_login === false;
+      });
+
+      if (hasGuestTickets && !currentUser) {
+        // Show guest ticket display
+        setGuestTickets(tickets || []);
+        setShowGuestTickets(true);
+      } else {
+        // Set success modal data for logged-in users
+        setPurchasedTicketCount(getTotalTickets());
+        setShowSuccessModal(true);
+      }
       
       // Reset form and clear persistence
       setSelectedTickets({});
@@ -575,6 +622,38 @@ export default function BuyTickets() {
   }
 
   const { event, ticketTypes } = eventData;
+
+  // Check if any selected tickets require login
+  const requiresLoginForPurchase = purchaseData.some(purchase => {
+    const ticketType = ticketTypes.find(t => t.id === purchase.ticketTypeId);
+    return ticketType?.requires_login !== false; // Default to requiring login
+  });
+
+  // Handle guest ticket download
+  const handleGuestTicketDownload = () => {
+    const element = document.createElement('a');
+    const file = new Blob([JSON.stringify(guestTickets, null, 2)], { type: 'application/json' });
+    element.href = URL.createObjectURL(file);
+    element.download = `tickets-${event.name.replace(/\s+/g, '-')}.json`;
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
+
+  // Show guest ticket display if applicable
+  if (showGuestTickets && guestTickets.length > 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-4xl mx-auto px-4">
+          <GuestTicketDisplay 
+            tickets={guestTickets}
+            event={event}
+            onDownload={handleGuestTicketDownload}
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
@@ -629,13 +708,32 @@ export default function BuyTickets() {
                 </CardContent>
               </Card>
             ) : (
-              <EnhancedTicketPurchaseForm
-                ticketTypes={ticketTypes}
-                selectedTickets={selectedTickets}
-                onTicketQuantityChange={handleQuantityChange}
-                onPurchaseDataChange={handlePurchaseDataChange}
-                currentUserEmail={currentUser?.email}
-              />
+              <div className={`relative ${requiresLoginForPurchase && !currentUser ? 'opacity-40 pointer-events-none' : ''}`}>
+                <EnhancedTicketPurchaseForm
+                  ticketTypes={ticketTypes}
+                  selectedTickets={selectedTickets}
+                  onTicketQuantityChange={handleQuantityChange}
+                  onPurchaseDataChange={handlePurchaseDataChange}
+                  currentUserEmail={currentUser?.email}
+                />
+                {requiresLoginForPurchase && !currentUser && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-lg">
+                    <Card className="border-amber-200 bg-amber-50 shadow-lg">
+                      <CardContent className="p-6 text-center">
+                        <LogIn className="h-12 w-12 text-amber-600 mx-auto mb-4" />
+                        <h3 className="font-semibold text-amber-900 mb-2">Login Required</h3>
+                        <p className="text-sm text-amber-700 mb-4">
+                          Please log in to select and purchase tickets
+                        </p>
+                        <Button onClick={handleLoginRedirect} size="sm">
+                          <LogIn className="h-4 w-4 mr-2" />
+                          Login to Continue
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
@@ -646,7 +744,7 @@ export default function BuyTickets() {
                 <CardTitle>Purchase Summary</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {!currentUser && (
+                {requiresLoginForPurchase && !currentUser && (
                   <Card className="border-amber-200 bg-amber-50">
                     <CardContent className="pt-4">
                       <div className="flex items-center gap-2 text-amber-700 mb-2">
@@ -743,7 +841,7 @@ export default function BuyTickets() {
                 {!showPayment && (
                   <Button
                     onClick={handlePurchase}
-                    disabled={isProcessing || getTotalTickets() === 0 || !currentUser}
+                    disabled={isProcessing || getTotalTickets() === 0 || (requiresLoginForPurchase && !currentUser)}
                     className="w-full"
                     size="lg"
                   >

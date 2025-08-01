@@ -85,7 +85,7 @@ export default function RuleCard({ title, content, category, priority, created_a
         <h3 className="font-bold text-lg group-hover:text-primary transition select-text mb-1 text-zinc-900 dark:text-zinc-100">{title}</h3>
         <div
           className={`text-zinc-700/90 dark:text-zinc-100/90 text-base mt-0.5 will-change-max-height transition-all duration-300 origin-top-left overflow-hidden
-          ${open ? "max-h-60 opacity-100 py-2 scale-y-100" : "max-h-0 opacity-0 scale-y-95"}
+          ${open ? "max-h-none opacity-100 py-2 scale-y-100" : "max-h-0 opacity-0 scale-y-95"}
         `}
         >
           <p className="mb-2 whitespace-pre-wrap">{content}</p>

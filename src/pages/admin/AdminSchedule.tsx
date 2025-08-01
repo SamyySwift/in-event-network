@@ -236,15 +236,21 @@ const AdminScheduleContent = () => {
       let endTimeForDb = null;
       
       if (data.start_date && data.start_time) {
-        startTimeForDb = `${data.start_date}T${data.start_time}:00`;
+        // Create a local datetime and convert to ISO string
+        const localDateTime = new Date(`${data.start_date}T${data.start_time}`);
+        startTimeForDb = localDateTime.toISOString();
       } else if (data.start_date) {
-        startTimeForDb = `${data.start_date}T00:00:00`;
+        const localDateTime = new Date(`${data.start_date}T00:00:00`);
+        startTimeForDb = localDateTime.toISOString();
       }
       
       if (data.end_date && data.end_time) {
-        endTimeForDb = `${data.end_date}T${data.end_time}:00`;
+        // Create a local datetime and convert to ISO string
+        const localDateTime = new Date(`${data.end_date}T${data.end_time}`);
+        endTimeForDb = localDateTime.toISOString();
       } else if (data.end_date) {
-        endTimeForDb = `${data.end_date}T23:59:59`;
+        const localDateTime = new Date(`${data.end_date}T23:59:59`);
+        endTimeForDb = localDateTime.toISOString();
       }
       
       const scheduleData = {
@@ -342,24 +348,28 @@ const AdminScheduleContent = () => {
       endDate = item.end_time_full.slice(0, 10);
     }
     
-    // Handle start time - check multiple sources
+    // Handle start time - check multiple sources and convert to local time
     if (item.start_time) {
-      // Extract time from timestamp
-      const timeStr = item.start_time.slice(11, 16);
-      startTime = timeStr;
+      // Convert UTC time to local time for datetime-local input
+      const utcDate = new Date(item.start_time);
+      const localDateTime = new Date(utcDate.getTime() - utcDate.getTimezoneOffset() * 60000);
+      startTime = localDateTime.toISOString().slice(11, 16);
     } else if (item.start_time_full) {
-      const timeStr = item.start_time_full.slice(11, 16);
-      startTime = timeStr;
+      const utcDate = new Date(item.start_time_full);
+      const localDateTime = new Date(utcDate.getTime() - utcDate.getTimezoneOffset() * 60000);
+      startTime = localDateTime.toISOString().slice(11, 16);
     }
     
-    // Handle end time - check multiple sources
+    // Handle end time - check multiple sources and convert to local time
     if (item.end_time) {
-      // Extract time from timestamp
-      const timeStr = item.end_time.slice(11, 16);
-      endTime = timeStr;
+      // Convert UTC time to local time for datetime-local input
+      const utcDate = new Date(item.end_time);
+      const localDateTime = new Date(utcDate.getTime() - utcDate.getTimezoneOffset() * 60000);
+      endTime = localDateTime.toISOString().slice(11, 16);
     } else if (item.end_time_full) {
-      const timeStr = item.end_time_full.slice(11, 16);
-      endTime = timeStr;
+      const utcDate = new Date(item.end_time_full);
+      const localDateTime = new Date(utcDate.getTime() - utcDate.getTimezoneOffset() * 60000);
+      endTime = localDateTime.toISOString().slice(11, 16);
     }
     
     reset({

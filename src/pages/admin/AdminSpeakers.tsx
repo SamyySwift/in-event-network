@@ -180,7 +180,7 @@ const AdminSpeakersContent = () => {
         ...data,
         event_id: selectedEventId,
         photo_url: photoUrl,
-        session_time: data.session_time ? new Date(data.session_time).toISOString() : undefined
+        session_time: data.session_time ? data.session_time : undefined
       };
       if (editingSpeaker) {
         updateSpeaker({
@@ -214,7 +214,14 @@ const AdminSpeakersContent = () => {
     setValue('company', speaker.company || '');
     setValue('bio', speaker.bio);
     setValue('session_title', speaker.session_title || '');
-    setValue('session_time', speaker.session_time ? speaker.session_time.slice(0, 16) : '');
+    // Convert UTC time to local time for datetime-local input
+    if (speaker.session_time) {
+      const utcDate = new Date(speaker.session_time);
+      const localDateTime = new Date(utcDate.getTime() - utcDate.getTimezoneOffset() * 60000);
+      setValue('session_time', localDateTime.toISOString().slice(0, 16));
+    } else {
+      setValue('session_time', '');
+    }
     setValue('time_allocation', speaker.time_allocation || '');
     setValue('topic', speaker.topic || '');
     setValue('twitter_link', speaker.twitter_link || '');

@@ -792,17 +792,17 @@ export default function BuyTickets() {
                         <PaystackTicketPayment
                           eventId={eventData.event.id}
                           eventName={eventData.event.name}
-                           tickets={purchaseData.map(purchase => {
-                             const ticketType = eventData.ticketTypes.find(t => t.id === purchase.ticketTypeId);
-                             const priceInKobo = (ticketType?.display_price || ticketType?.price || 0) * 100;
-                             return {
-                               ticketTypeId: purchase.ticketTypeId,
-                               quantity: purchase.quantity,
-                               price: priceInKobo,
-                               name: ticketType?.name || ''
-                             };
-                           })}
-                          totalAmount={getTotalPrice() * 100}
+                            tickets={purchaseData.map(purchase => {
+                              const ticketType = eventData.ticketTypes.find(t => t.id === purchase.ticketTypeId);
+                              const priceInKobo = (ticketType?.display_price || ticketType?.price || 0) * 100;
+                              return {
+                                ticketTypeId: purchase.ticketTypeId,
+                                quantity: purchase.quantity,
+                                price: priceInKobo,
+                                name: ticketType?.name || ''
+                              };
+                            })}
+                           totalAmount={getTotalPrice() * 100}
                           userInfo={{
                             fullName: purchaseData[0]?.attendees[0] 
                               ? `${purchaseData[0].attendees[0].firstName} ${purchaseData[0].attendees[0].lastName}`.trim() 

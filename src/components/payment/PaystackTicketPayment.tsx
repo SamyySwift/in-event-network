@@ -50,9 +50,9 @@ export function PaystackTicketPayment({
 
   const paymentProps = {
     email: userInfo.email,
-    amount: totalAmount * 100, // Convert to kobo
+    amount: totalAmount, // Already in kobo
     publicKey,
-    text: `Pay ₦${totalAmount.toLocaleString()}`,
+    text: `Pay ₦${(totalAmount / 100).toLocaleString()}`,
     onSuccess: async (reference: any) => {
       console.log('Payment successful:', reference);
       
@@ -67,7 +67,7 @@ export function PaystackTicketPayment({
               userId: currentUser?.id
             },
             paystackReference: reference.reference,
-            totalAmount: totalAmount * 100 // Amount in kobo
+            totalAmount: totalAmount // Already in kobo
           }
         });
 

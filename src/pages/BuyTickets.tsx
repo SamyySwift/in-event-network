@@ -565,15 +565,16 @@ export default function BuyTickets() {
       // Handle successful ticket creation
       console.log('Purchase completed successfully');
       
-      // Check if any tickets don't require login (guest purchases)
-      const hasGuestTickets = purchaseData.some(purchase => {
+      // Check if this is a guest purchase (no user logged in and tickets don't require login)
+      const isGuestPurchase = !currentUser && purchaseData.every(purchase => {
         const ticketType = eventData.ticketTypes.find(t => t.id === purchase.ticketTypeId);
         return ticketType?.requires_login === false;
       });
 
-      if (hasGuestTickets && !currentUser) {
+      if (isGuestPurchase && tickets && tickets.length > 0) {
         // Show guest ticket display
-        setGuestTickets(tickets || []);
+        console.log('Setting guest tickets:', tickets);
+        setGuestTickets(tickets);
         setShowGuestTickets(true);
       } else {
         // Set success modal data for logged-in users
@@ -717,15 +718,15 @@ export default function BuyTickets() {
                   currentUserEmail={currentUser?.email}
                 />
                 {requiresLoginForPurchase && !currentUser && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-lg">
-                    <Card className="border-amber-200 bg-amber-50 shadow-lg">
+                  <div className="absolute inset-0 flex items-center justify-center bg-white/90 rounded-lg">
+                    <Card className="border-primary bg-white shadow-xl max-w-sm w-full mx-4">
                       <CardContent className="p-6 text-center">
-                        <LogIn className="h-12 w-12 text-amber-600 mx-auto mb-4" />
-                        <h3 className="font-semibold text-amber-900 mb-2">Login Required</h3>
-                        <p className="text-sm text-amber-700 mb-4">
+                        <LogIn className="h-12 w-12 text-primary mx-auto mb-4" />
+                        <h3 className="font-semibold text-foreground mb-2">Login Required</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
                           Please log in to select and purchase tickets
                         </p>
-                        <Button onClick={handleLoginRedirect} size="sm">
+                        <Button onClick={handleLoginRedirect} size="sm" className="bg-primary hover:bg-primary/90">
                           <LogIn className="h-4 w-4 mr-2" />
                           Login to Continue
                         </Button>
@@ -745,19 +746,18 @@ export default function BuyTickets() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {requiresLoginForPurchase && !currentUser && (
-                  <Card className="border-amber-200 bg-amber-50">
+                  <Card className="border-primary bg-primary/5">
                     <CardContent className="pt-4">
-                      <div className="flex items-center gap-2 text-amber-700 mb-2">
+                      <div className="flex items-center gap-2 text-primary mb-2">
                         <LogIn className="h-4 w-4" />
                         <span className="font-medium">Login Required</span>
                       </div>
-                      <p className="text-sm text-amber-600 mb-3">
+                      <p className="text-sm text-muted-foreground mb-3">
                         You need to log in to purchase tickets
                       </p>
                       <Button 
                         onClick={handleLoginRedirect}
-                        className="w-full" 
-                        variant="outline"
+                        className="w-full bg-primary hover:bg-primary/90" 
                       >
                         <LogIn className="h-4 w-4 mr-2" />
                         Login to Continue
@@ -792,16 +792,17 @@ export default function BuyTickets() {
                         <PaystackTicketPayment
                           eventId={eventData.event.id}
                           eventName={eventData.event.name}
-                          tickets={purchaseData.map(purchase => {
-                            const ticketType = eventData.ticketTypes.find(t => t.id === purchase.ticketTypeId);
-                            return {
-                              ticketTypeId: purchase.ticketTypeId,
-                              quantity: purchase.quantity,
-                              price: ticketType?.display_price || ticketType?.price || 0,
-                              name: ticketType?.name || ''
-                            };
-                          })}
-                          totalAmount={getTotalPrice()}
+                           tickets={purchaseData.map(purchase => {
+                             const ticketType = eventData.ticketTypes.find(t => t.id === purchase.ticketTypeId);
+                             const priceInKobo = (ticketType?.display_price || ticketType?.price || 0) * 100;
+                             return {
+                               ticketTypeId: purchase.ticketTypeId,
+                               quantity: purchase.quantity,
+                               price: priceInKobo,
+                               name: ticketType?.name || ''
+                             };
+                           })}
+                          totalAmount={getTotalPrice() * 100}
                           userInfo={{
                             fullName: purchaseData[0]?.attendees[0] 
                               ? `${purchaseData[0].attendees[0].firstName} ${purchaseData[0].attendees[0].lastName}`.trim() 

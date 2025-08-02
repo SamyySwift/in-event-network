@@ -878,7 +878,7 @@ export default function BuyTickets() {
                   {!showPayment && (
                     <Button
                       onClick={handlePurchase}
-                      disabled={isProcessing || getTotalTickets() === 0 || (requiresLoginForPurchase && !currentUser)}
+                      disabled={isProcessing || getTotalTickets() === 0}
                       className="w-full"
                       size="lg"
                     >

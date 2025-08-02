@@ -698,18 +698,72 @@ export default function BuyTickets() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Enhanced Ticket Purchase Form */}
-          <div className="lg:col-span-2">
-            {ticketTypes.length === 0 ? (
-              <Card>
-                <CardContent className="py-8 text-center">
-                  <Ticket className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">No tickets available at this time.</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className={`relative ${requiresLoginForPurchase && !currentUser ? 'opacity-40 pointer-events-none' : ''}`}>
+        {/* Show login requirement as main content if needed */}
+        {requiresLoginForPurchase && !currentUser ? (
+          <div className="max-w-2xl mx-auto">
+            <Card className="border-primary bg-white shadow-lg">
+              <CardContent className="py-12 text-center">
+                <LogIn className="h-16 w-16 text-primary mx-auto mb-6" />
+                <h2 className="text-2xl font-semibold text-foreground mb-4">Login Required</h2>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  Please log in to select and purchase tickets for this event
+                </p>
+                <Button 
+                  onClick={handleLoginRedirect} 
+                  size="lg" 
+                  className="bg-primary hover:bg-primary/90 min-w-48"
+                >
+                  <LogIn className="h-5 w-5 mr-2" />
+                  Login to Continue
+                </Button>
+              </CardContent>
+            </Card>
+            
+            {/* Show available ticket types preview */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Ticket className="w-5 h-5" />
+                  Available Tickets
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {ticketTypes.map((ticketType) => (
+                  <div key={ticketType.id} className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-medium text-muted-foreground">{ticketType.name}</h4>
+                        {ticketType.price > 0 ? (
+                          <Badge variant="secondary">₦{((ticketType.display_price || ticketType.price) / 100).toLocaleString()}</Badge>
+                        ) : (
+                          <Badge variant="secondary">Free</Badge>
+                        )}
+                      </div>
+                      {ticketType.description && (
+                        <p className="text-sm text-muted-foreground mb-2">{ticketType.description}</p>
+                      )}
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span>{ticketType.available_quantity} available</span>
+                        <span>Max {ticketType.max_tickets_per_user} per user</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Enhanced Ticket Purchase Form */}
+            <div className="lg:col-span-2">
+              {ticketTypes.length === 0 ? (
+                <Card>
+                  <CardContent className="py-8 text-center">
+                    <Ticket className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No tickets available at this time.</p>
+                  </CardContent>
+                </Card>
+              ) : (
                 <EnhancedTicketPurchaseForm
                   ticketTypes={ticketTypes}
                   selectedTickets={selectedTickets}
@@ -717,143 +771,126 @@ export default function BuyTickets() {
                   onPurchaseDataChange={handlePurchaseDataChange}
                   currentUserEmail={currentUser?.email}
                 />
-                {requiresLoginForPurchase && !currentUser && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-white/90 rounded-lg">
-                    <Card className="border-primary bg-white shadow-xl max-w-sm w-full mx-4">
-                      <CardContent className="p-6 text-center">
-                        <LogIn className="h-12 w-12 text-primary mx-auto mb-4" />
-                        <h3 className="font-semibold text-foreground mb-2">Login Required</h3>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Please log in to select and purchase tickets
+              )}
+            </div>
+
+            {/* Purchase Summary */}
+            <div>
+              <Card className="sticky top-8">
+                <CardHeader>
+                  <CardTitle>Purchase Summary</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {requiresLoginForPurchase && !currentUser && (
+                    <Card className="border-primary bg-primary/5">
+                      <CardContent className="pt-4">
+                        <div className="flex items-center gap-2 text-primary mb-2">
+                          <LogIn className="h-4 w-4" />
+                          <span className="font-medium">Login Required</span>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          You need to log in to purchase tickets
                         </p>
-                        <Button onClick={handleLoginRedirect} size="sm" className="bg-primary hover:bg-primary/90">
+                        <Button 
+                          onClick={handleLoginRedirect}
+                          className="w-full bg-primary hover:bg-primary/90" 
+                        >
                           <LogIn className="h-4 w-4 mr-2" />
                           Login to Continue
                         </Button>
                       </CardContent>
                     </Card>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+                  )}
 
-          {/* Purchase Summary */}
-          <div>
-            <Card className="sticky top-8">
-              <CardHeader>
-                <CardTitle>Purchase Summary</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {requiresLoginForPurchase && !currentUser && (
-                  <Card className="border-primary bg-primary/5">
-                    <CardContent className="pt-4">
-                      <div className="flex items-center gap-2 text-primary mb-2">
-                        <LogIn className="h-4 w-4" />
-                        <span className="font-medium">Login Required</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        You need to log in to purchase tickets
-                      </p>
-                      <Button 
-                        onClick={handleLoginRedirect}
-                        className="w-full bg-primary hover:bg-primary/90" 
-                      >
-                        <LogIn className="h-4 w-4 mr-2" />
-                        Login to Continue
-                      </Button>
-                    </CardContent>
-                  </Card>
-                )}
+                  {/* Step-by-step Purchase Flow */}
+                  {currentUser && getTotalTickets() > 0 && !showPayment && (
+                    <div className="space-y-4">
+                      <Card className="border-green-200 bg-green-50">
+                        <CardContent className="pt-4">
+                          <div className="flex items-center gap-2 text-green-700 mb-2">
+                            <User className="h-4 w-4" />
+                            <span className="font-medium">Ready to Purchase</span>
+                          </div>
+                          <p className="text-sm text-green-600">
+                            All attendee information completed. Click purchase to continue.
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
 
-                {/* Step-by-step Purchase Flow */}
-                {currentUser && getTotalTickets() > 0 && !showPayment && (
-                  <div className="space-y-4">
+                  {/* Payment Interface */}
+                  {showPayment && currentUser && eventData && (
                     <Card className="border-green-200 bg-green-50">
                       <CardContent className="pt-4">
-                        <div className="flex items-center gap-2 text-green-700 mb-2">
-                          <User className="h-4 w-4" />
-                          <span className="font-medium">Ready to Purchase</span>
+                        <div className="space-y-4">
+                          <h3 className="font-medium text-green-700">Complete Payment</h3>
+                          <PaystackTicketPayment
+                            eventId={eventData.event.id}
+                            eventName={eventData.event.name}
+                              tickets={purchaseData.map(purchase => {
+                                const ticketType = eventData.ticketTypes.find(t => t.id === purchase.ticketTypeId);
+                                const priceInKobo = (ticketType?.display_price || ticketType?.price || 0) * 100;
+                                return {
+                                  ticketTypeId: purchase.ticketTypeId,
+                                  quantity: purchase.quantity,
+                                  price: priceInKobo,
+                                  name: ticketType?.name || ''
+                                };
+                              })}
+                             totalAmount={getTotalPrice() * 100}
+                            userInfo={{
+                              fullName: purchaseData[0]?.attendees[0] 
+                                ? `${purchaseData[0].attendees[0].firstName} ${purchaseData[0].attendees[0].lastName}`.trim() 
+                                : currentUser?.email || 'User',
+                              email: purchaseData[0]?.attendees[0]?.email || currentUser?.email || '',
+                              phone: purchaseData[0]?.attendees[0]?.phone || ''
+                            }}
+                            onSuccess={handlePaymentSuccess}
+                            onClose={handlePaymentClose}
+                            disabled={isProcessing}
+                          />
+                          <Button 
+                            variant="outline" 
+                            onClick={() => setShowPayment(false)}
+                            className="w-full"
+                          >
+                            Cancel Payment
+                          </Button>
                         </div>
-                        <p className="text-sm text-green-600">
-                          All attendee information completed. Click purchase to continue.
-                        </p>
                       </CardContent>
                     </Card>
-                  </div>
-                )}
+                  )}
 
-                {/* Payment Interface */}
-                {showPayment && currentUser && eventData && (
-                  <Card className="border-green-200 bg-green-50">
-                    <CardContent className="pt-4">
-                      <div className="space-y-4">
-                        <h3 className="font-medium text-green-700">Complete Payment</h3>
-                        <PaystackTicketPayment
-                          eventId={eventData.event.id}
-                          eventName={eventData.event.name}
-                            tickets={purchaseData.map(purchase => {
-                              const ticketType = eventData.ticketTypes.find(t => t.id === purchase.ticketTypeId);
-                              const priceInKobo = (ticketType?.display_price || ticketType?.price || 0) * 100;
-                              return {
-                                ticketTypeId: purchase.ticketTypeId,
-                                quantity: purchase.quantity,
-                                price: priceInKobo,
-                                name: ticketType?.name || ''
-                              };
-                            })}
-                           totalAmount={getTotalPrice() * 100}
-                          userInfo={{
-                            fullName: purchaseData[0]?.attendees[0] 
-                              ? `${purchaseData[0].attendees[0].firstName} ${purchaseData[0].attendees[0].lastName}`.trim() 
-                              : currentUser?.email || 'User',
-                            email: purchaseData[0]?.attendees[0]?.email || currentUser?.email || '',
-                            phone: purchaseData[0]?.attendees[0]?.phone || ''
-                          }}
-                          onSuccess={handlePaymentSuccess}
-                          onClose={handlePaymentClose}
-                          disabled={isProcessing}
-                        />
-                        <Button 
-                          variant="outline" 
-                          onClick={() => setShowPayment(false)}
-                          className="w-full"
-                        >
-                          Cancel Payment
-                        </Button>
+                  <div className="border-t pt-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span>Total Tickets:</span>
+                        <span>{getTotalTickets()}</span>
                       </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                <div className="border-t pt-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span>Total Tickets:</span>
-                      <span>{getTotalTickets()}</span>
-                    </div>
-                    <div className="flex justify-between font-semibold text-lg">
-                      <span>Total:</span>
-                      <span>₦{(getTotalPrice() / 100).toLocaleString()}</span>
+                      <div className="flex justify-between font-semibold text-lg">
+                        <span>Total:</span>
+                        <span>₦{(getTotalPrice() / 100).toLocaleString()}</span>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {!showPayment && (
-                  <Button
-                    onClick={handlePurchase}
-                    disabled={isProcessing || getTotalTickets() === 0 || (requiresLoginForPurchase && !currentUser)}
-                    className="w-full"
-                    size="lg"
-                  >
-                    {isProcessing ? 'Processing...' : getTotalPrice() === 0 ? `Get ${getTotalTickets()} Free Ticket${getTotalTickets() !== 1 ? 's' : ''}` : `Purchase ${getTotalTickets()} Ticket${getTotalTickets() !== 1 ? 's' : ''}`}
-                  </Button>
-                )}
+                  {!showPayment && (
+                    <Button
+                      onClick={handlePurchase}
+                      disabled={isProcessing || getTotalTickets() === 0 || (requiresLoginForPurchase && !currentUser)}
+                      className="w-full"
+                      size="lg"
+                    >
+                      {isProcessing ? 'Processing...' : getTotalPrice() === 0 ? `Get ${getTotalTickets()} Free Ticket${getTotalTickets() !== 1 ? 's' : ''}` : `Purchase ${getTotalTickets()} Ticket${getTotalTickets() !== 1 ? 's' : ''}`}
+                    </Button>
+                  )}
 
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Success Modal */}

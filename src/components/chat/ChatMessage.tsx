@@ -1,31 +1,51 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Quote, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 import { QuotedMessage } from './QuotedMessage';
+import { AttendeeProfileModal } from '@/components/attendee/AttendeeProfileModal';
 
 interface ChatMessageProps {
   message: any;
   isOwn: boolean;
   onQuote: (message: any) => void;
+  onConnect?: (userId: string) => void;
+  onMessage?: (userId: string, userName: string, userPhoto?: string) => void;
 }
 
-export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwn, onQuote }) => {
+export const ChatMessage: React.FC<ChatMessageProps> = ({ 
+  message, 
+  isOwn, 
+  onQuote, 
+  onConnect, 
+  onMessage 
+}) => {
+  const [showProfileModal, setShowProfileModal] = useState(false);
   const timeAgo = formatDistanceToNow(new Date(message.created_at), { addSuffix: true });
 
+  const handleAvatarClick = () => {
+    if (!isOwn && message.user_profile) {
+      setShowProfileModal(true);
+    }
+  };
+
   return (
-    <div className={`flex gap-3 group ${isOwn ? 'flex-row-reverse' : ''}`}>
-      <Avatar className="h-8 w-8 flex-shrink-0">
-        {message.user_profile?.photo_url ? (
-          <AvatarImage src={message.user_profile.photo_url} alt={message.user_profile?.name} />
-        ) : (
-          <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300 text-sm">
-            {message.user_profile?.name?.charAt(0) || 'U'}
-          </AvatarFallback>
-        )}
-      </Avatar>
+    <>
+      <div className={`flex gap-3 group ${isOwn ? 'flex-row-reverse' : ''}`}>
+        <Avatar 
+          className={`h-8 w-8 flex-shrink-0 ${!isOwn ? 'cursor-pointer hover:ring-2 hover:ring-connect-500 transition-all' : ''}`}
+          onClick={handleAvatarClick}
+        >
+          {message.user_profile?.photo_url ? (
+            <AvatarImage src={message.user_profile.photo_url} alt={message.user_profile?.name} />
+          ) : (
+            <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300 text-sm">
+              {message.user_profile?.name?.charAt(0) || 'U'}
+            </AvatarFallback>
+          )}
+        </Avatar>
 
       <div className={`flex-1 min-w-0 ${isOwn ? 'text-right' : ''}`}>
         <div className={`flex items-center gap-2 mb-1 ${isOwn ? 'justify-end' : ''}`}>
@@ -71,5 +91,25 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, isOwn, onQuot
         </div>
       </div>
     </div>
+
+    {/* Profile Modal */}
+    <AttendeeProfileModal
+      isOpen={showProfileModal}
+      onClose={() => setShowProfileModal(false)}
+      attendee={message.user_profile ? {
+        id: message.user_id,
+        name: message.user_profile.name,
+        email: message.user_profile.email,
+        photo_url: message.user_profile.photo_url,
+        bio: message.user_profile.bio,
+        niche: message.user_profile.niche,
+        location: message.user_profile.location,
+        company: message.user_profile.company,
+        links: message.user_profile.links
+      } : null}
+      onConnect={onConnect}
+      onMessage={onMessage}
+    />
+    </>
   );
 };

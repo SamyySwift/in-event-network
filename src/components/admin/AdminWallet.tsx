@@ -63,7 +63,7 @@ export const AdminWallet: React.FC = () => {
     }).format(amount);
   };
 
-  // Line 57 - Fix minimum withdrawal calculation:
+  // Fixed: Remove division by 100 since wallet amounts are now stored in naira
   const canWithdraw = (wallet?.available_balance || 0) >= (wallet?.minimum_payout_amount || 1000);
 
   return (
@@ -76,18 +76,8 @@ export const AdminWallet: React.FC = () => {
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            // In AdminWallet component, remove the division by 100:
             <div className="text-2xl font-bold text-green-600">
               {formatCurrency(wallet?.available_balance || 0)}
-            </div>
-            
-            // Also fix other wallet amount displays:
-            <div className="text-2xl font-bold">
-              {formatCurrency(wallet?.total_earnings || 0)}
-            </div>
-            
-            <div className="text-2xl font-bold">
-              {formatCurrency(wallet?.withdrawn_amount || 0)}
             </div>
             <p className="text-xs text-muted-foreground">
               Ready for withdrawal
@@ -102,7 +92,7 @@ export const AdminWallet: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency((wallet?.total_earnings || 0) / 100)}
+              {formatCurrency(wallet?.total_earnings || 0)}
             </div>
             <p className="text-xs text-muted-foreground">
               From ticket sales
@@ -117,7 +107,7 @@ export const AdminWallet: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency((wallet?.withdrawn_amount || 0) / 100)}
+              {formatCurrency(wallet?.withdrawn_amount || 0)}
             </div>
             <p className="text-xs text-muted-foreground">
               Successfully withdrawn
@@ -138,7 +128,6 @@ export const AdminWallet: React.FC = () => {
           {!canWithdraw && (
             <Alert>
               <AlertCircle className="h-4 w-4" />
-              // Lines 115-119 - Fix alert message:
               <AlertDescription>
                 Minimum withdrawal amount is {formatCurrency(wallet?.minimum_payout_amount || 1000)}.
                 Current balance: {formatCurrency(wallet?.available_balance || 0)}

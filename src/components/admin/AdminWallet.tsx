@@ -63,7 +63,8 @@ export const AdminWallet: React.FC = () => {
     }).format(amount);
   };
 
-  const canWithdraw = (wallet?.available_balance || 0) >= (wallet?.minimum_payout_amount || 100000) / 100;
+  // Line 57 - Fix minimum withdrawal calculation:
+  const canWithdraw = (wallet?.available_balance || 0) >= (wallet?.minimum_payout_amount || 1000);
 
   return (
     <div className="grid gap-6">
@@ -75,8 +76,18 @@ export const AdminWallet: React.FC = () => {
             <Wallet className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
+            // In AdminWallet component, remove the division by 100:
             <div className="text-2xl font-bold text-green-600">
-              {formatCurrency((wallet?.available_balance || 0) / 100)}
+              {formatCurrency(wallet?.available_balance || 0)}
+            </div>
+            
+            // Also fix other wallet amount displays:
+            <div className="text-2xl font-bold">
+              {formatCurrency(wallet?.total_earnings || 0)}
+            </div>
+            
+            <div className="text-2xl font-bold">
+              {formatCurrency(wallet?.withdrawn_amount || 0)}
             </div>
             <p className="text-xs text-muted-foreground">
               Ready for withdrawal
@@ -127,9 +138,10 @@ export const AdminWallet: React.FC = () => {
           {!canWithdraw && (
             <Alert>
               <AlertCircle className="h-4 w-4" />
+              // Lines 115-119 - Fix alert message:
               <AlertDescription>
-                Minimum withdrawal amount is {formatCurrency((wallet?.minimum_payout_amount || 1000) / 100)}.
-                Current balance: {formatCurrency((wallet?.available_balance || 0) / 100)}
+                Minimum withdrawal amount is {formatCurrency(wallet?.minimum_payout_amount || 1000)}.
+                Current balance: {formatCurrency(wallet?.available_balance || 0)}
               </AlertDescription>
             </Alert>
           )}

@@ -17,69 +17,29 @@ export const useAdminCheckIns = () => {
   // Search for tickets without checking in
   const searchTickets = useMutation({
     mutationFn: async (searchQuery: string) => {
-      if (!selectedEventId) throw new Error('No event selected');
-      
-      // First, search by ticket number if it looks like one
-      if (searchQuery.startsWith('TKT-')) {
-        const { data: tickets, error: ticketError } = await supabase
-          .from('event_tickets')
-          .select(`
-            *,
-            profiles!event_tickets_user_id_fkey(id, name, email),
-            ticket_types!event_tickets_ticket_type_id_fkey(name)
-          `)
-          .eq('event_id', selectedEventId)
-          .eq('ticket_number', searchQuery);
-
-        if (ticketError) {
-          console.error('Search error:', ticketError);
-          throw new Error(`Search failed: ${ticketError.message}`);
-        }
-        
-        return tickets || [];
-      } 
-      
-      // Otherwise, search by guest name first (simpler query)
-      const { data: guestTickets, error: guestError } = await supabase
+      let query = supabase
         .from('event_tickets')
         .select(`
           *,
-          ticket_types!event_tickets_ticket_type_id_fkey(name)
+          profiles!event_tickets_user_id_fkey(id, name, email),
+          ticket_types(name)
         `)
-        .eq('event_id', selectedEventId)
-        .ilike('guest_name', `%${searchQuery}%`);
+        .eq('event_id', selectedEventId);
 
-      if (guestError) {
-        console.error('Guest search error:', guestError);
-        throw new Error(`Search failed: ${guestError.message}`);
+      // Check if searchQuery looks like a ticket number (starts with TKT-)
+      if (searchQuery.startsWith('TKT-')) {
+        query = query.eq('ticket_number', searchQuery);
+      } else {
+        // Search by guest name or profile name
+        query = query.or(`guest_name.ilike.%${searchQuery}%,profiles.name.ilike.%${searchQuery}%`);
       }
 
-      // If no guest tickets found, try searching by profile name
-      if (!guestTickets || guestTickets.length === 0) {
-        const { data: profileTickets, error: profileError } = await supabase
-          .from('event_tickets')
-          .select(`
-            *,
-            profiles!event_tickets_user_id_fkey(id, name, email),
-            ticket_types!event_tickets_ticket_type_id_fkey(name)
-          `)
-          .eq('event_id', selectedEventId)
-          .not('user_id', 'is', null);
+      const { data: tickets, error: ticketError } = await query;
 
-        if (profileError) {
-          console.error('Profile search error:', profileError);
-          throw new Error(`Search failed: ${profileError.message}`);
-        }
-
-        // Filter by profile name on the client side
-        const filteredTickets = (profileTickets || []).filter(ticket => 
-          ticket.profiles?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-
-        return filteredTickets;
-      }
-
-      return guestTickets;
+      if (ticketError) throw new Error('Error searching for tickets');
+      if (!tickets || tickets.length === 0) throw new Error('No tickets found matching search criteria');
+      
+      return tickets;
     },
     onError: (error: any) => {
       toast({

@@ -5,7 +5,7 @@ import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 import { useToast } from '@/hooks/use-toast';
 
 interface CheckInData {
-  ticketNumber: string;
+  searchQuery: string; // Can be ticket number or attendee name
   notes?: string;
 }
 
@@ -44,21 +44,33 @@ export const useAdminCheckIns = () => {
     }
   };
 
-  // Check in a ticket by ticket number
+  // Check in a ticket by ticket number or attendee name
   const checkInTicket = useMutation({
-    mutationFn: async ({ ticketNumber, notes }: CheckInData) => {
-      // First, find the ticket with user information
-      const { data: ticket, error: ticketError } = await supabase
+    mutationFn: async ({ searchQuery, notes }: CheckInData) => {
+      // First, find the ticket by either ticket number or attendee name
+      let query = supabase
         .from('event_tickets')
         .select(`
           *,
           profiles!event_tickets_user_id_fkey(id, name, email)
         `)
-        .eq('ticket_number', ticketNumber)
-        .eq('event_id', selectedEventId)
-        .single();
+        .eq('event_id', selectedEventId);
 
-      if (ticketError) throw new Error('Ticket not found');
+      // Check if searchQuery looks like a ticket number (starts with TKT-)
+      if (searchQuery.startsWith('TKT-')) {
+        query = query.eq('ticket_number', searchQuery);
+      } else {
+        // Search by guest name or profile name
+        query = query.or(`guest_name.ilike.%${searchQuery}%,profiles.name.ilike.%${searchQuery}%`);
+      }
+
+      const { data: tickets, error: ticketError } = await query;
+
+      if (ticketError) throw new Error('Error searching for ticket');
+      if (!tickets || tickets.length === 0) throw new Error('No ticket found matching search criteria');
+      if (tickets.length > 1) throw new Error('Multiple tickets found. Please be more specific or use ticket number.');
+      
+      const ticket = tickets[0];
       if (ticket.check_in_status) throw new Error('Ticket already checked in');
 
       // Update ticket status
@@ -138,7 +150,7 @@ export const useAdminCheckIns = () => {
         throw new Error('Invalid QR code format. Could not extract ticket number.');
       }
 
-      return checkInTicket.mutateAsync({ ticketNumber });
+      return checkInTicket.mutateAsync({ searchQuery: ticketNumber });
     },
     onSuccess: (ticket) => {
       console.log('QR check-in successful:', ticket);

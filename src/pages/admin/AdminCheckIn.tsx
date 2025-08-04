@@ -13,7 +13,7 @@ import { useAdminTickets } from '@/hooks/useAdminTickets';
 import { AdminEventProvider } from '@/hooks/useAdminEventContext';
 
 function AdminCheckInContent() {
-  const [ticketNumber, setTicketNumber] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [notes, setNotes] = useState('');
   const [showScanner, setShowScanner] = useState(false);
   
@@ -21,15 +21,15 @@ function AdminCheckInContent() {
   const { eventTickets, isLoadingTickets, stats } = useAdminTickets();
 
   const handleManualCheckIn = () => {
-    if (!ticketNumber.trim()) return;
+    if (!searchQuery.trim()) return;
     
     checkInTicket.mutate({ 
-      ticketNumber: ticketNumber.trim(), 
+      searchQuery: searchQuery.trim(), 
       notes: notes.trim() || undefined 
     });
     
     // Clear form on success
-    setTicketNumber('');
+    setSearchQuery('');
     setNotes('');
   };
 
@@ -172,12 +172,12 @@ function AdminCheckInContent() {
                 <h3 className="text-base font-semibold text-foreground">Manual Check-In</h3>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="ticketNumber" className="text-sm font-medium">Ticket Number</Label>
+                    <Label htmlFor="searchQuery" className="text-sm font-medium">Ticket Number or Attendee Name</Label>
                     <Input
-                      id="ticketNumber"
-                      placeholder="Enter ticket number (e.g., TKT-20240101-1234)"
-                      value={ticketNumber}
-                      onChange={(e) => setTicketNumber(e.target.value)}
+                      id="searchQuery"
+                      placeholder="Enter ticket number (TKT-xxx) or attendee name"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleManualCheckIn()}
                       className="rounded-xl"
                     />
@@ -195,7 +195,7 @@ function AdminCheckInContent() {
                   </div>
                   <Button 
                     onClick={handleManualCheckIn}
-                    disabled={!ticketNumber.trim() || isCheckingIn}
+                    disabled={!searchQuery.trim() || isCheckingIn}
                     className="w-full rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
                     size="lg"
                   >

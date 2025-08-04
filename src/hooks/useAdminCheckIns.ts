@@ -14,42 +14,6 @@ export const useAdminCheckIns = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  // Search for tickets without checking in
-  const searchTickets = useMutation({
-    mutationFn: async (searchQuery: string) => {
-      let query = supabase
-        .from('event_tickets')
-        .select(`
-          *,
-          profiles!event_tickets_user_id_fkey(id, name, email),
-          ticket_types(name)
-        `)
-        .eq('event_id', selectedEventId);
-
-      // Check if searchQuery looks like a ticket number (starts with TKT-)
-      if (searchQuery.startsWith('TKT-')) {
-        query = query.eq('ticket_number', searchQuery);
-      } else {
-        // Search by guest name or profile name
-        query = query.or(`guest_name.ilike.%${searchQuery}%,profiles.name.ilike.%${searchQuery}%`);
-      }
-
-      const { data: tickets, error: ticketError } = await query;
-
-      if (ticketError) throw new Error('Error searching for tickets');
-      if (!tickets || tickets.length === 0) throw new Error('No tickets found matching search criteria');
-      
-      return tickets;
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Search Failed",
-        description: error.message || "Failed to search for tickets",
-        variant: "destructive",
-      });
-    },
-  });
-
   // Helper function to grant attendee dashboard access via admin check-in
   const grantAttendeeAccess = async (ticketData: any) => {
     try {
@@ -278,75 +242,11 @@ export const useAdminCheckIns = () => {
     },
   });
 
-  // Check in a specific ticket by ID
-  const checkInTicketById = useMutation({
-    mutationFn: async ({ ticketId, notes }: { ticketId: string; notes?: string }) => {
-      // Get the ticket first
-      const { data: ticket, error: fetchError } = await supabase
-        .from('event_tickets')
-        .select(`
-          *,
-          profiles!event_tickets_user_id_fkey(id, name, email)
-        `)
-        .eq('id', ticketId)
-        .single();
-
-      if (fetchError) throw new Error('Ticket not found');
-      if (ticket.check_in_status) throw new Error('Ticket already checked in');
-
-      // Update ticket status
-      const { error: updateError } = await supabase
-        .from('event_tickets')
-        .update({
-          check_in_status: true,
-          checked_in_at: new Date().toISOString(),
-          checked_in_by: (await supabase.auth.getUser()).data.user?.id,
-        })
-        .eq('id', ticketId);
-
-      if (updateError) throw updateError;
-
-      // Create check-in record
-      const { error: checkInError } = await supabase
-        .from('check_ins')
-        .insert([{
-          ticket_id: ticketId,
-          admin_id: (await supabase.auth.getUser()).data.user?.id,
-          check_in_method: 'manual',
-          notes,
-        }]);
-
-      if (checkInError) throw checkInError;
-
-      // Grant attendee dashboard access
-      await grantAttendeeAccess(ticket);
-
-      return ticket;
-    },
-    onSuccess: (ticket) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-event-tickets'] });
-      toast({
-        title: "Success",
-        description: `Ticket checked in successfully. ${ticket.profiles?.name || 'Attendee'} now has dashboard access.`,
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Check-in Failed",
-        description: error.message || "Failed to check in ticket",
-        variant: "destructive",
-      });
-    },
-  });
-
   return {
-    searchTickets,
     checkInTicket,
-    checkInTicketById,
     checkInByQR,
     bulkCheckInAll,
-    isCheckingIn: checkInTicket.isPending || checkInByQR.isPending || checkInTicketById.isPending,
+    isCheckingIn: checkInTicket.isPending || checkInByQR.isPending,
     isBulkCheckingIn: bulkCheckInAll.isPending,
-    isSearching: searchTickets.isPending,
   };
 };

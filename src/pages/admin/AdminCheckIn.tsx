@@ -16,21 +16,47 @@ function AdminCheckInContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [notes, setNotes] = useState('');
   const [showScanner, setShowScanner] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [selectedTicket, setSelectedTicket] = useState<any>(null);
   
-  const { checkInTicket, checkInByQR, isCheckingIn, bulkCheckInAll, isBulkCheckingIn } = useAdminCheckIns();
+  const { 
+    searchTickets, 
+    checkInTicket, 
+    checkInTicketById, 
+    checkInByQR, 
+    isCheckingIn, 
+    isSearching,
+    bulkCheckInAll, 
+    isBulkCheckingIn 
+  } = useAdminCheckIns();
   const { eventTickets, isLoadingTickets, stats } = useAdminTickets();
 
-  const handleManualCheckIn = () => {
+  const handleSearch = () => {
     if (!searchQuery.trim()) return;
     
-    checkInTicket.mutate({ 
-      searchQuery: searchQuery.trim(), 
-      notes: notes.trim() || undefined 
+    searchTickets.mutate(searchQuery.trim(), {
+      onSuccess: (tickets) => {
+        setSearchResults(tickets);
+        if (tickets.length === 1) {
+          setSelectedTicket(tickets[0]);
+        }
+      }
     });
-    
-    // Clear form on success
-    setSearchQuery('');
-    setNotes('');
+  };
+
+  const handleCheckIn = (ticketId: string) => {
+    checkInTicketById.mutate({ 
+      ticketId, 
+      notes: notes.trim() || undefined 
+    }, {
+      onSuccess: () => {
+        // Clear form on success
+        setSearchQuery('');
+        setNotes('');
+        setSearchResults([]);
+        setSelectedTicket(null);
+      }
+    });
   };
 
   const handleQRScan = (qrData: string) => {
@@ -178,30 +204,70 @@ function AdminCheckInContent() {
                       placeholder="Enter ticket number (TKT-xxx) or attendee name"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleManualCheckIn()}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                       className="rounded-xl"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="notes" className="text-sm font-medium">Notes (Optional)</Label>
-                    <Textarea
-                      id="notes"
-                      placeholder="Add any notes about this check-in..."
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      rows={3}
-                      className="rounded-xl resize-none"
-                    />
-                  </div>
+
+                  {/* Search Button */}
                   <Button 
-                    onClick={handleManualCheckIn}
-                    disabled={!searchQuery.trim() || isCheckingIn}
+                    onClick={handleSearch}
+                    disabled={!searchQuery.trim() || isSearching}
                     className="w-full rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
                     size="lg"
+                    variant="outline"
                   >
                     <Scan className="h-4 w-4 mr-2" />
-                    {isCheckingIn ? 'Checking In...' : 'Check In Ticket'}
+                    {isSearching ? 'Searching...' : 'Search Tickets'}
                   </Button>
+
+                  {/* Search Results */}
+                  {searchResults.length > 0 && (
+                    <div className="space-y-3 border rounded-xl p-4 bg-muted/30">
+                      <h4 className="font-medium text-foreground">Search Results ({searchResults.length})</h4>
+                      {searchResults.map((ticket) => (
+                        <div key={ticket.id} className="flex items-center justify-between p-3 border rounded-lg bg-background">
+                          <div className="flex-1">
+                            <div className="font-medium text-foreground">
+                              {ticket.guest_name || ticket.profiles?.name || 'Unknown'}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {ticket.ticket_number}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {ticket.ticket_types?.name}
+                            </div>
+                            {ticket.check_in_status && (
+                              <Badge variant="default" className="mt-1">Already Checked In</Badge>
+                            )}
+                          </div>
+                          <Button
+                            onClick={() => handleCheckIn(ticket.id)}
+                            disabled={ticket.check_in_status || isCheckingIn}
+                            size="sm"
+                            className="ml-4"
+                          >
+                            {isCheckingIn ? 'Checking...' : 'Check In'}
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Notes for selected ticket */}
+                  {(selectedTicket || searchResults.length > 0) && (
+                    <div className="space-y-2">
+                      <Label htmlFor="notes" className="text-sm font-medium">Notes (Optional)</Label>
+                      <Textarea
+                        id="notes"
+                        placeholder="Add any notes about this check-in..."
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        rows={3}
+                        className="rounded-xl resize-none"
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
             </CardContent>

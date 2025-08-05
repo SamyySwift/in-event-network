@@ -147,17 +147,19 @@ const AttendeeQuestions = () => {
                 {question.content}
               </p>
 
-              {/* Admin Response */}
+              {/* Admin/Speaker Response */}
               {question.response && (
                 <div className="mt-4 p-4 bg-blue-50 border-l-4 border-blue-200 rounded">
                   <div className="flex items-center gap-2 mb-2">
                     <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center">
                       <span className="text-xs font-semibold text-white">
-                        A
+                        {question.session_info?.speaker_name ? 'S' : 'A'}
                       </span>
                     </div>
                     <span className="text-sm font-medium text-blue-800">
-                      Admin Response
+                      {question.session_info?.speaker_name 
+                        ? `${question.session_info.speaker_name} (Speaker)` 
+                        : 'Admin Response'}
                     </span>
                     {question.response_created_at && (
                       <span className="text-xs text-blue-600">

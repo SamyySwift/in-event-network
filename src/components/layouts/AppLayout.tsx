@@ -35,7 +35,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNotificationCount } from "@/hooks/useNotificationCount";
-import { useAttendeeNotifications } from "@/hooks/useAttendeeNotifications";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -46,13 +45,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const location = useLocation();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
-  
-  // Use appropriate notification system based on user role
-  const { unreadCount: adminUnreadCount } = useNotificationCount();
-  const { unreadCount: attendeeUnreadCount } = useAttendeeNotifications();
-  
-  const unreadCount = currentUser?.role === 'attendee' ? attendeeUnreadCount : adminUnreadCount;
-  
+  const { unreadCount } = useNotificationCount();
   const isActive = (path: string) => {
     if (path === "/") {
       return location.pathname === "/";

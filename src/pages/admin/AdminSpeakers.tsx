@@ -216,8 +216,10 @@ const AdminSpeakersContent = () => {
     setValue('session_title', speaker.session_title || '');
     // Keep the original time value without timezone conversion
     if (speaker.session_time) {
-      const sessionDate = new Date(speaker.session_time);
-      setValue('session_time', sessionDate.toISOString().slice(0, 16));
+      // For datetime-local input, we need to format as YYYY-MM-DDTHH:mm
+      // without any timezone conversion to preserve the exact time
+      const timeString = speaker.session_time.replace('Z', '').slice(0, 16);
+      setValue('session_time', timeString);
     } else {
       setValue('session_time', '');
     }

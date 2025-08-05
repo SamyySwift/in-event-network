@@ -214,11 +214,10 @@ const AdminSpeakersContent = () => {
     setValue('company', speaker.company || '');
     setValue('bio', speaker.bio);
     setValue('session_title', speaker.session_title || '');
-    // Convert UTC time to local time for datetime-local input
+    // Keep the original time value without timezone conversion
     if (speaker.session_time) {
-      const utcDate = new Date(speaker.session_time);
-      const localDateTime = new Date(utcDate.getTime() - utcDate.getTimezoneOffset() * 60000);
-      setValue('session_time', localDateTime.toISOString().slice(0, 16));
+      const sessionDate = new Date(speaker.session_time);
+      setValue('session_time', sessionDate.toISOString().slice(0, 16));
     } else {
       setValue('session_time', '');
     }

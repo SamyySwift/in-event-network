@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Bell, Check, MessageSquare, UserPlus, Calendar, Clock, Megaphone, Info, X, CheckCircle, XCircle, Mail, Users } from 'lucide-react';
+import { Bell, Check, MessageSquare, UserPlus, Calendar, Clock, Megaphone, Info, X, CheckCircle, XCircle } from 'lucide-react';
 import { 
   Card, 
   CardContent, 
@@ -16,47 +16,28 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useConnectionRequests } from '@/hooks/useConnectionRequests';
-import { useAttendeeNotifications } from '@/hooks/useAttendeeNotifications';
 
 const AttendeeNotifications = () => {
   const { toast } = useToast();
   const { 
-    notifications: connectionNotifications, 
-    loading: connectionLoading, 
+    notifications, 
+    loading, 
     acceptConnectionRequest, 
     declineConnectionRequest, 
-    markAsRead: markConnectionAsRead 
+    markAsRead 
   } = useConnectionRequests();
-  
-  const {
-    notifications,
-    loading,
-    markAsRead,
-    markAllAsRead: attendeeMarkAllAsRead,
-    getNotificationsByType,
-    requestNotificationPermission
-  } = useAttendeeNotifications();
   
   const [selectMode, setSelectMode] = useState(false);
   const [selectedNotifications, setSelectedNotifications] = useState<string[]>([]);
   
   const unreadCount = notifications.filter(n => !n.is_read).length;
   
-  // Request notification permission on component mount
-  React.useEffect(() => {
-    requestNotificationPermission();
-  }, []);
-  
   // Handle clicking a notification
-  const handleNotificationClick = (notification: typeof notifications[0] | typeof connectionNotifications[0]) => {
+  const handleNotificationClick = (notification: typeof notifications[0]) => {
     if (selectMode) {
       toggleSelectNotification(notification.id);
     } else if (!notification.is_read) {
-      if ('connection' in notification) {
-        markConnectionAsRead(notification.id);
-      } else {
-        markAsRead(notification.id);
-      }
+      markAsRead(notification.id);
     }
   };
   
@@ -69,6 +50,28 @@ const AttendeeNotifications = () => {
         return [...prev, id];
       }
     });
+  };
+  
+  // Mark all as read
+  const markAllAsRead = async () => {
+    try {
+      await Promise.all(
+        notifications
+          .filter(n => !n.is_read)
+          .map(n => markAsRead(n.id))
+      );
+      
+      toast({
+        title: "Success",
+        description: "All notifications marked as read",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to mark all as read",
+        variant: "destructive",
+      });
+    }
   };
   
   // Format the time
@@ -93,28 +96,19 @@ const AttendeeNotifications = () => {
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'connection':
-      case 'connection_accepted':
         return <UserPlus className="h-5 w-5 text-connect-600" />;
-      case 'direct_message':
-        return <Mail className="h-5 w-5 text-blue-600" />;
-      case 'group_message':
-        return <Users className="h-5 w-5 text-purple-600" />;
       case 'question':
         return <MessageSquare className="h-5 w-5 text-amber-600" />;
-      case 'schedule_update':
+      case 'schedule':
         return <Calendar className="h-5 w-5 text-green-600" />;
-      case 'facility_update':
-        return <Info className="h-5 w-5 text-orange-600" />;
       case 'announcement':
         return <Megaphone className="h-5 w-5 text-blue-600" />;
-      case 'poll_created':
-        return <Clock className="h-5 w-5 text-indigo-600" />;
       default:
         return <Info className="h-5 w-5 text-gray-600" />;
     }
   };
 
-  const renderConnectionRequest = (notification: typeof connectionNotifications[0]) => {
+  const renderConnectionRequest = (notification: typeof notifications[0]) => {
     const connection = notification.connection;
     const requesterProfile = connection?.requester_profile;
     
@@ -202,7 +196,7 @@ const AttendeeNotifications = () => {
     );
   };
 
-  if (loading || connectionLoading) {
+  if (loading) {
     return (
       <div className="animate-fade-in max-w-6xl mx-auto p-4 sm:p-6">
         <div className="flex justify-center items-center h-64">
@@ -252,7 +246,7 @@ const AttendeeNotifications = () => {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={attendeeMarkAllAsRead}
+                  onClick={markAllAsRead}
                   className="text-sm flex-1 sm:flex-none"
                   disabled={unreadCount === 0}
                 >
@@ -284,12 +278,10 @@ const AttendeeNotifications = () => {
         
         <CardContent className="px-4 sm:px-6">
           <Tabs defaultValue="all" className="w-full">
-            <TabsList className="grid grid-cols-5 mb-4 w-full">
+            <TabsList className="grid grid-cols-3 mb-4 w-full">
               <TabsTrigger value="all" className="text-xs sm:text-sm">All</TabsTrigger>
               <TabsTrigger value="unread" className="text-xs sm:text-sm">Unread</TabsTrigger>
-              <TabsTrigger value="messages" className="text-xs sm:text-sm">Messages</TabsTrigger>
               <TabsTrigger value="connections" className="text-xs sm:text-sm">Connections</TabsTrigger>
-              <TabsTrigger value="updates" className="text-xs sm:text-sm">Updates</TabsTrigger>
             </TabsList>
             
             <TabsContent value="all" className="space-y-0 divide-y divide-gray-100 dark:divide-gray-800">
@@ -372,45 +364,9 @@ const AttendeeNotifications = () => {
               )}
             </TabsContent>
             
-            <TabsContent value="messages" className="space-y-0 divide-y divide-gray-100 dark:divide-gray-800">
-              {notifications.filter(n => n.type === 'direct_message' || n.type === 'group_message').length > 0 ? (
-                notifications.filter(n => n.type === 'direct_message' || n.type === 'group_message').map((notification) => (
-                  <div 
-                    key={notification.id}
-                    className={`cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
-                      !notification.is_read ? 'bg-gray-50 dark:bg-gray-800/50' : ''
-                    }`}
-                    onClick={() => handleNotificationClick(notification)}
-                  >
-                    <div className="py-4 px-2 flex items-start gap-3">
-                      <div className="mt-1 p-2 rounded-full bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-                        {getNotificationIcon(notification.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm ${!notification.is_read ? 'font-medium' : ''} break-words`}>
-                          {notification.message}
-                        </p>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {formatTime(notification.created_at)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="py-10 text-center">
-                  <MessageSquare className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600" />
-                  <h3 className="mt-4 text-lg font-medium">No messages</h3>
-                  <p className="mt-2 text-gray-500 dark:text-gray-400 text-sm">
-                    You haven't received any messages yet
-                  </p>
-                </div>
-              )}
-            </TabsContent>
-
             <TabsContent value="connections" className="space-y-0 divide-y divide-gray-100 dark:divide-gray-800">
-              {connectionNotifications.filter(n => n.type === 'connection').length > 0 ? (
-                connectionNotifications.filter(n => n.type === 'connection').map((notification) => (
+              {notifications.filter(n => n.type === 'connection').length > 0 ? (
+                notifications.filter(n => n.type === 'connection').map((notification) => (
                   <div 
                     key={notification.id}
                     className={`cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
@@ -427,42 +383,6 @@ const AttendeeNotifications = () => {
                   <h3 className="mt-4 text-lg font-medium">No connection requests</h3>
                   <p className="mt-2 text-gray-500 dark:text-gray-400 text-sm">
                     You haven't received any connection requests yet
-                  </p>
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="updates" className="space-y-0 divide-y divide-gray-100 dark:divide-gray-800">
-              {notifications.filter(n => ['announcement', 'schedule_update', 'facility_update', 'poll_created'].includes(n.type)).length > 0 ? (
-                notifications.filter(n => ['announcement', 'schedule_update', 'facility_update', 'poll_created'].includes(n.type)).map((notification) => (
-                  <div 
-                    key={notification.id}
-                    className={`cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
-                      !notification.is_read ? 'bg-gray-50 dark:bg-gray-800/50' : ''
-                    }`}
-                    onClick={() => handleNotificationClick(notification)}
-                  >
-                    <div className="py-4 px-2 flex items-start gap-3">
-                      <div className="mt-1 p-2 rounded-full bg-gray-100 dark:bg-gray-800 flex-shrink-0">
-                        {getNotificationIcon(notification.type)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm ${!notification.is_read ? 'font-medium' : ''} break-words`}>
-                          {notification.message}
-                        </p>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {formatTime(notification.created_at)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="py-10 text-center">
-                  <Bell className="h-12 w-12 mx-auto text-gray-300 dark:text-gray-600" />
-                  <h3 className="mt-4 text-lg font-medium">No updates</h3>
-                  <p className="mt-2 text-gray-500 dark:text-gray-400 text-sm">
-                    You haven't received any event updates yet
                   </p>
                 </div>
               )}

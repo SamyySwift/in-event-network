@@ -36,6 +36,7 @@ import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNotificationCount } from "@/hooks/useNotificationCount";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
+import { NotificationBadge } from "@/components/notifications/NotificationBadge";
 interface AppLayoutProps {
   children: React.ReactNode;
 }
@@ -255,19 +256,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         {currentUser && (
           <div className="flex items-center space-x-2">
             <ThemeToggle />
-            <Button
-              variant="ghost"
-              size="icon"
+            <NotificationBadge 
+              count={unreadCount}
+              size="md"
               onClick={() => navigate("/attendee/notifications")}
-              className="relative"
-            >
-              <Bell size={20} className="text-gray-600 dark:text-gray-300" />
-              {unreadCount > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs bg-red-500 text-white flex items-center justify-center">
-                  {unreadCount > 9 ? "9+" : unreadCount}
-                </Badge>
-              )}
-            </Button>
+            />
 
             <Avatar
               className="h-8 w-8 cursor-pointer"
@@ -327,19 +320,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   {currentUser.role}
                 </p>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
+              <NotificationBadge 
+                count={unreadCount}
+                size="sm"
                 onClick={() => navigate("/attendee/notifications")}
-                className="relative"
-              >
-                <Bell size={16} className="text-gray-600 dark:text-gray-300" />
-                {unreadCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs bg-red-500 text-white flex items-center justify-center">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </Badge>
-                )}
-              </Button>
+              />
             </div>
           )}
         </div>

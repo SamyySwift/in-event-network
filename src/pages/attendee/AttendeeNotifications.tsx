@@ -125,8 +125,8 @@ const AttendeeNotifications = () => {
     const isRejected = connection.status === 'rejected';
 
     return (
-      <div className="py-4 px-2 flex items-start gap-3">
-        <Avatar className="h-10 w-10 flex-shrink-0">
+      <div className="py-5 px-3 flex items-start gap-4">
+        <Avatar className="h-12 w-12 flex-shrink-0">
           {requesterProfile.photo_url ? (
             <AvatarImage src={requesterProfile.photo_url} alt={requesterProfile.name} />
           ) : (
@@ -136,33 +136,35 @@ const AttendeeNotifications = () => {
           )}
         </Avatar>
         
-        <div className="flex-1 min-w-0 space-y-2">
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <p className={`text-sm ${!notification.is_read ? 'font-medium' : ''} break-words`}>
-                <span className="font-semibold">{requesterProfile.name}</span> wants to connect with you
-              </p>
-              {requesterProfile.role && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 break-words">
-                  {requesterProfile.role}{requesterProfile.company && ` at ${requesterProfile.company}`}
+          <div className="flex-1 min-w-0 space-y-3">
+            <div className="space-y-2">
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm leading-relaxed ${!notification.is_read ? 'font-medium' : ''} break-words`}>
+                  <span className="font-semibold">{requesterProfile.name}</span> wants to connect with you
                 </p>
-              )}
-              <div className="flex flex-wrap items-center mt-1 gap-2">
+                {requesterProfile.role && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400 break-words mt-1">
+                    {requesterProfile.role}{requesterProfile.company && ` at ${requesterProfile.company}`}
+                  </p>
+                )}
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-xs text-gray-500 dark:text-gray-400">
                   {formatTime(notification.created_at)}
                 </span>
                 {!notification.is_read && (
-                  <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-connect-50 text-connect-600 dark:bg-connect-900/30 dark:text-connect-400">
+                  <Badge variant="outline" className="text-[10px] px-2 py-0.5 h-5 bg-connect-50 text-connect-600 dark:bg-connect-900/30 dark:text-connect-400">
                     New
                   </Badge>
                 )}
                 {isAccepted && (
-                  <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400">
+                  <Badge variant="outline" className="text-[10px] px-2 py-0.5 h-5 bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400">
                     Accepted
                   </Badge>
                 )}
                 {isRejected && (
-                  <Badge variant="outline" className="text-[10px] px-1 py-0 h-4 bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400">
+                  <Badge variant="outline" className="text-[10px] px-2 py-0.5 h-5 bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400">
                     Declined
                   </Badge>
                 )}
@@ -170,7 +172,7 @@ const AttendeeNotifications = () => {
             </div>
             
             {isPending && (
-              <div className="flex gap-2 flex-shrink-0">
+              <div className="flex gap-2 pt-2">
                 <Button
                   size="sm"
                   variant="outline"
@@ -178,10 +180,10 @@ const AttendeeNotifications = () => {
                     e.stopPropagation();
                     declineConnectionRequest(connection.id, notification.id);
                   }}
-                  className="h-8 px-3 text-xs"
+                  className="h-8 px-3 text-xs flex-1 sm:flex-none"
                 >
-                  <XCircle className="h-3 w-3 sm:mr-1" />
-                  <span className="hidden sm:inline">Decline</span>
+                  <XCircle className="h-3 w-3 mr-1" />
+                  Decline
                 </Button>
                 <Button
                   size="sm"
@@ -189,15 +191,14 @@ const AttendeeNotifications = () => {
                     e.stopPropagation();
                     acceptConnectionRequest(connection.id, notification.id);
                   }}
-                  className="h-8 px-3 text-xs bg-connect-600 hover:bg-connect-700"
+                  className="h-8 px-3 text-xs bg-connect-600 hover:bg-connect-700 flex-1 sm:flex-none"
                 >
-                  <CheckCircle className="h-3 w-3 sm:mr-1" />
-                  <span className="hidden sm:inline">Accept</span>
+                  <CheckCircle className="h-3 w-3 mr-1" />
+                  Accept
                 </Button>
               </div>
             )}
           </div>
-        </div>
       </div>
     );
   };
@@ -305,12 +306,12 @@ const AttendeeNotifications = () => {
                     {notification.type === 'connection' ? 
                       renderConnectionRequest(notification) : 
                       (
-                        <div className="py-4 px-2 flex items-start gap-3">
-                          <div className="mt-1 p-2 rounded-full bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                        <div className="py-5 px-3 flex items-start gap-4">
+                          <div className="mt-1 p-2.5 rounded-full bg-gray-100 dark:bg-gray-800 flex-shrink-0">
                             {getNotificationIcon(notification.type)}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className={`text-sm ${!notification.is_read ? 'font-medium' : ''} break-words`}>
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <p className={`text-sm leading-relaxed ${!notification.is_read ? 'font-medium' : ''} break-words`}>
                               {notification.message}
                             </p>
                             <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -344,12 +345,12 @@ const AttendeeNotifications = () => {
                     {notification.type === 'connection' ? 
                       renderConnectionRequest(notification) : 
                       (
-                        <div className="py-4 px-2 flex items-start gap-3">
-                          <div className="mt-1 p-2 rounded-full bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                        <div className="py-5 px-3 flex items-start gap-4">
+                          <div className="mt-1 p-2.5 rounded-full bg-gray-100 dark:bg-gray-800 flex-shrink-0">
                             {getNotificationIcon(notification.type)}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium break-words">
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <p className="text-sm font-medium leading-relaxed break-words">
                               {notification.message}
                             </p>
                             <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -382,12 +383,12 @@ const AttendeeNotifications = () => {
                     }`}
                     onClick={() => handleNotificationClick(notification)}
                   >
-                    <div className="py-4 px-2 flex items-start gap-3">
-                      <div className="mt-1 p-2 rounded-full bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                    <div className="py-5 px-3 flex items-start gap-4">
+                      <div className="mt-1 p-2.5 rounded-full bg-gray-100 dark:bg-gray-800 flex-shrink-0">
                         {getNotificationIcon(notification.type)}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm ${!notification.is_read ? 'font-medium' : ''} break-words`}>
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <p className={`text-sm leading-relaxed ${!notification.is_read ? 'font-medium' : ''} break-words`}>
                           {notification.message}
                         </p>
                         <span className="text-xs text-gray-500 dark:text-gray-400">
@@ -442,12 +443,12 @@ const AttendeeNotifications = () => {
                     }`}
                     onClick={() => handleNotificationClick(notification)}
                   >
-                    <div className="py-4 px-2 flex items-start gap-3">
-                      <div className="mt-1 p-2 rounded-full bg-gray-100 dark:bg-gray-800 flex-shrink-0">
+                    <div className="py-5 px-3 flex items-start gap-4">
+                      <div className="mt-1 p-2.5 rounded-full bg-gray-100 dark:bg-gray-800 flex-shrink-0">
                         {getNotificationIcon(notification.type)}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className={`text-sm ${!notification.is_read ? 'font-medium' : ''} break-words`}>
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <p className={`text-sm leading-relaxed ${!notification.is_read ? 'font-medium' : ''} break-words`}>
                           {notification.message}
                         </p>
                         <span className="text-xs text-gray-500 dark:text-gray-400">

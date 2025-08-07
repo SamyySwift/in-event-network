@@ -285,13 +285,25 @@ const AttendeeNotifications = () => {
         
         <CardContent className="px-4 sm:px-6">
           <Tabs defaultValue="all" className="w-full">
-            <TabsList className="grid grid-cols-5 mb-4 w-full">
-              <TabsTrigger value="all" className="text-xs sm:text-sm">All</TabsTrigger>
-              <TabsTrigger value="unread" className="text-xs sm:text-sm">Unread</TabsTrigger>
-              <TabsTrigger value="messages" className="text-xs sm:text-sm">Messages</TabsTrigger>
-              <TabsTrigger value="connections" className="text-xs sm:text-sm">Connections</TabsTrigger>
-              <TabsTrigger value="updates" className="text-xs sm:text-sm">Updates</TabsTrigger>
-            </TabsList>
+            <div className="mb-6 overflow-x-auto">
+              <TabsList className="inline-flex w-auto min-w-full h-auto p-1 gap-1">
+                <TabsTrigger value="all" className="px-4 py-2.5 text-sm font-medium whitespace-nowrap">
+                  All
+                </TabsTrigger>
+                <TabsTrigger value="unread" className="px-4 py-2.5 text-sm font-medium whitespace-nowrap">
+                  Unread
+                </TabsTrigger>
+                <TabsTrigger value="messages" className="px-4 py-2.5 text-sm font-medium whitespace-nowrap">
+                  Messages
+                </TabsTrigger>
+                <TabsTrigger value="connections" className="px-4 py-2.5 text-sm font-medium whitespace-nowrap">
+                  Connections
+                </TabsTrigger>
+                <TabsTrigger value="updates" className="px-4 py-2.5 text-sm font-medium whitespace-nowrap">
+                  Updates
+                </TabsTrigger>
+              </TabsList>
+            </div>
             
             <TabsContent value="all" className="space-y-0 divide-y divide-gray-100 dark:divide-gray-800">
               {notifications.length > 0 ? (

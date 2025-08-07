@@ -4,6 +4,7 @@ import AdminDataTable from "@/components/admin/AdminDataTable";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2 } from "lucide-react";
+import { formatDisplayDate, formatDisplayTime } from "@/utils/timezone";
 
 type Speaker = {
   id: string;
@@ -65,8 +66,7 @@ const columns = [
         <div className="font-medium">{value || "—"}</div>
         {row.session_time && (
           <div className="text-sm text-primary-600 dark:text-primary-400">
-            {new Date(row.session_time).toLocaleDateString()} •{" "}
-            {new Date(row.session_time).toLocaleTimeString()}
+            {formatDisplayDate(row.session_time)} • {formatDisplayTime(row.session_time)}
           </div>
         )}
       </div>

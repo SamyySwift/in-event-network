@@ -180,7 +180,7 @@ const AdminSpeakersContent = () => {
         ...data,
         event_id: selectedEventId,
         photo_url: photoUrl,
-        session_time: data.session_time ? data.session_time : undefined
+        session_time: data.session_time ? data.session_time + ':00' : undefined
       };
       if (editingSpeaker) {
         updateSpeaker({
@@ -214,11 +214,14 @@ const AdminSpeakersContent = () => {
     setValue('company', speaker.company || '');
     setValue('bio', speaker.bio);
     setValue('session_title', speaker.session_title || '');
-    // Convert UTC time to local time for datetime-local input
+    // Set session time for datetime-local input (no timezone conversion needed)
     if (speaker.session_time) {
-      const utcDate = new Date(speaker.session_time);
-      const localDateTime = new Date(utcDate.getTime() - utcDate.getTimezoneOffset() * 60000);
-      setValue('session_time', localDateTime.toISOString().slice(0, 16));
+      // datetime-local expects YYYY-MM-DDTHH:MM format
+      // If the stored time is ISO string, just take the first 16 characters
+      const timeValue = speaker.session_time.includes('T') 
+        ? speaker.session_time.slice(0, 16)
+        : speaker.session_time;
+      setValue('session_time', timeValue);
     } else {
       setValue('session_time', '');
     }

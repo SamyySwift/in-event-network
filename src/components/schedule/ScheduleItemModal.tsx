@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import XLogo from "@/components/icons/XLogo";
+import { formatDisplayTime } from '@/utils/timezone';
 
 interface ScheduleItemModalProps {
   item: {
@@ -46,10 +47,7 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
   const formatTime = (timeStr?: string | null) => {
     if (!timeStr) return '';
     try {
-      return new Date(timeStr).toLocaleTimeString([], { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      });
+      return formatDisplayTime(timeStr);
     } catch {
       return timeStr;
     }

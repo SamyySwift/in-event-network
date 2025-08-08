@@ -27,6 +27,8 @@ export interface QuestionWithProfile {
     session_time: string | null;
   } | null;
   event_name?: string;
+  is_panelist?: boolean;
+  panelist_name?: string | null;
 }
 
 export const useAdminQuestions = (eventId?: string) => {
@@ -159,6 +161,23 @@ export const useAdminQuestions = (eventId?: string) => {
             // Find the user profile for this question
             const userProfile = profiles?.find(p => p.id === question.user_id);
 
+            // Check if the user is a speaker/panelist for this event
+            let isPanelist = false;
+            let panelistName = null;
+            if (question.user_id && question.event_id) {
+              const { data: speakerData } = await supabase
+                .from('speakers')
+                .select('name')
+                .eq('event_id', question.event_id)
+                .eq('created_by', question.user_id)
+                .single();
+              
+              if (speakerData) {
+                isPanelist = true;
+                panelistName = speakerData.name;
+              }
+            }
+
             const processedQuestion = {
               ...question,
               profiles: question.is_anonymous ? null : (userProfile ? {
@@ -166,7 +185,9 @@ export const useAdminQuestions = (eventId?: string) => {
                 photo_url: userProfile.photo_url
               } : null),
               session_info: sessionInfo,
-              event_name: eventsMap[question.event_id] || 'Unknown Event'
+              event_name: eventsMap[question.event_id] || 'Unknown Event',
+              is_panelist: isPanelist,
+              panelist_name: panelistName
             };
 
             console.log('Processed question:', processedQuestion);

@@ -23,6 +23,8 @@ export interface Question {
     speaker_name?: string;
     session_time?: string;
   };
+  is_panelist?: boolean;
+  panelist_name?: string | null;
 }
 
 type QuestionCardProps = {
@@ -72,6 +74,16 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             <CardDescription>
               {format(new Date(question.created_at), "MMM d, yyyy h:mm a")}
             </CardDescription>
+            {question.is_panelist && question.panelist_name && (
+              <div className="flex flex-col gap-1 mt-1">
+                <Badge variant="secondary" className="text-xs w-fit">
+                  PANELIST
+                </Badge>
+                <span className="text-xs text-muted-foreground">
+                  {question.panelist_name}
+                </span>
+              </div>
+            )}
           </div>
         </div>
         <div className="flex flex-col items-end gap-2">

@@ -83,16 +83,16 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
     if (socialLinks.length === 0) return null;
 
     return (
-      <div className="flex items-center gap-2 mt-4">
-        <span className="text-sm font-medium">Connect:</span>
-        <div className="flex gap-2">
+      <div className="mt-4">
+        <span className="block text-sm font-medium mb-2">Connect</span>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {socialLinks.map((link, index) => (
             <Button
               key={index}
               variant="outline"
               size="sm"
               onClick={() => window.open(link.url, '_blank')}
-              className="flex items-center gap-2"
+              className="w-full justify-start gap-2"
             >
               {getSocialIcon(link.platform)}
               {link.platform === 'x' ? 'X' : link.platform.charAt(0).toUpperCase() + link.platform.slice(1)}
@@ -105,7 +105,7 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+      <DialogContent className="w-[95vw] sm:max-w-2xl max-h-[90vh] flex flex-col p-4 sm:p-6">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle className="text-xl font-bold pr-8">{item.title}</DialogTitle>
         </DialogHeader>
@@ -113,7 +113,7 @@ const ScheduleItemModal: React.FC<ScheduleItemModalProps> = ({ item, isOpen, onC
         <div className="flex-1 overflow-y-auto space-y-6 pr-2">
           {/* Event/Speaker Image */}
           {(item.image_url || item.speaker_photo) && (
-            <div className="w-full h-64 rounded-lg overflow-hidden flex-shrink-0">
+            <div className="w-full h-48 sm:h-64 rounded-lg overflow-hidden flex-shrink-0">
               <img 
                 src={item.image_url || item.speaker_photo} 
                 alt={item.title}

@@ -176,11 +176,23 @@ const AdminSpeakersContent = () => {
       if (selectedImage) {
         photoUrl = await uploadImage(selectedImage);
       }
+      // Convert local datetime (from input) to UTC ISO string for consistent storage
+      let sessionTimeISO: string | undefined = undefined;
+      if (data.session_time) {
+        const localDate = new Date(data.session_time);
+        if (!isNaN(localDate.getTime())) {
+          sessionTimeISO = localDate.toISOString();
+        } else {
+          // Fallback: keep original with seconds
+          sessionTimeISO = `${data.session_time}:00`;
+        }
+      }
+
       const speakerData = {
         ...data,
         event_id: selectedEventId,
         photo_url: photoUrl,
-        session_time: data.session_time ? data.session_time + ':00' : undefined
+        session_time: sessionTimeISO,
       };
       if (editingSpeaker) {
         updateSpeaker({
@@ -214,14 +226,19 @@ const AdminSpeakersContent = () => {
     setValue('company', speaker.company || '');
     setValue('bio', speaker.bio);
     setValue('session_title', speaker.session_title || '');
-    // Set session time for datetime-local input (no timezone conversion needed)
+    // Set session time for datetime-local input (convert UTC -> local string)
     if (speaker.session_time) {
-      // datetime-local expects YYYY-MM-DDTHH:MM format
-      // If the stored time is ISO string, just take the first 16 characters
-      const timeValue = speaker.session_time.includes('T') 
-        ? speaker.session_time.slice(0, 16)
-        : speaker.session_time;
-      setValue('session_time', timeValue);
+      const d = new Date(speaker.session_time);
+      if (!isNaN(d.getTime())) {
+        const pad = (n: number) => String(n).padStart(2, '0');
+        const localValue = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        setValue('session_time', localValue);
+      } else {
+        const timeValue = speaker.session_time.includes('T')
+          ? speaker.session_time.slice(0, 16)
+          : speaker.session_time;
+        setValue('session_time', timeValue);
+      }
     } else {
       setValue('session_time', '');
     }

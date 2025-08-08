@@ -104,15 +104,22 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
             )}
           </Badge>
           {question.session_info ? (
-            <Badge
-              variant="secondary"
-              className="flex items-center gap-1 text-xs"
-            >
-              <span>
-                {question.session_info.session_title ||
-                  `${question.session_info.speaker_name}'s Session`}
-              </span>
-            </Badge>
+            <div className="flex flex-col items-end">
+              <Badge
+                variant="secondary"
+                className="flex items-center gap-1 text-xs"
+              >
+                <span>
+                  {question.session_info.session_title ||
+                    `${question.session_info.speaker_name}'s Session`}
+                </span>
+              </Badge>
+              {question.session_info.speaker_name && (
+                <span className="text-xs text-muted-foreground mt-1 text-right">
+                  {question.session_info.speaker_name}
+                </span>
+              )}
+            </div>
           ) : (
             <Badge
               variant="outline"

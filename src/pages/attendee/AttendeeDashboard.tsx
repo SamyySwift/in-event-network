@@ -43,12 +43,7 @@ import { useAttendeeFacilities } from "@/hooks/useAttendeeFacilities";
 import { HighlightsSection } from "@/components/attendee/HighlightsSection";
 import * as LucideIcons from "lucide-react";
 
-// Lazy load the ProfileCompletionPopup to reduce initial bundle size
-const ProfileCompletionPopup = React.lazy(() => 
-  import("@/components/attendee/ProfileCompletionPopup").then(module => ({
-    default: module.ProfileCompletionPopup
-  }))
-);
+import { ProfileCompletionPopup } from "@/components/attendee/ProfileCompletionPopup";
 
 const AttendeeDashboardContent = () => {
   const navigate = useNavigate();
@@ -575,12 +570,11 @@ const AttendeeDashboardContent = () => {
         )}
       </div>
 
-      <Suspense fallback={null}>
-        <ProfileCompletionPopup
-          isOpen={showProfilePopup}
-          onClose={() => setShowProfilePopup(false)}
-        />
-      </Suspense>
+      <ProfileCompletionPopup
+        isOpen={showProfilePopup}
+        onClose={() => setShowProfilePopup(false)}
+      />
+
     </>
   );
 };

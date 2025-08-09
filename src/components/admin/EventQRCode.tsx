@@ -29,6 +29,22 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
+  // Persist QR access in localStorage per user and event
+  const storageKey = currentUser?.id ? `qr_access:${currentUser.id}:${eventId}` : null;
+
+  // Load persisted access on mount or when user/event changes
+  React.useEffect(() => {
+    if (!storageKey) return;
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved === 'true') {
+        setHasValidReferralCode(true);
+      }
+    } catch (e) {
+      console.warn('Unable to read QR access from storage', e);
+    }
+  }, [storageKey]);
+
   // Get the current user's profile data including access_key
   const { data: userProfile } = useQuery({
     queryKey: ['user-profile', currentUser?.id],
@@ -66,6 +82,15 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
     // Force refetch of payment data to ensure immediate UI update
     await queryClient.invalidateQueries({ queryKey: ['event-payments'] });
     await queryClient.refetchQueries({ queryKey: ['event-payments', currentUser?.id] });
+    // Persist access so it remains unlocked after refresh
+    try {
+      if (storageKey) {
+        localStorage.setItem(storageKey, 'true');
+      }
+      setHasValidReferralCode(true);
+    } catch (e) {
+      console.warn('Unable to persist QR access after payment', e);
+    }
   };
 
   const handleApplyReferralCode = async () => {
@@ -74,6 +99,14 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
     // Check if the referral code matches the specific code
     if (referralCode.trim() === '#Kconect09099') {
       setHasValidReferralCode(true);
+      // Persist access so it remains unlocked after refresh
+      try {
+        if (storageKey) {
+          localStorage.setItem(storageKey, 'true');
+        }
+      } catch (e) {
+        console.warn('Unable to persist QR access for referral code', e);
+      }
       toast({
         title: 'Referral Code Applied',
         description: 'You now have access to generate QR codes for this event!',

@@ -8,7 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Check, Rocket, Star } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Check, Rocket, Star, Mail, MessageCircle } from "lucide-react";
 
 const PricingSection = () => {
   const navigate = useNavigate();
@@ -179,14 +180,50 @@ const PricingSection = () => {
                 ))}
               </div>
 
-              <Button
-                size="lg"
-                variant="outline"
-                className="w-full border-white/30 text-white hover:bg-white/10 py-4 sm:py-5 text-lg font-semibold mt-2"
-                onClick={() => navigate("/sponsorship-partnership")}
-              >
-                Contact Sales
-              </Button>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="w-full border-white/30 text-white hover:bg-white/10 py-4 sm:py-5 text-lg font-semibold mt-2"
+                  >
+                    Contact Sales
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Contact Sales</DialogTitle>
+                    <DialogDescription>
+                      Choose how you’d like to reach us.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <Button asChild className="w-full">
+                      <a
+                        href="https://wa.me/2349068982251"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="Chat on WhatsApp"
+                      >
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                        WhatsApp
+                      </a>
+                    </Button>
+                    <Button variant="secondary" asChild className="w-full">
+                      <a
+                        href="mailto:kconect.com@gmail.com?subject=Custom%20Plan%20Enquiry&body=Hi%20kconect%20team%2C%20I%27d%20like%20to%20learn%20more%20about%20the%20Custom%20Plan."
+                        aria-label="Send an email"
+                      >
+                        <Mail className="mr-2 h-4 w-4" />
+                        Email
+                      </a>
+                    </Button>
+                  </div>
+                  <DialogFooter className="sm:justify-start">
+                    <p className="text-xs text-white/60">We’ll get back to you quickly.</p>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
         </div>

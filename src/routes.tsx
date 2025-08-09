@@ -34,7 +34,7 @@ import AdminVendorHub from "@/pages/admin/AdminVendorHub";
 import AdminHighlights from "@/pages/admin/AdminHighlights";
 
 import SponsorForm from "@/pages/SponsorForm";
-import SponsorshipPartnership from "@/pages/SponsorshipPartnership";
+
 
 // Attendee Pages
 import AppLayout from "@/components/layouts/AppLayout";
@@ -128,10 +128,6 @@ export const router = createBrowserRouter([
   {
     path: "/guide",
     element: <Guide />,
-  },
-  {
-    path: "/sponsorship-partnership",
-    element: <SponsorshipPartnership />,
   },
   {
     path: "/discovery",

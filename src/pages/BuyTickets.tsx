@@ -830,7 +830,7 @@ export default function BuyTickets() {
                             eventName={eventData.event.name}
                               tickets={purchaseData.map(purchase => {
                                 const ticketType = eventData.ticketTypes.find(t => t.id === purchase.ticketTypeId);
-                                const priceInKobo = (ticketType?.display_price || ticketType?.price || 0) * 100;
+                                const priceInKobo = (ticketType?.display_price || ticketType?.price || 0);
                                 return {
                                   ticketTypeId: purchase.ticketTypeId,
                                   quantity: purchase.quantity,
@@ -838,7 +838,7 @@ export default function BuyTickets() {
                                   name: ticketType?.name || ''
                                 };
                               })}
-                             totalAmount={getTotalPrice() * 100}
+                             totalAmount={getTotalPrice()}
                             userInfo={{
                               fullName: purchaseData[0]?.attendees[0] 
                                 ? `${purchaseData[0].attendees[0].firstName} ${purchaseData[0].attendees[0].lastName}`.trim() 

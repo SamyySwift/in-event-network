@@ -96,32 +96,9 @@ async function handleChargeSuccess(supabase: any, data: any) {
     return
   }
 
-  // Credit organizer wallet
-  const hostId = payment.events.host_id
-  const eventId = payment.event_id
-  const paymentAmount = payment.amount
-
-  const { error: walletError } = await supabase
-    .from('admin_wallets')
-    .upsert({
-      admin_id: hostId,
-      event_id: eventId,
-      total_earnings: paymentAmount,
-      available_balance: paymentAmount,
-    }, {
-      onConflict: 'admin_id,event_id',
-      update: {
-        total_earnings: 'admin_wallets.total_earnings + ' + paymentAmount,
-        available_balance: 'admin_wallets.available_balance + ' + paymentAmount,
-        updated_at: new Date().toISOString()
-      }
-    })
-
-  if (walletError) {
-    console.error('Error updating wallet:', walletError)
-  } else {
-    console.log('Wallet credited successfully:', hostId, paymentAmount)
-  }
+  // Wallet crediting is handled by a database trigger when tickets are created.
+  // Skip wallet updates here to prevent double-crediting.
+  console.log('Skipping wallet crediting in webhook; handled by DB trigger.');
 }
 
 async function handleTransferSuccess(supabase: any, data: any) {

@@ -47,7 +47,7 @@ function AdminWalletContent() {
                 <span className="text-sm text-muted-foreground">Total Earnings</span>
               </div>
               <div className="text-2xl font-bold text-green-600">
-                ₦{((wallet?.total_earnings || 0) / 100).toLocaleString()}
+                ₦{(wallet?.total_earnings || 0).toLocaleString()}
               </div>
             </div>
             <div className="bg-card border rounded-xl p-4 hover:shadow-md transition-shadow">
@@ -56,7 +56,7 @@ function AdminWalletContent() {
                 <span className="text-sm text-muted-foreground">Available Balance</span>
               </div>
               <div className="text-2xl font-bold text-blue-600">
-                ₦{((wallet?.available_balance || 0) / 100).toLocaleString()}
+                ₦{(wallet?.available_balance || 0).toLocaleString()}
               </div>
             </div>
             <div className="bg-card border rounded-xl p-4 hover:shadow-md transition-shadow">
@@ -65,7 +65,7 @@ function AdminWalletContent() {
                 <span className="text-sm text-muted-foreground">Withdrawn</span>
               </div>
               <div className="text-2xl font-bold text-purple-600">
-                ₦{((wallet?.withdrawn_amount || 0) / 100).toLocaleString()}
+                ₦{(wallet?.withdrawn_amount || 0).toLocaleString()}
               </div>
             </div>
           </div>
@@ -117,7 +117,7 @@ function AdminWalletContent() {
                           </p>
                           <p>
                             <span className="text-muted-foreground">Minimum Payout:</span> 
-                            ₦{((wallet.minimum_payout_amount || 1000) / 100).toLocaleString()}
+                            ₦{(wallet.minimum_payout_amount || 1000).toLocaleString()}
                           </p>
                         </div>
                       </div>
@@ -138,8 +138,8 @@ function AdminWalletContent() {
                             Balance below minimum withdrawal
                           </h4>
                           <p className="text-sm text-yellow-700 mt-1">
-                          You need at least ₦{((wallet.minimum_payout_amount || 1000) / 100).toLocaleString()} to make a withdrawal. 
-                            Current balance: ₦{(wallet.available_balance / 100).toLocaleString()}
+                          You need at least ₦{(wallet.minimum_payout_amount || 1000).toLocaleString()} to make a withdrawal. 
+                            Current balance: ₦{(wallet.available_balance).toLocaleString()}
                           </p>
                         </div>
                       </div>

@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_wallet_credits: {
+        Row: {
+          admin_id: string
+          amount_naira: number
+          created_at: string
+          event_id: string
+          id: string
+          ticket_id: string
+        }
+        Insert: {
+          admin_id: string
+          amount_naira: number
+          created_at?: string
+          event_id: string
+          id?: string
+          ticket_id: string
+        }
+        Update: {
+          admin_id?: string
+          amount_naira?: number
+          created_at?: string
+          event_id?: string
+          id?: string
+          ticket_id?: string
+        }
+        Relationships: []
+      }
       admin_wallets: {
         Row: {
           account_name: string | null

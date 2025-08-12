@@ -820,7 +820,7 @@ export default function BuyTickets() {
                   )}
 
                   {/* Payment Interface */}
-                  {showPayment && currentUser && eventData && (
+                  {showPayment && eventData && (
                     <Card className="border-green-200 bg-green-50">
                       <CardContent className="pt-4">
                         <div className="space-y-4">

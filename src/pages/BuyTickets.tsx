@@ -267,7 +267,7 @@ export default function BuyTickets() {
     // Check if any ticket requires login
     const requiresLogin = purchaseData.some(purchase => {
       const ticketType = eventData?.ticketTypes.find(t => t.id === purchase.ticketTypeId);
-      return ticketType?.requires_login !== false; // Default to requiring login
+      return ticketType?.requires_login === true; // Require login only if explicitly true
     });
 
     if (requiresLogin && !currentUser) {
@@ -288,7 +288,7 @@ export default function BuyTickets() {
         .eq('id', eventData.event.id)
         .single();
 
-      if (!eventError && eventDetails?.host_id === currentUser.id) {
+      if (!eventError && currentUser && eventDetails?.host_id === currentUser.id) {
         toast({
           title: "Admin Purchase Not Allowed",
           description: "Event admins cannot purchase tickets for their own event",
@@ -627,7 +627,7 @@ export default function BuyTickets() {
   // Check if any selected tickets require login
   const requiresLoginForPurchase = purchaseData.some(purchase => {
     const ticketType = ticketTypes.find(t => t.id === purchase.ticketTypeId);
-    return ticketType?.requires_login !== false; // Default to requiring login
+    return ticketType?.requires_login === true; // Require login only if explicitly true
   });
 
   // Handle guest ticket download

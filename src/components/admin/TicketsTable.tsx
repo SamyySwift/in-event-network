@@ -191,7 +191,7 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
                     </div>
                   )}
                 </TableCell>
-                <TableCell>₦{ticket.price.toLocaleString()}</TableCell>
+                <TableCell>₦{(ticket.price / 100).toLocaleString()}</TableCell>
                 <TableCell>
                   <Badge
                     variant={ticket.check_in_status ? "default" : "secondary"}

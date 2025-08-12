@@ -189,6 +189,26 @@ export default function BuyTickets() {
     },
   });
 
+  // Realtime: update ticket availability when new tickets are created
+  useEffect(() => {
+    if (!eventData?.event?.id) return;
+
+    const channel = supabase
+      .channel('tickets-realtime')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'event_tickets', filter: `event_id=eq.${eventData.event.id}` },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['event-tickets', eventKey] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [eventData?.event?.id, eventKey, queryClient]);
+
   // Handle error state
   if (error) {
     return (

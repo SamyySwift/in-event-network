@@ -170,7 +170,7 @@ export function EnhancedTicketPurchaseForm({
                   <p className="text-sm text-muted-foreground mb-2">{ticketType.description}</p>
                 )}
                 <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                  <span>{ticketType.available_quantity} available</span>
+                  <span>{Math.max(0, ticketType.available_quantity - (selectedTickets[ticketType.id] || 0))} remaining</span>
                   <span>Max {ticketType.max_tickets_per_user} per user</span>
                 </div>
               </div>

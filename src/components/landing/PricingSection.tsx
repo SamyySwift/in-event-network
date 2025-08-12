@@ -184,8 +184,7 @@ const PricingSection = () => {
                 <DialogTrigger asChild>
                   <Button
                     size="lg"
-                    variant="outline"
-                    className="w-full border-white/30 text-white hover:bg-white/10 py-4 sm:py-5 text-lg font-semibold mt-2"
+                    className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white shadow-xl py-4 sm:py-5 text-lg font-semibold transform hover:scale-105 transition-all duration-200 mt-2"
                   >
                     Contact Sales
                   </Button>

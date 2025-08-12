@@ -442,43 +442,49 @@ export default function BuyTickets() {
   
       console.log('Inserting tickets:', ticketPurchases);
   
-      // Insert tickets with retry logic for duplicate key errors
+      // Insert tickets with retry logic for duplicate key errors or via edge function for free flow
       let tickets;
-      let retryCount = 0;
-      const maxRetries = 3;
-      
-      while (retryCount < maxRetries) {
-        try {
-          const { data, error } = await supabase
-            .from('event_tickets')
-            .insert(ticketPurchases)
-            .select();
-            
-          if (error) {
-            // If it's a duplicate key error, regenerate QR codes and retry
-            if (error.message.includes('duplicate key value violates unique constraint') && retryCount < maxRetries - 1) {
-              console.log(`Duplicate key error, retrying... (attempt ${retryCount + 1})`);
-              
-              // Regenerate QR codes for all tickets
-              ticketPurchases.forEach((ticket, index) => {
-                const uniqueId = crypto.randomUUID();
-                const timestamp = Date.now();
-                ticket.qr_code_data = `${ticket.event_id}-${ticket.ticket_type_id}-${timestamp}-${uniqueId}-${index}`;
-              });
-              
-              retryCount++;
-              continue;
+      const isFreeFlow = !paymentReference && ticketPurchases.every(t => t.price === 0);
+
+      if (isFreeFlow) {
+        const { data, error } = await supabase.functions.invoke('create-free-tickets', {
+          body: {
+            eventId: eventData.event.id,
+            tickets: ticketPurchases
+          }
+        });
+        if (error) throw error;
+        tickets = data?.tickets || [];
+      } else {
+        let retryCount = 0;
+        const maxRetries = 3;
+        while (retryCount < maxRetries) {
+          try {
+            const { data, error } = await supabase
+              .from('event_tickets')
+              .insert(ticketPurchases)
+              .select();
+            if (error) {
+              if (error.message.includes('duplicate key value violates unique constraint') && retryCount < maxRetries - 1) {
+                console.log(`Duplicate key error, retrying... (attempt ${retryCount + 1})`);
+                ticketPurchases.forEach((ticket, index) => {
+                  const uniqueId = crypto.randomUUID();
+                  const timestamp = Date.now();
+                  ticket.qr_code_data = `${ticket.event_id}-${ticket.ticket_type_id}-${timestamp}-${uniqueId}-${index}`;
+                });
+                retryCount++;
+                continue;
+              }
+              throw error;
             }
-            throw error;
+            tickets = data;
+            break;
+          } catch (err) {
+            if (retryCount === maxRetries - 1) {
+              throw err;
+            }
+            retryCount++;
           }
-          
-          tickets = data;
-          break;
-        } catch (err) {
-          if (retryCount === maxRetries - 1) {
-            throw err;
-          }
-          retryCount++;
         }
       }
   

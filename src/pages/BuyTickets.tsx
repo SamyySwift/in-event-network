@@ -522,7 +522,7 @@ export default function BuyTickets() {
   
       // Insert tickets with retry logic for duplicate key errors or via edge function for free flow
       let tickets;
-      const isFreeFlow = !paymentReference && ticketPurchases.every(t => t.price === 0);
+      const isFreeFlow = !paymentReference && getTotalPrice() === 0;
 
       if (isFreeFlow) {
         const { data, error } = await supabase.functions.invoke('create-free-tickets', {

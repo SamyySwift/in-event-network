@@ -233,6 +233,11 @@ const AttendeeDashboardContent = () => {
           <div className="absolute -top-8 -left-8 w-24 h-24 bg-white/5 rounded-full z-0"></div>
         </div>
 
+        {/* Event Highlights */}
+        <div className="mb-8">
+          <HighlightsSection />
+        </div>
+
         {/* Event Card - Enhanced single event display */}
         {(currentEvent || upcomingEvents?.[0]) && (
           <div className="mb-8">
@@ -243,10 +248,6 @@ const AttendeeDashboardContent = () => {
           </div>
         )}
 
-        {/* Event Highlights */}
-        <div className="mb-8">
-          <HighlightsSection />
-        </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Featured Session Card */}
           <div className="lg:col-span-2">

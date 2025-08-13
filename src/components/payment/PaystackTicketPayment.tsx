@@ -22,7 +22,7 @@ interface PaystackTicketPaymentProps {
     email: string;
     phone: string;
   };
-  onSuccess: (reference: string) => void;
+  onSuccess: (reference: string, tickets?: any[]) => void;
   onClose: () => void;
   disabled?: boolean;
 }
@@ -77,8 +77,7 @@ export function PaystackTicketPayment({
         }
 
         console.log('Tickets created successfully:', data);
-        onSuccess(reference.reference);
-        
+        onSuccess(reference.reference, data?.tickets);
       } catch (error) {
         console.error('Failed to process ticket purchase:', error);
         // Still call onSuccess to allow UI to handle the situation

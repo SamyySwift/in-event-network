@@ -96,6 +96,7 @@ serve(async (req) => {
           ticket_type_id: ticket.ticketTypeId,
           price: ticket.price,
           payment_status: 'completed',
+          payment_reference: paystackReference,
           qr_code_data: uniqueQRCode,
           guest_name: userInfo.userId ? null : userInfo.fullName,
           guest_email: userInfo.userId ? null : userInfo.email,
@@ -115,6 +116,33 @@ serve(async (req) => {
 
     if (createdTickets.length === 0) {
       throw new Error('Failed to create tickets')
+    }
+
+    // Decrement available quantities per ticket type
+    try {
+      const reductions: Record<string, number> = {}
+      for (const t of tickets) {
+        reductions[t.ticketTypeId] = (reductions[t.ticketTypeId] || 0) + (t.quantity || 0)
+      }
+      for (const [ticketTypeId, reduceBy] of Object.entries(reductions)) {
+        const { data: current, error: fetchErr } = await supabase
+          .from('ticket_types')
+          .select('available_quantity')
+          .eq('id', ticketTypeId)
+          .single()
+        if (!fetchErr && current) {
+          const newQty = Math.max(0, (current.available_quantity || 0) - reduceBy)
+          const { error: updErr } = await supabase
+            .from('ticket_types')
+            .update({ available_quantity: newQty })
+            .eq('id', ticketTypeId)
+          if (updErr) console.error('Quantity update error:', updErr)
+        } else if (fetchErr) {
+          console.error('Quantity fetch error:', fetchErr)
+        }
+      }
+    } catch (qtyErr) {
+      console.error('Quantity decrement exception:', qtyErr)
     }
 
     // Credit organizer wallet if payment amount > 0

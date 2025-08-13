@@ -397,10 +397,68 @@ export default function BuyTickets() {
     }
   };
 
-  const handlePaymentSuccess = async (reference: string) => {
-    console.log('Payment successful, creating tickets with reference:', reference);
-    await createTickets(reference);
+  const handlePaymentSuccess = async (reference: string, createdTickets?: any[]) => {
+    console.log('Payment successful, reference:', reference);
     setShowPayment(false);
+
+    // If backend already created tickets (guest or logged-in), use them directly
+    if (createdTickets && createdTickets.length > 0) {
+      try {
+        // Save any form responses against created tickets
+        // Reuse existing logic to map purchaseData to tickets by type and index
+        const formResponseInserts: any[] = [];
+        for (const purchase of purchaseData) {
+          const ticketType = eventData?.ticketTypes.find(t => t.id === purchase.ticketTypeId);
+          if (ticketType?.formFields) {
+            const ticketsForType = createdTickets.filter((t: any) => t.ticket_type_id === purchase.ticketTypeId);
+            for (let i = 0; i < purchase.attendees.length; i++) {
+              const attendee = purchase.attendees[i];
+              const ticket = ticketsForType[i];
+              if (ticket && attendee.formResponses) {
+                for (const field of ticketType.formFields) {
+                  const responseValue = attendee.formResponses[field.id];
+                  if (responseValue !== undefined && responseValue !== null && responseValue !== '') {
+                    formResponseInserts.push({
+                      ticket_id: ticket.id,
+                      form_field_id: field.id,
+                      response_value: responseValue
+                    });
+                  }
+                }
+              }
+            }
+          }
+        }
+        if (formResponseInserts.length > 0) {
+          const { error: responseError } = await supabase
+            .from('ticket_form_responses')
+            .insert(formResponseInserts);
+          if (responseError) console.error('Form responses insert error:', responseError);
+        }
+      } catch (e) {
+        console.error('Error saving form responses:', e);
+      }
+
+      // Show tickets for guests; success modal for logged-in users
+      const isGuestPurchase = !currentUser;
+      if (isGuestPurchase) {
+        setGuestTickets(createdTickets);
+        setShowGuestTickets(true);
+      } else {
+        setPurchasedTicketCount(getTotalTickets());
+        setShowSuccessModal(true);
+      }
+
+      // Reset and refresh
+      setSelectedTickets({});
+      setPurchaseData([]);
+      clearSavedData();
+      queryClient.invalidateQueries({ queryKey: ['event-tickets', eventKey] });
+      return;
+    }
+
+    // Fallback: create tickets client-side if backend did not return them
+    await createTickets(reference);
   };
 
   const handlePaymentClose = () => {

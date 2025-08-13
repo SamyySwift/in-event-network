@@ -62,7 +62,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   const userPhoto = question.profiles?.photo_url;
 
   return (
-    <Card className="glass-card overflow-hidden hover:shadow-xl transition-all">
+    <Card className={`glass-card overflow-hidden hover:shadow-xl transition-all ${question.upvotes > 0 ? 'fire-border animate-enter' : ''}`}>
       <CardHeader className="pb-2 flex flex-row items-start justify-between">
         <div className="flex items-center gap-3">
           <Avatar>
@@ -180,7 +180,8 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
         )}
         <div className="flex flex-wrap gap-2 text-sm mt-3">
           <Badge variant="outline" className="flex items-center gap-1">
-            <ArrowUpCircle size={14} /> {question.upvotes} upvotes
+            <ArrowUpCircle size={14} />
+            {question.upvotes} upvotes {question.upvotes > 0 && <span aria-hidden="true">🔥</span>}
           </Badge>
           {question.is_anonymous && (
             <Badge variant="secondary">Anonymous</Badge>

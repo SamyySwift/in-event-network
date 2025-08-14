@@ -32,7 +32,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const { publicKey, isLoading: isLoadingConfig } = usePaystackConfig();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const amount = getPaymentAmount(); // 30,000 NGN in kobo
+  const amount = getPaymentAmount(); // 100,000 NGN in kobo
 
   const handlePaystackClick = () => {
     // Close the modal immediately when payment button is clicked
@@ -44,7 +44,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
     amount,
     currency: 'NGN',
     publicKey,
-    text: 'Pay ₦30,000',
+    text: 'Pay ₦100,000',
     onSuccess: async (reference: any) => {
       console.log('Payment successful:', reference);
       setIsProcessing(true);
@@ -138,7 +138,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             <h3 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">{eventName}</h3>
             <div className="flex items-center justify-between">
               <span className="text-xs sm:text-sm text-gray-600">Event Access Fee</span>
-              <span className="text-lg sm:text-xl font-bold text-primary">₦30,000</span>
+              <span className="text-lg sm:text-xl font-bold text-primary">₦100,000</span>
             </div>
           </div>
 
@@ -182,7 +182,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                     Processing...
                   </div>
                 ) : (
-                  'Pay ₦30,000'
+                  'Pay ₦100,000'
                 )}
               </PaystackButton>
             </div>

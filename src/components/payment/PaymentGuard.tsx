@@ -53,7 +53,7 @@ const PaymentGuard: React.FC<PaymentGuardProps> = ({
         </CardHeader>
         <CardContent className="text-center space-y-4">
           <p className="text-sm text-muted-foreground">
-            Access all premium features including unlimited attendees, analytics, and more for just ₦30,000
+            Access all premium features including unlimited attendees, analytics, and more for just ₦100,000
           </p>
           
           <Button 

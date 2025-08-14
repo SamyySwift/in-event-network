@@ -56,17 +56,23 @@ export function PaystackTicketPayment({
     text: `Pay ₦${(totalAmount / 100).toLocaleString()}`,
     onSuccess: async (reference: any) => {
       console.log('Payment successful:', reference);
+      console.log('Current user for payment processing:', currentUser?.id);
       
       try {
+        // Validate user authentication if required
+        const finalUserInfo = {
+          ...userInfo,
+          userId: currentUser?.id
+        };
+        
+        console.log('Processing payment with user info:', finalUserInfo);
+        
         // Process ticket purchase through our backend
         const { data, error } = await supabase.functions.invoke('process-ticket-purchase', {
           body: {
             eventId,
             tickets,
-            userInfo: {
-              ...userInfo,
-              userId: currentUser?.id
-            },
+            userInfo: finalUserInfo,
             paystackReference: reference.reference,
             totalAmount: totalAmount // Already in kobo
           }

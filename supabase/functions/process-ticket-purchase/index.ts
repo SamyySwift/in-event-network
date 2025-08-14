@@ -92,31 +92,6 @@ serve(async (req) => {
     const ticketPromises: Promise<any>[] = []
     
     for (const ticket of tickets) {
-      // Get ticket type details to check if login is required
-      const { data: ticketType, error: ticketTypeError } = await supabase
-        .from('ticket_types')
-        .select('requires_login, name')
-        .eq('id', ticket.ticketTypeId)
-        .single()
-
-      if (ticketTypeError) {
-        console.error('Error fetching ticket type:', ticketTypeError)
-        throw new Error(`Ticket type not found: ${ticket.ticketTypeId}`)
-      }
-
-      // Validate user_id if login is required
-      if (ticketType.requires_login && !userInfo.userId) {
-        console.error('Login required but no user_id provided:', { ticketType: ticketType.name, requires_login: ticketType.requires_login, user_id: userInfo.userId })
-        throw new Error(`Login required for ${ticketType.name} but user not authenticated`)
-      }
-
-      console.log('Processing ticket type:', { 
-        name: ticketType.name, 
-        requires_login: ticketType.requires_login, 
-        user_id: userInfo.userId,
-        quantity: ticket.quantity 
-      })
-      
       for (let i = 0; i < ticket.quantity; i++) {
         // Generate truly unique QR code
         const uniqueId = crypto.randomUUID()

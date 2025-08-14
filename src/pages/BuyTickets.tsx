@@ -290,28 +290,13 @@ export default function BuyTickets() {
       return ticketType?.requires_login === true; // Require login only if explicitly true
     });
 
-    console.log('Login required for purchase:', requiresLogin);
-    console.log('Current user ID:', currentUser?.id);
-
     if (requiresLogin && !currentUser) {
-      console.log('Login required but user not authenticated - redirecting to login');
       toast({
         title: "Login Required",
         description: "Please log in to purchase tickets",
         variant: "destructive",
       });
       handleLoginRedirect();
-      return;
-    }
-
-    // Additional validation: If login is required, ensure user_id will be set
-    if (requiresLogin && currentUser && !currentUser.id) {
-      console.error('Login required but currentUser.id is missing:', currentUser);
-      toast({
-        title: "Authentication Error",
-        description: "Please log out and log in again",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -549,23 +534,10 @@ export default function BuyTickets() {
           const timestamp = Date.now();
           const uniqueQRCode = `${eventData.event.id}-${purchase.ticketTypeId}-${timestamp}-${uniqueId}-${i}`;
 
-          // Validate user_id for tickets that require login
-          const ticketUserId = ticketType.requires_login ? currentUser?.id : (currentUser?.id || null);
-          
-          if (ticketType.requires_login && !ticketUserId) {
-            throw new Error(`Login required for ${ticketType.name} but user not authenticated`);
-          }
-
-          console.log(`Creating ticket for ${ticketType.name}:`, {
-            requires_login: ticketType.requires_login,
-            user_id: ticketUserId,
-            attendee_email: attendee.email
-          });
-
           ticketPurchases.push({
             event_id: eventData.event.id,
             ticket_type_id: purchase.ticketTypeId,
-            user_id: ticketUserId,
+            user_id: currentUser?.id || null, // Allow null for guest purchases
             first_name: attendee.firstName.trim(),
             last_name: attendee.lastName.trim(),
             guest_name: `${attendee.firstName} ${attendee.lastName}`.trim().substring(0, 100),

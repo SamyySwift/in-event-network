@@ -27,34 +27,6 @@ serve(async (req) => {
       });
     }
 
-    // Validate tickets that require login
-    const ticketTypeIds = [...new Set(tickets.map((t: any) => t.ticket_type_id))];
-    const { data: ticketTypes, error: ticketTypesError } = await supabaseService
-      .from('ticket_types')
-      .select('id, requires_login, name')
-      .in('id', ticketTypeIds);
-
-    if (ticketTypesError) {
-      console.error('Error fetching ticket types:', ticketTypesError);
-      throw new Error('Failed to validate ticket types');
-    }
-
-    // Validate each ticket
-    for (const ticket of tickets) {
-      const ticketType = ticketTypes?.find(tt => tt.id === ticket.ticket_type_id);
-      if (ticketType?.requires_login && !ticket.user_id) {
-        console.error('Login required but no user_id:', { ticketType: ticketType.name, user_id: ticket.user_id });
-        return new Response(JSON.stringify({ 
-          error: `Login required for ${ticketType.name} but user not authenticated` 
-        }), {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400,
-        });
-      }
-    }
-
-    console.log('Ticket validation passed. Creating tickets...');
-
     // Force free + completed for guest flow
     const rows = tickets.map((t: any) => ({
       event_id: t.event_id || eventId,

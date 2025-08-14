@@ -454,6 +454,10 @@ export default function BuyTickets() {
       setPurchaseData([]);
       clearSavedData();
       queryClient.invalidateQueries({ queryKey: ['event-tickets', eventKey] });
+      // Also refresh the attendee's tickets if they are logged in
+      if (currentUser) {
+        queryClient.invalidateQueries({ queryKey: ['my-tickets', currentUser.id] });
+      }
       return;
     }
 
@@ -642,6 +646,10 @@ export default function BuyTickets() {
 
       // Refresh the ticket types data to show updated quantities
       queryClient.invalidateQueries({ queryKey: ['event-tickets', eventKey] });
+      // Also refresh the attendee's tickets if they are logged in
+      if (currentUser) {
+        queryClient.invalidateQueries({ queryKey: ['my-tickets', currentUser.id] });
+      }
 
     } catch (error: any) {
       console.error('Purchase failed:', error);

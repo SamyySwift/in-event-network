@@ -332,16 +332,22 @@ export default function BuyTickets() {
     const emailsUsed = new Set<string>();
     
     for (const purchase of purchaseData) {
+      const ticketType = eventData?.ticketTypes.find(t => t.id === purchase.ticketTypeId);
+      
       for (let i = 0; i < purchase.attendees.length; i++) {
         const attendee = purchase.attendees[i];
+        const attendeeNumber = i + 1;
+        const ticketTypeName = ticketType?.name || 'Unknown';
+        
+        // Validate basic required information
         if (!attendee.firstName.trim()) {
-          missingInfo.push(`First name for attendee ${i + 1}`);
+          missingInfo.push(`First name for ${ticketTypeName} attendee ${attendeeNumber}`);
         }
         if (!attendee.lastName.trim()) {
-          missingInfo.push(`Last name for attendee ${i + 1}`);
+          missingInfo.push(`Last name for ${ticketTypeName} attendee ${attendeeNumber}`);
         }
         if (!attendee.email.trim()) {
-          missingInfo.push(`Email for attendee ${i + 1}`);
+          missingInfo.push(`Email for ${ticketTypeName} attendee ${attendeeNumber}`);
         } else {
           // Check for duplicate emails
           const email = attendee.email.trim().toLowerCase();
@@ -361,6 +367,22 @@ export default function BuyTickets() {
                 
               if (existingTickets && existingTickets.length > 0) {
                 missingInfo.push(`Email ${email} already used for this event`);
+              }
+            }
+          }
+        }
+
+        // Validate required custom form fields
+        if (ticketType?.formFields) {
+          for (const field of ticketType.formFields) {
+            if (field.is_required) {
+              const response = attendee.formResponses?.[field.id];
+              const isEmpty = response === undefined || response === null || response === '' || 
+                             (Array.isArray(response) && response.length === 0) ||
+                             (typeof response === 'object' && Object.keys(response).length === 0);
+              
+              if (isEmpty) {
+                missingInfo.push(`${field.label} for ${ticketTypeName} attendee ${attendeeNumber}`);
               }
             }
           }

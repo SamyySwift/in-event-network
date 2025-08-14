@@ -19,15 +19,15 @@ interface TicketQRModalProps {
     checked_in_at?: string;
     purchase_date: string;
     qr_code_data: string;
-    ticket_types: {
+    ticket_types?: {
       name: string;
       description?: string;
-    };
-    events: {
+    } | null;
+    events?: {
       name: string;
       start_time: string;
       location?: string;
-    };
+    } | null;
     guest_name?: string;
   } | null;
 }

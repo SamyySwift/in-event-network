@@ -14,15 +14,15 @@ interface TicketQRCodeProps {
     checked_in_at?: string;
     purchase_date: string;
     qr_code_data: string;
-    ticket_types: {
+    ticket_types?: {
       name: string;
       description?: string;
-    };
-    events: {
+    } | null;
+    events?: {
       name: string;
       start_time: string;
       location?: string;
-    };
+    } | null;
     guest_name?: string;
   };
   onClose: () => void;
@@ -36,8 +36,8 @@ const TicketQRCode: React.FC<TicketQRCodeProps> = ({ ticket, onClose }) => {
     const qrData = JSON.stringify({
       ticketNumber: ticket.ticket_number,
       ticketId: ticket.id,
-      eventName: ticket.events.name,
-      ticketType: ticket.ticket_types.name,
+      eventName: ticket.events?.name || 'Unknown Event',
+      ticketType: ticket.ticket_types?.name || 'Unknown Ticket Type',
       verifyUrl: `${window.location.origin}/admin/verify-ticket/${ticket.ticket_number}`
     });
 
@@ -104,8 +104,8 @@ const TicketQRCode: React.FC<TicketQRCodeProps> = ({ ticket, onClose }) => {
       <CardContent className="space-y-4 px-2 sm:px-6">
         {/* Event Information */}
         <div className="text-center space-y-2">
-          <h3 className="font-semibold text-lg">{ticket.events.name}</h3>
-          <p className="text-sm text-muted-foreground">{ticket.ticket_types.name}</p>
+          <h3 className="font-semibold text-lg">{ticket.events?.name || 'Unknown Event'}</h3>
+          <p className="text-sm text-muted-foreground">{ticket.ticket_types?.name || 'Unknown Ticket Type'}</p>
           <p className="text-xs text-muted-foreground">#{ticket.ticket_number}</p>
           {ticket.guest_name && (
             <p className="text-sm font-medium">{ticket.guest_name}</p>
@@ -132,9 +132,9 @@ const TicketQRCode: React.FC<TicketQRCodeProps> = ({ ticket, onClose }) => {
         {/* Event Details */}
         <div className="space-y-2 text-sm text-muted-foreground">
           <div>
-            <strong>Event Date:</strong> {formatDate(ticket.events.start_time)}
+            <strong>Event Date:</strong> {ticket.events?.start_time ? formatDate(ticket.events.start_time) : 'Unknown Date'}
           </div>
-          {ticket.events.location && (
+          {ticket.events?.location && (
             <div>
               <strong>Location:</strong> {ticket.events.location}
             </div>

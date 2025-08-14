@@ -43,18 +43,18 @@ interface MyTicket {
   checked_in_at?: string;
   purchase_date: string;
   qr_code_data: string;
-  ticket_types: {
+  ticket_types?: {
     name: string;
     description?: string;
-  };
-  events: {
+  } | null;
+  events?: {
     name: string;
     description?: string;
     start_time: string;
     end_time: string;
     location?: string;
     banner_url?: string;
-  };
+  } | null;
 }
 
 interface TicketType {
@@ -447,9 +447,9 @@ export default function AttendeeMyTickets() {
     const now = new Date();
     switch (activeTab) {
       case "upcoming":
-        return tickets.filter((t) => new Date(t.events.start_time) > now);
+        return tickets.filter((t) => t.events?.start_time && new Date(t.events.start_time) > now);
       case "past":
-        return tickets.filter((t) => new Date(t.events.end_time) < now);
+        return tickets.filter((t) => t.events?.end_time && new Date(t.events.end_time) < now);
       case "checked-in":
         return tickets.filter((t) => t.check_in_status);
       default:
@@ -486,7 +486,7 @@ export default function AttendeeMyTickets() {
             </div>
             <div className="bg-card border rounded-xl p-4">
               <div className="text-2xl font-bold text-green-600">
-                {tickets.filter((t) => new Date(t.events.start_time) > new Date()).length}
+                {tickets.filter((t) => t.events?.start_time && new Date(t.events.start_time) > new Date()).length}
               </div>
               <div className="text-sm text-muted-foreground">Upcoming</div>
             </div>
@@ -498,7 +498,7 @@ export default function AttendeeMyTickets() {
             </div>
             <div className="bg-card border rounded-xl p-4">
               <div className="text-2xl font-bold text-orange-600">
-                {tickets.filter((t) => new Date(t.events.end_time) < new Date()).length}
+                {tickets.filter((t) => t.events?.end_time && new Date(t.events.end_time) < new Date()).length}
               </div>
               <div className="text-sm text-muted-foreground">Past</div>
             </div>
@@ -564,11 +564,11 @@ export default function AttendeeMyTickets() {
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-3 sm:space-y-0">
                       <div className="space-y-2">
                         <h3 className="text-lg font-semibold line-clamp-1">
-                          {ticket.events.name}
+                          {ticket.events?.name || 'Unknown Event'}
                         </h3>
                         <div className="flex flex-wrap gap-2">
                           <Badge variant="secondary">
-                            {ticket.ticket_types.name}
+                            {ticket.ticket_types?.name || 'Unknown Ticket Type'}
                           </Badge>
                           <Badge 
                             variant={ticket.check_in_status ? "default" : "outline"}
@@ -612,9 +612,9 @@ export default function AttendeeMyTickets() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Calendar className="h-4 w-4" />
-                        <span>{formatDate(ticket.events.start_time)}</span>
+                        <span>{ticket.events?.start_time ? formatDate(ticket.events.start_time) : 'Unknown Date'}</span>
                       </div>
-                      {ticket.events.location && (
+                       {ticket.events?.location && (
                         <div className="flex items-center gap-2 text-muted-foreground">
                           <MapPin className="h-4 w-4" />
                           <span className="line-clamp-1">{ticket.events.location}</span>
@@ -975,10 +975,10 @@ export default function AttendeeMyTickets() {
                       <div className="flex justify-between items-start mb-4">
                         <div className="flex-1">
                           <h3 className="font-bold text-lg text-gray-800 group-hover:text-purple-700 transition-colors">
-                            {ticket.events.name}
+                            {ticket.events?.name}
                           </h3>
                           <p className="text-purple-600 font-medium">
-                            {ticket.ticket_types.name}
+                            {ticket.ticket_types?.name || 'Unknown Ticket Type'}
                           </p>
                           <p className="text-xs text-gray-500 font-mono bg-gray-100 px-2 py-1 rounded mt-1 inline-block">
                             #{ticket.ticket_number}
@@ -1023,10 +1023,10 @@ export default function AttendeeMyTickets() {
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-purple-500" />
                           <span className="font-medium">
-                            {formatDate(ticket.events.start_time)}
+                            {ticket.events?.start_time ? formatDate(ticket.events.start_time) : 'Unknown Date'}
                           </span>
                         </div>
-                        {ticket.events.location && (
+                        {ticket.events?.location && (
                           <div className="flex items-center gap-2">
                             <MapPin className="h-4 w-4 text-indigo-500" />
                             <span>{ticket.events.location}</span>

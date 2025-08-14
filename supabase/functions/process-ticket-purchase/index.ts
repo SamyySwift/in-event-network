@@ -104,9 +104,10 @@ serve(async (req) => {
           payment_status: 'completed',
           payment_reference: paystackReference,
           qr_code_data: uniqueQRCode,
-          guest_name: userInfo.userId ? null : userInfo.fullName,
-          guest_email: userInfo.userId ? null : userInfo.email,
-          guest_phone: userInfo.userId ? null : userInfo.phone,
+          // Always include guest info for fallback, but set user_id when logged in
+          guest_name: userInfo.fullName,
+          guest_email: userInfo.email,
+          guest_phone: userInfo.phone,
         }
 
         ticketPromises.push(

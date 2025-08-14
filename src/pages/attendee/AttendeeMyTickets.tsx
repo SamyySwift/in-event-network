@@ -146,7 +146,7 @@ export default function AttendeeMyTickets() {
           )
         `
         )
-        .eq("user_id", currentUser.id)
+        .or(`user_id.eq.${currentUser.id},guest_email.eq.${currentUser.email}`)
         .order("purchase_date", { ascending: false });
 
       if (error) throw error;

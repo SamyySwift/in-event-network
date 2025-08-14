@@ -65,16 +65,19 @@ serve(async (req) => {
       throw new Error('Event not found')
     }
 
-    // Record payment
+    // Record payment (use upsert to handle duplicates)
     const { data: payment, error: paymentError } = await supabase
       .from('event_payments')
-      .insert({
+      .upsert({
         event_id: eventId,
         user_id: userInfo.userId || null,
         amount: totalAmount, // Keep in kobo for consistency
         currency: 'NGN',
         paystack_reference: paystackReference,
         status: 'success'
+      }, {
+        onConflict: 'event_id,user_id',
+        ignoreDuplicates: false
       })
       .select()
       .single()

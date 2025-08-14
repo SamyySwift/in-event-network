@@ -703,14 +703,48 @@ export default function BuyTickets() {
   });
 
   // Handle guest ticket download
-  const handleGuestTicketDownload = () => {
-    const element = document.createElement('a');
-    const file = new Blob([JSON.stringify(guestTickets, null, 2)], { type: 'application/json' });
-    element.href = URL.createObjectURL(file);
-    element.download = `tickets-${event.name.replace(/\s+/g, '-')}.json`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+  const handleGuestTicketDownload = async () => {
+    try {
+      // For each ticket, generate a QR code and download it
+      for (const ticket of guestTickets) {
+        const qrData = JSON.stringify({
+          ticketNumber: ticket.ticket_number,
+          ticketId: ticket.id,
+          eventName: event?.name || 'Unknown Event',
+          ticketType: ticket.ticket_types?.name || 'Unknown Ticket Type',
+          verifyUrl: `${window.location.origin}/admin/verify-ticket/${ticket.ticket_number}`
+        });
+
+        // Generate QR code using QR Server API
+        const qrSize = 300;
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(qrData)}`;
+        
+        // Download the QR code image
+        const response = await fetch(qrUrl);
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `ticket-${ticket.ticket_number}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
+      
+      toast({
+        title: "Download Complete",
+        description: `Downloaded ${guestTickets.length} ticket QR code${guestTickets.length > 1 ? 's' : ''}`,
+      });
+    } catch (error) {
+      console.error('Failed to download tickets:', error);
+      toast({
+        title: "Download Failed",
+        description: "Failed to download ticket QR codes. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Show guest ticket display if applicable

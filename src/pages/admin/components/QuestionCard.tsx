@@ -61,11 +61,8 @@ const QuestionCard: React.FC<QuestionCardProps> = ({
   const userName = question.profiles?.name || "Anonymous User";
   const userPhoto = question.profiles?.photo_url;
 
-  // Debug logging
-  console.log('Question upvotes:', question.upvotes, 'Should show fire:', question.upvotes > 0);
-
   return (
-    <Card className={`glass-card overflow-hidden hover:shadow-xl transition-all ${question.upvotes > 0 ? 'fire-border animate-enter' : ''} ${question.id ? 'fire-border animate-enter' : ''}`}>
+    <Card className={`glass-card overflow-hidden hover:shadow-xl transition-all ${question.upvotes > 0 ? 'fire-border animate-enter' : ''}`}>
       <CardHeader className="pb-2 flex flex-row items-start justify-between">
         <div className="flex items-center gap-3">
           <Avatar>

@@ -49,19 +49,137 @@ const TicketQRCode: React.FC<TicketQRCodeProps> = ({ ticket, onClose }) => {
 
   const downloadQRCode = async () => {
     try {
-      const response = await fetch(qrImageUrl);
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
+      // Generate complete ticket card instead of just QR code
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Could not get canvas context');
+
+      // Set canvas size for ticket card
+      canvas.width = 600;
+      canvas.height = 400;
+
+      // Fill background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Add border
+      ctx.strokeStyle = '#e5e5e5';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
+      // Add dashed border for ticket effect
+      ctx.strokeStyle = '#d1d5db';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 5]);
+      ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+      ctx.setLineDash([]);
+
+      // Title
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 24px Arial';
+      ctx.fillText('Your Ticket', 30, 50);
+
+      // Ticket type and price
+      ctx.font = 'bold 20px Arial';
+      ctx.fillText(ticket.ticket_types?.name || 'General Admission', 30, 90);
       
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `ticket-${ticket.ticket_number}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      ctx.font = 'bold 24px Arial';
+      ctx.fillStyle = '#059669';
+      const price = `₦${(ticket.price / 100).toFixed(2)}`;
+      const priceWidth = ctx.measureText(price).width;
+      ctx.fillText(price, canvas.width - priceWidth - 30, 90);
+
+      // Ticket details
+      ctx.fillStyle = '#374151';
+      ctx.font = '16px Arial';
+      
+      ctx.fillText('Ticket Number:', 30, 130);
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 16px Arial';
+      ctx.fillText(ticket.ticket_number, 160, 130);
+
+      ctx.fillStyle = '#374151';
+      ctx.font = '16px Arial';
+      ctx.fillText('Name:', 30, 160);
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 16px Arial';
+      ctx.fillText(ticket.guest_name || 'Guest', 80, 160);
+
+      // Event info
+      if (ticket.events) {
+        ctx.fillStyle = '#374151';
+        ctx.font = '14px Arial';
+        ctx.fillText('Event:', 30, 200);
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 14px Arial';
+        ctx.fillText(ticket.events.name, 80, 200);
+
+        if (ticket.events.location) {
+          ctx.fillStyle = '#374151';
+          ctx.font = '14px Arial';
+          ctx.fillText('Location:', 30, 220);
+          ctx.fillStyle = '#000000';
+          ctx.font = 'bold 14px Arial';
+          ctx.fillText(ticket.events.location, 100, 220);
+        }
+
+        ctx.fillStyle = '#374151';
+        ctx.font = '14px Arial';
+        ctx.fillText('Date:', 30, 240);
+        ctx.fillStyle = '#000000';
+        ctx.font = 'bold 14px Arial';
+        ctx.fillText(formatDate(ticket.events.start_time), 70, 240);
+      }
+
+      // Generate QR code with logo
+      const qrData = JSON.stringify({
+        ticketNumber: ticket.ticket_number,
+        ticketId: ticket.id,
+        eventName: ticket.events?.name || 'Unknown Event',
+        ticketType: ticket.ticket_types?.name || 'Unknown Ticket Type',
+        verifyUrl: `${window.location.origin}/admin/verify-ticket/${ticket.ticket_number}`
+      });
+
+      const qrSize = 120;
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(qrData)}&logo=https://89ffd642-3173-4004-8c28-eb0eea097a15.lovableproject.com/lovable-uploads/cc286065-ca78-4e02-b135-112dfebbebef.png`;
+      
+      // Load and draw QR code
+      const qrImg = new Image();
+      qrImg.crossOrigin = 'anonymous';
+      
+      await new Promise((resolve, reject) => {
+        qrImg.onload = () => {
+          // Draw QR code
+          ctx.drawImage(qrImg, canvas.width - 150, canvas.height - 170, 120, 120);
+          
+          // Add "Scan at venue" text
+          ctx.fillStyle = '#6b7280';
+          ctx.font = '12px Arial';
+          const scanText = 'Scan at venue';
+          const scanTextWidth = ctx.measureText(scanText).width;
+          ctx.fillText(scanText, canvas.width - 150 + (120 - scanTextWidth) / 2, canvas.height - 30);
+          
+          resolve(true);
+        };
+        qrImg.onerror = reject;
+        qrImg.src = qrUrl;
+      });
+
+      // Convert canvas to blob and download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `ticket-${ticket.ticket_number}.png`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+        }
+      }, 'image/png');
     } catch (error) {
-      console.error('Failed to download QR code:', error);
+      console.error('Failed to download ticket card:', error);
     }
   };
 

@@ -33,37 +33,96 @@ function AdminCheckInContent() {
     queryFn: async () => {
       if (!searchQuery.trim() || !selectedEventId) return null;
       
-      let query = supabase
-        .from('event_tickets')
-        .select(`
-          *,
-          ticket_types (
-            name,
-            description
-          ),
-          events (
-            name,
-            start_time,
-            location
-          ),
-          profiles!event_tickets_user_id_fkey (
-            name,
-            email
-          )
-        `)
-        .eq('event_id', selectedEventId);
-
       // Check if searchQuery looks like a ticket number (starts with TKT-)
       if (searchQuery.startsWith('TKT-')) {
-        query = query.eq('ticket_number', searchQuery);
+        const { data, error } = await supabase
+          .from('event_tickets')
+          .select(`
+            *,
+            ticket_types (
+              name,
+              description
+            ),
+            events (
+              name,
+              start_time,
+              location
+            ),
+            profiles!event_tickets_user_id_fkey (
+              name,
+              email
+            )
+          `)
+          .eq('event_id', selectedEventId)
+          .eq('ticket_number', searchQuery);
+        
+        if (error) throw error;
+        return data;
       } else {
-        // Search by guest name or profile name
-        query = query.or(`guest_name.ilike.%${searchQuery}%,profiles.name.ilike.%${searchQuery}%`);
-      }
+        // Search by guest name or profile name - do separate queries and combine
+        const searchTerm = `%${searchQuery}%`;
+        
+        // Search by guest name
+        const { data: guestResults, error: guestError } = await supabase
+          .from('event_tickets')
+          .select(`
+            *,
+            ticket_types (
+              name,
+              description
+            ),
+            events (
+              name,
+              start_time,
+              location
+            ),
+            profiles!event_tickets_user_id_fkey (
+              name,
+              email
+            )
+          `)
+          .eq('event_id', selectedEventId)
+          .ilike('guest_name', searchTerm);
 
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
+        // Search by profile name
+        const { data: profileResults, error: profileError } = await supabase
+          .from('event_tickets')
+          .select(`
+            *,
+            ticket_types (
+              name,
+              description
+            ),
+            events (
+              name,
+              start_time,
+              location
+            ),
+            profiles!event_tickets_user_id_fkey (
+              name,
+              email
+            )
+          `)
+          .eq('event_id', selectedEventId)
+          .not('profiles', 'is', null);
+
+        if (guestError && profileError) {
+          throw guestError || profileError;
+        }
+
+        // Filter profile results by name match
+        const filteredProfileResults = (profileResults || []).filter(ticket => 
+          ticket.profiles?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+
+        // Combine and deduplicate results
+        const allResults = [...(guestResults || []), ...filteredProfileResults];
+        const uniqueResults = allResults.filter((ticket, index, self) => 
+          index === self.findIndex(t => t.id === ticket.id)
+        );
+
+        return uniqueResults;
+      }
     },
     enabled: false, // We'll trigger this manually
   });

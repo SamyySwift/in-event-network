@@ -110,7 +110,21 @@ serve(async (req) => {
         }
 
         ticketPromises.push(
-          supabase.from('event_tickets').insert(ticketData).select().single()
+          supabase.from('event_tickets')
+            .insert(ticketData)
+            .select(`
+              *,
+              ticket_types (
+                name,
+                description
+              ),
+              events (
+                name,
+                start_time,
+                location
+              )
+            `)
+            .single()
         )
       }
     }

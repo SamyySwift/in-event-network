@@ -9,10 +9,10 @@ interface GuestTicketDisplayProps {
     ticket_number: string;
     qr_code_data: string;
     price: number;
-    ticket_types: {
+    ticket_types?: {
       name: string;
       description?: string;
-    };
+    } | null;
     guest_name?: string;
     guest_email?: string;
   }>;
@@ -117,9 +117,9 @@ export function GuestTicketDisplay({ tickets, event, onDownload }: GuestTicketDi
                 {/* Ticket Info */}
                 <div className="flex-1 space-y-4">
                   <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-semibold text-lg">{ticket.ticket_types.name}</h3>
-                      {ticket.ticket_types.description && (
+                  <div>
+                      <h3 className="font-semibold text-lg">{ticket.ticket_types?.name || 'Ticket'}</h3>
+                      {ticket.ticket_types?.description && (
                         <p className="text-sm text-gray-600 mt-1">{ticket.ticket_types.description}</p>
                       )}
                     </div>

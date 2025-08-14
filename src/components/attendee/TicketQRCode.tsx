@@ -41,9 +41,9 @@ const TicketQRCode: React.FC<TicketQRCodeProps> = ({ ticket, onClose }) => {
       verifyUrl: `${window.location.origin}/admin/verify-ticket/${ticket.ticket_number}`
     });
 
-    // Generate QR code using QR Server API
+    // Generate QR code with logo using QR Server API
     const qrSize = 300;
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(qrData)}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(qrData)}&logo=https://89ffd642-3173-4004-8c28-eb0eea097a15.lovableproject.com/lovable-uploads/cc286065-ca78-4e02-b135-112dfebbebef.png`;
     setQrImageUrl(qrUrl);
   }, [ticket]);
 

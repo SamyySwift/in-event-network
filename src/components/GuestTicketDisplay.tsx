@@ -153,6 +153,14 @@ export function GuestTicketDisplay({ tickets, event, onDownload }: GuestTicketDi
                     size={120}
                     level="M"
                     includeMargin={true}
+                    imageSettings={{
+                      src: "/lovable-uploads/cc286065-ca78-4e02-b135-112dfebbebef.png",
+                      x: undefined,
+                      y: undefined,
+                      height: 24,
+                      width: 24,
+                      excavate: true,
+                    }}
                   />
                   <div className="text-xs text-gray-500 flex items-center gap-1">
                     <QrCode className="w-3 h-3" />

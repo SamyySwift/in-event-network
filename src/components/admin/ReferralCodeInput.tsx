@@ -17,8 +17,11 @@ const ReferralCodeInput: React.FC<ReferralCodeInputProps> = ({
   eventName
 }) => {
   const [accessCode, setAccessCode] = useState('');
-  const { submitReferralCode, isSubmittingCode } = useReferralCode();
-  const { isEventUnlocked } = usePayment();
+  const { submitReferralCode, isSubmittingCode, isEventUnlockedByCode } = useReferralCode();
+  const { isEventPaid } = usePayment();
+
+  // Unified check for event access (payment OR referral code)
+  const isEventUnlocked = isEventPaid(eventId) || isEventUnlockedByCode(eventId);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +32,7 @@ const ReferralCodeInput: React.FC<ReferralCodeInputProps> = ({
   };
 
   // Don't show if already unlocked
-  if (isEventUnlocked(eventId)) {
+  if (isEventUnlocked) {
     return (
       <Card className="border-success/30 bg-gradient-to-br from-success/5 to-success/10">
         <CardHeader className="pb-3">

@@ -21,6 +21,7 @@ export const useReferralCode = () => {
         throw error;
       }
 
+      console.log('Fetched unlocked events from referral codes:', data);
       return data.map(item => item.event_id);
     },
     staleTime: 0,
@@ -102,7 +103,9 @@ export const useReferralCode = () => {
 
   // Check if event is unlocked via referral code
   const isEventUnlockedByCode = (eventId: string) => {
-    return unlockedEvents.includes(eventId);
+    const isUnlocked = unlockedEvents.includes(eventId);
+    console.log('Checking if event is unlocked by referral code:', { eventId, unlockedEvents, isUnlocked });
+    return isUnlocked;
   };
 
   return {

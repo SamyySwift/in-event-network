@@ -453,11 +453,18 @@ export default function BuyTickets() {
       setSelectedTickets({});
       setPurchaseData([]);
       clearSavedData();
-      queryClient.invalidateQueries({ queryKey: ['event-tickets', eventKey] });
-      // Also refresh the attendee's tickets if they are logged in
-      if (currentUser) {
-        queryClient.invalidateQueries({ queryKey: ['my-tickets', currentUser.id] });
-      }
+      
+      // Force refresh of both queries
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['event-tickets', eventKey] }),
+        currentUser && queryClient.invalidateQueries({ queryKey: ['my-tickets', currentUser.id] })
+      ].filter(Boolean));
+      
+      // Small delay to ensure queries are refreshed
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ['my-tickets', currentUser?.id] });
+      }, 500);
+      
       return;
     }
 
@@ -644,12 +651,16 @@ export default function BuyTickets() {
       setPurchaseData([]);
       clearSavedData();
 
-      // Refresh the ticket types data to show updated quantities
-      queryClient.invalidateQueries({ queryKey: ['event-tickets', eventKey] });
-      // Also refresh the attendee's tickets if they are logged in
-      if (currentUser) {
-        queryClient.invalidateQueries({ queryKey: ['my-tickets', currentUser.id] });
-      }
+      // Force refresh of both queries  
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['event-tickets', eventKey] }),
+        currentUser && queryClient.invalidateQueries({ queryKey: ['my-tickets', currentUser.id] })
+      ].filter(Boolean));
+      
+      // Additional refetch with delay to ensure data is updated
+      setTimeout(() => {
+        queryClient.refetchQueries({ queryKey: ['my-tickets', currentUser?.id] });
+      }, 500);
 
     } catch (error: any) {
       console.error('Purchase failed:', error);

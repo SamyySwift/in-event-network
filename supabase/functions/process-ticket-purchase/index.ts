@@ -43,8 +43,14 @@ serve(async (req) => {
     })
 
     const paystackData = await paystackResponse.json()
+    console.log('Paystack verification response:', { status: paystackResponse.status, data: paystackData })
 
-    if (!paystackResponse.ok || paystackData.data.status !== 'success') {
+    if (!paystackResponse.ok || paystackData.data?.status !== 'success') {
+      console.error('Payment verification failed:', { 
+        ok: paystackResponse.ok, 
+        status: paystackData.data?.status,
+        reference: paystackReference 
+      })
       throw new Error('Payment verification failed')
     }
 

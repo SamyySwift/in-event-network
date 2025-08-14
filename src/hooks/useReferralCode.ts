@@ -59,10 +59,10 @@ export const useReferralCode = () => {
     mutationFn: async ({ accessCode, eventId }: { accessCode: string; eventId: string }) => {
       console.log('Submitting referral code:', { accessCode, eventId, userId: currentUser?.id || 'anonymous' });
 
-      // For now, accept any referral code (since we don't have a validation system yet)
-      // In a real system, you'd validate against a list of valid codes
-      if (!accessCode || accessCode.trim().length < 3) {
-        throw new Error('Please enter a valid referral code');
+      // Validate against the specific referral code
+      const validReferralCode = '#Kconect09099';
+      if (!accessCode || accessCode.trim() !== validReferralCode) {
+        throw new Error('Invalid referral code. Please enter the correct code.');
       }
 
       // For anonymous users, use localStorage

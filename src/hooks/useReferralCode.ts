@@ -114,6 +114,7 @@ export const useReferralCode = () => {
       return { success: true, message: 'Event features unlocked successfully!', data };
     },
     onSuccess: async (result) => {
+      console.log('Referral code submission successful:', result);
       // Invalidate and refetch queries
       await queryClient.invalidateQueries({ queryKey: ['unlocked-events'] });
       await queryClient.invalidateQueries({ queryKey: ['event-payments'] });

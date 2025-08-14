@@ -63,6 +63,41 @@ serve(async (req) => {
       });
     }
 
+    // Decrement available quantities for free tickets as well
+    try {
+      const reductions: Record<string, number> = {};
+      for (const ticket of tickets) {
+        const ticketTypeId = ticket.ticket_type_id;
+        if (ticketTypeId) {
+          reductions[ticketTypeId] = (reductions[ticketTypeId] || 0) + 1;
+        }
+      }
+
+      for (const [ticketTypeId, reduceBy] of Object.entries(reductions)) {
+        const { data: current, error: fetchErr } = await supabaseService
+          .from('ticket_types')
+          .select('available_quantity')
+          .eq('id', ticketTypeId)
+          .single();
+
+        if (!fetchErr && current) {
+          const newQty = Math.max(0, (current.available_quantity || 0) - reduceBy);
+          const { error: updErr } = await supabaseService
+            .from('ticket_types')
+            .update({ available_quantity: newQty })
+            .eq('id', ticketTypeId);
+          
+          if (updErr) {
+            console.error('Quantity update error:', updErr);
+          }
+        } else if (fetchErr) {
+          console.error('Quantity fetch error:', fetchErr);
+        }
+      }
+    } catch (qtyErr) {
+      console.error('Quantity decrement exception:', qtyErr);
+    }
+
     return new Response(JSON.stringify({ tickets: inserted }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

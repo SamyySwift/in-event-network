@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Lock, CreditCard, Sparkles } from 'lucide-react';
 import PaymentModal from './PaymentModal';
 import { usePayment } from '@/hooks/usePayment';
+import { useReferralCode } from '@/hooks/useReferralCode';
 
 interface PaymentGuardProps {
   eventId: string;
@@ -19,10 +20,15 @@ const PaymentGuard: React.FC<PaymentGuardProps> = ({
   children,
   feature = "this feature"
 }) => {
+  const { isLoadingPayments, isEventPaid } = usePayment();
+  const { isEventUnlockedByCode, isLoadingUnlocked } = useReferralCode();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const { isEventUnlocked, isLoadingPayments } = usePayment();
 
-  if (isLoadingPayments) {
+  // Unified check for event access (payment OR referral code)
+  const isEventUnlocked = isEventPaid(eventId) || isEventUnlockedByCode(eventId);
+  const isLoading = isLoadingPayments || isLoadingUnlocked;
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-32">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -30,7 +36,7 @@ const PaymentGuard: React.FC<PaymentGuardProps> = ({
     );
   }
 
-  if (isEventUnlocked(eventId)) {
+  if (isEventUnlocked) {
     return <>{children}</>;
   }
 

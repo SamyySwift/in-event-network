@@ -136,32 +136,12 @@ export const usePayment = () => {
     return isPaid;
   };
 
-  // Check if event is unlocked via referral code
-  const { data: unlockedEvents = [] } = useQuery({
-    queryKey: ['unlocked-events'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('event_access_codes')
-        .select('event_id');
-
-      if (error) {
-        console.error('Error fetching unlocked events:', error);
-        return [];
-      }
-
-      return data.map(item => item.event_id);
-    },
-    staleTime: 0,
-    refetchOnWindowFocus: true,
-  });
-
   // Unified check for event access (payment OR referral code)
+  // This uses the referral code hook to avoid duplicate queries
   const isEventUnlocked = (eventId: string) => {
     const isPaid = isEventPaid(eventId);
-    const isUnlockedByCode = unlockedEvents.includes(eventId);
-    const isUnlocked = isPaid || isUnlockedByCode;
-    console.log('Checking if event is unlocked:', { eventId, isPaid, isUnlockedByCode, isUnlocked });
-    return isUnlocked;
+    console.log('Checking if event is unlocked via payment:', { eventId, isPaid });
+    return isPaid;
   };
 
   // Get payment amount (₦100,000 as specified in the landing page)

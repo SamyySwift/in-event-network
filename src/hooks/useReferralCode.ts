@@ -34,14 +34,21 @@ export const useReferralCode = () => {
         throw new Error('User not authenticated');
       }
 
-      console.log('Submitting referral code:', { accessCode, eventId });
+      console.log('Submitting referral code:', { accessCode, eventId, userId: currentUser.id });
 
-      // Check if this code has already been used for this event
+      // For now, accept any referral code (since we don't have a validation system yet)
+      // In a real system, you'd validate against a list of valid codes
+      if (!accessCode || accessCode.trim().length < 3) {
+        throw new Error('Please enter a valid referral code');
+      }
+
+      // Check if this code has already been used for this event by this user
       const { data: existingCode, error: checkError } = await supabase
         .from('event_access_codes')
         .select('id')
         .eq('event_id', eventId)
         .eq('access_code', accessCode)
+        .eq('unlocked_by_user_id', currentUser.id)
         .maybeSingle();
 
       if (checkError) {
@@ -50,8 +57,8 @@ export const useReferralCode = () => {
       }
 
       if (existingCode) {
-        // Code already exists, just return success
-        return { success: true, message: 'Event features unlocked successfully!' };
+        // Code already exists for this user, just return success
+        return { success: true, message: 'Event features already unlocked!' };
       }
 
       // Insert new access code record

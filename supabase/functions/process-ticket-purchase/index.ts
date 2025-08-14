@@ -142,32 +142,7 @@ serve(async (req) => {
       throw new Error('Failed to create tickets')
     }
 
-    // Decrement available quantities per ticket type
-    try {
-      const reductions: Record<string, number> = {}
-      for (const t of tickets) {
-        reductions[t.ticketTypeId] = (reductions[t.ticketTypeId] || 0) + (t.quantity || 0)
-      }
-      for (const [ticketTypeId, reduceBy] of Object.entries(reductions)) {
-        const { data: current, error: fetchErr } = await supabase
-          .from('ticket_types')
-          .select('available_quantity')
-          .eq('id', ticketTypeId)
-          .single()
-        if (!fetchErr && current) {
-          const newQty = Math.max(0, (current.available_quantity || 0) - reduceBy)
-          const { error: updErr } = await supabase
-            .from('ticket_types')
-            .update({ available_quantity: newQty })
-            .eq('id', ticketTypeId)
-          if (updErr) console.error('Quantity update error:', updErr)
-        } else if (fetchErr) {
-          console.error('Quantity fetch error:', fetchErr)
-        }
-      }
-    } catch (qtyErr) {
-      console.error('Quantity decrement exception:', qtyErr)
-    }
+    // Quantity will be decremented automatically by database triggers
 
     // Credit organizer wallet if payment amount > 0
     // The wallet will be updated automatically by the trigger function

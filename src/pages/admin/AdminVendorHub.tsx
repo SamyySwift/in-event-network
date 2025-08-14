@@ -55,6 +55,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import PaymentGuard from '@/components/payment/PaymentGuard';
 
 interface VendorForm {
   id: string;
@@ -422,8 +423,13 @@ function AdminVendorHubContent() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
+    <PaymentGuard 
+      eventId={selectedEventId || ''}
+      eventName="this event"
+      feature="Vendors Hub"
+    >
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-6 max-w-6xl">
         {/* Modern Header */}
         <div className="flex flex-col space-y-6 mb-8">
           <div className="flex items-center justify-between">
@@ -916,6 +922,7 @@ function AdminVendorHubContent() {
         </Dialog>
       </div>
     </div>
+    </PaymentGuard>
   );
 }
 

@@ -34,6 +34,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { usePayment } from "@/hooks/usePayment";
 import EventQRCode from "@/components/admin/EventQRCode";
+import PaymentGuard from '@/components/payment/PaymentGuard';
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import {
   Popover,
@@ -125,6 +126,16 @@ const AdminEvents = () => {
     ) {
       console.error("Missing required fields");
       return;
+    }
+
+    // Check if user is trying to create a second event without payment
+    if (!editingEvent && events.length >= 1) {
+      // Check if any existing event has been paid for
+      const hasAnyPaidEvent = events.some(event => isEventPaid(event.id));
+      if (!hasAnyPaidEvent) {
+        alert("You can only create one free event. Please pay ₦100,000 to unlock unlimited event creation.");
+        return;
+      }
     }
 
     // Combine date and time for start_time

@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAdminEventContext, AdminEventProvider } from "@/hooks/useAdminEventContext";
 import { useIsMobile } from "@/hooks/use-mobile";
+import PaymentGuard from '@/components/payment/PaymentGuard';
 
 interface Suggestion {
   id: string;
@@ -285,7 +286,11 @@ const AdminSuggestionsContent = () => {
 
       {/* Only show content when an event is selected */}
       {selectedEventId && (
-        <>
+        <PaymentGuard 
+          eventId={selectedEventId} 
+          eventName={selectedEvent?.name || 'this event'}
+          feature="Suggestions & Ratings"
+        >
           {/* Gradient Hero Section */}
           <div className="p-4 sm:p-6 lg:p-8 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary-100 via-blue-100 to-indigo-50 text-primary-900 dark:text-white shadow-lg sm:shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
             <div className="absolute -top-12 -right-10 w-32 h-32 sm:w-56 sm:h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
@@ -401,7 +406,7 @@ const AdminSuggestionsContent = () => {
               </div>
             )}
           </div>
-        </>
+        </PaymentGuard>
       )}
     </div>
   );

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { useAdminQuestions } from "@/hooks/useAdminQuestions";
 import { useAdminEventContext, AdminEventProvider } from "@/hooks/useAdminEventContext";
 import { Plus } from "lucide-react";
+import PaymentGuard from '@/components/payment/PaymentGuard';
 
 const TABS = [
   { id: "all", label: "All" },
@@ -120,7 +121,11 @@ const QuestionsContent = () => {
 
       {/* Only show content when an event is selected */}
       {selectedEventId && (
-        <>
+        <PaymentGuard 
+          eventId={selectedEventId} 
+          eventName={selectedEvent?.name || 'this event'}
+          feature="Q&A Management"
+        >
           {/* Gradient Hero Section */}
           <div className="p-8 rounded-2xl bg-gradient-to-br from-primary-100 via-blue-100 to-indigo-50 text-primary-900 dark:text-white shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
             <div className="absolute -top-12 -right-10 w-56 h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
@@ -207,7 +212,7 @@ const QuestionsContent = () => {
               Error loading questions: {error.message}
             </div>
           )}
-        </>
+        </PaymentGuard>
       )}
     </div>
   );

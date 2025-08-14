@@ -15,6 +15,7 @@ import {
   useAdminEventContext,
 } from "@/hooks/useAdminEventContext";
 import { Star, Image, Video, Eye, Loader } from "lucide-react";
+import PaymentGuard from '@/components/payment/PaymentGuard';
 
 const AdminHighlightsContent = () => {
   const { highlights, isLoading } = useAdminHighlights();
@@ -89,7 +90,11 @@ const AdminHighlightsContent = () => {
 
       {/* Only show content when an event is selected */}
       {selectedEventId && (
-        <>
+        <PaymentGuard 
+          eventId={selectedEventId} 
+          eventName={selectedEvent?.name || 'this event'}
+          feature="Event Highlights"
+        >
           {/* Gradient Hero Section */}
           <div className="p-6 sm:p-8 rounded-2xl bg-gradient-to-br from-primary-100 via-purple-100 to-blue-50 text-primary-900 dark:text-white shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
             <div className="absolute -top-12 -right-10 w-56 h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
@@ -208,7 +213,7 @@ const AdminHighlightsContent = () => {
               )}
             </CardContent>
           </Card>
-        </>
+        </PaymentGuard>
       )}
     </div>
   );

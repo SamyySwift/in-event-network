@@ -44,10 +44,13 @@ import { useNetworking } from "@/hooks/useNetworking";
 import { useAttendeeEventContext } from "@/contexts/AttendeeEventContext";
 import { NetworkingFilter } from "@/components/networking/NetworkingFilter";
 import XLogo from "@/components/icons/XLogo";
+import PaymentGuard from '@/components/payment/PaymentGuard';
+import { usePayment } from '@/hooks/usePayment';
 
 const AttendeeNetworking = () => {
   const navigate = useNavigate();
   const { currentEventId } = useAttendeeEventContext();
+  const { isEventPaid } = usePayment();
   const [activeTab, setActiveTab] = useState("people");
   const [selectedConversation, setSelectedConversation] = useState<{
     userId: string;

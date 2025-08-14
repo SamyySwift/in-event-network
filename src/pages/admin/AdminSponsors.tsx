@@ -11,6 +11,7 @@ import { SponsorsTable } from '@/components/admin/SponsorsTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { exportToCSV } from '@/utils/exportUtils';
 import { AdminEventProvider, useAdminEventContext } from '@/hooks/useAdminEventContext';
+import PaymentGuard from '@/components/payment/PaymentGuard';
 
 function AdminSponsorsContent() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -140,8 +141,13 @@ function AdminSponsorsContent() {
   }
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
-      {/* Modern Section Header */}
+    <PaymentGuard 
+      eventId={selectedEventId} 
+      eventName="this event"
+      feature="Partners & Sponsors"
+    >
+      <div className="space-y-6 p-4 sm:p-6">
+        {/* Modern Section Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 shadow-lg">
@@ -343,7 +349,8 @@ function AdminSponsorsContent() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </PaymentGuard>
   );
 }
 

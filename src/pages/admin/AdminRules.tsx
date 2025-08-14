@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Plus } from "lucide-react";
 import { useAdminEventContext, AdminEventProvider } from "@/hooks/useAdminEventContext";
 import { useRules, Rule } from "@/hooks/useRules";
+import PaymentGuard from '@/components/payment/PaymentGuard';
 
 const RulesContent = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -78,7 +79,11 @@ const RulesContent = () => {
 
       {/* Only show content when an event is selected */}
       {selectedEventId && (
-        <>
+        <PaymentGuard 
+          eventId={selectedEventId} 
+          eventName={selectedEvent?.name || 'this event'}
+          feature="Event Rules"
+        >
           {/* Gradient Hero Section */}
           <div className="p-8 rounded-2xl bg-gradient-to-br from-primary-100 via-blue-100 to-indigo-50 text-primary-900 dark:text-white shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
             <div className="absolute -top-12 -right-10 w-56 h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
@@ -160,7 +165,7 @@ const RulesContent = () => {
               Error loading rules: {rulesError.message}
             </div>
           )}
-        </>
+        </PaymentGuard>
       )}
     </div>
   );

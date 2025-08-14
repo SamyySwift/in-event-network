@@ -8,13 +8,39 @@ export const useReferralCode = () => {
   const queryClient = useQueryClient();
   const { currentUser } = useAuth();
 
+  // Get unlocked events from localStorage for anonymous users
+  const getLocalUnlockedEvents = (): string[] => {
+    try {
+      const stored = localStorage.getItem('unlocked-events');
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  // Save unlocked events to localStorage
+  const saveLocalUnlockedEvents = (eventIds: string[]) => {
+    try {
+      localStorage.setItem('unlocked-events', JSON.stringify(eventIds));
+    } catch (error) {
+      console.error('Failed to save unlocked events to localStorage:', error);
+    }
+  };
+
   // Check if event is unlocked via referral code
   const { data: unlockedEvents = [], isLoading: isLoadingUnlocked, refetch: refetchUnlocked } = useQuery({
     queryKey: ['unlocked-events'],
     queryFn: async () => {
+      // For anonymous users, use localStorage
+      if (!currentUser?.id) {
+        return getLocalUnlockedEvents();
+      }
+
+      // For authenticated users, fetch from database
       const { data, error } = await supabase
         .from('event_access_codes')
-        .select('event_id');
+        .select('event_id')
+        .eq('unlocked_by_user_id', currentUser.id);
 
       if (error) {
         console.error('Error fetching unlocked events:', error);
@@ -31,11 +57,7 @@ export const useReferralCode = () => {
   // Submit referral code
   const submitReferralCodeMutation = useMutation({
     mutationFn: async ({ accessCode, eventId }: { accessCode: string; eventId: string }) => {
-      if (!currentUser?.id) {
-        throw new Error('User not authenticated');
-      }
-
-      console.log('Submitting referral code:', { accessCode, eventId, userId: currentUser.id });
+      console.log('Submitting referral code:', { accessCode, eventId, userId: currentUser?.id || 'anonymous' });
 
       // For now, accept any referral code (since we don't have a validation system yet)
       // In a real system, you'd validate against a list of valid codes
@@ -43,6 +65,17 @@ export const useReferralCode = () => {
         throw new Error('Please enter a valid referral code');
       }
 
+      // For anonymous users, use localStorage
+      if (!currentUser?.id) {
+        const currentUnlocked = getLocalUnlockedEvents();
+        if (!currentUnlocked.includes(eventId)) {
+          const updatedUnlocked = [...currentUnlocked, eventId];
+          saveLocalUnlockedEvents(updatedUnlocked);
+        }
+        return { success: true, message: 'Event features unlocked successfully!' };
+      }
+
+      // For authenticated users, use database
       // Check if this code has already been used for this event by this user
       const { data: existingCode, error: checkError } = await supabase
         .from('event_access_codes')

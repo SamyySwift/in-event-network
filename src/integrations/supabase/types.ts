@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -2217,23 +2217,23 @@ export type Database = {
     }
     Functions: {
       admin_update_user_role: {
-        Args: { target_email: string; new_role: string }
+        Args: { new_role: string; target_email: string }
         Returns: Json
       }
       calculate_ticket_pricing: {
         Args: {
           base_price: number
-          include_fees?: boolean
-          service_fee_pct?: number
           gateway_fee_pct?: number
           gateway_fixed_fee?: number
+          include_fees?: boolean
+          service_fee_pct?: number
         }
         Returns: {
           display_price: number
-          organizer_receives: number
-          total_fees: number
-          service_fee: number
           gateway_fee: number
+          organizer_receives: number
+          service_fee: number
+          total_fees: number
         }[]
       }
       can_access_event_data: {
@@ -2243,11 +2243,11 @@ export type Database = {
       debug_user_role: {
         Args: { user_email: string }
         Returns: {
-          user_id: string
-          email: string
-          role: string
-          name: string
           created_at: string
+          email: string
+          name: string
+          role: string
+          user_id: string
         }[]
       }
       generate_invite_token: {
@@ -2285,27 +2285,27 @@ export type Database = {
       get_event_attendees_with_profiles: {
         Args: { p_event_id: string }
         Returns: {
-          id: string
-          event_id: string
-          user_id: string
-          created_at: string
-          joined_at: string
-          name: string
-          email: string
-          role: string
-          event_name: string
           bio: string
-          niche: string
           company: string
-          photo_url: string
+          created_at: string
+          email: string
+          event_id: string
+          event_name: string
+          github_link: string
+          id: string
+          instagram_link: string
+          joined_at: string
+          linkedin_link: string
+          name: string
           networking_preferences: string[]
+          networking_visible: boolean
+          niche: string
+          photo_url: string
+          role: string
           tags: string[]
           twitter_link: string
-          linkedin_link: string
-          github_link: string
-          instagram_link: string
+          user_id: string
           website_link: string
-          networking_visible: boolean
         }[]
       }
       get_poll_with_results: {
@@ -2329,7 +2329,7 @@ export type Database = {
         Returns: boolean
       }
       increment_wallet_balance: {
-        Args: { p_admin_id: string; p_event_id: string; p_amount: number }
+        Args: { p_admin_id: string; p_amount: number; p_event_id: string }
         Returns: undefined
       }
       is_admin_for_event: {
@@ -2353,7 +2353,7 @@ export type Database = {
         Returns: boolean
       }
       user_has_joined_event: {
-        Args: { user_uuid: string; event_uuid: string }
+        Args: { event_uuid: string; user_uuid: string }
         Returns: boolean
       }
     }

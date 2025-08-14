@@ -21,12 +21,20 @@ const PaymentGuard: React.FC<PaymentGuardProps> = ({
   feature = "this feature"
 }) => {
   const { isLoadingPayments, isEventPaid } = usePayment();
-  const { isEventUnlockedByCode, isLoadingUnlocked } = useReferralCode();
+  const { isEventUnlockedByCode, isLoadingUnlocked, refetchUnlocked } = useReferralCode();
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // Unified check for event access (payment OR referral code)
   const isEventUnlocked = isEventPaid(eventId) || isEventUnlockedByCode(eventId);
   const isLoading = isLoadingPayments || isLoadingUnlocked;
+
+  console.log('PaymentGuard check:', { 
+    eventId, 
+    isEventPaid: isEventPaid(eventId), 
+    isEventUnlockedByCode: isEventUnlockedByCode(eventId), 
+    isEventUnlocked,
+    isLoading 
+  });
 
   if (isLoading) {
     return (
@@ -77,8 +85,9 @@ const PaymentGuard: React.FC<PaymentGuardProps> = ({
         onClose={() => setShowPaymentModal(false)}
         eventId={eventId}
         eventName={eventName}
-        onPaymentSuccess={() => {
-          // Refresh the page or trigger a re-render
+        onPaymentSuccess={async () => {
+          // Refresh both payment and referral code data
+          await refetchUnlocked();
           window.location.reload();
         }}
       />

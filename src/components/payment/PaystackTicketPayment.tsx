@@ -21,6 +21,7 @@ interface PaystackTicketPaymentProps {
     fullName: string;
     email: string;
     phone: string;
+    userId?: string;
   };
   onSuccess: (reference: string, tickets?: any[]) => void;
   onClose: () => void;

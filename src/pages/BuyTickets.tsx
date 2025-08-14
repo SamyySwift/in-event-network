@@ -916,7 +916,8 @@ export default function BuyTickets() {
                                 ? `${purchaseData[0].attendees[0].firstName} ${purchaseData[0].attendees[0].lastName}`.trim() 
                                 : currentUser?.email || 'User',
                               email: purchaseData[0]?.attendees[0]?.email || currentUser?.email || '',
-                              phone: purchaseData[0]?.attendees[0]?.phone || ''
+                              phone: purchaseData[0]?.attendees[0]?.phone || '',
+                              userId: currentUser?.id
                             }}
                             onSuccess={handlePaymentSuccess}
                             onClose={handlePaymentClose}

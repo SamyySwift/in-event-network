@@ -526,7 +526,7 @@ export type Database = {
           paystack_reference: string
           status: string
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           amount: number
@@ -537,7 +537,7 @@ export type Database = {
           paystack_reference: string
           status?: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           amount?: number
@@ -548,7 +548,7 @@ export type Database = {
           paystack_reference?: string
           status?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
           {

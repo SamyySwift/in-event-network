@@ -17,14 +17,16 @@ import {
 } from "lucide-react";
 import { useAdminDashboard } from "@/hooks/useAdminDashboard";
 import { useAuth } from "@/contexts/AuthContext";
-import { AdminEventProvider } from "@/hooks/useAdminEventContext";
+import { AdminEventProvider, useAdminEventContext } from "@/hooks/useAdminEventContext";
 import DashboardMetrics from "./components/DashboardMetrics";
 import EventPerformanceCard from "./components/EventPerformanceCard";
 import EventFocusCard from "./components/EventFocusCard";
+import ReferralCodeInput from "@/components/admin/ReferralCodeInput";
 
 const AdminDashboardContent = () => {
   const { currentUser } = useAuth();
   const { dashboardData, isLoading } = useAdminDashboard();
+  const { selectedEventId, selectedEvent } = useAdminEventContext();
 
   const metrics = [
     {
@@ -130,6 +132,14 @@ const AdminDashboardContent = () => {
         <div className="space-y-6">
           {/* Event Selector */}
           <EventFocusCard />
+          
+          {/* Referral Code Input */}
+          {selectedEventId && selectedEvent && (
+            <ReferralCodeInput 
+              eventId={selectedEventId} 
+              eventName={selectedEvent.name} 
+            />
+          )}
         </div>
       </div>
     </div>

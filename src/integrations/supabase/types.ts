@@ -442,6 +442,33 @@ export type Database = {
           },
         ]
       }
+      event_access_codes: {
+        Row: {
+          access_code: string
+          created_at: string
+          event_id: string
+          id: string
+          unlocked_at: string
+          unlocked_by_user_id: string | null
+        }
+        Insert: {
+          access_code: string
+          created_at?: string
+          event_id: string
+          id?: string
+          unlocked_at?: string
+          unlocked_by_user_id?: string | null
+        }
+        Update: {
+          access_code?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          unlocked_at?: string
+          unlocked_by_user_id?: string | null
+        }
+        Relationships: []
+      }
       event_participants: {
         Row: {
           created_at: string

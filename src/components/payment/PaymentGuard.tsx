@@ -20,7 +20,7 @@ const PaymentGuard: React.FC<PaymentGuardProps> = ({
   feature = "this feature"
 }) => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const { isEventPaid, isLoadingPayments } = usePayment();
+  const { isEventUnlocked, isLoadingPayments } = usePayment();
 
   if (isLoadingPayments) {
     return (
@@ -30,7 +30,7 @@ const PaymentGuard: React.FC<PaymentGuardProps> = ({
     );
   }
 
-  if (isEventPaid(eventId)) {
+  if (isEventUnlocked(eventId)) {
     return <>{children}</>;
   }
 

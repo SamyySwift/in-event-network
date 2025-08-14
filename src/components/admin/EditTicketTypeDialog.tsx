@@ -79,7 +79,8 @@ export function EditTicketTypeDialog({ open, onOpenChange, ticketType }: EditTic
       
       setDescription(ticketType.description || '');
       setTicketTypeState(ticketType.price > 0 ? 'paid' : 'free');
-      setPrice(ticketType.price?.toString() || '0');
+      // Convert from kobo to naira for display (divide by 100)
+      setPrice(ticketType.price > 0 ? (ticketType.price / 100).toString() : '0');
       setAvailableQuantity(ticketType.available_quantity?.toString() || '0');
       setMaxTicketsPerUser((ticketType as any).max_tickets_per_user || 1);
       setRequiresLogin(ticketType.requires_login ?? true);
@@ -119,7 +120,8 @@ export function EditTicketTypeDialog({ open, onOpenChange, ticketType }: EditTic
       return;
     }
 
-    const ticketPrice = ticketTypeState === 'free' ? 0 : parseFloat(price) || 0;
+    // Convert from naira to kobo for storage (multiply by 100)
+    const ticketPrice = ticketTypeState === 'free' ? 0 : Math.round((parseFloat(price) || 0) * 100);
     const quantity = parseInt(availableQuantity) || 0;
 
     try {

@@ -372,7 +372,7 @@ function AdminCheckInContent() {
                                 <span>{foundTicket.guest_name || foundTicket.profiles?.name || 'N/A'}</span>
                               </div>
                               <div>
-                                <strong>Price:</strong> ₦{foundTicket.price.toLocaleString()}
+                                <strong>Price:</strong> ₦{(foundTicket.price / 100).toLocaleString()}
                               </div>
                               {foundTicket.checked_in_at && (
                                 <div>

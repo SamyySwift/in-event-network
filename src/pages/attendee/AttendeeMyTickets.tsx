@@ -842,7 +842,7 @@ export default function AttendeeMyTickets() {
                           </div>
                           <div className="text-right">
                             <div className="text-2xl font-bold text-purple-600">
-                              ₦{ticket.price.toLocaleString()}
+                              ₦{(ticket.price / 100).toLocaleString()}
                             </div>
                             <Badge
                               variant="outline"
@@ -992,7 +992,7 @@ export default function AttendeeMyTickets() {
                         </div>
                         <div className="text-right">
                           <div className="text-xl font-bold text-gray-800">
-                            ₦{ticket.price.toLocaleString()}
+                            ₦{(ticket.price / 100).toLocaleString()}
                           </div>
                           <Badge
                             variant={

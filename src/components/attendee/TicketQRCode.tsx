@@ -85,7 +85,7 @@ const TicketQRCode: React.FC<TicketQRCodeProps> = ({ ticket, onClose }) => {
       
       ctx.font = 'bold 24px Arial';
       ctx.fillStyle = '#059669';
-      const price = `₦${(ticket.price / 100).toFixed(2)}`;
+      const price = `₦${(ticket.price / 100).toLocaleString('en-NG', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
       const priceWidth = ctx.measureText(price).width;
       ctx.fillText(price, canvas.width - priceWidth - 30, 90);
 

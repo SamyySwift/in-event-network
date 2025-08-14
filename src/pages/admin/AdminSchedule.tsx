@@ -20,6 +20,7 @@ import ScheduleStatsCards from "./components/ScheduleStatsCards";
 import ScheduleItemCard from "./components/ScheduleItemCard";
 import ScheduleFilters from "@/components/admin/ScheduleFilters";
 import { isToday, isTomorrow, parseISO } from "date-fns";
+import PaymentGuard from "@/components/payment/PaymentGuard";
 
 interface ScheduleItem {
   id: string;
@@ -753,8 +754,26 @@ const AdminScheduleContent = () => {
 const AdminSchedule = () => {
   return (
     <AdminEventProvider>
-      <AdminScheduleContent />
+      <PaymentGuardWrapper />
     </AdminEventProvider>
+  );
+};
+
+const PaymentGuardWrapper = () => {
+  const { selectedEventId, selectedEvent } = useAdminEventContext();
+
+  if (!selectedEventId || !selectedEvent) {
+    return <AdminScheduleContent />;
+  }
+
+  return (
+    <PaymentGuard
+      eventId={selectedEventId}
+      eventName={selectedEvent.name}
+      feature="schedule management"
+    >
+      <AdminScheduleContent />
+    </PaymentGuard>
   );
 };
 

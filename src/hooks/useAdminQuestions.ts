@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useEffect } from 'react';
 
 export interface QuestionWithProfile {
   id: string;
@@ -204,6 +205,81 @@ export const useAdminQuestions = (eventId?: string) => {
     },
     enabled: !!currentUser?.id,
   });
+
+  // Set up real-time subscription for questions
+  useEffect(() => {
+    if (!currentUser?.id) return;
+
+    console.log('Setting up real-time subscription for questions');
+
+    const channel = supabase
+      .channel('questions-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'questions'
+        },
+        (payload) => {
+          console.log('New question received:', payload);
+          
+          // Check if this question is for events that the current admin hosts
+          if (eventId) {
+            // If we're viewing a specific event, only update if the new question is for this event
+            if (payload.new.event_id === eventId) {
+              queryClient.invalidateQueries({ queryKey: ['admin-questions', currentUser.id, eventId] });
+            }
+          } else {
+            // If viewing all events, we need to check if this question belongs to any of the admin's events
+            // For now, we'll invalidate all queries and let the existing logic filter appropriately
+            queryClient.invalidateQueries({ queryKey: ['admin-questions', currentUser.id] });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'questions'
+        },
+        (payload) => {
+          console.log('Question updated:', payload);
+          
+          // Invalidate queries to reflect updates (like when marked as answered or response added)
+          if (eventId && payload.new.event_id === eventId) {
+            queryClient.invalidateQueries({ queryKey: ['admin-questions', currentUser.id, eventId] });
+          } else if (!eventId) {
+            queryClient.invalidateQueries({ queryKey: ['admin-questions', currentUser.id] });
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'questions'
+        },
+        (payload) => {
+          console.log('Question deleted:', payload);
+          
+          // Invalidate queries to reflect deletions
+          if (eventId && payload.old.event_id === eventId) {
+            queryClient.invalidateQueries({ queryKey: ['admin-questions', currentUser.id, eventId] });
+          } else if (!eventId) {
+            queryClient.invalidateQueries({ queryKey: ['admin-questions', currentUser.id] });
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('Cleaning up real-time subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [currentUser?.id, eventId, queryClient]);
 
   const markAsAnsweredMutation = useMutation({
     mutationFn: async (questionId: string) => {

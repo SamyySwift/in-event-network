@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { QrCode, Scan, Ticket, Users, CheckCircle, Clock, UserCheck } from 'lucide-react';
+import { QrCode, Scan, Ticket, Users, CheckCircle, Clock, UserCheck, Search, Calendar, MapPin, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,29 +8,107 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import QRCodeScanner from '@/components/QRCodeScanner';
+import TicketVerifier from '@/components/admin/TicketVerifier';
 import { useAdminCheckIns } from '@/hooks/useAdminCheckIns';
 import { useAdminTickets } from '@/hooks/useAdminTickets';
 import { AdminEventProvider } from '@/hooks/useAdminEventContext';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 
 function AdminCheckInContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [notes, setNotes] = useState('');
   const [showScanner, setShowScanner] = useState(false);
+  const [foundTicket, setFoundTicket] = useState<any>(null);
+  const [searchAttempted, setSearchAttempted] = useState(false);
   
+  const { selectedEventId } = useAdminEventContext();
   const { checkInTicket, checkInByQR, isCheckingIn, bulkCheckInAll, isBulkCheckingIn } = useAdminCheckIns();
   const { eventTickets, isLoadingTickets, stats } = useAdminTickets();
 
-  const handleManualCheckIn = () => {
+  // Search for ticket by name or ticket number
+  const { data: searchResults, isLoading: isSearching, refetch: searchTicket } = useQuery({
+    queryKey: ['search-ticket', searchQuery, selectedEventId],
+    queryFn: async () => {
+      if (!searchQuery.trim() || !selectedEventId) return null;
+      
+      let query = supabase
+        .from('event_tickets')
+        .select(`
+          *,
+          ticket_types (
+            name,
+            description
+          ),
+          events (
+            name,
+            start_time,
+            location
+          ),
+          profiles!event_tickets_user_id_fkey (
+            name,
+            email
+          )
+        `)
+        .eq('event_id', selectedEventId);
+
+      // Check if searchQuery looks like a ticket number (starts with TKT-)
+      if (searchQuery.startsWith('TKT-')) {
+        query = query.eq('ticket_number', searchQuery);
+      } else {
+        // Search by guest name or profile name
+        query = query.or(`guest_name.ilike.%${searchQuery}%,profiles.name.ilike.%${searchQuery}%`);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    enabled: false, // We'll trigger this manually
+  });
+
+  const handleSearch = async () => {
     if (!searchQuery.trim()) return;
+    setSearchAttempted(true);
+    const result = await searchTicket();
+    if (result.data && result.data.length > 0) {
+      setFoundTicket(result.data[0]);
+    } else {
+      setFoundTicket(null);
+    }
+  };
+
+  const handleCheckInFound = () => {
+    if (!foundTicket) return;
     
     checkInTicket.mutate({ 
-      searchQuery: searchQuery.trim(), 
+      searchQuery: foundTicket.ticket_number, 
       notes: notes.trim() || undefined 
     });
     
     // Clear form on success
     setSearchQuery('');
     setNotes('');
+    setFoundTicket(null);
+    setSearchAttempted(false);
+  };
+
+  const handleClearSearch = () => {
+    setSearchQuery('');
+    setFoundTicket(null);
+    setSearchAttempted(false);
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   const handleQRScan = (qrData: string) => {
@@ -173,35 +251,123 @@ function AdminCheckInContent() {
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="searchQuery" className="text-sm font-medium">Ticket Number or Attendee Name</Label>
-                    <Input
-                      id="searchQuery"
-                      placeholder="Enter ticket number (TKT-xxx) or attendee name"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && handleManualCheckIn()}
-                      className="rounded-xl"
-                    />
+                    <div className="flex gap-2">
+                      <Input
+                        id="searchQuery"
+                        placeholder="Enter ticket number (TKT-xxx) or attendee name"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                        className="rounded-xl"
+                      />
+                      <Button 
+                        onClick={handleSearch}
+                        disabled={!searchQuery.trim() || isSearching}
+                        variant="outline"
+                        className="rounded-xl"
+                      >
+                        <Search className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="notes" className="text-sm font-medium">Notes (Optional)</Label>
-                    <Textarea
-                      id="notes"
-                      placeholder="Add any notes about this check-in..."
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      rows={3}
-                      className="rounded-xl resize-none"
-                    />
+
+                  {/* Ticket Search Results */}
+                  {searchAttempted && (
+                    <div className="border rounded-xl p-4 bg-muted/30">
+                      {isSearching ? (
+                        <div className="text-center py-4">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+                          <p className="mt-2 text-sm text-muted-foreground">Searching...</p>
+                        </div>
+                      ) : foundTicket ? (
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-semibold text-foreground">Ticket Found</h4>
+                            <Badge 
+                              variant={foundTicket.check_in_status ? "default" : "secondary"}
+                            >
+                              {foundTicket.check_in_status ? "Already Checked In" : "Ready for Check-in"}
+                            </Badge>
+                          </div>
+                          
+                          <div className="space-y-3">
+                            <div className="text-center space-y-1">
+                              <h5 className="font-medium">{foundTicket.events.name}</h5>
+                              <p className="text-sm text-muted-foreground">{foundTicket.ticket_types.name}</p>
+                              <p className="text-xs text-muted-foreground">#{foundTicket.ticket_number}</p>
+                            </div>
+
+                            <div className="space-y-2 text-sm">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                <span>{formatDate(foundTicket.events.start_time)}</span>
+                              </div>
+                              {foundTicket.events.location && (
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                                  <span>{foundTicket.events.location}</span>
+                                </div>
+                              )}
+                              <div className="flex items-center gap-2">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                <span>{foundTicket.guest_name || foundTicket.profiles?.name || 'N/A'}</span>
+                              </div>
+                              <div>
+                                <strong>Price:</strong> ₦{foundTicket.price.toLocaleString()}
+                              </div>
+                              {foundTicket.checked_in_at && (
+                                <div>
+                                  <strong>Checked in:</strong> {formatDate(foundTicket.checked_in_at)}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-4">
+                          <p className="text-sm text-red-600">No ticket found matching "{searchQuery}"</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {foundTicket && (
+                    <div className="space-y-2">
+                      <Label htmlFor="notes" className="text-sm font-medium">Notes (Optional)</Label>
+                      <Textarea
+                        id="notes"
+                        placeholder="Add any notes about this check-in..."
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        rows={3}
+                        className="rounded-xl resize-none"
+                      />
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    {foundTicket && !foundTicket.check_in_status && (
+                      <Button 
+                        onClick={handleCheckInFound}
+                        disabled={isCheckingIn}
+                        className="flex-1 rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
+                        size="lg"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        {isCheckingIn ? 'Checking In...' : 'Check In Ticket'}
+                      </Button>
+                    )}
+                    {(foundTicket || searchAttempted) && (
+                      <Button 
+                        onClick={handleClearSearch}
+                        variant="outline"
+                        className="rounded-xl"
+                        size="lg"
+                      >
+                        Clear
+                      </Button>
+                    )}
                   </div>
-                  <Button 
-                    onClick={handleManualCheckIn}
-                    disabled={!searchQuery.trim() || isCheckingIn}
-                    className="w-full rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
-                    size="lg"
-                  >
-                    <Scan className="h-4 w-4 mr-2" />
-                    {isCheckingIn ? 'Checking In...' : 'Check In Ticket'}
-                  </Button>
                 </div>
               </div>
             </CardContent>

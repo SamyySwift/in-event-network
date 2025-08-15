@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          action: string
+          created_at: string
+          details: Json | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          ip_address: unknown | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       admin_wallet_credits: {
         Row: {
           admin_id: string
@@ -1672,6 +1708,33 @@ export type Database = {
         }
         Relationships: []
       }
+      super_admins: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          permissions: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          permissions?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          permissions?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       team_invitations: {
         Row: {
           admin_id: string
@@ -2278,6 +2341,20 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
+      get_dashboard_analytics: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          active_events: number
+          completed_events: number
+          monthly_registrations: number
+          total_admins: number
+          total_attendees: number
+          total_revenue: number
+          total_subscriptions: number
+          total_tickets_sold: number
+          weekly_registrations: number
+        }[]
+      }
       get_event_attendance_count: {
         Args: { event_uuid: string }
         Returns: number
@@ -2328,6 +2405,10 @@ export type Database = {
         Args: { section_name: string; target_event_id?: string }
         Returns: boolean
       }
+      impersonate_organizer: {
+        Args: { organizer_user_id: string }
+        Returns: Json
+      }
       increment_wallet_balance: {
         Args: { p_admin_id: string; p_amount: number; p_event_id: string }
         Returns: undefined
@@ -2344,9 +2425,22 @@ export type Database = {
         Args: { event_uuid: string }
         Returns: boolean
       }
+      is_super_admin: {
+        Args: { user_uuid?: string }
+        Returns: boolean
+      }
       join_event_by_access_key: {
         Args: { access_code: string }
         Returns: Json
+      }
+      log_activity: {
+        Args: {
+          p_action: string
+          p_details?: Json
+          p_entity_id?: string
+          p_entity_type?: string
+        }
+        Returns: string
       }
       user_can_see_profile: {
         Args: { profile_user_id: string }

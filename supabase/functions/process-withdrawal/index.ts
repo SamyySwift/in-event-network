@@ -252,6 +252,12 @@ serve(async (req) => {
         if (!response.ok) {
           const errorData = await response.json();
           console.error('Transfer initiation failed:', errorData);
+          
+          // Handle specific Paystack business upgrade requirement
+          if (errorData.code === "transfer_unavailable" && errorData.message?.includes("starter business")) {
+            throw new Error("Business account upgrade required. Please upgrade your Paystack business account to 'Registered Business' to enable withdrawals.");
+          }
+          
           throw new Error(errorData.message || "Failed to initiate transfer");
         }
 

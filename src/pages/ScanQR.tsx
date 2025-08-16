@@ -67,7 +67,7 @@ const ScanQR = () => {
   
             // Navigate to dashboard after a short delay
             setTimeout(() => {
-              navigate('/attendee', { replace: true });
+              navigate('/attendee/dashboard', { replace: true });
             }, 2000);
           },
           onError: (error: any) => {

@@ -72,7 +72,7 @@ const AuthCallback = () => {
               }
               
               // Default redirect based on role
-              const redirectPath = currentUser.role === 'host' ? '/admin' : '/attendee';
+              const redirectPath = currentUser.role === 'host' ? '/admin' : '/attendee/dashboard';
               navigate(redirectPath, { replace: true });
             } else if (currentUser === null) {
               // Auth context has been updated but no user found

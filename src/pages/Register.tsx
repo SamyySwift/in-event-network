@@ -108,7 +108,10 @@ const Register = () => {
                 data?.event_name || "event"
               } successfully!`,
             });
-            navigate("/attendee", { replace: true });
+            // Add delay to ensure context updates before navigation
+            setTimeout(() => {
+              navigate("/attendee/dashboard", { replace: true });
+            }, 500);
           },
           onError: (error: any) => {
             console.error("Failed to join event after registration:", error);
@@ -119,13 +122,13 @@ const Register = () => {
                 "Your account was created, but we couldn't join the event. Please scan the QR code again.",
               variant: "destructive",
             });
-            navigate("/attendee", { replace: true });
+            navigate("/attendee/dashboard", { replace: true });
           },
         });
       } else {
         // Normal redirect without event joining
         const redirectPath =
-          currentUser.role === "host" ? "/admin" : "/attendee";
+          currentUser.role === "host" ? "/admin" : "/attendee/dashboard";
         navigate(redirectPath, { replace: true });
       }
     }

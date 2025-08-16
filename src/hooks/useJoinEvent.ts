@@ -36,6 +36,9 @@ export const useJoinEvent = () => {
       if (data?.success) {
         console.log('Successfully joined event, invalidating caches...');
         
+        // Mark recent event join for AttendeeRouteGuard
+        localStorage.setItem('recentEventJoin', Date.now().toString());
+        
         // Invalidate all networking-related queries to refresh data
         queryClient.invalidateQueries({ queryKey: ['attendee-networking'] });
         queryClient.invalidateQueries({ queryKey: ['attendee-context'] });

@@ -227,6 +227,17 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
               </div>
             )}
 
+            {/* Usage Instructions */}
+            <div className="w-full p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2 text-sm">How to use this QR Code:</h4>
+              <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
+                <li>• Display on screens or projectors at your event entrance</li>
+                <li>• Print on flyers, posters, or event materials</li>
+                <li>• Share digitally via email or social media</li>
+                <li>• Attendees scan to create account and join your event</li>
+              </ul>
+            </div>
+
             <div className="flex flex-col gap-3 w-full">
               <Button onClick={handleDownloadQR} className="w-full">
                 <Download className="h-4 w-4 mr-2" />

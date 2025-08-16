@@ -108,15 +108,15 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   }, [qrUrl, qrSize]);
 
   return (
-    <div className="w-full max-w-lg mx-auto">
+    <div className="w-full max-w-lg mx-auto p-4">
       <Card className="border-0 shadow-lg">
-        <CardHeader className="pb-4">
+        <CardHeader className="pb-4 px-4 sm:px-6">
           <CardTitle className="flex items-center gap-2 text-lg">
             <QrCode className="h-5 w-5 text-primary" />
             Event QR Code Generator
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6 max-h-[80vh] overflow-y-auto px-6 pb-6">
+        <CardContent className="space-y-6 max-h-[80vh] overflow-y-auto px-4 sm:px-6 pb-6">
           <div className="space-y-3">
             <Label htmlFor="qr-url" className="text-sm font-medium">Event Registration URL</Label>
             <div className="flex gap-2">
@@ -176,12 +176,12 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
               </a>
             )}
             
-            <div className="flex gap-3 w-full">
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
               <Button 
                 onClick={generateQRCode} 
                 variant="outline"
                 disabled={isGenerating}
-                className="flex-1"
+                className="flex-1 text-sm"
               >
                 <QrCode className="h-4 w-4 mr-2" />
                 {isGenerating ? 'Generating...' : 'Regenerate'}
@@ -189,7 +189,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
               <Button 
                 onClick={downloadQRCode}
                 disabled={isGenerating || !qrImageUrl}
-                className="flex-1 bg-primary hover:bg-primary/90"
+                className="flex-1 bg-primary hover:bg-primary/90 text-sm"
               >
                 <Download className="h-4 w-4 mr-2" />
                 Download
@@ -197,7 +197,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
             </div>
           </div>
 
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800 space-y-3">
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 sm:p-4 border border-blue-200 dark:border-blue-800 space-y-3">
             <h4 className="font-medium text-blue-900 dark:text-blue-100 text-sm">How to use this QR Code:</h4>
             <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1.5 leading-relaxed">
               <li>• Display on screens or projectors at your event entrance</li>
@@ -207,8 +207,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
             </ul>
           </div>
 
-
-          <p className="text-xs text-muted-foreground text-center leading-relaxed">
+          <p className="text-xs text-muted-foreground text-center leading-relaxed px-2">
             Having trouble downloading? Try the alternative download link above, or right click the QR image and "Save image as...".
           </p>
         </CardContent>

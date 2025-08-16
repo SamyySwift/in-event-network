@@ -150,6 +150,10 @@ export const router = createBrowserRouter([
     element: <ScanQR />,
   },
   {
+    path: "/index/:eventKey",
+    element: <Index />,
+  },
+  {
     path: "/index",
     element: <Index />,
   },

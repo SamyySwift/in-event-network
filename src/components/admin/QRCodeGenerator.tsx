@@ -108,16 +108,17 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
   }, [qrUrl, qrSize]);
 
   return (
-    <div className="w-full max-w-lg mx-auto p-4">
-      <Card className="border-0 shadow-lg">
-        <CardHeader className="pb-4 px-4 sm:px-6">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <QrCode className="h-5 w-5 text-primary" />
-            Event QR Code Generator
+    <div className="w-full max-w-lg mx-auto p-2 sm:p-4">
+      <Card className="border-0 shadow-lg overflow-hidden">
+        <CardHeader className="pb-3 sm:pb-4 px-3 sm:px-6">
+          <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <QrCode className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
+            <span className="truncate">Event QR Code Generator</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6 max-h-[80vh] overflow-y-auto px-4 sm:px-6 pb-6">
-          <div className="space-y-3">
+        <CardContent className="space-y-4 sm:space-y-6 max-h-[85vh] overflow-y-auto px-3 sm:px-6 pb-4 sm:pb-6">
+          {/* URL Input Section */}
+          <div className="space-y-2 sm:space-y-3">
             <Label htmlFor="qr-url" className="text-sm font-medium">Event Registration URL</Label>
             <div className="flex gap-2">
               <Input
@@ -126,80 +127,96 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
                 onChange={(e) => setQrUrl(e.target.value)}
                 placeholder="Enter event registration URL"
                 autoComplete="off"
-                className="text-sm"
+                className="text-xs sm:text-sm min-w-0 break-all"
               />
-              <Button variant="outline" size="icon" onClick={copyQRCodeUrl} className="flex-shrink-0">
-                <Copy className="h-4 w-4" />
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={copyQRCodeUrl} 
+                className="flex-shrink-0 h-9 w-9 sm:h-10 sm:w-10"
+                aria-label="Copy URL"
+              >
+                <Copy className="h-3 w-3 sm:h-4 sm:w-4" />
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed break-words">
               This URL should contain your access code (e.g., {window.location.origin}/register?code=123456)
             </p>
           </div>
           
-          <div className="space-y-3">
-            <Label htmlFor="qr-size" className="text-sm font-medium">QR Code Size</Label>
+          {/* Size Input Section */}
+          <div className="space-y-2 sm:space-y-3">
+            <Label htmlFor="qr-size" className="text-sm font-medium">QR Code Size (pixels)</Label>
             <Input
               id="qr-size"
               type="number"
               min="128"
               max="512"
+              step="32"
               value={qrSize}
               onChange={(e) => setQrSize(parseInt(e.target.value) || 256)}
-              className="text-sm"
+              className="text-xs sm:text-sm w-full sm:w-32"
             />
+            <p className="text-xs text-muted-foreground">Recommended: 256px for most uses</p>
           </div>
           
-          <div className="flex flex-col items-center space-y-4 py-4">
-            <div className="relative bg-white rounded-lg p-4 shadow-sm border">
+          {/* QR Code Display Section */}
+          <div className="flex flex-col items-center space-y-3 sm:space-y-4 py-3 sm:py-4">
+            <div className="relative bg-white dark:bg-gray-50 rounded-lg p-3 sm:p-4 shadow-sm border w-fit max-w-full">
               <canvas 
                 ref={canvasRef}
-                className={`rounded-lg transition-opacity ${isGenerating ? 'opacity-50' : ''}`}
-                style={{ maxWidth: '100%', height: 'auto' }}
+                className={`rounded-lg transition-opacity block ${isGenerating ? 'opacity-50' : ''}`}
+                style={{ 
+                  maxWidth: 'min(100%, 300px)',
+                  height: 'auto',
+                  width: 'auto'
+                }}
               />
               {isGenerating && (
-                <div className="absolute inset-0 flex items-center justify-center bg-white/80 rounded-lg">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <div className="absolute inset-0 flex items-center justify-center bg-white/80 dark:bg-gray-50/80 rounded-lg">
+                  <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-primary"></div>
                 </div>
               )}
             </div>
 
-            {/* Alternative direct-image download for users if canvas fails */}
-            {qrImageUrl && (
-              <a
-                href={qrImageUrl}
-                download={`${eventName.replace(/\s+/g, '_')}_QR_Code.png`}
-                className="text-xs text-blue-600 underline hover:text-blue-800 transition-colors"
-                tabIndex={0}
-              >
-                Download as Image (alternative)
-              </a>
-            )}
-            
-            <div className="flex flex-col sm:flex-row gap-3 w-full">
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full max-w-sm">
               <Button 
                 onClick={generateQRCode} 
                 variant="outline"
                 disabled={isGenerating}
-                className="flex-1 text-sm"
+                className="flex-1 text-xs sm:text-sm h-10 sm:h-11 min-w-0"
               >
-                <QrCode className="h-4 w-4 mr-2" />
-                {isGenerating ? 'Generating...' : 'Regenerate'}
+                <QrCode className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+                <span className="truncate">{isGenerating ? 'Generating...' : 'Regenerate'}</span>
               </Button>
               <Button 
                 onClick={downloadQRCode}
                 disabled={isGenerating || !qrImageUrl}
-                className="flex-1 bg-primary hover:bg-primary/90 text-sm"
+                className="flex-1 bg-primary hover:bg-primary/90 text-xs sm:text-sm h-10 sm:h-11 min-w-0"
               >
-                <Download className="h-4 w-4 mr-2" />
-                Download
+                <Download className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 flex-shrink-0" />
+                <span className="truncate">Download</span>
               </Button>
             </div>
+
+            {/* Alternative download link */}
+            {qrImageUrl && (
+              <a
+                href={qrImageUrl}
+                download={`${eventName.replace(/\s+/g, '_')}_QR_Code.png`}
+                className="text-xs text-blue-600 dark:text-blue-400 underline hover:text-blue-800 dark:hover:text-blue-300 transition-colors text-center px-2"
+                tabIndex={0}
+              >
+                Alternative download link
+              </a>
+            )}
           </div>
 
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 sm:p-4 border border-blue-200 dark:border-blue-800 space-y-3">
+          {/* Usage Instructions */}
+          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 sm:p-4 border border-blue-200 dark:border-blue-800 space-y-2 sm:space-y-3">
             <h4 className="font-medium text-blue-900 dark:text-blue-100 text-sm">How to use this QR Code:</h4>
-            <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1.5 leading-relaxed">
+            <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1 sm:space-y-1.5 leading-relaxed">
               <li>• Display on screens or projectors at your event entrance</li>
               <li>• Print on flyers, posters, or event materials</li>
               <li>• Share digitally via email or social media</li>
@@ -207,9 +224,11 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
             </ul>
           </div>
 
-          <p className="text-xs text-muted-foreground text-center leading-relaxed px-2">
-            Having trouble downloading? Try the alternative download link above, or right click the QR image and "Save image as...".
-          </p>
+          {/* Help Text */}
+          <div className="text-xs text-muted-foreground text-center leading-relaxed px-1 sm:px-2 space-y-1">
+            <p>Having trouble downloading? Try the alternative download link above, or right-click the QR image and select "Save image as..."</p>
+            <p className="text-xs opacity-75">Tip: For best results, use a high contrast background when printing</p>
+          </div>
         </CardContent>
       </Card>
     </div>

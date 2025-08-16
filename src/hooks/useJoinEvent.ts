@@ -61,10 +61,13 @@ export const useJoinEvent = () => {
         onSuccess: (data) => {
           // Only show default toast if no custom onSuccess handler is provided
           if (!options?.onSuccess) {
-            toast({
-              title: 'Successfully Joined Event!',
-              description: `Welcome to ${data?.event_name}. You can now connect with other attendees.`,
-            });
+            // Delay default toast to prevent conflicts
+            setTimeout(() => {
+              toast({
+                title: 'Successfully Joined Event!',
+                description: `Welcome to ${data?.event_name}. You can now connect with other attendees.`,
+              });
+            }, 2000);
             // Navigate to attendee dashboard
             navigate('/attendee/dashboard');
           } else {

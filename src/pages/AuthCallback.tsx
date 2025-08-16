@@ -50,20 +50,26 @@ const AuthCallback = () => {
                     onSuccess: (data: any) => {
                       console.log('Successfully joined event after OAuth:', data);
                       setIsJoiningEvent(false);
-                      toast({
-                        title: 'Welcome!',
-                        description: `Successfully joined ${data?.event_name || 'event'}!`,
-                      });
+                      // Delay toast to prevent conflicts
+                      setTimeout(() => {
+                        toast({
+                          title: 'Welcome!',
+                          description: `Successfully joined ${data?.event_name || 'event'}!`,
+                        });
+                      }, 2000);
                       navigate('/attendee/dashboard', { replace: true });
                     },
                     onError: (error: any) => {
                       console.error('Failed to join event after OAuth:', error);
                       setIsJoiningEvent(false);
-                      toast({
-                        title: 'Joined Successfully',
-                        description: 'Welcome! You can now access the event features.',
-                        variant: 'default',
-                      });
+                      // Delay toast to prevent conflicts
+                      setTimeout(() => {
+                        toast({
+                          title: 'Joined Successfully',
+                          description: 'Welcome! You can now access the event features.',
+                          variant: 'default',
+                        });
+                      }, 2000);
                       navigate('/attendee/dashboard', { replace: true });
                     }
                   });

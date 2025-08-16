@@ -102,12 +102,15 @@ const Register = () => {
           onSuccess: (data: any) => {
             console.log("Successfully joined event after registration:", data);
             setIsJoiningEvent(false);
-            toast({
-              title: "Welcome!",
-              description: `Account created and joined ${
-                data?.event_name || "event"
-              } successfully!`,
-            });
+            // Delay toast to prevent conflicts with other success messages
+            setTimeout(() => {
+              toast({
+                title: "Welcome!",
+                description: `Account created and joined ${
+                  data?.event_name || "event"
+                } successfully!`,
+              });
+            }, 2000);
             // Add delay to ensure context updates before navigation
             setTimeout(() => {
               navigate("/attendee/dashboard", { replace: true });
@@ -116,12 +119,15 @@ const Register = () => {
           onError: (error: any) => {
             console.error("Failed to join event after registration:", error);
             setIsJoiningEvent(false);
-            toast({
-              title: "Account Created",
-              description:
-                "Your account was created, but we couldn't join the event. Please scan the QR code again.",
-              variant: "destructive",
-            });
+            // Delay toast to prevent conflicts with other messages
+            setTimeout(() => {
+              toast({
+                title: "Account Created",
+                description:
+                  "Your account was created, but we couldn't join the event. Please scan the QR code again.",
+                variant: "destructive",
+              });
+            }, 2000);
             navigate("/attendee/dashboard", { replace: true });
           },
         });
@@ -176,10 +182,7 @@ const Register = () => {
       }
 
       console.log("Registration successful");
-      toast({
-        title: "Success",
-        description: "Your account has been created successfully",
-      });
+      // No immediate toast here to prevent conflicts with event joining toast
 
       // The redirect will be handled by the useEffect when currentUser updates
     } catch (error) {

@@ -48,8 +48,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const isMobile = useIsMobile();
   const { unreadCount } = useNotificationCount();
   const isActive = (path: string) => {
-    if (path === "/") {
-      return location.pathname === "/";
+    if (path === "/" || path === "/attendee" || path === "/host") {
+      return location.pathname === path;
     }
     return location.pathname.startsWith(path);
   };

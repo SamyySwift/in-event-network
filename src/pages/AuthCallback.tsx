@@ -35,41 +35,44 @@ const AuthCallback = () => {
                 return;
               }
               
-              // Check for pending event code (use localStorage for better persistence)
-              const pendingEventCode = localStorage.getItem('pendingEventCode');
-              if (pendingEventCode && currentUser.role === 'attendee') {
-                console.log('Found pending event code after OAuth, attempting to join:', pendingEventCode);
-                setIsJoiningEvent(true);
-                
-                // Clear the stored code
-                localStorage.removeItem('pendingEventCode');
-                
-                // Join the event after OAuth completion
-                setTimeout(() => {
-                  joinEvent(pendingEventCode, {
-                    onSuccess: (data: any) => {
-                      console.log('Successfully joined event after OAuth:', data);
-                      setIsJoiningEvent(false);
-                      toast({
-                        title: 'Welcome!',
-                        description: `Successfully joined ${data?.event_name || 'event'}!`,
-                      });
-                      navigate('/attendee/dashboard', { replace: true });
-                    },
-                    onError: (error: any) => {
-                      console.error('Failed to join event after OAuth:', error);
-                      setIsJoiningEvent(false);
-                      toast({
-                        title: 'Joined Successfully',
-                        description: 'Welcome! You can now access the event features.',
-                        variant: 'default',
-                      });
-                      navigate('/attendee/dashboard', { replace: true });
-                    }
-                  });
-                }, 0);
-                return;
-              }
+               // Check for pending event code (use localStorage for better persistence)
+               const pendingEventCode = localStorage.getItem('pendingEventCode');
+               if (pendingEventCode && currentUser.role === 'attendee') {
+                 console.log('Found pending event code after OAuth, attempting to join:', pendingEventCode);
+                 setIsJoiningEvent(true);
+                 
+                 // Clear the stored code
+                 localStorage.removeItem('pendingEventCode');
+                 // Also clean up OAuth flag
+                 localStorage.removeItem('googleOAuthInProgress');
+                 
+                 // Join the event after OAuth completion
+                 joinEvent(pendingEventCode, {
+                   onSuccess: (data: any) => {
+                     console.log('Successfully joined event after OAuth:', data);
+                     setIsJoiningEvent(false);
+                     toast({
+                       title: 'Welcome!',
+                       description: `Account created and joined ${data?.event_name || 'event'} successfully!`,
+                     });
+                     navigate('/attendee/dashboard', { replace: true });
+                   },
+                   onError: (error: any) => {
+                     console.error('Failed to join event after OAuth:', error);
+                     setIsJoiningEvent(false);
+                     toast({
+                       title: 'Account Created',
+                       description: 'Your account was created successfully. Please scan the QR code again to join the event.',
+                       variant: 'default',
+                     });
+                     navigate('/attendee/dashboard', { replace: true });
+                   }
+                 });
+                 return;
+               }
+               
+               // Clean up OAuth flag if no event to join
+               localStorage.removeItem('googleOAuthInProgress');
               
               // Default redirect based on role
               const redirectPath = currentUser.role === 'host' ? '/admin' : '/attendee/dashboard';

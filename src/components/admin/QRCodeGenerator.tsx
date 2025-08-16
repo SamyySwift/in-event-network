@@ -225,9 +225,9 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
           </div>
 
           {/* Help Text */}
-          <div className="text-xs text-muted-foreground text-center leading-relaxed px-1 sm:px-2 space-y-1">
+          <div className="text-xs text-muted-foreground text-center leading-relaxed px-1 sm:px-2">
             <p>Having trouble downloading? Try the alternative download link above, or right-click the QR image and select "Save image as..."</p>
-            <p className="text-xs opacity-75">Tip: For best results, use a high contrast background when printing</p>
+            <p className="text-xs opacity-75 mt-1">Tip: For best results, use a high contrast background when printing</p>
           </div>
         </CardContent>
       </Card>

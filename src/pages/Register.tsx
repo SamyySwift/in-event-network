@@ -46,22 +46,14 @@ const Register = () => {
     setErrorMessage(null);
     try {
       setIsSubmitting(true);
-      
-      // Set flag to indicate Google OAuth is in progress
-      // This prevents Register.tsx from handling event joining
-      localStorage.setItem('googleOAuthInProgress', 'true');
-      
       const { error } = await signInWithGoogle(role);
       
       if (error) {
         console.error("Google sign-up error:", error);
-        localStorage.removeItem('googleOAuthInProgress');
         setErrorMessage("Failed to sign up with Google. Please try again.");
-        setIsSubmitting(false);
       }
     } catch (error) {
       console.error("Google sign-up error:", error);
-      localStorage.removeItem('googleOAuthInProgress');
       setErrorMessage("An unexpected error occurred. Please try again.");
       setIsSubmitting(false);
     }
@@ -77,25 +69,18 @@ const Register = () => {
         currentUser
       );
 
-      // Check if Google OAuth is in progress - let AuthCallback handle event joining
-      const googleOAuthInProgress = localStorage.getItem('googleOAuthInProgress');
-      if (googleOAuthInProgress) {
-        console.log('Google OAuth in progress, skipping event joining in Register');
-        localStorage.removeItem('googleOAuthInProgress');
-        return; // Let AuthCallback handle the flow
-      }
-
       // Check for ticketing redirect first
+      // Replace the existing buy-tickets redirect logic (around lines 74-86) with:
       const redirectAfterLogin = localStorage.getItem('redirectAfterLogin');
       if (redirectAfterLogin && redirectAfterLogin.includes('/buy-tickets/')) {
-        // Extract event key from the buy-tickets URL
-        const eventKeyMatch = redirectAfterLogin.match(/\/buy-tickets\/([^\/\?]+)/);
-        if (eventKeyMatch) {
-          localStorage.removeItem('redirectAfterLogin');
-          // Redirect directly to the buy-tickets page
-          navigate(redirectAfterLogin, { replace: true });
-          return;
-        }
+      // Extract event key from the buy-tickets URL
+      const eventKeyMatch = redirectAfterLogin.match(/\/buy-tickets\/([^\/\?]+)/);
+      if (eventKeyMatch) {
+      localStorage.removeItem('redirectAfterLogin');
+      // Redirect directly to the buy-tickets page
+      navigate(redirectAfterLogin, { replace: true });
+      return;
+      }
       }
 
       // Check if there's a pending event to join (check both localStorage and sessionStorage for backward compatibility)
@@ -104,7 +89,7 @@ const Register = () => {
 
       if (pendingEventCode && currentUser.role === "attendee") {
         console.log(
-          "Found pending event code in Register, attempting to join:",
+          "Found pending event code, attempting to join:",
           pendingEventCode
         );
         setIsJoiningEvent(true);
@@ -115,7 +100,7 @@ const Register = () => {
 
         joinEvent(pendingEventCode, {
           onSuccess: (data: any) => {
-            console.log("Successfully joined event after email registration:", data);
+            console.log("Successfully joined event after registration:", data);
             setIsJoiningEvent(false);
             toast({
               title: "Welcome!",

@@ -62,12 +62,13 @@ const ScanQR = () => {
         joinEvent(accessCode, {
           onSuccess: (data: any) => {
             console.log('Join event success:', data);
-            toast({
-              title: 'Successfully Joined Event!',
-              description: `Welcome to ${data?.event_name}. You can now connect with other attendees.`,
-            });
-            // Navigate immediately to dashboard
-            navigate('/attendee/dashboard', { replace: true });
+            setScanSuccess(true);
+            setEventName(data?.event_name || 'Event');
+  
+            // Navigate to dashboard after a short delay
+            setTimeout(() => {
+              navigate('/attendee/dashboard', { replace: true });
+            }, 2000);
           },
           onError: (error: any) => {
             console.error('Join event error:', error);

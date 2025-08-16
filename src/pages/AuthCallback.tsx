@@ -1,11 +1,16 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { useJoinEvent } from '@/hooks/useJoinEvent';
+import { useToast } from '@/hooks/use-toast';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
+  const { joinEvent } = useJoinEvent();
+  const { toast } = useToast();
+  const [isJoiningEvent, setIsJoiningEvent] = useState(false);
 
   useEffect(() => {
     const handleAuthCallback = async () => {
@@ -27,6 +32,42 @@ const AuthCallback = () => {
               if (redirectAfterLogin && redirectAfterLogin.includes('/buy-tickets/')) {
                 localStorage.removeItem('redirectAfterLogin');
                 navigate(redirectAfterLogin, { replace: true });
+                return;
+              }
+              
+              // Check for pending event code (use localStorage for better persistence)
+              const pendingEventCode = localStorage.getItem('pendingEventCode');
+              if (pendingEventCode && currentUser.role === 'attendee') {
+                console.log('Found pending event code after OAuth, attempting to join:', pendingEventCode);
+                setIsJoiningEvent(true);
+                
+                // Clear the stored code
+                localStorage.removeItem('pendingEventCode');
+                
+                // Join the event after OAuth completion
+                setTimeout(() => {
+                  joinEvent(pendingEventCode, {
+                    onSuccess: (data: any) => {
+                      console.log('Successfully joined event after OAuth:', data);
+                      setIsJoiningEvent(false);
+                      toast({
+                        title: 'Welcome!',
+                        description: `Successfully joined ${data?.event_name || 'event'}!`,
+                      });
+                      navigate('/attendee/dashboard', { replace: true });
+                    },
+                    onError: (error: any) => {
+                      console.error('Failed to join event after OAuth:', error);
+                      setIsJoiningEvent(false);
+                      toast({
+                        title: 'Joined Successfully',
+                        description: 'Welcome! You can now access the event features.',
+                        variant: 'default',
+                      });
+                      navigate('/attendee/dashboard', { replace: true });
+                    }
+                  });
+                }, 0);
                 return;
               }
               
@@ -53,13 +94,15 @@ const AuthCallback = () => {
     };
 
     handleAuthCallback();
-  }, [navigate, currentUser]);
+  }, [navigate, currentUser, joinEvent, toast]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-connect-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Completing sign-in...</p>
+        <p className="text-gray-600">
+          {isJoiningEvent ? 'Joining event...' : 'Completing sign-in...'}
+        </p>
       </div>
     </div>
   );

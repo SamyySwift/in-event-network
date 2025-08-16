@@ -83,9 +83,9 @@ const Register = () => {
       }
       }
 
-      // Check if there's a pending event to join
+      // Check if there's a pending event to join (check both localStorage and sessionStorage for backward compatibility)
       const pendingEventCode =
-        eventCode || sessionStorage.getItem("pendingEventCode");
+        eventCode || localStorage.getItem("pendingEventCode") || sessionStorage.getItem("pendingEventCode");
 
       if (pendingEventCode && currentUser.role === "attendee") {
         console.log(
@@ -94,7 +94,8 @@ const Register = () => {
         );
         setIsJoiningEvent(true);
 
-        // Clear the stored code
+        // Clear the stored code from both storages
+        localStorage.removeItem("pendingEventCode");
         sessionStorage.removeItem("pendingEventCode");
 
         joinEvent(pendingEventCode, {

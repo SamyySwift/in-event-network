@@ -197,15 +197,6 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
             </div>
           </div>
 
-          <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800 space-y-3">
-            <h4 className="font-medium text-blue-900 dark:text-blue-100 text-sm">How to use this QR Code:</h4>
-            <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1.5 leading-relaxed">
-              <li>• Display on screens or projectors at your event entrance</li>
-              <li>• Print on flyers, posters, or event materials</li>
-              <li>• Share digitally via email or social media</li>
-              <li>• Attendees scan to create account and join your event</li>
-            </ul>
-          </div>
 
           <p className="text-xs text-muted-foreground text-center leading-relaxed">
             Having trouble downloading? Try the alternative download link above, or right click the QR image and "Save image as...".

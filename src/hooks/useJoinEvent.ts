@@ -46,46 +46,38 @@ export const useJoinEvent = () => {
         
         // Force a refetch of networking data
         queryClient.refetchQueries({ queryKey: ['attendee-networking'] });
+        
+        toast({
+          title: 'Successfully Joined Event!',
+          description: `Welcome to ${data.event_name}. You can now connect with other attendees.`,
+        });
+        
+        // Navigate to attendee dashboard
+        navigate('/attendee/dashboard');
       } else {
         console.error('Join event failed:', data?.message);
+        toast({
+          title: 'Failed to Join Event',
+          description: data?.message || 'Invalid access code',
+          variant: 'destructive',
+        });
       }
     },
     onError: (error: any) => {
       console.error('Join event error:', error);
+      toast({
+        title: 'Error Joining Event',
+        description: error.message || 'Failed to join event. Please try again.',
+        variant: 'destructive',
+      });
     },
   });
 
   return {
     joinEvent: (accessCode: string, options?: { onSuccess?: (data: any) => void; onError?: (error: any) => void }) => {
       return joinEventMutation.mutate(accessCode, {
-        onSuccess: (data) => {
-          // Only show default toast if no custom onSuccess handler is provided
-          if (!options?.onSuccess) {
-            toast({
-              title: 'Successfully Joined Event!',
-              description: `Welcome to ${data?.event_name}. You can now connect with other attendees.`,
-            });
-            // Navigate to attendee dashboard
-            navigate('/attendee/dashboard');
-          } else {
-            // Call custom success handler
-            options.onSuccess(data);
-          }
-        },
-        onError: (error) => {
-          // Only show default error toast if no custom onError handler is provided
-          if (!options?.onError) {
-            console.error('Join event error:', error);
-            toast({
-              title: 'Error Joining Event',
-              description: error.message || 'Failed to join event. Please try again.',
-              variant: 'destructive',
-            });
-          } else {
-            // Call custom error handler
-            options.onError(error);
-          }
-        },
+        onSuccess: options?.onSuccess,
+        onError: options?.onError,
       });
     },
     isJoining: joinEventMutation.isPending,

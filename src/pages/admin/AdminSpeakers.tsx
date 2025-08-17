@@ -97,52 +97,68 @@ const AdminSpeakersContent = () => {
     }
   }, [watchedValues, saveFormData, isCreating, editingSpeaker]);
 
-  // Filter speakers
-  const filteredSpeakers = speakers.filter((speaker) => {
-    const matchesSearch = 
-      speaker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      speaker.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      speaker.bio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      speaker.topic?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      speaker.session_title?.toLowerCase().includes(searchTerm.toLowerCase());
+  // Filter and sort speakers by session time
+  const filteredSpeakers = speakers
+    .filter((speaker) => {
+      const matchesSearch = 
+        speaker.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        speaker.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        speaker.bio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        speaker.topic?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        speaker.session_title?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus = (() => {
-      if (selectedStatus === "all") return true;
-      if (selectedStatus === "confirmed") return !!speaker.session_title;
-      if (selectedStatus === "pending") return !speaker.session_title;
-      if (selectedStatus === "with_topic") return !!speaker.topic;
-      if (selectedStatus === "no_topic") return !speaker.topic;
-      return true;
-    })();
+      const matchesStatus = (() => {
+        if (selectedStatus === "all") return true;
+        if (selectedStatus === "confirmed") return !!speaker.session_title;
+        if (selectedStatus === "pending") return !speaker.session_title;
+        if (selectedStatus === "with_topic") return !!speaker.topic;
+        if (selectedStatus === "no_topic") return !speaker.topic;
+        return true;
+      })();
 
-    const matchesTopic = selectedTopic === "all" || speaker.topic === selectedTopic;
+      const matchesTopic = selectedTopic === "all" || speaker.topic === selectedTopic;
 
-    const matchesDate = (() => {
-      if (selectedDate === "all") return true;
-      
-      if (selectedDate.startsWith("date-")) {
-        const targetDate = selectedDate.replace("date-", "");
+      const matchesDate = (() => {
+        if (selectedDate === "all") return true;
+        
+        if (selectedDate.startsWith("date-")) {
+          const targetDate = selectedDate.replace("date-", "");
+          const speakerDate = speaker.session_time ? speaker.session_time.slice(0, 10) : null;
+          return speakerDate === targetDate;
+        }
+
         const speakerDate = speaker.session_time ? speaker.session_time.slice(0, 10) : null;
-        return speakerDate === targetDate;
-      }
+        if (!speakerDate) return selectedDate === "tba";
 
-      const speakerDate = speaker.session_time ? speaker.session_time.slice(0, 10) : null;
-      if (!speakerDate) return selectedDate === "tba";
+        try {
+          const date = parseISO(speakerDate);
+          if (selectedDate === "today") return isToday(date);
+          if (selectedDate === "tomorrow") return isTomorrow(date);
+          if (selectedDate === "tba") return false;
+        } catch {
+          return selectedDate === "tba";
+        }
 
+        return true;
+      })();
+
+      return matchesSearch && matchesStatus && matchesTopic && matchesDate;
+    })
+    .sort((a, b) => {
+      // Sort by session time - speakers with session times come first, sorted chronologically
+      if (!a.session_time && !b.session_time) return 0;
+      if (!a.session_time) return 1; // Move speakers without session time to end
+      if (!b.session_time) return -1; // Move speakers without session time to end
+      
       try {
-        const date = parseISO(speakerDate);
-        if (selectedDate === "today") return isToday(date);
-        if (selectedDate === "tomorrow") return isTomorrow(date);
-        if (selectedDate === "tba") return false;
-      } catch {
-        return selectedDate === "tba";
+        const timeA = new Date(a.session_time).getTime();
+        const timeB = new Date(b.session_time).getTime();
+        return timeA - timeB; // Sort in ascending order (earliest first, like 10am before 1pm)
+      } catch (error) {
+        console.error('Error sorting by session time:', error);
+        return 0;
       }
-
-      return true;
-    })();
-
-    return matchesSearch && matchesStatus && matchesTopic && matchesDate;
-  });
+    });
 
   // Calculate some simple speaker stats
   const totalSpeakers = filteredSpeakers.length;

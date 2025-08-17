@@ -299,20 +299,10 @@ const AttendeeMap = () => {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader className="space-y-4">
-              <div className="flex items-center justify-between">
-                <DialogTitle className="text-2xl font-bold flex items-center gap-3">
-                  <FacilityIcon iconType={selectedFacility?.icon_type} className="h-6 w-6 text-primary" />
-                  {selectedFacility?.name}
-                </DialogTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsDialogOpen(false)}
-                  className="rounded-full h-8 w-8 p-0"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
+              <DialogTitle className="text-2xl font-bold flex items-center gap-3">
+                <FacilityIcon iconType={selectedFacility?.icon_type} className="h-6 w-6 text-primary" />
+                {selectedFacility?.name}
+              </DialogTitle>
             </DialogHeader>
 
             {selectedFacility && (

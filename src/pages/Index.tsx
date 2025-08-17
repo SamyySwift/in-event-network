@@ -12,23 +12,40 @@ const Index = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (eventKey) {
-      // If we have an event key from the URL, try to join the event
-      console.log('Attempting to join event with key:', eventKey);
+    // Check for event key from URL params or localStorage
+    const accessCode = eventKey || localStorage.getItem('pendingEventCode');
+    
+    if (accessCode) {
+      // If we have an event key from the URL or localStorage, try to join the event
+      console.log('Attempting to join event with code:', accessCode);
       
-      joinEvent(eventKey, {
+      // Clear stored code to prevent repeat attempts
+      if (!eventKey && localStorage.getItem('pendingEventCode')) {
+        localStorage.removeItem('pendingEventCode');
+      }
+      
+      joinEvent(accessCode, {
         onSuccess: (data: any) => {
           console.log('Successfully joined event:', data);
+          // Add a small delay to prevent toast conflicts
+          setTimeout(() => {
+            toast({
+              title: "Welcome!",
+              description: `Successfully joined ${data?.event_name || 'the event'}!`,
+            });
+          }, 500);
           // Navigate to attendee dashboard
           navigate('/attendee/dashboard', { replace: true });
         },
         onError: (error: any) => {
           console.error('Failed to join event:', error);
-          toast({
-            title: "Failed to Join Event",
-            description: error?.message || "Could not join the event. Please try scanning the QR code again.",
-            variant: "destructive"
-          });
+          setTimeout(() => {
+            toast({
+              title: "Failed to Join Event",
+              description: error?.message || "Could not join the event. Please try scanning the QR code again.",
+              variant: "destructive"
+            });
+          }, 500);
           // Redirect to scan page to try again
           navigate('/scan', { replace: true });
         }

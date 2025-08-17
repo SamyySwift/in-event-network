@@ -47,16 +47,13 @@ const AuthCallback = () => {
                  localStorage.removeItem('googleOAuthInProgress');
                  
                  // Join the event after OAuth completion
-                 joinEvent(pendingEventCode, {
-                   onSuccess: (data: any) => {
-                     console.log('Successfully joined event after OAuth:', data);
-                     setIsJoiningEvent(false);
-                     toast({
-                       title: 'Welcome!',
-                       description: `Account created and joined ${data?.event_name || 'event'} successfully!`,
-                     });
-                     navigate('/attendee/dashboard', { replace: true });
-                   },
+                  joinEvent(pendingEventCode, {
+                    onSuccess: (data: any) => {
+                      console.log('Successfully joined event after OAuth:', data);
+                      setIsJoiningEvent(false);
+                      // Navigate to index page which will handle the success message
+                      navigate('/index', { replace: true });
+                    },
                    onError: (error: any) => {
                      console.error('Failed to join event after OAuth:', error);
                      setIsJoiningEvent(false);

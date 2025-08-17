@@ -47,6 +47,11 @@ const Register = () => {
     try {
       setIsSubmitting(true);
       
+      // Store event code for OAuth flow if present
+      if (eventCode) {
+        localStorage.setItem('pendingEventCode', eventCode);
+      }
+      
       // Set flag to indicate Google OAuth is in progress
       // This prevents Register.tsx from handling event joining
       localStorage.setItem('googleOAuthInProgress', 'true');
@@ -117,16 +122,8 @@ const Register = () => {
           onSuccess: (data: any) => {
             console.log("Successfully joined event after email registration:", data);
             setIsJoiningEvent(false);
-            toast({
-              title: "Welcome!",
-              description: `Account created and joined ${
-                data?.event_name || "event"
-              } successfully!`,
-            });
-            // Add delay to ensure context updates before navigation
-            setTimeout(() => {
-              navigate("/attendee/dashboard", { replace: true });
-            }, 500);
+            // Navigate to index page which will handle the success message
+            navigate("/index", { replace: true });
           },
           onError: (error: any) => {
             console.error("Failed to join event after registration:", error);

@@ -381,9 +381,17 @@ const AttendeeNotifications = () => {
                 notifications.filter(n => !n.is_read).map((notification) => (
                   <div 
                     key={notification.id}
-                    className="cursor-pointer bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors"
+                    className={`cursor-pointer bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800/70 transition-colors ${selectMode ? 'relative' : ''}`}
                     onClick={() => handleNotificationClick(notification)}
                   >
+                    {selectMode && (
+                      <div className="absolute top-3 left-3 z-10" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={selectedNotifications.includes(notification.id)}
+                          onCheckedChange={() => toggleSelectNotification(notification.id)}
+                        />
+                      </div>
+                    )}
                     {notification.type === 'connection' ? 
                       renderConnectionRequest(notification) : 
                       (
@@ -422,9 +430,17 @@ const AttendeeNotifications = () => {
                     key={notification.id}
                     className={`cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
                       !notification.is_read ? 'bg-gray-50 dark:bg-gray-800/50' : ''
-                    }`}
+                    } ${selectMode ? 'relative' : ''}`}
                     onClick={() => handleNotificationClick(notification)}
                   >
+                    {selectMode && (
+                      <div className="absolute top-3 left-3 z-10" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={selectedNotifications.includes(notification.id)}
+                          onCheckedChange={() => toggleSelectNotification(notification.id)}
+                        />
+                      </div>
+                    )}
                     <div className="py-5 px-3 flex items-start gap-4">
                       <div className="mt-1 p-2.5 rounded-full bg-gray-100 dark:bg-gray-800 flex-shrink-0">
                         {getNotificationIcon(notification.type)}
@@ -458,9 +474,17 @@ const AttendeeNotifications = () => {
                     key={notification.id}
                     className={`cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
                       !notification.is_read ? 'bg-gray-50 dark:bg-gray-800/50' : ''
-                    }`}
+                    } ${selectMode ? 'relative' : ''}`}
                     onClick={() => handleNotificationClick(notification)}
                   >
+                    {selectMode && (
+                      <div className="absolute top-3 left-3 z-10" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={selectedNotifications.includes(notification.id)}
+                          onCheckedChange={() => toggleSelectNotification(notification.id)}
+                        />
+                      </div>
+                    )}
                     {renderConnectionRequest(notification)}
                   </div>
                 ))
@@ -482,9 +506,17 @@ const AttendeeNotifications = () => {
                     key={notification.id}
                     className={`cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
                       !notification.is_read ? 'bg-gray-50 dark:bg-gray-800/50' : ''
-                    }`}
+                    } ${selectMode ? 'relative' : ''}`}
                     onClick={() => handleNotificationClick(notification)}
                   >
+                    {selectMode && (
+                      <div className="absolute top-3 left-3 z-10" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={selectedNotifications.includes(notification.id)}
+                          onCheckedChange={() => toggleSelectNotification(notification.id)}
+                        />
+                      </div>
+                    )}
                     <div className="py-5 px-3 flex items-start gap-4">
                       <div className="mt-1 p-2.5 rounded-full bg-gray-100 dark:bg-gray-800 flex-shrink-0">
                         {getNotificationIcon(notification.type)}

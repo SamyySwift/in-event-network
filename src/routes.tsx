@@ -35,6 +35,7 @@ import AdminHighlights from "@/pages/admin/AdminHighlights";
 import AdminEventPreview from "@/pages/admin/AdminEventPreview";
 
 import SponsorForm from "@/pages/SponsorForm";
+import LiveQuestions from "@/pages/LiveQuestions";
 
 
 // Attendee Pages
@@ -315,6 +316,12 @@ export const router = createBrowserRouter([
   {
     path: "/sponsor-form/:formId",
     element: <SponsorForm />,
+  },
+
+  // Public live questions route
+  {
+    path: "/live-questions/:eventId",
+    element: <LiveQuestions />,
   },
 
   // Host Routes (redirect to admin)

@@ -8,8 +8,11 @@ import EventSelector from "@/components/admin/EventSelector";
 import { Input } from "@/components/ui/input";
 import { useAdminQuestions } from "@/hooks/useAdminQuestions";
 import { useAdminEventContext } from "@/hooks/useAdminEventContext";
-import { Plus } from "lucide-react";
+import { Plus, Share2, Copy, ExternalLink } from "lucide-react";
 import PaymentGuard from '@/components/payment/PaymentGuard';
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
 
 const TABS = [
   { id: "all", label: "All" },
@@ -23,6 +26,8 @@ const QuestionsContent = () => {
   const [respondingTo, setRespondingTo] = useState<string | null>(null);
   const [responseText, setResponseText] = useState("");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   const { selectedEventId, selectedEvent } = useAdminEventContext();
   const {
@@ -83,6 +88,27 @@ const QuestionsContent = () => {
 
   const handleDelete = (id: string) => {
     deleteQuestion(id);
+  };
+
+  // Generate shareable link
+  const generateShareableLink = () => {
+    if (!selectedEventId) return '';
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/live-questions/${selectedEventId}`;
+  };
+
+  const copyShareableLink = () => {
+    const link = generateShareableLink();
+    navigator.clipboard.writeText(link);
+    toast({
+      title: "Link copied!",
+      description: "Shareable link has been copied to clipboard",
+    });
+  };
+
+  const openInNewTab = () => {
+    const link = generateShareableLink();
+    window.open(link, '_blank');
   };
 
   if (isLoading) {
@@ -166,14 +192,54 @@ const QuestionsContent = () => {
             </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="flex justify-between mb-4">
+          {/* Search Bar and Share Button */}
+          <div className="flex justify-between items-center mb-4">
             <Input
               placeholder="Search questions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="max-w-sm"
             />
+            <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2">
+                  <Share2 className="h-4 w-4" />
+                  Share Live View
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Share2 className="h-5 w-5" />
+                    Share Live Questions
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Share this link to allow anyone to view questions and answers in real-time without needing to log in.
+                  </p>
+                  <div className="flex items-center space-x-2">
+                    <div className="grid flex-1 gap-2">
+                      <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                        {generateShareableLink()}
+                      </div>
+                    </div>
+                    <Button size="sm" onClick={copyShareableLink} className="shrink-0">
+                      <Copy className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={openInNewTab} variant="outline" className="flex-1 gap-2">
+                      <ExternalLink className="h-4 w-4" />
+                      Preview
+                    </Button>
+                    <Button onClick={() => setShareDialogOpen(false)} className="flex-1">
+                      Done
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
 
           {/* Questions List */}

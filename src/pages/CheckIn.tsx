@@ -21,7 +21,7 @@ function CheckIn() {
   const [foundTicket, setFoundTicket] = useState<any>(null);
   const [searchAttempted, setSearchAttempted] = useState(false);
   
-  const { checkInTicket, checkInByQR, isCheckingIn, bulkCheckInAll, isBulkCheckingIn } = useAdminCheckIns();
+  const { checkInTicket, checkInByQR, isCheckingIn, bulkCheckInAll, isBulkCheckingIn } = useAdminCheckIns(eventId);
   
   // Get event details
   const { data: event, isLoading: isLoadingEvent } = useQuery({
@@ -41,53 +41,14 @@ function CheckIn() {
     enabled: !!eventId,
   });
 
-  // Get ticket stats for this event
-  const { data: ticketStats, isLoading: isLoadingStats } = useQuery({
-    queryKey: ['shared-event-stats', eventId],
-    queryFn: async () => {
-      if (!eventId) throw new Error('Event ID not provided');
-      
-      const { data: tickets, error } = await supabase
-        .from('event_tickets')
-        .select('id, check_in_status, checked_in_at')
-        .eq('event_id', eventId);
-      
-      if (error) throw error;
-      
-      const totalTickets = tickets.length;
-      const checkedInTickets = tickets.filter(t => t.check_in_status).length;
-      
-      return {
-        totalTickets,
-        checkedInTickets,
-      };
-    },
-    enabled: !!eventId,
-  });
+  // Get event tickets using the hook
+  const { eventTickets, isLoadingTickets, stats } = useAdminTickets(eventId);
 
-  // Get recent check-ins
-  const { data: recentCheckIns, isLoading: isLoadingCheckIns } = useQuery({
-    queryKey: ['shared-recent-checkins', eventId],
-    queryFn: async () => {
-      if (!eventId) throw new Error('Event ID not provided');
-      
-      const { data, error } = await supabase
-        .from('event_tickets')
-        .select(`
-          *,
-          ticket_types (name),
-          profiles!event_tickets_user_id_fkey (name)
-        `)
-        .eq('event_id', eventId)
-        .eq('check_in_status', true)
-        .order('checked_in_at', { ascending: false })
-        .limit(10);
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!eventId,
-  });
+  // Get recent check-ins from eventTickets
+  const recentCheckIns = eventTickets
+    .filter(ticket => ticket.check_in_status)
+    .sort((a, b) => new Date(b.checked_in_at!).getTime() - new Date(a.checked_in_at!).getTime())
+    .slice(0, 10);
 
   // Search for ticket by name or ticket number
   const { data: searchResults, isLoading: isSearching, refetch: searchTicket } = useQuery({
@@ -243,7 +204,7 @@ function CheckIn() {
     }
   };
 
-  if (isLoadingEvent || isLoadingStats) {
+  if (isLoadingEvent || isLoadingTickets) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -262,7 +223,7 @@ function CheckIn() {
     );
   }
 
-  const stats = ticketStats || { totalTickets: 0, checkedInTickets: 0 };
+  // Use stats from the hook instead of local ticketStats
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
@@ -519,7 +480,7 @@ function CheckIn() {
                 <CardTitle className="text-lg font-semibold">Recent Check-ins</CardTitle>
               </CardHeader>
               <CardContent>
-                {isLoadingCheckIns ? (
+                {isLoadingTickets ? (
                   <div className="text-center py-8">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
                     <p className="mt-2 text-sm text-muted-foreground">Loading recent check-ins...</p>

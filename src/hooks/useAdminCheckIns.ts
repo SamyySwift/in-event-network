@@ -9,8 +9,9 @@ interface CheckInData {
   notes?: string;
 }
 
-export const useAdminCheckIns = () => {
+export const useAdminCheckIns = (eventIdOverride?: string) => {
   const { selectedEventId } = useAdminEventContext();
+  const actualEventId = eventIdOverride || selectedEventId;
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -19,13 +20,13 @@ export const useAdminCheckIns = () => {
     try {
       const attendeeUserId = ticketData.user_id;
       
-      if (attendeeUserId && selectedEventId) {
+      if (attendeeUserId && actualEventId) {
         console.log('Granting dashboard access for attendee:', attendeeUserId);
         
         // Use the new admin-specific function to grant dashboard access
         const { data, error } = await supabase.rpc('grant_attendee_dashboard_access', {
           attendee_user_id: attendeeUserId,
-          target_event_id: selectedEventId
+          target_event_id: actualEventId
         });
 
         if (error) {
@@ -54,7 +55,7 @@ export const useAdminCheckIns = () => {
           *,
           profiles!event_tickets_user_id_fkey(id, name, email)
         `)
-        .eq('event_id', selectedEventId);
+        .eq('event_id', actualEventId);
 
       // Check if searchQuery looks like a ticket number (starts with TKT-)
       if (searchQuery.startsWith('TKT-')) {
@@ -163,7 +164,7 @@ export const useAdminCheckIns = () => {
   // Bulk check-in all tickets for the event
   const bulkCheckInAll = useMutation({
     mutationFn: async () => {
-      if (!selectedEventId) throw new Error('No event selected');
+      if (!actualEventId) throw new Error('No event selected');
 
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
@@ -173,7 +174,7 @@ export const useAdminCheckIns = () => {
       const { data: uncheckedTickets, error: fetchError } = await supabase
         .from('event_tickets')
         .select('id, ticket_number, user_id')
-        .eq('event_id', selectedEventId)
+        .eq('event_id', actualEventId)
         .eq('check_in_status', false);
 
       if (fetchError) throw fetchError;
@@ -191,7 +192,7 @@ export const useAdminCheckIns = () => {
           checked_in_at: now,
           checked_in_by: user.id,
         })
-        .eq('event_id', selectedEventId)
+        .eq('event_id', actualEventId)
         .eq('check_in_status', false);
 
       if (updateError) throw updateError;
@@ -216,7 +217,7 @@ export const useAdminCheckIns = () => {
         try {
           await supabase.rpc('grant_attendee_dashboard_access', {
             attendee_user_id: ticket.user_id,
-            target_event_id: selectedEventId
+            target_event_id: actualEventId
           });
         } catch (error) {
           console.error(`Failed to grant access for ticket ${ticket.ticket_number}:`, error);

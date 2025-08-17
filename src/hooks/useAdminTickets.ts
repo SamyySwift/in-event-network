@@ -57,34 +57,35 @@ interface EventTicket {
   }>;
 }
 
-export const useAdminTickets = () => {
+export const useAdminTickets = (eventIdOverride?: string) => {
   const { selectedEventId } = useAdminEventContext();
+  const actualEventId = eventIdOverride || selectedEventId;
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   // Fetch ticket types for the selected event
   const { data: ticketTypes = [], isLoading: isLoadingTypes } = useQuery({
-    queryKey: ['admin-ticket-types', selectedEventId],
+    queryKey: ['admin-ticket-types', actualEventId],
     queryFn: async (): Promise<TicketType[]> => {
-      if (!selectedEventId) return [];
+      if (!actualEventId) return [];
 
       const { data, error } = await supabase
         .from('ticket_types')
         .select('*')
-        .eq('event_id', selectedEventId)
+        .eq('event_id', actualEventId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data || [];
     },
-    enabled: !!selectedEventId,
+    enabled: !!actualEventId,
   });
 
   // Fetch event tickets for the selected event
   const { data: eventTickets = [], isLoading: isLoadingTickets } = useQuery({
-    queryKey: ['admin-event-tickets', selectedEventId],
+    queryKey: ['admin-event-tickets', actualEventId],
     queryFn: async (): Promise<EventTicket[]> => {
-      if (!selectedEventId) return [];
+      if (!actualEventId) return [];
 
       const { data, error } = await supabase
         .from('event_tickets')
@@ -92,7 +93,7 @@ export const useAdminTickets = () => {
           *,
           ticket_types (*)
         `)
-        .eq('event_id', selectedEventId)
+        .eq('event_id', actualEventId)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -140,7 +141,7 @@ export const useAdminTickets = () => {
 
       return ticketsWithDetails;
     },
-    enabled: !!selectedEventId,
+    enabled: !!actualEventId,
   });
 
   // Create ticket type mutation

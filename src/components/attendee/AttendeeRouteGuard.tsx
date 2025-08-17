@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
@@ -25,19 +26,7 @@ const AttendeeRouteGuard: React.FC<AttendeeRouteGuardProps> = ({
     );
   }
 
-  // Check for recent event join in localStorage as fallback
   if (requireEvent && !hasJoinedEvent) {
-    const recentEventJoin = localStorage.getItem('recentEventJoin');
-    if (recentEventJoin) {
-      const joinTime = parseInt(recentEventJoin);
-      const timeDiff = Date.now() - joinTime;
-      // If joined within last 30 seconds, allow access while context updates
-      if (timeDiff < 30000) {
-        return <>{children}</>;
-      } else {
-        localStorage.removeItem('recentEventJoin');
-      }
-    }
     return <Navigate to="/scan" replace />;
   }
 

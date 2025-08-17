@@ -75,8 +75,8 @@ const ScanQR = () => {
   
             // Check if the error is due to authentication
             if (error?.message?.includes('not authenticated') || error?.message?.includes('login') || error?.code === 'PGRST301') {
-              // Store the access code (using localStorage for better persistence across OAuth redirects)
-              localStorage.setItem('pendingEventCode', accessCode);
+              // Store the access code and redirect to register with the code
+              sessionStorage.setItem('pendingEventCode', accessCode);
               navigate(`/register?eventCode=${accessCode}&role=attendee`, { replace: true });
               return;
             }

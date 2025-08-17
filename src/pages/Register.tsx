@@ -83,9 +83,9 @@ const Register = () => {
       }
       }
 
-      // Check if there's a pending event to join (check both localStorage and sessionStorage for backward compatibility)
+      // Check if there's a pending event to join
       const pendingEventCode =
-        eventCode || localStorage.getItem("pendingEventCode") || sessionStorage.getItem("pendingEventCode");
+        eventCode || sessionStorage.getItem("pendingEventCode");
 
       if (pendingEventCode && currentUser.role === "attendee") {
         console.log(
@@ -94,8 +94,7 @@ const Register = () => {
         );
         setIsJoiningEvent(true);
 
-        // Clear the stored code from both storages
-        localStorage.removeItem("pendingEventCode");
+        // Clear the stored code
         sessionStorage.removeItem("pendingEventCode");
 
         joinEvent(pendingEventCode, {
@@ -108,10 +107,7 @@ const Register = () => {
                 data?.event_name || "event"
               } successfully!`,
             });
-            // Add delay to ensure context updates before navigation
-            setTimeout(() => {
-              navigate("/attendee/dashboard", { replace: true });
-            }, 500);
+            navigate("/attendee", { replace: true });
           },
           onError: (error: any) => {
             console.error("Failed to join event after registration:", error);
@@ -122,13 +118,13 @@ const Register = () => {
                 "Your account was created, but we couldn't join the event. Please scan the QR code again.",
               variant: "destructive",
             });
-            navigate("/attendee/dashboard", { replace: true });
+            navigate("/attendee", { replace: true });
           },
         });
       } else {
         // Normal redirect without event joining
         const redirectPath =
-          currentUser.role === "host" ? "/admin" : "/attendee/dashboard";
+          currentUser.role === "host" ? "/admin" : "/attendee";
         navigate(redirectPath, { replace: true });
       }
     }

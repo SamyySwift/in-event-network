@@ -87,7 +87,7 @@ const ProtectedRoute = ({
     if (currentUser.role === "host") {
       return <Navigate to="/admin" replace />;
     } else if (currentUser.role === "attendee") {
-      return <Navigate to="/attendee/dashboard" replace />;
+      return <Navigate to="/attendee" replace />;
     }
     return <Navigate to="/" replace />;
   }
@@ -317,10 +317,6 @@ export const router = createBrowserRouter([
   // Attendee Routes
   {
     path: "/attendee",
-    element: <Navigate to="/attendee/dashboard" replace />,
-  },
-  {
-    path: "/attendee/dashboard",
     element: (
       <AttendeeRoute>
         <AttendeeDashboard />

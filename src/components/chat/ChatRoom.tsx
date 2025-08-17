@@ -26,7 +26,10 @@ const ChatRoom = () => {
 
   const scrollToBottom = useCallback(() => {
     if (scrollViewportRef.current) {
-      scrollViewportRef.current.scrollTop = scrollViewportRef.current.scrollHeight;
+      scrollViewportRef.current.scrollTo({
+        top: scrollViewportRef.current.scrollHeight,
+        behavior: 'smooth'
+      });
     }
     setShowScrollButton(false);
   }, []);
@@ -134,7 +137,8 @@ const ChatRoom = () => {
         <div className="flex-1 bg-gray-50 dark:bg-gray-900 overflow-hidden">
           <div 
             ref={scrollViewportRef}
-            className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600"
+            className="h-full overflow-y-auto scroll-smooth scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500"
+            style={{ scrollBehavior: 'smooth' }}
           >
             <div className="p-4 space-y-3">
               {messages.length === 0 ? (

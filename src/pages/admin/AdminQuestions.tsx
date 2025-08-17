@@ -202,38 +202,60 @@ const QuestionsContent = () => {
             />
             <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="outline" className="gap-2">
+                <Button variant="outline" className="gap-2 hover-scale">
                   <Share2 className="h-4 w-4" />
-                  Share Live View
+                  <span className="hidden sm:inline">Share Live View</span>
+                  <span className="sm:hidden">Share</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <Share2 className="h-5 w-5" />
+              <DialogContent className="sm:max-w-lg max-w-[95vw] w-full mx-4 rounded-xl border-0 bg-gradient-to-br from-background via-background to-primary/5 shadow-2xl">
+                <DialogHeader className="space-y-3 pb-4">
+                  <DialogTitle className="flex items-center gap-3 text-xl font-semibold">
+                    <div className="p-2 rounded-full bg-primary/10">
+                      <Share2 className="h-5 w-5 text-primary" />
+                    </div>
                     Share Live Questions
                   </DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
                     Share this link to allow anyone to view questions and answers in real-time without needing to log in.
                   </p>
-                  <div className="flex items-center space-x-2">
-                    <div className="grid flex-1 gap-2">
-                      <div className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
-                        {generateShareableLink()}
+                </DialogHeader>
+                
+                <div className="space-y-6">
+                  {/* URL Display with Copy Button */}
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Shareable Link</label>
+                    <div className="relative">
+                      <div className="flex items-center rounded-lg border border-border bg-muted/50 p-3 pr-12 min-h-[44px]">
+                        <span className="text-sm text-foreground truncate font-mono">
+                          {generateShareableLink()}
+                        </span>
                       </div>
+                      <Button 
+                        size="sm" 
+                        onClick={copyShareableLink} 
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 px-3 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                        <span className="sr-only">Copy link</span>
+                      </Button>
                     </div>
-                    <Button size="sm" onClick={copyShareableLink} className="shrink-0">
-                      <Copy className="h-4 w-4" />
-                    </Button>
                   </div>
-                  <div className="flex gap-2">
-                    <Button onClick={openInNewTab} variant="outline" className="flex-1 gap-2">
+
+                  {/* Action Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <Button 
+                      onClick={openInNewTab} 
+                      variant="outline" 
+                      className="flex-1 gap-2 h-11 border-primary/20 hover:border-primary/40 hover:bg-primary/5"
+                    >
                       <ExternalLink className="h-4 w-4" />
-                      Preview
+                      Preview Live View
                     </Button>
-                    <Button onClick={() => setShareDialogOpen(false)} className="flex-1">
+                    <Button 
+                      onClick={() => setShareDialogOpen(false)} 
+                      className="flex-1 h-11 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+                    >
                       Done
                     </Button>
                   </div>

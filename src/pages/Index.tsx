@@ -11,13 +11,14 @@ const Index = () => {
   const { eventKey } = useParams();
   const { joinEvent, isJoining } = useJoinEvent();
   const { toast } = useToast();
-  const { currentUser } = useAuth();
+  const { currentUser, isLoading } = useAuth();
   const [hasAttempted, setHasAttempted] = useState(false);
 
   useEffect(() => {
-    if (hasAttempted) return; // Prevent multiple attempts
+    if (hasAttempted || isLoading) return; // Wait for auth to load and prevent multiple attempts
 
     console.log('Index.tsx: Starting with eventKey:', eventKey);
+    console.log('Index.tsx: Auth loading:', isLoading);
     console.log('Index.tsx: Checking localStorage for pendingEventCode...');
     
     // Check for event key from URL params or localStorage
@@ -90,7 +91,7 @@ const Index = () => {
       // No user, redirect to landing page
       navigate("/", { replace: true });
     }
-  }, [eventKey, joinEvent, navigate, toast, currentUser, hasAttempted]);
+  }, [eventKey, joinEvent, navigate, toast, currentUser, hasAttempted, isLoading]);
 
   // Fallback timeout to prevent infinite loading
   useEffect(() => {

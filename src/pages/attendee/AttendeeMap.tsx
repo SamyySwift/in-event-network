@@ -380,7 +380,7 @@ const AttendeeMap = () => {
                     {filteredFacilities.map((facility) => (
                       <div
                         key={facility.id}
-                        className={`border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer ${
+                         className={`border rounded-lg p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer ${
                           selectedFacility?.id === facility.id
                             ? "ring-2 ring-connect-500 bg-connect-50 dark:bg-connect-900/30"
                             : ""
@@ -389,23 +389,37 @@ const AttendeeMap = () => {
                       >
                         <div className="flex items-start gap-4 mb-3">
                           {facility.image_url ? (
-                            <div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0">
+                            <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 shadow-md">
                               <img
                                 src={facility.image_url}
                                 alt={facility.name}
                                 className="w-full h-full object-cover"
+                                onError={(e) => {
+                                  // Fallback to icon if image fails to load
+                                  const target = e.currentTarget;
+                                  const container = target.parentElement;
+                                  if (container) {
+                                    container.innerHTML = `
+                                      <div class="w-full h-full flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg">
+                                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                      </div>
+                                    `;
+                                  }
+                                }}
                               />
                             </div>
                           ) : (
                             <div
-                              className={`p-3 rounded-full ${
+                              className={`p-3 rounded-full flex-shrink-0 ${
                                 (
-                                  facilityTypeColors[facility.icon_type] ||
+                                  facilityTypeColors[facility.icon_type || 'other'] ||
                                   facilityTypeColors.other
                                 ).split(" ")[0]
                               } ${
                                 (
-                                  facilityTypeColors[facility.icon_type] ||
+                                  facilityTypeColors[facility.icon_type || 'other'] ||
                                   facilityTypeColors.other
                                 ).split(" ")[1]
                               }`}
@@ -423,38 +437,45 @@ const AttendeeMap = () => {
                               </h4>
                               <Badge
                                 className={`text-xs ${
-                                  facilityTypeColors[facility.icon_type] ||
+                                  facilityTypeColors[facility.icon_type || 'other'] ||
                                   facilityTypeColors.other
                                 }`}
                               >
-                                {facilityTypeLabels[facility.icon_type] ||
-                                  facility.icon_type}
+                                {facilityTypeLabels[facility.icon_type || 'other'] ||
+                                  facility.icon_type || 'Other'}
                               </Badge>
                             </div>
-                            <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1 mb-2">
-                              <MapPin className="inline h-4 w-4 mr-1" />
-                              {facility.location}
-                            </p>
+                            
+                            {facility.location && (
+                              <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-1 mb-2">
+                                <MapPin className="inline h-4 w-4 mr-1" />
+                                {facility.location}
+                              </p>
+                            )}
+                            
                             {facility.description && (
                               <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2 mb-3">
                                 {facility.description}
                               </p>
                             )}
+                            
                             {facility.rules && (
-                              <div className="mb-3">
-                                <p className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-                                  Rules:
+                              <div className="mb-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-2">
+                                <p className="text-xs font-medium text-amber-800 dark:text-amber-200 mb-1 flex items-center">
+                                  <Info className="h-3 w-3 mr-1" />
+                                  Rules & Guidelines:
                                 </p>
-                                <p className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+                                <p className="text-sm text-amber-700 dark:text-amber-300 line-clamp-2">
                                   {facility.rules}
                                 </p>
                               </div>
                             )}
+                            
                             {facility.contact_info &&
                               facility.contact_type !== "none" && (
-                                <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+                                <div className="flex items-center gap-2 text-sm text-connect-600 dark:text-connect-400">
                                   {getContactIcon(facility.contact_type)}
-                                  <span>{facility.contact_info}</span>
+                                  <span className="font-medium">{facility.contact_info}</span>
                                 </div>
                               )}
                           </div>

@@ -1,8 +1,9 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useJoinEvent } from "@/hooks/useJoinEvent";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { Loader, QrCode } from "lucide-react";
 
 const Index = () => {
@@ -10,14 +11,37 @@ const Index = () => {
   const { eventKey } = useParams();
   const { joinEvent, isJoining } = useJoinEvent();
   const { toast } = useToast();
+  const { currentUser } = useAuth();
+  const [hasAttempted, setHasAttempted] = useState(false);
 
   useEffect(() => {
+    if (hasAttempted) return; // Prevent multiple attempts
+
+    console.log('Index.tsx: Starting with eventKey:', eventKey);
+    console.log('Index.tsx: Checking localStorage for pendingEventCode...');
+    
     // Check for event key from URL params or localStorage
     const accessCode = eventKey || localStorage.getItem('pendingEventCode');
+    const recentEventJoin = localStorage.getItem('recentEventJoin');
     
-    if (accessCode) {
-      // If we have an event key from the URL or localStorage, try to join the event
-      console.log('Attempting to join event with code:', accessCode);
+    console.log('Index.tsx: Found accessCode:', accessCode);
+    console.log('Index.tsx: Found recentEventJoin:', recentEventJoin);
+    console.log('Index.tsx: Current user:', currentUser);
+    
+    // If user recently joined (within last 10 seconds), just redirect to dashboard
+    if (recentEventJoin && currentUser?.role === 'attendee') {
+      const joinTime = parseInt(recentEventJoin);
+      const timeDiff = Date.now() - joinTime;
+      if (timeDiff < 10000) { // 10 seconds
+        console.log('Index.tsx: Recent event join detected, redirecting to dashboard');
+        navigate('/attendee/dashboard', { replace: true });
+        return;
+      }
+    }
+    
+    if (accessCode && currentUser) {
+      setHasAttempted(true);
+      console.log('Index.tsx: Attempting to join event with code:', accessCode);
       
       // Clear stored code to prevent repeat attempts
       if (!eventKey && localStorage.getItem('pendingEventCode')) {
@@ -26,7 +50,7 @@ const Index = () => {
       
       joinEvent(accessCode, {
         onSuccess: (data: any) => {
-          console.log('Successfully joined event:', data);
+          console.log('Index.tsx: Successfully joined event:', data);
           // Add a small delay to prevent toast conflicts
           setTimeout(() => {
             toast({
@@ -38,7 +62,8 @@ const Index = () => {
           navigate('/attendee/dashboard', { replace: true });
         },
         onError: (error: any) => {
-          console.error('Failed to join event:', error);
+          console.error('Index.tsx: Failed to join event:', error);
+          setHasAttempted(false); // Allow retry
           setTimeout(() => {
             toast({
               title: "Failed to Join Event",
@@ -50,11 +75,38 @@ const Index = () => {
           navigate('/scan', { replace: true });
         }
       });
+    } else if (currentUser) {
+      console.log('Index.tsx: No event code found, redirecting to dashboard');
+      // User is authenticated but no event code, redirect based on role
+      if (currentUser.role === 'attendee') {
+        navigate('/attendee/dashboard', { replace: true });
+      } else if (currentUser.role === 'host') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
     } else {
-      // No event key, redirect to landing page
+      console.log('Index.tsx: No user found, redirecting to landing');
+      // No user, redirect to landing page
       navigate("/", { replace: true });
     }
-  }, [eventKey, joinEvent, navigate, toast]);
+  }, [eventKey, joinEvent, navigate, toast, currentUser, hasAttempted]);
+
+  // Fallback timeout to prevent infinite loading
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      console.log('Index.tsx: Timeout reached, redirecting to landing');
+      if (currentUser?.role === 'attendee') {
+        navigate('/attendee/dashboard', { replace: true });
+      } else if (currentUser?.role === 'host') {
+        navigate('/admin', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
+    }, 10000); // 10 second timeout
+
+    return () => clearTimeout(timeout);
+  }, [currentUser, navigate]);
 
   if (isJoining) {
     return (

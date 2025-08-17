@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Ambulance, Hospital, Car, MapPin, Building, Coffee, Shield, Wifi, Phone, User, Bath, ChefHat, Utensils, Home, Dumbbell, Music, Gamepad2, Archive, ArchiveRestore, Box, Landmark, Warehouse, Siren, AlertTriangle, Presentation, Monitor, Sofa, Wine, ArrowUp } from "lucide-react";
+import { Plus, Ambulance, Hospital, Car, MapPin, Building, Coffee, Shield, Wifi, Phone, User, Bath, ChefHat, Utensils, Home, Dumbbell, Music, Gamepad2, Archive, ArchiveRestore, Box, Landmark, Warehouse, Siren, AlertTriangle, Presentation, Monitor, Sofa, Wine, ArrowUp, Upload } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +10,8 @@ import { useFormPersistence } from "@/hooks/useFormPersistence";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ImageUpload } from "@/components/ui/image-upload";
+import { useToast } from "@/hooks/use-toast";
 
 // EXPANDED ICON SELECTION (up to 25 entries)
 const ICON_OPTIONS = [{
@@ -141,11 +143,12 @@ const formSchema = z.object({
   iconType: z.string().optional(),
   eventId: z.string().min(1, {
     message: "Please select an event for this facility."
-  })
+  }),
+  image: z.any().optional()
 });
 type FormData = z.infer<typeof formSchema>;
 type CreateFacilityDialogProps = {
-  onSubmit: (form: FormData) => void;
+  onSubmit: (form: FormData & { imageFile?: File }) => void;
   events: {
     id: string;
     name: string;
@@ -162,6 +165,8 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
   isCreating
 }) => {
   const [open, setOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const { toast } = useToast();
   const {
     register,
     handleSubmit,
@@ -203,11 +208,28 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
         iconType: ICON_OPTIONS[0].value,
         eventId: defaultEventId || ""
       });
+      setSelectedImage(null);
     }
   }, [open, reset, defaultEventId]);
 
   const contactType = watch("contactType");
   const selectedIcon = watch("iconType");
+
+  const handleImageSelect = (file: File | null) => {
+    if (file) {
+      // Validate file size (minimum 2MB)
+      const minSize = 2 * 1024 * 1024; // 2MB in bytes
+      if (file.size < minSize) {
+        toast({
+          title: "Image too small",
+          description: "Please select an image that is at least 2MB in size.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    setSelectedImage(file);
+  };
 
   const handleDialogSubmit = (data: FormData) => {
     console.log('CreateFacilityDialog - Form data:', data);
@@ -218,8 +240,9 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
       return;
     }
 
-    onSubmit(data);
+    onSubmit({ ...data, imageFile: selectedImage || undefined });
     setOpen(false);
+    setSelectedImage(null);
   };
 
   return (
@@ -314,6 +337,18 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
           <div>
             <Label htmlFor="rules">Rules (Optional)</Label>
             <Textarea id="rules" {...register("rules")} placeholder="Enter rules and guidelines" rows={2} disabled={isCreating} />
+          </div>
+
+          <div>
+            <Label>Facility Image (Optional)</Label>
+            <p className="text-sm text-muted-foreground mb-2">
+              Upload an image for this facility (minimum 2MB required)
+            </p>
+            <ImageUpload
+              onImageSelect={handleImageSelect}
+              label="Upload facility image"
+              accept="image/*"
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

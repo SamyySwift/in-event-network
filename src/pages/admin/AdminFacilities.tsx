@@ -9,7 +9,7 @@ import EventSelector from "@/components/admin/EventSelector";
 import EditFacilityDialog from "@/components/admin/EditFacilityDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus } from "lucide-react";
+import { Plus, Building } from "lucide-react";
 import { useAdminFacilities, Facility } from "@/hooks/useAdminFacilities";
 import { useAdminEventContext } from "@/hooks/useAdminEventContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -145,6 +145,26 @@ const AdminFacilitiesContent = () => {
               </p>
               <div className="mt-6">
                 <FacilityStatsCards {...stats} loading={isLoading} />
+              </div>
+            </div>
+          </div>
+
+          {/* Information Card */}
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mb-6">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center">
+                <Building className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+                  About Event Facilities
+                </h3>
+                <p className="text-blue-700 dark:text-blue-200 text-sm leading-relaxed">
+                  Set up facilities around your event venue to help attendees navigate and find what they need. 
+                  Add exhibitor booths, restrooms, registration desks, first aid stations, food courts, networking lounges, 
+                  parking areas, WiFi zones, and more. Each facility can include location details, contact information, 
+                  and custom icons for easy identification.
+                </p>
               </div>
             </div>
           </div>

@@ -17,6 +17,8 @@ import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Facility } from "@/hooks/useAdminFacilities";
+import { ImageUpload } from "@/components/ui/image-upload";
+import { useToast } from "@/hooks/use-toast";
 import {
   Ambulance,
   Hospital,
@@ -89,6 +91,7 @@ const formSchema = z.object({
   contactInfo: z.string().optional(),
   iconType: z.string().optional(),
   eventId: z.string().min(1, { message: "Please select an event for this facility." }),
+  image: z.any().optional()
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -97,7 +100,7 @@ type EditFacilityDialogProps = {
   facility: Facility | null;
   events: { id: string; name: string }[];
   isUpdating: boolean;
-  onSubmit: (form: FormData) => void;
+  onSubmit: (form: FormData & { imageFile?: File }) => void;
   onClose: () => void;
   open: boolean;
 };
@@ -110,6 +113,8 @@ const EditFacilityDialog: React.FC<EditFacilityDialogProps> = ({
   onClose,
   open
 }) => {
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const { toast } = useToast();
   const {
     register, handleSubmit, setValue, watch, reset, formState: { errors }
   } = useForm<FormData>({
@@ -145,8 +150,24 @@ const EditFacilityDialog: React.FC<EditFacilityDialogProps> = ({
   const contactType = watch("contactType");
   const selectedIcon = watch("iconType");
 
+  const handleImageSelect = (file: File | null) => {
+    if (file) {
+      // Validate file size (minimum 2MB)
+      const minSize = 2 * 1024 * 1024; // 2MB in bytes
+      if (file.size < minSize) {
+        toast({
+          title: "Image too small",
+          description: "Please select an image that is at least 2MB in size.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    setSelectedImage(file);
+  };
+
   const handleDialogSubmit = (data: FormData) => {
-    onSubmit(data);
+    onSubmit({ ...data, imageFile: selectedImage || undefined });
   };
 
   return (
@@ -237,6 +258,19 @@ const EditFacilityDialog: React.FC<EditFacilityDialogProps> = ({
           <div>
             <Label htmlFor="rules">Rules (Optional)</Label>
             <Textarea id="rules" {...register("rules")} placeholder="Enter rules and guidelines" rows={2} disabled={isUpdating} />
+          </div>
+
+          <div>
+            <Label>Facility Image (Optional)</Label>
+            <p className="text-sm text-muted-foreground mb-2">
+              Upload an image for this facility (minimum 2MB required)
+            </p>
+            <ImageUpload
+              onImageSelect={handleImageSelect}
+              currentImageUrl={facility?.image_url}
+              label="Upload facility image"
+              accept="image/*"
+            />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

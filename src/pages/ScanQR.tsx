@@ -4,17 +4,63 @@ import { useNavigate } from 'react-router-dom';
 import QRCodeScanner from '@/components/QRCodeScanner';
 import { useToast } from '@/hooks/use-toast';
 import { useJoinEvent } from '@/hooks/useJoinEvent';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, QrCode, CheckCircle } from 'lucide-react';
+import { ArrowLeft, QrCode, CheckCircle, LogOut, AlertTriangle } from 'lucide-react';
 import AppLayout from '@/components/layouts/AppLayout';
 
 const ScanQR = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { joinEvent, isJoining } = useJoinEvent();
+  const { currentUser, logout } = useAuth();
   const [scanSuccess, setScanSuccess] = useState(false);
   const [eventName, setEventName] = useState('');
+
+  // Check if user is admin/host and show restriction message
+  if (currentUser?.role === 'host') {
+    return (
+      <AppLayout>
+        <div className="max-w-2xl mx-auto py-8">
+          <div className="flex items-center mb-6">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate(-1)}
+              className="mr-4"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <h1 className="text-2xl font-bold">Access Restricted</h1>
+          </div>
+
+          <Card>
+            <CardContent className="py-16 text-center">
+              <AlertTriangle className="h-16 w-16 text-amber-500 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-amber-700 mb-4">Admin Account Detected</h2>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                Admin accounts cannot join events by scanning QR codes. This feature is only available for attendees.
+              </p>
+              <p className="text-sm text-muted-foreground mb-8">
+                Please sign out of your admin account to join events as an attendee.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button onClick={() => logout()} variant="outline" className="flex items-center gap-2">
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </Button>
+                <Button onClick={() => navigate('/admin')} className="flex items-center gap-2">
+                  Go to Admin Dashboard
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </AppLayout>
+    );
+  }
 
   const handleScanSuccess = (decodedText: string) => {
     console.log('QR Code decoded:', decodedText);

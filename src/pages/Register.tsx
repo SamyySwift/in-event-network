@@ -24,6 +24,10 @@ const Register = () => {
   const defaultRole = searchParams.get("role") || "attendee";
   const eventCode = searchParams.get("eventCode");
 
+  // If coming from QR code, force attendee role and prevent admin registration
+  const isFromQRCode = !!eventCode;
+  const allowedRoles = isFromQRCode ? ["attendee"] : ["host", "attendee"];
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -31,7 +35,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [role, setRole] = useState<"host" | "attendee">(
-    defaultRole as "host" | "attendee"
+    isFromQRCode ? "attendee" : (defaultRole as "host" | "attendee")
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -324,22 +328,33 @@ const Register = () => {
               </div>
               <div className="space-y-2">
                 <Label>I want to:</Label>
+                {isFromQRCode && (
+                  <Alert className="bg-blue-50 border-blue-200">
+                    <Network className="h-4 w-4" />
+                    <AlertDescription>
+                      You're registering to join an event. Your account will be set up as an attendee.
+                    </AlertDescription>
+                  </Alert>
+                )}
                 <RadioGroup
                   value={role}
                   onValueChange={(value) =>
                     setRole(value as "host" | "attendee")
                   }
                   className="flex flex-col space-y-2 mt-2"
+                  disabled={isFromQRCode}
                 >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="host" id="host" />
-                    <Label
-                      htmlFor="host"
-                      className="font-normal cursor-pointer"
-                    >
-                      Host events (organize networking events)
-                    </Label>
-                  </div>
+                  {allowedRoles.includes("host") && (
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="host" id="host" disabled={isFromQRCode} />
+                      <Label
+                        htmlFor="host"
+                        className={`font-normal cursor-pointer ${isFromQRCode ? 'text-muted-foreground' : ''}`}
+                      >
+                        Host events (organize networking events)
+                      </Label>
+                    </div>
+                  )}
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="attendee" id="attendee" />
                     <Label

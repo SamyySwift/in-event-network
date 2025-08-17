@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus } from "lucide-react";
 import { useAdminFacilities, Facility } from "@/hooks/useAdminFacilities";
-import { useAdminEventContext, AdminEventProvider } from "@/hooks/useAdminEventContext";
+import { useAdminEventContext } from "@/hooks/useAdminEventContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import PaymentGuard from '@/components/payment/PaymentGuard';
@@ -284,10 +284,6 @@ const AdminFacilitiesContent = () => {
   );
 };
 
-const AdminFacilities = () => (
-  <AdminEventProvider>
-    <AdminFacilitiesContent />
-  </AdminEventProvider>
-);
+const AdminFacilities = AdminFacilitiesContent;
 
 export default AdminFacilities;

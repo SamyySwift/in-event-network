@@ -18,7 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Settings, Bell, User, CheckCircle, Trash2 } from "lucide-react";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
-import { AdminEventProvider } from "@/hooks/useAdminEventContext";
+
 
 function AdminSettingsContent() {
   const { currentUser } = useAuth();
@@ -229,12 +229,6 @@ function AdminSettingsContent() {
   );
 }
 
-const AdminSettings = () => {
-  return (
-    <AdminEventProvider>
-      <AdminSettingsContent />
-    </AdminEventProvider>
-  );
-};
+const AdminSettings = AdminSettingsContent;
 
 export default AdminSettings;

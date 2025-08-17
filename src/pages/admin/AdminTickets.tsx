@@ -11,7 +11,7 @@ import { DeleteTicketConfirmDialog } from '@/components/admin/DeleteTicketConfir
 import { TicketsTable } from '@/components/admin/TicketsTable';
 import { ShareableTicketLink } from '@/components/admin/ShareableTicketLink';
 import { WithdrawalButton } from '@/components/admin/WithdrawalButton';
-import { AdminEventProvider } from '@/hooks/useAdminEventContext';
+
 import { useAdminTickets } from '@/hooks/useAdminTickets';
 
 function AdminTicketsContent() {
@@ -279,10 +279,4 @@ function AdminTicketsContent() {
   );
 }
 
-export default function AdminTickets() {
-  return (
-    <AdminEventProvider>
-      <AdminTicketsContent />
-    </AdminEventProvider>
-  );
-}
+export default AdminTicketsContent;

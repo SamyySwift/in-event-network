@@ -34,10 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "@/hooks/use-toast";
 import AdminLayout from "@/components/layouts/AdminLayout";
-import {
-  AdminEventProvider,
-  useAdminEventContext,
-} from "@/hooks/useAdminEventContext";
+import { useAdminEventContext } from "@/hooks/useAdminEventContext";
 import {
   Table,
   TableBody,
@@ -926,12 +923,6 @@ function AdminVendorHubContent() {
   );
 }
 
-const AdminVendorHub = () => {
-  return (
-    <AdminEventProvider>
-      <AdminVendorHubContent />
-    </AdminEventProvider>
-  );
-};
+const AdminVendorHub = AdminVendorHubContent;
 
 export default AdminVendorHub;

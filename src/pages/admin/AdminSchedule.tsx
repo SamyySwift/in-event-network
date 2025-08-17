@@ -15,7 +15,7 @@ import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAdminEventContext, AdminEventProvider } from "@/hooks/useAdminEventContext";
+import { useAdminEventContext } from "@/hooks/useAdminEventContext";
 import ScheduleStatsCards from "./components/ScheduleStatsCards";
 import ScheduleItemCard from "./components/ScheduleItemCard";
 import ScheduleFilters from "@/components/admin/ScheduleFilters";
@@ -751,14 +751,6 @@ const AdminScheduleContent = () => {
   );
 };
 
-const AdminSchedule = () => {
-  return (
-    <AdminEventProvider>
-      <PaymentGuardWrapper />
-    </AdminEventProvider>
-  );
-};
-
 const PaymentGuardWrapper = () => {
   const { selectedEventId, selectedEvent } = useAdminEventContext();
 
@@ -776,5 +768,7 @@ const PaymentGuardWrapper = () => {
     </PaymentGuard>
   );
 };
+
+const AdminSchedule = PaymentGuardWrapper;
 
 export default AdminSchedule;

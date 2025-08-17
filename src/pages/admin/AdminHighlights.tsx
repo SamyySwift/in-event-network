@@ -10,10 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAdminHighlights } from "@/hooks/useAdminHighlights";
-import {
-  AdminEventProvider,
-  useAdminEventContext,
-} from "@/hooks/useAdminEventContext";
+import { useAdminEventContext } from "@/hooks/useAdminEventContext";
 import { Star, Image, Video, Eye, Loader } from "lucide-react";
 import PaymentGuard from '@/components/payment/PaymentGuard';
 
@@ -219,13 +216,7 @@ const AdminHighlightsContent = () => {
   );
 };
 
-const AdminHighlights = () => {
-  return (
-    <AdminEventProvider>
-      <AdminHighlightsContent />
-    </AdminEventProvider>
-  );
-};
+const AdminHighlights = AdminHighlightsContent;
 
 export default AdminHighlights;
 

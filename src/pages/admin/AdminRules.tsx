@@ -9,7 +9,7 @@ import EventSelector from "@/components/admin/EventSelector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus } from "lucide-react";
-import { useAdminEventContext, AdminEventProvider } from "@/hooks/useAdminEventContext";
+import { useAdminEventContext } from "@/hooks/useAdminEventContext";
 import { useRules, Rule } from "@/hooks/useRules";
 import PaymentGuard from '@/components/payment/PaymentGuard';
 
@@ -171,10 +171,6 @@ const RulesContent = () => {
   );
 };
 
-const AdminRules = () => (
-  <AdminEventProvider>
-    <RulesContent />
-  </AdminEventProvider>
-);
+const AdminRules = RulesContent;
 
 export default AdminRules;

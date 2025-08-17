@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Plus } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAdminPolls, Poll } from "@/hooks/useAdminPolls";
-import { useAdminEventContext, AdminEventProvider } from "@/hooks/useAdminEventContext";
+import { useAdminEventContext } from "@/hooks/useAdminEventContext";
 import { useToast } from "@/hooks/use-toast";
 import PaymentGuard from '@/components/payment/PaymentGuard';
 
@@ -161,12 +161,6 @@ const AdminPollsContent = () => {
   );
 };
 
-const AdminPolls = () => {
-  return (
-    <AdminEventProvider>
-      <AdminPollsContent />
-    </AdminEventProvider>
-  );
-};
+const AdminPolls = AdminPollsContent;
 
 export default AdminPolls;

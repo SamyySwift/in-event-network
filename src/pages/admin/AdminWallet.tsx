@@ -2,7 +2,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { DollarSign, TrendingUp, Wallet, Download } from 'lucide-react';
 import { WithdrawalButton } from '@/components/admin/WithdrawalButton';
-import { AdminEventProvider } from '@/hooks/useAdminEventContext';
+
 import { useAdminWallet } from '@/hooks/useAdminWallet';
 import EventSelector from '@/components/admin/EventSelector';
 
@@ -180,10 +180,4 @@ function AdminWalletContent() {
   );
 }
 
-export default function AdminWallet() {
-  return (
-    <AdminEventProvider>
-      <AdminWalletContent />
-    </AdminEventProvider>
-  );
-}
+export default AdminWalletContent;

@@ -9,7 +9,7 @@ import { Plus, Lightbulb } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAdminEventContext, AdminEventProvider } from "@/hooks/useAdminEventContext";
+import { useAdminEventContext } from "@/hooks/useAdminEventContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import PaymentGuard from '@/components/payment/PaymentGuard';
 
@@ -412,10 +412,6 @@ const AdminSuggestionsContent = () => {
   );
 };
 
-const AdminSuggestions = () => (
-  <AdminEventProvider>
-    <AdminSuggestionsContent />
-  </AdminEventProvider>
-);
+const AdminSuggestions = AdminSuggestionsContent;
 
 export default AdminSuggestions;

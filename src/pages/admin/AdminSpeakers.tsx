@@ -12,7 +12,7 @@ import { ImageUpload } from '@/components/ui/image-upload';
 import { RefreshCw } from 'lucide-react'; // Add this import
 import { useForm } from 'react-hook-form';
 import { useAdminSpeakers } from '@/hooks/useAdminSpeakers';
-import { useAdminEventContext, AdminEventProvider } from '@/hooks/useAdminEventContext';
+import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -569,12 +569,6 @@ const AdminSpeakersContent = () => {
   );
 };
 
-const AdminSpeakers = () => {
-  return (
-    <AdminEventProvider>
-      <AdminSpeakersContent />
-    </AdminEventProvider>
-  );
-};
+const AdminSpeakers = AdminSpeakersContent;
 
 export default AdminSpeakers;

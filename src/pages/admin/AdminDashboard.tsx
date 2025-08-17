@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { useAdminDashboard } from "@/hooks/useAdminDashboard";
 import { useAuth } from "@/contexts/AuthContext";
-import { AdminEventProvider, useAdminEventContext } from "@/hooks/useAdminEventContext";
+import { useAdminEventContext } from "@/hooks/useAdminEventContext";
 import DashboardMetrics from "./components/DashboardMetrics";
 import EventPerformanceCard from "./components/EventPerformanceCard";
 import EventFocusCard from "./components/EventFocusCard";
@@ -146,12 +146,6 @@ const AdminDashboardContent = () => {
   );
 };
 
-const AdminDashboard = () => {
-  return (
-    <AdminEventProvider>
-      <AdminDashboardContent />
-    </AdminEventProvider>
-  );
-};
+const AdminDashboard = AdminDashboardContent;
 
 export default AdminDashboard;

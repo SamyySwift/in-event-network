@@ -7,7 +7,7 @@ import QuestionCard from "./components/QuestionCard";
 import EventSelector from "@/components/admin/EventSelector";
 import { Input } from "@/components/ui/input";
 import { useAdminQuestions } from "@/hooks/useAdminQuestions";
-import { useAdminEventContext, AdminEventProvider } from "@/hooks/useAdminEventContext";
+import { useAdminEventContext } from "@/hooks/useAdminEventContext";
 import { Plus } from "lucide-react";
 import PaymentGuard from '@/components/payment/PaymentGuard';
 
@@ -218,12 +218,6 @@ const QuestionsContent = () => {
   );
 };
 
-const AdminQuestions = () => {
-  return (
-    <AdminEventProvider>
-      <QuestionsContent />
-    </AdminEventProvider>
-  );
-};
+const AdminQuestions = QuestionsContent;
 
 export default AdminQuestions;

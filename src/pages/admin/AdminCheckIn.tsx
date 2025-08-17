@@ -11,7 +11,7 @@ import QRCodeScanner from '@/components/QRCodeScanner';
 import TicketVerifier from '@/components/admin/TicketVerifier';
 import { useAdminCheckIns } from '@/hooks/useAdminCheckIns';
 import { useAdminTickets } from '@/hooks/useAdminTickets';
-import { AdminEventProvider } from '@/hooks/useAdminEventContext';
+
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdminEventContext } from '@/hooks/useAdminEventContext';
@@ -477,10 +477,4 @@ function AdminCheckInContent() {
     );
 }
 
-export default function AdminCheckIn() {
-  return (
-    <AdminEventProvider>
-      <AdminCheckInContent />
-    </AdminEventProvider>
-  );
-}
+export default AdminCheckInContent;

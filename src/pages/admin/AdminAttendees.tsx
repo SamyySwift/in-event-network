@@ -6,7 +6,7 @@ import EventSelector from '@/components/admin/EventSelector';
 import { Loader } from 'lucide-react';
 import { useAdminAttendees } from '@/hooks/useAdminAttendees';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAdminEventContext, AdminEventProvider } from '@/hooks/useAdminEventContext';
+import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 import AttendeeHero from './components/AttendeeHero';
 import AttendeeFilters from './components/AttendeeFilters';
 import AttendeesList from './components/AttendeesList';
@@ -134,12 +134,6 @@ const AdminAttendeesContent = () => {
   );
 };
 
-const AdminAttendees = () => {
-  return (
-    <AdminEventProvider>
-      <AdminAttendeesContent />
-    </AdminEventProvider>
-  );
-};
+const AdminAttendees = AdminAttendeesContent;
 
 export default AdminAttendees;

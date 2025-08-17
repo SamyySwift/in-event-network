@@ -15,7 +15,7 @@ import { useForm } from 'react-hook-form';
 import { useAdminAnnouncements } from '@/hooks/useAdminAnnouncements';
 import { useFormPersistence } from '@/hooks/useFormPersistence';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAdminEventContext, AdminEventProvider } from '@/hooks/useAdminEventContext';
+import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 import { ImageUpload } from '@/components/ui/image-upload';
 import AnnouncementStatsCards from './components/AnnouncementStatsCards';
 import AnnouncementCard from './components/AnnouncementCard';
@@ -364,12 +364,6 @@ const AdminAnnouncementsContent = () => {
   );
 };
 
-const AdminAnnouncements = () => {
-  return (
-    <AdminEventProvider>
-      <AdminAnnouncementsContent />
-    </AdminEventProvider>
-  );
-};
+const AdminAnnouncements = AdminAnnouncementsContent;
 
 export default AdminAnnouncements;

@@ -10,7 +10,7 @@ import { SponsorFormQRCode } from '@/components/admin/SponsorFormQRCode';
 import { SponsorsTable } from '@/components/admin/SponsorsTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { exportToCSV } from '@/utils/exportUtils';
-import { AdminEventProvider, useAdminEventContext } from '@/hooks/useAdminEventContext';
+import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 import PaymentGuard from '@/components/payment/PaymentGuard';
 
 function AdminSponsorsContent() {
@@ -354,10 +354,4 @@ function AdminSponsorsContent() {
   );
 }
 
-export default function AdminSponsors() {
-  return (
-    <AdminEventProvider>
-      <AdminSponsorsContent />
-    </AdminEventProvider>
-  );
-}
+export default AdminSponsorsContent;

@@ -191,6 +191,7 @@ const AdminFacilitiesContent = () => {
                   icon_type: form.iconType,
                   event_id: form.eventId,
                   image_url: undefined,
+                  imageFile: form.imageFile, // Pass the image file for upload
                 });
               }}
             >
@@ -260,6 +261,7 @@ const AdminFacilitiesContent = () => {
                         icon_type: form.iconType,
                         event_id: form.eventId,
                         image_url: undefined,
+                        imageFile: form.imageFile, // Pass the image file for upload
                       });
                     }}
                   >
@@ -293,6 +295,7 @@ const AdminFacilitiesContent = () => {
                 contact_info: form.contactInfo || undefined,
                 icon_type: form.iconType,
                 event_id: form.eventId,
+                imageFile: form.imageFile, // Pass the image file for upload
               });
               setEditDialogOpen(false);
             }}

@@ -4,10 +4,12 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { MessageSquare, Users, CheckCircle, ArrowUp, Search, Clock, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { MessageSquare, Users, CheckCircle, ArrowUp, Search, Clock, User, Heart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
 
 interface Question {
   id: string;
@@ -45,7 +47,9 @@ export default function LiveQuestions() {
   const { eventId } = useParams<{ eventId: string }>();
   const [activeTab, setActiveTab] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [votingQuestions, setVotingQuestions] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   // Fetch event details
   const { data: event } = useQuery({
@@ -115,6 +119,99 @@ export default function LiveQuestions() {
     enabled: !!eventId,
     refetchInterval: 5000, // Refetch every 5 seconds as fallback
   });
+
+  // Vote mutation
+  const voteMutation = useMutation({
+    mutationFn: async (questionId: string) => {
+      // First, check if the user has already voted for this question
+      const { data: existingVote, error: voteCheckError } = await supabase
+        .from('poll_votes')
+        .select('id')
+        .eq('poll_id', questionId)
+        .maybeSingle();
+
+      if (voteCheckError && voteCheckError.code !== 'PGRST116') {
+        throw voteCheckError;
+      }
+
+      if (existingVote) {
+        throw new Error('You have already voted for this question');
+      }
+
+      // Add vote record
+      const { error: voteError } = await supabase
+        .from('poll_votes')
+        .insert({
+          poll_id: questionId,
+          option_id: 'upvote',
+          user_id: null // For public voting, we don't track user
+        });
+
+      if (voteError) {
+        throw voteError;
+      }
+
+      // Update question upvotes count
+      const { data: currentQuestion, error: fetchError } = await supabase
+        .from('questions')
+        .select('upvotes')
+        .eq('id', questionId)
+        .single();
+
+      if (fetchError) {
+        throw fetchError;
+      }
+
+      const { error: updateError } = await supabase
+        .from('questions')
+        .update({ upvotes: (currentQuestion.upvotes || 0) + 1 })
+        .eq('id', questionId);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      return questionId;
+    },
+    onMutate: (questionId) => {
+      // Add visual feedback immediately
+      setVotingQuestions(prev => new Set([...prev, questionId]));
+    },
+    onSuccess: (questionId) => {
+      // Remove from voting state and show success
+      setVotingQuestions(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(questionId);
+        return newSet;
+      });
+      
+      toast({
+        title: "Vote submitted!",
+        description: "Thank you for voting on this question.",
+      });
+      
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['live-questions', eventId] });
+    },
+    onError: (error, questionId) => {
+      // Remove from voting state and show error
+      setVotingQuestions(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(questionId);
+        return newSet;
+      });
+      
+      toast({
+        title: "Vote failed",
+        description: error.message || "Failed to submit vote. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleVote = (questionId: string) => {
+    voteMutation.mutate(questionId);
+  };
 
   // Set up real-time subscription for questions
   useEffect(() => {
@@ -320,81 +417,99 @@ export default function LiveQuestions() {
         {/* Questions List */}
         <div className="space-y-4">
           {filteredQuestions.length > 0 ? (
-            filteredQuestions.map((question) => (
-              <Card key={question.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                      {question.profiles && !question.is_anonymous ? (
-                        <>
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={question.profiles.photo_url || ''} />
-                            <AvatarFallback>
-                              {question.profiles.name?.charAt(0) || '?'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium text-sm">{question.profiles.name}</p>
-                            <p className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {formatDistanceToNow(new Date(question.created_at), { addSuffix: true })}
-                            </p>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <Avatar className="h-8 w-8">
-                            <AvatarFallback>
-                              <User className="h-4 w-4" />
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium text-sm">Anonymous</p>
-                            <p className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
-                              {formatDistanceToNow(new Date(question.created_at), { addSuffix: true })}
-                            </p>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {question.upvotes > 0 && (
-                        <Badge variant="secondary" className="gap-1">
-                          <ArrowUp className="h-3 w-3" />
-                          {question.upvotes}
-                        </Badge>
-                      )}
-                      {question.is_answered && (
-                        <Badge variant="default" className="gap-1">
-                          <CheckCircle className="h-3 w-3" />
-                          Answered
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <p className="text-foreground mb-3">{question.content}</p>
-                  
-                  {question.response && (
-                    <div className="bg-muted/50 rounded-lg p-4 border-l-4 border-primary">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="outline" className="text-xs">Official Response</Badge>
-                        {question.response_created_at && (
-                          <span className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(question.response_created_at), { addSuffix: true })}
-                          </span>
+            filteredQuestions.map((question) => {
+              const isVoting = votingQuestions.has(question.id);
+              
+              return (
+                <Card key={question.id} className="hover:shadow-md transition-all duration-300 hover:scale-[1.02]">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3 flex-1">
+                        {question.profiles && !question.is_anonymous ? (
+                          <>
+                            <Avatar className="h-8 w-8">
+                              <AvatarImage src={question.profiles.photo_url || ''} />
+                              <AvatarFallback>
+                                {question.profiles.name?.charAt(0) || '?'}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium text-sm">{question.profiles.name}</p>
+                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {formatDistanceToNow(new Date(question.created_at), { addSuffix: true })}
+                              </p>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <Avatar className="h-8 w-8">
+                              <AvatarFallback>
+                                <User className="h-4 w-4" />
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium text-sm">Anonymous</p>
+                              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Clock className="h-3 w-3" />
+                                {formatDistanceToNow(new Date(question.created_at), { addSuffix: true })}
+                              </p>
+                            </div>
+                          </>
                         )}
                       </div>
-                      <p className="text-sm">{question.response}</p>
+                      <div className="flex items-center gap-2">
+                        {/* Vote Button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleVote(question.id)}
+                          disabled={isVoting || voteMutation.isPending}
+                          className={`gap-1 transition-all duration-300 hover:scale-110 ${
+                            isVoting ? 'animate-pulse bg-red-50 text-red-600' : 'hover:bg-red-50 hover:text-red-600'
+                          }`}
+                        >
+                          <Heart 
+                            className={`h-4 w-4 transition-all duration-300 ${
+                              isVoting ? 'fill-current animate-bounce' : ''
+                            }`} 
+                          />
+                          <span className={`font-medium ${isVoting ? 'animate-pulse' : ''}`}>
+                            {question.upvotes || 0}
+                          </span>
+                        </Button>
+                        
+                        {question.is_answered && (
+                          <Badge variant="default" className="gap-1 animate-fade-in">
+                            <CheckCircle className="h-3 w-3" />
+                            Answered
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-foreground mb-3">{question.content}</p>
+                    
+                    {question.response && (
+                      <div className="bg-muted/50 rounded-lg p-4 border-l-4 border-primary animate-fade-in">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="outline" className="text-xs">Official Response</Badge>
+                          {question.response_created_at && (
+                            <span className="text-xs text-muted-foreground">
+                              {formatDistanceToNow(new Date(question.response_created_at), { addSuffix: true })}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm">{question.response}</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })
           ) : (
-            <Card>
+            <Card className="animate-fade-in">
               <CardContent className="p-8 text-center">
                 <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground opacity-30 mb-4" />
                 <h3 className="text-lg font-medium mb-2">No questions found</h3>
@@ -408,11 +523,23 @@ export default function LiveQuestions() {
 
         {/* Live indicator */}
         <div className="fixed bottom-4 right-4">
-          <Badge variant="default" className="gap-2 animate-pulse">
+          <Badge variant="default" className="gap-2 animate-pulse shadow-lg">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
             Live
           </Badge>
         </div>
+
+        {/* Voting feedback toast area */}
+        {votingQuestions.size > 0 && (
+          <div className="fixed bottom-16 right-4 animate-fade-in">
+            <div className="bg-background border rounded-lg p-3 shadow-lg">
+              <div className="flex items-center gap-2">
+                <Heart className="h-4 w-4 text-red-500 animate-bounce" />
+                <span className="text-sm">Submitting vote...</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

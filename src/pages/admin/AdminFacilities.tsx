@@ -221,22 +221,21 @@ const AdminFacilitiesContent = () => {
             </div>
           )}
 
-          {/* Facilities List */}
+          {/* Facilities Grid */}
           {!isLoading && (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredFacilities.length > 0 ? (
                 filteredFacilities.map(facility => (
-                  <React.Fragment key={facility.id}>
-                    <FacilityCard
-                      facility={facility}
-                      isDeleting={isDeleting}
-                      onEdit={(fac) => {
-                        setEditingFacility(fac);
-                        setEditDialogOpen(true);
-                      }}
-                      onDelete={facility => deleteFacility(facility.id)}
-                    />
-                  </React.Fragment>
+                  <FacilityCard
+                    key={facility.id}
+                    facility={facility}
+                    isDeleting={isDeleting}
+                    onEdit={(fac) => {
+                      setEditingFacility(fac);
+                      setEditDialogOpen(true);
+                    }}
+                    onDelete={facility => deleteFacility(facility.id)}
+                  />
                 ))
               ) : (
                 <div className="text-center py-8">

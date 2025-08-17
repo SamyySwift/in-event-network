@@ -226,8 +226,8 @@ const QuestionsContent = () => {
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-foreground">Shareable Link</label>
                     <div className="relative">
-                      <div className="flex items-center rounded-lg border border-border bg-muted/50 p-3 pr-12 min-h-[44px]">
-                        <span className="text-sm text-foreground truncate font-mono">
+                      <div className="flex items-center rounded-lg border border-border bg-muted/50 p-3 pr-12 min-h-[44px] overflow-hidden">
+                        <span className="text-sm text-foreground break-all font-mono leading-relaxed max-w-full">
                           {generateShareableLink()}
                         </span>
                       </div>

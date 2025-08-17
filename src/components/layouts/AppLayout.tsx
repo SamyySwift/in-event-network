@@ -48,10 +48,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const isMobile = useIsMobile();
   const { unreadCount } = useNotificationCount();
   const isActive = (path: string) => {
+    // For dashboard routes, check exact match
     if (path === "/" || path === "/attendee" || path === "/host") {
       return location.pathname === path;
     }
-    return location.pathname.startsWith(path);
+    // For other routes, check if path matches exactly or starts with path + "/"
+    return location.pathname === path || location.pathname.startsWith(path + "/");
   };
   const attendeeNavigation = [
     {

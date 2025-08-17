@@ -22,24 +22,37 @@ const ChatRoom = () => {
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const scrollViewportRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (scrollViewportRef.current) {
+      scrollViewportRef.current.scrollTop = scrollViewportRef.current.scrollHeight;
+    }
     setShowScrollButton(false);
   }, []);
 
-  const handleScroll = useCallback((event: React.UIEvent<HTMLDivElement>) => {
-    const target = event.currentTarget;
-    const scrollTop = target.scrollTop;
-    const scrollHeight = target.scrollHeight;
-    const clientHeight = target.clientHeight;
+  const handleScroll = useCallback(() => {
+    if (!scrollViewportRef.current) return;
+    
+    const viewport = scrollViewportRef.current;
+    const scrollTop = viewport.scrollTop;
+    const scrollHeight = viewport.scrollHeight;
+    const clientHeight = viewport.clientHeight;
     
     // Check if user is near the bottom (within 100px)
     const nearBottom = scrollHeight - scrollTop - clientHeight < 100;
     setIsNearBottom(nearBottom);
     setShowScrollButton(!nearBottom && messages.length > 0);
   }, [messages.length]);
+
+  // Set up scroll listener
+  useEffect(() => {
+    const viewport = scrollViewportRef.current;
+    if (!viewport) return;
+
+    viewport.addEventListener('scroll', handleScroll);
+    return () => viewport.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
   // Smart auto-scroll: only scroll to bottom if user is near bottom or it's a new message from current user
   useEffect(() => {
@@ -118,32 +131,31 @@ const ChatRoom = () => {
 
       <CardContent className="flex-1 flex flex-col p-0 relative">
         {/* Messages Area */}
-        <ScrollArea 
-          className="flex-1 bg-gray-50 dark:bg-gray-900"
-          ref={scrollAreaRef}
-        >
+        <div className="flex-1 bg-gray-50 dark:bg-gray-900 overflow-hidden">
           <div 
-            className="p-4 space-y-3"
-            onScroll={handleScroll}
+            ref={scrollViewportRef}
+            className="h-full overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600"
           >
-            {messages.length === 0 ? (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No messages yet. Start the conversation with your fellow attendees!</p>
-              </div>
-            ) : (
-              messages.map((message) => (
-                <ChatMessage
-                  key={message.id}
-                  message={message}
-                  isOwn={message.user_id === currentUser?.id}
-                  onQuote={handleQuoteMessage}
-                />
-              ))
-            )}
-            <div ref={messagesEndRef} />
+            <div className="p-4 space-y-3">
+              {messages.length === 0 ? (
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                  <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <p>No messages yet. Start the conversation with your fellow attendees!</p>
+                </div>
+              ) : (
+                messages.map((message) => (
+                  <ChatMessage
+                    key={message.id}
+                    message={message}
+                    isOwn={message.user_id === currentUser?.id}
+                    onQuote={handleQuoteMessage}
+                  />
+                ))
+              )}
+              <div ref={messagesEndRef} />
+            </div>
           </div>
-        </ScrollArea>
+        </div>
 
         {/* Scroll to Bottom Button */}
         {showScrollButton && (

@@ -152,12 +152,12 @@ const EditFacilityDialog: React.FC<EditFacilityDialogProps> = ({
 
   const handleImageSelect = (file: File | null) => {
     if (file) {
-      // Validate file size (minimum 2MB)
-      const minSize = 2 * 1024 * 1024; // 2MB in bytes
-      if (file.size < minSize) {
+      // Validate file size (maximum 2MB)
+      const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+      if (file.size > maxSize) {
         toast({
-          title: "Image too small",
-          description: "Please select an image that is at least 2MB in size.",
+          title: "Image too large",
+          description: "Please select an image that is smaller than 2MB.",
           variant: "destructive",
         });
         return;
@@ -263,7 +263,7 @@ const EditFacilityDialog: React.FC<EditFacilityDialogProps> = ({
           <div>
             <Label>Facility Image (Optional)</Label>
             <p className="text-sm text-muted-foreground mb-2">
-              Upload an image for this facility (minimum 2MB required)
+              Upload an image for this facility (maximum 2MB allowed)
             </p>
             <ImageUpload
               onImageSelect={handleImageSelect}

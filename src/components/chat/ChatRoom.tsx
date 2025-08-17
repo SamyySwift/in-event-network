@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useChat } from '@/hooks/useChat';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
@@ -90,24 +91,26 @@ const ChatRoom = () => {
 
       <CardContent className="flex-1 flex flex-col p-0">
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-gray-900">
-          {messages.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>No messages yet. Start the conversation with your fellow attendees!</p>
-            </div>
-          ) : (
-            messages.map((message) => (
-              <ChatMessage
-                key={message.id}
-                message={message}
-                isOwn={message.user_id === currentUser?.id}
-                onQuote={handleQuoteMessage}
-              />
-            ))
-          )}
-          <div ref={messagesEndRef} />
-        </div>
+        <ScrollArea className="flex-1 bg-gray-50 dark:bg-gray-900">
+          <div className="p-4 space-y-3">
+            {messages.length === 0 ? (
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No messages yet. Start the conversation with your fellow attendees!</p>
+              </div>
+            ) : (
+              messages.map((message) => (
+                <ChatMessage
+                  key={message.id}
+                  message={message}
+                  isOwn={message.user_id === currentUser?.id}
+                  onQuote={handleQuoteMessage}
+                />
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        </ScrollArea>
 
         {/* Quote Preview */}
         {quotedMessage && (

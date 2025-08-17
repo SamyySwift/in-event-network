@@ -2,27 +2,35 @@
 import { format, parseISO, addMinutes, isValid } from 'date-fns';
 
 /**
- * Parse time allocation strings like "30min", "1hr", "2h", "90 minutes" into minutes
+ * Parse time allocation strings like "30min", "1hr", "2h", "90 minutes", "1hour 20min" into minutes
  */
 export const parseTimeAllocation = (allocation: string): number => {
   if (!allocation) return 0;
   
   const cleaned = allocation.toLowerCase().trim();
+  let totalMinutes = 0;
   
-  // Match patterns like: 30min, 1hr, 2h, 90 minutes, 1.5 hours
-  const patterns = [
-    { regex: /(\d+(?:\.\d+)?)\s*(?:min|minute|minutes|m)/, multiplier: 1 },
-    { regex: /(\d+(?:\.\d+)?)\s*(?:hr|hour|hours|h)/, multiplier: 60 },
-  ];
+  // Extract hours component (matches: 1hr, 2hour, 3hours, 1h)
+  const hourMatch = cleaned.match(/(\d+(?:\.\d+)?)\s*(?:hr|hour|hours|h)(?:\s|$)/);
+  if (hourMatch) {
+    totalMinutes += Math.round(parseFloat(hourMatch[1]) * 60);
+  }
   
-  for (const pattern of patterns) {
-    const match = cleaned.match(pattern.regex);
-    if (match) {
-      return Math.round(parseFloat(match[1]) * pattern.multiplier);
+  // Extract minutes component (matches: 30min, 45minute, 20minutes, 15m)
+  const minuteMatch = cleaned.match(/(\d+(?:\.\d+)?)\s*(?:min|minute|minutes|m)(?:\s|$)/);
+  if (minuteMatch) {
+    totalMinutes += Math.round(parseFloat(minuteMatch[1]));
+  }
+  
+  // If no components found, try decimal hours format (like "1.5 hours")
+  if (totalMinutes === 0) {
+    const decimalHourMatch = cleaned.match(/^(\d+(?:\.\d+)?)\s*(?:hr|hour|hours|h)$/);
+    if (decimalHourMatch) {
+      totalMinutes = Math.round(parseFloat(decimalHourMatch[1]) * 60);
     }
   }
   
-  return 0;
+  return totalMinutes;
 };
 
 /**

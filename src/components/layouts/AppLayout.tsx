@@ -23,6 +23,7 @@ import {
   Lightbulb,
   Ticket,
   Store,
+  Building,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -87,7 +88,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       icon: <MessageSquare size={20} />,
     },
     {
-      name: "Event Facilities",
+      name: "Facilities",
+      href: "/attendee/facilities",
+      icon: <Building size={20} />,
+    },
+    {
+      name: "Event Map",
       href: "/attendee/map",
       icon: <MapPin size={20} />,
     },

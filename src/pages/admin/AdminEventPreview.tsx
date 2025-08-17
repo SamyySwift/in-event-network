@@ -27,7 +27,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import ScheduleItemModal from "@/components/schedule/ScheduleItemModal";
-import { useAdminEventContext } from "@/hooks/useAdminEventContext";
+import { useAdminEventContext, AdminEventProvider } from "@/hooks/useAdminEventContext";
 import { useAdminSpeakers } from "@/hooks/useAdminSpeakers";
 import { format, isToday, isTomorrow, isYesterday, parseISO } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,7 +89,7 @@ interface CombinedScheduleItem {
   time_allocation?: string | null;
 }
 
-const AdminEventPreview = () => {
+const AdminEventPreviewContent = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDate, setSelectedDate] = useState<string>("all");
   const [selectedType, setSelectedType] = useState<string>("all");
@@ -730,6 +730,14 @@ const AdminEventPreview = () => {
         />
       )}
     </div>
+  );
+};
+
+const AdminEventPreview = () => {
+  return (
+    <AdminEventProvider>
+      <AdminEventPreviewContent />
+    </AdminEventProvider>
   );
 };
 

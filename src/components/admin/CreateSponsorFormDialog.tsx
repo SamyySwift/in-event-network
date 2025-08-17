@@ -181,7 +181,14 @@ export function CreateSponsorFormDialog({ open, onOpenChange }: CreateSponsorFor
                         <Label className="text-xs">Type</Label>
                         <Select
                           value={field.type}
-                          onValueChange={(value) => updateField(field.id, { type: value })}
+                          onValueChange={(value) => {
+                            const updates: any = { type: value };
+                            // Initialize options for select fields
+                            if (value === 'select' && !field.options) {
+                              updates.options = ['Option 1', 'Option 2'];
+                            }
+                            updateField(field.id, updates);
+                          }}
                         >
                           <SelectTrigger className="rounded-lg border">
                             <SelectValue />
@@ -198,6 +205,60 @@ export function CreateSponsorFormDialog({ open, onOpenChange }: CreateSponsorFor
                         </Select>
                       </div>
                     </div>
+
+                    {/* Options for select fields */}
+                    {field.type === 'select' && (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs">Options</Label>
+                          <Button
+                            type="button"
+                            onClick={() => {
+                              const currentOptions = field.options || [];
+                              updateField(field.id, { 
+                                options: [...currentOptions, `Option ${currentOptions.length + 1}`] 
+                              });
+                            }}
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 px-2 text-xs"
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Add
+                          </Button>
+                        </div>
+                        <div className="space-y-1 max-h-32 overflow-y-auto">
+                          {(field.options || []).map((option, optionIndex) => (
+                            <div key={optionIndex} className="flex items-center gap-2">
+                              <Input
+                                value={option}
+                                onChange={(e) => {
+                                  const newOptions = [...(field.options || [])];
+                                  newOptions[optionIndex] = e.target.value;
+                                  updateField(field.id, { options: newOptions });
+                                }}
+                                className="text-xs h-7"
+                                placeholder={`Option ${optionIndex + 1}`}
+                              />
+                              <Button
+                                type="button"
+                                onClick={() => {
+                                  const newOptions = (field.options || []).filter((_, i) => i !== optionIndex);
+                                  updateField(field.id, { options: newOptions });
+                                }}
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 hover:bg-red-50 hover:text-red-600"
+                                disabled={(field.options || []).length <= 1}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex items-center space-x-2">
                       <input
                         type="checkbox"

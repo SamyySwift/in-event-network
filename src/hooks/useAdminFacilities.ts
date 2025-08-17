@@ -57,7 +57,7 @@ export const useAdminFacilities = (eventId?: string) => {
   });
 
   const createFacilityMutation = useMutation({
-    mutationFn: async (facilityData: Omit<Facility, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (facilityData: Omit<Facility, 'id' | 'created_at' | 'updated_at'> & { imageFile?: File }) => {
       if (!currentUser?.id) {
         throw new Error('User not authenticated');
       }
@@ -67,6 +67,32 @@ export const useAdminFacilities = (eventId?: string) => {
       }
 
       console.log('Creating facility:', facilityData);
+
+      let imageUrl: string | null = null;
+
+      // Handle image upload if provided
+      if (facilityData.imageFile) {
+        console.log('Uploading facility image...');
+        const fileName = `facility-${Date.now()}-${facilityData.imageFile.name}`;
+        const filePath = `facilities/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('facility-images')
+          .upload(filePath, facilityData.imageFile);
+
+        if (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          throw new Error('Failed to upload image');
+        }
+
+        // Get the public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('facility-images')
+          .getPublicUrl(filePath);
+
+        imageUrl = publicUrl;
+        console.log('Image uploaded successfully:', imageUrl);
+      }
 
       // Clean the data - remove empty strings and undefined values
       const cleanData = {
@@ -80,7 +106,8 @@ export const useAdminFacilities = (eventId?: string) => {
           : null,
         icon_type: facilityData.icon_type || 'building',
         event_id: facilityData.event_id,
-        created_by: currentUser.id
+        created_by: currentUser.id,
+        image_url: imageUrl
       };
 
       console.log('Cleaned facility data:', cleanData);
@@ -117,11 +144,37 @@ export const useAdminFacilities = (eventId?: string) => {
   });
 
   const updateFacilityMutation = useMutation({
-    mutationFn: async ({ id, ...facilityData }: Partial<Facility> & { id: string }) => {
+    mutationFn: async ({ id, imageFile, ...facilityData }: Partial<Facility> & { id: string; imageFile?: File }) => {
       console.log('Updating facility:', id, facilityData);
       
       if (!currentUser?.id) {
         throw new Error('User not authenticated');
+      }
+
+      let imageUrl: string | undefined = undefined;
+
+      // Handle image upload if provided
+      if (imageFile) {
+        console.log('Uploading facility image...');
+        const fileName = `facility-${Date.now()}-${imageFile.name}`;
+        const filePath = `facilities/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('facility-images')
+          .upload(filePath, imageFile);
+
+        if (uploadError) {
+          console.error('Error uploading image:', uploadError);
+          throw new Error('Failed to upload image');
+        }
+
+        // Get the public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('facility-images')
+          .getPublicUrl(filePath);
+
+        imageUrl = publicUrl;
+        console.log('Image uploaded successfully:', imageUrl);
       }
       
       // Clean the data - remove empty strings and undefined values
@@ -138,6 +191,7 @@ export const useAdminFacilities = (eventId?: string) => {
       }
       if (facilityData.icon_type) cleanData.icon_type = facilityData.icon_type;
       if (facilityData.event_id) cleanData.event_id = facilityData.event_id;
+      if (imageUrl !== undefined) cleanData.image_url = imageUrl;
 
       const { data, error } = await supabase
         .from('facilities')

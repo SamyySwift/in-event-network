@@ -193,6 +193,66 @@ export const useAttendeeNotifications = () => {
     return notifications.filter(n => n.type === type);
   };
 
+  const deleteNotification = async (notificationId: string) => {
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('id', notificationId)
+        .eq('user_id', currentUser?.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setNotifications(prev =>
+        prev.filter(notification => notification.id !== notificationId)
+      );
+
+      toast({
+        title: "Success",
+        description: "Notification deleted",
+      });
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete notification",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteSelectedNotifications = async (notificationIds: string[]) => {
+    if (!currentUser?.id || notificationIds.length === 0) return;
+
+    try {
+      const { error } = await supabase
+        .from('notifications')
+        .delete()
+        .in('id', notificationIds)
+        .eq('user_id', currentUser.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setNotifications(prev =>
+        prev.filter(notification => !notificationIds.includes(notification.id))
+      );
+
+      toast({
+        title: "Success",
+        description: `${notificationIds.length} notification${notificationIds.length > 1 ? 's' : ''} deleted`,
+      });
+    } catch (error) {
+      console.error('Error deleting notifications:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete selected notifications",
+        variant: "destructive",
+      });
+    }
+  };
+
   const requestNotificationPermission = async () => {
     if ('Notification' in window && Notification.permission === 'default') {
       const permission = await Notification.requestPermission();
@@ -205,6 +265,8 @@ export const useAttendeeNotifications = () => {
     loading,
     markAsRead,
     markAllAsRead,
+    deleteNotification,
+    deleteSelectedNotifications,
     getUnreadCount,
     getNotificationsByType,
     requestNotificationPermission,

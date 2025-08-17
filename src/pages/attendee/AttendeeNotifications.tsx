@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Bell, Check, MessageSquare, UserPlus, Calendar, Clock, Megaphone, Info, X, CheckCircle, XCircle, Mail, Users } from 'lucide-react';
+import { Bell, Check, MessageSquare, UserPlus, Calendar, Clock, Megaphone, Info, X, CheckCircle, XCircle, Mail, Users, Trash2 } from 'lucide-react';
 import { 
   Card, 
   CardContent, 
@@ -33,6 +33,8 @@ const AttendeeNotifications = () => {
     loading,
     markAsRead,
     markAllAsRead: attendeeMarkAllAsRead,
+    deleteNotification,
+    deleteSelectedNotifications,
     getNotificationsByType,
     requestNotificationPermission
   } = useAttendeeNotifications();
@@ -69,6 +71,15 @@ const AttendeeNotifications = () => {
         return [...prev, id];
       }
     });
+  };
+
+  // Handle delete selected notifications
+  const handleDeleteSelected = async () => {
+    if (selectedNotifications.length === 0) return;
+    
+    await deleteSelectedNotifications(selectedNotifications);
+    setSelectedNotifications([]);
+    setSelectMode(false);
   };
   
   // Format the time
@@ -232,16 +243,27 @@ const AttendeeNotifications = () => {
           
           <div className="flex flex-wrap gap-2 w-full sm:w-auto">
             {selectMode ? (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSelectMode(false);
-                  setSelectedNotifications([]);
-                }}
-                className="text-sm flex-1 sm:flex-none"
-              >
-                Cancel
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSelectMode(false);
+                    setSelectedNotifications([]);
+                  }}
+                  className="text-sm flex-1 sm:flex-none"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleDeleteSelected}
+                  disabled={selectedNotifications.length === 0}
+                  className="text-sm flex-1 sm:flex-none"
+                >
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete ({selectedNotifications.length})
+                </Button>
+              </>
             ) : (
               <>
                 <Button
@@ -312,9 +334,17 @@ const AttendeeNotifications = () => {
                     key={notification.id}
                     className={`cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 ${
                       !notification.is_read ? 'bg-gray-50 dark:bg-gray-800/50' : ''
-                    }`}
+                    } ${selectMode ? 'relative' : ''}`}
                     onClick={() => handleNotificationClick(notification)}
                   >
+                    {selectMode && (
+                      <div className="absolute top-3 left-3 z-10" onClick={(e) => e.stopPropagation()}>
+                        <Checkbox
+                          checked={selectedNotifications.includes(notification.id)}
+                          onCheckedChange={() => toggleSelectNotification(notification.id)}
+                        />
+                      </div>
+                    )}
                     {notification.type === 'connection' ? 
                       renderConnectionRequest(notification) : 
                       (

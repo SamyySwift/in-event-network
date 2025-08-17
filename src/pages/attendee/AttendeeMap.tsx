@@ -505,11 +505,16 @@ const AttendeeMap = () => {
               </div>
 
               {selectedFacility.image_url && (
-                <div className="w-full h-48 rounded-lg overflow-hidden mb-4">
+                <div className="w-full h-48 rounded-lg overflow-hidden mb-4 shadow-lg">
                   <img
                     src={selectedFacility.image_url}
                     alt={selectedFacility.name}
                     className="w-full h-full object-cover"
+                    onLoad={() => console.log('Modal image loaded:', selectedFacility.image_url)}
+                    onError={(e) => {
+                      console.error('Modal image failed to load:', selectedFacility.image_url);
+                      e.currentTarget.style.display = 'none';
+                    }}
                   />
                 </div>
               )}

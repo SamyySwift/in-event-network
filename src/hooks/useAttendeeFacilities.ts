@@ -74,10 +74,13 @@ export const useAttendeeFacilities = () => {
       }
 
       // Type cast and validate the contact_type field
-      return (facilities || []).map(facility => ({
+      const processedFacilities = (facilities || []).map(facility => ({
         ...facility,
         contact_type: (facility.contact_type as 'none' | 'phone' | 'whatsapp') || 'none'
       }));
+      
+      console.log('Fetched facilities with images:', processedFacilities.filter(f => f.image_url));
+      return processedFacilities;
     },
     enabled: !!currentUser?.id,
   });

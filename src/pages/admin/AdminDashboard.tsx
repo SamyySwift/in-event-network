@@ -34,24 +34,28 @@ const AdminDashboardContent = () => {
       value: dashboardData?.eventsCount,
       icon: Calendar,
       gradient: "from-blue-500 to-indigo-500",
+      navigationPath: "/admin/events",
     },
     {
       title: "Total Attendees",
       value: dashboardData?.attendeesCount,
       icon: Users,
       gradient: "from-green-400 to-emerald-500",
+      navigationPath: "/admin/attendees",
     },
     {
       title: "Total Speakers",
       value: dashboardData?.speakersCount,
       icon: User,
       gradient: "from-purple-500 to-violet-400",
+      navigationPath: "/admin/speakers",
     },
     {
       title: "Total Questions",
       value: dashboardData?.questionsCount,
       icon: MessageSquare,
       gradient: "from-yellow-400 to-orange-500",
+      navigationPath: "/admin/questions",
     },
   ];
 

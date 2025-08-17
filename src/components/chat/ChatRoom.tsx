@@ -1,6 +1,6 @@
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, MessageCircle, AlertCircle, ArrowDown } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, MessageCircle, AlertCircle } from 'lucide-react'; // swapped User for MessageCircle
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -19,63 +19,15 @@ const ChatRoom = () => {
   const { messages, loading, sendMessage } = useChat();
   const [newMessage, setNewMessage] = useState('');
   const [quotedMessage, setQuotedMessage] = useState<any>(null);
-  const [isNearBottom, setIsNearBottom] = useState(true);
-  const [showScrollButton, setShowScrollButton] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const scrollViewportRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = useCallback(() => {
-    if (scrollViewportRef.current) {
-      scrollViewportRef.current.scrollTo({
-        top: scrollViewportRef.current.scrollHeight,
-        behavior: 'smooth'
-      });
-    }
-    setShowScrollButton(false);
-  }, []);
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
 
-  const handleScroll = useCallback(() => {
-    if (!scrollViewportRef.current) return;
-    
-    const viewport = scrollViewportRef.current;
-    const scrollTop = viewport.scrollTop;
-    const scrollHeight = viewport.scrollHeight;
-    const clientHeight = viewport.clientHeight;
-    
-    // Check if user is near the bottom (within 100px)
-    const nearBottom = scrollHeight - scrollTop - clientHeight < 100;
-    setIsNearBottom(nearBottom);
-    setShowScrollButton(!nearBottom && messages.length > 0);
-  }, [messages.length]);
-
-  // Throttled scroll handler for better performance
-  const throttledHandleScroll = useCallback(() => {
-    requestAnimationFrame(handleScroll);
-  }, [handleScroll]);
-
-  // Set up scroll listener
   useEffect(() => {
-    const viewport = scrollViewportRef.current;
-    if (!viewport) return;
-
-    viewport.addEventListener('scroll', throttledHandleScroll, { passive: true });
-    return () => viewport.removeEventListener('scroll', throttledHandleScroll);
-  }, [throttledHandleScroll]);
-
-  // Smart auto-scroll: only scroll to bottom if user is near bottom or it's a new message from current user
-  useEffect(() => {
-    if (messages.length === 0) return;
-    
-    const lastMessage = messages[messages.length - 1];
-    const isOwnMessage = lastMessage?.user_id === currentUser?.id;
-    
-    // Auto-scroll if user is near bottom OR if it's their own message
-    if (isNearBottom || isOwnMessage) {
-      setTimeout(scrollToBottom, 100);
-    } else {
-      setShowScrollButton(true);
-    }
-  }, [messages, isNearBottom, currentUser?.id, scrollToBottom]);
+    scrollToBottom();
+  }, [messages]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
@@ -137,49 +89,28 @@ const ChatRoom = () => {
         </div>
       </div>
 
-      <CardContent className="flex-1 flex flex-col p-0 relative">
+      <CardContent className="flex-1 flex flex-col p-0">
         {/* Messages Area */}
-        <div className="flex-1 bg-gray-50 dark:bg-gray-900 overflow-hidden">
-          <div 
-            ref={scrollViewportRef}
-            className="h-full overflow-y-auto scroll-smooth scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500"
-            style={{ 
-              scrollBehavior: 'smooth',
-              WebkitOverflowScrolling: 'touch', // Better mobile scrolling
-              overscrollBehavior: 'contain' // Prevent parent scroll when reaching bounds
-            }}
-          >
-            <div className="p-4 space-y-3">
-              {messages.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No messages yet. Start the conversation with your fellow attendees!</p>
-                </div>
-              ) : (
-                messages.map((message) => (
-                  <ChatMessage
-                    key={message.id}
-                    message={message}
-                    isOwn={message.user_id === currentUser?.id}
-                    onQuote={handleQuoteMessage}
-                  />
-                ))
-              )}
-              <div ref={messagesEndRef} />
-            </div>
+        <ScrollArea className="flex-1 bg-gray-50 dark:bg-gray-900">
+          <div className="p-4 space-y-3">
+            {messages.length === 0 ? (
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>No messages yet. Start the conversation with your fellow attendees!</p>
+              </div>
+            ) : (
+              messages.map((message) => (
+                <ChatMessage
+                  key={message.id}
+                  message={message}
+                  isOwn={message.user_id === currentUser?.id}
+                  onQuote={handleQuoteMessage}
+                />
+              ))
+            )}
+            <div ref={messagesEndRef} />
           </div>
-        </div>
-
-        {/* Scroll to Bottom Button */}
-        {showScrollButton && (
-          <Button
-            onClick={scrollToBottom}
-            className="absolute bottom-20 right-4 rounded-full h-10 w-10 p-0 bg-primary hover:bg-primary/90 shadow-lg z-10"
-            size="sm"
-          >
-            <ArrowDown className="h-4 w-4" />
-          </Button>
-        )}
+        </ScrollArea>
 
         {/* Quote Preview */}
         {quotedMessage && (

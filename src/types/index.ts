@@ -30,6 +30,8 @@ export interface Speaker {
     twitter?: string;
     linkedin?: string;
     website?: string;
+    instagram?: string;
+    tiktok?: string;
   };
 }
 

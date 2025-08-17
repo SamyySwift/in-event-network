@@ -21,6 +21,8 @@ export interface Speaker {
   linkedin_link?: string;
   twitter_link?: string;
   website_link?: string;
+  instagram_link?: string;
+  tiktok_link?: string;
   event_id?: string;
   created_at: string;
   updated_at: string;

@@ -183,8 +183,8 @@ const AdminEventPreviewContent = () => {
           speaker_twitter: speaker.twitter_link,
           speaker_linkedin: speaker.linkedin_link,
           speaker_website: speaker.website_link,
-          speaker_instagram: undefined, // Not available in current Speaker type
-          speaker_tiktok: undefined, // Not available in current Speaker type
+          speaker_instagram: speaker.instagram_link,
+          speaker_tiktok: speaker.tiktok_link,
           speaker_topic: speaker.topic,
           speaker_title: speaker.title,
           time_allocation: speaker.time_allocation,

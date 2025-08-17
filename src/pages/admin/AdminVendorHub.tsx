@@ -53,33 +53,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import PaymentGuard from '@/components/payment/PaymentGuard';
-
-interface VendorForm {
-  id: string;
-  title: string;
-  description: string;
-  fields: VendorFormField[];
-  isActive: boolean;
-  createdAt: string;
-  submissionsCount: number;
-}
-
-interface VendorFormField {
-  id: string;
-  label: string;
-  type: "text" | "textarea" | "email" | "phone" | "url";
-  required: boolean;
-  placeholder?: string;
-}
-
-interface VendorSubmission {
-  id: string;
-  formId: string;
-  responses: Record<string, string>;
-  submittedAt: string;
-  vendorName: string;
-  vendorEmail: string;
-}
+import { VendorForm, VendorFormField, VendorSubmission } from '@/types/vendorForm';
+import VendorFormFieldBuilder from '@/components/admin/VendorFormFieldBuilder';
 
 function AdminVendorHubContent() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -175,6 +150,13 @@ function AdminVendorHubContent() {
       isActive: true,
       createdAt: new Date().toISOString(),
       submissionsCount: 0,
+      settings: {
+        allowMultipleSubmissions: false,
+        requireEmailVerification: false,
+        customSubmissionMessage: undefined,
+        autoResponse: false,
+        categories: [],
+      },
     };
 
     setVendorForms((prev) => [...prev, newForm]);
@@ -485,105 +467,11 @@ function AdminVendorHubContent() {
                     </div>
                   </div>
 
-                  {/* Form Fields */}
-                  <div className="space-y-6">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h3 className="text-lg font-semibold">Form Fields</h3>
-                        <p className="text-sm text-muted-foreground">Customize the fields vendors will fill out</p>
-                      </div>
-                      <Button onClick={addFormField} variant="outline" size="sm">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Field
-                      </Button>
-                    </div>
-
-                    <div className="space-y-4 max-h-96 overflow-y-auto">
-                      {formFields.map((field, index) => (
-                        <Card key={field.id} className="p-4 border border-border/50">
-                          <div className="space-y-4">
-                            {/* Field Header */}
-                            <div className="flex items-center justify-between">
-                              <span className="text-sm font-medium text-muted-foreground">
-                                Field {index + 1}
-                              </span>
-                              <Button
-                                onClick={() => removeFormField(field.id)}
-                                variant="ghost"
-                                size="sm"
-                                className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-
-                            {/* Field Configuration */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                              <div className="space-y-2">
-                                <Label className="text-sm">Field Label</Label>
-                                <Input
-                                  value={field.label}
-                                  onChange={(e) =>
-                                    updateFormField(field.id, {
-                                      label: e.target.value,
-                                    })
-                                  }
-                                  placeholder="Phone Number"
-                                  className="h-9"
-                                />
-                              </div>
-
-                              <div className="space-y-2">
-                                <Label className="text-sm">Field Type</Label>
-                                <select
-                                  value={field.type}
-                                  onChange={(e) =>
-                                    updateFormField(field.id, {
-                                      type: e.target.value as VendorFormField["type"],
-                                    })
-                                  }
-                                  className="w-full h-9 px-3 border border-input bg-background rounded-md text-sm"
-                                >
-                                  <option value="text">Text</option>
-                                  <option value="textarea">Textarea</option>
-                                  <option value="email">Email</option>
-                                  <option value="phone">Phone</option>
-                                  <option value="url">URL</option>
-                                </select>
-                              </div>
-
-                              <div className="space-y-2">
-                                <Label className="text-sm">Placeholder</Label>
-                                <Input
-                                  value={field.placeholder || ""}
-                                  onChange={(e) =>
-                                    updateFormField(field.id, {
-                                      placeholder: e.target.value,
-                                    })
-                                  }
-                                  placeholder="+1234567890"
-                                  className="h-9"
-                                />
-                              </div>
-                            </div>
-
-                            {/* Required Toggle */}
-                            <div className="flex items-center justify-between pt-2">
-                              <div className="flex items-center space-x-2">
-                                <Switch
-                                  checked={field.required}
-                                  onCheckedChange={(checked) =>
-                                    updateFormField(field.id, { required: checked })
-                                  }
-                                />
-                                <Label className="text-sm">Required field</Label>
-                              </div>
-                            </div>
-                          </div>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
+                  {/* Enhanced Form Fields Builder */}
+                  <VendorFormFieldBuilder
+                    fields={formFields}
+                    onFieldsChange={setFormFields}
+                  />
 
                   {/* Actions */}
                   <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t">

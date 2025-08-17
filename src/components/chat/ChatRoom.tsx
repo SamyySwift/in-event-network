@@ -48,14 +48,19 @@ const ChatRoom = () => {
     setShowScrollButton(!nearBottom && messages.length > 0);
   }, [messages.length]);
 
+  // Throttled scroll handler for better performance
+  const throttledHandleScroll = useCallback(() => {
+    requestAnimationFrame(handleScroll);
+  }, [handleScroll]);
+
   // Set up scroll listener
   useEffect(() => {
     const viewport = scrollViewportRef.current;
     if (!viewport) return;
 
-    viewport.addEventListener('scroll', handleScroll);
-    return () => viewport.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
+    viewport.addEventListener('scroll', throttledHandleScroll, { passive: true });
+    return () => viewport.removeEventListener('scroll', throttledHandleScroll);
+  }, [throttledHandleScroll]);
 
   // Smart auto-scroll: only scroll to bottom if user is near bottom or it's a new message from current user
   useEffect(() => {
@@ -138,7 +143,11 @@ const ChatRoom = () => {
           <div 
             ref={scrollViewportRef}
             className="h-full overflow-y-auto scroll-smooth scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 hover:scrollbar-thumb-gray-400 dark:hover:scrollbar-thumb-gray-500"
-            style={{ scrollBehavior: 'smooth' }}
+            style={{ 
+              scrollBehavior: 'smooth',
+              WebkitOverflowScrolling: 'touch', // Better mobile scrolling
+              overscrollBehavior: 'contain' // Prevent parent scroll when reaching bounds
+            }}
           >
             <div className="p-4 space-y-3">
               {messages.length === 0 ? (

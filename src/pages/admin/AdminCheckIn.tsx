@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import QRCodeScanner from '@/components/QRCodeScanner';
 import TicketVerifier from '@/components/admin/TicketVerifier';
+import ShareableCheckInLink from '@/components/admin/ShareableCheckInLink';
 import { useAdminCheckIns } from '@/hooks/useAdminCheckIns';
 import { useAdminTickets } from '@/hooks/useAdminTickets';
 
@@ -196,7 +197,7 @@ function AdminCheckInContent() {
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
-      {/* Modern Section Header */}
+        {/* Modern Section Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 shadow-lg">
@@ -212,16 +213,19 @@ function AdminCheckInContent() {
               </p>
             </div>
           </div>
-          <Button 
-            onClick={handleBulkCheckIn}
-            disabled={isBulkCheckingIn || stats.totalTickets === stats.checkedInTickets}
-            variant="outline"
-            className="w-full sm:w-auto rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
-            size="lg"
-          >
-            <UserCheck className="h-4 w-4 mr-2" />
-            {isBulkCheckingIn ? 'Checking In All...' : 'Bulk Check-In All'}
-          </Button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <ShareableCheckInLink />
+            <Button 
+              onClick={handleBulkCheckIn}
+              disabled={isBulkCheckingIn || stats.totalTickets === stats.checkedInTickets}
+              variant="outline"
+              className="flex-1 sm:flex-none rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
+              size="lg"
+            >
+              <UserCheck className="h-4 w-4 mr-2" />
+              {isBulkCheckingIn ? 'Checking In All...' : 'Bulk Check-In All'}
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}

@@ -213,17 +213,19 @@ function AdminCheckInContent() {
               </p>
             </div>
           </div>
-          <div className="flex gap-2 w-full sm:w-auto">
+          <div className="flex flex-col gap-2 w-full sm:flex-row sm:w-auto">
             <ShareableCheckInLink />
             <Button 
               onClick={handleBulkCheckIn}
               disabled={isBulkCheckingIn || stats.totalTickets === stats.checkedInTickets}
               variant="outline"
-              className="flex-1 sm:flex-none rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
+              className="w-full sm:w-auto rounded-xl shadow-md hover:shadow-lg transition-all duration-200 whitespace-nowrap"
               size="lg"
             >
-              <UserCheck className="h-4 w-4 mr-2" />
-              {isBulkCheckingIn ? 'Checking In All...' : 'Bulk Check-In All'}
+              <UserCheck className="h-4 w-4 mr-2 flex-shrink-0" />
+              <span className="truncate">
+                {isBulkCheckingIn ? 'Checking In All...' : 'Bulk Check-In All'}
+              </span>
             </Button>
           </div>
         </div>

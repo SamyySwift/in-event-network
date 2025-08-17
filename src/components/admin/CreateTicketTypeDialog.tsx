@@ -53,7 +53,7 @@ export function CreateTicketTypeDialog({ open, onOpenChange, onTicketCreated }: 
   const [serviceFeePercentage, setServiceFeePercentage] = useState(5.0);
   const [gatewayFeePercentage, setGatewayFeePercentage] = useState(1.5);
   const [gatewayFixedFee, setGatewayFixedFee] = useState(100);
-  const [requiresLogin, setRequiresLogin] = useState(true);
+  const [requiresLogin, setRequiresLogin] = useState(false);
 
   const { createTicketType } = useAdminTickets();
   const { adminEvents, selectedEventId: contextEventId } = useAdminEventContext();
@@ -123,7 +123,7 @@ export function CreateTicketTypeDialog({ open, onOpenChange, onTicketCreated }: 
     setServiceFeePercentage(5.0);
     setGatewayFeePercentage(1.5);
     setGatewayFixedFee(100);
-    setRequiresLogin(true);
+    setRequiresLogin(false);
     // Keep the selected event if it's from context
     if (!contextEventId) {
       setSelectedEventId('');

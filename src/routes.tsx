@@ -53,7 +53,6 @@ import AttendeeRules from "@/pages/attendee/AttendeeRules";
 import AttendeeNotifications from "@/pages/attendee/AttendeeNotifications";
 import AttendeeSearch from "@/pages/attendee/AttendeeSearch";
 import AttendeeOnboarding from "@/pages/attendee/AttendeeOnboarding";
-import AttendeeFacilities from "@/pages/attendee/AttendeeFacilities";
 
 import AttendeeMyTickets from "@/pages/attendee/AttendeeMyTickets";
 
@@ -448,14 +447,6 @@ export const router = createBrowserRouter([
     element: (
       <AttendeeRoute>
         <AttendeeMyTickets />
-      </AttendeeRoute>
-    ),
-  },
-  {
-    path: "/attendee/facilities",
-    element: (
-      <AttendeeRoute>
-        <AttendeeFacilities />
       </AttendeeRoute>
     ),
   },

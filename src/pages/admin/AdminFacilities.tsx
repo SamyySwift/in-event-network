@@ -15,7 +15,6 @@ import { useAdminEventContext } from "@/hooks/useAdminEventContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import PaymentGuard from '@/components/payment/PaymentGuard';
-import { supabase } from '@/integrations/supabase/client';
 
 // Helper: aggregate statistics
 function getFacilityStats(facilities: Facility[]) {
@@ -180,32 +179,8 @@ const AdminFacilitiesContent = () => {
               events={adminEvents}
               defaultEventId={selectedEventId}
               isCreating={isCreating}
-              onSubmit={async (form) => {
+              onSubmit={form => {
                 console.log('Submitting facility form:', form);
-                
-                let imageUrl = undefined;
-                if (form.imageFile) {
-                  try {
-                    const fileExt = form.imageFile.name.split('.').pop();
-                    const fileName = `${Date.now()}.${fileExt}`;
-                    const filePath = `facilities/${fileName}`;
-                    
-                    const { error: uploadError } = await supabase.storage
-                      .from('event-images')
-                      .upload(filePath, form.imageFile);
-                    
-                    if (uploadError) throw uploadError;
-                    
-                    const { data: { publicUrl } } = supabase.storage
-                      .from('event-images')
-                      .getPublicUrl(filePath);
-                    
-                    imageUrl = publicUrl;
-                  } catch (error) {
-                    console.error('Error uploading image:', error);
-                  }
-                }
-                
                 createFacility({
                   name: form.name,
                   description: form.description || undefined,
@@ -215,7 +190,7 @@ const AdminFacilitiesContent = () => {
                   contact_info: form.contactInfo || undefined,
                   icon_type: form.iconType,
                   event_id: form.eventId,
-                  image_url: imageUrl,
+                  image_url: undefined,
                 });
               }}
             >
@@ -270,54 +245,30 @@ const AdminFacilitiesContent = () => {
                   <p className="text-sm text-muted-foreground mt-1">
                     {searchQuery ? 'No facilities match your search criteria.' : 'Get started by adding your first facility.'}
                   </p>
-                    <CreateFacilityDialog
-                      events={adminEvents}
-                      defaultEventId={selectedEventId}
-                      isCreating={isCreating}
-                      onSubmit={async (form) => {
-                        console.log('Submitting facility form:', form);
-                        
-                        let imageUrl = undefined;
-                        if (form.imageFile) {
-                          try {
-                            const fileExt = form.imageFile.name.split('.').pop();
-                            const fileName = `${Date.now()}.${fileExt}`;
-                            const filePath = `facilities/${fileName}`;
-                            
-                            const { error: uploadError } = await supabase.storage
-                              .from('event-images')
-                              .upload(filePath, form.imageFile);
-                            
-                            if (uploadError) throw uploadError;
-                            
-                            const { data: { publicUrl } } = supabase.storage
-                              .from('event-images')
-                              .getPublicUrl(filePath);
-                            
-                            imageUrl = publicUrl;
-                          } catch (error) {
-                            console.error('Error uploading image:', error);
-                          }
-                        }
-                        
-                        createFacility({
-                          name: form.name,
-                          description: form.description || undefined,
-                          location: form.location || undefined,
-                          rules: form.rules || undefined,
-                          contact_type: form.contactType,
-                          contact_info: form.contactInfo || undefined,
-                          icon_type: form.iconType,
-                          event_id: form.eventId,
-                          image_url: imageUrl,
-                        });
-                      }}
-                    >
-                      <Button className="mt-4">
-                        <Plus size={16} className="mr-1" />
-                        Add Facility
-                      </Button>
-                    </CreateFacilityDialog>
+                  <CreateFacilityDialog
+                    events={adminEvents}
+                    defaultEventId={selectedEventId}
+                    isCreating={isCreating}
+                    onSubmit={form => {
+                      console.log('Submitting facility form:', form);
+                      createFacility({
+                        name: form.name,
+                        description: form.description || undefined,
+                        location: form.location || undefined,
+                        rules: form.rules || undefined,
+                        contact_type: form.contactType,
+                        contact_info: form.contactInfo || undefined,
+                        icon_type: form.iconType,
+                        event_id: form.eventId,
+                        image_url: undefined,
+                      });
+                    }}
+                  >
+                    <Button className="mt-4">
+                      <Plus size={16} className="mr-1" />
+                      Add Facility
+                    </Button>
+                  </CreateFacilityDialog>
                 </div>
               )}
             </div>
@@ -330,33 +281,9 @@ const AdminFacilitiesContent = () => {
             isUpdating={isUpdating}
             open={editDialogOpen}
             onClose={() => setEditDialogOpen(false)}
-            onSubmit={async (form) => {
+            onSubmit={form => {
               if (!editingFacility) return;
               console.log('Updating facility:', form);
-              
-              let imageUrl = editingFacility.image_url;
-              if (form.imageFile) {
-                try {
-                  const fileExt = form.imageFile.name.split('.').pop();
-                  const fileName = `${Date.now()}.${fileExt}`;
-                  const filePath = `facilities/${fileName}`;
-                  
-                  const { error: uploadError } = await supabase.storage
-                    .from('event-images')
-                    .upload(filePath, form.imageFile);
-                  
-                  if (uploadError) throw uploadError;
-                  
-                  const { data: { publicUrl } } = supabase.storage
-                    .from('event-images')
-                    .getPublicUrl(filePath);
-                  
-                  imageUrl = publicUrl;
-                } catch (error) {
-                  console.error('Error uploading image:', error);
-                }
-              }
-              
               updateFacility({
                 id: editingFacility.id,
                 name: form.name,
@@ -367,7 +294,6 @@ const AdminFacilitiesContent = () => {
                 contact_info: form.contactInfo || undefined,
                 icon_type: form.iconType,
                 event_id: form.eventId,
-                image_url: imageUrl,
               });
               setEditDialogOpen(false);
             }}

@@ -2303,6 +2303,18 @@ export type Database = {
         Args: { event_uuid: string }
         Returns: boolean
       }
+      checkin_ticket_by_qr_public: {
+        Args: { qr_data: string; target_event_id: string }
+        Returns: Json
+      }
+      checkin_ticket_public: {
+        Args: {
+          notes_text?: string
+          search_query: string
+          target_event_id: string
+        }
+        Returns: Json
+      }
       debug_user_role: {
         Args: { user_email: string }
         Returns: {
@@ -2383,6 +2395,27 @@ export type Database = {
           twitter_link: string
           user_id: string
           website_link: string
+        }[]
+      }
+      get_event_checkin_stats: {
+        Args: { target_event_id: string }
+        Returns: Json
+      }
+      get_event_tickets_for_checkin: {
+        Args: { target_event_id: string }
+        Returns: {
+          check_in_status: boolean
+          checked_in_at: string
+          guest_email: string
+          guest_name: string
+          id: string
+          price: number
+          profile_email: string
+          profile_name: string
+          purchase_date: string
+          ticket_number: string
+          ticket_type_name: string
+          user_id: string
         }[]
       }
       get_poll_with_results: {

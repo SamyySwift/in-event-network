@@ -8,10 +8,25 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import QRCodeScanner from '@/components/QRCodeScanner';
-import { useAdminCheckIns } from '@/hooks/useAdminCheckIns';
-import { useAdminTickets } from '@/hooks/useAdminTickets';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+interface CheckInResponse {
+  success: boolean;
+  message: string;
+  ticket?: {
+    ticket_number: string;
+    attendee_name: string;
+  };
+}
+
+interface EventStats {
+  totalTickets: number;
+  checkedInTickets: number;
+  pendingTickets: number;
+  attendanceRate: number;
+}
 
 function CheckIn() {
   const { eventId } = useParams<{ eventId: string }>();
@@ -21,7 +36,8 @@ function CheckIn() {
   const [foundTicket, setFoundTicket] = useState<any>(null);
   const [searchAttempted, setSearchAttempted] = useState(false);
   
-  const { checkInTicket, checkInByQR, isCheckingIn, bulkCheckInAll, isBulkCheckingIn } = useAdminCheckIns(eventId);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
   
   // Get event details
   const { data: event, isLoading: isLoadingEvent } = useQuery({
@@ -41,8 +57,37 @@ function CheckIn() {
     enabled: !!eventId,
   });
 
-  // Get event tickets using the hook
-  const { eventTickets, isLoadingTickets, stats } = useAdminTickets(eventId);
+  // Get event tickets using public function
+  const { data: eventTickets = [], isLoading: isLoadingTickets } = useQuery({
+    queryKey: ['public-event-tickets', eventId],
+    queryFn: async () => {
+      if (!eventId) return [];
+      
+      const { data, error } = await supabase.rpc('get_event_tickets_for_checkin', {
+        target_event_id: eventId
+      });
+      
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!eventId,
+  });
+
+  // Get event stats using public function
+  const { data: stats, isLoading: isLoadingStats } = useQuery({
+    queryKey: ['public-event-stats', eventId],
+    queryFn: async () => {
+      if (!eventId) return { totalTickets: 0, checkedInTickets: 0, pendingTickets: 0, attendanceRate: 0 };
+      
+      const { data, error } = await supabase.rpc('get_event_checkin_stats', {
+        target_event_id: eventId
+      });
+      
+      if (error) throw error;
+      return (data as unknown as EventStats) || { totalTickets: 0, checkedInTickets: 0, pendingTickets: 0, attendanceRate: 0 };
+    },
+    enabled: !!eventId,
+  });
 
   // Get recent check-ins from eventTickets
   const recentCheckIns = eventTickets
@@ -50,101 +95,93 @@ function CheckIn() {
     .sort((a, b) => new Date(b.checked_in_at!).getTime() - new Date(a.checked_in_at!).getTime())
     .slice(0, 10);
 
+  // Public check-in mutation
+  const checkInTicket = useMutation({
+    mutationFn: async ({ searchQuery, notes }: { searchQuery: string; notes?: string }) => {
+      if (!eventId) throw new Error('Event ID not provided');
+      
+      const { data, error } = await supabase.rpc('checkin_ticket_public', {
+        target_event_id: eventId,
+        search_query: searchQuery,
+        notes_text: notes || null
+      });
+      
+      if (error) throw error;
+      const result = data as unknown as CheckInResponse;
+      if (!result.success) throw new Error(result.message);
+      return result;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['public-event-tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['public-event-stats'] });
+      toast({
+        title: "Success",
+        description: `${data.ticket?.attendee_name || 'Attendee'} checked in successfully`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Check-in Failed",
+        description: error.message || "Failed to check in ticket",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Public QR check-in mutation
+  const checkInByQR = useMutation({
+    mutationFn: async (qrData: string) => {
+      if (!eventId) throw new Error('Event ID not provided');
+      
+      const { data, error } = await supabase.rpc('checkin_ticket_by_qr_public', {
+        target_event_id: eventId,
+        qr_data: qrData
+      });
+      
+      if (error) throw error;
+      const result = data as unknown as CheckInResponse;
+      if (!result.success) throw new Error(result.message);
+      return result;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['public-event-tickets'] });
+      queryClient.invalidateQueries({ queryKey: ['public-event-stats'] });
+      toast({
+        title: "QR Check-in Success",
+        description: `${data.ticket?.attendee_name || 'Attendee'} checked in successfully`,
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "QR Check-in Failed",
+        description: error.message || "Failed to check in via QR code",
+        variant: "destructive",
+      });
+    },
+  });
+
   // Search for ticket by name or ticket number
   const { data: searchResults, isLoading: isSearching, refetch: searchTicket } = useQuery({
-    queryKey: ['shared-search-ticket', searchQuery, eventId],
+    queryKey: ['public-search-ticket', searchQuery, eventId],
     queryFn: async () => {
       if (!searchQuery.trim() || !eventId) return null;
       
-      // Check if searchQuery looks like a ticket number (starts with TKT-)
+      // Use the public function to search for tickets
+      const { data, error } = await supabase.rpc('get_event_tickets_for_checkin', {
+        target_event_id: eventId
+      });
+      
+      if (error) throw error;
+      
+      // Filter tickets based on search query
       if (searchQuery.startsWith('TKT-')) {
-        const { data, error } = await supabase
-          .from('event_tickets')
-          .select(`
-            *,
-            ticket_types (
-              name,
-              description
-            ),
-            events (
-              name,
-              start_time,
-              location
-            ),
-            profiles!event_tickets_user_id_fkey (
-              name,
-              email
-            )
-          `)
-          .eq('event_id', eventId)
-          .eq('ticket_number', searchQuery);
-        
-        if (error) throw error;
-        return data;
+        return (data || []).filter(ticket => ticket.ticket_number === searchQuery);
       } else {
-        // Search by guest name or profile name - do separate queries and combine
-        const searchTerm = `%${searchQuery}%`;
-        
-        // Search by guest name
-        const { data: guestResults, error: guestError } = await supabase
-          .from('event_tickets')
-          .select(`
-            *,
-            ticket_types (
-              name,
-              description
-            ),
-            events (
-              name,
-              start_time,
-              location
-            ),
-            profiles!event_tickets_user_id_fkey (
-              name,
-              email
-            )
-          `)
-          .eq('event_id', eventId)
-          .ilike('guest_name', searchTerm);
-
-        // Search by profile name
-        const { data: profileResults, error: profileError } = await supabase
-          .from('event_tickets')
-          .select(`
-            *,
-            ticket_types (
-              name,
-              description
-            ),
-            events (
-              name,
-              start_time,
-              location
-            ),
-            profiles!event_tickets_user_id_fkey (
-              name,
-              email
-            )
-          `)
-          .eq('event_id', eventId)
-          .not('profiles', 'is', null);
-
-        if (guestError && profileError) {
-          throw guestError || profileError;
-        }
-
-        // Filter profile results by name match
-        const filteredProfileResults = (profileResults || []).filter(ticket => 
-          ticket.profiles?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+        const searchTerm = searchQuery.toLowerCase();
+        return (data || []).filter(ticket => 
+          ticket.guest_name?.toLowerCase().includes(searchTerm) ||
+          ticket.profile_name?.toLowerCase().includes(searchTerm)
         );
-
-        // Combine and deduplicate results
-        const allResults = [...(guestResults || []), ...filteredProfileResults];
-        const uniqueResults = allResults.filter((ticket, index, self) => 
-          index === self.findIndex(t => t.id === ticket.id)
-        );
-
-        return uniqueResults;
       }
     },
     enabled: false, // We'll trigger this manually
@@ -199,12 +236,14 @@ function CheckIn() {
   };
 
   const handleBulkCheckIn = () => {
-    if (confirm('Are you sure you want to check in all remaining tickets? This action cannot be undone.')) {
-      bulkCheckInAll.mutate();
-    }
+    toast({
+      title: "Feature Not Available",
+      description: "Bulk check-in is only available for authenticated admin users",
+      variant: "destructive",
+    });
   };
 
-  if (isLoadingEvent || isLoadingTickets) {
+  if (isLoadingEvent || isLoadingTickets || isLoadingStats) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -256,13 +295,13 @@ function CheckIn() {
             </div>
             <Button 
               onClick={handleBulkCheckIn}
-              disabled={isBulkCheckingIn || stats.totalTickets === stats.checkedInTickets}
+              disabled={true}
               variant="outline"
               className="w-full sm:w-auto rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
               size="lg"
             >
               <UserCheck className="h-4 w-4 mr-2" />
-              {isBulkCheckingIn ? 'Checking In All...' : 'Bulk Check-In All'}
+              Bulk Check-In (Admin Only)
             </Button>
           </div>
 
@@ -274,7 +313,7 @@ function CheckIn() {
                 <Ticket className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-foreground">{stats.totalTickets}</div>
+                <div className="text-2xl font-bold text-foreground">{stats?.totalTickets || 0}</div>
               </CardContent>
             </Card>
 
@@ -284,7 +323,7 @@ function CheckIn() {
                 <CheckCircle className="h-4 w-4 text-green-600" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{stats.checkedInTickets}</div>
+                <div className="text-2xl font-bold text-green-600">{stats?.checkedInTickets || 0}</div>
               </CardContent>
             </Card>
 
@@ -295,7 +334,7 @@ function CheckIn() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-orange-600">
-                  {stats.totalTickets - stats.checkedInTickets}
+                  {stats?.pendingTickets || 0}
                 </div>
               </CardContent>
             </Card>
@@ -307,7 +346,7 @@ function CheckIn() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-foreground">
-                  {stats.totalTickets > 0 ? Math.round((stats.checkedInTickets / stats.totalTickets) * 100) : 0}%
+                  {stats?.attendanceRate || 0}%
                 </div>
               </CardContent>
             </Card>
@@ -393,25 +432,25 @@ function CheckIn() {
                             
                             <div className="space-y-3">
                               <div className="text-center space-y-1">
-                                <h5 className="font-medium">{foundTicket.events?.name || event.name}</h5>
-                                <p className="text-sm text-muted-foreground">{foundTicket.ticket_types?.name}</p>
+                                <h5 className="font-medium">{event.name}</h5>
+                                <p className="text-sm text-muted-foreground">{foundTicket.ticket_type_name}</p>
                                 <p className="text-xs text-muted-foreground">#{foundTicket.ticket_number}</p>
                               </div>
 
                               <div className="space-y-2 text-sm">
                                 <div className="flex items-center gap-2">
                                   <Calendar className="h-4 w-4 text-muted-foreground" />
-                                  <span>{formatDate(foundTicket.events?.start_time || event.start_time)}</span>
+                                  <span>{formatDate(event.start_time)}</span>
                                 </div>
-                                {(foundTicket.events?.location || event.location) && (
+                                {event.location && (
                                   <div className="flex items-center gap-2">
                                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                                    <span>{foundTicket.events?.location || event.location}</span>
+                                    <span>{event.location}</span>
                                   </div>
                                 )}
                                 <div className="flex items-center gap-2">
                                   <User className="h-4 w-4 text-muted-foreground" />
-                                  <span>{foundTicket.guest_name || foundTicket.profiles?.name || 'N/A'}</span>
+                                  <span>{foundTicket.guest_name || foundTicket.profile_name || 'N/A'}</span>
                                 </div>
                                 <div>
                                   <strong>Price:</strong> ₦{(foundTicket.price / 100).toLocaleString()}
@@ -450,12 +489,12 @@ function CheckIn() {
                       {foundTicket && !foundTicket.check_in_status && (
                         <Button 
                           onClick={handleCheckInFound}
-                          disabled={isCheckingIn}
+                          disabled={checkInTicket.isPending}
                           className="flex-1 rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
                           size="lg"
                         >
                           <CheckCircle className="h-4 w-4 mr-2" />
-                          {isCheckingIn ? 'Checking In...' : 'Check In Ticket'}
+                          {checkInTicket.isPending ? 'Checking In...' : 'Check In Ticket'}
                         </Button>
                       )}
                       {(foundTicket || searchAttempted) && (
@@ -494,8 +533,8 @@ function CheckIn() {
                             <CheckCircle className="h-4 w-4 text-green-600" />
                           </div>
                           <div>
-                            <p className="font-medium text-sm">{checkIn.guest_name || checkIn.profiles?.name || 'N/A'}</p>
-                            <p className="text-xs text-muted-foreground">{checkIn.ticket_types?.name}</p>
+                            <p className="font-medium text-sm">{checkIn.guest_name || checkIn.profile_name || 'N/A'}</p>
+                            <p className="text-xs text-muted-foreground">{checkIn.ticket_type_name}</p>
                           </div>
                         </div>
                         <div className="text-right">

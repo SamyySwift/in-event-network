@@ -313,7 +313,7 @@ export type Database = {
       }
       check_ins: {
         Row: {
-          admin_id: string
+          admin_id: string | null
           check_in_method: string
           checked_in_at: string
           created_at: string
@@ -322,7 +322,7 @@ export type Database = {
           ticket_id: string
         }
         Insert: {
-          admin_id: string
+          admin_id?: string | null
           check_in_method?: string
           checked_in_at?: string
           created_at?: string
@@ -331,7 +331,7 @@ export type Database = {
           ticket_id: string
         }
         Update: {
-          admin_id?: string
+          admin_id?: string | null
           check_in_method?: string
           checked_in_at?: string
           created_at?: string

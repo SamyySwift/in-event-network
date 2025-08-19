@@ -2,10 +2,14 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
+import { useJoinEvent } from '@/hooks/useJoinEvent';
+import { useToast } from '@/hooks/use-toast';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
+  const { joinEvent } = useJoinEvent();
+  const { toast } = useToast();
 
   useEffect(() => {
     const handleAuthCallback = async () => {
@@ -27,6 +31,32 @@ const AuthCallback = () => {
               if (redirectAfterLogin && redirectAfterLogin.includes('/buy-tickets/')) {
                 localStorage.removeItem('redirectAfterLogin');
                 navigate(redirectAfterLogin, { replace: true });
+                return;
+              }
+              
+              // Check for pending event code (from QR scan)
+              const pendingEventCode = sessionStorage.getItem('pendingEventCode');
+              if (pendingEventCode && currentUser.role === 'attendee') {
+                sessionStorage.removeItem('pendingEventCode');
+                
+                joinEvent(pendingEventCode, {
+                  onSuccess: (data: any) => {
+                    toast({
+                      title: "Welcome!",
+                      description: `Account created and joined ${data?.event_name || 'event'} successfully!`,
+                    });
+                    navigate('/attendee', { replace: true });
+                  },
+                  onError: (error: any) => {
+                    console.error('Failed to join event after Google auth:', error);
+                    toast({
+                      title: "Account Created",
+                      description: "Your account was created, but we couldn't join the event. Please scan the QR code again.",
+                      variant: "destructive",
+                    });
+                    navigate('/attendee', { replace: true });
+                  }
+                });
                 return;
               }
               

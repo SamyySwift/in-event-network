@@ -119,8 +119,11 @@ const ScanQR = () => {
           onError: (error: any) => {
             console.error('Join event error:', error);
   
-            // Check if the error is due to authentication
-            if (error?.message?.includes('not authenticated') || error?.message?.includes('login') || error?.code === 'PGRST301') {
+            // Check if the error is due to authentication or user not found
+            if (error?.message?.includes('not authenticated') || 
+                error?.message?.includes('login') || 
+                error?.code === 'PGRST301' ||
+                !currentUser) {
               // Store the access code and redirect to register with the code
               sessionStorage.setItem('pendingEventCode', accessCode);
               navigate(`/register?eventCode=${accessCode}&role=attendee`, { replace: true });

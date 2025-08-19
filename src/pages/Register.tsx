@@ -176,10 +176,15 @@ const Register = () => {
       }
 
       console.log("Registration successful");
-      toast({
-        title: "Success",
-        description: "Your account has been created successfully",
-      });
+      
+      // Don't show a separate toast here for QR code registrations
+      // The event joining success will show its own toast
+      if (!eventCode) {
+        toast({
+          title: "Success",
+          description: "Your account has been created successfully",
+        });
+      }
 
       // The redirect will be handled by the useEffect when currentUser updates
     } catch (error) {

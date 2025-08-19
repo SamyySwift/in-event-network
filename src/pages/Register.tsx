@@ -67,24 +67,29 @@ const Register = () => {
   useEffect(() => {
     console.log("Register component - Auth state:", { currentUser, isLoading });
 
-    if (currentUser && !isLoading) {
+    // Only handle redirects for email/password registration, not Google auth
+    // Google auth is handled by AuthCallback component
+    const isGoogleAuth = new URLSearchParams(window.location.search).get('code');
+    if (isGoogleAuth) {
+      console.log("Skipping register redirect - Google auth detected");
+      return;
+    }
+
+    if (currentUser && !isLoading && !isSubmitting) {
       console.log(
-        "User authenticated after registration, checking for pending event...",
+        "User authenticated after email registration, checking for pending event...",
         currentUser
       );
 
       // Check for ticketing redirect first
-      // Replace the existing buy-tickets redirect logic (around lines 74-86) with:
       const redirectAfterLogin = localStorage.getItem('redirectAfterLogin');
       if (redirectAfterLogin && redirectAfterLogin.includes('/buy-tickets/')) {
-      // Extract event key from the buy-tickets URL
-      const eventKeyMatch = redirectAfterLogin.match(/\/buy-tickets\/([^\/\?]+)/);
-      if (eventKeyMatch) {
-      localStorage.removeItem('redirectAfterLogin');
-      // Redirect directly to the buy-tickets page
-      navigate(redirectAfterLogin, { replace: true });
-      return;
-      }
+        const eventKeyMatch = redirectAfterLogin.match(/\/buy-tickets\/([^\/\?]+)/);
+        if (eventKeyMatch) {
+          localStorage.removeItem('redirectAfterLogin');
+          navigate(redirectAfterLogin, { replace: true });
+          return;
+        }
       }
 
       // Check if there's a pending event to join
@@ -132,7 +137,7 @@ const Register = () => {
         navigate(redirectPath, { replace: true });
       }
     }
-  }, [currentUser, isLoading, navigate, eventCode, joinEvent, toast]);
+  }, [currentUser, isLoading, isSubmitting, navigate, eventCode, joinEvent, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -65,11 +65,12 @@ const Register = () => {
 
   // Handle redirect when user becomes authenticated after registration
   useEffect(() => {
-    console.log("Register component - Auth state:", { currentUser, isLoading });
+    console.log("Register component - Auth state:", { currentUser, isLoading, isSubmitting });
 
     // Only handle redirects for email/password registration, not Google auth
     // Google auth is handled by AuthCallback component
-    const isGoogleAuth = new URLSearchParams(window.location.search).get('code');
+    const urlParams = new URLSearchParams(window.location.search);
+    const isGoogleAuth = urlParams.get('code') || urlParams.get('state');
     if (isGoogleAuth) {
       console.log("Skipping register redirect - Google auth detected");
       return;
@@ -87,6 +88,7 @@ const Register = () => {
         const eventKeyMatch = redirectAfterLogin.match(/\/buy-tickets\/([^\/\?]+)/);
         if (eventKeyMatch) {
           localStorage.removeItem('redirectAfterLogin');
+          console.log("Redirecting to buy-tickets:", redirectAfterLogin);
           navigate(redirectAfterLogin, { replace: true });
           return;
         }
@@ -116,6 +118,7 @@ const Register = () => {
                 data?.event_name || "event"
               } successfully!`,
             });
+            console.log("Redirecting to attendee dashboard after event join");
             navigate("/attendee", { replace: true });
           },
           onError: (error: any) => {
@@ -127,6 +130,7 @@ const Register = () => {
                 "Your account was created, but we couldn't join the event. Please scan the QR code again.",
               variant: "destructive",
             });
+            console.log("Redirecting to attendee dashboard after failed event join");
             navigate("/attendee", { replace: true });
           },
         });
@@ -134,6 +138,7 @@ const Register = () => {
         // Normal redirect without event joining
         const redirectPath =
           currentUser.role === "host" ? "/admin" : "/attendee";
+        console.log("Normal redirect to:", redirectPath);
         navigate(redirectPath, { replace: true });
       }
     }

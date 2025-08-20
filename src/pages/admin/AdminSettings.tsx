@@ -28,10 +28,7 @@ function AdminSettingsContent() {
       <Tabs defaultValue="general" className="space-y-4">
         <TabsList className="grid grid-cols-3 w-full md:w-auto">
           
-          <TabsTrigger value="notifications" className="flex items-center gap-2">
-            <Bell size={16} />
-            <span className="hidden sm:inline">Notifications</span>
-          </TabsTrigger>
+          
           <TabsTrigger value="profile" className="flex items-center gap-2">
             <User size={16} />
             <span className="hidden sm:inline">Profile</span>
@@ -42,9 +39,7 @@ function AdminSettingsContent() {
         
 
         {/* Notifications Settings */}
-        <TabsContent value="notifications" className="space-y-4">
-          // ... existing code ...
-        </TabsContent>
+        
 
         {/* Profile Settings */}
         <TabsContent value="profile" className="space-y-4">

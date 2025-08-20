@@ -8,7 +8,7 @@ import { CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const JoinEvent = () => {
-  const { code } = useParams<{ code: string }>();
+  const { code, eventKey } = useParams<{ code: string; eventKey: string }>();
   const [searchParams] = useSearchParams();
   const codeFromParam = searchParams.get('code');
   const navigate = useNavigate();
@@ -19,35 +19,48 @@ const JoinEvent = () => {
   const [eventName, setEventName] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  const accessCode = code || codeFromParam;
+  const accessCode = code || eventKey || codeFromParam;
 
   useEffect(() => {
     console.log('JoinEvent: Component mounted with accessCode:', accessCode, 'authLoading:', authLoading, 'currentUser:', currentUser?.email);
     
+    // Add timeout to prevent infinite loading
+    const timeout = setTimeout(() => {
+      if (joinStatus === 'loading') {
+        console.error('JoinEvent: Timeout reached, setting error state');
+        setJoinStatus('error');
+        setErrorMessage('Request timed out. Please try again.');
+      }
+    }, 10000); // 10 second timeout
+    
     if (authLoading) {
       console.log('JoinEvent: Still loading auth state');
+      return () => clearTimeout(timeout);
+    }
+
+    if (!accessCode) {
+      console.error('JoinEvent: No access code provided');
+      setJoinStatus('error');
+      setErrorMessage('No access code provided');
+      clearTimeout(timeout);
       return;
     }
 
     if (!currentUser) {
       console.log('JoinEvent: User not authenticated, storing event code and redirecting to register');
-      // User not authenticated, store the code for later and redirect to register
-      if (accessCode) {
-        sessionStorage.setItem('pendingEventCode', accessCode);
-        navigate(`/register?eventCode=${accessCode}&role=attendee`, { replace: true });
-      } else {
-        setJoinStatus('error');
-        setErrorMessage('No access code provided');
-      }
+      sessionStorage.setItem('pendingEventCode', accessCode);
+      navigate(`/register?eventCode=${accessCode}&role=attendee`, { replace: true });
+      clearTimeout(timeout);
       return;
     }
 
     // User is authenticated, try to join the event
-    if (accessCode && /^\d{6}$/.test(accessCode)) {
+    if (/^\d{6}$/.test(accessCode)) {
       console.log('JoinEvent: Valid access code, attempting to join event');
       handleEventJoin(accessCode, {
         onSuccess: (data: any) => {
           console.log('JoinEvent: Join event success:', data);
+          clearTimeout(timeout);
           setJoinStatus('success');
           setEventName(data?.event_name || 'Event');
           
@@ -59,6 +72,7 @@ const JoinEvent = () => {
         },
         onError: (error: any) => {
           console.error('JoinEvent: Join event error:', error);
+          clearTimeout(timeout);
           setJoinStatus('error');
           setErrorMessage(error?.message || "Failed to join the event. Please try again.");
         },
@@ -66,10 +80,13 @@ const JoinEvent = () => {
       });
     } else {
       console.error('JoinEvent: Invalid access code format:', accessCode);
+      clearTimeout(timeout);
       setJoinStatus('error');
       setErrorMessage('Invalid access code format');
     }
-  }, [currentUser, authLoading, accessCode, handleEventJoin, navigate, toast]);
+
+    return () => clearTimeout(timeout);
+  }, [currentUser, authLoading, accessCode, handleEventJoin, navigate, joinStatus]);
 
   if (authLoading || joinStatus === 'loading' || isJoining) {
     return (

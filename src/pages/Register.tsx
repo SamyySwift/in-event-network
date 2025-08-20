@@ -112,12 +112,7 @@ const Register = () => {
           onSuccess: (data: any) => {
             console.log("Successfully joined event after registration:", data);
             setIsJoiningEvent(false);
-            toast({
-              title: "Welcome!",
-              description: `Account created and joined ${
-                data?.event_name || "event"
-              } successfully!`,
-            });
+            // Removed success toast to prevent redirect conflicts
             console.log("Redirecting to attendee dashboard after event join");
             navigate("/attendee", { replace: true });
           },
@@ -187,14 +182,7 @@ const Register = () => {
 
       console.log("Registration successful");
       
-      // Don't show a separate toast here for QR code registrations
-      // The event joining success will show its own toast
-      if (!eventCode) {
-        toast({
-          title: "Success",
-          description: "Your account has been created successfully",
-        });
-      }
+      // Removed all success toasts to prevent redirect conflicts
 
       // The redirect will be handled by the useEffect when currentUser updates
     } catch (error) {

@@ -51,11 +51,10 @@ import AttendeeOnboarding from '@/pages/attendee/AttendeeOnboarding';
 import AttendeeMap from '@/pages/attendee/AttendeeMap';
 import AttendeeSearch from '@/pages/attendee/AttendeeSearch';
 
-
+import Index from '@/pages/Index';
 import { AdminEventProvider } from '@/hooks/useAdminEventContext';
 import DataPrivacy from '@/pages/DataPrivacy';
 import TermsOfService from '@/pages/TermsOfService';
-import JoinEvent from '@/pages/JoinEvent';
 import AttendeeMyTickets from '@/pages/attendee/AttendeeMyTickets';
 
 const queryClient = new QueryClient();
@@ -74,7 +73,7 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/scan" element={<ScanQR />} />
-              <Route path="/join/:eventKey" element={<JoinEvent />} />
+              <Route path="/join/:eventKey" element={<Index />} />
               <Route path="/buy-tickets/:eventKey" element={<BuyTickets />} />
               <Route path="/buy" element={<BuyTickets />} />
               <Route path="/privacy" element={<DataPrivacy />} />
@@ -142,11 +141,11 @@ function App() {
               <Route
                 path="/attendee/my-tickets"
                 element={
-                  <ProtectedRoute requiredRole="attendee">
-                    <AttendeeMyTickets />
-                  </ProtectedRoute>
-                }
-              />
+                <ProtectedRoute requiredRole="attendee">
+                  <AttendeeMyTickets />
+                </ProtectedRoute>
+              }
+            />
               <Route
                 path="/attendee/profile"
                 element={

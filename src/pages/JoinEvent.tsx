@@ -1,92 +1,75 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useEventJoinFlow } from '@/hooks/useEventJoinFlow';
+import { useJoinEvent } from '@/hooks/useJoinEvent';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 const JoinEvent = () => {
-  const { code, eventKey } = useParams<{ code: string; eventKey: string }>();
+  const { code } = useParams<{ code: string }>();
   const [searchParams] = useSearchParams();
   const codeFromParam = searchParams.get('code');
   const navigate = useNavigate();
   const { currentUser, isLoading: authLoading } = useAuth();
-  const { handleEventJoin, isJoining } = useEventJoinFlow();
+  const { joinEvent, isJoining } = useJoinEvent();
   const { toast } = useToast();
   const [joinStatus, setJoinStatus] = useState<'loading' | 'success' | 'error' | 'unauthorized'>('loading');
   const [eventName, setEventName] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  const accessCode = code || eventKey || codeFromParam;
+  const accessCode = code || codeFromParam;
 
   useEffect(() => {
-    console.log('JoinEvent: Component mounted with accessCode:', accessCode, 'authLoading:', authLoading, 'currentUser:', currentUser?.email);
-    
-    // Add timeout to prevent infinite loading
-    const timeout = setTimeout(() => {
-      if (joinStatus === 'loading') {
-        console.error('JoinEvent: Timeout reached, setting error state');
-        setJoinStatus('error');
-        setErrorMessage('Request timed out. Please try again.');
-      }
-    }, 10000); // 10 second timeout
-    
-    if (authLoading) {
-      console.log('JoinEvent: Still loading auth state');
-      return () => clearTimeout(timeout);
-    }
-
-    if (!accessCode) {
-      console.error('JoinEvent: No access code provided');
-      setJoinStatus('error');
-      setErrorMessage('No access code provided');
-      clearTimeout(timeout);
-      return;
-    }
+    if (authLoading) return;
 
     if (!currentUser) {
-      console.log('JoinEvent: User not authenticated, storing event code and redirecting to register');
-      sessionStorage.setItem('pendingEventCode', accessCode);
-      navigate(`/register?eventCode=${accessCode}&role=attendee`, { replace: true });
-      clearTimeout(timeout);
+      // User not authenticated, redirect to register with the code
+      if (accessCode) {
+        navigate(`/register?eventCode=${accessCode}&role=attendee`, { replace: true });
+      } else {
+        setJoinStatus('error');
+        setErrorMessage('No access code provided');
+      }
       return;
     }
 
     // User is authenticated, try to join the event
-    if (/^\d{6}$/.test(accessCode)) {
-      console.log('JoinEvent: Valid access code, attempting to join event');
-      handleEventJoin(accessCode, {
+    if (accessCode && /^\d{6}$/.test(accessCode)) {
+      joinEvent(accessCode, {
         onSuccess: (data: any) => {
-          console.log('JoinEvent: Join event success:', data);
-          clearTimeout(timeout);
+          console.log('Join event success:', data);
           setJoinStatus('success');
           setEventName(data?.event_name || 'Event');
           
+          toast({
+            title: "Successfully Joined!",
+            description: `You've joined ${data?.event_name || 'the event'}`,
+          });
+
           // Navigate to attendee dashboard after a short delay
           setTimeout(() => {
-            console.log('JoinEvent: Navigating to /attendee after successful join');
             navigate('/attendee', { replace: true });
           }, 2000);
         },
         onError: (error: any) => {
-          console.error('JoinEvent: Join event error:', error);
-          clearTimeout(timeout);
+          console.error('Join event error:', error);
           setJoinStatus('error');
           setErrorMessage(error?.message || "Failed to join the event. Please try again.");
-        },
-        showToasts: false, // We handle success message manually
+          
+          toast({
+            title: "Failed to Join Event",
+            description: error?.message || "Could not join the event. Please try again.",
+            variant: "destructive"
+          });
+        }
       });
     } else {
-      console.error('JoinEvent: Invalid access code format:', accessCode);
-      clearTimeout(timeout);
       setJoinStatus('error');
       setErrorMessage('Invalid access code format');
     }
-
-    return () => clearTimeout(timeout);
-  }, [currentUser, authLoading, accessCode, handleEventJoin, navigate, joinStatus]);
+  }, [currentUser, authLoading, accessCode, joinEvent, navigate, toast]);
 
   if (authLoading || joinStatus === 'loading' || isJoining) {
     return (
@@ -116,11 +99,6 @@ const JoinEvent = () => {
             <p className="text-muted-foreground mb-4">
               You've successfully joined <span className="font-semibold">{eventName}</span>
             </p>
-            {/* Show success toast here since we disabled it in the hook */}
-            {toast({
-              title: "Successfully Joined!",
-              description: `You've joined ${eventName}`,
-            }) && null}
             <p className="text-sm text-muted-foreground">
               Redirecting to your dashboard...
             </p>

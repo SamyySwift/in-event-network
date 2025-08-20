@@ -48,12 +48,9 @@ export const useAdminCheckIns = (eventIdOverride?: string) => {
   // Check in a ticket by ticket number, attendee name, or email address
   const checkInTicket = useMutation({
     mutationFn: async ({ searchQuery, notes }: CheckInData) => {
-      let tickets: any[] = [];
-      let ticketError: any = null;
-
       // Check if searchQuery looks like a ticket number (starts with TKT-)
       if (searchQuery.startsWith('TKT-')) {
-        const { data, error } = await supabase
+        const { data: tickets, error: ticketError } = await supabase
           .from('event_tickets')
           .select(`
             *,
@@ -61,50 +58,76 @@ export const useAdminCheckIns = (eventIdOverride?: string) => {
           `)
           .eq('event_id', actualEventId)
           .eq('ticket_number', searchQuery);
+
+        if (ticketError) throw new Error('Error searching for ticket');
+        if (!tickets || tickets.length === 0) throw new Error('No ticket found matching search criteria');
+        if (tickets.length > 1) throw new Error('Multiple tickets found. Please be more specific or use ticket number.');
         
-        tickets = data || [];
-        ticketError = error;
-      } else {
-        // Search guest tickets first
-        const { data: guestTickets, error: guestError } = await supabase
+        const ticket = tickets[0];
+        if (ticket.check_in_status) throw new Error('Ticket already checked in');
+
+        // Update ticket and create check-in record
+        const { error: updateError } = await supabase
           .from('event_tickets')
-          .select(`
-            *,
-            profiles!event_tickets_user_id_fkey(id, name, email)
-          `)
-          .eq('event_id', actualEventId)
-          .or(`guest_name.ilike.%${searchQuery}%,guest_email.ilike.%${searchQuery}%`);
+          .update({
+            check_in_status: true,
+            checked_in_at: new Date().toISOString(),
+            checked_in_by: (await supabase.auth.getUser()).data.user?.id,
+          })
+          .eq('id', ticket.id);
 
-        // Search registered user tickets
-        const { data: userTickets, error: userError } = await supabase
-          .from('event_tickets')
-          .select(`
-            *,
-            profiles!event_tickets_user_id_fkey(id, name, email)
-          `)
-          .eq('event_id', actualEventId)
-          .not('user_id', 'is', null);
+        if (updateError) throw updateError;
 
-        if (guestError || userError) {
-          ticketError = guestError || userError;
-        } else {
-          // Filter user tickets by name or email
-          const filteredUserTickets = (userTickets || []).filter(ticket => 
-            ticket.profiles?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            ticket.profiles?.email?.toLowerCase().includes(searchQuery.toLowerCase())
-          );
+        const { error: checkInError } = await supabase
+          .from('check_ins')
+          .insert([{
+            ticket_id: ticket.id,
+            admin_id: (await supabase.auth.getUser()).data.user?.id,
+            check_in_method: 'manual',
+            notes,
+          }]);
 
-          // Combine results
-          tickets = [...(guestTickets || []), ...filteredUserTickets];
-        }
+        if (checkInError) throw checkInError;
+        await grantAttendeeAccess(ticket);
+        return ticket;
       }
 
-      if (ticketError) throw new Error('Error searching for ticket');
-      if (!tickets || tickets.length === 0) throw new Error('No ticket found matching search criteria');
-      if (tickets.length > 1) throw new Error('Multiple tickets found. Please be more specific or use ticket number.');
+      // For non-ticket number searches, get all tickets for the event
+      const { data: allTickets, error: fetchError } = await supabase
+        .from('event_tickets')
+        .select(`
+          *,
+          profiles!event_tickets_user_id_fkey(id, name, email)
+        `)
+        .eq('event_id', actualEventId);
+
+      if (fetchError) throw new Error('Error searching for ticket');
+      if (!allTickets || allTickets.length === 0) throw new Error('No tickets found for this event');
+
+      // Filter tickets by search query (name or email)
+      const matchingTickets = allTickets.filter(ticket => {
+        const searchLower = searchQuery.toLowerCase();
+        
+        // Check guest name and email
+        if (ticket.guest_name?.toLowerCase().includes(searchLower) || 
+            ticket.guest_email?.toLowerCase().includes(searchLower)) {
+          return true;
+        }
+        
+        // Check profile name and email
+        if (ticket.profiles?.name?.toLowerCase().includes(searchLower) ||
+            ticket.profiles?.email?.toLowerCase().includes(searchLower)) {
+          return true;
+        }
+        
+        return false;
+      });
+
+      if (matchingTickets.length === 0) throw new Error('No ticket found matching search criteria');
+      if (matchingTickets.length > 1) throw new Error('Multiple tickets found. Please be more specific or use ticket number.');
       
-      const ticket = tickets[0];
-      if (ticket.check_in_status) throw new Error('Ticket already checked in');
+      const selectedTicket = matchingTickets[0];
+      if (selectedTicket.check_in_status) throw new Error('Ticket already checked in');
 
       // Update ticket status
       const { error: updateError } = await supabase
@@ -114,7 +137,7 @@ export const useAdminCheckIns = (eventIdOverride?: string) => {
           checked_in_at: new Date().toISOString(),
           checked_in_by: (await supabase.auth.getUser()).data.user?.id,
         })
-        .eq('id', ticket.id);
+        .eq('id', selectedTicket.id);
 
       if (updateError) throw updateError;
 
@@ -122,7 +145,7 @@ export const useAdminCheckIns = (eventIdOverride?: string) => {
       const { error: checkInError } = await supabase
         .from('check_ins')
         .insert([{
-          ticket_id: ticket.id,
+          ticket_id: selectedTicket.id,
           admin_id: (await supabase.auth.getUser()).data.user?.id,
           check_in_method: 'manual',
           notes,
@@ -131,9 +154,9 @@ export const useAdminCheckIns = (eventIdOverride?: string) => {
       if (checkInError) throw checkInError;
 
       // Grant attendee dashboard access
-      await grantAttendeeAccess(ticket);
+      await grantAttendeeAccess(selectedTicket);
 
-      return ticket;
+      return selectedTicket;
     },
     onSuccess: (ticket) => {
       queryClient.invalidateQueries({ queryKey: ['admin-event-tickets'] });

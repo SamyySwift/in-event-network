@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,22 +11,30 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
 interface EventQRCodeProps {
   eventId: string;
   eventName: string;
 }
-
-const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
+const EventQRCode: React.FC<EventQRCodeProps> = ({
+  eventId,
+  eventName
+}) => {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showQRModal, setShowQRModal] = useState(false);
   const [referralCode, setReferralCode] = useState('');
   const [hasValidReferralCode, setHasValidReferralCode] = useState(false);
   const [isValidatingCode, setIsValidatingCode] = useState(false);
-  const { isEventPaid, isLoadingPayments } = usePayment();
-  const { currentUser } = useAuth();
+  const {
+    isEventPaid,
+    isLoadingPayments
+  } = usePayment();
+  const {
+    currentUser
+  } = useAuth();
   const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
 
   // Persist QR access in localStorage per user and event
   const storageKey = currentUser?.id ? `qr_access:${currentUser.id}:${eventId}` : null;
@@ -46,27 +53,24 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
   }, [storageKey]);
 
   // Get the current user's profile data including access_key
-  const { data: userProfile } = useQuery({
+  const {
+    data: userProfile
+  } = useQuery({
     queryKey: ['user-profile', currentUser?.id],
     queryFn: async () => {
       if (!currentUser?.id) return null;
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('access_key')
-        .eq('id', currentUser.id)
-        .single();
-
+      const {
+        data,
+        error
+      } = await supabase.from('profiles').select('access_key').eq('id', currentUser.id).single();
       if (error) {
         console.error('Error fetching user profile:', error);
         return null;
       }
-
       return data;
     },
-    enabled: !!currentUser?.id,
+    enabled: !!currentUser?.id
   });
-
   const handleDownloadQR = () => {
     const canvas = document.querySelector('#qr-canvas canvas') as HTMLCanvasElement;
     if (canvas) {
@@ -76,12 +80,15 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
       link.click();
     }
   };
-
   const handlePaymentSuccess = async () => {
     setShowPaymentModal(false);
     // Force refetch of payment data to ensure immediate UI update
-    await queryClient.invalidateQueries({ queryKey: ['event-payments'] });
-    await queryClient.refetchQueries({ queryKey: ['event-payments', currentUser?.id] });
+    await queryClient.invalidateQueries({
+      queryKey: ['event-payments']
+    });
+    await queryClient.refetchQueries({
+      queryKey: ['event-payments', currentUser?.id]
+    });
     // Persist access so it remains unlocked after refresh
     try {
       if (storageKey) {
@@ -92,10 +99,9 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
       console.warn('Unable to persist QR access after payment', e);
     }
   };
-
   const handleApplyReferralCode = async () => {
     setIsValidatingCode(true);
-    
+
     // Check if the referral code matches the specific code
     if (referralCode.trim() === '#Kconect09099') {
       setHasValidReferralCode(true);
@@ -109,52 +115,33 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
       }
       toast({
         title: 'Referral Code Applied',
-        description: 'You now have access to generate QR codes for this event!',
+        description: 'You now have access to generate QR codes for this event!'
       });
     } else {
       toast({
         title: 'Invalid Referral Code',
         description: 'The referral code you entered is not valid.',
-        variant: 'destructive',
+        variant: 'destructive'
       });
     }
-    
     setIsValidatingCode(false);
   };
-
   const isPaid = isEventPaid(eventId);
   const hasAccess = isPaid || hasValidReferralCode;
-
   console.log('EventQRCode - isPaid:', isPaid, 'hasValidReferralCode:', hasValidReferralCode, 'eventId:', eventId);
   console.log('EventQRCode - isLoadingPayments:', isLoadingPayments);
-
   if (isLoadingPayments) {
-    return (
-      <div className="flex items-center justify-center h-16 mt-3">
+    return <div className="flex items-center justify-center h-16 mt-3">
         <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <>
+  return <>
       <div className="flex flex-col gap-2 mt-3 w-full">
-        {hasAccess ? (
-          <Button
-            onClick={() => setShowQRModal(true)}
-            size="sm"
-            className="w-full min-h-[40px] bg-gradient-to-r from-green-500 to-emerald-400 hover:from-green-600 hover:to-emerald-500 text-white text-xs sm:text-sm px-3 py-2"
-          >
+        {hasAccess ? <Button onClick={() => setShowQRModal(true)} size="sm" className="w-full min-h-[40px] bg-gradient-to-r from-green-500 to-emerald-400 hover:from-green-600 hover:to-emerald-500 text-white text-xs sm:text-sm px-3 py-2">
             <QrCode className="h-4 w-4 mr-2 flex-shrink-0" />
             <span className="truncate">Generate QR Code</span>
-          </Button>
-        ) : (
-          <>
-            <Button
-              onClick={() => setShowPaymentModal(true)}
-              size="sm"
-              className="w-full min-h-[40px] bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-xs sm:text-sm px-3 py-2"
-            >
+          </Button> : <>
+            <Button onClick={() => setShowPaymentModal(true)} size="sm" className="w-full min-h-[40px] bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-xs sm:text-sm px-3 py-2">
               <CreditCard className="h-4 w-4 mr-2 flex-shrink-0" />
               <span className="truncate">Pay Now (₦100,000)</span>
             </Button>
@@ -166,39 +153,17 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
                 <span>Have a referral code?</span>
               </div>
               <div className="flex gap-2">
-                <Input
-                  placeholder="Enter referral code"
-                  value={referralCode}
-                  onChange={(e) => setReferralCode(e.target.value)}
-                  className="text-xs h-8 bg-background/50"
-                />
-                <Button
-                  onClick={handleApplyReferralCode}
-                  disabled={!referralCode.trim() || isValidatingCode}
-                  size="sm"
-                  variant="outline"
-                  className="h-8 px-3 text-xs"
-                >
-                  {isValidatingCode ? (
-                    <div className="animate-spin rounded-full h-3 w-3 border-b border-current"></div>
-                  ) : (
-                    'Apply'
-                  )}
+                <Input placeholder="Enter referral code" value={referralCode} onChange={e => setReferralCode(e.target.value)} className="text-xs h-8 bg-background/50" />
+                <Button onClick={handleApplyReferralCode} disabled={!referralCode.trim() || isValidatingCode} size="sm" variant="outline" className="h-8 px-3 text-xs">
+                  {isValidatingCode ? <div className="animate-spin rounded-full h-3 w-3 border-b border-current"></div> : 'Apply'}
                 </Button>
               </div>
             </div>
-          </>
-        )}
+          </>}
       </div>
 
       {/* Payment Modal */}
-      <PaymentModal
-        isOpen={showPaymentModal}
-        onClose={() => setShowPaymentModal(false)}
-        eventId={eventId}
-        eventName={eventName}
-        onPaymentSuccess={handlePaymentSuccess}
-      />
+      <PaymentModal isOpen={showPaymentModal} onClose={() => setShowPaymentModal(false)} eventId={eventId} eventName={eventName} onPaymentSuccess={handlePaymentSuccess} />
 
       {/* QR Code Modal */}
       <Dialog open={showQRModal} onOpenChange={setShowQRModal}>
@@ -214,29 +179,14 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
           </DialogHeader>
 
           <div className="flex flex-col items-center space-y-4">
-            {userProfile?.access_key ? (
-              <div id="qr-canvas" className="w-full flex justify-center">
-                <QRCodeGenerator
-                  eventName={eventName}
-                  eventUrl={`${window.location.origin}/join/${userProfile.access_key}`}
-                />
-              </div>
-            ) : (
-              <div className="text-muted-foreground text-center p-4">
+            {userProfile?.access_key ? <div id="qr-canvas" className="w-full flex justify-center">
+                <QRCodeGenerator eventName={eventName} eventUrl={`${window.location.origin}/join/${userProfile.access_key}`} />
+              </div> : <div className="text-muted-foreground text-center p-4">
                 Access key not available. Please contact support.
-              </div>
-            )}
+              </div>}
 
             {/* Usage Instructions */}
-            <div className="w-full p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-              <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2 text-sm">How to use this QR Code:</h4>
-              <ul className="text-xs text-blue-800 dark:text-blue-200 space-y-1">
-                <li>• Display on screens or projectors at your event entrance</li>
-                <li>• Print on flyers, posters, or event materials</li>
-                <li>• Share digitally via email or social media</li>
-                <li>• Attendees scan to create account and join your event</li>
-              </ul>
-            </div>
+            
 
             <div className="flex flex-col gap-3 w-full">
               <Button onClick={handleDownloadQR} className="w-full">
@@ -250,8 +200,6 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({ eventId, eventName }) => {
           </div>
         </DialogContent>
       </Dialog>
-    </>
-  );
+    </>;
 };
-
 export default EventQRCode;

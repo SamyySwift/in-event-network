@@ -6,7 +6,7 @@ import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import AuthCallback from "@/pages/AuthCallback";
 import Guide from "@/pages/Guide";
-
+import Index from "@/pages/Index";
 import NotFound from "@/pages/NotFound";
 import ScanQR from "@/pages/ScanQR";
 import VendorForm from "./pages/VendorForm";
@@ -151,6 +151,10 @@ export const router = createBrowserRouter([
   {
     path: "/scan",
     element: <ScanQR />,
+  },
+  {
+    path: "/index",
+    element: <Index />,
   },
   {
     path: "/buy-tickets/:eventKey",

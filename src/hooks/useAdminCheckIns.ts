@@ -5,7 +5,7 @@ import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 import { useToast } from '@/hooks/use-toast';
 
 interface CheckInData {
-  searchQuery: string; // Can be ticket number or attendee name
+  searchQuery: string; // Can be ticket number, attendee name, or email address
   notes?: string;
 }
 
@@ -45,7 +45,7 @@ export const useAdminCheckIns = (eventIdOverride?: string) => {
     }
   };
 
-  // Check in a ticket by ticket number or attendee name
+  // Check in a ticket by ticket number, attendee name, or email address
   const checkInTicket = useMutation({
     mutationFn: async ({ searchQuery, notes }: CheckInData) => {
       // First, find the ticket by either ticket number or attendee name
@@ -61,8 +61,8 @@ export const useAdminCheckIns = (eventIdOverride?: string) => {
       if (searchQuery.startsWith('TKT-')) {
         query = query.eq('ticket_number', searchQuery);
       } else {
-        // Search by guest name or profile name
-        query = query.or(`guest_name.ilike.%${searchQuery}%,profiles.name.ilike.%${searchQuery}%`);
+        // Search by guest name, profile name, guest email, or profile email
+        query = query.or(`guest_name.ilike.%${searchQuery}%,profiles.name.ilike.%${searchQuery}%,guest_email.ilike.%${searchQuery}%,profiles.email.ilike.%${searchQuery}%`);
       }
 
       const { data: tickets, error: ticketError } = await query;

@@ -321,7 +321,7 @@ export default function LiveQuestions() {
         <div className="space-y-4">
           {filteredQuestions.length > 0 ? (
             filteredQuestions.map((question) => (
-              <Card key={question.id} className="hover:shadow-md transition-shadow">
+              <Card key={question.id} className={`glass-card overflow-hidden hover:shadow-xl transition-all ${question.upvotes > 0 ? 'fire-border animate-enter' : 'hover:shadow-md transition-shadow'}`}>
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
@@ -362,7 +362,7 @@ export default function LiveQuestions() {
                       {question.upvotes > 0 && (
                         <Badge variant="secondary" className="gap-1">
                           <ArrowUp className="h-3 w-3" />
-                          {question.upvotes}
+                          {question.upvotes} {question.upvotes > 0 && <span aria-hidden="true">🔥</span>}
                         </Badge>
                       )}
                       {question.is_answered && (

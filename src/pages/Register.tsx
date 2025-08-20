@@ -14,7 +14,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { useJoinEvent } from "@/hooks/useJoinEvent";
+import { useEventJoinFlow } from "@/hooks/useEventJoinFlow";
 import { AlertCircle, Network, Eye, EyeOff } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FcGoogle } from "react-icons/fc";
@@ -42,7 +42,7 @@ const Register = () => {
   const [isJoiningEvent, setIsJoiningEvent] = useState(false);
 
   const { register, signInWithGoogle, currentUser, isLoading } = useAuth();
-  const { joinEvent } = useJoinEvent();
+  const { processPendingEventJoin, getAppropriateRedirect } = useEventJoinFlow();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -78,71 +78,46 @@ const Register = () => {
 
     if (currentUser && !isLoading && !isSubmitting) {
       console.log(
-        "User authenticated after email registration, checking for pending event...",
+        "User authenticated after email registration, processing any pending events...",
         currentUser
       );
 
-      // Check for ticketing redirect first
-      const redirectAfterLogin = localStorage.getItem('redirectAfterLogin');
-      if (redirectAfterLogin && redirectAfterLogin.includes('/buy-tickets/')) {
-        const eventKeyMatch = redirectAfterLogin.match(/\/buy-tickets\/([^\/\?]+)/);
-        if (eventKeyMatch) {
-          localStorage.removeItem('redirectAfterLogin');
-          console.log("Redirecting to buy-tickets:", redirectAfterLogin);
-          navigate(redirectAfterLogin, { replace: true });
-          return;
-        }
-      }
-
-      // Check if there's a pending event to join
-      const pendingEventCode =
-        eventCode || sessionStorage.getItem("pendingEventCode");
-
-      if (pendingEventCode && currentUser.role === "attendee") {
-        console.log(
-          "Found pending event code, attempting to join:",
-          pendingEventCode
-        );
+      const processAuth = async () => {
         setIsJoiningEvent(true);
+        
+        try {
+          // Try to process any pending event joins
+          const hadPendingEvent = await processPendingEventJoin({
+            onSuccess: (data: any) => {
+              console.log("Register: Successfully joined event after registration:", data);
+              setIsJoiningEvent(false);
+            },
+            onError: (error: any) => {
+              console.error("Register: Failed to join event after registration:", error);
+              setIsJoiningEvent(false);
+              // Still navigate to attendee dashboard even if event join fails
+              navigate("/attendee", { replace: true });
+            }
+          });
 
-        // Clear the stored code
-        sessionStorage.removeItem("pendingEventCode");
+          // If no pending event, do normal redirect
+          if (!hadPendingEvent) {
+            console.log("Register: No pending events, doing normal redirect");
+            const redirectPath = getAppropriateRedirect();
+            navigate(redirectPath, { replace: true });
+          }
+        } catch (error) {
+          console.error("Register: Error processing authentication:", error);
+          setIsJoiningEvent(false);
+          // Fallback to normal redirect
+          const redirectPath = getAppropriateRedirect();
+          navigate(redirectPath, { replace: true });
+        }
+      };
 
-        joinEvent(pendingEventCode, {
-          onSuccess: (data: any) => {
-            console.log("Successfully joined event after registration:", data);
-            setIsJoiningEvent(false);
-            toast({
-              title: "Welcome!",
-              description: `Account created and joined ${
-                data?.event_name || "event"
-              } successfully!`,
-            });
-            console.log("Redirecting to attendee dashboard after event join");
-            navigate("/attendee", { replace: true });
-          },
-          onError: (error: any) => {
-            console.error("Failed to join event after registration:", error);
-            setIsJoiningEvent(false);
-            toast({
-              title: "Account Created",
-              description:
-                "Your account was created, but we couldn't join the event. Please scan the QR code again.",
-              variant: "destructive",
-            });
-            console.log("Redirecting to attendee dashboard after failed event join");
-            navigate("/attendee", { replace: true });
-          },
-        });
-      } else {
-        // Normal redirect without event joining
-        const redirectPath =
-          currentUser.role === "host" ? "/admin" : "/attendee";
-        console.log("Normal redirect to:", redirectPath);
-        navigate(redirectPath, { replace: true });
-      }
+      processAuth();
     }
-  }, [currentUser, isLoading, isSubmitting, navigate, eventCode, joinEvent, toast]);
+  }, [currentUser, isLoading, isSubmitting, navigate, processPendingEventJoin, getAppropriateRedirect]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

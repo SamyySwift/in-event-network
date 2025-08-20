@@ -48,24 +48,56 @@ export const useAdminCheckIns = (eventIdOverride?: string) => {
   // Check in a ticket by ticket number, attendee name, or email address
   const checkInTicket = useMutation({
     mutationFn: async ({ searchQuery, notes }: CheckInData) => {
-      // First, find the ticket by either ticket number or attendee name
-      let query = supabase
-        .from('event_tickets')
-        .select(`
-          *,
-          profiles!event_tickets_user_id_fkey(id, name, email)
-        `)
-        .eq('event_id', actualEventId);
+      let tickets: any[] = [];
+      let ticketError: any = null;
 
       // Check if searchQuery looks like a ticket number (starts with TKT-)
       if (searchQuery.startsWith('TKT-')) {
-        query = query.eq('ticket_number', searchQuery);
+        const { data, error } = await supabase
+          .from('event_tickets')
+          .select(`
+            *,
+            profiles!event_tickets_user_id_fkey(id, name, email)
+          `)
+          .eq('event_id', actualEventId)
+          .eq('ticket_number', searchQuery);
+        
+        tickets = data || [];
+        ticketError = error;
       } else {
-        // Search by guest name, profile name, guest email, or profile email
-        query = query.or(`guest_name.ilike.%${searchQuery}%,profiles.name.ilike.%${searchQuery}%,guest_email.ilike.%${searchQuery}%,profiles.email.ilike.%${searchQuery}%`);
-      }
+        // Search guest tickets first
+        const { data: guestTickets, error: guestError } = await supabase
+          .from('event_tickets')
+          .select(`
+            *,
+            profiles!event_tickets_user_id_fkey(id, name, email)
+          `)
+          .eq('event_id', actualEventId)
+          .or(`guest_name.ilike.%${searchQuery}%,guest_email.ilike.%${searchQuery}%`);
 
-      const { data: tickets, error: ticketError } = await query;
+        // Search registered user tickets
+        const { data: userTickets, error: userError } = await supabase
+          .from('event_tickets')
+          .select(`
+            *,
+            profiles!event_tickets_user_id_fkey(id, name, email)
+          `)
+          .eq('event_id', actualEventId)
+          .not('user_id', 'is', null);
+
+        if (guestError || userError) {
+          ticketError = guestError || userError;
+        } else {
+          // Filter user tickets by name or email
+          const filteredUserTickets = (userTickets || []).filter(ticket => 
+            ticket.profiles?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            ticket.profiles?.email?.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+
+          // Combine results
+          tickets = [...(guestTickets || []), ...filteredUserTickets];
+        }
+      }
 
       if (ticketError) throw new Error('Error searching for ticket');
       if (!tickets || tickets.length === 0) throw new Error('No ticket found matching search criteria');

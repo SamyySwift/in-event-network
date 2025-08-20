@@ -18,9 +18,9 @@ const Index = () => {
       
       joinEvent(eventKey, {
         onSuccess: (data: any) => {
-          console.log('Successfully joined event:', data);
+          console.log('Index: Successfully joined event:', data);
           // Navigate to attendee dashboard
-          navigate('/attendee/dashboard', { replace: true });
+          navigate('/attendee', { replace: true });
         },
         onError: (error: any) => {
           console.error('Failed to join event:', error);

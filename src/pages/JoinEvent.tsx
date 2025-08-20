@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { useJoinEvent } from '@/hooks/useJoinEvent';
+import { useEventJoinFlow } from '@/hooks/useEventJoinFlow';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle, AlertCircle } from 'lucide-react';
@@ -13,7 +13,7 @@ const JoinEvent = () => {
   const codeFromParam = searchParams.get('code');
   const navigate = useNavigate();
   const { currentUser, isLoading: authLoading } = useAuth();
-  const { joinEvent, isJoining } = useJoinEvent();
+  const { handleEventJoin, isJoining } = useEventJoinFlow();
   const { toast } = useToast();
   const [joinStatus, setJoinStatus] = useState<'loading' | 'success' | 'error' | 'unauthorized'>('loading');
   const [eventName, setEventName] = useState('');
@@ -22,11 +22,18 @@ const JoinEvent = () => {
   const accessCode = code || codeFromParam;
 
   useEffect(() => {
-    if (authLoading) return;
+    console.log('JoinEvent: Component mounted with accessCode:', accessCode, 'authLoading:', authLoading, 'currentUser:', currentUser?.email);
+    
+    if (authLoading) {
+      console.log('JoinEvent: Still loading auth state');
+      return;
+    }
 
     if (!currentUser) {
-      // User not authenticated, redirect to register with the code
+      console.log('JoinEvent: User not authenticated, storing event code and redirecting to register');
+      // User not authenticated, store the code for later and redirect to register
       if (accessCode) {
+        sessionStorage.setItem('pendingEventCode', accessCode);
         navigate(`/register?eventCode=${accessCode}&role=attendee`, { replace: true });
       } else {
         setJoinStatus('error');
@@ -37,39 +44,32 @@ const JoinEvent = () => {
 
     // User is authenticated, try to join the event
     if (accessCode && /^\d{6}$/.test(accessCode)) {
-      joinEvent(accessCode, {
+      console.log('JoinEvent: Valid access code, attempting to join event');
+      handleEventJoin(accessCode, {
         onSuccess: (data: any) => {
-          console.log('Join event success:', data);
+          console.log('JoinEvent: Join event success:', data);
           setJoinStatus('success');
           setEventName(data?.event_name || 'Event');
           
-          toast({
-            title: "Successfully Joined!",
-            description: `You've joined ${data?.event_name || 'the event'}`,
-          });
-
           // Navigate to attendee dashboard after a short delay
           setTimeout(() => {
+            console.log('JoinEvent: Navigating to /attendee after successful join');
             navigate('/attendee', { replace: true });
           }, 2000);
         },
         onError: (error: any) => {
-          console.error('Join event error:', error);
+          console.error('JoinEvent: Join event error:', error);
           setJoinStatus('error');
           setErrorMessage(error?.message || "Failed to join the event. Please try again.");
-          
-          toast({
-            title: "Failed to Join Event",
-            description: error?.message || "Could not join the event. Please try again.",
-            variant: "destructive"
-          });
-        }
+        },
+        showToasts: false, // We handle success message manually
       });
     } else {
+      console.error('JoinEvent: Invalid access code format:', accessCode);
       setJoinStatus('error');
       setErrorMessage('Invalid access code format');
     }
-  }, [currentUser, authLoading, accessCode, joinEvent, navigate, toast]);
+  }, [currentUser, authLoading, accessCode, handleEventJoin, navigate, toast]);
 
   if (authLoading || joinStatus === 'loading' || isJoining) {
     return (
@@ -99,6 +99,11 @@ const JoinEvent = () => {
             <p className="text-muted-foreground mb-4">
               You've successfully joined <span className="font-semibold">{eventName}</span>
             </p>
+            {/* Show success toast here since we disabled it in the hook */}
+            {toast({
+              title: "Successfully Joined!",
+              description: `You've joined ${eventName}`,
+            }) && null}
             <p className="text-sm text-muted-foreground">
               Redirecting to your dashboard...
             </p>

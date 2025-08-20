@@ -10,6 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import QRCodeScanner from '@/components/QRCodeScanner';
 import TicketVerifier from '@/components/admin/TicketVerifier';
 import ShareableCheckInLink from '@/components/admin/ShareableCheckInLink';
+import CSVImportDialog from '@/components/admin/CSVImportDialog';
 import { useAdminCheckIns } from '@/hooks/useAdminCheckIns';
 import { useAdminTickets } from '@/hooks/useAdminTickets';
 
@@ -215,6 +216,7 @@ function AdminCheckInContent() {
           </div>
           <div className="flex flex-col gap-2 w-full sm:flex-row sm:w-auto">
             <ShareableCheckInLink />
+            <CSVImportDialog onImportComplete={() => window.location.reload()} />
             <Button 
               onClick={handleBulkCheckIn}
               disabled={isBulkCheckingIn || stats.totalTickets === stats.checkedInTickets}

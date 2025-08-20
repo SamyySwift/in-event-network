@@ -48,62 +48,26 @@ export const useAdminCheckIns = (eventIdOverride?: string) => {
   // Check in a ticket by ticket number, attendee name, or email address
   const checkInTicket = useMutation({
     mutationFn: async ({ searchQuery, notes }: CheckInData) => {
-      let tickets = [];
+      // First, find the ticket by either ticket number or attendee name
+      let query = supabase
+        .from('event_tickets')
+        .select(`
+          *,
+          profiles!event_tickets_user_id_fkey(id, name, email)
+        `)
+        .eq('event_id', actualEventId);
 
+      // Check if searchQuery looks like a ticket number (starts with TKT-)
       if (searchQuery.startsWith('TKT-')) {
-        // Search by ticket number
-        const { data, error: ticketError } = await supabase
-          .from('event_tickets')
-          .select(`
-            *,
-            profiles!event_tickets_user_id_fkey(id, name, email)
-          `)
-          .eq('event_id', actualEventId)
-          .eq('ticket_number', searchQuery);
-
-        if (ticketError) throw new Error('Error searching for ticket');
-        tickets = data || [];
+        query = query.eq('ticket_number', searchQuery);
       } else {
-        // Search by name or email - handle guest tickets and user tickets separately
-        const searchPattern = `%${searchQuery}%`;
-        
-        // Search guest tickets (by guest_name or guest_email)
-        const { data: guestTickets, error: guestError } = await supabase
-          .from('event_tickets')
-          .select(`
-            *,
-            profiles!event_tickets_user_id_fkey(id, name, email)
-          `)
-          .eq('event_id', actualEventId)
-          .or(`guest_name.ilike.${searchPattern},guest_email.ilike.${searchPattern}`);
-
-        if (guestError) throw new Error('Error searching guest tickets');
-
-        // Search user tickets (by profile name or profile email)
-        const { data: userTickets, error: userError } = await supabase
-          .from('event_tickets')
-          .select(`
-            *,
-            profiles!event_tickets_user_id_fkey(id, name, email)
-          `)
-          .eq('event_id', actualEventId)
-          .not('user_id', 'is', null);
-
-        if (userError) throw new Error('Error searching user tickets');
-
-        // Filter user tickets by profile name or email
-        const filteredUserTickets = (userTickets || []).filter(ticket => {
-          if (!ticket.profiles) return false;
-          const name = ticket.profiles.name?.toLowerCase() || '';
-          const email = ticket.profiles.email?.toLowerCase() || '';
-          const search = searchQuery.toLowerCase();
-          return name.includes(search) || email.includes(search);
-        });
-
-        // Combine results
-        tickets = [...(guestTickets || []), ...filteredUserTickets];
+        // Search by guest name, profile name, guest email, or profile email
+        query = query.or(`guest_name.ilike.%${searchQuery}%,profiles.name.ilike.%${searchQuery}%,guest_email.ilike.%${searchQuery}%,profiles.email.ilike.%${searchQuery}%`);
       }
 
+      const { data: tickets, error: ticketError } = await query;
+
+      if (ticketError) throw new Error('Error searching for ticket');
       if (!tickets || tickets.length === 0) throw new Error('No ticket found matching search criteria');
       if (tickets.length > 1) throw new Error('Multiple tickets found. Please be more specific or use ticket number.');
       

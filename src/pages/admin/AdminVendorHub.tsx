@@ -417,7 +417,7 @@ function AdminVendorHubContent() {
                 <Store className="h-6 w-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Vendor Hub</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Vendors & Exhibitors Hub</h1>
                 <p className="text-muted-foreground">
                   Create and manage vendor registration forms
                 </p>

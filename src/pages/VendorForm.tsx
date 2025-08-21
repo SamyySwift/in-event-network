@@ -9,43 +9,129 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from '@/hooks/use-toast';
-import { CheckCircle, Store, Star } from 'lucide-react';
+import { CheckCircle, Store, Star, Calendar, Clock, MapPin } from 'lucide-react';
 import { VendorForm as VendorFormType, VendorFormField, VendorSubmission } from '@/types/vendorForm';
+import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
+
+interface Event {
+  id: string;
+  name: string;
+  description?: string;
+  start_time: string;
+  end_time: string;
+  location?: string;
+  banner_url?: string;
+}
 
 const VendorForm = () => {
   const { formId } = useParams<{ formId: string }>();
   const navigate = useNavigate();
   const [form, setForm] = useState<VendorFormType | null>(null);
+  const [event, setEvent] = useState<Event | null>(null);
   const [responses, setResponses] = useState<Record<string, string | number | boolean | string[]>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // In a real app, this would fetch from an API
-    // For now, we'll simulate loading the form from localStorage
-    const loadForm = () => {
+    const loadFormAndEvent = async () => {
+      if (!formId) {
+        setLoading(false);
+        return;
+      }
+
       try {
-        const savedForms = localStorage.getItem('vendorForms');
-        if (savedForms) {
-          const forms: VendorFormType[] = JSON.parse(savedForms);
-          const foundForm = forms.find(f => f.id === formId);
+        // Fetch vendor form with event details
+        const { data: formData, error: formError } = await supabase
+          .from('vendor_forms')
+          .select(`
+            *,
+            events:event_id (
+              id,
+              name,
+              description,
+              start_time,
+              end_time,
+              location,
+              banner_url
+            )
+          `)
+          .eq('id', formId)
+          .eq('is_active', true)
+          .single();
+
+        if (formError || !formData) {
+          console.error('Error fetching form:', formError);
+          setForm(null);
+          setEvent(null);
+        } else {
+          // Map database form to VendorFormType
+          const mappedForm: VendorFormType = {
+            id: formData.id,
+            title: formData.form_title,
+            description: formData.form_description || '',
+            fields: [
+              {
+                id: "1",
+                label: "Business Name",
+                type: "text",
+                required: true,
+                placeholder: "Enter your business name",
+              },
+              {
+                id: "2",
+                label: "Product/Service Description",
+                type: "textarea",
+                required: true,
+                placeholder: "Describe your products or services",
+              },
+              {
+                id: "3",
+                label: "Contact Email",
+                type: "email",
+                required: true,
+                placeholder: "your@email.com",
+              },
+              {
+                id: "4",
+                label: "Phone Number",
+                type: "phone",
+                required: true,
+                placeholder: "+1234567890",
+              },
+              {
+                id: "5",
+                label: "Instagram Handle",
+                type: "text",
+                required: false,
+                placeholder: "@yourbusiness",
+              },
+            ],
+            isActive: formData.is_active,
+            createdAt: formData.created_at,
+            submissionsCount: 0,
+            settings: {
+              allowMultipleSubmissions: false,
+              requireEmailVerification: false,
+              autoResponse: false,
+              categories: [],
+            },
+          };
           
-          if (foundForm && foundForm.isActive) {
-            setForm(foundForm);
-          } else {
-            // Form not found or inactive
-            setForm(null);
-          }
+          setForm(mappedForm);
+          setEvent(formData.events as Event);
         }
       } catch (error) {
         console.error('Error loading form:', error);
+        setForm(null);
+        setEvent(null);
       } finally {
         setLoading(false);
       }
     };
 
-    loadForm();
+    loadFormAndEvent();
   }, [formId]);
 
   const handleInputChange = (fieldId: string, value: string | number | boolean | string[]) => {
@@ -427,6 +513,47 @@ const VendorForm = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-2xl mx-auto px-4">
+        {/* Event Information Section */}
+        {event && (
+          <Card className="mb-6">
+            <CardContent className="p-0">
+              {event.banner_url && (
+                <div className="w-full h-48 sm:h-64 relative overflow-hidden rounded-t-lg">
+                  <img 
+                    src={event.banner_url} 
+                    alt={event.name}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/20" />
+                </div>
+              )}
+              <div className="p-6">
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">{event.name}</h1>
+                {event.description && (
+                  <p className="text-gray-600 mb-4">{event.description}</p>
+                )}
+                
+                <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <span>{format(new Date(event.start_time), 'MMM dd, yyyy')}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    <span>{format(new Date(event.start_time), 'h:mm a')} - {format(new Date(event.end_time), 'h:mm a')}</span>
+                  </div>
+                  {event.location && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      <span>{event.location}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">

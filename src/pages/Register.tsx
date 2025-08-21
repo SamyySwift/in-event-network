@@ -142,15 +142,14 @@ const Register = () => {
             queryClient.invalidateQueries({ queryKey: ['attendee-context'] });
             queryClient.invalidateQueries({ queryKey: ['user-profile'] });
             
-            // Navigate with success message in state to show toast after page loads
-            console.log("Redirecting to attendee dashboard after event join");
-            navigate("/attendee", { 
-              replace: true,
-              state: { 
-                showWelcomeToast: true, 
-                eventName: data?.event_name || "event" 
-              }
+            toast({
+              title: "Welcome!",
+              description: `Account created and joined ${
+                data?.event_name || "event"
+              } successfully!`,
             });
+            console.log("Redirecting to attendee dashboard after event join");
+            navigate("/attendee", { replace: true });
           },
           onError: (error: any) => {
             console.error("Failed to join event after registration:", error);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, Suspense } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Calendar,
   Users,
@@ -42,14 +42,11 @@ import { ConnectionNotificationDropdown } from "@/components/attendee/Connection
 import { useAttendeeFacilities } from "@/hooks/useAttendeeFacilities";
 import { HighlightsSection } from "@/components/attendee/HighlightsSection";
 import * as LucideIcons from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
 
 import { ProfileCompletionPopup } from "@/components/attendee/ProfileCompletionPopup";
 
 const AttendeeDashboardContent = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { toast } = useToast();
   const { currentUser } = useAuth();
   const { hasJoinedEvent, isLoading: contextLoading } =
     useAttendeeEventContext();
@@ -71,21 +68,6 @@ const AttendeeDashboardContent = () => {
            !currentUser.links?.linkedin ||
            !currentUser.links?.twitter;
   }, [currentUser, hasJoinedEvent]);
-
-  // Check for welcome toast from registration flow
-  useEffect(() => {
-    const state = location.state as { showWelcomeToast?: boolean; eventName?: string } | null;
-    if (state?.showWelcomeToast) {
-      // Clear the state to prevent re-showing on page refresh
-      navigate(location.pathname, { replace: true });
-      
-      // Show the success toast
-      toast({
-        title: "Welcome!",
-        description: `Account created and joined ${state.eventName} successfully!`,
-      });
-    }
-  }, [location, navigate, toast]);
 
   // Reduced delay for profile popup to improve perceived performance
   useEffect(() => {

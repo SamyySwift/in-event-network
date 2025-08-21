@@ -42,6 +42,7 @@ const AttendeeQuestions = () => {
   const [selectedQuestionId, setSelectedQuestionId] = useState<string | null>(
     null
   );
+  const [upvotedQuestions, setUpvotedQuestions] = useState<Set<string>>(new Set());
   const {
     questions,
     sessions,
@@ -68,6 +69,16 @@ const AttendeeQuestions = () => {
   };
   const handleUpvote = (questionId: string) => {
     upvoteQuestion(questionId);
+    
+    // Add upvote animation
+    setUpvotedQuestions(prev => new Set([...prev, questionId]));
+    setTimeout(() => {
+      setUpvotedQuestions(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(questionId);
+        return newSet;
+      });
+    }, 600);
   };
   const handleFeedback = (questionId: string) => {
     setSelectedQuestionId(questionId);
@@ -178,9 +189,15 @@ const AttendeeQuestions = () => {
                   variant="ghost"
                   size="sm"
                   onClick={() => handleUpvote(question.id)}
-                  className="text-gray-600 hover:text-connect-600"
+                  className={`text-gray-600 hover:text-connect-600 transition-all duration-300 ${
+                    upvotedQuestions.has(question.id) 
+                      ? 'animate-pulse scale-110 text-connect-600 bg-connect-50' 
+                      : ''
+                  }`}
                 >
-                  <ArrowUp className="h-4 w-4 mr-1" />
+                  <ArrowUp className={`h-4 w-4 mr-1 transition-transform duration-300 ${
+                    upvotedQuestions.has(question.id) ? 'scale-125' : ''
+                  }`} />
                   {question.upvotes}
                 </Button>
 

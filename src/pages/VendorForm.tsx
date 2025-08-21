@@ -256,31 +256,25 @@ const VendorForm = () => {
       const vendorName = vendorNameField ? String(responses[vendorNameField.id] || 'Unknown Vendor') : 'Unknown Vendor';
       const vendorEmail = vendorEmailField ? String(responses[vendorEmailField.id] || '') : '';
 
-      // Create submission object
-      const submission: VendorSubmission = {
-        id: Date.now().toString(),
-        formId: formId!,
-        responses,
-        submittedAt: new Date().toISOString(),
-        vendorName,
-        vendorEmail,
-        status: 'pending'
-      };
-      
-      // Save submission to localStorage (in real app, this would be an API call)
-      const existingSubmissions = localStorage.getItem('vendorSubmissions');
-      const submissions: VendorSubmission[] = existingSubmissions ? JSON.parse(existingSubmissions) : [];
-      submissions.push(submission);
-      localStorage.setItem('vendorSubmissions', JSON.stringify(submissions));
-      
-      // Update form submission count
-      const savedForms = localStorage.getItem('vendorForms');
-      if (savedForms) {
-        const forms: VendorFormType[] = JSON.parse(savedForms);
-        const updatedForms = forms.map(f => 
-          f.id === formId ? { ...f, submissionsCount: (f.submissionsCount || 0) + 1 } : f
-        );
-        localStorage.setItem('vendorForms', JSON.stringify(updatedForms));
+      // Submit to Supabase
+      const { error } = await supabase
+        .from('vendor_submissions')
+        .insert({
+          form_id: formId!,
+          vendor_name: vendorName,
+          vendor_email: vendorEmail,
+          responses: responses,
+          status: 'pending',
+        });
+
+      if (error) {
+        console.error('Error submitting form:', error);
+        toast({
+          title: "Error",
+          description: "Failed to submit form. Please try again.",
+          variant: "destructive"
+        });
+        return;
       }
       
       setIsSubmitted(true);

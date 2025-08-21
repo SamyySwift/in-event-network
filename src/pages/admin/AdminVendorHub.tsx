@@ -55,6 +55,7 @@ import {
 import PaymentGuard from '@/components/payment/PaymentGuard';
 import { VendorForm, VendorFormField, VendorSubmission } from '@/types/vendorForm';
 import VendorFormFieldBuilder from '@/components/admin/VendorFormFieldBuilder';
+import { supabase } from '@/integrations/supabase/client';
 
 function AdminVendorHubContent() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -114,25 +115,126 @@ function AdminVendorHubContent() {
 
   const { selectedEventId } = useAdminEventContext();
 
-  // Load data from localStorage on component mount
+  // Load data from Supabase on component mount
   useEffect(() => {
-    const savedForms = localStorage.getItem("vendorForms");
-    if (savedForms) {
-      setVendorForms(JSON.parse(savedForms));
+    if (selectedEventId) {
+      loadVendorForms();
+      loadSubmissions();
     }
+  }, [selectedEventId]);
 
-    const savedSubmissions = localStorage.getItem("vendorSubmissions");
-    if (savedSubmissions) {
-      setSubmissions(JSON.parse(savedSubmissions));
+  const loadVendorForms = async () => {
+    if (!selectedEventId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('vendor_forms')
+        .select(`
+          *,
+          vendor_submissions(count)
+        `)
+        .eq('event_id', selectedEventId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error loading vendor forms:', error);
+        return;
+      }
+
+      const mappedForms: VendorForm[] = (data || []).map(form => ({
+        id: form.id,
+        title: form.form_title,
+        description: form.form_description || '',
+        fields: [
+          {
+            id: "1",
+            label: "Business Name",
+            type: "text",
+            required: true,
+            placeholder: "Enter your business name",
+          },
+          {
+            id: "2",
+            label: "Product/Service Description",
+            type: "textarea",
+            required: true,
+            placeholder: "Describe your products or services",
+          },
+          {
+            id: "3",
+            label: "Contact Email",
+            type: "email",
+            required: true,
+            placeholder: "your@email.com",
+          },
+          {
+            id: "4",
+            label: "Phone Number",
+            type: "phone",
+            required: true,
+            placeholder: "+1234567890",
+          },
+          {
+            id: "5",
+            label: "Instagram Handle",
+            type: "text",
+            required: false,
+            placeholder: "@yourbusiness",
+          },
+        ],
+        isActive: form.is_active,
+        createdAt: form.created_at,
+        submissionsCount: form.vendor_submissions?.[0]?.count || 0,
+        settings: {
+          allowMultipleSubmissions: false,
+          requireEmailVerification: false,
+          autoResponse: false,
+          categories: [],
+        },
+      }));
+
+      setVendorForms(mappedForms);
+    } catch (error) {
+      console.error('Error loading vendor forms:', error);
     }
-  }, []);
+  };
 
-  // Save forms to localStorage whenever vendorForms changes
-  useEffect(() => {
-    localStorage.setItem("vendorForms", JSON.stringify(vendorForms));
-  }, [vendorForms]);
+  const loadSubmissions = async () => {
+    if (!selectedEventId) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('vendor_submissions')
+        .select(`
+          *,
+          vendor_forms!inner(event_id)
+        `)
+        .eq('vendor_forms.event_id', selectedEventId)
+        .order('submitted_at', { ascending: false });
 
-  const handleCreateForm = () => {
+      if (error) {
+        console.error('Error loading submissions:', error);
+        return;
+      }
+
+      const mappedSubmissions: VendorSubmission[] = (data || []).map(submission => ({
+        id: submission.id,
+        formId: submission.form_id,
+        responses: submission.responses as Record<string, string | number | boolean | string[]>,
+        submittedAt: submission.submitted_at,
+        vendorName: submission.vendor_name,
+        vendorEmail: submission.vendor_email,
+        status: submission.status as 'pending' | 'approved' | 'rejected',
+        notes: submission.notes || undefined,
+      }));
+
+      setSubmissions(mappedSubmissions);
+    } catch (error) {
+      console.error('Error loading submissions:', error);
+    }
+  };
+
+  const handleCreateForm = async () => {
     if (!formTitle.trim()) {
       toast({
         title: "Error",
@@ -142,32 +244,85 @@ function AdminVendorHubContent() {
       return;
     }
 
-    const newForm: VendorForm = {
-      id: Date.now().toString(),
-      title: formTitle,
-      description: formDescription,
-      fields: formFields,
-      isActive: true,
-      createdAt: new Date().toISOString(),
-      submissionsCount: 0,
-      settings: {
-        allowMultipleSubmissions: false,
-        requireEmailVerification: false,
-        customSubmissionMessage: undefined,
-        autoResponse: false,
-        categories: [],
-      },
-    };
+    if (!selectedEventId) {
+      toast({
+        title: "Error",
+        description: "No event selected",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    setVendorForms((prev) => [...prev, newForm]);
-    setCreateDialogOpen(false);
-    setFormTitle("");
-    setFormDescription("");
+    try {
+      const { data, error } = await supabase
+        .from('vendor_forms')
+        .insert({
+          event_id: selectedEventId,
+          form_title: formTitle,
+          form_description: formDescription || null,
+          is_active: true,
+          shareable_link: null
+        })
+        .select()
+        .single();
 
-    toast({
-      title: "Success",
-      description: "Vendor form created successfully",
-    });
+      if (error) {
+        console.error('Error creating form:', error);
+        toast({
+          title: "Error",
+          description: "Failed to create form. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Insert default form fields
+      const defaultFields = formFields.map((field, index) => ({
+        form_id: data.id,
+        field_id: field.id,
+        label: field.label,
+        field_type: field.type,
+        is_required: field.required,
+        placeholder: field.placeholder,
+        field_description: field.description,
+        field_options: field.options ? JSON.stringify(field.options) : null,
+        validation_rules: field.validation ? JSON.stringify(field.validation) : null,
+        field_order: index,
+      }));
+
+      const { error: fieldsError } = await supabase
+        .from('vendor_form_fields')
+        .insert(defaultFields);
+
+      if (fieldsError) {
+        console.error('Error creating form fields:', fieldsError);
+        // Clean up the form if fields creation failed
+        await supabase.from('vendor_forms').delete().eq('id', data.id);
+        toast({
+          title: "Error",
+          description: "Failed to create form fields. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      await loadVendorForms();
+      setCreateDialogOpen(false);
+      setFormTitle("");
+      setFormDescription("");
+
+      toast({
+        title: "Success",
+        description: "Vendor form created successfully",
+      });
+    } catch (error) {
+      console.error('Error creating form:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create form. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const addFormField = () => {

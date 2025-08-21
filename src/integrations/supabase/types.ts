@@ -2048,6 +2048,62 @@ export type Database = {
           },
         ]
       }
+      vendor_form_fields: {
+        Row: {
+          created_at: string
+          field_description: string | null
+          field_id: string
+          field_options: Json | null
+          field_order: number
+          field_type: string
+          form_id: string
+          id: string
+          is_required: boolean
+          label: string
+          placeholder: string | null
+          updated_at: string
+          validation_rules: Json | null
+        }
+        Insert: {
+          created_at?: string
+          field_description?: string | null
+          field_id: string
+          field_options?: Json | null
+          field_order?: number
+          field_type: string
+          form_id: string
+          id?: string
+          is_required?: boolean
+          label: string
+          placeholder?: string | null
+          updated_at?: string
+          validation_rules?: Json | null
+        }
+        Update: {
+          created_at?: string
+          field_description?: string | null
+          field_id?: string
+          field_options?: Json | null
+          field_order?: number
+          field_type?: string
+          form_id?: string
+          id?: string
+          is_required?: boolean
+          label?: string
+          placeholder?: string | null
+          updated_at?: string
+          validation_rules?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_form_fields_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_forms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_forms: {
         Row: {
           created_at: string
@@ -2088,6 +2144,59 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_submissions: {
+        Row: {
+          created_at: string
+          form_id: string
+          id: string
+          ip_address: unknown | null
+          notes: string | null
+          responses: Json
+          status: string
+          submitted_at: string
+          updated_at: string
+          user_agent: string | null
+          vendor_email: string
+          vendor_name: string
+        }
+        Insert: {
+          created_at?: string
+          form_id: string
+          id?: string
+          ip_address?: unknown | null
+          notes?: string | null
+          responses?: Json
+          status?: string
+          submitted_at?: string
+          updated_at?: string
+          user_agent?: string | null
+          vendor_email: string
+          vendor_name: string
+        }
+        Update: {
+          created_at?: string
+          form_id?: string
+          id?: string
+          ip_address?: unknown | null
+          notes?: string | null
+          responses?: Json
+          status?: string
+          submitted_at?: string
+          updated_at?: string
+          user_agent?: string | null
+          vendor_email?: string
+          vendor_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_submissions_form_id_fkey"
+            columns: ["form_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_forms"
             referencedColumns: ["id"]
           },
         ]

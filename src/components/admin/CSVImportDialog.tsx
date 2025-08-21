@@ -296,14 +296,23 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
               onChange={handleFileChange}
               className="rounded-xl"
             />
-            <p className="text-sm text-muted-foreground">
-              CSV should contain "name" and "email" columns. Example format:
-            </p>
-            <code className="block text-xs bg-muted p-2 rounded">
-              name,email<br/>
-              John Doe,john@example.com<br/>
-              Jane Smith,jane@example.com
-            </code>
+            <div className="space-y-3">
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm font-medium text-blue-800">📝 Important Note</p>
+                <p className="text-xs text-blue-700 mt-1">
+                  Before importing attendees, please create a <strong>free ticket type</strong> (₦0.00) in the Tickets page. 
+                  This will be used to assign imported attendees to the event.
+                </p>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                CSV should contain "name" and "email" columns. Example format:
+              </p>
+              <code className="block text-xs bg-muted p-2 rounded">
+                name,email<br/>
+                John Doe,john@example.com<br/>
+                Jane Smith,jane@example.com
+              </code>
+            </div>
           </div>
 
           {/* Preview and Duplicate Options */}

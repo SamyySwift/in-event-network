@@ -401,16 +401,28 @@ function AdminSponsorsContent() {
       />
 
       <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>QR Code for {selectedForm?.form_title}</DialogTitle>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="sticky top-0 bg-background border-b pb-4 mb-4">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setQrDialogOpen(false)}
+                className="hover:bg-muted rounded-xl"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <DialogTitle className="text-lg">QR Code for {selectedForm?.form_title}</DialogTitle>
+            </div>
           </DialogHeader>
-          {selectedForm && (
-            <SponsorFormQRCode 
-              formLink={selectedForm.shareable_link}
-              formTitle={selectedForm.form_title}
-            />
-          )}
+          <div className="animate-fade-in">
+            {selectedForm && (
+              <SponsorFormQRCode 
+                formLink={selectedForm.shareable_link}
+                formTitle={selectedForm.form_title}
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </PaymentGuard>

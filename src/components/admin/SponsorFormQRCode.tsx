@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import QRCode from 'qrcode';
 import { Button } from '@/components/ui/button';
-import { Download, Copy, Share } from 'lucide-react';
+import { Download, Copy, Share, QrCode } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface SponsorFormQRCodeProps {
@@ -64,36 +64,40 @@ export function SponsorFormQRCode({ formLink, formTitle }: SponsorFormQRCodeProp
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col items-center space-y-4">
-        <canvas
-          ref={canvasRef}
-          className="border rounded-lg shadow-sm"
-        />
+        <div className="hover-scale">
+          <canvas
+            ref={canvasRef}
+            className="border rounded-lg shadow-sm transition-shadow duration-200 hover:shadow-md"
+          />
+        </div>
         
-        <div className="text-center">
-          <p className="text-sm text-muted-foreground mb-2">
+        <div className="text-center space-y-3">
+          <p className="text-sm text-muted-foreground">
             Scan this QR code to access the sponsor form
           </p>
-          <p className="text-xs text-muted-foreground break-all bg-muted p-2 rounded">
-            {formLink}
-          </p>
+          <div className="max-w-full overflow-hidden">
+            <p className="text-xs text-muted-foreground break-all bg-muted p-3 rounded-xl">
+              {formLink}
+            </p>
+          </div>
         </div>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Button 
           onClick={handleDownloadQR}
-          className="flex-1 rounded-xl"
+          className="rounded-xl transition-all duration-200 hover-scale"
           variant="default"
         >
           <Download className="h-4 w-4 mr-2" />
-          Download QR Code
+          Download
         </Button>
         
         <Button 
           onClick={handleCopyLink}
-          className="flex-1 rounded-xl"
+          className="rounded-xl transition-all duration-200 hover-scale"
           variant="outline"
         >
           <Copy className="h-4 w-4 mr-2" />
@@ -102,7 +106,7 @@ export function SponsorFormQRCode({ formLink, formTitle }: SponsorFormQRCodeProp
         
         <Button 
           onClick={handleShare}
-          className="flex-1 rounded-xl"
+          className="rounded-xl transition-all duration-200 hover-scale"
           variant="outline"
         >
           <Share className="h-4 w-4 mr-2" />
@@ -110,13 +114,28 @@ export function SponsorFormQRCode({ formLink, formTitle }: SponsorFormQRCodeProp
         </Button>
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-        <h4 className="font-medium text-blue-900 mb-2">How to use this QR code:</h4>
-        <ul className="text-sm text-blue-700 space-y-1">
-          <li>• Download and include in event flyers or posters</li>
-          <li>• Share on social media to attract sponsors</li>
-          <li>• Print on business cards or promotional materials</li>
-          <li>• Display on screens during events or presentations</li>
+      <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 animate-fade-in" style={{ animationDelay: '0.1s' }}>
+        <h4 className="font-medium text-primary mb-3 flex items-center gap-2">
+          <QrCode className="h-4 w-4" />
+          How to use this QR code:
+        </h4>
+        <ul className="text-sm text-muted-foreground space-y-2">
+          <li className="flex items-start gap-2">
+            <span className="text-primary mt-1">•</span>
+            <span>Download and include in event flyers or posters</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-primary mt-1">•</span>
+            <span>Share on social media to attract sponsors</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-primary mt-1">•</span>
+            <span>Print on business cards or promotional materials</span>
+          </li>
+          <li className="flex items-start gap-2">
+            <span className="text-primary mt-1">•</span>
+            <span>Display on screens during events or presentations</span>
+          </li>
         </ul>
       </div>
     </div>

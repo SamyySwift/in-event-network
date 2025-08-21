@@ -575,8 +575,8 @@ function AdminVendorHubContent() {
           <div className="absolute inset-0 bg-gradient-to-r from-primary/[0.02] to-transparent" />
           <div className="relative p-8">
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-              <div className="flex items-start gap-6">
-                <div className="relative">
+              <div className="flex items-start gap-4 min-w-0 flex-1">
+                <div className="relative flex-shrink-0">
                   <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl shadow-lg">
                     <Store className="h-8 w-8 text-primary-foreground" />
                   </div>
@@ -584,7 +584,7 @@ function AdminVendorHubContent() {
                     <Users className="h-3 w-3 text-white" />
                   </div>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-3 min-w-0">
                   <h1 className="text-3xl lg:text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
                     Vendors & Exhibitors Hub
                   </h1>
@@ -603,7 +603,7 @@ function AdminVendorHubContent() {
                   </div>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 flex-shrink-0 flex-wrap lg:flex-nowrap">
                 <Button variant="outline" className="h-11 px-6 border-border/50 hover:bg-accent/50 backdrop-blur-sm">
                   <Eye className="h-4 w-4 mr-2" />
                   Preview Forms

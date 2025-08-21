@@ -81,7 +81,7 @@ function AdminTicketsContent() {
 
           {/* Quick Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-card border rounded-xl p-4 hover:shadow-md transition-shadow blur-sm">
+            <div className="bg-card border rounded-xl p-4 hover:shadow-md transition-shadow blur-2xl">
               <div className="flex items-center gap-2 mb-2">
                 <DollarSign className="h-5 w-5 text-green-600" />
                 <span className="text-sm text-muted-foreground">Revenue</span>

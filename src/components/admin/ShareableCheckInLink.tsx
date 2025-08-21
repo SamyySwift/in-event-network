@@ -46,7 +46,47 @@ const ShareableCheckInLink = () => {
           light: '#FFFFFF'
         }
       });
-      setQrCodeDataUrl(dataUrl);
+      
+      // Add logo overlay
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error('Could not get canvas context');
+      
+      canvas.width = 300;
+      canvas.height = 300;
+      
+      // Draw QR code
+      const qrImg = new Image();
+      await new Promise((resolve, reject) => {
+        qrImg.onload = resolve;
+        qrImg.onerror = reject;
+        qrImg.src = dataUrl;
+      });
+      ctx.drawImage(qrImg, 0, 0);
+      
+      // Add logo
+      const logoImg = new Image();
+      logoImg.crossOrigin = 'anonymous';
+      await new Promise((resolve, reject) => {
+        logoImg.onload = () => {
+          const logoSize = 48;
+          const x = (canvas.width - logoSize) / 2;
+          const y = (canvas.height - logoSize) / 2;
+          
+          // Draw white background for logo
+          ctx.fillStyle = 'white';
+          ctx.fillRect(x - 4, y - 4, logoSize + 8, logoSize + 8);
+          
+          // Draw logo
+          ctx.drawImage(logoImg, x, y, logoSize, logoSize);
+          resolve(true);
+        };
+        logoImg.onerror = reject;
+        logoImg.src = '/lovable-uploads/c1f92d5a-00e5-43d5-8607-33a3e08b6021.png';
+      });
+      
+      const finalDataUrl = canvas.toDataURL();
+      setQrCodeDataUrl(finalDataUrl);
       toast.success('QR code generated successfully!');
     } catch (error) {
       console.error('Failed to generate QR code:', error);

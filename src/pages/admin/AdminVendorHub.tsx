@@ -663,6 +663,14 @@ function AdminVendorHubContent() {
                       size={200}
                       level="M"
                       includeMargin={true}
+                      imageSettings={{
+                        src: "/lovable-uploads/c1f92d5a-00e5-43d5-8607-33a3e08b6021.png",
+                        x: undefined,
+                        y: undefined,
+                        height: 32,
+                        width: 32,
+                        excavate: true,
+                      }}
                     />
                   </div>
                   <div className="text-center space-y-2 w-full">

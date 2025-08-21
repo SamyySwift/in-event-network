@@ -17,7 +17,7 @@ serve(async (req) => {
     const body = await req.text()
     
     // Verify webhook signature
-    const secret = Deno.env.get('PAYSTACK_TEST_SECRET')
+    const secret = Deno.env.get('PAYSTACK_LIVE_SECRET')
     if (!secret) {
       console.error('Paystack secret not found')
       return new Response('Configuration error', { status: 500, headers: corsHeaders })

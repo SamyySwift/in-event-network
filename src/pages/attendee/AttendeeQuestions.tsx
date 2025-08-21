@@ -120,7 +120,7 @@ const AttendeeQuestions = () => {
     return (
       <Card
         key={question.id}
-        className={`glass-card overflow-hidden hover:shadow-xl transition-all ${question.upvotes > 0 ? 'fire-border animate-enter' : ''} mb-3 sm:mb-4${question.is_answered ? " border-green-200 bg-green-50/60" : ""}`}
+        className={`glass-card overflow-hidden hover:shadow-xl transition-all ${question.upvotes > 0 ? 'fire-border animate-fade-in' : ''} mb-3 sm:mb-4${question.is_answered ? " border-green-200 bg-green-50/60" : ""}`}
       >
         <CardContent className="pt-6 pb-4">
           <div className="flex items-start gap-4">

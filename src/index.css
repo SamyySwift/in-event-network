@@ -186,9 +186,9 @@
  
   /* Flaming border utility for trending items */
   .fire-border {
-    position: relative;
-    border: 2px solid transparent;
-    border-radius: calc(var(--radius));
+    position: relative !important;
+    border: 2px solid transparent !important;
+    border-radius: calc(var(--radius)) !important;
     background:
       linear-gradient(hsl(var(--card)), hsl(var(--card))) padding-box,
       linear-gradient(
@@ -198,7 +198,8 @@
         hsl(var(--fire-3)) 50%,
         hsl(var(--fire-2)) 75%,
         hsl(var(--fire-1)) 100%
-      ) border-box;
+      ) border-box !important;
+    z-index: 1;
   }
   .fire-border::before {
     content: "";
@@ -217,6 +218,7 @@
     filter: blur(8px);
     z-index: -1;
     animation: fire-flicker 2s ease-in-out infinite alternate;
+    pointer-events: none;
   }
   .fire-border::after {
     content: "";
@@ -233,6 +235,7 @@
     filter: blur(16px);
     z-index: -2;
     animation: fire-glow 3s ease-in-out infinite alternate;
+    pointer-events: none;
   }
   @keyframes fire-flicker {
     0% { 

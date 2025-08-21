@@ -63,11 +63,13 @@ const Register = () => {
     }
   };
 
-  // Store event code in session storage when component mounts
+  // Store event code in both session and local storage when component mounts
   useEffect(() => {
     if (eventCode) {
-      console.log("Storing event code in session storage:", eventCode);
+      console.log("Storing event code in session and local storage:", eventCode);
       sessionStorage.setItem("pendingEventCode", eventCode);
+      localStorage.setItem("pendingEventCode", eventCode); // Backup in localStorage
+      console.log("Event code stored. SessionStorage:", sessionStorage.getItem("pendingEventCode"), "LocalStorage:", localStorage.getItem("pendingEventCode"));
     }
   }, [eventCode]);
 
@@ -102,9 +104,18 @@ const Register = () => {
         }
       }
 
-      // Check if there's a pending event to join
+      // Check if there's a pending event to join - check multiple sources
       const pendingEventCode =
-        eventCode || sessionStorage.getItem("pendingEventCode");
+        eventCode || 
+        sessionStorage.getItem("pendingEventCode") || 
+        localStorage.getItem("pendingEventCode");
+      
+      console.log("Checking for pending event code:", {
+        eventCode,
+        sessionStorage: sessionStorage.getItem("pendingEventCode"),
+        localStorage: localStorage.getItem("pendingEventCode"),
+        finalCode: pendingEventCode
+      });
 
       if (pendingEventCode && currentUser.role === "attendee") {
         console.log(
@@ -113,8 +124,10 @@ const Register = () => {
         );
         setIsJoiningEvent(true);
 
-        // Clear the stored code
+        // Clear the stored codes from both storages
         sessionStorage.removeItem("pendingEventCode");
+        localStorage.removeItem("pendingEventCode");
+        console.log("Cleared event codes from storage");
 
         joinEvent(pendingEventCode, {
           onSuccess: (data: any) => {

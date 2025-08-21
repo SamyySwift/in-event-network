@@ -310,11 +310,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         console.log("Registration successful for:", data.user.id);
 
         // Create or update profile with the specified role
+        // Use a slight delay to ensure the trigger has completed first
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         const { error: profileError } = await supabase.from("profiles").upsert({
           id: data.user.id,
           name,
           email,
-          role,
+          role, // This ensures the correct role is set
+        }, {
+          onConflict: 'id'
         });
 
         if (profileError) {

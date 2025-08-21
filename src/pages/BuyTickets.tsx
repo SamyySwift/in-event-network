@@ -967,7 +967,7 @@ export default function BuyTickets() {
               <CardContent className="space-y-4">
                 {ticketTypes.map((ticketType) => (
                   <div key={ticketType.id} className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
-                    <div className="flex-1">
+                    <div className="flex-1 mr-4">
                       <div className="flex items-center gap-2 mb-1">
                         <h4 className="font-medium text-muted-foreground">{ticketType.name}</h4>
                         {ticketType.price > 0 ? (

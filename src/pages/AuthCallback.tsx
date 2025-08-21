@@ -11,6 +11,8 @@ const AuthCallback = () => {
   const { joinEvent } = useJoinEvent();
   const { toast } = useToast();
   const [isJoiningEvent, setIsJoiningEvent] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
+  const [startTime] = useState(Date.now());
 
   useEffect(() => {
     const handleAuthCallback = async () => {
@@ -24,15 +26,26 @@ const AuthCallback = () => {
         }
 
         if (data.session) {
+          console.log('AuthCallback - Session found, waiting for user data...');
+          
           // Wait for auth context to update with proper user data
-          const checkUserAndRedirect = () => {
+          const checkUserAndRedirect = async (attempt = 1) => {
+            const maxAttempts = 50; // 5 seconds max (50 * 100ms)
+            const maxTime = 10000; // 10 seconds absolute max
+            const elapsedTime = Date.now() - startTime;
+            
+            console.log(`AuthCallback - Attempt ${attempt}/${maxAttempts}, elapsed: ${elapsedTime}ms`);
+            console.log('AuthCallback - currentUser:', currentUser);
+            console.log('AuthCallback - currentUser?.role:', currentUser?.role);
+            
+            // If we have user data, proceed with redirect logic
             if (currentUser && currentUser.role) {
-              console.log('AuthCallback - currentUser:', currentUser);
-              console.log('AuthCallback - currentUser.role:', currentUser.role);
+              console.log('AuthCallback - User data available, proceeding with redirects');
               
               // Check for ticket purchase redirect first
               const redirectAfterLogin = localStorage.getItem('redirectAfterLogin');
               if (redirectAfterLogin && redirectAfterLogin.includes('/buy-tickets/')) {
+                console.log('AuthCallback - Redirecting to buy tickets');
                 localStorage.removeItem('redirectAfterLogin');
                 navigate(redirectAfterLogin, { replace: true });
                 return;
@@ -43,7 +56,9 @@ const AuthCallback = () => {
               console.log('AuthCallback - pendingEventCode from storage:', pendingEventCode);
               console.log('AuthCallback - sessionStorage pendingEventCode:', sessionStorage.getItem('pendingEventCode'));
               console.log('AuthCallback - localStorage pendingEventCode:', localStorage.getItem('pendingEventCode'));
+              
               if (pendingEventCode && currentUser.role === 'attendee') {
+                console.log('AuthCallback - Found pending event code, joining event');
                 // Clear from both storage locations
                 sessionStorage.removeItem('pendingEventCode');
                 localStorage.removeItem('pendingEventCode');
@@ -53,6 +68,7 @@ const AuthCallback = () => {
                 
                 joinEvent(pendingEventCode, {
                   onSuccess: (data: any) => {
+                    console.log('AuthCallback - Successfully joined event:', data);
                     setIsJoiningEvent(false);
                     toast({
                       title: "Welcome!",
@@ -61,8 +77,8 @@ const AuthCallback = () => {
                     navigate('/attendee', { replace: true });
                   },
                   onError: (error: any) => {
+                    console.error('AuthCallback - Failed to join event:', error);
                     setIsJoiningEvent(false);
-                    console.error('Failed to join event after Google auth:', error);
                     toast({
                       title: "Account Created",
                       description: "Your account was created, but we couldn't join the event. Please scan the QR code again.",
@@ -76,28 +92,75 @@ const AuthCallback = () => {
               
               // Default redirect based on role
               const redirectPath = currentUser.role === 'host' ? '/admin' : '/attendee';
+              console.log('AuthCallback - Default redirect to:', redirectPath);
               navigate(redirectPath, { replace: true });
-            } else if (currentUser === null) {
-              // Auth context has been updated but no user found
-              navigate('/login', { replace: true });
-            } else {
-              // Still loading, check again
-              setTimeout(checkUserAndRedirect, 100);
+              return;
             }
+            
+            // If currentUser is explicitly null, auth context has loaded but no user found
+            if (currentUser === null) {
+              console.log('AuthCallback - No user found after auth, redirecting to login');
+              navigate('/login', { replace: true });
+              return;
+            }
+            
+            // Check if we've exceeded time limits
+            if (attempt >= maxAttempts || elapsedTime >= maxTime) {
+              console.warn('AuthCallback - Timeout waiting for user data, trying fallback');
+              
+              // Fallback: Try to get user directly from Supabase
+              try {
+                const { data: { user }, error: userError } = await supabase.auth.getUser();
+                if (userError) throw userError;
+                
+                if (user) {
+                  console.log('AuthCallback - Fallback: Got user from Supabase directly:', user);
+                  // Check for pending event code one more time with fallback user
+                  const pendingEventCode = sessionStorage.getItem('pendingEventCode') || localStorage.getItem('pendingEventCode');
+                  
+                  if (pendingEventCode) {
+                    console.log('AuthCallback - Fallback: Found pending event, redirecting to attendee with toast');
+                    sessionStorage.removeItem('pendingEventCode');
+                    localStorage.removeItem('pendingEventCode');
+                    
+                    toast({
+                      title: "Authentication Complete",
+                      description: "Please scan the QR code again to join the event.",
+                    });
+                  }
+                  
+                  // Default redirect to attendee (safer assumption for OAuth users)
+                  navigate('/attendee', { replace: true });
+                } else {
+                  console.warn('AuthCallback - Fallback: No user found, redirecting to login');
+                  navigate('/login', { replace: true });
+                }
+              } catch (fallbackError) {
+                console.error('AuthCallback - Fallback failed:', fallbackError);
+                navigate('/login?error=auth_timeout');
+              }
+              return;
+            }
+            
+            // Still loading, try again with exponential backoff
+            const delay = Math.min(100 + (attempt * 10), 500); // Max 500ms delay
+            setRetryCount(attempt);
+            setTimeout(() => checkUserAndRedirect(attempt + 1), delay);
           };
           
-          checkUserAndRedirect();
+          await checkUserAndRedirect();
         } else {
+          console.log('AuthCallback - No session found');
           navigate('/login?error=no_session');
         }
       } catch (error) {
-        console.error('Unexpected error in auth callback:', error);
+        console.error('AuthCallback - Unexpected error:', error);
         navigate('/login?error=unexpected');
       }
     };
 
     handleAuthCallback();
-  }, [navigate, currentUser]);
+  }, [navigate, currentUser, joinEvent, toast, startTime]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">

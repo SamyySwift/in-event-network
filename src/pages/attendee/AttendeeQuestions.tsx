@@ -120,10 +120,7 @@ const AttendeeQuestions = () => {
     return (
       <Card
         key={question.id}
-        className={
-          "shadow-md rounded-2xl transition-shadow border-0 bg-white/95 backdrop-blur mb-3 sm:mb-4" +
-          (question.is_answered ? " border-green-200 bg-green-50/60" : "")
-        }
+        className={`glass-card overflow-hidden hover:shadow-xl transition-all ${question.upvotes > 0 ? 'fire-border animate-enter' : ''} mb-3 sm:mb-4${question.is_answered ? " border-green-200 bg-green-50/60" : ""}`}
       >
         <CardContent className="pt-6 pb-4">
           <div className="flex items-start gap-4">
@@ -198,7 +195,7 @@ const AttendeeQuestions = () => {
                   <ArrowUp className={`h-4 w-4 mr-1 transition-transform duration-300 ${
                     upvotedQuestions.has(question.id) ? 'scale-125' : ''
                   }`} />
-                  {question.upvotes}
+                  {question.upvotes} {question.upvotes > 0 && <span aria-hidden="true">🔥</span>}
                 </Button>
 
                 {question.is_answered && question.user_id === currentUser?.id}

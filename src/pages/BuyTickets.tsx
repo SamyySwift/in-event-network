@@ -968,13 +968,8 @@ export default function BuyTickets() {
                 {ticketTypes.map((ticketType) => (
                   <div key={ticketType.id} className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
                     <div className="flex-1 mr-4">
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="mb-1">
                         <h4 className="font-medium text-muted-foreground">{ticketType.name}</h4>
-                        {ticketType.price > 0 ? (
-                          <Badge variant="secondary">₦{((ticketType.display_price || ticketType.price) / 100).toLocaleString()}</Badge>
-                        ) : (
-                          <Badge variant="secondary">Free</Badge>
-                        )}
                       </div>
                       {ticketType.description && (
                         <p className="text-sm text-muted-foreground mb-2">{ticketType.description}</p>
@@ -983,6 +978,13 @@ export default function BuyTickets() {
                         <span>{ticketType.available_quantity} available</span>
                         <span>Max {ticketType.max_tickets_per_user} per user</span>
                       </div>
+                    </div>
+                    <div className="flex flex-col items-center">
+                      {ticketType.price > 0 ? (
+                        <Badge variant="secondary">₦{((ticketType.display_price || ticketType.price) / 100).toLocaleString()}</Badge>
+                      ) : (
+                        <Badge variant="secondary">Free</Badge>
+                      )}
                     </div>
                   </div>
                 ))}

@@ -158,13 +158,8 @@ export function EnhancedTicketPurchaseForm({
           {ticketTypes.map((ticketType) => (
             <div key={ticketType.id} className="flex items-center justify-between p-4 border rounded-lg">
               <div className="flex-1 mr-6">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="mb-1">
                   <h4 className="font-medium">{ticketType.name}</h4>
-                  {ticketType.price > 0 ? (
-                    <Badge variant="default">₦{((ticketType.display_price || ticketType.price) / 100).toLocaleString()}</Badge>
-                  ) : (
-                    <Badge variant="secondary">Free</Badge>
-                  )}
                 </div>
                 {ticketType.description && (
                   <p className="text-sm text-muted-foreground mb-2">{ticketType.description}</p>
@@ -174,24 +169,33 @@ export function EnhancedTicketPurchaseForm({
                   <span>Max {ticketType.max_tickets_per_user} per user</span>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuantityChange(ticketType.id, (selectedTickets[ticketType.id] || 0) - 1)}
-                  disabled={(selectedTickets[ticketType.id] || 0) <= 0}
-                >
-                  -
-                </Button>
-                <span className="w-8 text-center">{selectedTickets[ticketType.id] || 0}</span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuantityChange(ticketType.id, (selectedTickets[ticketType.id] || 0) + 1)}
-                  disabled={(selectedTickets[ticketType.id] || 0) >= Math.min(ticketType.max_tickets_per_user, ticketType.available_quantity)}
-                >
-                  +
-                </Button>
+              <div className="flex flex-col items-center gap-3">
+                <div className="text-center">
+                  {ticketType.price > 0 ? (
+                    <Badge variant="default">₦{((ticketType.display_price || ticketType.price) / 100).toLocaleString()}</Badge>
+                  ) : (
+                    <Badge variant="secondary">Free</Badge>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleQuantityChange(ticketType.id, (selectedTickets[ticketType.id] || 0) - 1)}
+                    disabled={(selectedTickets[ticketType.id] || 0) <= 0}
+                  >
+                    -
+                  </Button>
+                  <span className="w-8 text-center">{selectedTickets[ticketType.id] || 0}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleQuantityChange(ticketType.id, (selectedTickets[ticketType.id] || 0) + 1)}
+                    disabled={(selectedTickets[ticketType.id] || 0) >= Math.min(ticketType.max_tickets_per_user, ticketType.available_quantity)}
+                  >
+                    +
+                  </Button>
+                </div>
               </div>
             </div>
           ))}

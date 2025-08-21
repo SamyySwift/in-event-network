@@ -20,6 +20,8 @@ import {
   AlertCircle,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 // Remove this import:
 // import AppLayout from "@/components/layouts/AppLayout";
@@ -57,6 +59,7 @@ const AttendeeNetworking = () => {
     userName: string;
     userPhoto?: string;
   } | null>(null);
+  const [expandedPreferences, setExpandedPreferences] = useState<Set<string>>(new Set());
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -311,24 +314,46 @@ const AttendeeNetworking = () => {
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {profile.networking_preferences
-                    .slice(0, 2)
-                    .map((pref: string, index: number) => (
-                      <Badge
-                        key={index}
-                        variant="outline"
-                        className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 text-xs"
-                      >
-                        {pref}
-                      </Badge>
-                    ))}
-                  {profile.networking_preferences.length > 2 && (
+                  {(expandedPreferences.has(profile.id) 
+                    ? profile.networking_preferences 
+                    : profile.networking_preferences.slice(0, 2)
+                  ).map((pref: string, index: number) => (
                     <Badge
+                      key={index}
                       variant="outline"
-                      className="bg-gray-50 dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-600 text-xs"
+                      className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 text-xs animate-fade-in"
                     >
-                      +{profile.networking_preferences.length - 2} more
+                      {pref}
                     </Badge>
+                  ))}
+                  {profile.networking_preferences.length > 2 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const newExpanded = new Set(expandedPreferences);
+                        if (expandedPreferences.has(profile.id)) {
+                          newExpanded.delete(profile.id);
+                        } else {
+                          newExpanded.add(profile.id);
+                        }
+                        setExpandedPreferences(newExpanded);
+                      }}
+                      className="h-auto p-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                    >
+                      {expandedPreferences.has(profile.id) ? (
+                        <>
+                          <ChevronUp size={12} className="mr-1" />
+                          Show less
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown size={12} className="mr-1" />
+                          +{profile.networking_preferences.length - 2} more
+                        </>
+                      )}
+                    </Button>
                   )}
                 </div>
               </div>

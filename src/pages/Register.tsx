@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,7 +45,6 @@ const Register = () => {
   const { joinEvent } = useJoinEvent();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const handleGoogleSignUp = async () => {
     setErrorMessage(null);
@@ -132,16 +130,9 @@ const Register = () => {
         console.log("Cleared event codes from storage");
 
         joinEvent(pendingEventCode, {
-          suppressToast: true, // Suppress default toast to avoid duplicates
           onSuccess: (data: any) => {
             console.log("Successfully joined event after registration:", data);
             setIsJoiningEvent(false);
-            
-            // Invalidate queries to refresh attendee data
-            queryClient.invalidateQueries({ queryKey: ['attendee-networking'] });
-            queryClient.invalidateQueries({ queryKey: ['attendee-context'] });
-            queryClient.invalidateQueries({ queryKey: ['user-profile'] });
-            
             toast({
               title: "Welcome!",
               description: `Account created and joined ${

@@ -22,8 +22,8 @@ serve(async (req) => {
       )
     }
 
-    // Get Paystack live secret key
-    const secretKey = Deno.env.get('PAYSTACK_LIVE_SECRET')
+    // Get Paystack test secret key
+    const secretKey = Deno.env.get('PAYSTACK_TEST_SECRET')
     
     if (!secretKey) {
       return new Response(

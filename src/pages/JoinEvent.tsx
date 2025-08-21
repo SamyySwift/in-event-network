@@ -43,10 +43,6 @@ const JoinEvent = () => {
           setJoinStatus('success');
           setEventName(data?.event_name || 'Event');
           
-          toast({
-            title: "Successfully Joined!",
-            description: `You've joined ${data?.event_name || 'the event'}`,
-          });
 
           // Navigate to attendee dashboard after a short delay
           setTimeout(() => {

@@ -44,10 +44,6 @@ export const useJoinEvent = () => {
         // Force a refetch of networking data
         queryClient.refetchQueries({ queryKey: ['attendee-networking'] });
         
-        toast({
-          title: 'Successfully Joined Event!',
-          description: `Welcome to ${data.event_name}. You can now connect with other attendees.`,
-        });
         
         // Navigate to attendee dashboard
         navigate('/attendee');

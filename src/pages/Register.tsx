@@ -139,12 +139,6 @@ const Register = () => {
           onSuccess: (data: any) => {
             console.log("Successfully joined event after registration:", data);
             setIsJoiningEvent(false);
-            toast({
-              title: "Welcome!",
-              description: `Account created and joined ${
-                data?.event_name || "event"
-              } successfully!`,
-            });
             console.log("Redirecting to attendee dashboard after event join");
             navigate("/attendee", { replace: true });
           },

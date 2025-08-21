@@ -70,10 +70,6 @@ const AuthCallback = () => {
                   onSuccess: (data: any) => {
                     console.log('AuthCallback - Successfully joined event:', data);
                     setIsJoiningEvent(false);
-                    toast({
-                      title: "Welcome!",
-                      description: `Account created and joined ${data?.event_name || 'event'} successfully!`,
-                    });
                     navigate('/attendee', { replace: true });
                   },
                   onError: (error: any) => {

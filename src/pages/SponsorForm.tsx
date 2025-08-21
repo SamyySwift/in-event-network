@@ -9,29 +9,31 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ImageUpload } from '@/components/ui/image-upload';
 import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { Users, Send, CheckCircle } from 'lucide-react';
+import { Users, Send, CheckCircle, Calendar, Clock, MapPin } from 'lucide-react';
 
 export default function SponsorForm() {
   const { formId } = useParams();
   const navigate = useNavigate();
   const [form, setForm] = useState<any>(null);
+  const [event, setEvent] = useState<any>(null);
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   useEffect(() => {
-    const fetchForm = async () => {
+    const fetchFormAndEvent = async () => {
       try {
-        const { data, error } = await supabase
+        // Fetch sponsor form data
+        const { data: formData, error: formError } = await supabase
           .from('sponsor_forms')
           .select('*')
           .eq('shareable_link', `${window.location.origin}/sponsor-form/${formId}`)
           .eq('is_active', true)
           .single();
 
-        if (error) throw error;
-        if (!data) {
+        if (formError) throw formError;
+        if (!formData) {
           toast({
             title: "Form not found",
             description: "This sponsor form is no longer available.",
@@ -41,9 +43,24 @@ export default function SponsorForm() {
           return;
         }
 
-        setForm(data);
+        setForm(formData);
+
+        // Fetch event data if we have an event_id
+        if (formData.event_id) {
+          const { data: eventData, error: eventError } = await supabase
+            .from('events')
+            .select('*')
+            .eq('id', formData.event_id)
+            .single();
+
+          if (eventError) {
+            console.error('Error fetching event:', eventError);
+          } else {
+            setEvent(eventData);
+          }
+        }
       } catch (error) {
-        console.error('Error fetching form:', error);
+        console.error('Error fetching data:', error);
         toast({
           title: "Error",
           description: "Unable to load the sponsor form.",
@@ -56,7 +73,7 @@ export default function SponsorForm() {
     };
 
     if (formId) {
-      fetchForm();
+      fetchFormAndEvent();
     }
   }, [formId, navigate]);
 
@@ -263,6 +280,47 @@ export default function SponsorForm() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted p-4">
       <div className="max-w-2xl mx-auto">
+        {/* Event Information Section */}
+        {event && (
+          <div className="mb-8">
+            {event.banner_url && (
+              <div className="w-full h-64 rounded-lg overflow-hidden mb-6">
+                <img 
+                  src={event.banner_url} 
+                  alt={event.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+            
+            <h1 className="text-3xl font-bold mb-4 text-foreground">{event.name}</h1>
+            
+            {event.description && (
+              <p className="text-muted-foreground mb-4">{event.description}</p>
+            )}
+            
+            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                <span>{new Date(event.start_time).toLocaleDateString()}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                <span>
+                  {new Date(event.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - 
+                  {new Date(event.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
+              </div>
+              {event.location && (
+                <div className="flex items-center gap-2">
+                  <MapPin className="h-4 w-4" />
+                  <span>{event.location}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         <Card className="rounded-xl border-0 shadow-xl">
           <CardHeader className="text-center pb-6">
             <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-purple-400 via-pink-500 to-red-500 shadow-lg mx-auto mb-4">

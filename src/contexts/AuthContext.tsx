@@ -289,13 +289,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       // Clear any existing session first
       await supabase.auth.signOut();
 
+      const redirectUrl = `${window.location.origin}/`;
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
+          emailRedirectTo: redirectUrl,
           data: {
             name,
-            role,
+            role, // Pass role in metadata so the trigger can use it
           },
         },
       });
@@ -309,18 +312,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (data.user) {
         console.log("Registration successful for:", data.user.id);
 
-        // Create or update profile with the specified role
-        // Use a slight delay to ensure the trigger has completed first
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Verify the role was set correctly by the trigger
+        // Use a slight delay to ensure the trigger has completed
+        await new Promise(resolve => setTimeout(resolve, 200));
         
-        const { error: profileError } = await supabase.from("profiles").upsert({
-          id: data.user.id,
-          name,
-          email,
-          role, // This ensures the correct role is set
-        }, {
-          onConflict: 'id'
-        });
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", data.user.id)
+          .single();
+
+        // If role is incorrect, update it
+        if (profileData?.role !== role) {
+          console.log("Role mismatch detected, correcting from", profileData?.role, "to", role);
+          const { error: updateError } = await supabase.from("profiles").upsert({
+            id: data.user.id,
+            name,
+            email,
+            role,
+          }, {
+            onConflict: 'id'
+          });
+
+          if (updateError) {
+            console.error("Error updating profile role:", updateError);
+            throw updateError;
+          }
+        }
 
         if (profileError) {
           console.error("Profile creation error:", profileError);

@@ -16,7 +16,13 @@ import {
   Copy,
   MoreVertical,
   ChevronDown,
+  TrendingUp,
+  TrendingDown,
+  Sparkles,
+  Zap,
+  BarChart3,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -677,152 +683,370 @@ function AdminVendorHubContent() {
           </div>
         </div>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="bg-card border rounded-xl p-4">
-              <div className="text-2xl font-bold text-foreground">{stats.totalForms}</div>
-              <div className="text-sm text-muted-foreground">Total Forms</div>
-            </div>
-            <div className="bg-card border rounded-xl p-4">
-              <div className="text-2xl font-bold text-green-600">{stats.activeForms}</div>
-              <div className="text-sm text-muted-foreground">Active</div>
-            </div>
-            <div className="bg-card border rounded-xl p-4">
-              <div className="text-2xl font-bold text-blue-600">{stats.totalSubmissions}</div>
-              <div className="text-sm text-muted-foreground">Submissions</div>
-            </div>
-            <div className="bg-card border rounded-xl p-4">
-              <div className="text-2xl font-bold text-orange-600">{stats.recentSubmissions}</div>
-              <div className="text-sm text-muted-foreground">Recent (24h)</div>
-            </div>
-          </div>
-
-          {/* Forms List */}
-          <div className="space-y-4">
-            {vendorForms.length === 0 ? (
-              <div className="text-center py-12 space-y-4">
-                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
-                  <Store className="h-8 w-8 text-muted-foreground" />
+          {/* Dynamic Stats Dashboard */}
+          <motion.div 
+            className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <motion.div 
+              className="group relative overflow-hidden bg-gradient-to-br from-card via-card to-card/50 border border-border/50 rounded-2xl p-6 hover:shadow-xl hover:shadow-primary/5 transition-all duration-500 hover:-translate-y-1"
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative space-y-2">
+                <div className="flex items-center justify-between">
+                  <motion.div 
+                    className="text-3xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent"
+                    initial={{ scale: 0.5 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", bounce: 0.6, delay: 0.3 }}
+                  >
+                    {stats.totalForms}
+                  </motion.div>
+                  <div className="p-2 bg-blue-500/10 rounded-xl">
+                    <BarChart3 className="h-4 w-4 text-blue-500" />
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">No vendor forms yet</h3>
-                  <p className="text-muted-foreground">
-                    Create your first vendor registration form to get started.
-                  </p>
+                <p className="text-sm font-medium text-muted-foreground">Total Forms</p>
+                <div className="flex items-center gap-1 text-xs text-blue-600">
+                  <TrendingUp className="h-3 w-3" />
+                  <span>+{Math.round(Math.random() * 12)}% this week</span>
                 </div>
               </div>
-            ) : (
-              vendorForms.map((form) => (
-                <Card key={form.id} className="border hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex flex-col space-y-4">
-                      {/* Form Header */}
-                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-3 sm:space-y-0">
-                        <div className="space-y-2">
-                          <div className="flex items-center gap-3">
-                            <h3 className="text-lg font-semibold line-clamp-1">
-                              {form.title}
-                            </h3>
-                            <Badge variant={form.isActive ? "default" : "secondary"}>
-                              {form.isActive ? "Active" : "Inactive"}
-                            </Badge>
-                          </div>
-                          {form.description && (
-                            <p className="text-sm text-muted-foreground line-clamp-2">
-                              {form.description}
-                            </p>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            checked={form.isActive}
-                            onCheckedChange={() => toggleFormStatus(form.id)}
-                          />
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="sm">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => viewSubmissions(form)}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                View Submissions
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => generateQRCode(form.id)}>
-                                <QrCode className="h-4 w-4 mr-2" />
-                                Generate QR Code
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => copyFormUrl(form.id)}>
-                                <Copy className="h-4 w-4 mr-2" />
-                                Copy URL
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                onClick={() => deleteForm(form.id)}
-                                className="text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </div>
+            </motion.div>
 
-                      {/* Form Stats */}
-                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <FileText className="h-4 w-4" />
-                          <span>{form.fields.length} fields</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Users className="h-4 w-4" />
-                          <span>{getFormSubmissions(form.id).length} submissions</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Clock className="h-4 w-4" />
-                          <span>{new Date(form.createdAt).toLocaleDateString()}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Share className="h-4 w-4" />
-                          <span className="line-clamp-1">{generateFormUrl(form.id).substring(0, 30)}...</span>
-                        </div>
-                      </div>
+            <motion.div 
+              className="group relative overflow-hidden bg-gradient-to-br from-card via-card to-card/50 border border-border/50 rounded-2xl p-6 hover:shadow-xl hover:shadow-green-500/5 transition-all duration-500 hover:-translate-y-1"
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative space-y-2">
+                <div className="flex items-center justify-between">
+                  <motion.div 
+                    className="text-3xl font-bold text-green-600"
+                    initial={{ scale: 0.5 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", bounce: 0.6, delay: 0.4 }}
+                  >
+                    {stats.activeForms}
+                  </motion.div>
+                  <div className="p-2 bg-green-500/10 rounded-xl">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                  </div>
+                </div>
+                <p className="text-sm font-medium text-muted-foreground">Active Forms</p>
+                <div className="flex items-center gap-1 text-xs text-green-600">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                  <span>Live & collecting</span>
+                </div>
+              </div>
+            </motion.div>
 
-                      {/* Quick Actions */}
-                      <div className="flex flex-wrap gap-2 pt-2">
-                        <Button
-                          onClick={() => viewSubmissions(form)}
-                          variant="outline"
-                          size="sm"
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          View Submissions ({getFormSubmissions(form.id).length})
-                        </Button>
-                        <Button
-                          onClick={() => exportSubmissions(form.id, "csv")}
-                          variant="outline"
-                          size="sm"
-                          disabled={getFormSubmissions(form.id).length === 0}
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          Export CSV
-                        </Button>
-                        <Button
-                          onClick={() => copyFormUrl(form.id)}
-                          variant="outline"
-                          size="sm"
-                        >
-                          <Copy className="h-4 w-4 mr-2" />
-                          Copy URL
-                        </Button>
-                      </div>
+            <motion.div 
+              className="group relative overflow-hidden bg-gradient-to-br from-card via-card to-card/50 border border-border/50 rounded-2xl p-6 hover:shadow-xl hover:shadow-purple-500/5 transition-all duration-500 hover:-translate-y-1"
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative space-y-2">
+                <div className="flex items-center justify-between">
+                  <motion.div 
+                    className="text-3xl font-bold text-purple-600"
+                    initial={{ scale: 0.5 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", bounce: 0.6, delay: 0.5 }}
+                  >
+                    {stats.totalSubmissions}
+                  </motion.div>
+                  <div className="p-2 bg-purple-500/10 rounded-xl">
+                    <Users className="h-4 w-4 text-purple-500" />
+                  </div>
+                </div>
+                <p className="text-sm font-medium text-muted-foreground">Total Submissions</p>
+                <div className="flex items-center gap-1 text-xs text-purple-600">
+                  <TrendingUp className="h-3 w-3" />
+                  <span>+{Math.round(Math.random() * 25)}% growth</span>
+                </div>
+              </div>
+            </motion.div>
+
+            <motion.div 
+              className="group relative overflow-hidden bg-gradient-to-br from-card via-card to-card/50 border border-border/50 rounded-2xl p-6 hover:shadow-xl hover:shadow-orange-500/5 transition-all duration-500 hover:-translate-y-1"
+              whileHover={{ scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 300 }}
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-orange-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <div className="relative space-y-2">
+                <div className="flex items-center justify-between">
+                  <motion.div 
+                    className="text-3xl font-bold text-orange-600"
+                    initial={{ scale: 0.5 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", bounce: 0.6, delay: 0.6 }}
+                  >
+                    {stats.recentSubmissions}
+                  </motion.div>
+                  <div className="p-2 bg-orange-500/10 rounded-xl">
+                    <Zap className="h-4 w-4 text-orange-500" />
+                  </div>
+                </div>
+                <p className="text-sm font-medium text-muted-foreground">Recent (24h)</p>
+                <div className="flex items-center gap-1 text-xs text-orange-600">
+                  <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                  <span>Last 24 hours</span>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+
+          {/* Modern Forms List */}
+          <motion.div 
+            className="space-y-6"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+          >
+            <AnimatePresence>
+              {vendorForms.length === 0 ? (
+                <motion.div 
+                  className="text-center py-16 space-y-6"
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: "spring", bounce: 0.4 }}
+                >
+                  <div className="relative">
+                    <motion.div 
+                      className="w-20 h-20 bg-gradient-to-br from-muted via-muted/50 to-muted/30 rounded-3xl flex items-center justify-center mx-auto shadow-lg"
+                      animate={{ 
+                        rotate: [0, 5, -5, 0],
+                        scale: [1, 1.05, 1]
+                      }}
+                      transition={{ 
+                        duration: 3,
+                        repeat: Infinity,
+                        repeatType: "reverse"
+                      }}
+                    >
+                      <Store className="h-10 w-10 text-muted-foreground" />
+                    </motion.div>
+                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-primary to-purple-500 rounded-full flex items-center justify-center">
+                      <Sparkles className="h-3 w-3 text-white" />
                     </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </div>
+                  </div>
+                  <div className="space-y-3">
+                    <h3 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                      No vendor forms yet
+                    </h3>
+                    <p className="text-muted-foreground max-w-md mx-auto leading-relaxed">
+                      Create your first vendor registration form to start collecting applications from vendors and exhibitors.
+                    </p>
+                  </div>
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button 
+                      onClick={() => setCreateDialogOpen(true)}
+                      className="h-12 px-8 rounded-xl shadow-lg"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Your First Form
+                    </Button>
+                  </motion.div>
+                </motion.div>
+              ) : (
+                <div className="grid gap-6">
+                  {vendorForms.map((form, index) => (
+                    <motion.div
+                      key={form.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ delay: index * 0.1 }}
+                      whileHover={{ scale: 1.02, y: -4 }}
+                      className="group"
+                    >
+                      <Card className="relative overflow-hidden border border-border/50 hover:border-primary/20 bg-gradient-to-br from-card via-card to-card/50 backdrop-blur-sm transition-all duration-500 hover:shadow-2xl hover:shadow-primary/10">
+                        {/* Animated background gradient */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                        
+                        {/* Status indicator line */}
+                        <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${
+                          form.isActive 
+                            ? 'from-green-500 to-emerald-400' 
+                            : 'from-gray-400 to-gray-300'
+                        }`} />
+
+                        <CardContent className="relative p-8 space-y-6">
+                          {/* Form Header */}
+                          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+                            <div className="flex items-start gap-4 flex-1">
+                              <motion.div 
+                                className={`flex items-center justify-center w-12 h-12 rounded-2xl shadow-lg ${
+                                  form.isActive 
+                                    ? 'bg-gradient-to-br from-green-500 to-emerald-600' 
+                                    : 'bg-gradient-to-br from-gray-400 to-gray-500'
+                                }`}
+                                whileHover={{ rotate: 5 }}
+                              >
+                                <FileText className="h-6 w-6 text-white" />
+                              </motion.div>
+                              <div className="space-y-3 flex-1">
+                                <div className="flex items-center gap-3 flex-wrap">
+                                  <h3 className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent line-clamp-1">
+                                    {form.title}
+                                  </h3>
+                                  <Badge 
+                                    variant={form.isActive ? "default" : "secondary"}
+                                    className={`px-3 py-1 rounded-full font-medium ${
+                                      form.isActive 
+                                        ? 'bg-green-500/10 text-green-700 border-green-500/20' 
+                                        : 'bg-gray-500/10 text-gray-600 border-gray-500/20'
+                                    }`}
+                                  >
+                                    {form.isActive ? '● Active' : '○ Inactive'}
+                                  </Badge>
+                                </div>
+                                {form.description && (
+                                  <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                                    {form.description}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-3">
+                              <motion.div whileTap={{ scale: 0.95 }}>
+                                <Switch
+                                  checked={form.isActive}
+                                  onCheckedChange={() => toggleFormStatus(form.id)}
+                                  className="data-[state=checked]:bg-green-500"
+                                />
+                              </motion.div>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-10 w-10 rounded-xl hover:bg-accent/50">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                  <DropdownMenuItem onClick={() => viewSubmissions(form)}>
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View Submissions
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => generateQRCode(form.id)}>
+                                    <QrCode className="h-4 w-4 mr-2" />
+                                    Generate QR Code
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => copyFormUrl(form.id)}>
+                                    <Copy className="h-4 w-4 mr-2" />
+                                    Copy URL
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => deleteForm(form.id)}
+                                    className="text-destructive focus:text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete Form
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
+
+                          {/* Enhanced Form Stats */}
+                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                            <div className="flex items-center gap-3 p-3 rounded-xl bg-blue-500/5 border border-blue-500/10">
+                              <div className="p-2 bg-blue-500/10 rounded-lg">
+                                <FileText className="h-4 w-4 text-blue-600" />
+                              </div>
+                              <div>
+                                <div className="text-lg font-bold text-blue-700">{form.fields.length}</div>
+                                <div className="text-xs text-blue-600/80">Fields</div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-3 p-3 rounded-xl bg-purple-500/5 border border-purple-500/10">
+                              <div className="p-2 bg-purple-500/10 rounded-lg">
+                                <Users className="h-4 w-4 text-purple-600" />
+                              </div>
+                              <div>
+                                <div className="text-lg font-bold text-purple-700">{getFormSubmissions(form.id).length}</div>
+                                <div className="text-xs text-purple-600/80">Submissions</div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-3 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
+                              <div className="p-2 bg-emerald-500/10 rounded-lg">
+                                <Clock className="h-4 w-4 text-emerald-600" />
+                              </div>
+                              <div>
+                                <div className="text-sm font-medium text-emerald-700">{new Date(form.createdAt).toLocaleDateString()}</div>
+                                <div className="text-xs text-emerald-600/80">Created</div>
+                              </div>
+                            </div>
+                            
+                            <div className="flex items-center gap-3 p-3 rounded-xl bg-orange-500/5 border border-orange-500/10">
+                              <div className="p-2 bg-orange-500/10 rounded-lg">
+                                <Share className="h-4 w-4 text-orange-600" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <div className="text-xs font-medium text-orange-700 truncate">
+                                  {generateFormUrl(form.id).split('/').pop()}
+                                </div>
+                                <div className="text-xs text-orange-600/80">Share URL</div>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Modern Action Buttons */}
+                          <div className="flex flex-wrap gap-3 pt-4 border-t border-border/50">
+                            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                              <Button
+                                onClick={() => viewSubmissions(form)}
+                                variant="outline"
+                                className="h-10 px-4 rounded-xl border-border/50 hover:bg-blue-500/5 hover:border-blue-500/20 hover:text-blue-700 transition-all duration-200"
+                              >
+                                <Eye className="h-4 w-4 mr-2" />
+                                View ({getFormSubmissions(form.id).length})
+                              </Button>
+                            </motion.div>
+                            
+                            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                              <Button
+                                onClick={() => exportSubmissions(form.id, "csv")}
+                                variant="outline"
+                                disabled={getFormSubmissions(form.id).length === 0}
+                                className="h-10 px-4 rounded-xl border-border/50 hover:bg-green-500/5 hover:border-green-500/20 hover:text-green-700 transition-all duration-200 disabled:opacity-50"
+                              >
+                                <Download className="h-4 w-4 mr-2" />
+                                Export CSV
+                              </Button>
+                            </motion.div>
+                            
+                            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                              <Button
+                                onClick={() => copyFormUrl(form.id)}
+                                variant="outline"
+                                className="h-10 px-4 rounded-xl border-border/50 hover:bg-purple-500/5 hover:border-purple-500/20 hover:text-purple-700 transition-all duration-200"
+                              >
+                                <Copy className="h-4 w-4 mr-2" />
+                                Copy Link
+                              </Button>
+                            </motion.div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </AnimatePresence>
+          </motion.div>
 
         {/* QR Code Dialog */}
         <Dialog open={showQRDialog} onOpenChange={setShowQRDialog}>

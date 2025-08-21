@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
@@ -10,6 +10,7 @@ const AuthCallback = () => {
   const { currentUser } = useAuth();
   const { joinEvent } = useJoinEvent();
   const { toast } = useToast();
+  const [isJoiningEvent, setIsJoiningEvent] = useState(false);
 
   useEffect(() => {
     const handleAuthCallback = async () => {
@@ -41,8 +42,12 @@ const AuthCallback = () => {
                 sessionStorage.removeItem('pendingEventCode');
                 localStorage.removeItem('pendingEventCode');
                 
+                // Set joining state to true before starting event join
+                setIsJoiningEvent(true);
+                
                 joinEvent(pendingEventCode, {
                   onSuccess: (data: any) => {
+                    setIsJoiningEvent(false);
                     toast({
                       title: "Welcome!",
                       description: `Account created and joined ${data?.event_name || 'event'} successfully!`,
@@ -50,6 +55,7 @@ const AuthCallback = () => {
                     navigate('/attendee', { replace: true });
                   },
                   onError: (error: any) => {
+                    setIsJoiningEvent(false);
                     console.error('Failed to join event after Google auth:', error);
                     toast({
                       title: "Account Created",
@@ -91,7 +97,9 @@ const AuthCallback = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-connect-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Completing sign-in...</p>
+        <p className="text-gray-600">
+          {isJoiningEvent ? "Joining event..." : "Completing sign-in..."}
+        </p>
       </div>
     </div>
   );

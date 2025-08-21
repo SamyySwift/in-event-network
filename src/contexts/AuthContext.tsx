@@ -289,7 +289,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       // Clear any existing session first
       await supabase.auth.signOut();
 
-      const redirectUrl = `${window.location.origin}/`;
+      // Check if registering for event joining (don't redirect away from current page)
+      const pendingEventCode = sessionStorage.getItem("pendingEventCode");
+      const urlParams = new URLSearchParams(window.location.search);
+      const eventCode = urlParams.get("eventCode");
+      const isEventRegistration = pendingEventCode || eventCode;
+
+      // Only redirect to home page if not registering for an event
+      const redirectUrl = isEventRegistration 
+        ? window.location.href // Stay on current page to allow event joining
+        : `${window.location.origin}/`; // Normal redirect to home
+
+      console.log("Registration redirect URL:", redirectUrl, "Event registration:", isEventRegistration);
 
       const { data, error } = await supabase.auth.signUp({
         email,

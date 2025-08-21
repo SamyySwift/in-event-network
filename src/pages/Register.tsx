@@ -63,6 +63,14 @@ const Register = () => {
     }
   };
 
+  // Store event code in session storage when component mounts
+  useEffect(() => {
+    if (eventCode) {
+      console.log("Storing event code in session storage:", eventCode);
+      sessionStorage.setItem("pendingEventCode", eventCode);
+    }
+  }, [eventCode]);
+
   // Handle redirect when user becomes authenticated after registration
   useEffect(() => {
     console.log("Register component - Auth state:", { currentUser, isLoading, isSubmitting });

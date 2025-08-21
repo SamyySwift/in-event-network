@@ -23,8 +23,8 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    // Get Paystack test secret key
-    const paystackSecretKey = Deno.env.get("PAYSTACK_TEST_SECRET");
+    // Get Paystack live secret key
+    const paystackSecretKey = Deno.env.get("PAYSTACK_LIVE_SECRET");
 
     if (!paystackSecretKey) {
       throw new Error("Paystack secret key not configured");

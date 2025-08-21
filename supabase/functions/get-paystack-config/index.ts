@@ -12,8 +12,8 @@ serve(async (req) => {
   }
 
   try {
-    // Get the test public key from Supabase secrets
-    const publicKey = Deno.env.get('PAYSTACK_TEST_KEY')
+    // Get the live public key from Supabase secrets
+    const publicKey = Deno.env.get('PAYSTACK_LIVE_KEY')
     
     if (!publicKey) {
       return new Response(

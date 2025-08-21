@@ -565,91 +565,117 @@ function AdminVendorHubContent() {
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-6 max-w-6xl">
         {/* Modern Header */}
-        <div className="flex flex-col space-y-6 mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center justify-center w-12 h-12 bg-primary rounded-2xl">
-                <Store className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Vendors & Exhibitors Hub</h1>
-                <p className="text-muted-foreground">
-                  Create and manage vendor registration forms
-                </p>
-              </div>
-            </div>
-            
-            <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="h-10">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Create Form
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader className="pb-6">
-                  <DialogTitle className="text-xl">Create Vendor Registration Form</DialogTitle>
-                  <DialogDescription>
-                    Design a custom form to collect vendor information for your event
-                  </DialogDescription>
-                </DialogHeader>
-
-                <div className="space-y-8">
-                  {/* Form Details */}
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="formTitle" className="text-sm font-medium">Form Title</Label>
-                        <Input
-                          id="formTitle"
-                          value={formTitle}
-                          onChange={(e) => setFormTitle(e.target.value)}
-                          placeholder="Vendor Registration Form"
-                          className="h-11"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="formDescription" className="text-sm font-medium">Description</Label>
-                        <Textarea
-                          id="formDescription"
-                          value={formDescription}
-                          onChange={(e) => setFormDescription(e.target.value)}
-                          placeholder="Brief description of the form purpose..."
-                          rows={2}
-                          className="resize-none"
-                        />
-                      </div>
-                    </div>
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/5 via-background to-primary/10 border border-border/50 backdrop-blur-sm mb-8">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/[0.02] to-transparent" />
+          <div className="relative p-8">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+              <div className="flex items-start gap-6">
+                <div className="relative">
+                  <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl shadow-lg">
+                    <Store className="h-8 w-8 text-primary-foreground" />
                   </div>
-
-                  {/* Enhanced Form Fields Builder */}
-                  <VendorFormFieldBuilder
-                    fields={formFields}
-                    onFieldsChange={setFormFields}
-                  />
-
-                  {/* Actions */}
-                  <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t">
-                    <Button
-                      onClick={handleCreateForm}
-                      disabled={!formTitle.trim()}
-                      className="flex-1 h-11"
-                    >
-                      <FileText className="h-4 w-4 mr-2" />
-                      Create Form
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={() => setCreateDialogOpen(false)}
-                      className="flex-1 h-11"
-                    >
-                      Cancel
-                    </Button>
+                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <Users className="h-3 w-3 text-white" />
                   </div>
                 </div>
-              </DialogContent>
-            </Dialog>
+                <div className="space-y-3">
+                  <h1 className="text-3xl lg:text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+                    Vendors & Exhibitors Hub
+                  </h1>
+                  <p className="text-base text-muted-foreground leading-relaxed max-w-2xl">
+                    Create and manage vendor registration forms with powerful customization options
+                  </p>
+                  <div className="flex items-center gap-4 pt-2">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                      <span>Forms Management</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                      <span>Real-time Analytics</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <Button variant="outline" className="h-11 px-6 border-border/50 hover:bg-accent/50 backdrop-blur-sm">
+                  <Eye className="h-4 w-4 mr-2" />
+                  Preview Forms
+                </Button>
+                <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button className="h-11 px-6 shadow-lg">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Form
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader className="pb-6">
+                      <DialogTitle className="text-xl">Create Vendor Registration Form</DialogTitle>
+                      <DialogDescription>
+                        Design a custom form to collect vendor information for your event
+                      </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-8">
+                      {/* Form Details */}
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="formTitle" className="text-sm font-medium">Form Title</Label>
+                            <Input
+                              id="formTitle"
+                              value={formTitle}
+                              onChange={(e) => setFormTitle(e.target.value)}
+                              placeholder="Vendor Registration Form"
+                              className="h-11"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="formDescription" className="text-sm font-medium">Description</Label>
+                            <Textarea
+                              id="formDescription"
+                              value={formDescription}
+                              onChange={(e) => setFormDescription(e.target.value)}
+                              placeholder="Brief description of the form purpose..."
+                              rows={2}
+                              className="resize-none"
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Enhanced Form Fields Builder */}
+                      <VendorFormFieldBuilder
+                        fields={formFields}
+                        onFieldsChange={setFormFields}
+                      />
+
+                      {/* Actions */}
+                      <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t">
+                        <Button
+                          onClick={handleCreateForm}
+                          disabled={!formTitle.trim()}
+                          className="flex-1 h-11"
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          Create Form
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => setCreateDialogOpen(false)}
+                          className="flex-1 h-11"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            </div>
           </div>
+        </div>
 
           {/* Quick Stats */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -670,134 +696,133 @@ function AdminVendorHubContent() {
               <div className="text-sm text-muted-foreground">Recent (24h)</div>
             </div>
           </div>
-        </div>
 
-        {/* Forms List */}
-        <div className="space-y-4">
-          {vendorForms.length === 0 ? (
-            <div className="text-center py-12 space-y-4">
-              <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
-                <Store className="h-8 w-8 text-muted-foreground" />
+          {/* Forms List */}
+          <div className="space-y-4">
+            {vendorForms.length === 0 ? (
+              <div className="text-center py-12 space-y-4">
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto">
+                  <Store className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold mb-2">No vendor forms yet</h3>
+                  <p className="text-muted-foreground">
+                    Create your first vendor registration form to get started.
+                  </p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-lg font-semibold mb-2">No vendor forms yet</h3>
-                <p className="text-muted-foreground">
-                  Create your first vendor registration form to get started.
-                </p>
-              </div>
-            </div>
-          ) : (
-            vendorForms.map((form) => (
-              <Card key={form.id} className="border hover:shadow-md transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex flex-col space-y-4">
-                    {/* Form Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-3 sm:space-y-0">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-3">
-                          <h3 className="text-lg font-semibold line-clamp-1">
-                            {form.title}
-                          </h3>
-                          <Badge variant={form.isActive ? "default" : "secondary"}>
-                            {form.isActive ? "Active" : "Inactive"}
-                          </Badge>
+            ) : (
+              vendorForms.map((form) => (
+                <Card key={form.id} className="border hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex flex-col space-y-4">
+                      {/* Form Header */}
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between space-y-3 sm:space-y-0">
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-3">
+                            <h3 className="text-lg font-semibold line-clamp-1">
+                              {form.title}
+                            </h3>
+                            <Badge variant={form.isActive ? "default" : "secondary"}>
+                              {form.isActive ? "Active" : "Inactive"}
+                            </Badge>
+                          </div>
+                          {form.description && (
+                            <p className="text-sm text-muted-foreground line-clamp-2">
+                              {form.description}
+                            </p>
+                          )}
                         </div>
-                        {form.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-2">
-                            {form.description}
-                          </p>
-                        )}
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            checked={form.isActive}
+                            onCheckedChange={() => toggleFormStatus(form.id)}
+                          />
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => viewSubmissions(form)}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Submissions
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => generateQRCode(form.id)}>
+                                <QrCode className="h-4 w-4 mr-2" />
+                                Generate QR Code
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => copyFormUrl(form.id)}>
+                                <Copy className="h-4 w-4 mr-2" />
+                                Copy URL
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => deleteForm(form.id)}
+                                className="text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={form.isActive}
-                          onCheckedChange={() => toggleFormStatus(form.id)}
-                        />
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => viewSubmissions(form)}>
-                              <Eye className="h-4 w-4 mr-2" />
-                              View Submissions
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => generateQRCode(form.id)}>
-                              <QrCode className="h-4 w-4 mr-2" />
-                              Generate QR Code
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => copyFormUrl(form.id)}>
-                              <Copy className="h-4 w-4 mr-2" />
-                              Copy URL
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
-                              onClick={() => deleteForm(form.id)}
-                              className="text-destructive"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                    </div>
 
-                    {/* Form Stats */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <FileText className="h-4 w-4" />
-                        <span>{form.fields.length} fields</span>
+                      {/* Form Stats */}
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <FileText className="h-4 w-4" />
+                          <span>{form.fields.length} fields</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Users className="h-4 w-4" />
+                          <span>{getFormSubmissions(form.id).length} submissions</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Clock className="h-4 w-4" />
+                          <span>{new Date(form.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Share className="h-4 w-4" />
+                          <span className="line-clamp-1">{generateFormUrl(form.id).substring(0, 30)}...</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Users className="h-4 w-4" />
-                        <span>{getFormSubmissions(form.id).length} submissions</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        <span>{new Date(form.createdAt).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Share className="h-4 w-4" />
-                        <span className="line-clamp-1">{generateFormUrl(form.id).substring(0, 30)}...</span>
-                      </div>
-                    </div>
 
-                    {/* Quick Actions */}
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      <Button
-                        onClick={() => viewSubmissions(form)}
-                        variant="outline"
-                        size="sm"
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        View Submissions ({getFormSubmissions(form.id).length})
-                      </Button>
-                      <Button
-                        onClick={() => exportSubmissions(form.id, "csv")}
-                        variant="outline"
-                        size="sm"
-                        disabled={getFormSubmissions(form.id).length === 0}
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Export CSV
-                      </Button>
-                      <Button
-                        onClick={() => copyFormUrl(form.id)}
-                        variant="outline"
-                        size="sm"
-                      >
-                        <Copy className="h-4 w-4 mr-2" />
-                        Copy URL
-                      </Button>
+                      {/* Quick Actions */}
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        <Button
+                          onClick={() => viewSubmissions(form)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Submissions ({getFormSubmissions(form.id).length})
+                        </Button>
+                        <Button
+                          onClick={() => exportSubmissions(form.id, "csv")}
+                          variant="outline"
+                          size="sm"
+                          disabled={getFormSubmissions(form.id).length === 0}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Export CSV
+                        </Button>
+                        <Button
+                          onClick={() => copyFormUrl(form.id)}
+                          variant="outline"
+                          size="sm"
+                        >
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copy URL
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
 
         {/* QR Code Dialog */}
         <Dialog open={showQRDialog} onOpenChange={setShowQRDialog}>

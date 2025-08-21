@@ -159,7 +159,7 @@ export function EnhancedTicketPurchaseForm({
             <div key={ticketType.id} className="flex items-center justify-between p-4 border rounded-lg">
               <div className="flex-1 mr-6">
                 <div className="flex items-center gap-2 mb-1">
-                  <h4 className="font-medium truncate">{ticketType.name}</h4>
+                  <h4 className="font-medium">{ticketType.name}</h4>
                   {ticketType.price > 0 ? (
                     <Badge variant="default">₦{((ticketType.display_price || ticketType.price) / 100).toLocaleString()}</Badge>
                   ) : (

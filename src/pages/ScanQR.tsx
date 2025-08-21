@@ -124,8 +124,9 @@ const ScanQR = () => {
                 error?.message?.includes('login') || 
                 error?.code === 'PGRST301' ||
                 !currentUser) {
-              // Store the access code and redirect to register with the code
+              // Store the access code in both storages and redirect to register with the code
               sessionStorage.setItem('pendingEventCode', accessCode);
+              localStorage.setItem('pendingEventCode', accessCode);
               navigate(`/register?eventCode=${accessCode}&role=attendee`, { replace: true });
               return;
             }

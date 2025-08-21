@@ -48,6 +48,12 @@ const Register = () => {
 
   const handleGoogleSignUp = async () => {
     setErrorMessage(null);
+    
+    // Store event code in localStorage before Google OAuth redirect (if exists)
+    if (eventCode) {
+      localStorage.setItem('pendingEventCode', eventCode);
+    }
+    
     try {
       setIsSubmitting(true);
       const { error } = await signInWithGoogle(role);

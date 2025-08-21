@@ -27,6 +27,9 @@ const AuthCallback = () => {
           // Wait for auth context to update with proper user data
           const checkUserAndRedirect = () => {
             if (currentUser && currentUser.role) {
+              console.log('AuthCallback - currentUser:', currentUser);
+              console.log('AuthCallback - currentUser.role:', currentUser.role);
+              
               // Check for ticket purchase redirect first
               const redirectAfterLogin = localStorage.getItem('redirectAfterLogin');
               if (redirectAfterLogin && redirectAfterLogin.includes('/buy-tickets/')) {
@@ -37,6 +40,9 @@ const AuthCallback = () => {
               
               // Check for pending event code (from QR scan) - check both storage locations
               const pendingEventCode = sessionStorage.getItem('pendingEventCode') || localStorage.getItem('pendingEventCode');
+              console.log('AuthCallback - pendingEventCode from storage:', pendingEventCode);
+              console.log('AuthCallback - sessionStorage pendingEventCode:', sessionStorage.getItem('pendingEventCode'));
+              console.log('AuthCallback - localStorage pendingEventCode:', localStorage.getItem('pendingEventCode'));
               if (pendingEventCode && currentUser.role === 'attendee') {
                 // Clear from both storage locations
                 sessionStorage.removeItem('pendingEventCode');

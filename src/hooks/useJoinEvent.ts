@@ -33,25 +33,8 @@ export const useJoinEvent = () => {
       return data as unknown as JoinEventResponse;
     },
     onSuccess: (data) => {
-      if (data?.success) {
-        console.log('Successfully joined event, invalidating caches...');
-        
-        // Invalidate all networking-related queries to refresh data
-        queryClient.invalidateQueries({ queryKey: ['attendee-networking'] });
-        queryClient.invalidateQueries({ queryKey: ['attendee-context'] });
-        queryClient.invalidateQueries({ queryKey: ['user-profile'] });
-        
-        // Force a refetch of networking data
-        queryClient.refetchQueries({ queryKey: ['attendee-networking'] });
-        
-        toast({
-          title: 'Successfully Joined Event!',
-          description: `Welcome to ${data.event_name}. You can now connect with other attendees.`,
-        });
-        
-        // Navigate to attendee dashboard
-        navigate('/attendee');
-      } else {
+      // This is now handled in the return function to allow conditional toast suppression
+      if (!data?.success) {
         console.error('Join event failed:', data?.message);
         toast({
           title: 'Failed to Join Event',
@@ -71,9 +54,33 @@ export const useJoinEvent = () => {
   });
 
   return {
-    joinEvent: (accessCode: string, options?: { onSuccess?: (data: any) => void; onError?: (error: any) => void }) => {
+    joinEvent: (accessCode: string, options?: { onSuccess?: (data: any) => void; onError?: (error: any) => void; suppressToast?: boolean }) => {
       return joinEventMutation.mutate(accessCode, {
-        onSuccess: options?.onSuccess,
+        onSuccess: (data) => {
+          // Only show default toast if not suppressed
+          if (!options?.suppressToast && data?.success) {
+            console.log('Successfully joined event, invalidating caches...');
+            
+            // Invalidate all networking-related queries to refresh data
+            queryClient.invalidateQueries({ queryKey: ['attendee-networking'] });
+            queryClient.invalidateQueries({ queryKey: ['attendee-context'] });
+            queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+            
+            // Force a refetch of networking data
+            queryClient.refetchQueries({ queryKey: ['attendee-networking'] });
+            
+            toast({
+              title: 'Successfully Joined Event!',
+              description: `Welcome to ${data.event_name}. You can now connect with other attendees.`,
+            });
+            
+            // Navigate to attendee dashboard
+            navigate('/attendee');
+          }
+          
+          // Call custom onSuccess if provided
+          options?.onSuccess?.(data);
+        },
         onError: options?.onError,
       });
     },

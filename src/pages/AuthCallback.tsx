@@ -34,10 +34,12 @@ const AuthCallback = () => {
                 return;
               }
               
-              // Check for pending event code (from QR scan)
-              const pendingEventCode = sessionStorage.getItem('pendingEventCode');
+              // Check for pending event code (from QR scan) - check both storage locations
+              const pendingEventCode = sessionStorage.getItem('pendingEventCode') || localStorage.getItem('pendingEventCode');
               if (pendingEventCode && currentUser.role === 'attendee') {
+                // Clear from both storage locations
                 sessionStorage.removeItem('pendingEventCode');
+                localStorage.removeItem('pendingEventCode');
                 
                 joinEvent(pendingEventCode, {
                   onSuccess: (data: any) => {

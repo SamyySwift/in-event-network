@@ -43,8 +43,7 @@ const TicketQRCode: React.FC<TicketQRCodeProps> = ({ ticket, onClose }) => {
 
     // Generate QR code with logo using QR Server API
     const qrSize = 300;
-    const logoUrl = encodeURIComponent('https://89ffd642-3173-4004-8c28-eb0eea097a15.lovableproject.com/lovable-uploads/c1f92d5a-00e5-43d5-8607-33a3e08b6021.png');
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(qrData)}&logo=${logoUrl}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(qrData)}&logo=https://89ffd642-3173-4004-8c28-eb0eea097a15.lovableproject.com/lovable-uploads/cc286065-ca78-4e02-b135-112dfebbebef.png`;
     setQrImageUrl(qrUrl);
   }, [ticket]);
 
@@ -142,8 +141,7 @@ const TicketQRCode: React.FC<TicketQRCodeProps> = ({ ticket, onClose }) => {
       });
 
       const qrSize = 120;
-      const logoUrl = encodeURIComponent('https://89ffd642-3173-4004-8c28-eb0eea097a15.lovableproject.com/lovable-uploads/c1f92d5a-00e5-43d5-8607-33a3e08b6021.png');
-      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(qrData)}&logo=${logoUrl}`;
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(qrData)}&logo=https://89ffd642-3173-4004-8c28-eb0eea097a15.lovableproject.com/lovable-uploads/cc286065-ca78-4e02-b135-112dfebbebef.png`;
       
       // Load and draw QR code
       const qrImg = new Image();

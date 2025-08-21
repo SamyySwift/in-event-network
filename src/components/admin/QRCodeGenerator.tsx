@@ -21,8 +21,7 @@ const QRCodeGenerator: React.FC<QRCodeGeneratorProps> = ({
 
   const generateQRCode = async () => {
     setIsGenerating(true);
-    const logoUrl = encodeURIComponent('https://89ffd642-3173-4004-8c28-eb0eea097a15.lovableproject.com/lovable-uploads/c1f92d5a-00e5-43d5-8607-33a3e08b6021.png');
-    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(qrUrl)}&logo=${logoUrl}`;
+    const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${qrSize}x${qrSize}&data=${encodeURIComponent(qrUrl)}`;
     
     if (canvasRef.current) {
       const ctx = canvasRef.current.getContext('2d');

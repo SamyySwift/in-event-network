@@ -21,32 +21,6 @@ export function SponsorFormQRCode({ formLink, formTitle }: SponsorFormQRCodeProp
           dark: '#000000',
           light: '#FFFFFF',
         },
-      }, (error) => {
-        if (error) {
-          console.error('Error generating QR code:', error);
-          return;
-        }
-        
-        // Add logo overlay
-        const canvas = canvasRef.current;
-        const ctx = canvas?.getContext('2d');
-        if (!ctx || !canvas) return;
-        
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.onload = () => {
-          const logoSize = 40;
-          const x = (canvas.width - logoSize) / 2;
-          const y = (canvas.height - logoSize) / 2;
-          
-          // Draw white background for logo
-          ctx.fillStyle = 'white';
-          ctx.fillRect(x - 4, y - 4, logoSize + 8, logoSize + 8);
-          
-          // Draw logo
-          ctx.drawImage(img, x, y, logoSize, logoSize);
-        };
-        img.src = '/lovable-uploads/c1f92d5a-00e5-43d5-8607-33a3e08b6021.png';
       });
     }
   }, [formLink]);

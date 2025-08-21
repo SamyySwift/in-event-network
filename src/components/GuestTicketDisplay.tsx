@@ -154,7 +154,7 @@ export function GuestTicketDisplay({ tickets, event, onDownload }: GuestTicketDi
                     level="M"
                     includeMargin={true}
                     imageSettings={{
-                      src: "/lovable-uploads/c1f92d5a-00e5-43d5-8607-33a3e08b6021.png",
+                      src: "/lovable-uploads/cc286065-ca78-4e02-b135-112dfebbebef.png",
                       x: undefined,
                       y: undefined,
                       height: 24,

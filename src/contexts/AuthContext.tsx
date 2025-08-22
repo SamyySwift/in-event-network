@@ -477,25 +477,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       // Store the role preference for after OAuth callback
       localStorage.setItem("pendingGoogleRole", role);
-      
-      // Check if there's a pending event code and include it in OAuth state
-      const pendingEventCode = localStorage.getItem('pendingEventCode') || 
-                              sessionStorage.getItem('pendingEventCode');
-      
-      // Build redirect URL with event context if needed
-      let redirectUrl = `${window.location.origin}/auth/callback`;
-      const queryParams: any = { role: role };
-      
-      if (pendingEventCode) {
-        console.log("Including event code in OAuth flow:", pendingEventCode);
-        queryParams.eventCode = pendingEventCode;
-      }
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: redirectUrl,
-          queryParams: queryParams,
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            role: role,
+          },
         },
       });
 

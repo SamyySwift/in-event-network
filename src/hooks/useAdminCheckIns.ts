@@ -45,69 +45,7 @@ export const useAdminCheckIns = (eventIdOverride?: string) => {
     }
   };
 
-  // Check in a ticket by ticket ID directly
-  const checkInTicketById = useMutation({
-    mutationFn: async ({ ticketId, notes }: { ticketId: string; notes?: string }) => {
-      // Find the specific ticket by ID
-      const { data: ticket, error: ticketError } = await supabase
-        .from('event_tickets')
-        .select(`
-          *,
-          profiles!event_tickets_user_id_fkey(id, name, email)
-        `)
-        .eq('id', ticketId)
-        .eq('event_id', actualEventId)
-        .single();
-
-      if (ticketError) throw new Error('Ticket not found');
-      if (ticket.check_in_status) throw new Error('Ticket already checked in');
-
-      // Update ticket status
-      const { error: updateError } = await supabase
-        .from('event_tickets')
-        .update({
-          check_in_status: true,
-          checked_in_at: new Date().toISOString(),
-          checked_in_by: (await supabase.auth.getUser()).data.user?.id,
-        })
-        .eq('id', ticket.id);
-
-      if (updateError) throw updateError;
-
-      // Create check-in record
-      const { error: checkInError } = await supabase
-        .from('check_ins')
-        .insert([{
-          ticket_id: ticket.id,
-          admin_id: (await supabase.auth.getUser()).data.user?.id,
-          check_in_method: 'manual',
-          notes,
-        }]);
-
-      if (checkInError) throw checkInError;
-
-      // Grant attendee dashboard access
-      await grantAttendeeAccess(ticket);
-
-      return ticket;
-    },
-    onSuccess: (ticket) => {
-      queryClient.invalidateQueries({ queryKey: ['admin-event-tickets'] });
-      toast({
-        title: "Success",
-        description: `Ticket checked in successfully. ${ticket.profiles?.name || ticket.guest_name || 'Attendee'} now has dashboard access.`,
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Check-in Failed",
-        description: error.message || "Failed to check in ticket",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Check in a ticket by ticket number or attendee name (legacy - for search)
+  // Check in a ticket by ticket number or attendee name
   const checkInTicket = useMutation({
     mutationFn: async ({ searchQuery, notes }: CheckInData) => {
       // First, find the ticket by either ticket number or attendee name
@@ -131,6 +69,7 @@ export const useAdminCheckIns = (eventIdOverride?: string) => {
 
       if (ticketError) throw new Error('Error searching for ticket');
       if (!tickets || tickets.length === 0) throw new Error('No ticket found matching search criteria');
+      if (tickets.length > 1) throw new Error('Multiple tickets found. Please be more specific or use ticket number.');
       
       const ticket = tickets[0];
       if (ticket.check_in_status) throw new Error('Ticket already checked in');
@@ -306,10 +245,9 @@ export const useAdminCheckIns = (eventIdOverride?: string) => {
 
   return {
     checkInTicket,
-    checkInTicketById,
     checkInByQR,
     bulkCheckInAll,
-    isCheckingIn: checkInTicket.isPending || checkInByQR.isPending || checkInTicketById.isPending,
+    isCheckingIn: checkInTicket.isPending || checkInByQR.isPending,
     isBulkCheckingIn: bulkCheckInAll.isPending,
   };
 };

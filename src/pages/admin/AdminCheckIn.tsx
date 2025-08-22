@@ -22,11 +22,11 @@ function AdminCheckInContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [notes, setNotes] = useState('');
   const [showScanner, setShowScanner] = useState(false);
-  const [foundTickets, setFoundTickets] = useState<any[]>([]);
+  const [foundTicket, setFoundTicket] = useState<any>(null);
   const [searchAttempted, setSearchAttempted] = useState(false);
   
   const { selectedEventId } = useAdminEventContext();
-  const { checkInTicket, checkInTicketById, checkInByQR, isCheckingIn, bulkCheckInAll, isBulkCheckingIn } = useAdminCheckIns();
+  const { checkInTicket, checkInByQR, isCheckingIn, bulkCheckInAll, isBulkCheckingIn } = useAdminCheckIns();
   const { eventTickets, isLoadingTickets, stats } = useAdminTickets();
 
   // Search for ticket by name or ticket number
@@ -134,31 +134,30 @@ function AdminCheckInContent() {
     setSearchAttempted(true);
     const result = await searchTicket();
     if (result.data && result.data.length > 0) {
-      setFoundTickets(result.data);
+      setFoundTicket(result.data[0]);
     } else {
-      setFoundTickets([]);
+      setFoundTicket(null);
     }
   };
 
-  const handleCheckInTicket = (ticketId: string) => {
-    checkInTicketById.mutate({ 
-      ticketId, 
+  const handleCheckInFound = () => {
+    if (!foundTicket) return;
+    
+    checkInTicket.mutate({ 
+      searchQuery: foundTicket.ticket_number, 
       notes: notes.trim() || undefined 
-    }, {
-      onSuccess: () => {
-        // Update the local state to reflect check-in status
-        setFoundTickets(prev => prev.map(ticket => 
-          ticket.id === ticketId 
-            ? { ...ticket, check_in_status: true, checked_in_at: new Date().toISOString() }
-            : ticket
-        ));
-      }
     });
+    
+    // Clear form on success
+    setSearchQuery('');
+    setNotes('');
+    setFoundTicket(null);
+    setSearchAttempted(false);
   };
 
   const handleClearSearch = () => {
     setSearchQuery('');
-    setFoundTickets([]);
+    setFoundTicket(null);
     setSearchAttempted(false);
   };
 
@@ -347,93 +346,95 @@ function AdminCheckInContent() {
                           <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
                           <p className="mt-2 text-sm text-muted-foreground">Searching...</p>
                         </div>
-                      ) : foundTickets.length > 0 ? (
+                      ) : foundTicket ? (
                         <div className="space-y-4">
                           <div className="flex items-center justify-between">
-                            <h4 className="font-semibold text-foreground">
-                              {foundTickets.length === 1 ? "Ticket Found" : `${foundTickets.length} Tickets Found`}
-                            </h4>
-                            <Button
-                              onClick={handleClearSearch}
-                              variant="outline"
-                              size="sm"
-                              className="rounded-lg"
+                            <h4 className="font-semibold text-foreground">Ticket Found</h4>
+                            <Badge 
+                              variant={foundTicket.check_in_status ? "default" : "secondary"}
                             >
-                              Clear
-                            </Button>
+                              {foundTicket.check_in_status ? "Already Checked In" : "Ready for Check-in"}
+                            </Badge>
                           </div>
                           
                           <div className="space-y-3">
-                            {foundTickets.map((ticket) => (
-                              <div key={ticket.id} className="border rounded-lg p-4 bg-background/50 space-y-3">
-                                <div className="flex items-center justify-between">
-                                  <div className="space-y-1">
-                                    <h5 className="font-medium text-sm">{ticket.guest_name || ticket.profiles?.name || 'N/A'}</h5>
-                                    <p className="text-xs text-muted-foreground">#{ticket.ticket_number}</p>
-                                    <p className="text-xs text-muted-foreground">{ticket.ticket_types.name}</p>
-                                  </div>
-                                  <div className="flex items-center gap-2">
-                                    <Badge 
-                                      variant={ticket.check_in_status ? "default" : "secondary"}
-                                      className="text-xs"
-                                    >
-                                      {ticket.check_in_status ? "Checked In" : "Pending"}
-                                    </Badge>
-                                    {!ticket.check_in_status && (
-                                      <Button
-                                        onClick={() => handleCheckInTicket(ticket.id)}
-                                        disabled={isCheckingIn}
-                                        size="sm"
-                                        className="rounded-lg"
-                                      >
-                                        <CheckCircle className="h-3 w-3 mr-1" />
-                                        Check In
-                                      </Button>
-                                    )}
-                                  </div>
-                                </div>
-                                
-                                <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-                                  <div>
-                                    <strong>Price:</strong> ₦{(ticket.price / 100).toLocaleString()}
-                                  </div>
-                                  <div>
-                                    <strong>Purchased:</strong> {formatDate(ticket.purchase_date)}
-                                  </div>
-                                  {ticket.checked_in_at && (
-                                    <div className="col-span-2">
-                                      <strong>Checked in:</strong> {formatDate(ticket.checked_in_at)}
-                                    </div>
-                                  )}
-                                </div>
+                            <div className="text-center space-y-1">
+                              <h5 className="font-medium">{foundTicket.events.name}</h5>
+                              <p className="text-sm text-muted-foreground">{foundTicket.ticket_types.name}</p>
+                              <p className="text-xs text-muted-foreground">#{foundTicket.ticket_number}</p>
+                            </div>
+
+                            <div className="space-y-2 text-sm">
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-muted-foreground" />
+                                <span>{formatDate(foundTicket.events.start_time)}</span>
                               </div>
-                            ))}
+                              {foundTicket.events.location && (
+                                <div className="flex items-center gap-2">
+                                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                                  <span>{foundTicket.events.location}</span>
+                                </div>
+                              )}
+                              <div className="flex items-center gap-2">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                <span>{foundTicket.guest_name || foundTicket.profiles?.name || 'N/A'}</span>
+                              </div>
+                              <div>
+                                <strong>Price:</strong> ₦{(foundTicket.price / 100).toLocaleString()}
+                              </div>
+                              {foundTicket.checked_in_at && (
+                                <div>
+                                  <strong>Checked in:</strong> {formatDate(foundTicket.checked_in_at)}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       ) : (
                         <div className="text-center py-4">
-                          <p className="text-sm text-red-600">No tickets found matching "{searchQuery}"</p>
+                          <p className="text-sm text-red-600">No ticket found matching "{searchQuery}"</p>
                         </div>
                       )}
                     </div>
                   )}
 
-                  {foundTickets.length > 0 && (
+                  {foundTicket && (
                     <div className="space-y-2">
-                      <Label htmlFor="notes" className="text-sm font-medium">Notes for Next Check-in (Optional)</Label>
+                      <Label htmlFor="notes" className="text-sm font-medium">Notes (Optional)</Label>
                       <Textarea
                         id="notes"
-                        placeholder="Add notes that will be applied to the next ticket check-in..."
+                        placeholder="Add any notes about this check-in..."
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
-                        rows={2}
+                        rows={3}
                         className="rounded-xl resize-none"
                       />
-                      <p className="text-xs text-muted-foreground">
-                        These notes will be saved with each individual ticket check-in.
-                      </p>
                     </div>
                   )}
+
+                  <div className="flex gap-2">
+                    {foundTicket && !foundTicket.check_in_status && (
+                      <Button 
+                        onClick={handleCheckInFound}
+                        disabled={isCheckingIn}
+                        className="flex-1 rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
+                        size="lg"
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        {isCheckingIn ? 'Checking In...' : 'Check In Ticket'}
+                      </Button>
+                    )}
+                    {(foundTicket || searchAttempted) && (
+                      <Button 
+                        onClick={handleClearSearch}
+                        variant="outline"
+                        className="rounded-xl"
+                        size="lg"
+                      >
+                        Clear
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
             </CardContent>

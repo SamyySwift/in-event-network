@@ -51,43 +51,17 @@ const AuthCallback = () => {
                 return;
               }
               
-              // Enhanced event code detection with multiple fallbacks for OAuth flow
-              let pendingEventCode = 
-                sessionStorage.getItem('pendingEventCode') || 
-                localStorage.getItem('pendingEventCode') ||
-                localStorage.getItem('googleOAuthEventCode');
-
-              // Try to get from stored OAuth event data
-              if (!pendingEventCode) {
-                try {
-                  const storedEventData = localStorage.getItem('googleOAuthEventData');
-                  if (storedEventData) {
-                    const eventData = JSON.parse(storedEventData);
-                    // Check if stored data is not too old (within last 10 minutes)
-                    if (Date.now() - eventData.timestamp < 600000) {
-                      pendingEventCode = eventData.code;
-                      console.log('AuthCallback - Retrieved event code from OAuth data:', pendingEventCode);
-                    }
-                  }
-                } catch (error) {
-                  console.warn('AuthCallback - Failed to parse stored OAuth event data:', error);
-                }
-              }
-              
-              console.log('AuthCallback - Enhanced event code check:', {
-                sessionStorage: sessionStorage.getItem('pendingEventCode'),
-                localStorage: localStorage.getItem('pendingEventCode'), 
-                googleOAuth: localStorage.getItem('googleOAuthEventCode'),
-                finalCode: pendingEventCode
-              });
+              // Check for pending event code (from QR scan) - check both storage locations
+              const pendingEventCode = sessionStorage.getItem('pendingEventCode') || localStorage.getItem('pendingEventCode');
+              console.log('AuthCallback - pendingEventCode from storage:', pendingEventCode);
+              console.log('AuthCallback - sessionStorage pendingEventCode:', sessionStorage.getItem('pendingEventCode'));
+              console.log('AuthCallback - localStorage pendingEventCode:', localStorage.getItem('pendingEventCode'));
               
               if (pendingEventCode && currentUser.role === 'attendee') {
                 console.log('AuthCallback - Found pending event code, joining event');
-                // Clear all stored event codes
+                // Clear from both storage locations
                 sessionStorage.removeItem('pendingEventCode');
                 localStorage.removeItem('pendingEventCode');
-                localStorage.removeItem('googleOAuthEventCode');
-                localStorage.removeItem('googleOAuthEventData');
                 
                 // Set joining state to true before starting event join
                 setIsJoiningEvent(true);
@@ -137,34 +111,13 @@ const AuthCallback = () => {
                 
                 if (user) {
                   console.log('AuthCallback - Fallback: Got user from Supabase directly:', user);
-                  // Enhanced pending event code check for fallback
-                  let pendingEventCode = 
-                    sessionStorage.getItem('pendingEventCode') || 
-                    localStorage.getItem('pendingEventCode') ||
-                    localStorage.getItem('googleOAuthEventCode');
-
-                  // Try OAuth event data as final fallback
-                  if (!pendingEventCode) {
-                    try {
-                      const storedEventData = localStorage.getItem('googleOAuthEventData');
-                      if (storedEventData) {
-                        const eventData = JSON.parse(storedEventData);
-                        if (Date.now() - eventData.timestamp < 600000) {
-                          pendingEventCode = eventData.code;
-                        }
-                      }
-                    } catch (error) {
-                      console.warn('AuthCallback - Fallback: Failed to parse OAuth event data:', error);
-                    }
-                  }
+                  // Check for pending event code one more time with fallback user
+                  const pendingEventCode = sessionStorage.getItem('pendingEventCode') || localStorage.getItem('pendingEventCode');
                   
                   if (pendingEventCode) {
                     console.log('AuthCallback - Fallback: Found pending event, redirecting to attendee with toast');
-                    // Clear all event code storage
                     sessionStorage.removeItem('pendingEventCode');
                     localStorage.removeItem('pendingEventCode');
-                    localStorage.removeItem('googleOAuthEventCode');
-                    localStorage.removeItem('googleOAuthEventData');
                     
                     toast({
                       title: "Authentication Complete",

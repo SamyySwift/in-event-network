@@ -49,23 +49,9 @@ const Register = () => {
   const handleGoogleSignUp = async () => {
     setErrorMessage(null);
     
-    // Enhanced event code storage for OAuth flow with multiple storage keys and timestamp
+    // Store event code in localStorage before Google OAuth redirect (if exists)
     if (eventCode) {
-      console.log("Storing event code for Google OAuth:", eventCode);
-      const eventData = {
-        code: eventCode,
-        timestamp: Date.now(),
-        role: role
-      };
-      
-      // Store in multiple locations with different keys for reliability
       localStorage.setItem('pendingEventCode', eventCode);
-      localStorage.setItem('googleOAuthEventCode', eventCode);
-      localStorage.setItem('googleOAuthEventData', JSON.stringify(eventData));
-      sessionStorage.setItem('pendingEventCode', eventCode);
-      sessionStorage.setItem('googleOAuthEventCode', eventCode);
-      
-      console.log("Event code stored for OAuth. Data:", eventData);
     }
     
     try {

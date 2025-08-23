@@ -137,6 +137,17 @@ const AuthCallback = () => {
                 
                 if (user) {
                   console.log('AuthCallback - Fallback: Got user from Supabase directly:', user);
+                  
+                  // Get user profile to determine role
+                  const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', user.id)
+                    .single();
+                  
+                  const userRole = profile?.role;
+                  console.log('AuthCallback - Fallback: User role from profile:', userRole);
+                  
                   // Enhanced pending event code check for fallback
                   let pendingEventCode = 
                     sessionStorage.getItem('pendingEventCode') || 
@@ -158,7 +169,7 @@ const AuthCallback = () => {
                     }
                   }
                   
-                  if (pendingEventCode) {
+                  if (pendingEventCode && userRole === 'attendee') {
                     console.log('AuthCallback - Fallback: Found pending event, redirecting to attendee with toast');
                     // Clear all event code storage
                     sessionStorage.removeItem('pendingEventCode');
@@ -172,8 +183,10 @@ const AuthCallback = () => {
                     });
                   }
                   
-                  // Default redirect to attendee (safer assumption for OAuth users)
-                  navigate('/attendee', { replace: true });
+                  // Redirect based on actual user role
+                  const redirectPath = userRole === 'host' ? '/admin' : '/attendee';
+                  console.log('AuthCallback - Fallback: Redirecting to:', redirectPath);
+                  navigate(redirectPath, { replace: true });
                 } else {
                   console.warn('AuthCallback - Fallback: No user found, redirecting to login');
                   navigate('/login', { replace: true });

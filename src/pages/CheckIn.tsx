@@ -33,7 +33,7 @@ function CheckIn() {
   const [searchQuery, setSearchQuery] = useState('');
   const [notes, setNotes] = useState('');
   const [showScanner, setShowScanner] = useState(false);
-  const [foundTicket, setFoundTicket] = useState<any>(null);
+  const [foundTickets, setFoundTickets] = useState<any[]>([]);
   const [searchAttempted, setSearchAttempted] = useState(false);
   
   const queryClient = useQueryClient();
@@ -192,30 +192,31 @@ function CheckIn() {
     setSearchAttempted(true);
     const result = await searchTicket();
     if (result.data && result.data.length > 0) {
-      setFoundTicket(result.data[0]);
+      setFoundTickets(result.data);
     } else {
-      setFoundTicket(null);
+      setFoundTickets([]);
     }
   };
 
-  const handleCheckInFound = () => {
-    if (!foundTicket) return;
-    
+  const handleCheckInTicket = (ticket: any) => {
     checkInTicket.mutate({ 
-      searchQuery: foundTicket.ticket_number, 
+      searchQuery: ticket.ticket_number, 
       notes: notes.trim() || undefined 
+    }, {
+      onSuccess: () => {
+        // Update the local state to reflect check-in status
+        setFoundTickets(prev => prev.map(t => 
+          t.id === ticket.id 
+            ? { ...t, check_in_status: true, checked_in_at: new Date().toISOString() }
+            : t
+        ));
+      }
     });
-    
-    // Clear form on success
-    setSearchQuery('');
-    setNotes('');
-    setFoundTicket(null);
-    setSearchAttempted(false);
   };
 
   const handleClearSearch = () => {
     setSearchQuery('');
-    setFoundTicket(null);
+    setFoundTickets([]);
     setSearchAttempted(false);
   };
 
@@ -419,48 +420,67 @@ function CheckIn() {
                             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
                             <p className="mt-2 text-sm text-muted-foreground">Searching...</p>
                           </div>
-                        ) : foundTicket ? (
+                        ) : foundTickets.length > 0 ? (
                           <div className="space-y-4">
                             <div className="flex items-center justify-between">
-                              <h4 className="font-semibold text-foreground">Ticket Found</h4>
-                              <Badge 
-                                variant={foundTicket.check_in_status ? "default" : "secondary"}
+                              <h4 className="font-semibold text-foreground">
+                                {foundTickets.length === 1 ? "Ticket Found" : `${foundTickets.length} Tickets Found`}
+                              </h4>
+                              <Button
+                                onClick={handleClearSearch}
+                                variant="outline"
+                                size="sm"
+                                className="rounded-lg"
                               >
-                                {foundTicket.check_in_status ? "Already Checked In" : "Ready for Check-in"}
-                              </Badge>
+                                Clear
+                              </Button>
                             </div>
                             
                             <div className="space-y-3">
-                              <div className="text-center space-y-1">
-                                <h5 className="font-medium">{event.name}</h5>
-                                <p className="text-sm text-muted-foreground">{foundTicket.ticket_type_name}</p>
-                                <p className="text-xs text-muted-foreground">#{foundTicket.ticket_number}</p>
-                              </div>
-
-                              <div className="space-y-2 text-sm">
-                                <div className="flex items-center gap-2">
-                                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                                  <span>{formatDate(event.start_time)}</span>
-                                </div>
-                                {event.location && (
-                                  <div className="flex items-center gap-2">
-                                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                                    <span>{event.location}</span>
+                              {foundTickets.map((ticket) => (
+                                <div key={ticket.id} className="border rounded-lg p-4 bg-background/50 space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <div className="space-y-1">
+                                      <h5 className="font-medium text-sm">{ticket.guest_name || ticket.profile_name || 'N/A'}</h5>
+                                      <p className="text-xs text-muted-foreground">#{ticket.ticket_number}</p>
+                                      <p className="text-xs text-muted-foreground">{ticket.ticket_type_name}</p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      <Badge 
+                                        variant={ticket.check_in_status ? "default" : "secondary"}
+                                        className="text-xs"
+                                      >
+                                        {ticket.check_in_status ? "Checked In" : "Pending"}
+                                      </Badge>
+                                      {!ticket.check_in_status && (
+                                        <Button
+                                          onClick={() => handleCheckInTicket(ticket)}
+                                          disabled={checkInTicket.isPending}
+                                          size="sm"
+                                          className="rounded-lg"
+                                        >
+                                          <CheckCircle className="h-3 w-3 mr-1" />
+                                          Check In
+                                        </Button>
+                                      )}
+                                    </div>
                                   </div>
-                                )}
-                                <div className="flex items-center gap-2">
-                                  <User className="h-4 w-4 text-muted-foreground" />
-                                  <span>{foundTicket.guest_name || foundTicket.profile_name || 'N/A'}</span>
-                                </div>
-                                <div>
-                                  <strong>Price:</strong> ₦{(foundTicket.price / 100).toLocaleString()}
-                                </div>
-                                {foundTicket.checked_in_at && (
-                                  <div>
-                                    <strong>Checked in:</strong> {formatDate(foundTicket.checked_in_at)}
+                                  
+                                  <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                                    <div>
+                                      <strong>Price:</strong> ₦{(ticket.price / 100).toLocaleString()}
+                                    </div>
+                                    <div>
+                                      <strong>Purchased:</strong> {formatDate(ticket.purchase_date)}
+                                    </div>
+                                    {ticket.checked_in_at && (
+                                      <div className="col-span-2">
+                                        <strong>Checked in:</strong> {formatDate(ticket.checked_in_at)}
+                                      </div>
+                                    )}
                                   </div>
-                                )}
-                              </div>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         ) : (
@@ -471,43 +491,22 @@ function CheckIn() {
                       </div>
                     )}
 
-                    {foundTicket && (
+                    {foundTickets.length > 0 && (
                       <div className="space-y-2">
-                        <Label htmlFor="notes" className="text-sm font-medium">Notes (Optional)</Label>
+                        <Label htmlFor="notes" className="text-sm font-medium">Notes for Next Check-in (Optional)</Label>
                         <Textarea
                           id="notes"
-                          placeholder="Add any notes about this check-in..."
+                          placeholder="Add notes that will be applied to the next ticket check-in..."
                           value={notes}
                           onChange={(e) => setNotes(e.target.value)}
-                          rows={3}
+                          rows={2}
                           className="rounded-xl resize-none"
                         />
+                        <p className="text-xs text-muted-foreground">
+                          These notes will be saved with each individual ticket check-in.
+                        </p>
                       </div>
                     )}
-
-                    <div className="flex gap-2">
-                      {foundTicket && !foundTicket.check_in_status && (
-                        <Button 
-                          onClick={handleCheckInFound}
-                          disabled={checkInTicket.isPending}
-                          className="flex-1 rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
-                          size="lg"
-                        >
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          {checkInTicket.isPending ? 'Checking In...' : 'Check In Ticket'}
-                        </Button>
-                      )}
-                      {(foundTicket || searchAttempted) && (
-                        <Button 
-                          onClick={handleClearSearch}
-                          variant="outline"
-                          className="rounded-xl"
-                          size="lg"
-                        >
-                          Clear
-                        </Button>
-                      )}
-                    </div>
                   </div>
                 </div>
               </CardContent>

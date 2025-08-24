@@ -12,6 +12,8 @@ interface DashboardData {
   liveEventsCount: number;
   upcomingEventsCount: number;
   performanceScore: number;
+  connectionsCount: number;
+  connectionsRate: number;
 }
 
 export const useAdminDashboard = () => {
@@ -82,6 +84,30 @@ export const useAdminDashboard = () => {
           .in('event_id', eventIds) : { count: 0, error: null },
       ]);
 
+      // Get networking connections between event attendees
+      let connectionsCount = 0;
+      if (eventIds.length > 0) {
+        // Get all participants for admin's events
+        const { data: participantsData } = await supabase
+          .from('event_participants')
+          .select('user_id')
+          .in('event_id', eventIds);
+        
+        const participantIds = participantsData?.map(p => p.user_id) || [];
+        
+        if (participantIds.length > 0) {
+          // Count accepted connections where both users are participants in admin's events
+          const { count } = await supabase
+            .from('connections')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'accepted')
+            .in('requester_id', participantIds)
+            .in('recipient_id', participantIds);
+          
+          connectionsCount = count || 0;
+        }
+      }
+
       // New: Get polls, poll votes, suggestions & average ratings
       let pollsCount = 0, pollVotesCount = 0, suggestionsCount = 0, avgRating = 0;
       if (eventIds.length > 0) {
@@ -142,6 +168,10 @@ export const useAdminDashboard = () => {
       const perfComponents = [questionsScore, pollEngagementScore, suggestionsScore, ratingsScore];
       const performanceScore = Math.round(perfComponents.reduce((a, b) => a + b, 0) / perfComponents.length);
 
+      // Calculate connection rate
+      const totalAttendees = attendeesResult.count || 0;
+      const connectionsRate = totalAttendees > 0 ? Math.round((connectionsCount / totalAttendees) * 100) : 0;
+
       return {
         eventsCount: eventsCount || 0,
         attendeesCount: attendeesResult.count || 0,
@@ -150,6 +180,8 @@ export const useAdminDashboard = () => {
         liveEventsCount: liveEvents.length,
         upcomingEventsCount: upcomingEvents.length,
         performanceScore,
+        connectionsCount,
+        connectionsRate,
       };
     },
     enabled: !!currentUser?.id,
@@ -167,6 +199,7 @@ export const useAdminDashboard = () => {
       { table: 'polls', filter: '' },
       { table: 'poll_votes', filter: '' },
       { table: 'suggestions', filter: '' },
+      { table: 'connections', filter: '' },
     ];
 
     // We'll subscribe to INSERT/UPDATE/DELETE for each table

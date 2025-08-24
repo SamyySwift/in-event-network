@@ -14,6 +14,7 @@ import {
   User,
   BarChart4,
   TrendingUp,
+  Users2,
 } from "lucide-react";
 import { useAdminDashboard } from "@/hooks/useAdminDashboard";
 import { useAuth } from "@/contexts/AuthContext";
@@ -56,6 +57,13 @@ const AdminDashboardContent = () => {
       icon: MessageSquare,
       gradient: "from-yellow-400 to-orange-500",
       navigationPath: "/admin/questions",
+    },
+    {
+      title: "Connections Made",
+      value: dashboardData?.connectionsCount,
+      icon: Users2,
+      gradient: "from-teal-500 to-cyan-500",
+      navigationPath: "/admin/attendees",
     },
   ];
 

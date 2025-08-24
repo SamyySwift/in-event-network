@@ -285,6 +285,40 @@ export const useAttendeeQuestions = () => {
     },
   });
 
+  const deleteQuestionMutation = useMutation({
+    mutationFn: async (questionId: string) => {
+      if (!currentUser?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      const { error } = await supabase
+        .from('questions')
+        .delete()
+        .eq('id', questionId)
+        .eq('user_id', currentUser.id); // Ensure users can only delete their own questions
+
+      if (error) throw error;
+
+      return questionId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['attendee-questions'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-questions'] });
+      toast({
+        title: "Success",
+        description: "Question deleted successfully!",
+      });
+    },
+    onError: (error: any) => {
+      console.error('Error deleting question:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete question",
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     questions,
     sessions,
@@ -293,7 +327,9 @@ export const useAttendeeQuestions = () => {
     error: questionsError,
     submitQuestion: submitQuestionMutation.mutate,
     upvoteQuestion: upvoteQuestionMutation.mutate,
+    deleteQuestion: deleteQuestionMutation.mutate,
     isSubmitting: submitQuestionMutation.isPending,
+    isDeleting: deleteQuestionMutation.isPending,
     isParticipant: isParticipantQuery.data,
     isParticipantLoading: isParticipantQuery.isLoading,
   };

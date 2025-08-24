@@ -6,6 +6,7 @@ import {
   User,
   Star,
   Lightbulb,
+  Trash2,
 } from "lucide-react";
 import AttendeeRouteGuard from "@/components/attendee/AttendeeRouteGuard";
 import {
@@ -51,7 +52,9 @@ const AttendeeQuestions = () => {
     error,
     submitQuestion,
     upvoteQuestion,
+    deleteQuestion,
     isSubmitting,
+    isDeleting,
   } = useAttendeeQuestions();
   const handleSubmitQuestion = async () => {
     if (!newQuestion.trim()) return;
@@ -83,6 +86,12 @@ const AttendeeQuestions = () => {
   const handleFeedback = (questionId: string) => {
     setSelectedQuestionId(questionId);
     setShowFeedbackModal(true);
+  };
+
+  const handleDeleteQuestion = (questionId: string) => {
+    if (window.confirm("Are you sure you want to delete this question?")) {
+      deleteQuestion(questionId);
+    }
   };
   const myQuestions = questions.filter((q) => q.user_id === currentUser?.id);
   const otherQuestions = questions.filter((q) => q.user_id !== currentUser?.id);
@@ -198,7 +207,18 @@ const AttendeeQuestions = () => {
                   {question.upvotes} {question.upvotes > 0 && <span aria-hidden="true">🔥</span>}
                 </Button>
 
-                {question.is_answered && question.user_id === currentUser?.id}
+                {question.user_id === currentUser?.id && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteQuestion(question.id)}
+                    disabled={isDeleting}
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4 mr-1" />
+                    Delete
+                  </Button>
+                )}
               </div>
             </div>
           </div>

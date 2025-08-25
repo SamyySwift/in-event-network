@@ -2454,12 +2454,6 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: string
       }
-      get_admin_event_connections: {
-        Args: { admin_event_ids: string[] }
-        Returns: {
-          connection_count: number
-        }[]
-      }
       get_current_user_event: {
         Args: Record<PropertyKey, never>
         Returns: string

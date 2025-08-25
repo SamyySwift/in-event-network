@@ -97,14 +97,16 @@ export const useAdminDashboard = () => {
         
         if (participantIds.length > 0) {
           // Count accepted connections where both users are participants in admin's events
-          const { count } = await supabase
+          // We need to ensure both requester and recipient are in the participant list
+          const { data: connectionsData } = await supabase
             .from('connections')
-            .select('*', { count: 'exact', head: true })
-            .eq('status', 'accepted')
-            .in('requester_id', participantIds)
-            .in('recipient_id', participantIds);
+            .select('requester_id, recipient_id')
+            .eq('status', 'accepted');
           
-          connectionsCount = count || 0;
+          // Filter connections where both users are participants in admin's events
+          connectionsCount = (connectionsData || []).filter(conn => 
+            participantIds.includes(conn.requester_id) && participantIds.includes(conn.recipient_id)
+          ).length;
         }
       }
 

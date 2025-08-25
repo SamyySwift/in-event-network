@@ -86,6 +86,8 @@ export const useAdminDashboard = () => {
 
       // Get networking connections between event attendees
       let connectionsCount = 0;
+      console.log('🔍 Debug connections - eventIds:', eventIds);
+      
       if (eventIds.length > 0) {
         // Get all participants for admin's events
         const { data: participantsData } = await supabase
@@ -94,6 +96,7 @@ export const useAdminDashboard = () => {
           .in('event_id', eventIds);
         
         const participantIds = participantsData?.map(p => p.user_id) || [];
+        console.log('🔍 Debug connections - participantIds count:', participantIds.length);
         
         if (participantIds.length > 1) {
           // Get all accepted connections and filter them
@@ -102,10 +105,15 @@ export const useAdminDashboard = () => {
             .select('requester_id, recipient_id')
             .eq('status', 'accepted');
           
+          console.log('🔍 Debug connections - allConnections count:', allConnections?.length || 0);
+          
           // Filter connections where both users are participants in admin's events
-          connectionsCount = (allConnections || []).filter(conn => 
+          const filteredConnections = (allConnections || []).filter(conn => 
             participantIds.includes(conn.requester_id) && participantIds.includes(conn.recipient_id)
-          ).length;
+          );
+          
+          connectionsCount = filteredConnections.length;
+          console.log('🔍 Debug connections - final connectionsCount:', connectionsCount);
         }
       }
 

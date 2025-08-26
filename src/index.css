@@ -52,11 +52,6 @@
     --sidebar-accent-foreground: 246 60% 26.1%;
     --sidebar-border: 246 60% 92%;
     --sidebar-ring: 246 87% 60%;
-
-    /* Fire gradient tokens */
-    --fire-1: 14 100% 57%; /* orange-red */
-    --fire-2: 28 100% 50%; /* orange */
-    --fire-3: 40 100% 55%; /* yellow */
   }
 
   .dark {
@@ -106,11 +101,6 @@
     --sidebar-accent-foreground: 246 87% 95%;
     --sidebar-border: 246 60% 20%;
     --sidebar-ring: 246 87% 60%;
-
-    /* Fire gradient tokens (dark) */
-    --fire-1: 14 100% 57%;
-    --fire-2: 28 100% 50%;
-    --fire-3: 40 100% 55%;
   }
 }
 
@@ -135,10 +125,6 @@
 
   .glass-card {
     @apply glass shadow-lg shadow-primary/5 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300;
-  }
-
-  .gradient-card {
-    @apply bg-gradient-to-br from-white to-primary-50/50 dark:from-gray-900 dark:to-gray-800;
   }
 }
 
@@ -165,100 +151,3 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-
-.hover-scale {
-  @apply transition-transform duration-300 hover:scale-105;
-}
-
-.pulse {
-  @apply animate-pulse-slow;
-}
-
- .float-animation {
-   @apply animate-float;
- }
- 
- .text-gradient {
-   @apply bg-gradient-to-r from-primary-600 to-primary-400 bg-clip-text text-transparent;
- }
- 
-  /* Flaming border utility for trending items */
-  .fire-border {
-    position: relative !important;
-    border: 2px solid transparent !important;
-    border-radius: calc(var(--radius)) !important;
-    background:
-      linear-gradient(hsl(var(--card)), hsl(var(--card))) padding-box,
-      linear-gradient(
-        45deg,
-        hsl(var(--fire-1)) 0%,
-        hsl(var(--fire-2)) 25%,
-        hsl(var(--fire-3)) 50%,
-        hsl(var(--fire-2)) 75%,
-        hsl(var(--fire-1)) 100%
-      ) border-box !important;
-    z-index: 1;
-  }
-  .fire-border::before {
-    content: "";
-    position: absolute;
-    inset: -4px;
-    border-radius: inherit;
-    background: 
-      linear-gradient(
-        45deg,
-        hsl(var(--fire-1) / 0.8) 0%,
-        hsl(var(--fire-2) / 0.6) 25%,
-        hsl(var(--fire-3) / 0.8) 50%,
-        hsl(var(--fire-2) / 0.6) 75%,
-        hsl(var(--fire-1) / 0.8) 100%
-      );
-    filter: blur(8px);
-    z-index: -1;
-    animation: fire-flicker 2s ease-in-out infinite alternate;
-    pointer-events: none;
-  }
-  .fire-border::after {
-    content: "";
-    position: absolute;
-    inset: -8px;
-    border-radius: inherit;
-    background: 
-      radial-gradient(
-        ellipse at center,
-        hsl(var(--fire-2) / 0.3) 0%,
-        hsl(var(--fire-1) / 0.2) 40%,
-        transparent 70%
-      );
-    filter: blur(16px);
-    z-index: -2;
-    animation: fire-glow 3s ease-in-out infinite alternate;
-    pointer-events: none;
-  }
-  @keyframes fire-flicker {
-    0% { 
-      opacity: 0.8;
-      transform: scale(1);
-      filter: blur(8px) hue-rotate(0deg);
-    }
-    50% { 
-      opacity: 0.9;
-      transform: scale(1.02);
-      filter: blur(6px) hue-rotate(5deg);
-    }
-    100% { 
-      opacity: 0.7;
-      transform: scale(0.98);
-      filter: blur(10px) hue-rotate(-5deg);
-    }
-  }
-  @keyframes fire-glow {
-    0% { 
-      opacity: 0.4;
-      transform: scale(0.95);
-    }
-    100% { 
-      opacity: 0.6;
-      transform: scale(1.05);
-    }
-  }

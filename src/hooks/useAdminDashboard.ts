@@ -87,34 +87,22 @@ export const useAdminDashboard = () => {
       // Get networking connections between event attendees
       let connectionsCount = 0;
       if (eventIds.length > 0) {
-        // Use a more efficient SQL query to get connections between event participants
-        const { data: connectionsData, error: connectionsError } = await supabase
-          .rpc('get_admin_event_connections', {
-            admin_event_ids: eventIds
-          });
-
-        if (connectionsError) {
-          console.error('Error fetching admin event connections:', connectionsError);
-          // Fallback to the original method
-          const { data: participantsData } = await supabase
-            .from('event_participants')
-            .select('user_id')
-            .in('event_id', eventIds);
-          
-          const participantIds = participantsData?.map(p => p.user_id) || [];
-          
-          if (participantIds.length > 1) {
-            const { data: allConnections } = await supabase
-              .from('connections')
-              .select('requester_id, recipient_id')
-              .eq('status', 'accepted');
+        const { data: participantsData } = await supabase
+          .from('event_participants')
+          .select('user_id')
+          .in('event_id', eventIds);
+        
+        const participantIds = participantsData?.map(p => p.user_id) || [];
+        
+        if (participantIds.length > 1) {
+          const { data: allConnections } = await supabase
+            .from('connections')
+            .select('requester_id, recipient_id')
+            .eq('status', 'accepted');
             
-            connectionsCount = (allConnections || []).filter(conn => 
-              participantIds.includes(conn.requester_id) && participantIds.includes(conn.recipient_id)
-            ).length;
-          }
-        } else {
-          connectionsCount = connectionsData?.[0]?.connection_count || 0;
+          connectionsCount = (allConnections || []).filter(conn => 
+            participantIds.includes(conn.requester_id) && participantIds.includes(conn.recipient_id)
+          ).length;
         }
       }
 

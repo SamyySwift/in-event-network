@@ -24,7 +24,6 @@ export const useNetworkingFilters = (profiles: AttendeeProfile[]) => {
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
   const [selectedNetworkingPrefs, setSelectedNetworkingPrefs] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [showIncompleteOnly, setShowIncompleteOnly] = useState(false);
 
   // Extract unique values for filter options
   const availableNiches = useMemo(() => {
@@ -52,16 +51,6 @@ export const useNetworkingFilters = (profiles: AttendeeProfile[]) => {
     return tags;
   }, [profiles]);
 
-  // Check if profile is incomplete
-  const isProfileIncomplete = (profile: AttendeeProfile) => {
-    return !profile.bio || 
-           !profile.niche || 
-           !profile.networking_preferences?.length || 
-           !profile.tags?.length ||
-           !profile.company ||
-           !profile.role;
-  };
-
   // Filter profiles based on current filters
   const filteredProfiles = useMemo(() => {
     return profiles.filter(profile => {
@@ -86,19 +75,15 @@ export const useNetworkingFilters = (profiles: AttendeeProfile[]) => {
       const matchesTags = selectedTags.length === 0 ||
         profile.tags?.some(tag => selectedTags.includes(tag));
 
-      // Incomplete profile filter
-      const matchesIncompleteFilter = !showIncompleteOnly || isProfileIncomplete(profile);
-
-      return matchesSearch && matchesNiche && matchesNetworkingPref && matchesTags && matchesIncompleteFilter;
+      return matchesSearch && matchesNiche && matchesNetworkingPref && matchesTags;
     });
-  }, [profiles, searchTerm, selectedNiches, selectedNetworkingPrefs, selectedTags, showIncompleteOnly]);
+  }, [profiles, searchTerm, selectedNiches, selectedNetworkingPrefs, selectedTags]);
 
   const clearAllFilters = () => {
     setSearchTerm('');
     setSelectedNiches([]);
     setSelectedNetworkingPrefs([]);
     setSelectedTags([]);
-    setShowIncompleteOnly(false);
   };
 
   return {
@@ -110,13 +95,10 @@ export const useNetworkingFilters = (profiles: AttendeeProfile[]) => {
     setSelectedNetworkingPrefs,
     selectedTags,
     setSelectedTags,
-    showIncompleteOnly,
-    setShowIncompleteOnly,
     availableNiches,
     availableNetworkingPrefs,
     availableTags,
     filteredProfiles,
     clearAllFilters,
-    isProfileIncomplete,
   };
 };

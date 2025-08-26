@@ -13,6 +13,7 @@ import {
   Users,
   Sparkles,
 } from "lucide-react";
+import { FaWhatsapp } from "react-icons/fa";
 import AttendeeRouteGuard from "@/components/attendee/AttendeeRouteGuard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -30,8 +31,22 @@ interface FacilityCardProps {
 }
 
 const FacilityCard: React.FC<FacilityCardProps> = ({ facility, onClick, isSelected }) => {
-  const ContactIcon = facility.contact_type === "phone" ? Phone : 
-                     facility.contact_type === "whatsapp" ? MessageCircle : null;
+  const getContactIcon = (contactType: string) => {
+    if (contactType === "phone") return Phone;
+    if (contactType === "whatsapp") return FaWhatsapp;
+    return null;
+  };
+
+  const handleContactClick = (e: React.MouseEvent, contactType: string, contactInfo: string) => {
+    e.stopPropagation();
+    if (contactType === "phone") {
+      window.location.href = `tel:${contactInfo}`;
+    } else if (contactType === "whatsapp") {
+      window.open(`https://wa.me/${contactInfo.replace(/[^0-9]/g, '')}`, '_blank');
+    }
+  };
+
+  const ContactIcon = getContactIcon(facility.contact_type);
 
   return (
     <div
@@ -73,11 +88,14 @@ const FacilityCard: React.FC<FacilityCardProps> = ({ facility, onClick, isSelect
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
         
         {/* Contact Badge */}
-        {facility.contact_type && facility.contact_type !== "none" && (
+        {facility.contact_type && facility.contact_type !== "none" && facility.contact_info && (
           <div className="absolute top-4 left-4">
-            <Badge className="bg-background/90 backdrop-blur-sm text-foreground border-0 shadow-lg hover:bg-background">
+            <Badge 
+              className="bg-background/90 backdrop-blur-sm text-foreground border-0 shadow-lg hover:bg-primary/10 cursor-pointer transition-colors"
+              onClick={(e) => handleContactClick(e, facility.contact_type, facility.contact_info)}
+            >
               {ContactIcon && <ContactIcon className="h-3 w-3 mr-1" />}
-              {facility.contact_type}
+              {facility.contact_type === "phone" ? "Call" : facility.contact_type === "whatsapp" ? "WhatsApp" : facility.contact_type}
             </Badge>
           </div>
         )}
@@ -165,8 +183,21 @@ const AttendeeMap = () => {
     setIsDialogOpen(true);
   };
 
-  const ContactIcon = selectedFacility?.contact_type === "phone" ? Phone : 
-                     selectedFacility?.contact_type === "whatsapp" ? MessageCircle : null;
+  const getContactIcon = (contactType?: string) => {
+    if (contactType === "phone") return Phone;
+    if (contactType === "whatsapp") return FaWhatsapp;
+    return null;
+  };
+
+  const handleModalContactClick = (contactType: string, contactInfo: string) => {
+    if (contactType === "phone") {
+      window.location.href = `tel:${contactInfo}`;
+    } else if (contactType === "whatsapp") {
+      window.open(`https://wa.me/${contactInfo.replace(/[^0-9]/g, '')}`, '_blank');
+    }
+  };
+
+  const ModalContactIcon = getContactIcon(selectedFacility?.contact_type);
 
   if (isLoading) {
     return (
@@ -347,12 +378,23 @@ const AttendeeMap = () => {
                 {/* Contact Info */}
                 {selectedFacility.contact_type && selectedFacility.contact_type !== "none" && selectedFacility.contact_info && (
                   <div className="flex items-start gap-3 p-4 bg-primary/5 rounded-xl">
-                    {ContactIcon && <ContactIcon className="h-5 w-5 text-primary mt-0.5" />}
-                    <div>
+                    {ModalContactIcon && <ModalContactIcon className="h-5 w-5 text-primary mt-0.5" />}
+                    <div className="flex-1">
                       <h4 className="font-medium mb-1">Contact Information</h4>
-                      <p className="text-muted-foreground">
-                        {selectedFacility.contact_type}: {selectedFacility.contact_info}
-                      </p>
+                      <div className="flex items-center gap-3">
+                        <p className="text-muted-foreground">
+                          {selectedFacility.contact_info}
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleModalContactClick(selectedFacility.contact_type, selectedFacility.contact_info)}
+                          className="hover:bg-primary hover:text-primary-foreground"
+                        >
+                          {ModalContactIcon && <ModalContactIcon className="h-3 w-3 mr-1" />}
+                          {selectedFacility.contact_type === "phone" ? "Call" : "Message"}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -369,10 +411,13 @@ const AttendeeMap = () => {
 
                 {/* Action Buttons */}
                 <div className="flex gap-3 pt-4">
-                  {selectedFacility.contact_info && ContactIcon && (
-                    <Button className="flex-1">
-                      <ContactIcon className="h-4 w-4 mr-2" />
-                      Contact
+                  {selectedFacility.contact_info && ModalContactIcon && (
+                    <Button 
+                      className="flex-1"
+                      onClick={() => handleModalContactClick(selectedFacility.contact_type, selectedFacility.contact_info)}
+                    >
+                      <ModalContactIcon className="h-4 w-4 mr-2" />
+                      {selectedFacility.contact_type === "phone" ? "Call Now" : "Message on WhatsApp"}
                     </Button>
                   )}
                   <Button variant="outline" onClick={() => setIsDialogOpen(false)}>

@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Filter, X } from 'lucide-react';
+import { Filter, X, Sparkles, AlertTriangle } from 'lucide-react';
 
 interface NetworkingFilterProps {
   searchTerm: string;
@@ -17,6 +17,10 @@ interface NetworkingFilterProps {
   onNetworkingPrefChange: (prefs: string[]) => void;
   selectedTags: string[];
   onTagChange: (tags: string[]) => void;
+  showIncompleteOnly: boolean;
+  onIncompleteToggle: (show: boolean) => void;
+  aiMatchingEnabled: boolean;
+  onAIMatchingToggle: () => void;
   availableNiches: string[];
   availableNetworkingPrefs: string[];
   availableTags: string[];
@@ -32,12 +36,16 @@ export const NetworkingFilter: React.FC<NetworkingFilterProps> = ({
   onNetworkingPrefChange,
   selectedTags,
   onTagChange,
+  showIncompleteOnly,
+  onIncompleteToggle,
+  aiMatchingEnabled,
+  onAIMatchingToggle,
   availableNiches,
   availableNetworkingPrefs,
   availableTags,
   onClearFilters,
 }) => {
-  const hasActiveFilters = selectedNiches.length > 0 || selectedNetworkingPrefs.length > 0 || selectedTags.length > 0;
+  const hasActiveFilters = selectedNiches.length > 0 || selectedNetworkingPrefs.length > 0 || selectedTags.length > 0 || showIncompleteOnly;
 
   const handleNicheToggle = (niche: string) => {
     if (selectedNiches.includes(niche)) {
@@ -75,6 +83,34 @@ export const NetworkingFilter: React.FC<NetworkingFilterProps> = ({
       </div>
       
       <div className="flex gap-2">
+        {/* AI Match Button */}
+        <Button
+          variant={aiMatchingEnabled ? "default" : "outline"}
+          onClick={onAIMatchingToggle}
+          className={`flex items-center gap-2 ${
+            aiMatchingEnabled 
+              ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white border-0" 
+              : "border-purple-200 hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+          }`}
+        >
+          <Sparkles size={16} className={aiMatchingEnabled ? "text-white" : "text-purple-500"} />
+          <span>AI Match</span>
+        </Button>
+
+        {/* Incomplete Profiles Button */}
+        <Button
+          variant={showIncompleteOnly ? "default" : "outline"}
+          onClick={() => onIncompleteToggle(!showIncompleteOnly)}
+          className={`flex items-center gap-2 ${
+            showIncompleteOnly 
+              ? "bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0" 
+              : "border-orange-200 hover:border-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+          }`}
+        >
+          <AlertTriangle size={16} className={showIncompleteOnly ? "text-white" : "text-orange-500"} />
+          <span>Incomplete</span>
+        </Button>
+
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" className="flex items-center gap-2">
@@ -82,7 +118,7 @@ export const NetworkingFilter: React.FC<NetworkingFilterProps> = ({
               <span>Filters</span>
               {hasActiveFilters && (
                 <span className="bg-connect-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">
-                  {selectedNiches.length + selectedNetworkingPrefs.length + selectedTags.length}
+                  {selectedNiches.length + selectedNetworkingPrefs.length + selectedTags.length + (showIncompleteOnly ? 1 : 0)}
                 </span>
               )}
             </Button>

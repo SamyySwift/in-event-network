@@ -22,6 +22,7 @@ import {
   ChevronRight,
   ChevronUp,
   ChevronDown,
+  Star,
 } from "lucide-react";
 // Remove this import:
 // import AppLayout from "@/components/layouts/AppLayout";
@@ -39,11 +40,13 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useAttendeeNetworking } from "@/hooks/useAttendeeNetworking";
 import { useNetworkingFilters } from "@/hooks/useNetworkingFilters";
+import { useAIMatching } from "@/hooks/useAIMatching";
 import ChatRoom from "@/components/chat/ChatRoom";
 import { ConversationsList } from "@/components/messaging/ConversationsList";
 import { DirectMessageThread } from "@/components/messaging/DirectMessageThread";
 import { useNetworking } from "@/hooks/useNetworking";
 import { useAttendeeEventContext } from "@/contexts/AttendeeEventContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { NetworkingFilter } from "@/components/networking/NetworkingFilter";
 import XLogo from "@/components/icons/XLogo";
 import PaymentGuard from '@/components/payment/PaymentGuard';
@@ -52,7 +55,7 @@ import { usePayment } from '@/hooks/usePayment';
 const AttendeeNetworking = () => {
   const navigate = useNavigate();
   const { currentEventId } = useAttendeeEventContext();
-  const { isEventPaid } = usePayment();
+  const { isEventPaid } = usePayment(); 
   const [activeTab, setActiveTab] = useState("people");
   const [selectedConversation, setSelectedConversation] = useState<{
     userId: string;
@@ -81,23 +84,35 @@ const AttendeeNetworking = () => {
     setSelectedNetworkingPrefs,
     selectedTags,
     setSelectedTags,
+    showIncompleteOnly,
+    setShowIncompleteOnly,
     availableNiches,
     availableNetworkingPrefs,
     availableTags,
     filteredProfiles,
     clearAllFilters,
+    isProfileIncomplete,
   } = useNetworkingFilters(profiles);
 
+  // AI Matching functionality
+  const { aiMatchingEnabled, toggleAIMatching, aiMatchedProfiles } = useAIMatching(
+    profiles,
+    profiles.find(p => p.id === currentUser?.id) // Current user's profile
+  );
+
+  // Use AI matched profiles if AI matching is enabled, otherwise use filtered profiles
+  const displayProfiles = aiMatchingEnabled ? aiMatchedProfiles : filteredProfiles;
+
   // Pagination calculations
-  const totalPages = Math.ceil(filteredProfiles.length / itemsPerPage);
+  const totalPages = Math.ceil(displayProfiles.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentPageProfiles = filteredProfiles.slice(startIndex, endIndex);
+  const currentPageProfiles = displayProfiles.slice(startIndex, endIndex);
 
   // Reset to first page when filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedNiches, selectedNetworkingPrefs, selectedTags]);
+  }, [searchTerm, selectedNiches, selectedNetworkingPrefs, selectedTags, aiMatchingEnabled, showIncompleteOnly]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -109,6 +124,9 @@ const AttendeeNetworking = () => {
 
   const { sendConnectionRequest, getConnectionStatus, connections } =
     useNetworking();
+
+  // Get current user
+  const { currentUser } = useAuth();
 
   console.log("AttendeeNetworking - currentEventId:", currentEventId);
   console.log("AttendeeNetworking - profiles:", profiles);
@@ -196,11 +214,17 @@ const AttendeeNetworking = () => {
     const isConnected = connectionStatus?.status === "accepted";
     const isPending = connectionStatus?.status === "pending";
     const socialLinks = getSocialLinks(profile);
+    const isIncomplete = isProfileIncomplete(profile);
+    const isAIMatch = aiMatchingEnabled && 'matchScore' in profile;
 
     return (
       <Card
         key={profile.id}
-        className="group relative overflow-hidden bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-900/50 border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-[1.02] rounded-2xl"
+        className={`group relative overflow-hidden bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-900/50 border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-[1.02] rounded-2xl ${
+          isIncomplete ? 'ring-2 ring-orange-200 dark:ring-orange-700' : ''
+        } ${
+          isAIMatch ? 'ring-2 ring-purple-200 dark:ring-purple-700 bg-gradient-to-br from-purple-50/30 to-pink-50/30 dark:from-purple-900/20 dark:to-pink-900/20' : ''
+        }`}
       >
         {/* Decorative Background Elements */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-connect-100/20 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-700" />
@@ -246,10 +270,48 @@ const AttendeeNetworking = () => {
                 </CardDescription>
               </div>
             </div>
+
+            {/* Match Score Badge */}
+            {isAIMatch && 'matchScore' in profile && (
+              <div className="flex items-center space-x-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                <Star size={12} fill="currentColor" />
+                <span>{profile.matchScore}%</span>
+              </div>
+            )}
+
+            {/* Incomplete Profile Badge */}
+            {isIncomplete && (
+              <div className="flex items-center space-x-1 bg-gradient-to-r from-orange-500 to-red-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                <AlertCircle size={12} />
+                <span>Incomplete</span>
+              </div>
+            )}
           </div>
         </CardHeader>
 
         <CardContent className="relative z-10 space-y-6">
+          {/* AI Match Reasons */}
+          {isAIMatch && 'matchReasons' in profile && profile.matchReasons.length > 0 && (
+            <div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-4 backdrop-blur-sm border border-purple-200 dark:border-purple-700">
+              <div className="flex items-center space-x-2 mb-2">
+                <Sparkles size={14} className="text-purple-500" />
+                <span className="text-xs font-medium text-purple-700 dark:text-purple-300">
+                  AI Match Reasons
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {profile.matchReasons.map((reason: string, index: number) => (
+                  <Badge
+                    key={index}
+                    variant="outline"
+                    className="bg-white/50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-600 text-xs"
+                  >
+                    {reason}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
           {/* About Section */}
           {profile.bio && (
             <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 backdrop-blur-sm">
@@ -582,6 +644,10 @@ const AttendeeNetworking = () => {
             onNetworkingPrefChange={setSelectedNetworkingPrefs}
             selectedTags={selectedTags}
             onTagChange={setSelectedTags}
+            showIncompleteOnly={showIncompleteOnly}
+            onIncompleteToggle={setShowIncompleteOnly}
+            aiMatchingEnabled={aiMatchingEnabled}
+            onAIMatchingToggle={toggleAIMatching}
             availableNiches={availableNiches}
             availableNetworkingPrefs={availableNetworkingPrefs}
             availableTags={availableTags}
@@ -589,12 +655,12 @@ const AttendeeNetworking = () => {
           />
 
           {/* Results summary */}
-          {filteredProfiles.length > 0 && (
+          {displayProfiles.length > 0 && (
             <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
               <span>
                 Showing {startIndex + 1}-
-                {Math.min(endIndex, filteredProfiles.length)} of{" "}
-                {filteredProfiles.length} attendees
+                {Math.min(endIndex, displayProfiles.length)} of{" "}
+                {displayProfiles.length} {aiMatchingEnabled ? 'AI matched ' : ''}attendees
               </span>
               <span>
                 Page {currentPage} of {totalPages}
@@ -681,23 +747,30 @@ const AttendeeNetworking = () => {
             </div>
           )}
 
-          {filteredProfiles.length === 0 && (
+          {displayProfiles.length === 0 && (
             <div className="text-center py-16">
               <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 rounded-full flex items-center justify-center">
-                <Search size={32} className="text-gray-400" />
+                {aiMatchingEnabled ? (
+                  <Sparkles size={32} className="text-purple-400" />
+                ) : (
+                  <Search size={32} className="text-gray-400" />
+                )}
               </div>
               <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                No results found
+                {aiMatchingEnabled ? 'No AI matches found' : 'No results found'}
               </h3>
               <p className="text-gray-600 dark:text-gray-400">
-                Try adjusting your search terms or filters
+                {aiMatchingEnabled 
+                  ? 'Try updating your profile with more interests and preferences for better matches'
+                  : 'Try adjusting your search terms or filters'
+                }
               </p>
               <Button
                 variant="outline"
                 className="mt-4"
-                onClick={clearAllFilters}
+                onClick={aiMatchingEnabled ? toggleAIMatching : clearAllFilters}
               >
-                Clear All Filters
+                {aiMatchingEnabled ? 'Show All Profiles' : 'Clear All Filters'}
               </Button>
             </div>
           )}

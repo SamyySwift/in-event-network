@@ -72,6 +72,18 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        connect: {
+          50: "#f5f3ff",
+          100: "#ede9fe",
+          200: "#ddd6fe",
+          300: "#c4b5fd",
+          400: "#a78bfa",
+          500: "#8b5cf6",
+          600: "#6366f1",
+          700: "#5a46e8",
+          800: "#4338ca",
+          900: "#3730a3",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -137,6 +149,14 @@ export default {
           "0%": { transform: "translateX(0)" },
           "100%": { transform: "translateX(100%)" },
         },
+        "pulse-slow": {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0.5" },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -149,6 +169,8 @@ export default {
         "slide-out-right": "slide-out-right 0.3s ease-out",
         enter: "fade-in 0.3s ease-out, scale-in 0.2s ease-out",
         exit: "fade-out 0.3s ease-out, scale-out 0.2s ease-out",
+        "pulse-slow": "pulse-slow 3s ease-in-out infinite",
+        float: "float 6s ease-in-out infinite",
       },
       fontFamily: {
         geist: ["Geist", "sans-serif"],

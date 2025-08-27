@@ -113,7 +113,7 @@ export const useAdminTickets = (eventIdOverride?: string) => {
         }
 
         // Fetch form responses for this ticket
-        const { data: formData } = await supabase
+        const { data: formData, error: formError } = await supabase
           .from('ticket_form_responses')
           .select(`
             *,
@@ -125,11 +125,17 @@ export const useAdminTickets = (eventIdOverride?: string) => {
           `)
           .eq('ticket_id', ticket.id);
 
-        if (formData) {
+        if (formError) {
+          console.error('Error fetching form responses for ticket:', ticket.id, formError);
+        }
+
+        if (formData && formData.length > 0) {
           // Sort the form responses by field order
-          formResponses = formData.sort((a, b) => 
-            (a.ticket_form_fields?.field_order || 0) - (b.ticket_form_fields?.field_order || 0)
-          );
+          formResponses = formData
+            .filter(response => response.ticket_form_fields) // Only include responses with valid field data
+            .sort((a, b) => 
+              (a.ticket_form_fields?.field_order || 0) - (b.ticket_form_fields?.field_order || 0)
+            );
         }
         
         return {

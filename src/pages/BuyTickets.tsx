@@ -452,10 +452,20 @@ export default function BuyTickets() {
           }
         }
         if (formResponseInserts.length > 0) {
+          console.log('Inserting form responses:', formResponseInserts);
           const { error: responseError } = await supabase
             .from('ticket_form_responses')
             .insert(formResponseInserts);
-          if (responseError) console.error('Form responses insert error:', responseError);
+          if (responseError) {
+            console.error('Form responses insert error:', responseError);
+            toast({
+              title: "Warning",
+              description: "Tickets created but form responses could not be saved. Please contact support.",
+              variant: "destructive",
+            });
+          } else {
+            console.log('Form responses saved successfully');
+          }
         }
       } catch (e) {
         console.error('Error saving form responses:', e);
@@ -600,12 +610,18 @@ export default function BuyTickets() {
         }
 
         if (formResponseInserts.length > 0) {
+          console.log('Inserting form responses (regular flow):', formResponseInserts);
           const { error: responseError } = await supabase
             .from('ticket_form_responses')
             .insert(formResponseInserts);
 
           if (responseError) {
             console.error('Form responses insert error:', responseError);
+            toast({
+              title: "Warning", 
+              description: "Tickets created but form responses could not be saved. Please contact support.",
+              variant: "destructive",
+            });
             // Don't throw here as tickets are already created
           } else {
             console.log('Form responses saved successfully');

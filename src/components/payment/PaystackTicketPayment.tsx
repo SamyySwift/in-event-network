@@ -23,6 +23,7 @@ interface PaystackTicketPaymentProps {
     phone: string;
     userId?: string;
   };
+  purchaseData?: any[]; // Form data for each ticket purchase
   onSuccess: (reference: string, tickets?: any[]) => void;
   onClose: () => void;
   disabled?: boolean;
@@ -34,6 +35,7 @@ export function PaystackTicketPayment({
   tickets,
   totalAmount,
   userInfo,
+  purchaseData = [],
   onSuccess,
   onClose,
   disabled = false
@@ -58,7 +60,23 @@ export function PaystackTicketPayment({
       console.log('Payment successful:', reference);
       
       try {
-        // Process ticket purchase through our backend
+        // Prepare form responses data
+        const formResponsesData = purchaseData && purchaseData.length > 0 
+          ? purchaseData.map(purchase => ({
+              ticketTypeId: purchase.ticketTypeId,
+              attendees: purchase.attendees.map((attendee, index) => ({
+                attendeeIndex: index,
+                responses: attendee.formResponses || {}
+              }))
+            })).flatMap(purchase => 
+              purchase.attendees.map(attendee => ({
+                ticketTypeId: purchase.ticketTypeId,
+                attendeeIndex: attendee.attendeeIndex,
+                responses: attendee.responses
+              }))
+            )
+          : [];
+
         const { data, error } = await supabase.functions.invoke('process-ticket-purchase', {
           body: {
             eventId,
@@ -68,7 +86,8 @@ export function PaystackTicketPayment({
               userId: currentUser?.id
             },
             paystackReference: reference.reference,
-            totalAmount: totalAmount // Already in kobo
+            totalAmount: totalAmount, // Already in kobo
+            formResponses: formResponsesData
           }
         });
 

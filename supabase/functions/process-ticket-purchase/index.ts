@@ -18,10 +18,11 @@ serve(async (req) => {
       tickets, 
       userInfo, 
       paystackReference, 
-      totalAmount 
+      totalAmount,
+      formResponses 
     } = await req.json()
 
-    console.log('Processing ticket purchase:', { eventId, tickets, userInfo, paystackReference, totalAmount })
+    console.log('Processing ticket purchase:', { eventId, tickets, userInfo, paystackReference, totalAmount, formResponses })
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -143,6 +144,48 @@ serve(async (req) => {
     }
 
     // Quantity will be decremented automatically by database triggers
+
+    // Save form responses if provided
+    if (formResponses && Array.isArray(formResponses) && formResponses.length > 0) {
+      console.log('Saving form responses:', formResponses.length, 'responses')
+      
+      // Map ticket IDs to form responses
+      const formResponseInserts = []
+      
+      for (const response of formResponses) {
+        const { ticketTypeId, attendeeIndex, responses } = response
+        
+        // Find the ticket for this attendee
+        const ticketsForType = createdTickets.filter(t => t.ticket_type_id === ticketTypeId)
+        const ticket = ticketsForType[attendeeIndex]
+        
+        if (ticket && responses) {
+          for (const [fieldId, value] of Object.entries(responses)) {
+            if (value !== undefined && value !== null && value !== '') {
+              formResponseInserts.push({
+                ticket_id: ticket.id,
+                form_field_id: fieldId,
+                response_value: value
+              })
+            }
+          }
+        }
+      }
+      
+      if (formResponseInserts.length > 0) {
+        console.log('Inserting form responses:', formResponseInserts)
+        const { error: formError } = await supabase
+          .from('ticket_form_responses')
+          .insert(formResponseInserts)
+        
+        if (formError) {
+          console.error('Error saving form responses:', formError)
+          // Don't fail the entire purchase if form responses fail
+        } else {
+          console.log('Form responses saved successfully')
+        }
+      }
+    }
 
     // Credit organizer wallet if payment amount > 0
     // The wallet will be updated automatically by the trigger function

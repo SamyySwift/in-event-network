@@ -61,21 +61,19 @@ export function PaystackTicketPayment({
       
       try {
         // Prepare form responses data
+        console.log('Purchase data for form responses:', purchaseData);
+        
         const formResponsesData = purchaseData && purchaseData.length > 0 
-          ? purchaseData.map(purchase => ({
-              ticketTypeId: purchase.ticketTypeId,
-              attendees: purchase.attendees.map((attendee, index) => ({
-                attendeeIndex: index,
-                responses: attendee.formResponses || {}
-              }))
-            })).flatMap(purchase => 
-              purchase.attendees.map(attendee => ({
+          ? purchaseData.flatMap(purchase => 
+              purchase.attendees.map((attendee, attendeeIndex) => ({
                 ticketTypeId: purchase.ticketTypeId,
-                attendeeIndex: attendee.attendeeIndex,
-                responses: attendee.responses
+                attendeeIndex: attendeeIndex,
+                responses: attendee.formResponses || {}
               }))
             )
           : [];
+        
+        console.log('Structured form responses data:', formResponsesData);
 
         const { data, error } = await supabase.functions.invoke('process-ticket-purchase', {
           body: {

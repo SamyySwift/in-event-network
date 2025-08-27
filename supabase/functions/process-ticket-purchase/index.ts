@@ -148,6 +148,7 @@ serve(async (req) => {
     // Save form responses if provided
     if (formResponses && Array.isArray(formResponses) && formResponses.length > 0) {
       console.log('Saving form responses:', formResponses.length, 'responses')
+      console.log('Form responses structure:', JSON.stringify(formResponses, null, 2))
       
       // Map ticket IDs to form responses
       const formResponseInserts = []
@@ -155,13 +156,20 @@ serve(async (req) => {
       for (const response of formResponses) {
         const { ticketTypeId, attendeeIndex, responses } = response
         
+        console.log(`Processing response for ticketType: ${ticketTypeId}, attendee: ${attendeeIndex}`)
+        console.log('Response data:', responses)
+        
         // Find the ticket for this attendee
         const ticketsForType = createdTickets.filter(t => t.ticket_type_id === ticketTypeId)
         const ticket = ticketsForType[attendeeIndex]
         
-        if (ticket && responses) {
+        console.log(`Found ${ticketsForType.length} tickets for type ${ticketTypeId}`)
+        console.log(`Using ticket for attendee ${attendeeIndex}:`, ticket?.id)
+        
+        if (ticket && responses && typeof responses === 'object') {
           for (const [fieldId, value] of Object.entries(responses)) {
             if (value !== undefined && value !== null && value !== '') {
+              console.log(`Adding form response: field ${fieldId} = ${value}`)
               formResponseInserts.push({
                 ticket_id: ticket.id,
                 form_field_id: fieldId,
@@ -172,8 +180,10 @@ serve(async (req) => {
         }
       }
       
+      console.log('Final form response inserts:', JSON.stringify(formResponseInserts, null, 2))
+      
       if (formResponseInserts.length > 0) {
-        console.log('Inserting form responses:', formResponseInserts)
+        console.log('Inserting', formResponseInserts.length, 'form responses')
         const { error: formError } = await supabase
           .from('ticket_form_responses')
           .insert(formResponseInserts)
@@ -184,7 +194,11 @@ serve(async (req) => {
         } else {
           console.log('Form responses saved successfully')
         }
+      } else {
+        console.log('No valid form responses to insert')
       }
+    } else {
+      console.log('No form responses provided or invalid format')
     }
 
     // Credit organizer wallet if payment amount > 0

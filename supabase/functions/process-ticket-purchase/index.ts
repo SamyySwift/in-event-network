@@ -213,14 +213,24 @@ serve(async (req) => {
                 continue
               }
               
-              // Convert value to string for storage
-              const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value)
+              // The response_value column is JSONB, so we need to properly format the value
+              let jsonValue;
+              if (typeof value === 'string') {
+                // For string values, store as JSON string
+                jsonValue = JSON.stringify(value);
+              } else if (typeof value === 'object') {
+                // For objects, stringify them
+                jsonValue = JSON.stringify(value);
+              } else {
+                // For other types (number, boolean), convert to JSON
+                jsonValue = JSON.stringify(value);
+              }
               
-              console.log(`Adding form response: field ${fieldId} = ${stringValue}`)
+              console.log(`Adding form response: field ${fieldId} = ${value} (JSON: ${jsonValue})`)
               formResponseInserts.push({
                 ticket_id: ticket.id,
                 form_field_id: fieldId,
-                response_value: stringValue
+                response_value: jsonValue
               })
             }
           } else {

@@ -87,18 +87,26 @@ export const debugFormDataFlow = async (ticketId: string) => {
 export const testFormResponseInsertion = async (ticketId: string, formFieldId: string, responseValue: string) => {
   try {
     console.log('Testing manual form response insertion...');
+    console.log('Ticket ID:', ticketId);
+    console.log('Form Field ID:', formFieldId);
+    console.log('Response Value:', responseValue);
+    
+    // Since response_value is JSONB, we need to ensure it's properly formatted
+    const jsonValue = JSON.stringify(responseValue);
+    console.log('JSON Value:', jsonValue);
     
     const { data, error } = await supabase
       .from('ticket_form_responses')
       .insert({
         ticket_id: ticketId,
         form_field_id: formFieldId,
-        response_value: responseValue
+        response_value: jsonValue
       })
       .select();
 
     if (error) {
       console.error('Error inserting test response:', error);
+      console.error('Error details:', JSON.stringify(error, null, 2));
     } else {
       console.log('Test response inserted successfully:', data);
     }
@@ -106,5 +114,6 @@ export const testFormResponseInsertion = async (ticketId: string, formFieldId: s
     return { data, error };
   } catch (error) {
     console.error('Test insertion error:', error);
+    return { data: null, error };
   }
 };

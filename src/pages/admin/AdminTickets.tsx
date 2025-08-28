@@ -13,6 +13,7 @@ import { ShareableTicketLink } from '@/components/admin/ShareableTicketLink';
 import { WithdrawalButton } from '@/components/admin/WithdrawalButton';
 
 import { useAdminTickets } from '@/hooks/useAdminTickets';
+import { FormDataDebugger } from '@/components/admin/FormDataDebugger';
 
 function AdminTicketsContent() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -229,6 +230,9 @@ function AdminTicketsContent() {
               )}
             </CardContent>
           </Card>
+
+          {/* Form Data Debugger - TEMPORARY */}
+          <FormDataDebugger />
 
           {/* Tickets Table Section */}
           <Card className="rounded-xl border-0 shadow-md">

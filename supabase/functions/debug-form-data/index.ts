@@ -50,7 +50,8 @@ serve(async (req) => {
         *,
         ticket_form_fields (
           label,
-          field_type
+          field_type,
+          field_order
         )
       `)
       .eq('ticket_id', ticketId)
@@ -58,6 +59,22 @@ serve(async (req) => {
     if (responsesError) {
       console.error('Error fetching responses:', responsesError)
     }
+
+    // Also check if there are any form responses in the database for debugging
+    const { data: allResponses, error: allResponsesError } = await supabase
+      .from('ticket_form_responses')
+      .select('*')
+      .limit(10)
+
+    console.log('All form responses (first 10):', allResponses)
+    
+    // Check form fields for this ticket type
+    const { data: formFields, error: formFieldsError } = await supabase
+      .from('ticket_form_fields')
+      .select('*')
+      .eq('ticket_type_id', ticket?.ticket_type_id)
+
+    console.log('Form fields for ticket type:', formFields)
 
     return new Response(
       JSON.stringify({ 

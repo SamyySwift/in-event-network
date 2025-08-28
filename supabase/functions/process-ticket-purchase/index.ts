@@ -147,58 +147,119 @@ serve(async (req) => {
 
     // Save form responses if provided
     if (formResponses && Array.isArray(formResponses) && formResponses.length > 0) {
-      console.log('Saving form responses:', formResponses.length, 'responses')
+      console.log('=== FORM RESPONSES PROCESSING START ===')
+      console.log('Received form responses count:', formResponses.length)
       console.log('Form responses structure:', JSON.stringify(formResponses, null, 2))
+      console.log('Created tickets count:', createdTickets.length)
       
-      // Map ticket IDs to form responses
-      const formResponseInserts = []
-      
+      // First, validate that we have valid form field IDs
+      const allFieldIds = new Set()
       for (const response of formResponses) {
-        const { ticketTypeId, attendeeIndex, responses } = response
-        
-        console.log(`Processing response for ticketType: ${ticketTypeId}, attendee: ${attendeeIndex}`)
-        console.log('Response data:', responses)
-        
-        // Find the ticket for this attendee
-        const ticketsForType = createdTickets.filter(t => t.ticket_type_id === ticketTypeId)
-        const ticket = ticketsForType[attendeeIndex]
-        
-        console.log(`Found ${ticketsForType.length} tickets for type ${ticketTypeId}`)
-        console.log(`Using ticket for attendee ${attendeeIndex}:`, ticket?.id)
-        
-        if (ticket && responses && typeof responses === 'object') {
-          for (const [fieldId, value] of Object.entries(responses)) {
-            if (value !== undefined && value !== null && value !== '') {
-              console.log(`Adding form response: field ${fieldId} = ${value}`)
-              formResponseInserts.push({
-                ticket_id: ticket.id,
-                form_field_id: fieldId,
-                response_value: value
-              })
-            }
+        if (response.responses && typeof response.responses === 'object') {
+          for (const fieldId of Object.keys(response.responses)) {
+            allFieldIds.add(fieldId)
           }
         }
       }
       
-      console.log('Final form response inserts:', JSON.stringify(formResponseInserts, null, 2))
+      console.log('All field IDs found in responses:', Array.from(allFieldIds))
+      
+      // Validate field IDs exist in database
+      if (allFieldIds.size > 0) {
+        const { data: validFields, error: fieldValidationError } = await supabase
+          .from('ticket_form_fields')
+          .select('id')
+          .in('id', Array.from(allFieldIds))
+        
+        if (fieldValidationError) {
+          console.error('Error validating form fields:', fieldValidationError)
+        } else {
+          const validFieldIds = new Set(validFields.map(f => f.id))
+          console.log('Valid field IDs from database:', Array.from(validFieldIds))
+          
+          // Filter out invalid field IDs
+          const invalidFieldIds = Array.from(allFieldIds).filter(id => !validFieldIds.has(id))
+          if (invalidFieldIds.length > 0) {
+            console.warn('Found invalid field IDs (will be skipped):', invalidFieldIds)
+          }
+        }
+      }
+      
+      // Map ticket IDs to form responses
+      const formResponseInserts = []
+      
+      for (let responseIndex = 0; responseIndex < formResponses.length; responseIndex++) {
+        const response = formResponses[responseIndex]
+        const { ticketTypeId, attendeeIndex, responses } = response
+        
+        console.log(`\n--- Processing response ${responseIndex + 1}/${formResponses.length} ---`)
+        console.log(`Ticket Type ID: ${ticketTypeId}`)
+        console.log(`Attendee Index: ${attendeeIndex}`)
+        console.log('Response data:', JSON.stringify(responses, null, 2))
+        
+        // Find tickets for this type
+        const ticketsForType = createdTickets.filter(t => t.ticket_type_id === ticketTypeId)
+        console.log(`Found ${ticketsForType.length} tickets for type ${ticketTypeId}`)
+        
+        if (attendeeIndex < ticketsForType.length) {
+          const ticket = ticketsForType[attendeeIndex]
+          console.log(`Using ticket ID: ${ticket.id} for attendee ${attendeeIndex}`)
+          
+          if (ticket && responses && typeof responses === 'object') {
+            for (const [fieldId, value] of Object.entries(responses)) {
+              // Skip empty values
+              if (value === undefined || value === null || value === '') {
+                console.log(`Skipping empty value for field ${fieldId}`)
+                continue
+              }
+              
+              // Convert value to string for storage
+              const stringValue = typeof value === 'object' ? JSON.stringify(value) : String(value)
+              
+              console.log(`Adding form response: field ${fieldId} = ${stringValue}`)
+              formResponseInserts.push({
+                ticket_id: ticket.id,
+                form_field_id: fieldId,
+                response_value: stringValue
+              })
+            }
+          } else {
+            console.log('Invalid ticket or responses object')
+          }
+        } else {
+          console.error(`Attendee index ${attendeeIndex} out of range for ${ticketsForType.length} tickets`)
+        }
+      }
+      
+      console.log('\n=== FINAL FORM RESPONSE INSERTS ===')
+      console.log('Total inserts to process:', formResponseInserts.length)
+      console.log('Insert data:', JSON.stringify(formResponseInserts, null, 2))
       
       if (formResponseInserts.length > 0) {
-        console.log('Inserting', formResponseInserts.length, 'form responses')
-        const { error: formError } = await supabase
+        console.log('Attempting to insert form responses...')
+        const { data: insertResult, error: formError } = await supabase
           .from('ticket_form_responses')
           .insert(formResponseInserts)
+          .select('*')
         
         if (formError) {
-          console.error('Error saving form responses:', formError)
-          // Don't fail the entire purchase if form responses fail
+          console.error('❌ Error saving form responses:', formError)
+          console.error('Error details:', JSON.stringify(formError, null, 2))
         } else {
-          console.log('Form responses saved successfully')
+          console.log('✅ Form responses saved successfully!')
+          console.log('Inserted records:', insertResult?.length || 0)
+          console.log('Insert result:', JSON.stringify(insertResult, null, 2))
         }
       } else {
-        console.log('No valid form responses to insert')
+        console.log('⚠️ No valid form responses to insert')
       }
+      
+      console.log('=== FORM RESPONSES PROCESSING END ===\n')
     } else {
       console.log('No form responses provided or invalid format')
+      console.log('formResponses type:', typeof formResponses)
+      console.log('formResponses isArray:', Array.isArray(formResponses))
+      console.log('formResponses length:', formResponses?.length)
     }
 
     // Credit organizer wallet if payment amount > 0

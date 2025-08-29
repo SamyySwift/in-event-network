@@ -127,6 +127,8 @@ export const useAdminTickets = (eventIdOverride?: string) => {
 
         if (formError) {
           console.error('Error fetching form responses for ticket:', ticket.id, formError);
+        } else if (formData && formData.length > 0) {
+          console.log(`Found ${formData.length} form responses for ticket ${ticket.id}:`, formData);
         }
 
         if (formData && formData.length > 0) {
@@ -136,6 +138,7 @@ export const useAdminTickets = (eventIdOverride?: string) => {
             .sort((a, b) => 
               (a.ticket_form_fields?.field_order || 0) - (b.ticket_form_fields?.field_order || 0)
             );
+          console.log(`Processed ${formResponses.length} valid form responses for ticket ${ticket.id}`);
         }
         
         return {

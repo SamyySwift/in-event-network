@@ -141,16 +141,30 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       // Check for existing tickets with same email or name
       const { data: existingTickets, error } = await supabase
         .from('event_tickets')
-        .select('id, guest_name, guest_email, ticket_number')
+        .select(`
+          id,
+          guest_name,
+          guest_email,
+          ticket_number,
+          user_id,
+          profiles:profiles!event_tickets_user_id_fkey (
+            email,
+            name
+          )
+        `)
         .eq('event_id', selectedEventId);
 
       if (error) throw error;
 
       const found: DuplicateInfo[] = [];
       csvData.forEach((attendee, index) => {
-        const existing = existingTickets?.find(ticket => 
-          ticket.guest_email?.toLowerCase() === attendee.email.toLowerCase() ||
-          ticket.guest_name?.toLowerCase() === attendee.name.toLowerCase()
+        const attendeeEmail = attendee.email?.toLowerCase();
+        const attendeeName = attendee.name?.toLowerCase();
+        const existing = existingTickets?.find(ticket =>
+          (ticket.guest_email && ticket.guest_email.toLowerCase() === attendeeEmail) ||
+          (ticket.profiles?.email && ticket.profiles.email.toLowerCase() === attendeeEmail) ||
+          (ticket.guest_name && ticket.guest_name.toLowerCase() === attendeeName) ||
+          (ticket.profiles?.name && ticket.profiles.name.toLowerCase() === attendeeName)
         );
         
         if (existing) {
@@ -161,11 +175,79 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
           });
         }
       });
-
+  
       setDuplicates(found);
     } catch (error) {
       console.error('Error checking duplicates:', error);
     }
+  };
+
+  // Auto-create/find form fields for extra CSV headers and return a header->form_field_id mapping
+  const ensureAutoFieldMapping = async (ticketTypeId: string, headers: string[]): Promise<Record<string, string>> => {
+    // Only headers beyond "name" and "email" are included in mapping (phone is also included in Form Data)
+    const extraHeaders = headers.filter(h => {
+      const hl = h.trim().toLowerCase();
+      return hl !== 'name' && hl !== 'email' && hl !== '';
+    });
+  
+    if (extraHeaders.length === 0) return {};
+  
+    const { data: existingFields, error: fieldsErr } = await supabase
+      .from('ticket_form_fields')
+      .select('id, label, field_order')
+      .eq('ticket_type_id', ticketTypeId)
+      .order('field_order', { ascending: true });
+  
+    if (fieldsErr) {
+      console.error('Error fetching existing form fields:', fieldsErr);
+      return {};
+    }
+  
+    const mapByLabel = new Map<string, { id: string; label: string }>();
+    (existingFields || []).forEach(f => {
+      mapByLabel.set(f.label.trim().toLowerCase(), { id: f.id, label: f.label });
+    });
+  
+    let nextOrder = (existingFields?.length || 0);
+    const toInsert: any[] = [];
+  
+    for (const header of extraHeaders) {
+      const key = header.trim().toLowerCase();
+      if (!mapByLabel.has(key)) {
+        toInsert.push({
+          ticket_type_id: ticketTypeId,
+          field_type: 'short_answer',
+          label: header.trim(),
+          is_required: false,
+          field_order: nextOrder++
+        });
+      }
+    }
+  
+    if (toInsert.length > 0) {
+      const { data: created, error: insertErr } = await supabase
+        .from('ticket_form_fields')
+        .insert(toInsert)
+        .select('id, label');
+  
+      if (insertErr) {
+        console.error('Error creating form fields:', insertErr);
+      } else {
+        created?.forEach((f: any) => {
+          mapByLabel.set(f.label.trim().toLowerCase(), { id: f.id, label: f.label });
+        });
+      }
+    }
+  
+    const mapping: Record<string, string> = {};
+    extraHeaders.forEach(h => {
+      const match = mapByLabel.get(h.trim().toLowerCase());
+      if (match) mapping[h] = match.id;
+    });
+  
+    // reflect in UI mapping (optional)
+    setFieldMapping(prev => ({ ...prev, ...mapping }));
+    return mapping;
   };
 
   const handleImport = async () => {
@@ -178,56 +260,65 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       // Check for duplicates first
       await checkForDuplicates();
 
-      // Get a default ticket type for this event
-      const { data: ticketTypes, error: ticketTypeError } = await supabase
+      // Prefer free (₦0) ticket type; fall back to any ticket type
+      let defaultTicketType: { id: string; name: string; price: number } | null = null;
+  
+      const { data: freeTypes, error: freeTypeError } = await supabase
         .from('ticket_types')
         .select('id, name, price')
         .eq('event_id', selectedEventId)
+        .eq('price', 0)
         .limit(1);
-
-      if (ticketTypeError || !ticketTypes || ticketTypes.length === 0) {
-        throw new Error('No ticket types found for this event. Please create a ticket type first.');
+  
+      if (freeTypeError) {
+        throw new Error('Failed to fetch ticket types for this event.');
       }
-
-      const defaultTicketType = ticketTypes[0];
+  
+      if (freeTypes && freeTypes.length > 0) {
+        defaultTicketType = freeTypes[0];
+      } else {
+        const { data: anyTypes, error: anyTypeError } = await supabase
+          .from('ticket_types')
+          .select('id, name, price')
+          .eq('event_id', selectedEventId)
+          .limit(1);
+        
+        if (anyTypeError || !anyTypes || anyTypes.length === 0) {
+          throw new Error('No ticket types found for this event. Please create a ticket type first.');
+        }
+        defaultTicketType = anyTypes[0];
+      }
+  
+      // Auto-create/find form fields for extra CSV columns and build a mapping
+      const autoMapping = await ensureAutoFieldMapping(defaultTicketType.id, csvHeaders);
+  
       const errors: string[] = [];
       let successCount = 0;
       let skippedCount = 0;
-      let updatedCount = 0;
-
+      let updatedCount = 0; // will remain zero since we no longer update existing
+  
       // Process each attendee
       for (let i = 0; i < csvData.length; i++) {
         const attendee = csvData[i];
         const isDuplicate = duplicates.some(d => d.csvIndex === i);
-
+  
         try {
           if (isDuplicate) {
-            if (skipDuplicates) {
-              skippedCount++;
-              continue;
-            } else if (updateExisting) {
-              // Update existing ticket
-              const duplicate = duplicates.find(d => d.csvIndex === i);
-              if (duplicate) {
-                const { error } = await supabase
-                  .from('event_tickets')
-                  .update({
-                    guest_name: attendee.name,
-                    guest_email: attendee.email,
-                    qr_code_data: generateUniqueQRData(attendee)
-                  })
-                  .eq('id', duplicate.existingTicket.id);
-
-                if (error) {
-                  errors.push(`${attendee.name} (${attendee.email}): Update failed - ${error.message}`);
-                } else {
-                  updatedCount++;
-                }
-              }
-              continue;
-            }
+            // Always skip duplicates to avoid overwriting any existing ticket purchases
+            skippedCount++;
+            continue;
           }
-
+  
+          // Map possible phone columns
+          const phoneValue =
+            attendee['phone'] ||
+            attendee['phone_number'] ||
+            attendee['phone number'] ||
+            attendee['mobile'] ||
+            attendee['mobile_number'] ||
+            attendee['mobile number'] ||
+            null;
+  
           // Create new ticket
           const { data: ticketData, error } = await supabase
             .from('event_tickets')
@@ -236,6 +327,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
               ticket_type_id: defaultTicketType.id,
               guest_name: attendee.name,
               guest_email: attendee.email,
+              guest_phone: phoneValue,
               price: defaultTicketType.price,
               payment_status: 'completed',
               qr_code_data: generateUniqueQRData(attendee),
@@ -243,7 +335,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
             })
             .select()
             .single();
-
+  
           if (error) {
             // Provide more specific error messages
             if (error.code === '23505' && error.message.includes('qr_code_data')) {
@@ -256,28 +348,26 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
           } else {
             successCount++;
             
-            // Create form responses for mapped CSV columns
-            if (ticketData && Object.keys(fieldMapping).length > 0) {
-              const formResponses = [];
-              
-              for (const [csvHeader, formFieldId] of Object.entries(fieldMapping)) {
-                if (formFieldId && attendee[csvHeader]) {
-                  formResponses.push({
-                    ticket_id: ticketData.id,
-                    form_field_id: formFieldId,
-                    response_value: JSON.stringify(attendee[csvHeader])
-                  });
-                }
+            // Build form responses for ALL extra CSV columns (auto mapping)
+            const responses: any[] = [];
+            Object.entries(autoMapping).forEach(([csvHeader, formFieldId]) => {
+              const value = attendee[csvHeader];
+              if (value !== undefined && value !== null && value !== '') {
+                responses.push({
+                  ticket_id: ticketData.id,
+                  form_field_id: formFieldId,
+                  response_value: value
+                });
               }
+            });
+  
+            if (responses.length > 0) {
+              const { error: formError } = await supabase
+                .from('ticket_form_responses')
+                .insert(responses);
               
-              if (formResponses.length > 0) {
-                const { error: formError } = await supabase
-                  .from('ticket_form_responses')
-                  .insert(formResponses);
-                
-                if (formError) {
-                  console.error('Error creating form responses:', formError);
-                }
+              if (formError) {
+                console.error('Error creating form responses:', formError);
               }
             }
           }
@@ -285,28 +375,28 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
           errors.push(`${attendee.name} (${attendee.email}): Unexpected error occurred`);
         }
       }
-
+  
       setImportResults({
         success: successCount,
         errors,
         skipped: skippedCount,
         updated: updatedCount
       });
-
+  
       const totalProcessed = successCount + updatedCount;
       if (totalProcessed > 0) {
         toast.success(`Successfully processed ${totalProcessed} attendees (${successCount} new, ${updatedCount} updated)`);
         onImportComplete?.();
       }
-
+  
       if (skippedCount > 0) {
         toast.info(`Skipped ${skippedCount} duplicate entries`);
       }
-
+  
       if (errors.length > 0) {
         toast.error(`${errors.length} imports failed`);
       }
-
+  
     } catch (error) {
       toast.error((error as Error).message);
     } finally {

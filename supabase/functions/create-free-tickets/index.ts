@@ -50,6 +50,7 @@ serve(async (req) => {
       .insert(rows)
       .select(`
         id,
+        ticket_type_id,
         ticket_number,
         qr_code_data,
         price,

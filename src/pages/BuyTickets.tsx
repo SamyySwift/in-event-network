@@ -545,7 +545,7 @@ export default function BuyTickets() {
       }
   
       // Insert form responses if any
-      if (tickets && tickets.length > 0) {
+      if (!isFreeFlow && tickets && tickets.length > 0) {
         const formResponseInserts = [];
         
         for (const purchase of purchaseData) {

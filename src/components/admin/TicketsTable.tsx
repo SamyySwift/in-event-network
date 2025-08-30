@@ -166,19 +166,29 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
                   {ticket.form_responses && ticket.form_responses.length > 0 ? (
                     <div className="space-y-1">
                       {ticket.form_responses.slice(0, 2).map((response) => {
-                        // Parse the JSONB response value
+                        // Parse the JSONB response value - handle both direct values and JSON strings
                         let displayValue;
                         try {
+                          // Handle different response_value formats
                           if (typeof response.response_value === 'string') {
-                            // Try to parse JSON string
-                            const parsed = JSON.parse(response.response_value);
-                            displayValue = typeof parsed === 'string' ? parsed : JSON.stringify(parsed);
-                          } else {
+                            try {
+                              // Try to parse as JSON first
+                              const parsed = JSON.parse(response.response_value);
+                              displayValue = typeof parsed === 'string' ? parsed : String(parsed);
+                            } catch {
+                              // If not JSON, use as-is
+                              displayValue = response.response_value;
+                            }
+                          } else if (response.response_value && typeof response.response_value === 'object') {
+                            // If it's already an object, stringify it
                             displayValue = JSON.stringify(response.response_value);
+                          } else {
+                            // For other types, convert to string
+                            displayValue = String(response.response_value || '');
                           }
-                        } catch {
-                          // If parsing fails, display as string
-                          displayValue = String(response.response_value);
+                        } catch (error) {
+                          console.error('Error parsing form response value:', error);
+                          displayValue = 'Error parsing value';
                         }
                         
                         return (

@@ -213,24 +213,22 @@ serve(async (req) => {
                 continue
               }
               
-              // The response_value column is JSONB, so we need to properly format the value
-              let jsonValue;
-              if (typeof value === 'string') {
-                // For string values, store as JSON string
-                jsonValue = JSON.stringify(value);
-              } else if (typeof value === 'object') {
-                // For objects, stringify them
-                jsonValue = JSON.stringify(value);
+              // The response_value column is JSONB, so we store the value directly
+              // Supabase's JSONB column will handle the JSON conversion automatically
+              let responseValue = value;
+              
+              // Ensure we don't double-stringify
+              if (typeof value === 'object' && value !== null) {
+                responseValue = value; // Keep objects as-is for JSONB
               } else {
-                // For other types (number, boolean), convert to JSON
-                jsonValue = JSON.stringify(value);
+                responseValue = value; // Keep primitives as-is for JSONB
               }
               
-              console.log(`Adding form response: field ${fieldId} = ${value} (JSON: ${jsonValue})`)
+              console.log(`Adding form response: field ${fieldId} = ${value} (storing as: ${JSON.stringify(responseValue)})`)
               formResponseInserts.push({
                 ticket_id: ticket.id,
                 form_field_id: fieldId,
-                response_value: jsonValue
+                response_value: responseValue // Let Supabase handle JSONB conversion
               })
             }
           } else {

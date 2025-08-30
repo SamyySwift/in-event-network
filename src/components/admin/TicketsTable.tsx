@@ -164,54 +164,65 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
                 </TableCell>
                 <TableCell>
                   {ticket.form_responses && ticket.form_responses.length > 0 ? (
-                    <div className="space-y-1">
-                      {ticket.form_responses.slice(0, 2).map((response) => {
-                        // Parse the JSONB response value - handle both direct values and JSON strings
+                    <div className="space-y-1 max-w-xs">
+                      {ticket.form_responses.slice(0, 3).map((response) => {
+                        // Parse the JSONB response value with better handling
                         let displayValue;
                         try {
-                          // Handle different response_value formats
-                          if (typeof response.response_value === 'string') {
-                            try {
-                              // Try to parse as JSON first
-                              const parsed = JSON.parse(response.response_value);
-                              displayValue = typeof parsed === 'string' ? parsed : String(parsed);
-                            } catch {
-                              // If not JSON, use as-is
-                              displayValue = response.response_value;
+                          const rawValue = response.response_value;
+                          
+                          if (rawValue === null || rawValue === undefined) {
+                            displayValue = 'No value';
+                          } else if (typeof rawValue === 'string') {
+                            // Handle string values that might be JSON
+                            if (rawValue.startsWith('"') && rawValue.endsWith('"')) {
+                              // It's a JSON string, parse it
+                              try {
+                                displayValue = JSON.parse(rawValue);
+                              } catch {
+                                displayValue = rawValue;
+                              }
+                            } else {
+                              displayValue = rawValue;
                             }
-                          } else if (response.response_value && typeof response.response_value === 'object') {
-                            // If it's already an object, stringify it
-                            displayValue = JSON.stringify(response.response_value);
+                          } else if (Array.isArray(rawValue)) {
+                            displayValue = rawValue.join(', ');
+                          } else if (typeof rawValue === 'object') {
+                            displayValue = JSON.stringify(rawValue);
                           } else {
-                            // For other types, convert to string
-                            displayValue = String(response.response_value || '');
+                            displayValue = String(rawValue);
+                          }
+                          
+                          // Truncate long values
+                          if (String(displayValue).length > 50) {
+                            displayValue = String(displayValue).substring(0, 47) + '...';
                           }
                         } catch (error) {
-                          console.error('Error parsing form response value:', error);
+                          console.error('Error parsing form response value:', error, { response });
                           displayValue = 'Error parsing value';
                         }
                         
                         return (
-                          <div key={response.id} className="text-xs">
-                            <span className="font-medium text-muted-foreground">
-                              {response.ticket_form_fields.label}:
-                            </span>{' '}
-                            <span className="text-foreground">
-                              {displayValue}
-                            </span>
+                          <div key={response.id} className="text-xs border-b border-muted/20 pb-1 last:border-b-0">
+                            <div className="font-medium text-muted-foreground text-[10px] uppercase tracking-wide mb-1">
+                              {response.ticket_form_fields?.label || 'Unknown Field'}
+                            </div>
+                            <div className="text-foreground font-medium">
+                              {displayValue || 'No response'}
+                            </div>
                           </div>
                         );
                       })}
-                      {ticket.form_responses.length > 2 && (
-                        <div className="text-xs text-muted-foreground">
-                          +{ticket.form_responses.length - 2} more
+                      {ticket.form_responses.length > 3 && (
+                        <div className="text-xs text-muted-foreground font-medium">
+                          +{ticket.form_responses.length - 3} more fields
                         </div>
                       )}
                     </div>
                   ) : (
                     <div className="flex items-center text-muted-foreground text-sm">
                       <FormInput className="h-3 w-3 mr-1" />
-                      No form data
+                      <span className="text-xs">No form data</span>
                     </div>
                   )}
                 </TableCell>

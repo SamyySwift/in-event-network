@@ -18,7 +18,9 @@ serve(async (req) => {
       { auth: { persistSession: false } }
     );
 
-    const { eventId, tickets } = await req.json();
+    const { eventId, tickets, formResponses } = await req.json();
+
+    console.log('Create free tickets input:', { eventId, tickets: tickets?.length, formResponses: formResponses?.length });
 
     if (!eventId || !Array.isArray(tickets) || tickets.length === 0) {
       return new Response(JSON.stringify({ error: "Invalid payload" }), {
@@ -96,6 +98,50 @@ serve(async (req) => {
       }
     } catch (qtyErr) {
       console.error('Quantity decrement exception:', qtyErr);
+    }
+
+    // Insert form responses if provided
+    if (formResponses && Array.isArray(formResponses) && formResponses.length > 0) {
+      console.log('Processing form responses:', formResponses.length);
+      
+      const formResponseInserts = [];
+      
+      for (const responseData of formResponses) {
+        const { ticketTypeId, attendeeIndex, responses } = responseData;
+        
+        // Find the corresponding ticket
+        const ticketsForType = inserted?.filter(t => t.ticket_type_id === ticketTypeId) || [];
+        const ticket = ticketsForType[attendeeIndex];
+        
+        if (ticket && responses) {
+          console.log(`Processing responses for ticket ${ticket.id}:`, responses);
+          
+          // Create form response entries
+          for (const [fieldId, value] of Object.entries(responses)) {
+            if (value !== undefined && value !== null && value !== '') {
+              formResponseInserts.push({
+                ticket_id: ticket.id,
+                form_field_id: fieldId,
+                response_value: value // Let Supabase handle JSONB conversion
+              });
+            }
+          }
+        }
+      }
+      
+      if (formResponseInserts.length > 0) {
+        console.log('Inserting form responses:', formResponseInserts.length);
+        const { error: responseError } = await supabaseService
+          .from('ticket_form_responses')
+          .insert(formResponseInserts);
+          
+        if (responseError) {
+          console.error('Form responses insert error:', responseError);
+          // Don't fail the whole operation, just log the error
+        } else {
+          console.log('Form responses inserted successfully');
+        }
+      }
     }
 
     return new Response(JSON.stringify({ tickets: inserted }), {

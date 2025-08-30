@@ -494,6 +494,10 @@ export default function BuyTickets() {
           const timestamp = Date.now();
           const uniqueQRCode = `${eventData.event.id}-${purchase.ticketTypeId}-${timestamp}-${uniqueId}-${i}`;
 
+          // Prepare form responses for this attendee
+          const attendeeFormResponses = attendee.formResponses || {};
+          console.log(`Form responses for attendee ${i}:`, attendeeFormResponses);
+
           ticketPurchases.push({
             event_id: eventData.event.id,
             ticket_type_id: purchase.ticketTypeId,
@@ -518,10 +522,22 @@ export default function BuyTickets() {
       const isFreeFlow = !paymentReference && getTotalPrice() === 0;
 
       if (isFreeFlow) {
+        // Prepare form responses data for free tickets
+        const formResponsesData = purchaseData.flatMap((purchase, purchaseIndex) => 
+          purchase.attendees.map((attendee, attendeeIndex) => ({
+            ticketTypeId: purchase.ticketTypeId,
+            attendeeIndex: attendeeIndex,
+            responses: attendee.formResponses || {}
+          }))
+        );
+
+        console.log('Sending form responses to create-free-tickets:', formResponsesData);
+
         const { data, error } = await supabase.functions.invoke('create-free-tickets', {
           body: {
             eventId: eventData.event.id,
-            tickets: ticketPurchases
+            tickets: ticketPurchases,
+            formResponses: formResponsesData
           }
         });
         if (error) throw error;

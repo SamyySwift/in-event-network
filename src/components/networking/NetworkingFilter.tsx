@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Filter, X } from 'lucide-react';
+import { Filter, X, Sparkles } from 'lucide-react';
 
 interface NetworkingFilterProps {
   searchTerm: string;
@@ -17,6 +17,8 @@ interface NetworkingFilterProps {
   onNetworkingPrefChange: (prefs: string[]) => void;
   selectedTags: string[];
   onTagChange: (tags: string[]) => void;
+  showSuggestedOnly: boolean;
+  onSuggestedToggle: (show: boolean) => void;
   availableNiches: string[];
   availableNetworkingPrefs: string[];
   availableTags: string[];
@@ -32,12 +34,14 @@ export const NetworkingFilter: React.FC<NetworkingFilterProps> = ({
   onNetworkingPrefChange,
   selectedTags,
   onTagChange,
+  showSuggestedOnly,
+  onSuggestedToggle,
   availableNiches,
   availableNetworkingPrefs,
   availableTags,
   onClearFilters,
 }) => {
-  const hasActiveFilters = selectedNiches.length > 0 || selectedNetworkingPrefs.length > 0 || selectedTags.length > 0;
+  const hasActiveFilters = selectedNiches.length > 0 || selectedNetworkingPrefs.length > 0 || selectedTags.length > 0 || showSuggestedOnly;
 
   const handleNicheToggle = (niche: string) => {
     if (selectedNiches.includes(niche)) {
@@ -75,15 +79,24 @@ export const NetworkingFilter: React.FC<NetworkingFilterProps> = ({
       </div>
       
       <div className="flex gap-2">
+        <Button 
+          variant={showSuggestedOnly ? "default" : "outline"}
+          onClick={() => onSuggestedToggle(!showSuggestedOnly)}
+          className="flex items-center gap-2"
+        >
+          <Sparkles size={16} />
+          <span>Suggest</span>
+        </Button>
+        
         <Popover>
           <PopoverTrigger asChild>
             <Button variant="outline" className="flex items-center gap-2">
               <Filter size={16} />
               <span>Filters</span>
               {hasActiveFilters && (
-                <span className="bg-connect-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">
-                  {selectedNiches.length + selectedNetworkingPrefs.length + selectedTags.length}
-                </span>
+                 <span className="bg-connect-600 text-white rounded-full w-5 h-5 text-xs flex items-center justify-center">
+                   {selectedNiches.length + selectedNetworkingPrefs.length + selectedTags.length + (showSuggestedOnly ? 1 : 0)}
+                 </span>
               )}
             </Button>
           </PopoverTrigger>

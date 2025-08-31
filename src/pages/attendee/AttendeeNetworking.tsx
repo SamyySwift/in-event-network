@@ -81,11 +81,14 @@ const AttendeeNetworking = () => {
     setSelectedNetworkingPrefs,
     selectedTags,
     setSelectedTags,
+    showSuggestedOnly,
+    setShowSuggestedOnly,
     availableNiches,
     availableNetworkingPrefs,
     availableTags,
     filteredProfiles,
     clearAllFilters,
+    calculateProfileCompletion,
   } = useNetworkingFilters(profiles);
 
   // Pagination calculations
@@ -97,7 +100,7 @@ const AttendeeNetworking = () => {
   // Reset to first page when filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedNiches, selectedNetworkingPrefs, selectedTags]);
+  }, [searchTerm, selectedNiches, selectedNetworkingPrefs, selectedTags, showSuggestedOnly]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -582,6 +585,8 @@ const AttendeeNetworking = () => {
             onNetworkingPrefChange={setSelectedNetworkingPrefs}
             selectedTags={selectedTags}
             onTagChange={setSelectedTags}
+            showSuggestedOnly={showSuggestedOnly}
+            onSuggestedToggle={setShowSuggestedOnly}
             availableNiches={availableNiches}
             availableNetworkingPrefs={availableNetworkingPrefs}
             availableTags={availableTags}

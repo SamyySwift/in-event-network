@@ -24,6 +24,7 @@ export const useNetworkingFilters = (profiles: AttendeeProfile[]) => {
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
   const [selectedNetworkingPrefs, setSelectedNetworkingPrefs] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [showSuggestedOnly, setShowSuggestedOnly] = useState(false);
 
   // Extract unique values for filter options
   const availableNiches = useMemo(() => {
@@ -51,6 +52,28 @@ export const useNetworkingFilters = (profiles: AttendeeProfile[]) => {
     return tags;
   }, [profiles]);
 
+  // Calculate profile completion percentage
+  const calculateProfileCompletion = (profile: AttendeeProfile): number => {
+    const fields = [
+      profile.name,
+      profile.role,
+      profile.company,
+      profile.bio,
+      profile.niche,
+      profile.photo_url,
+      profile.networking_preferences?.length ? 'has_prefs' : null,
+      profile.tags?.length ? 'has_tags' : null,
+      profile.twitter_link,
+      profile.linkedin_link,
+      profile.github_link,
+      profile.instagram_link,
+      profile.website_link
+    ];
+    
+    const filledFields = fields.filter(field => field && field.length > 0).length;
+    return Math.round((filledFields / fields.length) * 100);
+  };
+
   // Filter profiles based on current filters
   const filteredProfiles = useMemo(() => {
     return profiles.filter(profile => {
@@ -75,15 +98,20 @@ export const useNetworkingFilters = (profiles: AttendeeProfile[]) => {
       const matchesTags = selectedTags.length === 0 ||
         profile.tags?.some(tag => selectedTags.includes(tag));
 
-      return matchesSearch && matchesNiche && matchesNetworkingPref && matchesTags;
+      // Suggested filter (50-100% completion)
+      const matchesSuggested = !showSuggestedOnly || 
+        calculateProfileCompletion(profile) >= 50;
+
+      return matchesSearch && matchesNiche && matchesNetworkingPref && matchesTags && matchesSuggested;
     });
-  }, [profiles, searchTerm, selectedNiches, selectedNetworkingPrefs, selectedTags]);
+  }, [profiles, searchTerm, selectedNiches, selectedNetworkingPrefs, selectedTags, showSuggestedOnly]);
 
   const clearAllFilters = () => {
     setSearchTerm('');
     setSelectedNiches([]);
     setSelectedNetworkingPrefs([]);
     setSelectedTags([]);
+    setShowSuggestedOnly(false);
   };
 
   return {
@@ -95,10 +123,13 @@ export const useNetworkingFilters = (profiles: AttendeeProfile[]) => {
     setSelectedNetworkingPrefs,
     selectedTags,
     setSelectedTags,
+    showSuggestedOnly,
+    setShowSuggestedOnly,
     availableNiches,
     availableNetworkingPrefs,
     availableTags,
     filteredProfiles,
     clearAllFilters,
+    calculateProfileCompletion,
   };
 };

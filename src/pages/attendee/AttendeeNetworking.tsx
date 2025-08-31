@@ -48,6 +48,7 @@ import { NetworkingFilter } from "@/components/networking/NetworkingFilter";
 import XLogo from "@/components/icons/XLogo";
 import PaymentGuard from '@/components/payment/PaymentGuard';
 import { usePayment } from '@/hooks/usePayment';
+import { useUserPresence } from '@/hooks/useUserPresence';
 
 const AttendeeNetworking = () => {
   const navigate = useNavigate();
@@ -112,6 +113,8 @@ const AttendeeNetworking = () => {
 
   const { sendConnectionRequest, getConnectionStatus, connections } =
     useNetworking();
+  
+  const { getUserStatus, getStatusColor } = useUserPresence();
 
   console.log("AttendeeNetworking - currentEventId:", currentEventId);
   console.log("AttendeeNetworking - profiles:", profiles);
@@ -199,6 +202,8 @@ const AttendeeNetworking = () => {
     const isConnected = connectionStatus?.status === "accepted";
     const isPending = connectionStatus?.status === "pending";
     const socialLinks = getSocialLinks(profile);
+    const userStatus = getUserStatus(profile.id);
+    const statusColor = getStatusColor(userStatus);
 
     return (
       <Card
@@ -229,7 +234,10 @@ const AttendeeNetworking = () => {
                     </AvatarFallback>
                   )}
                 </Avatar>
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-400 rounded-full border-2 border-white dark:border-gray-800 animate-pulse" />
+                <div 
+                  className={`absolute -bottom-1 -right-1 w-6 h-6 ${statusColor} rounded-full border-2 border-white dark:border-gray-800 ${userStatus === 'online' ? 'animate-pulse' : ''}`}
+                  title={userStatus === 'online' ? 'Online in dashboard' : userStatus === 'away' ? 'Online but away from dashboard' : 'Offline'}
+                />
               </div>
 
               <div className="flex-1">

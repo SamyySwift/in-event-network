@@ -232,8 +232,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
                   {currentUser && (
                     <Button
-                      variant="ghost"
-                      className="justify-start text-gray-600 dark:text-gray-300 mt-4"
+                      variant="destructive"
+                      className="justify-start mt-4"
                       onClick={() => {
                         logout();
                         navigate("/");
@@ -353,8 +353,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
           {currentUser && (
             <Button
-              variant="ghost"
-              className="w-full justify-start text-gray-600 dark:text-gray-300 mt-6 border-t border-gray-100 dark:border-gray-700 pt-4"
+              variant="destructive"
+              className="w-full justify-start mt-6 border-t border-gray-100 dark:border-gray-700 pt-4"
               onClick={() => {
                 logout();
                 navigate("/");

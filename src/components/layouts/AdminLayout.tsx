@@ -423,8 +423,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
         {currentUser && (
           <Button
-            variant="ghost"
-            className="w-full justify-start text-sidebar-foreground mt-4 hover:text-destructive hover:bg-destructive/10"
+            variant="destructive"
+            className="w-full justify-start mt-4"
             onClick={() => {
               logout();
               navigate("/");
@@ -631,10 +631,10 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
             {currentUser && (
               <Button
-                variant="ghost"
+                variant="destructive"
                 className={`w-full ${
                   sidebarOpen ? "justify-start" : "justify-center"
-                } text-sidebar-foreground mt-4 hover:text-destructive hover:bg-destructive/10`}
+                } mt-4`}
                 onClick={() => {
                   logout();
                   navigate("/");

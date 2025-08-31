@@ -47,7 +47,7 @@ const ScanQR = () => {
                 Please sign out of your admin account to join events as an attendee.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button onClick={() => logout()} variant="outline" className="flex items-center gap-2">
+                <Button onClick={() => logout()} variant="destructive" className="flex items-center gap-2">
                   <LogOut className="h-4 w-4" />
                   Sign Out
                 </Button>

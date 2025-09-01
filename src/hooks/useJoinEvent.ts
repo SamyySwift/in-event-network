@@ -46,7 +46,7 @@ export const useJoinEvent = () => {
         
         
         // Navigate to attendee dashboard
-        navigate('/attendee/dashboard');
+        navigate('/attendee');
       } else {
         console.error('Join event failed:', data?.message);
         toast({

@@ -13,32 +13,30 @@ export const useNotificationCount = () => {
 
   useEffect(() => {
     if (currentUser) {
-      // Check user role and use appropriate notification system
-      if (currentUser && attendeeNotifications) {
-        setUnreadCount(attendeeNotifications.getUnreadCount());
-      } else {
-        fetchUnreadCount();
-        setupRealtimeSubscription();
-      }
+      // Always use attendee notifications system for better state management
+      const newUnreadCount = attendeeNotifications.getUnreadCount();
+      setUnreadCount(newUnreadCount);
     }
   }, [currentUser, attendeeNotifications.notifications]);
 
-  const setupRealtimeSubscription = () => {
+  // Set up additional real-time subscription for immediate updates
+  useEffect(() => {
     if (!currentUser) return;
 
-    // Set up real-time subscription for notifications
     const channel = supabase
       .channel('notifications-count-changes')
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'UPDATE',
           schema: 'public',
           table: 'notifications',
           filter: `user_id=eq.${currentUser.id}`
         },
         () => {
-          fetchUnreadCount();
+          // Force a re-calculation of unread count
+          const newUnreadCount = attendeeNotifications.getUnreadCount();
+          setUnreadCount(newUnreadCount);
         }
       )
       .subscribe();
@@ -46,25 +44,10 @@ export const useNotificationCount = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  };
-
-  const fetchUnreadCount = async () => {
-    try {
-      const { count, error } = await supabase
-        .from('notifications')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', currentUser?.id)
-        .eq('is_read', false);
-
-      if (error) throw error;
-      setUnreadCount(count || 0);
-    } catch (error) {
-      console.error('Error fetching unread count:', error);
-    }
-  };
+  }, [currentUser, attendeeNotifications]);
 
   return { 
-    unreadCount: attendeeNotifications ? attendeeNotifications.getUnreadCount() : unreadCount, 
-    refetch: attendeeNotifications ? attendeeNotifications.refetch : fetchUnreadCount 
+    unreadCount, 
+    refetch: attendeeNotifications.refetch 
   };
 };

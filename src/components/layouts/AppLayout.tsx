@@ -225,7 +225,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                         setMobileSidebarOpen(false);
                       }}
                     >
-                      <span className="mr-3">{item.icon}</span>
+                      {renderNavIcon(item.icon, item.href)}
                       {item.name}
                     </Button>
                   ))}
@@ -343,7 +343,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               }`}
               onClick={() => navigate(item.href)}
             >
-              <span className="mr-3">{item.icon}</span>
+              {renderNavIcon(item.icon, item.href)}
               {item.name}
               {isActive(item.href) && (
                 <ChevronRight className="ml-auto h-4 w-4" />
@@ -385,7 +385,15 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               }`}
               onClick={() => navigate(item.href)}
             >
-              {item.icon}
+              <span className="relative inline-flex">
+                {item.icon}
+                {item.href === "/attendee/networking" && (
+                  <span
+                    className={`absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full border border-white dark:border-gray-800 ${networkingIndicatorColor}`}
+                    aria-label="Networking status indicator"
+                  />
+                )}
+              </span>
               <span className="text-xs mt-1">{item.name}</span>
             </button>
           ))}
@@ -411,3 +419,48 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   );
 };
 export default AppLayout;
+
+// Add page-visibility and online/offline detection
+const [isPageVisible, setIsPageVisible] = React.useState(!document.hidden);
+const [isOnline, setIsOnline] = React.useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
+
+React.useEffect(() => {
+  const handleVisibility = () => setIsPageVisible(!document.hidden);
+  document.addEventListener('visibilitychange', handleVisibility);
+  return () => document.removeEventListener('visibilitychange', handleVisibility);
+}, []);
+
+React.useEffect(() => {
+  const handleOnline = () => setIsOnline(true);
+  const handleOffline = () => setIsOnline(false);
+  window.addEventListener('online', handleOnline);
+  window.addEventListener('offline', handleOffline);
+  // initialize
+  setIsOnline(navigator.onLine);
+  return () => {
+    window.removeEventListener('online', handleOnline);
+    window.removeEventListener('offline', handleOffline);
+  };
+}, []);
+
+// Compute networking indicator color based on requirements
+const isInAttendeeDashboard = location.pathname.startsWith('/attendee');
+const networkingIndicatorColor = !isOnline
+  ? 'bg-red-500'                      // only red when offline/connection error
+  : isInAttendeeDashboard
+    ? (isPageVisible ? 'bg-green-500' // green when in dashboard and app visible
+                       : 'bg-orange-500') // orange when app is not visible (away)
+    : 'bg-gray-300';                  // neutral when not in attendee dashboard
+
+// helper to render icon with status badge for Networking item
+const renderNavIcon = (itemIcon: React.ReactNode, itemHref: string) => (
+<span className="mr-3 relative inline-flex">
+  {itemIcon}
+  {itemHref === "/attendee/networking" && (
+    <span
+      className={`absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full border border-white dark:border-gray-800 ${networkingIndicatorColor}`}
+      aria-label="Networking status indicator"
+    />
+  )}
+</span>
+);

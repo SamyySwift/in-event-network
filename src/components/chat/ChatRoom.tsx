@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, MessageCircle, AlertCircle } from 'lucide-react'; // swapped User for MessageCircle
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,15 +19,34 @@ const ChatRoom = () => {
   const { messages, loading, sendMessage } = useChat();
   const [newMessage, setNewMessage] = useState('');
   const [quotedMessage, setQuotedMessage] = useState<any>(null);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const previousMessageCount = useRef(messages.length);
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, []);
 
+  // Auto-scroll to bottom only when new messages arrive and user isn't manually scrolling
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    const hasNewMessages = messages.length > previousMessageCount.current;
+    previousMessageCount.current = messages.length;
+    
+    if (hasNewMessages && !isUserScrolling) {
+      setTimeout(scrollToBottom, 100);
+    }
+  }, [messages, isUserScrolling, scrollToBottom]);
+
+  // Handle scroll events to detect when user is manually scrolling
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    const scrollContainer = e.currentTarget;
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+    const isAtBottom = scrollHeight - scrollTop - clientHeight < 10;
+    
+    // If user scrolls away from bottom, they're manually scrolling
+    setIsUserScrolling(!isAtBottom);
+  }, []);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
@@ -35,6 +54,9 @@ const ChatRoom = () => {
     await sendMessage(newMessage, quotedMessage?.id);
     setNewMessage('');
     setQuotedMessage(null);
+    // Force scroll to bottom when user sends a message
+    setIsUserScrolling(false);
+    setTimeout(scrollToBottom, 100);
   };
 
   const handleQuoteMessage = (message: any) => {
@@ -89,10 +111,15 @@ const ChatRoom = () => {
         </div>
       </div>
 
-      <CardContent className="flex-1 flex flex-col p-0">
-        {/* Messages Area */}
-        <ScrollArea className="flex-1 bg-gray-50 dark:bg-gray-900">
-          <div className="p-4 space-y-3">
+      <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
+        {/* Messages Area with Custom Scroll Implementation */}
+        <div 
+          ref={scrollAreaRef}
+          className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 scroll-smooth"
+          style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--border)) transparent' }}
+          onScroll={handleScroll}
+        >
+          <div className="p-4 space-y-3 min-h-full">
             {messages.length === 0 ? (
               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -110,7 +137,7 @@ const ChatRoom = () => {
             )}
             <div ref={messagesEndRef} />
           </div>
-        </ScrollArea>
+        </div>
 
         {/* Quote Preview */}
         {quotedMessage && (

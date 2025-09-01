@@ -12,12 +12,12 @@ export const useNotificationCount = () => {
   const attendeeNotifications = useAttendeeNotifications();
 
   useEffect(() => {
-    if (currentUser) {
+    if (currentUser && attendeeNotifications) {
       // Always use attendee notifications system for better state management
       const newUnreadCount = attendeeNotifications.getUnreadCount();
       setUnreadCount(newUnreadCount);
     }
-  }, [currentUser, attendeeNotifications.notifications]);
+  }, [currentUser, attendeeNotifications, attendeeNotifications.notifications]);
 
   // Set up additional real-time subscription for immediate updates
   useEffect(() => {

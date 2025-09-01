@@ -116,10 +116,15 @@ export const useUserPresence = () => {
     // Update presence when route changes
     const updatePresence = () => {
       if (channelRef.current && currentUser?.id) {
-        const isDashboard = currentRoute.includes('/attendee');
+        // Consider any dashboard page as "online" (attendee, admin, or other app pages)
+        const isInApp = currentRoute.includes('/attendee') || 
+                       currentRoute.includes('/admin') ||
+                       currentRoute.includes('/host') ||
+                       !['/login', '/register', '/landing', '/', '/auth-callback'].includes(currentRoute);
+        
         channelRef.current.track({
           user_id: currentUser.id,
-          status: isDashboard ? 'online' : 'away',
+          status: isInApp ? 'online' : 'away',
           last_seen: new Date().toISOString(),
           current_route: currentRoute,
         });
@@ -136,7 +141,7 @@ export const useUserPresence = () => {
     // Handle page visibility changes
     const handleVisibilityChange = () => {
       if (document.hidden) {
-        // User switched tabs or minimized window
+        // User switched tabs or minimized window - they're away from the app
         channelRef.current?.track({
           user_id: currentUser.id,
           status: 'away',
@@ -144,11 +149,15 @@ export const useUserPresence = () => {
           current_route: currentRoute,
         });
       } else {
-        // User came back
-        const isDashboard = currentRoute.includes('/attendee');
+        // User came back - check if they're in the app
+        const isInApp = currentRoute.includes('/attendee') || 
+                       currentRoute.includes('/admin') ||
+                       currentRoute.includes('/host') ||
+                       !['/login', '/register', '/landing', '/', '/auth-callback'].includes(currentRoute);
+        
         channelRef.current?.track({
           user_id: currentUser.id,
-          status: isDashboard ? 'online' : 'away',
+          status: isInApp ? 'online' : 'away',
           last_seen: new Date().toISOString(),
           current_route: currentRoute,
         });

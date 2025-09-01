@@ -438,11 +438,11 @@ const Register = () => {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full"
+                className={`w-full ${isFromQRCode ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={handleGoogleSignUp}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isFromQRCode}
               >
-                <FcGoogle className="mr-2 h-4 w-4" />
+                <FcGoogle className={`mr-2 h-4 w-4 ${isFromQRCode ? 'opacity-50' : ''}`} />
                 Sign up with Google
               </Button>
               

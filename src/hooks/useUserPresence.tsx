@@ -116,11 +116,11 @@ export const useUserPresence = () => {
     // Update presence when route changes
     const updatePresence = () => {
       if (channelRef.current && currentUser?.id) {
-        // Consider any dashboard page as "online" (attendee, admin, or other app pages)
-        const isInApp = currentRoute.includes('/attendee') || 
-                       currentRoute.includes('/admin') ||
-                       currentRoute.includes('/host') ||
-                       !['/login', '/register', '/landing', '/', '/auth-callback'].includes(currentRoute);
+        // Always show green when in attendee dashboard (any attendee page)
+        const isInAttendeeDashboard = currentRoute.includes('/attendee');
+        const isInAdminDashboard = currentRoute.includes('/admin');
+        const isInHostDashboard = currentRoute.includes('/host');
+        const isInApp = isInAttendeeDashboard || isInAdminDashboard || isInHostDashboard;
         
         channelRef.current.track({
           user_id: currentUser.id,
@@ -150,10 +150,10 @@ export const useUserPresence = () => {
         });
       } else {
         // User came back - check if they're in the app
-        const isInApp = currentRoute.includes('/attendee') || 
-                       currentRoute.includes('/admin') ||
-                       currentRoute.includes('/host') ||
-                       !['/login', '/register', '/landing', '/', '/auth-callback'].includes(currentRoute);
+        const isInAttendeeDashboard = currentRoute.includes('/attendee');
+        const isInAdminDashboard = currentRoute.includes('/admin');
+        const isInHostDashboard = currentRoute.includes('/host');
+        const isInApp = isInAttendeeDashboard || isInAdminDashboard || isInHostDashboard;
         
         channelRef.current?.track({
           user_id: currentUser.id,

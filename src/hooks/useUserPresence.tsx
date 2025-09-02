@@ -26,7 +26,25 @@ export const useUserPresence = () => {
     setCurrentRoute(window.location.pathname);
     
     const handleRouteChange = () => {
-      setCurrentRoute(window.location.pathname);
+      const newRoute = window.location.pathname;
+      setCurrentRoute(newRoute);
+      
+      // Force presence update immediately on route change
+      setTimeout(() => {
+        if (channelRef.current && currentUser?.id) {
+          const isInAttendeeDashboard = newRoute.includes('/attendee');
+          const isInAdminDashboard = newRoute.includes('/admin');
+          const isInHostDashboard = newRoute.includes('/host');
+          const isInApp = isInAttendeeDashboard || isInAdminDashboard || isInHostDashboard;
+          
+          channelRef.current.track({
+            user_id: currentUser.id,
+            status: isInApp ? 'online' : 'away',
+            last_seen: new Date().toISOString(),
+            current_route: newRoute,
+          });
+        }
+      }, 100); // Small delay to ensure channel is ready
     };
 
     // Listen for route changes
@@ -51,7 +69,7 @@ export const useUserPresence = () => {
       history.pushState = originalPushState;
       history.replaceState = originalReplaceState;
     };
-  }, []);
+  }, [currentUser?.id]);
 
   useEffect(() => {
     if (!currentUser?.id || !currentEventId) return;

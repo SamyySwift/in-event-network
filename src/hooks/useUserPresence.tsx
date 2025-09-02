@@ -74,16 +74,31 @@ export const useUserPresence = () => {
   useEffect(() => {
     if (!currentUser?.id || !currentEventId) return;
 
+    console.log('[UserPresence] Setting up presence for user:', currentUser.id, 'event:', currentEventId, 'route:', currentRoute);
+
     const channelName = `event_${currentEventId}_presence`;
     
     // Create channel
     const channel = supabase.channel(channelName);
     channelRef.current = channel;
 
+    // Determine initial status
+    const isInAttendeeDashboard = currentRoute.includes('/attendee');
+    const isInAdminDashboard = currentRoute.includes('/admin');
+    const isInHostDashboard = currentRoute.includes('/host');
+    const isInApp = isInAttendeeDashboard || isInAdminDashboard || isInHostDashboard;
+
+    console.log('[UserPresence] Initial status check:', {
+      currentRoute,
+      isInAttendeeDashboard,
+      isInApp,
+      status: isInApp ? 'online' : 'away'
+    });
+
     // Track presence state
     const userPresence: UserPresence = {
       user_id: currentUser.id,
-      status: 'online',
+      status: isInApp ? 'online' : 'away',
       last_seen: new Date().toISOString(),
       current_route: currentRoute,
     };
@@ -102,9 +117,11 @@ export const useUserPresence = () => {
           }
         });
         
+        console.log('[UserPresence] Synced presences:', newPresences);
         setPresences(newPresences);
       })
       .on('presence', { event: 'join' }, ({ newPresences }) => {
+        console.log('[UserPresence] Users joined:', newPresences);
         newPresences.forEach((presence: any) => {
           if (presence && presence.user_id) {
             setPresences(prev => ({
@@ -115,6 +132,7 @@ export const useUserPresence = () => {
         });
       })
       .on('presence', { event: 'leave' }, ({ leftPresences }) => {
+        console.log('[UserPresence] Users left:', leftPresences);
         leftPresences.forEach((presence: any) => {
           if (presence && presence.user_id) {
             setPresences(prev => {
@@ -126,7 +144,9 @@ export const useUserPresence = () => {
         });
       })
       .subscribe(async (status) => {
+        console.log('[UserPresence] Channel subscription status:', status);
         if (status === 'SUBSCRIBED') {
+          console.log('[UserPresence] Tracking initial presence:', userPresence);
           await channel.track(userPresence);
         }
       });
@@ -140,32 +160,37 @@ export const useUserPresence = () => {
         const isInHostDashboard = currentRoute.includes('/host');
         const isInApp = isInAttendeeDashboard || isInAdminDashboard || isInHostDashboard;
         
-        channelRef.current.track({
+        const newPresence = {
           user_id: currentUser.id,
           status: isInApp ? 'online' : 'away',
           last_seen: new Date().toISOString(),
           current_route: currentRoute,
-        });
+        };
+
+        console.log('[UserPresence] Updating presence:', newPresence);
+        channelRef.current.track(newPresence);
       }
     };
 
     updatePresence();
 
-    // Set up heartbeat to update presence every 30 seconds
+    // Set up heartbeat to update presence every 15 seconds (more frequent)
     heartbeatRef.current = setInterval(() => {
       updatePresence();
-    }, 30000);
+    }, 15000);
 
     // Handle page visibility changes
     const handleVisibilityChange = () => {
       if (document.hidden) {
         // User switched tabs or minimized window - they're away from the app
-        channelRef.current?.track({
+        const awayPresence = {
           user_id: currentUser.id,
-          status: 'away',
+          status: 'away' as UserStatus,
           last_seen: new Date().toISOString(),
           current_route: currentRoute,
-        });
+        };
+        console.log('[UserPresence] User went away (tab hidden):', awayPresence);
+        channelRef.current?.track(awayPresence);
       } else {
         // User came back - check if they're in the app
         const isInAttendeeDashboard = currentRoute.includes('/attendee');
@@ -173,18 +198,21 @@ export const useUserPresence = () => {
         const isInHostDashboard = currentRoute.includes('/host');
         const isInApp = isInAttendeeDashboard || isInAdminDashboard || isInHostDashboard;
         
-        channelRef.current?.track({
+        const backPresence = {
           user_id: currentUser.id,
-          status: isInApp ? 'online' : 'away',
+          status: isInApp ? 'online' as UserStatus : 'away' as UserStatus,
           last_seen: new Date().toISOString(),
           current_route: currentRoute,
-        });
+        };
+        console.log('[UserPresence] User came back (tab visible):', backPresence);
+        channelRef.current?.track(backPresence);
       }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
+      console.log('[UserPresence] Cleaning up presence tracking');
       if (heartbeatRef.current) {
         clearInterval(heartbeatRef.current);
       }

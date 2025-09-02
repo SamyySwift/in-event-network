@@ -203,7 +203,9 @@ const AttendeeNetworking = () => {
     const isPending = connectionStatus?.status === "pending";
     const socialLinks = getSocialLinks(profile);
     const userStatus = getUserStatus(profile.id);
-    const statusColor = getStatusColor(userStatus);
+    // Show green if user is in any attendee dashboard page, orange if away, red if offline
+    const statusColor = userStatus === 'offline' ? 'bg-red-400' : 
+                       userStatus === 'online' ? 'bg-green-400' : 'bg-green-400';
 
     return (
       <Card

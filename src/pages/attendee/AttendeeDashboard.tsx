@@ -42,6 +42,7 @@ import { ConnectionNotificationDropdown } from "@/components/attendee/Connection
 import { useAttendeeFacilities } from "@/hooks/useAttendeeFacilities";
 import { HighlightsSection } from "@/components/attendee/HighlightsSection";
 import * as LucideIcons from "lucide-react";
+import FacilityIcon from "@/pages/admin/components/FacilityIcon";
 
 import { ProfileCompletionPopup } from "@/components/attendee/ProfileCompletionPopup";
 
@@ -352,6 +353,73 @@ const AttendeeDashboardContent = () => {
               </CardFooter>
             </Card>
           </div>
+        </div>
+
+        {/* Event Facilities Card */}
+        <div className="mb-8">
+          <Card className="border-0 shadow-xl bg-white backdrop-blur-sm overflow-hidden group hover:shadow-2xl transition-all duration-300 relative z-10">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/90 to-green-50/90 z-0"></div>
+            <CardHeader className="relative z-20 pb-4 bg-white/50 backdrop-blur-sm">
+              <div className="flex items-center gap-3">
+                <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
+                  <MapPin className="h-7 w-7 text-white" />
+                </div>
+                <div>
+                  <CardTitle className="text-2xl">Event Facilities</CardTitle>
+                  <CardDescription className="text-base">Explore venue amenities and services</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="relative z-20 pb-6 bg-white/80 backdrop-blur-sm">
+              {facilities && facilities.length > 0 ? (
+                <>
+                  <p className="text-gray-600 mb-4">
+                    Discover {facilities.length} facilities available at the venue, including dining, restrooms, meeting spaces, and other essential services.
+                  </p>
+                  
+                  {/* Show first 3 facilities */}
+                  <div className="space-y-3">
+                    {facilities.slice(0, 3).map((facility) => (
+                      <div key={facility.id} className="flex items-center gap-3 p-3 bg-white/60 rounded-lg border">
+                        <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                          <FacilityIcon iconType={facility.icon_type} className="h-4 w-4 text-emerald-600" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-gray-900 truncate">{facility.name}</p>
+                          {facility.location && (
+                            <p className="text-xs text-gray-500 truncate">{facility.location}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {facilities.length > 3 && (
+                    <p className="text-xs text-gray-500 mt-3 text-center">
+                      +{facilities.length - 3} more facilities available
+                    </p>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-4">
+                  <MapPin className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm text-gray-500">No facilities information available</p>
+                </div>
+              )}
+            </CardContent>
+
+            <CardFooter className="relative z-20 bg-white/90 backdrop-blur-sm">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => navigate("/attendee/map")}
+              >
+                <MapPin className="mr-2 h-4 w-4" />
+                Explore All Facilities
+              </Button>
+            </CardFooter>
+          </Card>
         </div>
 
         {/* Recent Announcements - Improved Mobile Layout */}

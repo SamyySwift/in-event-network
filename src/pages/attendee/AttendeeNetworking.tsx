@@ -203,8 +203,8 @@ const AttendeeNetworking = () => {
     const isPending = connectionStatus?.status === "pending";
     const socialLinks = getSocialLinks(profile);
     const userStatus = getUserStatus(profile.id);
-    // Show green for online/away, red only for offline
-    const statusColor = userStatus === 'offline' ? 'bg-red-400' : 'bg-green-400';
+    // Always show green in networking tab as requested
+    const statusColor = 'bg-green-400';
 
     return (
       <Card

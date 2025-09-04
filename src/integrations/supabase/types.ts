@@ -1085,6 +1085,7 @@ export type Database = {
           show_results: boolean | null
           start_time: string
           updated_at: string | null
+          vote_limit: number | null
         }
         Insert: {
           created_at?: string
@@ -1099,6 +1100,7 @@ export type Database = {
           show_results?: boolean | null
           start_time: string
           updated_at?: string | null
+          vote_limit?: number | null
         }
         Update: {
           created_at?: string
@@ -1113,6 +1115,7 @@ export type Database = {
           show_results?: boolean | null
           start_time?: string
           updated_at?: string | null
+          vote_limit?: number | null
         }
         Relationships: [
           {

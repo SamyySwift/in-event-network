@@ -26,6 +26,7 @@ const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
   const [options, setOptions] = useState(['', '']);
   const [isActive, setIsActive] = useState(true);
   const [showResults, setShowResults] = useState(false);
+  const [voteLimit, setVoteLimit] = useState<number | undefined>(undefined);
   
   const { selectedEventId } = useAdminEventContext();
   const { createPoll, isCreating } = useAdminPolls(selectedEventId || undefined);
@@ -84,7 +85,8 @@ const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
       })),
       is_active: isActive,
       show_results: showResults,
-      event_id: selectedEventId
+      event_id: selectedEventId,
+      vote_limit: voteLimit || null
     };
 
     createPoll(pollData);
@@ -94,6 +96,7 @@ const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
     setOptions(['', '']);
     setIsActive(true);
     setShowResults(false);
+    setVoteLimit(undefined);
     setOpen(false);
   };
 
@@ -150,6 +153,21 @@ const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
                 Add Option
               </Button>
             </div>
+          </div>
+
+          <div>
+            <Label htmlFor="vote-limit">Vote Limit (optional)</Label>
+            <Input
+              id="vote-limit"
+              type="number"
+              placeholder="Enter maximum number of votes (leave empty for unlimited)"
+              value={voteLimit || ''}
+              onChange={(e) => setVoteLimit(e.target.value ? parseInt(e.target.value) : undefined)}
+              min={1}
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              Set the maximum number of people who can vote on this poll. Leave empty for unlimited voting.
+            </p>
           </div>
 
           <div className="space-y-3">

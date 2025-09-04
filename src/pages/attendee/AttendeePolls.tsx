@@ -62,6 +62,8 @@ const AttendeePolls = () => {
   });
 
   const handleVote = (pollId: string, optionId: string) => {
+    const poll = polls.find(p => p.id === pollId);
+    
     if (hasUserVotedForPoll(pollId)) {
       toast({
         title: "Already voted",
@@ -70,6 +72,16 @@ const AttendeePolls = () => {
       });
       return;
     }
+    
+    if (poll?.vote_limit && poll.totalVotes && poll.totalVotes >= poll.vote_limit) {
+      toast({
+        title: "Vote limit reached",
+        description: "This poll has reached its maximum number of votes",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (!optionId) {
       toast({
         title: "Selection required",
@@ -105,6 +117,7 @@ const AttendeePolls = () => {
     const userVoted = hasUserVotedForPoll(poll.id);
     const userVoteId = getUserVoteForPoll(poll.id);
     const showResults = poll.show_results || userVoted;
+    const isVoteLimitReached = poll.vote_limit && poll.totalVotes && poll.totalVotes >= poll.vote_limit;
 
     return (
       <Card
@@ -119,11 +132,18 @@ const AttendeePolls = () => {
                 Created {format(new Date(poll.created_at), "MMM d, yyyy")}
               </CardDescription>
             </div>
-            {userVoted && (
-              <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
-                You voted
-              </Badge>
-            )}
+            <div className="flex gap-2">
+              {userVoted && (
+                <Badge className="bg-green-100 text-green-800 hover:bg-green-200">
+                  You voted
+                </Badge>
+              )}
+              {isVoteLimitReached && (
+                <Badge variant="destructive">
+                  Vote limit reached
+                </Badge>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -162,10 +182,11 @@ const AttendeePolls = () => {
                 </div>
               ))}
               <p className="text-xs text-muted-foreground mt-2">
-                Total votes:{" "}
-                {poll.options.reduce(
-                  (acc, option) => acc + (option.votes || 0),
-                  0
+                Total votes: {poll.totalVotes || 0}
+                {poll.vote_limit && (
+                  <span className="ml-2">
+                    (Limit: {poll.vote_limit})
+                  </span>
                 )}
               </p>
             </div>
@@ -190,14 +211,20 @@ const AttendeePolls = () => {
           )}
         </CardContent>
         {!showResults && poll.is_active && (
-          <CardFooter className="flex justify-end border-t pt-3">
+          <CardFooter className="flex justify-between items-center border-t pt-3">
+            {isVoteLimitReached && (
+              <p className="text-sm text-muted-foreground">
+                Maximum votes reached ({poll.vote_limit})
+              </p>
+            )}
             <Button
               onClick={() =>
                 handleVote(poll.id, selectedOptions[poll.id] || "")
               }
-              disabled={!selectedOptions[poll.id] || isSubmitting}
+              disabled={!selectedOptions[poll.id] || isSubmitting || isVoteLimitReached}
+              className={isVoteLimitReached ? "ml-auto" : ""}
             >
-              {isSubmitting ? "Submitting..." : "Submit Vote"}
+              {isSubmitting ? "Submitting..." : isVoteLimitReached ? "Voting Closed" : "Submit Vote"}
             </Button>
           </CardFooter>
         )}

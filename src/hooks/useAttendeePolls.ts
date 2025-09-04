@@ -17,6 +17,8 @@ export interface Poll {
   show_results: boolean;
   event_id?: string;
   created_at: string;
+  vote_limit?: number | null;
+  totalVotes?: number;
 }
 
 export interface PollVote {
@@ -71,9 +73,12 @@ export const useAttendeePolls = () => {
             votes: voteCounts[option.id] || 0
           }));
 
+          const totalVotes = optionsWithVotes.reduce((acc, option) => acc + (option.votes || 0), 0);
+
           return {
             ...poll,
-            options: optionsWithVotes
+            options: optionsWithVotes,
+            totalVotes
           };
         })
       );
@@ -115,6 +120,12 @@ export const useAttendeePolls = () => {
 
       if (existingVote) {
         throw new Error('You have already voted on this poll');
+      }
+
+      // Check if poll has vote limit and if it's reached
+      const poll = polls.find(p => p.id === pollId);
+      if (poll?.vote_limit && poll.totalVotes && poll.totalVotes >= poll.vote_limit) {
+        throw new Error('This poll has reached its maximum number of votes');
       }
 
       const { data, error } = await supabase

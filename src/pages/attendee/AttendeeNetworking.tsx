@@ -113,11 +113,10 @@ const AttendeeNetworking = () => {
       ?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const { sendConnectionRequest, getConnectionStatus, connections, refetch } =
+  const { sendConnectionRequest, getConnectionStatus, connections, refetch, acceptConnectionRequest } =
     useNetworking();
   
   const { getUserStatus, getStatusColor } = useUserPresence();
-  const { acceptConnectionRequest } = useConnectionRequests();
   const { currentUser } = useAuth();
 
   console.log("AttendeeNetworking - currentEventId:", currentEventId);
@@ -138,15 +137,7 @@ const AttendeeNetworking = () => {
   const handleAcceptConnection = async (profileId: string) => {
     const connectionStatus = getConnectionStatus(profileId);
     if (connectionStatus) {
-      try {
-        await acceptConnectionRequest(connectionStatus.id, ''); // notification ID not needed for direct accept
-        // Refetch connections to update UI
-        if (refetch) {
-          refetch();
-        }
-      } catch (error) {
-        console.error('Error accepting connection:', error);
-      }
+      await acceptConnectionRequest(connectionStatus.id);
     }
   };
 

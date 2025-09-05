@@ -180,11 +180,46 @@ export const useNetworking = () => {
     );
   };
 
+  const acceptConnectionRequest = async (connectionId: string) => {
+    if (!currentUser) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to accept connection requests",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('connections')
+        .update({ status: 'accepted' })
+        .eq('id', connectionId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Connection Accepted",
+        description: "You are now connected!",
+      });
+
+      fetchConnections(); // Refresh connections
+    } catch (error) {
+      console.error('Error accepting connection:', error);
+      toast({
+        title: "Error",
+        description: "Failed to accept connection request",
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
     profiles,
     connections,
     loading,
     sendConnectionRequest,
+    acceptConnectionRequest,
     getConnectionStatus,
     refetch: fetchProfiles,
   };

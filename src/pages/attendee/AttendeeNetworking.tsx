@@ -49,6 +49,8 @@ import XLogo from "@/components/icons/XLogo";
 import PaymentGuard from '@/components/payment/PaymentGuard';
 import { usePayment } from '@/hooks/usePayment';
 import { useUserPresence } from '@/hooks/useUserPresence';
+import { useConnectionRequests } from '@/hooks/useConnectionRequests';
+import { useAuth } from '@/contexts/AuthContext';
 
 const AttendeeNetworking = () => {
   const navigate = useNavigate();
@@ -111,10 +113,12 @@ const AttendeeNetworking = () => {
       ?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const { sendConnectionRequest, getConnectionStatus, connections } =
+  const { sendConnectionRequest, getConnectionStatus, connections, refetch } =
     useNetworking();
   
   const { getUserStatus, getStatusColor } = useUserPresence();
+  const { acceptConnectionRequest } = useConnectionRequests();
+  const { currentUser } = useAuth();
 
   console.log("AttendeeNetworking - currentEventId:", currentEventId);
   console.log("AttendeeNetworking - profiles:", profiles);
@@ -129,6 +133,21 @@ const AttendeeNetworking = () => {
 
   const handleConnect = (profileId: string) => {
     sendConnectionRequest(profileId);
+  };
+
+  const handleAcceptConnection = async (profileId: string) => {
+    const connectionStatus = getConnectionStatus(profileId);
+    if (connectionStatus) {
+      try {
+        await acceptConnectionRequest(connectionStatus.id, ''); // notification ID not needed for direct accept
+        // Refetch connections to update UI
+        if (refetch) {
+          refetch();
+        }
+      } catch (error) {
+        console.error('Error accepting connection:', error);
+      }
+    }
   };
 
   const handleMessage = (
@@ -201,6 +220,8 @@ const AttendeeNetworking = () => {
     const connectionStatus = getConnectionStatus(profile.id);
     const isConnected = connectionStatus?.status === "accepted";
     const isPending = connectionStatus?.status === "pending";
+    const isReceivedRequest = isPending && connectionStatus?.recipient_id === currentUser?.id;
+    const isSentRequest = isPending && connectionStatus?.requester_id === currentUser?.id;
     const socialLinks = getSocialLinks(profile);
     const userStatus = getUserStatus(profile.id);
     // Always show green in networking tab as requested
@@ -410,12 +431,12 @@ const AttendeeNetworking = () => {
             {showConnectButton && (
               <Button
                 size="sm"
-                onClick={() => handleConnect(profile.id)}
+                onClick={() => isReceivedRequest ? handleAcceptConnection(profile.id) : handleConnect(profile.id)}
                 className="flex-1 h-10 bg-gradient-to-r from-connect-500 to-connect-600 hover:from-connect-600 hover:to-connect-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                disabled={isConnected || isPending}
+                disabled={isConnected || isSentRequest}
               >
                 <UserPlus size={16} className="mr-2" />
-                {isPending ? "Pending" : isConnected ? "Connected" : "Connect"}
+                {isReceivedRequest ? "Accept" : isSentRequest ? "Pending" : isConnected ? "Connected" : "Connect"}
               </Button>
             )}
           </div>

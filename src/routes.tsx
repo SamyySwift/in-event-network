@@ -19,6 +19,7 @@ import AdminLayout from "@/components/layouts/AdminLayout";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import AdminEvents from "@/pages/admin/AdminEvents";
 import AdminAttendees from "@/pages/admin/AdminAttendees";
+import AdminNetworking from "@/pages/admin/AdminNetworking";
 import AdminSpeakers from "@/pages/admin/AdminSpeakers";
 import AdminAnnouncements from "@/pages/admin/AdminAnnouncements";
 import AdminSchedule from "@/pages/admin/AdminSchedule";
@@ -203,6 +204,14 @@ export const router = createBrowserRouter([
     element: (
       <AdminRoute>
         <AdminAttendees />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/admin/networking",
+    element: (
+      <AdminRoute>
+        <AdminNetworking />
       </AdminRoute>
     ),
   },

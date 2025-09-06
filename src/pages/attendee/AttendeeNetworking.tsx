@@ -570,28 +570,28 @@ const AttendeeNetworking = () => {
               className="flex items-center space-x-2 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-connect-500 data-[state=active]:to-connect-600 data-[state=active]:text-white transition-all duration-300"
             >
               <UserPlus size={18} />
-              <span className="hidden sm:inline">Discover</span>
+              <span className="text-xs sm:text-sm">Discover</span>
             </TabsTrigger>
             <TabsTrigger
               value="connections"
               className="flex items-center space-x-2 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-connect-500 data-[state=active]:to-connect-600 data-[state=active]:text-white transition-all duration-300"
             >
               <Users size={18} />
-              <span className="hidden sm:inline">Network</span>
+              <span className="text-xs sm:text-sm">Network</span>
             </TabsTrigger>
             <TabsTrigger
               value="chats"
               className="flex items-center space-x-2 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-connect-500 data-[state=active]:to-connect-600 data-[state=active]:text-white transition-all duration-300"
             >
               <MessageSquare size={18} />
-              <span className="hidden sm:inline">Chat Room</span>
+              <span className="text-xs sm:text-sm">Chat Room</span>
             </TabsTrigger>
             <TabsTrigger
               value="messages"
               className="flex items-center space-x-2 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-connect-500 data-[state=active]:to-connect-600 data-[state=active]:text-white transition-all duration-300"
             >
               <Send size={18} />
-              <span className="hidden sm:inline">Messages</span>
+              <span className="text-xs sm:text-sm">Messages</span>
             </TabsTrigger>
           </TabsList>
         </div>

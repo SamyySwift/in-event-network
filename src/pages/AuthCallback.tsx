@@ -89,14 +89,13 @@ const AuthCallback = () => {
                 localStorage.removeItem('googleOAuthEventCode');
                 localStorage.removeItem('googleOAuthEventData');
                 
-                // Set joining state to true before starting event join
                 setIsJoiningEvent(true);
                 
                 joinEvent(pendingEventCode, {
                   onSuccess: (data: any) => {
                     console.log('AuthCallback - Successfully joined event:', data);
                     setIsJoiningEvent(false);
-                    navigate('/attendee', { replace: true });
+                    navigate('/attendee/dashboard', { replace: true });
                   },
                   onError: (error: any) => {
                     console.error('AuthCallback - Failed to join event:', error);
@@ -106,14 +105,14 @@ const AuthCallback = () => {
                       description: "Your account was created, but we couldn't join the event. Please scan the QR code again.",
                       variant: "destructive",
                     });
-                    navigate('/attendee', { replace: true });
+                    navigate('/attendee/dashboard', { replace: true });
                   }
                 });
                 return;
               }
               
               // Default redirect based on role
-              const redirectPath = currentUser.role === 'host' ? '/admin' : '/attendee';
+              const redirectPath = currentUser.role === 'host' ? '/admin' : '/attendee/dashboard';
               console.log('AuthCallback - Default redirect to:', redirectPath);
               navigate(redirectPath, { replace: true });
               return;
@@ -171,7 +170,6 @@ const AuthCallback = () => {
                   
                   if (pendingEventCode && userRole === 'attendee') {
                     console.log('AuthCallback - Fallback: Found pending event, redirecting to attendee with toast');
-                    // Clear all event code storage
                     sessionStorage.removeItem('pendingEventCode');
                     localStorage.removeItem('pendingEventCode');
                     localStorage.removeItem('googleOAuthEventCode');
@@ -184,7 +182,7 @@ const AuthCallback = () => {
                   }
                   
                   // Redirect based on actual user role
-                  const redirectPath = userRole === 'host' ? '/admin' : '/attendee';
+                  const redirectPath = userRole === 'host' ? '/admin' : '/attendee/dashboard';
                   console.log('AuthCallback - Fallback: Redirecting to:', redirectPath);
                   navigate(redirectPath, { replace: true });
                 } else {

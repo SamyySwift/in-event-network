@@ -20,35 +20,37 @@ export interface ChatMessage {
   quoted_message?: ChatMessage;
 }
 
-export const useChat = () => {
+export const useChat = (overrideEventId?: string) => {
   const { currentUser } = useAuth();
   const { currentEventId } = useAttendeeEventContext();
   const { toast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const effectiveEventId = overrideEventId ?? currentEventId;
+
   useEffect(() => {
-    if (currentUser && currentEventId) {
+    if (currentUser && effectiveEventId) {
       fetchMessages();
       setupRealtimeSubscription();
     }
-  }, [currentUser, currentEventId]);
+  }, [currentUser, effectiveEventId]);
 
   const fetchMessages = async () => {
-    if (!currentEventId) {
+    if (!effectiveEventId) {
       setMessages([]);
       setLoading(false);
       return;
     }
 
     try {
-      console.log('Fetching chat messages for event:', currentEventId);
+      console.log('Fetching chat messages for event:', effectiveEventId);
       
       // First get the messages for the current event only
       const { data: messagesData, error: messagesError } = await supabase
         .from('chat_messages')
         .select('*')
-        .eq('event_id', currentEventId)
+        .eq('event_id', effectiveEventId)
         .order('created_at', { ascending: true })
         .limit(100);
 
@@ -97,21 +99,21 @@ export const useChat = () => {
   };
 
   const setupRealtimeSubscription = () => {
-    if (!currentEventId) {
+    if (!effectiveEventId) {
       return;
     }
 
-    console.log('Setting up realtime subscription for event:', currentEventId);
+    console.log('Setting up realtime subscription for event:', effectiveEventId);
     
     const channel = supabase
-      .channel(`chat-messages-${currentEventId}`)
+      .channel(`chat-messages-${effectiveEventId}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'chat_messages',
-          filter: `event_id=eq.${currentEventId}`
+          filter: `event_id=eq.${effectiveEventId}`
         },
         async (payload) => {
           console.log('New message received:', payload);
@@ -156,7 +158,7 @@ export const useChat = () => {
       return;
     }
 
-    if (!currentEventId) {
+    if (!effectiveEventId) {
       toast({
         title: "Error",
         description: "You must be in an event to send messages",
@@ -166,7 +168,7 @@ export const useChat = () => {
     }
 
     try {
-      console.log('Sending message:', { content, quotedMessageId, userId: currentUser.id, eventId: currentEventId });
+      console.log('Sending message:', { content, quotedMessageId, userId: currentUser.id, eventId: effectiveEventId });
       
       const { error } = await supabase
         .from('chat_messages')
@@ -174,7 +176,7 @@ export const useChat = () => {
           user_id: currentUser.id,
           content: content.trim(),
           quoted_message_id: quotedMessageId || null,
-          event_id: currentEventId,
+          event_id: effectiveEventId,
         });
 
       if (error) {

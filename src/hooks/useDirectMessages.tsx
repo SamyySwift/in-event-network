@@ -15,10 +15,12 @@ export interface DirectMessage {
   sender_profile?: {
     name: string;
     photo_url?: string;
+    role?: string;
   };
   recipient_profile?: {
     name: string;
     photo_url?: string;
+    role?: string;
   };
 }
 
@@ -115,7 +117,7 @@ export const useDirectMessages = (recipientId?: string) => {
       const otherUserIds = conversationsArray.map(conv => conv.other_user_id);
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, name, photo_url')
+        .select('id, name, photo_url, role')
         .in('id', otherUserIds);
 
       if (profilesError) {
@@ -197,7 +199,7 @@ export const useDirectMessages = (recipientId?: string) => {
       
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, name, photo_url')
+        .select('id, name, photo_url, role')
         .in('id', userIds);
 
       if (profilesError) {
@@ -260,7 +262,7 @@ export const useDirectMessages = (recipientId?: string) => {
             // Get profiles for the new message
             const { data: profilesData } = await supabase
               .from('profiles')
-              .select('id, name, photo_url')
+              .select('id, name, photo_url, role')
               .in('id', [newMessage.sender_id, newMessage.recipient_id]);
 
             const profilesMap = new Map();

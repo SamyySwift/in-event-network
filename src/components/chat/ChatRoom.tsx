@@ -13,10 +13,10 @@ import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
 import { ChatMessage } from './ChatMessage';
 import { QuotedMessage } from './QuotedMessage';
 
-const ChatRoom = () => {
+const ChatRoom = ({ eventId }: { eventId?: string }) => {
   const { currentUser } = useAuth();
   const { currentEventId, hasJoinedEvent } = useAttendeeEventContext();
-  const { messages, loading, sendMessage } = useChat();
+  const { messages, loading, sendMessage } = useChat(eventId);
   const [newMessage, setNewMessage] = useState('');
   const [quotedMessage, setQuotedMessage] = useState<any>(null);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
@@ -70,8 +70,8 @@ const ChatRoom = () => {
     }
   };
 
-  // Show message if user hasn't joined an event
-  if (!hasJoinedEvent || !currentEventId) {
+  // Show message if user hasn't joined an event (unless eventId override provided)
+  if (!eventId && (!hasJoinedEvent || !currentEventId)) {
     return (
       <Card>
         <CardContent className="p-6">

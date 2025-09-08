@@ -36,6 +36,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import XLogo from "@/components/icons/XLogo";
+import { DirectMessageThread } from "@/components/messaging/DirectMessageThread";
 
 const AdminNetworking = () => {
   const { toast } = useToast();
@@ -77,23 +78,7 @@ const AdminNetworking = () => {
 
   // Create a special chat component that works with admin context
   const AdminChatRoom = ({ eventId }: { eventId: string }) => {
-    const { currentUser } = useAuth();
-    
-    // Override the event context with admin's selected event
-    useEffect(() => {
-      // Set user's current event temporarily for chat functionality
-      if (currentUser?.id && eventId) {
-        supabase
-          .from('profiles')
-          .update({ current_event_id: eventId })
-          .eq('id', currentUser.id)
-          .then(() => {
-            console.log('Temporarily set admin current event for chat');
-          });
-      }
-    }, [currentUser?.id, eventId]);
-
-    return <ChatRoom />;
+    return <ChatRoom eventId={eventId} />;
   };
 
   // Generate shareable link
@@ -200,6 +185,10 @@ const AdminNetworking = () => {
       clearAllFilters,
       calculateProfileCompletion,
     } = useNetworkingFilters(profiles);
+
+    // Add DM dialog state
+    const [dmOpen, setDmOpen] = useState(false);
+    const [dmRecipient, setDmRecipient] = useState<{ id: string; name: string; photo_url?: string } | null>(null);
 
     // Pagination calculations
     const totalPages = Math.ceil(filteredProfiles.length / itemsPerPage);
@@ -471,6 +460,20 @@ const AdminNetworking = () => {
                         </Button>
                       )}
                     </div>
+
+                    {/* Admin -> Attendee DM */}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full mt-2"
+                      onClick={() => {
+                        setDmRecipient({ id: profile.id, name: profile.name, photo_url: profile.photo_url });
+                        setDmOpen(true);
+                      }}
+                    >
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      Message
+                    </Button>
                   </CardContent>
                 </Card>
               ))}
@@ -525,9 +528,7 @@ const AdminNetworking = () => {
               </CardHeader>
               <CardContent>
                 <div className="h-[600px]">
-                  <AttendeeEventProvider>
-                    <AdminChatRoom eventId={eventId} />
-                  </AttendeeEventProvider>
+                  <AdminChatRoom eventId={eventId} />
                 </div>
               </CardContent>
             </Card>

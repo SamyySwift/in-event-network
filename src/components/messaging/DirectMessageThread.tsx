@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useDirectMessages, DirectMessage } from '@/hooks/useDirectMessages';
 import { formatDistanceToNow } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
 
 interface DirectMessageThreadProps {
   recipientId?: string;
@@ -153,6 +154,7 @@ const DirectMessageBubble: React.FC<DirectMessageBubbleProps> = ({ message, isOw
   const timeAgo = formatDistanceToNow(new Date(message.created_at), { addSuffix: true });
   const profile = isOwn ? message.sender_profile : message.recipient_profile;
   const profileName = profile?.name || 'Unknown User';
+  const isFromAdmin = message.sender_profile?.role === 'admin';
 
   return (
     <div className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>
@@ -168,6 +170,11 @@ const DirectMessageBubble: React.FC<DirectMessageBubbleProps> = ({ message, isOw
 
       <div className={`flex-1 min-w-0 ${isOwn ? 'text-right' : ''}`}>
         <div className={`flex items-center gap-2 mb-1 ${isOwn ? 'justify-end' : ''}`}>
+          {isFromAdmin && (
+            <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+              Admin
+            </Badge>
+          )}
           <span className="text-xs text-gray-500 dark:text-gray-400">{timeAgo}</span>
         </div>
 

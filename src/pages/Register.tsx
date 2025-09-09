@@ -126,10 +126,10 @@ const Register = () => {
 
       // Check if there's a pending event to join - check multiple sources
       const pendingEventCode =
-        eventCode || 
-        sessionStorage.getItem("pendingEventCode") || 
+        eventCode ||
+        sessionStorage.getItem("pendingEventCode") ||
         localStorage.getItem("pendingEventCode");
-      
+
       console.log("Checking for pending event code:", {
         eventCode,
         sessionStorage: sessionStorage.getItem("pendingEventCode"),
@@ -144,29 +144,32 @@ const Register = () => {
         );
         setIsJoiningEvent(true);
 
-        // Clear the stored codes from both storages
-        sessionStorage.removeItem("pendingEventCode");
-        localStorage.removeItem("pendingEventCode");
-        console.log("Cleared event codes from storage");
-
+        // Change: do NOT clear codes before join; only clear on success
         joinEvent(pendingEventCode, {
           onSuccess: (data: any) => {
             console.log("Successfully joined event after registration:", data);
+
+            // Clear event code only after successful join
+            sessionStorage.removeItem("pendingEventCode");
+            localStorage.removeItem("pendingEventCode");
+
             setIsJoiningEvent(false);
             console.log("Redirecting to attendee dashboard after event join");
-            navigate("/attendee", { replace: true });
+            navigate("/attendee/dashboard", { replace: true });
           },
           onError: (error: any) => {
             console.error("Failed to join event after registration:", error);
             setIsJoiningEvent(false);
+
+            // Keep codes intact for retry; still redirect to dashboard
             toast({
               title: "Account Created",
               description:
-                "Your account was created, but we couldn't join the event. Please scan the QR code again.",
+                "Your account was created, but we couldn't join the event automatically. Please try again from the dashboard.",
               variant: "destructive",
             });
             console.log("Redirecting to attendee dashboard after failed event join");
-            navigate("/attendee", { replace: true });
+            navigate("/attendee/dashboard", { replace: true });
           },
         });
       } else {

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -7,15 +7,22 @@ import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
 
 export interface ChatMessage {
   id: string;
-  user_id: string;
   content: string;
-  quoted_message_id: string | null;
-  event_id: string | null;
+  user_id: string;
+  event_id: string;
   created_at: string;
-  updated_at: string;
+  quoted_message_id?: string | null;
   user_profile?: {
-    name: string;
-    photo_url?: string;
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    photo_url?: string | null;
+    bio?: string | null;
+    company?: string | null;
+    location?: string | null;
+    niche?: string | null;
+    links?: any;
+    role?: string | null; // Added to support Admin label
   };
   quoted_message?: ChatMessage;
 }
@@ -36,168 +43,205 @@ export const useChat = (overrideEventId?: string) => {
     }
   }, [currentUser, effectiveEventId]);
 
-  const fetchMessages = async () => {
-    if (!effectiveEventId) {
-      setMessages([]);
-      setLoading(false);
-      return;
-    }
+  const fetchMessages = useCallback(async () => {
+    if (!effectiveEventId) return;
 
+    setLoading(true);
     try {
-      console.log('Fetching chat messages for event:', effectiveEventId);
-      
-      // First get the messages for the current event only
-      const { data: messagesData, error: messagesError } = await supabase
+      const { data, error } = await supabase
         .from('chat_messages')
-        .select('*')
+        .select('id, content, user_id, event_id, created_at, quoted_message_id')
         .eq('event_id', effectiveEventId)
-        .order('created_at', { ascending: true })
-        .limit(100);
+        .order('created_at', { ascending: true });
 
-      if (messagesError) {
-        console.error('Error fetching messages:', messagesError);
-        throw messagesError;
-      }
+      if (error) throw error;
+      
+      const baseMessages = data || [];
+      const userIds = Array.from(new Set(baseMessages.map(m => m.user_id).filter(Boolean)));
 
-      console.log('Messages fetched:', messagesData);
-
-      // Then get user profiles for all unique user IDs
-      const userIds = [...new Set(messagesData?.map(msg => msg.user_id) || [])];
-      const { data: profilesData, error: profilesError } = await supabase
+      // Select only valid columns from profiles
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, name, photo_url')
+        .select('id, name, email, photo_url, bio, company, niche, role, linkedin_link, twitter_link, instagram_link, github_link, website_link')
         .in('id', userIds);
 
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
-      }
+      if (profilesError) throw profilesError;
 
-      // Create a map of user profiles
-      const profilesMap = new Map();
-      profilesData?.forEach(profile => {
-        profilesMap.set(profile.id, profile);
+      const profileMap = new Map<string, any>();
+      (profiles || []).forEach(p => {
+        profileMap.set(p.id, {
+          ...p,
+          // Build links object expected by UI
+          links: {
+            linkedin: p.linkedin_link || undefined,
+            twitter: p.twitter_link || undefined,
+            instagram: p.instagram_link || undefined,
+            github: p.github_link || undefined,
+            website: p.website_link || undefined,
+          },
+          // location is not in schema; leave undefined
+          location: undefined,
+        });
       });
 
-      // Combine messages with user profiles
-      const messagesWithProfiles = messagesData?.map(message => ({
-        ...message,
-        user_profile: profilesMap.get(message.user_id) || { name: 'Unknown User' }
-      })) || [];
+      // Create a quick lookup for quoted messages
+      const messagesMap = new Map<string, any>();
+      baseMessages.forEach(m => messagesMap.set(m.id, { ...m }));
 
-      console.log('Messages with profiles:', messagesWithProfiles);
+      const messagesWithProfiles = baseMessages.map((m) => {
+        const user_profile = profileMap.get(m.user_id) || null;
+        const msg = { ...m, user_profile } as ChatMessage;
+        if (m.quoted_message_id) {
+          const quoted = messagesMap.get(m.quoted_message_id);
+          if (quoted) {
+            const qp = profileMap.get(quoted.user_id) || null;
+            msg.quoted_message = { ...quoted, user_profile: qp } as ChatMessage;
+          }
+        }
+        return msg;
+      });
+
       setMessages(messagesWithProfiles);
-    } catch (error) {
-      console.error('Error in fetchMessages:', error);
-      toast({
-        title: "Error",
-        description: "Failed to load chat messages",
-        variant: "destructive",
-      });
+    } catch (err) {
+      console.error('Error fetching messages:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [effectiveEventId]);
 
-  const setupRealtimeSubscription = () => {
-    if (!effectiveEventId) {
-      return;
-    }
+  const setupRealtimeSubscription = useCallback(() => {
+    if (!effectiveEventId) return;
 
-    console.log('Setting up realtime subscription for event:', effectiveEventId);
-    
     const channel = supabase
-      .channel(`chat-messages-${effectiveEventId}`)
+      .channel('chat_messages_changes')
       .on(
         'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'chat_messages',
-          filter: `event_id=eq.${effectiveEventId}`
-        },
+        { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `event_id=eq.${effectiveEventId}` },
         async (payload) => {
-          console.log('New message received:', payload);
-          
-          // Get the user profile for the new message
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('id, name, photo_url')
-            .eq('id', payload.new.user_id)
-            .single();
+          try {
+            const message = payload.new as any;
+            const { data: p } = await supabase
+              .from('profiles')
+              .select('id, name, email, photo_url, bio, company, niche, role, linkedin_link, twitter_link, instagram_link, github_link, website_link')
+              .eq('id', message.user_id)
+              .maybeSingle();
 
-          if (profileError) {
-            console.error('Error fetching profile for new message:', profileError);
+            const profile = p
+              ? {
+                  ...p,
+                  links: {
+                    linkedin: p.linkedin_link || undefined,
+                    twitter: p.twitter_link || undefined,
+                    instagram: p.instagram_link || undefined,
+                    github: p.github_link || undefined,
+                    website: p.website_link || undefined,
+                  },
+                  location: undefined,
+                }
+              : null;
+
+            let quoted_message: any = null;
+            if (message.quoted_message_id) {
+              const { data: quoted, error: quotedErr } = await supabase
+                .from('chat_messages')
+                .select('id, content, user_id, event_id, created_at, quoted_message_id')
+                .eq('id', message.quoted_message_id)
+                .maybeSingle();
+
+              if (!quotedErr && quoted) {
+                const { data: qpRaw } = await supabase
+                  .from('profiles')
+                  .select('id, name, email, photo_url, bio, company, niche, role, linkedin_link, twitter_link, instagram_link, github_link, website_link')
+                  .eq('id', quoted.user_id)
+                  .maybeSingle();
+
+                const qp = qpRaw
+                  ? {
+                      ...qpRaw,
+                      links: {
+                        linkedin: qpRaw.linkedin_link || undefined,
+                        twitter: qpRaw.twitter_link || undefined,
+                        instagram: qpRaw.instagram_link || undefined,
+                        github: qpRaw.github_link || undefined,
+                        website: qpRaw.website_link || undefined,
+                      },
+                      location: undefined,
+                    }
+                  : null;
+
+                quoted_message = { ...quoted, user_profile: qp };
+              }
+            }
+
+            setMessages(prev => [...prev, { ...message, user_profile: profile, quoted_message }]);
+          } catch (e) {
+            console.error('Realtime INSERT handling error:', e);
           }
-
-          const newMessage = {
-            ...payload.new,
-            user_profile: profileData || { name: 'Unknown User' }
-          } as ChatMessage;
-
-          console.log('Adding new message to state:', newMessage);
-          setMessages(prev => [...prev, newMessage]);
         }
       )
-      .subscribe((status) => {
-        console.log('Realtime subscription status:', status);
-      });
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'chat_messages', filter: `event_id=eq.${effectiveEventId}` },
+        (payload) => {
+          const deleted = payload.old as any;
+          setMessages(prev => prev.filter(m => m.id !== deleted.id));
+        }
+      )
+      .subscribe();
 
     return () => {
-      console.log('Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
-  };
+  }, [effectiveEventId]);
 
   const sendMessage = async (content: string, quotedMessageId?: string) => {
-    if (!currentUser) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to send messages",
-        variant: "destructive",
+    if (!effectiveEventId || !currentUser?.id) return;
+
+    const { error } = await supabase
+      .from('chat_messages')
+      .insert({
+        content,
+        user_id: currentUser.id,
+        event_id: effectiveEventId,
+        quoted_message_id: quotedMessageId || null,
       });
-      return;
-    }
 
-    if (!effectiveEventId) {
-      toast({
-        title: "Error",
-        description: "You must be in an event to send messages",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      console.log('Sending message:', { content, quotedMessageId, userId: currentUser.id, eventId: effectiveEventId });
-      
-      const { error } = await supabase
-        .from('chat_messages')
-        .insert({
-          user_id: currentUser.id,
-          content: content.trim(),
-          quoted_message_id: quotedMessageId || null,
-          event_id: effectiveEventId,
-        });
-
-      if (error) {
-        console.error('Error sending message:', error);
-        throw error;
-      }
-
-      console.log('Message sent successfully');
-    } catch (error) {
-      console.error('Error in sendMessage:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send message",
-        variant: "destructive",
-      });
+    if (error) {
+      console.error('Error sending message:', error);
     }
   };
+
+  // New: delete a message (admin can delete any message; user can delete own)
+  const deleteMessage = async (messageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('chat_messages')
+        .delete()
+        .eq('id', messageId);
+
+      if (error) throw error;
+      setMessages(prev => prev.filter(m => m.id !== messageId));
+    } catch (e) {
+      console.error('Error deleting message:', e);
+      throw e;
+    }
+  };
+
+  useEffect(() => {
+    fetchMessages();
+  }, [fetchMessages]);
+
+  useEffect(() => {
+    const cleanup = setupRealtimeSubscription();
+    return () => {
+      if (cleanup) cleanup();
+    };
+  }, [setupRealtimeSubscription]);
 
   return {
     messages,
     loading,
     sendMessage,
+    deleteMessage,
   };
 };

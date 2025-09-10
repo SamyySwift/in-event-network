@@ -1,10 +1,14 @@
 
-import React from "react";
-import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, AlertTriangle, Loader, Clock } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { useIsMobile } from "@/hooks/use-mobile";
+// File: AnnouncementCard.tsx
+// Component: AnnouncementCard
+import React from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Pencil, Trash2, FileDown, AlertTriangle, Clock } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { supabase } from '@/integrations/supabase/client';
+import { exportToCSV } from '@/utils/exportUtils';
 
 function getPriorityBadge(priority: string) {
   switch (priority) {
@@ -25,23 +29,85 @@ function getPriorityBadge(priority: string) {
 
 interface AnnouncementCardProps {
   announcement: any;
-  onEdit: (a: any) => void;
+  onEdit: (announcement: any) => void;
   onDelete: (id: string) => void;
-  isUpdating: boolean;
-  isDeleting: boolean;
+  isUpdating?: boolean;
+  isDeleting?: boolean;
 }
 
-const AnnouncementCard: React.FC<AnnouncementCardProps> = ({
+// Component: AnnouncementCard
+export default function AnnouncementCard({
   announcement,
   onEdit,
   onDelete,
   isUpdating,
   isDeleting,
-}) => {
+}: AnnouncementCardProps) {
   const isMobile = useIsMobile();
-  
+
+  const handleExportResponses = async () => {
+    try {
+      if (!announcement.vendor_form_id) return;
+
+      const formId = announcement.vendor_form_id as string;
+
+      // Columns from migration: field_id, label
+      const { data: fields, error: fieldsError } = await supabase
+        .from('vendor_form_fields')
+        .select('field_id,label')
+        .eq('form_id', formId);
+
+      if (fieldsError) throw fieldsError;
+
+      // Columns from migration: id, vendor_name, vendor_email, responses, submitted_at
+      const { data: submissions, error: subsError } = await supabase
+        .from('vendor_submissions')
+        .select('id, vendor_name, vendor_email, responses, submitted_at')
+        .eq('form_id', formId);
+
+      if (subsError) throw subsError;
+
+      const fieldDefs = (fields || []) as { field_id: string; label: string }[];
+
+      const processed = (submissions || []).map((s) => {
+        const row: Record<string, any> = {
+          submission_id: s.id,
+          vendor_name: (s as any).vendor_name,
+          vendor_email: (s as any).vendor_email,
+          submitted_at: (s as any).submitted_at
+            ? new Date((s as any).submitted_at as string).toLocaleString()
+            : '',
+        };
+        fieldDefs.forEach((f) => {
+          const header = (f.label || f.field_id || '').trim() || f.field_id;
+          row[header] = (s as any).responses?.[f.field_id] ?? '';
+        });
+        return row;
+      });
+
+      if (!processed.length) {
+        const emptyRow: Record<string, any> = {
+          submission_id: '',
+          vendor_name: '',
+          vendor_email: '',
+          submitted_at: '',
+        };
+        fieldDefs.forEach((f) => {
+          const header = (f.label || f.field_id || '').trim() || f.field_id;
+          emptyRow[header] = '';
+        });
+        exportToCSV([emptyRow], `${announcement.title}_form_submissions`);
+      } else {
+        exportToCSV(processed, `${announcement.title}_form_submissions`);
+      }
+    } catch (e: any) {
+      console.error('Failed to export form responses:', e?.message || e);
+      alert(`Failed to export form responses: ${e?.message || 'Unknown error'}`);
+    }
+  };
+
   return (
-    <div className="glass-card border p-4 sm:p-5 rounded-2xl flex flex-col sm:flex-row gap-4 shadow-lg hover:shadow-primary/20 transition-shadow">
+    <div className="glass-card p-4 rounded-xl shadow-md">
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-2 flex-wrap">
           <h3 className="font-semibold text-lg">{announcement.title}</h3>
@@ -69,6 +135,21 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({
         "flex gap-2 shrink-0",
         isMobile ? "flex-row justify-end" : "flex-col"
       )}>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {/* Existing priority badge */}
+          {getPriorityBadge(announcement.priority)}
+          {/* New badges for form attachment */}
+          {!!announcement.vendor_form_id && (
+            <Badge variant="secondary">
+              Attached Form
+            </Badge>
+          )}
+          {!!announcement.vendor_form_id && !!announcement.require_submission && (
+            <Badge variant="destructive">
+              Submission Required
+            </Badge>
+          )}
+        </div>
         <Button
           variant="ghost"
           size={isMobile ? "sm" : "icon"}
@@ -90,8 +171,40 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({
           {isMobile && <span className="ml-1 text-xs">Delete</span>}
         </Button>
       </div>
+      <div className="mt-4 flex flex-col sm:flex-row gap-2 justify-end">
+        {/* New: export form responses if an attached form exists */}
+        {!!announcement.vendor_form_id && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleExportResponses}
+            className="sm:w-auto"
+          >
+            <FileDown className="h-4 w-4 mr-2" />
+            Export Responses (CSV)
+          </Button>
+        )}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => onEdit(announcement)}
+          disabled={isUpdating}
+          className="sm:w-auto"
+        >
+          <Pencil className="h-4 w-4 mr-2" />
+          Edit
+        </Button>
+        <Button
+          type="button"
+          variant="destructive"
+          onClick={() => onDelete(announcement.id)}
+          disabled={isDeleting}
+          className="sm:w-auto"
+        >
+          <Trash2 className="h-4 w-4 mr-2" />
+          Delete
+        </Button>
+      </div>
     </div>
   );
 };
-
-export default AnnouncementCard;

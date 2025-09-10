@@ -1,3 +1,5 @@
+// File: AdminAnnouncements.tsx
+// Component: AdminAnnouncementsContent
 import React, { useState, useEffect } from 'react';
 // Remove this import:
 // import AdminLayout from '@/components/layouts/AdminLayout';
@@ -45,6 +47,10 @@ const AdminAnnouncementsContent = () => {
   const { selectedEvent, selectedEventId } = useAdminEventContext();
   const { announcements, isLoading, createAnnouncement, updateAnnouncement, deleteAnnouncement, isCreating, isUpdating, isDeleting } = useAdminAnnouncements();
 
+  // New: list of vendor forms for the event
+  const [vendorForms, setVendorForms] = useState<{ id: string; title: string }[]>([]);
+  const [loadingVendorForms, setLoadingVendorForms] = useState(false);
+
   const form = useForm<AnnouncementFormData>({
     defaultValues: {
       title: "",
@@ -60,6 +66,35 @@ const AdminAnnouncementsContent = () => {
   });
 
   const { register, handleSubmit, watch, setValue, reset, formState: { errors } } = form;
+
+  // Load vendor forms for selected event
+  useEffect(() => {
+    const loadVendorForms = async () => {
+      if (!selectedEventId) {
+        setVendorForms([]);
+        return;
+      }
+      setLoadingVendorForms(true);
+      const { data, error } = await supabase
+        .from('vendor_forms')
+        .select('id, form_title')
+        .eq('event_id', selectedEventId)
+        .order('created_at', { ascending: false });
+
+      if (!error && data) {
+        const mapped = (data as { id: string; form_title: string }[]).map(f => ({
+          id: f.id,
+          title: f.form_title,
+        }));
+        setVendorForms(mapped);
+      } else {
+        setVendorForms([]);
+        console.error('Error loading vendor forms:', error);
+      }
+      setLoadingVendorForms(false);
+    };
+    loadVendorForms();
+  }, [selectedEventId]);
 
   // Form persistence
   const { saveFormData, clearSavedData, hasSavedData } = useFormPersistence(
@@ -83,17 +118,20 @@ const AdminAnnouncementsContent = () => {
   const highPriority = announcements.filter(a => a.priority === 'high').length;
 
   const onSubmit = (data: AnnouncementFormData) => {
-    const announcementData = {
+    // Clean values to avoid invalid empty strings in DB
+    const cleaned = {
       ...data,
+      vendor_form_id: data.vendor_form_id ? data.vendor_form_id : null,
+      require_submission: data.vendor_form_id ? !!data.require_submission : false,
       created_by: currentUser?.id,
       image: selectedImage,
     };
 
     if (editingAnnouncement) {
-      updateAnnouncement({ id: editingAnnouncement, ...announcementData });
+      updateAnnouncement({ id: editingAnnouncement, ...cleaned });
       setEditingAnnouncement(null);
     } else {
-      createAnnouncement(announcementData);
+      createAnnouncement(cleaned);
     }
     reset();
     setSelectedImage(null);
@@ -112,6 +150,9 @@ const AdminAnnouncementsContent = () => {
     setValue('facebook_link', announcement.facebook_link || '');
     setValue('tiktok_link', announcement.tiktok_link || '');
     setValue('website_link', announcement.website_link || '');
+    // New: set attached form fields
+    setValue('vendor_form_id', announcement.vendor_form_id || '');
+    setValue('require_submission', !!announcement.require_submission);
     setSelectedImage(null);
   };
 
@@ -312,6 +353,47 @@ const AdminAnnouncementsContent = () => {
                         </span>
                       </div>
                     </div>
+
+                    {/* New: Attach Vendor Form */}
+                    <div className="border rounded-lg p-4 bg-muted/30">
+                      <Label className="text-sm font-medium mb-3 block">Attach Vendor Form (Optional)</Label>
+                      <Select
+                        value={watch('vendor_form_id') || ''}
+                        onValueChange={(value) => {
+                          setValue('vendor_form_id', value === 'none' ? '' : value);
+                          if (value === 'none') {
+                            setValue('require_submission', false);
+                          }
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={loadingVendorForms ? 'Loading vendor forms...' : 'Select a vendor form'} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          {vendorForms.map((vf) => (
+                            <SelectItem key={vf.id} value={vf.id}>
+                              {vf.title}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <div className="mt-4">
+                        <Label>Require Submission</Label>
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            disabled={!watch('vendor_form_id')}
+                            checked={!!watch('require_submission')}
+                            onCheckedChange={(checked) => setValue('require_submission', checked)}
+                          />
+                          <span className="text-sm text-muted-foreground">
+                            Attendees must submit this form
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
                     <div className="flex flex-col sm:flex-row gap-2 pt-4">
                       <Button type="submit" className="flex-1" disabled={isCreating || isUpdating}>
                         {(isCreating || isUpdating) && <Loader className="h-4 w-4 mr-2 animate-spin" />}

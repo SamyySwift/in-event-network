@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import {
   Send,
   UserPlus,
@@ -51,13 +51,16 @@ import { usePayment } from "@/hooks/usePayment";
 import { useUserPresence } from "@/hooks/useUserPresence";
 import { useConnectionRequests } from "@/hooks/useConnectionRequests";
 import { useAuth } from "@/contexts/AuthContext";
-import { useLocation } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const AttendeeNetworking = () => {
   const navigate = useNavigate();
   const { currentEventId } = useAttendeeEventContext();
   const { isEventPaid } = usePayment();
   const [activeTab, setActiveTab] = useState("people");
+  const queryClient = useQueryClient();
+  const { currentUser } = useAuth();
   const [selectedConversation, setSelectedConversation] = useState<{
     userId: string;
     userName: string;
@@ -107,9 +110,7 @@ const AttendeeNetworking = () => {
       .filter((x) => x.score >= 30)
       .sort((a, b) => b.score - a.score)
       .map((x) => x.profile);
-    const rest = withScores
-      .filter((x) => x.score < 30)
-      .map((x) => x.profile);
+    const rest = withScores.filter((x) => x.score < 30).map((x) => x.profile);
     return [...top, ...rest];
   }, [filteredProfiles, calculateProfileCompletion]);
 
@@ -142,7 +143,6 @@ const AttendeeNetworking = () => {
 
     const dmUserId = params.get("dmUserId");
     if (dmUserId) {
-      // We may not know the name/photo yet; it will default to 'Unknown User' in the thread UI
       setSelectedConversation({
         userId: dmUserId,
         userName: "Unknown User",
@@ -150,6 +150,51 @@ const AttendeeNetworking = () => {
       setActiveTab("messages");
     }
   }, [location.search]);
+
+  // New: Deep link to switch event for Chat Room using ?event=<eventId>
+  React.useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const targetEventId = params.get("event");
+    if (!targetEventId || !currentUser?.id) return;
+    if (targetEventId === currentEventId) return;
+
+    (async () => {
+      try {
+        // Verify the user is already a participant of the target event
+        const { data: participant, error: partErr } = await supabase
+          .from("event_participants")
+          .select("id")
+          .eq("user_id", currentUser.id)
+          .eq("event_id", targetEventId)
+          .maybeSingle();
+
+        if (partErr) {
+          console.error("Error checking event participation:", partErr);
+          return;
+        }
+
+        if (participant) {
+          const { error: updateErr } = await supabase
+            .from("profiles")
+            .update({ current_event_id: targetEventId })
+            .eq("id", currentUser.id);
+
+          if (!updateErr) {
+            // Refresh attendee context so ChatRoom reads the new event
+            queryClient.invalidateQueries({ queryKey: ["attendee-context"] });
+          } else {
+            console.error("Error switching current event:", updateErr);
+          }
+        } else {
+          console.log(
+            "User is not a participant of the target event; not switching."
+          );
+        }
+      } catch (e) {
+        console.error("Deep link event switch error:", e);
+      }
+    })();
+  }, [location.search, currentUser?.id, currentEventId, queryClient]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -168,7 +213,6 @@ const AttendeeNetworking = () => {
   } = useNetworking();
 
   const { getUserStatus, getStatusColor } = useUserPresence();
-  const { currentUser } = useAuth();
 
   // Get connected users
   const connectedUsers = profiles.filter((profile) => {
@@ -683,7 +727,9 @@ const AttendeeNetworking = () => {
           {sortedProfiles.length > 0 && (
             <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
               <span>
-                Showing {startIndex + 1}-{Math.min(endIndex, sortedProfiles.length)} of {sortedProfiles.length} attendees
+                Showing {startIndex + 1}-
+                {Math.min(endIndex, sortedProfiles.length)} of{" "}
+                {sortedProfiles.length} attendees
               </span>
               <span>
                 Page {currentPage} of {totalPages}

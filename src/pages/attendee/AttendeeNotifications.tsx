@@ -17,6 +17,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { useConnectionRequests } from '@/hooks/useConnectionRequests';
 import { useAttendeeNotifications } from '@/hooks/useAttendeeNotifications';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 const AttendeeNotifications = () => {
   const { toast } = useToast();
@@ -39,6 +42,8 @@ const AttendeeNotifications = () => {
     requestNotificationPermission
   } = useAttendeeNotifications();
   
+  const navigate = useNavigate();
+  const { currentUser } = useAuth();
   const [selectMode, setSelectMode] = useState(false);
   const [selectedNotifications, setSelectedNotifications] = useState<string[]>([]);
   
@@ -50,15 +55,99 @@ const AttendeeNotifications = () => {
   }, []);
   
   // Handle clicking a notification
-  const handleNotificationClick = (notification: typeof notifications[0] | typeof connectionNotifications[0]) => {
+  const handleNotificationClick = async (notification: typeof notifications[0] | typeof connectionNotifications[0]) => {
     if (selectMode) {
-      toggleSelectNotification(notification.id);
-    } else if (!notification.is_read) {
-      if ('connection' in notification) {
-        markConnectionAsRead(notification.id);
-      } else {
-        markAsRead(notification.id);
+      toggleSelectNotification((notification as any).id);
+      return;
+    }
+
+    try {
+      // Mark as read appropriately
+      if (!(notification as any).is_read) {
+        if ('connection' in notification) {
+          await markConnectionAsRead((notification as any).id);
+        } else {
+          await markAsRead((notification as any).id);
+        }
       }
+
+      // Navigate based on type
+      if ('connection' in notification) {
+        // Connection requests list item
+        navigate('/attendee/networking?tab=connections');
+        return;
+      }
+
+      const n = notification as any;
+      switch (n.type) {
+        case 'direct_message': {
+          // related_id is the direct_messages.id
+          const dmId = n.related_id;
+          let targetUserId: string | undefined;
+
+          if (dmId && currentUser?.id) {
+            const { data, error } = await supabase
+              .from('direct_messages')
+              .select('sender_id, recipient_id')
+              .eq('id', dmId)
+              .single();
+
+            if (!error && data) {
+              targetUserId = data.sender_id === currentUser.id ? data.recipient_id : data.sender_id;
+            }
+          }
+
+          const params = new URLSearchParams();
+          params.set('tab', 'messages');
+          if (targetUserId) params.set('dmUserId', targetUserId);
+          navigate(`/attendee/networking?${params.toString()}`);
+          break;
+        }
+        case 'group_message': {
+          navigate('/attendee/networking?tab=chats');
+          break;
+        }
+        case 'connection_accepted': {
+          navigate('/attendee/networking?tab=connections');
+          break;
+        }
+        case 'announcement': {
+          // related_id is announcements.id
+          if (n.related_id) {
+            navigate(`/attendee/announcements?announcementId=${n.related_id}`);
+          } else {
+            navigate('/attendee/announcements');
+          }
+          break;
+        }
+        case 'poll_created': {
+          navigate('/attendee/polls?tab=active');
+          break;
+        }
+        case 'schedule_update': {
+          // related_id is schedule_items.id
+          if (n.related_id) {
+            navigate(`/attendee/schedule?itemId=${n.related_id}`);
+          } else {
+            navigate('/attendee/schedule');
+          }
+          break;
+        }
+        case 'facility_update': {
+          navigate('/attendee/map');
+          break;
+        }
+        case 'question': {
+          navigate('/attendee/questions');
+          break;
+        }
+        default: {
+          // Fallback: stay on notifications or handle other custom types
+          navigate('/attendee/notifications');
+        }
+      }
+    } catch (e) {
+      console.error('Error handling notification click:', e);
     }
   };
   

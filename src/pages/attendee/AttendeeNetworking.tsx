@@ -51,6 +51,7 @@ import { usePayment } from "@/hooks/usePayment";
 import { useUserPresence } from "@/hooks/useUserPresence";
 import { useConnectionRequests } from "@/hooks/useConnectionRequests";
 import { useAuth } from "@/contexts/AuthContext";
+import { useLocation } from "react-router-dom";
 
 const AttendeeNetworking = () => {
   const navigate = useNavigate();
@@ -128,6 +129,27 @@ const AttendeeNetworking = () => {
     selectedTags,
     showSuggestedOnly,
   ]);
+
+  // Handle deep links via query parameters from notifications
+  React.useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get("tab");
+    const allowedTabs = new Set(["people", "connections", "chats", "messages"]);
+
+    if (tabParam && allowedTabs.has(tabParam)) {
+      setActiveTab(tabParam);
+    }
+
+    const dmUserId = params.get("dmUserId");
+    if (dmUserId) {
+      // We may not know the name/photo yet; it will default to 'Unknown User' in the thread UI
+      setSelectedConversation({
+        userId: dmUserId,
+        userName: "Unknown User",
+      });
+      setActiveTab("messages");
+    }
+  }, [location.search]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);

@@ -89,7 +89,7 @@ interface CombinedScheduleItem {
 
 const AttendeeSchedule = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedDate, setSelectedDate] = useState<string>("all");
+  const [selectedDate, setSelectedDate] = useState<string>("today");
   const [selectedType, setSelectedType] = useState<string>("all");
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
   const [combinedItems, setCombinedItems] = useState<CombinedScheduleItem[]>(
@@ -101,6 +101,7 @@ const AttendeeSchedule = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
+  const [userDateInteracted, setUserDateInteracted] = useState(false);
 
   const {
     speakers,
@@ -113,6 +114,46 @@ const AttendeeSchedule = () => {
     isLoading: contextLoading,
     error: contextError,
   } = useAttendeeContext();
+
+  // Handle date changes with user interaction tracking
+  const handleDateChange = (value: string) => {
+    setSelectedDate(value);
+    setUserDateInteracted(true);
+  };
+
+  // Reset to today when event changes
+  useEffect(() => {
+    setSelectedDate("today");
+    setUserDateInteracted(false);
+  }, [context?.currentEventId]);
+
+  // Auto-update to today at midnight if user hasn't manually changed date
+  useEffect(() => {
+    const getDelayToNextMidnight = () => {
+      const now = new Date();
+      const midnight = new Date(now);
+      midnight.setHours(24, 0, 0, 0);
+      return midnight.getTime() - now.getTime();
+    };
+
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const scheduleMidnightUpdate = () => {
+      const delay = getDelayToNextMidnight();
+      timeoutId = setTimeout(() => {
+        if (!userDateInteracted) {
+          setSelectedDate("today");
+        }
+        scheduleMidnightUpdate();
+      }, Math.max(1000, delay));
+    };
+
+    scheduleMidnightUpdate();
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [userDateInteracted]);
 
   // Fetch schedule items from database
   useEffect(() => {
@@ -590,7 +631,7 @@ const AttendeeSchedule = () => {
 
                   <Tabs
                     value={selectedDate}
-                    onValueChange={setSelectedDate}
+                    onValueChange={handleDateChange}
                     className="w-auto"
                   >
                     <TabsList className="bg-gray-100 p-1">

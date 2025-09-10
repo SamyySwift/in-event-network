@@ -85,8 +85,7 @@ const AdminNetworking = () => {
   const generateShareableLink = () => {
     if (!selectedEventId) return '';
     const baseUrl = window.location.origin;
-    // Deep-link to attendee networking, open Chat Room tab, and carry event id
-    return `${baseUrl}/attendee/networking?tab=chats&event=${selectedEventId}`;
+    return `${baseUrl}/attendee/networking?event=${selectedEventId}`;
   };
 
   const copyShareableLink = () => {

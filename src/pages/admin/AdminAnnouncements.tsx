@@ -360,11 +360,11 @@ function AdminAnnouncementsContent() {
           feature="Event Announcements"
         >
           {/* Gradient Hero Section */}
-          <div className="p-8 rounded-2xl bg-gradient-to-br from-primary-100 via-purple-100 to-blue-50 text-primary-900 dark:text-white shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
+          <div className="p-4 sm:p-8 rounded-2xl bg-gradient-to-br from-primary-100 via-purple-100 to-blue-50 text-primary-900 dark:text-white shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
             <div className="absolute -top-12 -right-10 w-56 h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none" />
             <div className="absolute -bottom-14 -left-14 w-36 h-36 bg-white/20 rounded-full opacity-30 pointer-events-none" />
             <div className="relative z-10">
-              <h1 className="text-4xl font-bold tracking-tight">
+              <h1 className="text-2xl sm:text-4xl font-bold tracking-tight">
                 Announcements
               </h1>
               <p className="mt-2 max-w-2xl text-primary-700 dark:text-primary-100">
@@ -381,7 +381,7 @@ function AdminAnnouncementsContent() {
             </div>
           </div>
 
-          <div className="glass-card p-6 rounded-xl space-y-8 shadow-xl">
+          <div className="glass-card p-4 sm:p-6 rounded-xl space-y-8 shadow-xl">
             {/* Section Header */}
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">

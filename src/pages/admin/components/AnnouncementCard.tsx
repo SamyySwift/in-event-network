@@ -116,7 +116,7 @@ export default function AnnouncementCard({
             <Badge className="bg-gradient-to-r from-green-400 to-green-600 text-white">Immediate</Badge>
           )}
         </div>
-        <p className="text-sm text-muted-foreground mb-2">{announcement.content}</p>
+        <p className="text-sm text-muted-foreground mb-2 break-words">{announcement.content}</p>
         {announcement.image_url && (
           <img
             src={announcement.image_url}
@@ -129,11 +129,11 @@ export default function AnnouncementCard({
           Created: {new Date(announcement.created_at).toLocaleString()}
         </div>
       </div>
-      
+
       {/* Mobile: Horizontal button layout, Desktop: Vertical */}
       <div className={cn(
-        "flex gap-2 shrink-0",
-        isMobile ? "flex-row justify-end" : "flex-col"
+        "flex gap-2",
+        isMobile ? "flex-row justify-end flex-wrap w-full" : "flex-col"
       )}>
         <div className="mt-2 flex flex-wrap gap-2">
           {/* Existing priority badge */}
@@ -171,14 +171,14 @@ export default function AnnouncementCard({
           {isMobile && <span className="ml-1 text-xs">Delete</span>}
         </Button>
       </div>
-      <div className="mt-4 flex flex-col sm:flex-row gap-2 justify-end">
-        {/* New: export form responses if an attached form exists */}
+
+      <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 justify-end">
         {!!announcement.vendor_form_id && (
           <Button
             type="button"
             variant="outline"
             onClick={handleExportResponses}
-            className="sm:w-auto"
+            className="w-full sm:w-auto"
           >
             <FileDown className="h-4 w-4 mr-2" />
             Export Responses (CSV)
@@ -189,7 +189,7 @@ export default function AnnouncementCard({
           variant="outline"
           onClick={() => onEdit(announcement)}
           disabled={isUpdating}
-          className="sm:w-auto"
+          className="w-full sm:w-auto"
         >
           <Pencil className="h-4 w-4 mr-2" />
           Edit
@@ -199,7 +199,7 @@ export default function AnnouncementCard({
           variant="destructive"
           onClick={() => onDelete(announcement.id)}
           disabled={isDeleting}
-          className="sm:w-auto"
+          className="w-full sm:w-auto"
         >
           <Trash2 className="h-4 w-4 mr-2" />
           Delete
@@ -207,4 +207,4 @@ export default function AnnouncementCard({
       </div>
     </div>
   );
-};
+}

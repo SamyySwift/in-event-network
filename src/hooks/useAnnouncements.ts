@@ -15,6 +15,14 @@ interface Announcement {
   event_id?: string;
   created_at: string;
   updated_at: string;
+  // New optional social and form attachment fields
+  twitter_link?: string | null;
+  instagram_link?: string | null;
+  facebook_link?: string | null;
+  tiktok_link?: string | null;
+  website_link?: string | null;
+  vendor_form_id?: string | null;
+  require_submission?: boolean | null;
 }
 
 export const useAnnouncements = (eventId?: string) => {

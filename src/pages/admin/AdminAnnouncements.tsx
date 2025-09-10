@@ -20,6 +20,7 @@ import { ImageUpload } from '@/components/ui/image-upload';
 import AnnouncementStatsCards from './components/AnnouncementStatsCards';
 import AnnouncementCard from './components/AnnouncementCard';
 import PaymentGuard from '@/components/payment/PaymentGuard';
+import { supabase } from '@/integrations/supabase/client'; // Add
 
 type AnnouncementFormData = {
   title: string;
@@ -32,6 +33,9 @@ type AnnouncementFormData = {
   facebook_link?: string;
   tiktok_link?: string;
   website_link?: string;
+  // New fields
+  vendor_form_id?: string;
+  require_submission?: boolean;
 };
 
 const AdminAnnouncementsContent = () => {

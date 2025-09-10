@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   Plus,
-  Store,
   Users,
   Clock,
   CheckCircle,
@@ -21,6 +20,7 @@ import {
   Sparkles,
   Zap,
   BarChart3,
+  Store,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -319,7 +319,7 @@ function AdminVendorHubContent() {
 
       toast({
         title: "Success",
-        description: "Vendor form created successfully",
+        description: "Form created successfully",
       });
     } catch (error) {
       console.error('Error creating form:', error);
@@ -364,7 +364,7 @@ function AdminVendorHubContent() {
     setVendorForms((prev) => prev.filter((form) => form.id !== formId));
     toast({
       title: "Success",
-      description: "Vendor form deleted successfully",
+      description: "Form deleted successfully",
     });
   };
 
@@ -404,8 +404,8 @@ function AdminVendorHubContent() {
 
     const headers = [
       "Submission Date",
-      "Vendor Name",
-      "Vendor Email",
+      "Name",
+      "Email",
       ...form.fields.map((f) => f.label),
     ];
 
@@ -448,8 +448,8 @@ function AdminVendorHubContent() {
           "Submission Date": new Date(
             submission.submittedAt
           ).toLocaleDateString(),
-          "Vendor Name": submission.vendorName,
-          "Vendor Email": submission.vendorEmail,
+          "Name": submission.vendorName,
+          "Email": submission.vendorEmail,
         };
 
         // Add all form fields
@@ -472,7 +472,7 @@ function AdminVendorHubContent() {
       worksheet["!cols"] = colWidths;
 
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Vendor Submissions");
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Form Submissions");
       XLSX.writeFile(workbook, `${filename}.xlsx`);
     }
 
@@ -566,7 +566,7 @@ function AdminVendorHubContent() {
     <PaymentGuard 
       eventId={selectedEventId || ''}
       eventName="this event"
-      feature="Vendors Hub"
+      feature="Forms"
     >
       <div className="min-h-screen bg-background">
         <div className="container mx-auto px-4 py-6 max-w-6xl">
@@ -578,7 +578,7 @@ function AdminVendorHubContent() {
               <div className="flex items-start gap-4 min-w-0 flex-1">
                 <div className="relative flex-shrink-0">
                   <div className="flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl shadow-lg">
-                    <Store className="h-8 w-8 text-primary-foreground" />
+                    <FileText className="h-8 w-8 text-primary-foreground" />
                   </div>
                   <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
                     <Users className="h-3 w-3 text-white" />
@@ -586,10 +586,10 @@ function AdminVendorHubContent() {
                 </div>
                 <div className="space-y-3 min-w-0">
                   <h1 className="text-3xl lg:text-4xl font-bold tracking-tight bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                    Vendors & Exhibitors Hub
+                    Forms
                   </h1>
                   <p className="text-base text-muted-foreground leading-relaxed max-w-2xl">
-                    Create and manage vendor registration forms with powerful customization options
+                    Create and manage forms with powerful customization options
                   </p>
                   <div className="flex items-center gap-4 pt-2">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -617,9 +617,9 @@ function AdminVendorHubContent() {
                   </DialogTrigger>
                   <DialogContent className="max-w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader className="pb-6">
-                      <DialogTitle className="text-xl">Create Vendor Registration Form</DialogTitle>
+                      <DialogTitle className="text-xl">Create Form</DialogTitle>
                       <DialogDescription>
-                        Design a custom form to collect vendor information for your event
+                        Design a custom form to collect information for your event
                       </DialogDescription>
                     </DialogHeader>
 
@@ -633,7 +633,7 @@ function AdminVendorHubContent() {
                               id="formTitle"
                               value={formTitle}
                               onChange={(e) => setFormTitle(e.target.value)}
-                              placeholder="Vendor Registration Form"
+                              placeholder="Form Title"
                               className="h-11"
                             />
                           </div>
@@ -812,52 +812,13 @@ function AdminVendorHubContent() {
           >
             <AnimatePresence>
               {vendorForms.length === 0 ? (
-                <motion.div 
-                  className="text-center py-16 space-y-6"
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ type: "spring", bounce: 0.4 }}
-                >
-                  <div className="relative">
-                    <motion.div 
-                      className="w-20 h-20 bg-gradient-to-br from-muted via-muted/50 to-muted/30 rounded-3xl flex items-center justify-center mx-auto shadow-lg"
-                      animate={{ 
-                        rotate: [0, 5, -5, 0],
-                        scale: [1, 1.05, 1]
-                      }}
-                      transition={{ 
-                        duration: 3,
-                        repeat: Infinity,
-                        repeatType: "reverse"
-                      }}
-                    >
-                      <Store className="h-10 w-10 text-muted-foreground" />
-                    </motion.div>
-                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-gradient-to-r from-primary to-purple-500 rounded-full flex items-center justify-center">
-                      <Sparkles className="h-3 w-3 text-white" />
-                    </div>
-                  </div>
-                  <div className="space-y-3">
-                    <h3 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
-                      No vendor forms yet
-                    </h3>
-                    <p className="text-muted-foreground max-w-md mx-auto leading-relaxed">
-                      Create your first vendor registration form to start collecting applications from vendors and exhibitors.
-                    </p>
-                  </div>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Button 
-                      onClick={() => setCreateDialogOpen(true)}
-                      className="h-12 px-8 rounded-xl shadow-lg"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Create Your First Form
-                    </Button>
-                  </motion.div>
-                </motion.div>
+                <div className="flex flex-col items-center justify-center py-16 text-center border rounded-lg">
+                  <FileText className="h-10 w-10 text-muted-foreground" />
+                  <p className="mt-4 text-lg font-medium">No forms yet</p>
+                  <p className="mt-2 text-muted-foreground">
+                    Create your first form to start collecting submissions.
+                  </p>
+                </div>
               ) : (
                 <div className="grid gap-6">
                   {vendorForms.map((form, index) => (
@@ -1052,9 +1013,9 @@ function AdminVendorHubContent() {
         <Dialog open={showQRDialog} onOpenChange={setShowQRDialog}>
           <DialogContent className="sm:max-w-md max-w-[95vw]">
             <DialogHeader>
-              <DialogTitle>QR Code for Vendor Form</DialogTitle>
+              <DialogTitle>QR Code for Form</DialogTitle>
               <DialogDescription>
-                Scan this QR code or share it to allow vendors to access the form directly.
+                Scan this QR code or share it to allow users to access the form directly.
               </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col items-center space-y-4">
@@ -1119,7 +1080,7 @@ function AdminVendorHubContent() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder="Search by vendor name or email..."
+                    placeholder="Search by name or email..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-9"
@@ -1148,7 +1109,9 @@ function AdminVendorHubContent() {
                   <p className="text-muted-foreground">
                     {searchTerm
                       ? "No submissions match your search."
-                      : "Share the form link to start receiving vendor registrations."}
+                      : (selectedForm
+                          ? "Share the form link to start receiving submissions."
+                          : "Select a form to view submissions.")}
                   </p>
                 </div>
               ) : (
@@ -1157,7 +1120,7 @@ function AdminVendorHubContent() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Date</TableHead>
-                        <TableHead>Vendor</TableHead>
+                        <TableHead>Name</TableHead>
                         <TableHead>Email</TableHead>
                         {selectedForm?.fields.slice(0, 3).map((field) => (
                           <TableHead key={field.id}>{field.label}</TableHead>

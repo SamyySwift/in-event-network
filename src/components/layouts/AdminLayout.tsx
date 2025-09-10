@@ -30,6 +30,7 @@ import {
   Scan,
   Settings,
   Store,
+  FileText,
   DollarSign,
   Camera, // Add this import for highlights icon
   Eye, // Add this import for event preview icon
@@ -313,12 +314,22 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     { type: "separator" },
 
     // Partners group
+    // inside adminNavigation array
     {
       name: "Sponsors & Partners",
       href: "/admin/sponsors",
       icon: (
         <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
           <Star size={14} className="text-purple-600" />
+        </div>
+      ),
+    },
+    {
+      name: "Forms",
+      href: "/admin/vendor-hub",
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+          <FileText size={14} className="text-purple-600" />
         </div>
       ),
     },

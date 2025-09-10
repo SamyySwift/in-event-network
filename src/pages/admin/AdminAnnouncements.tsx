@@ -534,27 +534,16 @@ function AdminAnnouncementsContent() {
                       </Label>
                       <Select
                         value={watch("vendor_form_id") || ""}
-                        onValueChange={(value) => {
-                          setValue(
-                            "vendor_form_id",
-                            value === "none" ? "" : value
-                          );
-                          if (value === "none") {
-                            setValue("require_submission", false);
-                          }
-                        }}
+                        onValueChange={(value) => setValue("vendor_form_id", value)}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full mt-2">
                           <SelectValue
                             placeholder={
-                              loadingVendorForms
-                                ? "Loading vendor forms..."
-                                : "Select a vendor form"
+                              loadingVendorForms ? "Loading forms..." : "Select a form"
                             }
                           />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="none">None</SelectItem>
                           {vendorForms.map((vf) => (
                             <SelectItem key={vf.id} value={vf.id}>
                               {vf.title}

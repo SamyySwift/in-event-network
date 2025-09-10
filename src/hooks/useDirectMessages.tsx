@@ -44,37 +44,6 @@ export const useDirectMessages = (recipientId?: string) => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Helper: get latest connection status between current user and other user
-  type ConnectionRow = {
-    id: string;
-    requester_id: string;
-    recipient_id: string;
-    status: 'pending' | 'accepted' | 'rejected';
-    created_at: string;
-  };
-
-  const getLatestConnection = async (otherUserId: string): Promise<ConnectionRow | null> => {
-    if (!currentUser?.id) return null;
-    try {
-      const { data, error } = await supabase
-        .from('connections')
-        .select('id, requester_id, recipient_id, status, created_at')
-        .or(
-          `and(requester_id.eq.${currentUser.id},recipient_id.eq.${otherUserId}),and(requester_id.eq.${otherUserId},recipient_id.eq.${currentUser.id})`
-        )
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      if (error) {
-        console.error('Error fetching latest connection:', error);
-        return null;
-      }
-      return (data && data.length > 0 ? (data[0] as ConnectionRow) : null);
-    } catch (e) {
-      console.error('Unexpected error in getLatestConnection:', e);
-      return null;
-    }
-  };
   useEffect(() => {
     if (currentUser) {
       console.log('Current user found, initializing direct messages...');
@@ -339,95 +308,24 @@ export const useDirectMessages = (recipientId?: string) => {
       return;
     }
 
-    const trimmed = content.trim();
-    if (!trimmed) return;
-
     try {
-      // Determine existing connection status
-      const connection = await getLatestConnection(recipientId);
-
-      // Have I already sent any message in this conversation?
-      const hasSentInitial = messages.some(
-        (m) => m.sender_id === currentUser.id
-      );
-
-      // Enforce rules:
-      // - accepted: allow sending
-      // - rejected: block
-      // - pending: allow only if I haven't sent my initial message yet; otherwise block
-      // - no connection: allow only if I haven't sent my initial message yet; then auto-create pending connection
-      if (connection) {
-        if (connection.status === 'accepted') {
-          // allowed
-        } else if (connection.status === 'rejected') {
-          toast({
-            title: "Message blocked",
-            description: "Your previous connection request was declined. You can't send more messages until you reconnect.",
-            variant: "destructive",
-          });
-          return;
-        } else if (connection.status === 'pending') {
-          if (hasSentInitial) {
-            toast({
-              title: "Message blocked",
-              description: "Your connection request is pending. You can continue messaging after it's accepted.",
-              variant: "destructive",
-            });
-            return;
-          }
-          // allowed: this is the initial message prior to connection acceptance
-        }
-      } else {
-        // No connection record yet
-        if (hasSentInitial) {
-          // Safety guard: this would imply historical data inconsistency
-          toast({
-            title: "Message blocked",
-            description: "You can't send more messages until your connection request is accepted.",
-            variant: "destructive",
-          });
-          return;
-        }
-        // allowed: first-ever message; we'll auto-create the connection after sending
-      }
-
-      // Insert the message
-      const { error: dmError } = await supabase
+      console.log('Sending direct message:', { content, recipientId, senderId: currentUser.id });
+      
+      const { error } = await supabase
         .from('direct_messages')
         .insert({
           sender_id: currentUser.id,
           recipient_id: recipientId,
-          content: trimmed,
+          content: content.trim(),
         });
 
-      if (dmError) {
-        console.error('Error sending direct message:', dmError);
-        throw dmError;
+      if (error) {
+        console.error('Error sending direct message:', error);
+        throw error;
       }
 
-      // Auto-trigger connection request if none exists
-      if (!connection) {
-        try {
-          const { error: connError } = await supabase
-            .from('connections')
-            .insert({
-              requester_id: currentUser.id,
-              recipient_id: recipientId,
-              status: 'pending',
-            });
-
-          if (connError) {
-            // Non-fatal: in case of race/duplication, just log
-            console.warn('Auto connection creation failed or already exists:', connError.message);
-          }
-        } catch (e) {
-          console.warn('Unexpected error creating auto connection:', e);
-        }
-      }
-
-      // Optional: refresh conversations list to reflect last message update
-      fetchConversations();
-    } catch (error: any) {
+      console.log('Direct message sent successfully');
+    } catch (error) {
       console.error('Error in sendMessage:', error);
       toast({
         title: "Error",

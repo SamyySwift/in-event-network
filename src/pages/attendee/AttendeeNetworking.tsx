@@ -54,7 +54,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-const AttendeeNetworking = () => {
+function AttendeeNetworking() {
   const navigate = useNavigate();
   const { currentEventId } = useAttendeeEventContext();
   const { isEventPaid } = usePayment();
@@ -320,7 +320,7 @@ const AttendeeNetworking = () => {
     return (
       <Card
         key={profile.id}
-        className="group relative overflow-hidden bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-900/50 border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-[1.02] rounded-2xl h-[420px] flex flex-col"
+        className="group relative overflow-hidden bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-900/50 border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-[1.02] rounded-2xl h-[500px] sm:h-[480px] lg:h-[460px] xl:h-[440px] flex flex-col"
       >
         {/* Decorative Background Elements */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-connect-100/20 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-700" />
@@ -383,25 +383,29 @@ const AttendeeNetworking = () => {
         <CardContent className="relative z-10 space-y-6 flex-1 flex flex-col overflow-hidden">
           {/* About Section */}
           {profile.bio && (
-            <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 backdrop-blur-sm">
-              <p
-                className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed ${
-                  isBioExpanded ? "" : "line-clamp-3"
-                }`}
-              >
-                {profile.bio}
-              </p>
+            <>
+              <div className="relative bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 backdrop-blur-sm">
+                <p
+                  className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed ${
+                    isBioExpanded ? "" : "line-clamp-3"
+                  }`}
+                >
+                  {profile.bio}
+                </p>
+                {!isBioExpanded && shouldShowReadMore && (
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-white dark:from-gray-800 to-transparent" />
+                )}
+              </div>
+
               {shouldShowReadMore && (
                 <button
                   type="button"
+                  aria-expanded={isBioExpanded}
                   onClick={(e) => {
                     e.stopPropagation();
                     const next = new Set(expandedBios);
-                    if (isBioExpanded) {
-                      next.delete(profile.id);
-                    } else {
-                      next.add(profile.id);
-                    }
+                    if (isBioExpanded) next.delete(profile.id);
+                    else next.add(profile.id);
                     setExpandedBios(next);
                   }}
                   className="mt-2 text-xs font-medium text-connect-600 hover:text-connect-700 dark:text-connect-400 dark:hover:text-connect-300 hover:underline"
@@ -409,9 +413,8 @@ const AttendeeNetworking = () => {
                   {isBioExpanded ? "Show less" : "Read more"}
                 </button>
               )}
-            </div>
+            </>
           )}
-  
           {/* Professional Niche */}
           {profile.niche && (
             <div className="flex items-center space-x-2">

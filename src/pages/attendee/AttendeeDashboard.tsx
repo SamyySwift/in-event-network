@@ -45,6 +45,7 @@ import * as LucideIcons from "lucide-react";
 import FacilityIcon from "@/pages/admin/components/FacilityIcon";
 
 import { ProfileCompletionPopup } from "@/components/attendee/ProfileCompletionPopup";
+import { AnnouncementPopup } from "@/components/attendee/AnnouncementPopup";
 
 const AttendeeDashboardContent = () => {
   const navigate = useNavigate();
@@ -54,20 +55,25 @@ const AttendeeDashboardContent = () => {
   const { dashboardData, isLoading, error } = useDashboard();
   const { facilities } = useAttendeeFacilities();
   const [showProfilePopup, setShowProfilePopup] = useState(false);
-  const [expandedAnnouncements, setExpandedAnnouncements] = useState<Set<string>>(new Set());
+  const [expandedAnnouncements, setExpandedAnnouncements] = useState<
+    Set<string>
+  >(new Set());
+  const [popupAnnouncement, setPopupAnnouncement] = useState<any | null>(null);
 
   // Memoize profile completion check to avoid unnecessary recalculation
   const shouldShowProfilePopup = useMemo(() => {
     if (!currentUser || !hasJoinedEvent) return false;
-    
+
     const neverShow = localStorage.getItem("profileReminderNeverShow");
     if (neverShow === "true") return false;
 
-    return !currentUser.photoUrl ||
-           !currentUser.bio ||
-           !currentUser.niche ||
-           !currentUser.links?.linkedin ||
-           !currentUser.links?.twitter;
+    return (
+      !currentUser.photoUrl ||
+      !currentUser.bio ||
+      !currentUser.niche ||
+      !currentUser.links?.linkedin ||
+      !currentUser.links?.twitter
+    );
   }, [currentUser, hasJoinedEvent]);
 
   // Reduced delay for profile popup to improve perceived performance
@@ -78,26 +84,58 @@ const AttendeeDashboardContent = () => {
     }
   }, [shouldShowProfilePopup]);
 
-  // Memoize date formatting functions to avoid recreation on every render
-  const formatDate = useMemo(() => (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  }, []);
+  // Show announcement popup for newest undismissed announcement
+  useEffect(() => {
+    if (!dashboardData?.recentAnnouncements) return;
 
-  const formatTime = useMemo(() => (dateString: string) => {
-    return new Date(dateString).toLocaleTimeString("en-US", {
-      hour: "numeric",
-      minute: "2-digit",
+    const undismissed = dashboardData.recentAnnouncements.filter((a: any) => {
+      return !localStorage.getItem(`announcementDismissed_${a.id}`);
     });
-  }, []);
+
+    if (undismissed.length > 0) {
+      undismissed.sort(
+        (a: any, b: any) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      setPopupAnnouncement(undismissed[0]);
+    } else {
+      setPopupAnnouncement(null);
+    }
+  }, [dashboardData?.recentAnnouncements]);
+
+  const handleDismissAnnouncement = (announcementId?: string) => {
+    if (announcementId) {
+      localStorage.setItem(`announcementDismissed_${announcementId}`, "true");
+    }
+    setPopupAnnouncement(null);
+  };
+
+  // Memoize date formatting functions to avoid recreation on every render
+  const formatDate = useMemo(
+    () => (dateString: string) => {
+      return new Date(dateString).toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+      });
+    },
+    []
+  );
+
+  const formatTime = useMemo(
+    () => (dateString: string) => {
+      return new Date(dateString).toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+      });
+    },
+    []
+  );
 
   const toggleAnnouncementExpanded = (announcementId: string) => {
-    setExpandedAnnouncements(prev => {
+    setExpandedAnnouncements((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(announcementId)) {
         newSet.delete(announcementId);
@@ -109,7 +147,9 @@ const AttendeeDashboardContent = () => {
   };
 
   const truncateContent = (content: string, maxLength: number = 150) => {
-    return content.length > maxLength ? content.substring(0, maxLength) + "..." : content;
+    return content.length > maxLength
+      ? content.substring(0, maxLength) + "..."
+      : content;
   };
 
   // Show loading state while checking event context
@@ -242,8 +282,8 @@ const AttendeeDashboardContent = () => {
         {/* Event Card - Enhanced single event display */}
         {(currentEvent || upcomingEvents?.[0]) && (
           <div className="mb-8">
-            <EventCard 
-              event={currentEvent || upcomingEvents[0]} 
+            <EventCard
+              event={currentEvent || upcomingEvents[0]}
               isLive={!!currentEvent}
             />
           </div>
@@ -261,7 +301,9 @@ const AttendeeDashboardContent = () => {
                   </div>
                   <div>
                     <CardTitle className="text-2xl">Featured Session</CardTitle>
-                    <CardDescription className="text-base">What's happening next at the event</CardDescription>
+                    <CardDescription className="text-base">
+                      What's happening next at the event
+                    </CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -336,7 +378,9 @@ const AttendeeDashboardContent = () => {
                 ) : (
                   <div className="text-center py-4">
                     <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-sm text-gray-500">No sessions scheduled</p>
+                    <p className="text-sm text-gray-500">
+                      No sessions scheduled
+                    </p>
                   </div>
                 )}
               </CardContent>
@@ -366,7 +410,9 @@ const AttendeeDashboardContent = () => {
                 </div>
                 <div>
                   <CardTitle className="text-2xl">Event Facilities</CardTitle>
-                  <CardDescription className="text-base">Explore venue amenities and services</CardDescription>
+                  <CardDescription className="text-base">
+                    Explore venue amenities and services
+                  </CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -375,26 +421,38 @@ const AttendeeDashboardContent = () => {
               {facilities && facilities.length > 0 ? (
                 <>
                   <p className="text-gray-600 mb-4">
-                    Discover {facilities.length} facilities available at the venue, including dining, restrooms, meeting spaces, and other essential services.
+                    Discover {facilities.length} facilities available at the
+                    venue, including dining, restrooms, meeting spaces, and
+                    other essential services.
                   </p>
-                  
+
                   {/* Show first 3 facilities */}
                   <div className="space-y-3">
                     {facilities.slice(0, 3).map((facility) => (
-                      <div key={facility.id} className="flex items-center gap-3 p-3 bg-white/60 rounded-lg border">
+                      <div
+                        key={facility.id}
+                        className="flex items-center gap-3 p-3 bg-white/60 rounded-lg border"
+                      >
                         <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                          <FacilityIcon iconType={facility.icon_type} className="h-4 w-4 text-emerald-600" />
+                          <FacilityIcon
+                            iconType={facility.icon_type}
+                            className="h-4 w-4 text-emerald-600"
+                          />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{facility.name}</p>
+                          <p className="text-sm font-medium text-gray-900 truncate">
+                            {facility.name}
+                          </p>
                           {facility.location && (
-                            <p className="text-xs text-gray-500 truncate">{facility.location}</p>
+                            <p className="text-xs text-gray-500 truncate">
+                              {facility.location}
+                            </p>
                           )}
                         </div>
                       </div>
                     ))}
                   </div>
-                  
+
                   {facilities.length > 3 && (
                     <p className="text-xs text-gray-500 mt-3 text-center">
                       +{facilities.length - 3} more facilities available
@@ -404,7 +462,9 @@ const AttendeeDashboardContent = () => {
               ) : (
                 <div className="text-center py-4">
                   <MapPin className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-gray-500">No facilities information available</p>
+                  <p className="text-sm text-gray-500">
+                    No facilities information available
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -454,24 +514,30 @@ const AttendeeDashboardContent = () => {
                         </h3>
                         <div className="text-gray-600 leading-relaxed break-words">
                           {expandedAnnouncements.has(announcement.id) ? (
-                            announcement.content.split('\n').map((paragraph, index) => (
-                              <p key={index} className="mb-2 last:mb-0">
-                                {paragraph}
-                              </p>
-                            ))
+                            announcement.content
+                              .split("\n")
+                              .map((paragraph, index) => (
+                                <p key={index} className="mb-2 last:mb-0">
+                                  {paragraph}
+                                </p>
+                              ))
                           ) : (
                             <p>{truncateContent(announcement.content)}</p>
                           )}
-                          
+
                           {announcement.content.length > 150 && (
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => toggleAnnouncementExpanded(announcement.id)}
+                              onClick={() =>
+                                toggleAnnouncementExpanded(announcement.id)
+                              }
                               className="mt-2 h-auto p-1 text-blue-600 hover:text-blue-800 font-medium"
                             >
                               <Eye className="h-3 w-3 mr-1" />
-                              {expandedAnnouncements.has(announcement.id) ? "See less" : "See more"}
+                              {expandedAnnouncements.has(announcement.id)
+                                ? "See less"
+                                : "See more"}
                             </Button>
                           )}
                         </div>
@@ -508,7 +574,9 @@ const AttendeeDashboardContent = () => {
               </div>
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">Quick Actions</h2>
+              <h2 className="text-2xl font-bold text-gray-900">
+                Quick Actions
+              </h2>
               <p className="text-gray-500">
                 Everything you need at your fingertips
               </p>
@@ -546,33 +614,36 @@ const AttendeeDashboardContent = () => {
               let IconComponent = action.icon;
               if (action.name === "Event Facilities" && facilities.length > 0) {
                 const firstFacility = facilities[0];
-                if (firstFacility.icon_type && (LucideIcons as any)[firstFacility.icon_type]) {
+                if (
+                  firstFacility.icon_type &&
+                  (LucideIcons as any)[firstFacility.icon_type]
+                ) {
                   IconComponent = (LucideIcons as any)[firstFacility.icon_type];
                 }
               }
-              
+
               return (
-              <Card
-                key={action.name}
-                className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-0 shadow-lg overflow-hidden bg-white backdrop-blur-sm hover:-translate-y-1 relative z-10"
-                onClick={() => navigate(action.href)}
-              >
-                <CardContent className="p-6 text-center relative bg-white/95 backdrop-blur-sm">
-                  <div className="absolute inset-0 bg-gradient-to-br from-gray-50/50 to-gray-100/50 group-hover:from-gray-100/50 group-hover:to-gray-200/50 transition-all duration-300 z-0"></div>
-                  <div className="relative z-10">
-                    <div
-                      className={`w-12 h-12 bg-gradient-to-br ${action.gradient} rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300`}
-                    >
-                      <IconComponent className="h-6 w-6 text-white" />
+                <Card
+                  key={action.name}
+                  className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-0 shadow-lg overflow-hidden bg-white backdrop-blur-sm hover:-translate-y-1 relative z-10"
+                  onClick={() => navigate(action.href)}
+                >
+                  <CardContent className="p-6 text-center relative bg-white/95 backdrop-blur-sm">
+                    <div className="absolute inset-0 bg-gradient-to-br from-gray-50/50 to-gray-100/50 group-hover:from-gray-100/50 group-hover:to-gray-200/50 transition-all duration-300 z-0"></div>
+                    <div className="relative z-10">
+                      <div
+                        className={`w-12 h-12 bg-gradient-to-br ${action.gradient} rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300`}
+                      >
+                        <IconComponent className="h-6 w-6 text-white" />
+                      </div>
+                      <p className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                        {action.name}
+                      </p>
+                      <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-indigo-500 mx-auto mt-2 transition-colors" />
                     </div>
-                    <p className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
-                      {action.name}
-                    </p>
-                    <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-indigo-500 mx-auto mt-2 transition-colors" />
-                  </div>
-                </CardContent>
-              </Card>
-            );
+                  </CardContent>
+                </Card>
+              );
             })}
           </div>
         </div>
@@ -639,11 +710,16 @@ const AttendeeDashboardContent = () => {
         )}
       </div>
 
-      <ProfileCompletionPopup
-        isOpen={showProfilePopup}
-        onClose={() => setShowProfilePopup(false)}
+      <AnnouncementPopup
+        isOpen={!!popupAnnouncement}
+        announcement={popupAnnouncement}
+        onClose={() => handleDismissAnnouncement(popupAnnouncement?.id)}
       />
 
+      <ProfileCompletionPopup
+        isOpen={showProfilePopup && !popupAnnouncement}
+        onClose={() => setShowProfilePopup(false)}
+      />
     </>
   );
 };

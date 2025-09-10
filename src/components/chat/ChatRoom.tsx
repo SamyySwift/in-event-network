@@ -16,7 +16,7 @@ import { QuotedMessage } from './QuotedMessage';
 const ChatRoom = ({ eventId }: { eventId?: string }) => {
   const { currentUser } = useAuth();
   const { currentEventId, hasJoinedEvent } = useAttendeeEventContext();
-  const { messages, loading, sendMessage, deleteMessage } = useChat(eventId);
+  const { messages, loading, sendMessage } = useChat(eventId);
   const [newMessage, setNewMessage] = useState('');
   const [quotedMessage, setQuotedMessage] = useState<any>(null);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
@@ -67,15 +67,6 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
-    }
-  };
-
-  const handleDelete = async (msg: any) => {
-    try {
-      await deleteMessage(msg.id);
-    } catch (e) {
-      // optional: surface UI error/toast
-      console.error('Delete failed:', e);
     }
   };
 
@@ -135,20 +126,14 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
                 <p>No messages yet. Start the conversation with your fellow attendees!</p>
               </div>
             ) : (
-              messages.map((message) => {
-                const isOwn = message.user_id === currentUser?.id;
-                const canDelete = isOwn || currentUser?.role === 'host';
-                return (
-                  <ChatMessage
-                    key={message.id}
-                    message={message}
-                    isOwn={isOwn}
-                    onQuote={handleQuoteMessage}
-                    canDelete={!!canDelete}
-                    onDelete={handleDelete}
-                  />
-                );
-              })
+              messages.map((message) => (
+                <ChatMessage
+                  key={message.id}
+                  message={message}
+                  isOwn={message.user_id === currentUser?.id}
+                  onQuote={handleQuoteMessage}
+                />
+              ))
             )}
             <div ref={messagesEndRef} />
           </div>

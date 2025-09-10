@@ -1,13 +1,10 @@
-// File-scope imports and types
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, Megaphone, Clock, ExternalLink } from 'lucide-react';
+import { AlertTriangle, Megaphone, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { InlineVendorForm } from '@/components/forms/InlineVendorForm';
-import { FaInstagram, FaTiktok, FaFacebook } from 'react-icons/fa';
-import { FaXTwitter } from 'react-icons/fa6';
 
 // Top-level types and component signature changes
 interface Announcement {
@@ -20,10 +17,6 @@ interface Announcement {
   website_link?: string | null;
   vendor_form_id?: string | null;
   require_submission?: boolean | null;
-  twitter_link?: string | null;
-  instagram_link?: string | null;
-  facebook_link?: string | null;
-  tiktok_link?: string | null;
 }
 
 interface AnnouncementPopupProps {
@@ -73,7 +66,6 @@ export function AnnouncementPopup({ isOpen, announcement, onClose, onNeverShowAg
 
           <div className="px-4 sm:px-6 pt-4 pb-20 sm:pb-6 overflow-y-auto overscroll-contain">
             <div className="space-y-4">
-              {/* priority badge + timestamp */}
               <div className="flex items-center gap-2">
                 {priorityBadge}
                 {announcement.created_at && (
@@ -97,84 +89,14 @@ export function AnnouncementPopup({ isOpen, announcement, onClose, onNeverShowAg
                 />
               )}
 
-              {/* Social link buttons */}
-              {(announcement.twitter_link ||
-                announcement.instagram_link ||
-                announcement.facebook_link ||
-                announcement.tiktok_link ||
-                announcement.website_link) && (
-                <div className="mt-1 sm:mt-2">
-                  <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-600 mb-2">
-                    <ExternalLink className="h-4 w-4" />
-                    <span>Connect & Follow:</span>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {announcement.twitter_link && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-3 text-xs sm:text-sm"
-                        onClick={() => window.open(announcement.twitter_link!, '_blank', 'noopener,noreferrer')}
-                      >
-                        <FaXTwitter className="h-3.5 w-3.5 mr-1" />
-                        Open X
-                      </Button>
-                    )}
-                    {announcement.instagram_link && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-3 text-xs sm:text-sm"
-                        onClick={() => window.open(announcement.instagram_link!, '_blank', 'noopener,noreferrer')}
-                      >
-                        <FaInstagram className="h-3.5 w-3.5 mr-1" />
-                        Visit Instagram
-                      </Button>
-                    )}
-                    {announcement.facebook_link && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-3 text-xs sm:text-sm"
-                        onClick={() => window.open(announcement.facebook_link!, '_blank', 'noopener,noreferrer')}
-                      >
-                        <FaFacebook className="h-3.5 w-3.5 mr-1" />
-                        Open Facebook
-                      </Button>
-                    )}
-                    {announcement.tiktok_link && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-3 text-xs sm:text-sm"
-                        onClick={() => window.open(announcement.tiktok_link!, '_blank', 'noopener,noreferrer')}
-                      >
-                        <FaTiktok className="h-3.5 w-3.5 mr-1" />
-                        Open TikTok
-                      </Button>
-                    )}
-                    {announcement.website_link && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 px-3 text-xs sm:text-sm"
-                        onClick={() => window.open(announcement.website_link!, '_blank', 'noopener,noreferrer')}
-                      >
-                        <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                        Visit Website
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Inline form rendering (if required) */}
+              {/* Add inline form rendering */}
               {hasVendorForm && (
                 <div className="border rounded-lg p-4 bg-muted/10">
                   <h4 className="font-medium mb-3">Required Form</h4>
                   <InlineVendorForm 
                     formId={announcement.vendor_form_id!} 
                     onSubmitted={() => {
+                      // Mark as submitted and close popup
                       localStorage.setItem(`vendor_form_submitted_${announcement.vendor_form_id}`, 'true');
                       onClose();
                     }}
@@ -189,9 +111,21 @@ export function AnnouncementPopup({ isOpen, announcement, onClose, onNeverShowAg
               {isCompulsory ? (
                 <>
                   {hasVendorForm ? (
+                    // Remove the navigation button since form is now inline
                     null
                   ) : (
                     <>
+                      {hasExternalLink && (
+                        <Button
+                          className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                          onClick={() => {
+                            window.open(announcement.website_link!, "_blank", "noopener,noreferrer");
+                            onAcknowledge?.();
+                          }}
+                        >
+                          Open Link
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         className="flex-1"

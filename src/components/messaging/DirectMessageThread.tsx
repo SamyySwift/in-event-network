@@ -1,4 +1,5 @@
 
+// Top-level imports section
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,8 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useDirectMessages, DirectMessage } from '@/hooks/useDirectMessages';
 import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import { useNetworking } from '@/hooks/useNetworking';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface DirectMessageThreadProps {
   recipientId?: string;
@@ -45,9 +48,29 @@ export const DirectMessageThread: React.FC<DirectMessageThreadProps> = ({
     scrollToBottom();
   }, [messages]);
 
+  // Add networking and auth context to reflect connection status
+  const { getConnectionStatus, acceptConnectionRequest, declineConnectionRequest } = useNetworking();
+  const { currentUser } = useAuth();
+
+  const connectionStatus = actualRecipientId ? getConnectionStatus(actualRecipientId) : undefined;
+  const isPending = connectionStatus?.status === 'pending';
+  const isRejected = connectionStatus?.status === 'rejected';
+  const isRequester = connectionStatus?.requester_id === currentUser?.id;
+
+  const mySentCount = messages.filter(m => m.sender_id === currentUser?.id).length;
+  const hasUsedIntroMessage = mySentCount > 0;
+
+  // Can send if:
+  // - No connection yet (first message allowed)
+  // - Accepted connection
+  // - Pending AND I am requester AND I haven't used my one introductory message
+  const canSendNow =
+    !connectionStatus ||
+    connectionStatus?.status === 'accepted' ||
+    (isPending && isRequester && !hasUsedIntroMessage);
+
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !actualRecipientId) return;
-
     await sendMessage(actualRecipientId, newMessage);
     setNewMessage('');
   };
@@ -100,8 +123,59 @@ export const DirectMessageThread: React.FC<DirectMessageThreadProps> = ({
           <h3 className="font-medium text-gray-900 dark:text-white">{actualRecipientName}</h3>
         </div>
       </CardHeader>
-      
+
       <CardContent className="flex-1 flex flex-col p-0">
+        {/* Connection Status Banner */}
+        {(isPending || isRejected) && (
+          <div className="px-4 py-3 border-b bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200">
+            {isPending && (
+              <div className="flex items-center justify-between gap-3 flex-wrap">
+                <div className="text-sm">
+                  {isRequester ? (
+                    hasUsedIntroMessage ? (
+                      <span>
+                        Connection request pending. You've sent your introductory message. You'll be able to continue once your request is accepted.
+                      </span>
+                    ) : (
+                      <span>
+                        Connection request pending. You can send one introductory message while you wait.
+                      </span>
+                    )
+                  ) : (
+                    <span>
+                      Connection request pending from {actualRecipientName}. Accept to start messaging.
+                    </span>
+                  )}
+                </div>
+                {!isRequester && connectionStatus && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className="bg-connect-600 hover:bg-connect-700"
+                      onClick={() => acceptConnectionRequest(connectionStatus.id)}
+                    >
+                      Accept
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => declineConnectionRequest(connectionStatus.id)}
+                    >
+                      Decline
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+            {isRejected && (
+              <div className="text-sm">
+                Connection request was declined. Messaging is blocked until a new connection request is initiated and accepted.
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-gray-900">
           {messages.length === 0 ? (
@@ -130,10 +204,11 @@ export const DirectMessageThread: React.FC<DirectMessageThreadProps> = ({
               placeholder="Type your message..."
               className="flex-1"
               maxLength={500}
+              disabled={!canSendNow}
             />
-            <Button 
+            <Button
               onClick={handleSendMessage}
-              disabled={!newMessage.trim()}
+              disabled={!newMessage.trim() || !canSendNow}
               className="bg-connect-600 hover:bg-connect-700"
             >
               <Send className="h-4 w-4" />

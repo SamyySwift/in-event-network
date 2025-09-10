@@ -448,7 +448,6 @@ const AttendeeNetworking = () => {
                 )
               }
               className="flex-1 h-10 bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-600 hover:border-connect-300 transition-all duration-300"
-              disabled={!isConnected}
             >
               <MessageSquare size={16} className="mr-2" />
               Message

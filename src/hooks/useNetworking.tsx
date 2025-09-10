@@ -214,12 +214,47 @@ export const useNetworking = () => {
     }
   };
 
+  const declineConnectionRequest = async (connectionId: string) => {
+    if (!currentUser) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to decline connection requests",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('connections')
+        .update({ status: 'rejected' })
+        .eq('id', connectionId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Connection Declined",
+        description: "Connection request has been declined",
+      });
+
+      fetchConnections(); // Refresh connections
+    } catch (error) {
+      console.error('Error declining connection:', error);
+      toast({
+        title: "Error",
+        description: "Failed to decline connection request",
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
     profiles,
     connections,
     loading,
     sendConnectionRequest,
     acceptConnectionRequest,
+    declineConnectionRequest,
     getConnectionStatus,
     refetch: fetchProfiles,
   };

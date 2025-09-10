@@ -308,28 +308,134 @@ export const useDirectMessages = (recipientId?: string) => {
       return;
     }
 
+    const trimmed = content.trim();
+    if (!trimmed) return;
+
     try {
-      console.log('Sending direct message:', { content, recipientId, senderId: currentUser.id });
-      
-      const { error } = await supabase
+      console.log('Sending direct message (with connection flow):', { content: trimmed, recipientId, senderId: currentUser.id });
+
+      // 1) Get the most recent connection (if any) between the two users
+      const { data: connectionRows, error: connectionError } = await supabase
+        .from('connections')
+        .select('*')
+        .or(
+          `and(requester_id.eq.${currentUser.id},recipient_id.eq.${recipientId}),and(requester_id.eq.${recipientId},recipient_id.eq.${currentUser.id})`
+        )
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (connectionError) {
+        console.error('Error fetching connection between users:', connectionError);
+        throw connectionError;
+      }
+
+      const latestConnection = connectionRows?.[0];
+
+      // 2) Enforce rules based on connection status
+      if (latestConnection?.status === 'rejected') {
+        toast({
+          title: "Messaging blocked",
+          description: "Your previous connection request was declined. Send a new connection request and wait for acceptance to continue messaging.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (latestConnection?.status === 'pending') {
+        const isRequester = latestConnection.requester_id === currentUser.id;
+
+        if (!isRequester) {
+          // Recipient of a pending request cannot message until accepting
+          toast({
+            title: "Connection pending",
+            description: "You have a pending connection request. Accept the request to start messaging.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Requester can only send one introductory message while pending
+        const { count: myMsgCount } = await supabase
+          .from('direct_messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('sender_id', currentUser.id)
+          .eq('recipient_id', recipientId);
+
+        if ((myMsgCount || 0) > 0) {
+          toast({
+            title: "Please wait",
+            description: "You've already sent your introductory message. You'll be able to continue once your connection is accepted.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // 3) If no connection exists, allow exactly one initial message and auto-create a pending request afterward
+      let shouldCreatePendingConnection = false;
+      if (!latestConnection) {
+        // Ensure we haven't already sent a message (edge case)
+        const { count: myMsgCountNoConn } = await supabase
+          .from('direct_messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('sender_id', currentUser.id)
+          .eq('recipient_id', recipientId);
+
+        if ((myMsgCountNoConn || 0) > 0) {
+          // If somehow a prior message exists without a connection record, block additional messages
+          toast({
+            title: "Please wait",
+            description: "You've already sent your introductory message. You'll be able to continue once your connection is accepted.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        shouldCreatePendingConnection = true;
+      }
+
+      // 4) Insert the message
+      const { error: dmError } = await supabase
         .from('direct_messages')
         .insert({
           sender_id: currentUser.id,
           recipient_id: recipientId,
-          content: content.trim(),
+          content: trimmed,
         });
 
-      if (error) {
-        console.error('Error sending direct message:', error);
-        throw error;
+      if (dmError) {
+        console.error('Error sending direct message:', dmError);
+        throw dmError;
+      }
+
+      // 5) If this was the first message with no connection, create the pending connection request automatically
+      if (shouldCreatePendingConnection) {
+        const { error: createConnError } = await supabase
+          .from('connections')
+          .insert({
+            requester_id: currentUser.id,
+            recipient_id: recipientId,
+            status: 'pending',
+          });
+
+        if (createConnError) {
+          console.error('Error creating pending connection after first message:', createConnError);
+          // We won't throw here to avoid losing the message; but we do notify
+          toast({
+            title: "Warning",
+            description: "Message sent, but creating the connection request failed. Please try sending a connection request manually.",
+          });
+        } else {
+          console.log('Pending connection request created automatically after first message');
+        }
       }
 
       console.log('Direct message sent successfully');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error in sendMessage:', error);
       toast({
         title: "Error",
-        description: "Failed to send message",
+        description: error?.message || "Failed to send message",
         variant: "destructive",
       });
     }

@@ -51,16 +51,9 @@ const AuthCallback = () => {
                 return;
               }
               
-              // Enhanced event code detection with URL param first
-              const urlParams = new URLSearchParams(window.location.search);
-              const eventCodeFromUrl =
-                urlParams.get('eventCode') ||
-                urlParams.get('code') ||
-                urlParams.get('event_code');
-
-              let pendingEventCode =
-                eventCodeFromUrl ||
-                sessionStorage.getItem('pendingEventCode') ||
+              // Enhanced event code detection with multiple fallbacks for OAuth flow
+              let pendingEventCode = 
+                sessionStorage.getItem('pendingEventCode') || 
                 localStorage.getItem('pendingEventCode') ||
                 localStorage.getItem('googleOAuthEventCode');
 
@@ -70,6 +63,7 @@ const AuthCallback = () => {
                   const storedEventData = localStorage.getItem('googleOAuthEventData');
                   if (storedEventData) {
                     const eventData = JSON.parse(storedEventData);
+                    // Check if stored data is not too old (within last 10 minutes)
                     if (Date.now() - eventData.timestamp < 600000) {
                       pendingEventCode = eventData.code;
                       console.log('AuthCallback - Retrieved event code from OAuth data:', pendingEventCode);
@@ -100,23 +94,15 @@ const AuthCallback = () => {
                 joinEvent(pendingEventCode, {
                   onSuccess: (data: any) => {
                     console.log('AuthCallback - Successfully joined event:', data);
-                    // Clear event code only after successful join
-                    sessionStorage.removeItem('pendingEventCode');
-                    localStorage.removeItem('pendingEventCode');
-                    localStorage.removeItem('googleOAuthEventCode');
-                    localStorage.removeItem('googleOAuthEventData');
-
                     setIsJoiningEvent(false);
                     navigate('/attendee/dashboard', { replace: true });
                   },
                   onError: (error: any) => {
                     console.error('AuthCallback - Failed to join event:', error);
                     setIsJoiningEvent(false);
-
-                    // Keep codes intact for a manual or automatic retry later
                     toast({
                       title: "Account Created",
-                      description: "Your account was created, but we couldn't join the event automatically. Please try again from the dashboard.",
+                      description: "Your account was created, but we couldn't join the event. Please scan the QR code again.",
                       variant: "destructive",
                     });
                     navigate('/attendee/dashboard', { replace: true });
@@ -124,7 +110,7 @@ const AuthCallback = () => {
                 });
                 return;
               }
-
+              
               // Default redirect based on role
               const redirectPath = currentUser.role === 'host' ? '/admin' : '/attendee/dashboard';
               console.log('AuthCallback - Default redirect to:', redirectPath);
@@ -183,10 +169,19 @@ const AuthCallback = () => {
                   }
                   
                   if (pendingEventCode && userRole === 'attendee') {
-                    console.log('AuthCallback - Fallback: Found pending event (not joining here).');
-                    // Keep codes intact so attendee can retry from dashboard without rescanning
+                    console.log('AuthCallback - Fallback: Found pending event, redirecting to attendee with toast');
+                    sessionStorage.removeItem('pendingEventCode');
+                    localStorage.removeItem('pendingEventCode');
+                    localStorage.removeItem('googleOAuthEventCode');
+                    localStorage.removeItem('googleOAuthEventData');
+                    
+                    toast({
+                      title: "Authentication Complete",
+                      description: "Please scan the QR code again to join the event.",
+                    });
                   }
-
+                  
+                  // Redirect based on actual user role
                   const redirectPath = userRole === 'host' ? '/admin' : '/attendee/dashboard';
                   console.log('AuthCallback - Fallback: Redirecting to:', redirectPath);
                   navigate(redirectPath, { replace: true });

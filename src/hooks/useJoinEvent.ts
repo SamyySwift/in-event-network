@@ -1,6 +1,6 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -32,21 +32,19 @@ export const useJoinEvent = () => {
       console.log('Join event response:', data);
       return data as unknown as JoinEventResponse;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       if (data?.success) {
         console.log('Successfully joined event, invalidating caches...');
         
         // Invalidate all networking-related queries to refresh data
-        queryClient.invalidateQueries({ queryKey: ['attendee-networking'] });
-        queryClient.invalidateQueries({ queryKey: ['attendee-context'] });
-        queryClient.invalidateQueries({ queryKey: ['user-profile'] });
-        
-        // Force a refetch of networking data
-        queryClient.refetchQueries({ queryKey: ['attendee-networking'] });
-        
-        
-        // Navigate to attendee dashboard
-        navigate('/attendee');
+        await queryClient.invalidateQueries({ queryKey: ['attendee-networking'] });
+        await queryClient.invalidateQueries({ queryKey: ['attendee-context'] });
+        await queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+        await queryClient.refetchQueries({ queryKey: ['attendee-context'] });
+        await queryClient.refetchQueries({ queryKey: ['user-profile'] });
+
+        // Navigate to attendee dashboard after data refresh
+        navigate('/attendee/dashboard', { replace: true });
       } else {
         console.error('Join event failed:', data?.message);
         toast({

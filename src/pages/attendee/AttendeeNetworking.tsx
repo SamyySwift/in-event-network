@@ -94,11 +94,27 @@ const AttendeeNetworking = () => {
     calculateProfileCompletion,
   } = useNetworkingFilters(profiles);
 
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredProfiles.length / itemsPerPage);
+  // New: sort profiles by completion: 50–100% first (descending), then <50%
+  const sortedProfiles = React.useMemo(() => {
+    const withScores = filteredProfiles.map((p) => ({
+      profile: p,
+      score: calculateProfileCompletion(p),
+    }));
+    const top = withScores
+      .filter((x) => x.score >= 50)
+      .sort((a, b) => b.score - a.score)
+      .map((x) => x.profile);
+    const rest = withScores
+      .filter((x) => x.score < 50)
+      .map((x) => x.profile);
+    return [...top, ...rest];
+  }, [filteredProfiles, calculateProfileCompletion]);
+
+  // Pagination calculations (use sortedProfiles instead of filteredProfiles)
+  const totalPages = Math.ceil(sortedProfiles.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentPageProfiles = filteredProfiles.slice(startIndex, endIndex);
+  const currentPageProfiles = sortedProfiles.slice(startIndex, endIndex);
 
   // Reset to first page when filters change
   React.useEffect(() => {
@@ -615,12 +631,10 @@ const AttendeeNetworking = () => {
           />
 
           {/* Results summary */}
-          {filteredProfiles.length > 0 && (
+          {sortedProfiles.length > 0 && (
             <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
               <span>
-                Showing {startIndex + 1}-
-                {Math.min(endIndex, filteredProfiles.length)} of{" "}
-                {filteredProfiles.length} attendees
+                Showing {startIndex + 1}-{Math.min(endIndex, sortedProfiles.length)} of {sortedProfiles.length} attendees
               </span>
               <span>
                 Page {currentPage} of {totalPages}

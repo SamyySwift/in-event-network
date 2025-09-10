@@ -94,11 +94,27 @@ const AttendeeNetworking = () => {
     calculateProfileCompletion,
   } = useNetworkingFilters(profiles);
 
+  // Sort by profile completion: 30–100% first (descending), then <30%
+  const sortedProfiles = React.useMemo(() => {
+    const withScores = filteredProfiles.map((p) => ({
+      profile: p,
+      score: calculateProfileCompletion(p),
+    }));
+    const top = withScores
+      .filter((x) => x.score >= 30)
+      .sort((a, b) => b.score - a.score)
+      .map((x) => x.profile);
+    const rest = withScores
+      .filter((x) => x.score < 30)
+      .map((x) => x.profile);
+    return [...top, ...rest];
+  }, [filteredProfiles, calculateProfileCompletion]);
+
   // Pagination calculations
-  const totalPages = Math.ceil(filteredProfiles.length / itemsPerPage);
+  const totalPages = Math.ceil(sortedProfiles.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const currentPageProfiles = filteredProfiles.slice(startIndex, endIndex);
+  const currentPageProfiles = sortedProfiles.slice(startIndex, endIndex);
 
   // Reset to first page when filters change
   React.useEffect(() => {

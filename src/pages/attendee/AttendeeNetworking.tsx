@@ -46,11 +46,11 @@ import { useNetworking } from "@/hooks/useNetworking";
 import { useAttendeeEventContext } from "@/contexts/AttendeeEventContext";
 import { NetworkingFilter } from "@/components/networking/NetworkingFilter";
 import XLogo from "@/components/icons/XLogo";
-import PaymentGuard from '@/components/payment/PaymentGuard';
-import { usePayment } from '@/hooks/usePayment';
-import { useUserPresence } from '@/hooks/useUserPresence';
-import { useConnectionRequests } from '@/hooks/useConnectionRequests';
-import { useAuth } from '@/contexts/AuthContext';
+import PaymentGuard from "@/components/payment/PaymentGuard";
+import { usePayment } from "@/hooks/usePayment";
+import { useUserPresence } from "@/hooks/useUserPresence";
+import { useConnectionRequests } from "@/hooks/useConnectionRequests";
+import { useAuth } from "@/contexts/AuthContext";
 
 const AttendeeNetworking = () => {
   const navigate = useNavigate();
@@ -62,7 +62,9 @@ const AttendeeNetworking = () => {
     userName: string;
     userPhoto?: string;
   } | null>(null);
-  const [expandedPreferences, setExpandedPreferences] = useState<Set<string>>(new Set());
+  const [expandedPreferences, setExpandedPreferences] = useState<Set<string>>(
+    new Set()
+  );
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -119,7 +121,13 @@ const AttendeeNetworking = () => {
   // Reset to first page when filters change
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedNiches, selectedNetworkingPrefs, selectedTags, showSuggestedOnly]);
+  }, [
+    searchTerm,
+    selectedNiches,
+    selectedNetworkingPrefs,
+    selectedTags,
+    showSuggestedOnly,
+  ]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -129,16 +137,16 @@ const AttendeeNetworking = () => {
       ?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const { sendConnectionRequest, getConnectionStatus, connections, refetch, acceptConnectionRequest } =
-    useNetworking();
-  
+  const {
+    sendConnectionRequest,
+    getConnectionStatus,
+    connections,
+    refetch,
+    acceptConnectionRequest,
+  } = useNetworking();
+
   const { getUserStatus, getStatusColor } = useUserPresence();
   const { currentUser } = useAuth();
-
-  console.log("AttendeeNetworking - currentEventId:", currentEventId);
-  console.log("AttendeeNetworking - profiles:", profiles);
-  console.log("AttendeeNetworking - loading:", loading);
-  console.log("AttendeeNetworking - error:", error);
 
   // Get connected users
   const connectedUsers = profiles.filter((profile) => {
@@ -227,12 +235,14 @@ const AttendeeNetworking = () => {
     const connectionStatus = getConnectionStatus(profile.id);
     const isConnected = connectionStatus?.status === "accepted";
     const isPending = connectionStatus?.status === "pending";
-    const isReceivedRequest = isPending && connectionStatus?.recipient_id === currentUser?.id;
-    const isSentRequest = isPending && connectionStatus?.requester_id === currentUser?.id;
+    const isReceivedRequest =
+      isPending && connectionStatus?.recipient_id === currentUser?.id;
+    const isSentRequest =
+      isPending && connectionStatus?.requester_id === currentUser?.id;
     const socialLinks = getSocialLinks(profile);
     const userStatus = getUserStatus(profile.id);
     // Always show green in networking tab as requested
-    const statusColor = 'bg-green-400';
+    const statusColor = "bg-green-400";
 
     return (
       <Card
@@ -263,9 +273,17 @@ const AttendeeNetworking = () => {
                     </AvatarFallback>
                   )}
                 </Avatar>
-                <div 
-                  className={`absolute -bottom-1 -right-1 w-6 h-6 ${statusColor} rounded-full border-2 border-white dark:border-gray-800 ${userStatus === 'online' ? 'animate-pulse' : ''}`}
-                  title={userStatus === 'online' ? 'Online in dashboard' : userStatus === 'away' ? 'Online but away from dashboard' : 'Offline'}
+                <div
+                  className={`absolute -bottom-1 -right-1 w-6 h-6 ${statusColor} rounded-full border-2 border-white dark:border-gray-800 ${
+                    userStatus === "online" ? "animate-pulse" : ""
+                  }`}
+                  title={
+                    userStatus === "online"
+                      ? "Online in dashboard"
+                      : userStatus === "away"
+                      ? "Online but away from dashboard"
+                      : "Offline"
+                  }
                 />
               </div>
 
@@ -354,8 +372,8 @@ const AttendeeNetworking = () => {
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {(expandedPreferences.has(profile.id) 
-                    ? profile.networking_preferences 
+                  {(expandedPreferences.has(profile.id)
+                    ? profile.networking_preferences
                     : profile.networking_preferences.slice(0, 2)
                   ).map((pref: string, index: number) => (
                     <Badge
@@ -389,8 +407,8 @@ const AttendeeNetworking = () => {
                         </>
                       ) : (
                         <>
-                          <ChevronDown size={12} className="mr-1" />
-                          +{profile.networking_preferences.length - 2} more
+                          <ChevronDown size={12} className="mr-1" />+
+                          {profile.networking_preferences.length - 2} more
                         </>
                       )}
                     </Button>
@@ -438,12 +456,22 @@ const AttendeeNetworking = () => {
             {showConnectButton && (
               <Button
                 size="sm"
-                onClick={() => isReceivedRequest ? handleAcceptConnection(profile.id) : handleConnect(profile.id)}
+                onClick={() =>
+                  isReceivedRequest
+                    ? handleAcceptConnection(profile.id)
+                    : handleConnect(profile.id)
+                }
                 className="flex-1 h-10 bg-gradient-to-r from-connect-500 to-connect-600 hover:from-connect-600 hover:to-connect-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
                 disabled={isConnected || isSentRequest}
               >
                 <UserPlus size={16} className="mr-2" />
-                {isReceivedRequest ? "Accept" : isSentRequest ? "Pending" : isConnected ? "Connected" : "Connect"}
+                {isReceivedRequest
+                  ? "Accept"
+                  : isSentRequest
+                  ? "Pending"
+                  : isConnected
+                  ? "Connected"
+                  : "Connect"}
               </Button>
             )}
           </div>
@@ -631,12 +659,10 @@ const AttendeeNetworking = () => {
           />
 
           {/* Results summary */}
-          {filteredProfiles.length > 0 && (
+          {sortedProfiles.length > 0 && (
             <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
               <span>
-                Showing {startIndex + 1}-
-                {Math.min(endIndex, filteredProfiles.length)} of{" "}
-                {filteredProfiles.length} attendees
+                Showing {startIndex + 1}-{Math.min(endIndex, sortedProfiles.length)} of {sortedProfiles.length} attendees
               </span>
               <span>
                 Page {currentPage} of {totalPages}

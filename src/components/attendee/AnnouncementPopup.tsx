@@ -53,110 +53,116 @@ export function AnnouncementPopup({ isOpen, announcement, onClose, onNeverShowAg
   return (
     // Update the Dialog onOpenChange logic
     <Dialog open={isOpen} onOpenChange={allowDismiss && !hasVendorForm ? onClose : () => {}}>
-      <DialogContent className="sm:max-w-md max-w-[95vw] mx-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
-              <Megaphone className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-            </div>
-            <span className="text-base sm:text-xl">New Announcement</span>
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-[95vw] sm:max-w-md w-full p-0 overflow-hidden rounded-xl">
+        <div className="flex flex-col max-h-[90dvh] sm:max-h-[85vh]">
+          <DialogHeader className="px-4 sm:px-6 pt-4 pb-3 border-b sticky top-0 z-10 bg-white/95 backdrop-blur">
+            <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center">
+                <Megaphone className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
+              </div>
+              <span className="text-base sm:text-xl">New Announcement</span>
+            </DialogTitle>
+          </DialogHeader>
 
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">{priorityBadge}
-            {announcement.created_at && (
-              <span className="text-xs text-gray-500 flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {new Date(announcement.created_at).toLocaleString()}
-              </span>
-            )}
+          <div className="px-4 sm:px-6 pt-4 pb-20 sm:pb-6 overflow-y-auto overscroll-contain">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                {priorityBadge}
+                {announcement.created_at && (
+                  <span className="text-xs text-gray-500 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {new Date(announcement.created_at).toLocaleString()}
+                  </span>
+                )}
+              </div>
+
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{announcement.title}</h3>
+                <div className="text-sm text-gray-700 whitespace-pre-wrap">{announcement.content}</div>
+              </div>
+
+              {announcement.image_url && (
+                <img
+                  src={announcement.image_url}
+                  alt="Announcement"
+                  className="w-full h-40 object-cover rounded-xl border"
+                />
+              )}
+
+              {/* Add inline form rendering */}
+              {hasVendorForm && (
+                <div className="border rounded-lg p-4 bg-muted/10">
+                  <h4 className="font-medium mb-3">Required Form</h4>
+                  <InlineVendorForm 
+                    formId={announcement.vendor_form_id!} 
+                    onSubmitted={() => {
+                      // Mark as submitted and close popup
+                      localStorage.setItem(`vendor_form_submitted_${announcement.vendor_form_id}`, 'true');
+                      onClose();
+                    }}
+                  />
+                </div>
+              )}
+            </div>
           </div>
 
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">{announcement.title}</h3>
-            <div className="text-sm text-gray-700 whitespace-pre-wrap">{announcement.content}</div>
-          </div>
-
-          {announcement.image_url && (
-            <img
-              src={announcement.image_url}
-              alt="Announcement"
-              className="w-full h-40 object-cover rounded-xl border"
-            />
-          )}
-
-          {/* Add inline form rendering */}
-          {hasVendorForm && (
-            <div className="border rounded-lg p-4 bg-muted/10">
-              <h4 className="font-medium mb-3">Required Form</h4>
-              <InlineVendorForm 
-                formId={announcement.vendor_form_id!} 
-                onSubmitted={() => {
-                  // Mark as submitted and close popup
-                  localStorage.setItem(`vendor_form_submitted_${announcement.vendor_form_id}`, 'true');
-                  onClose();
-                }}
-              />
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="flex flex-col sm:flex-row gap-2">
-            {isCompulsory ? (
-              <>
-                {hasVendorForm ? (
-                  // Remove the navigation button since form is now inline
-                  null
-                ) : (
-                  <>
-                    {hasExternalLink && (
+          <div className="px-4 sm:px-6 py-4 border-t sticky bottom-0 z-10 bg-white/95 backdrop-blur">
+            <div className="flex flex-col sm:flex-row gap-2">
+              {isCompulsory ? (
+                <>
+                  {hasVendorForm ? (
+                    // Remove the navigation button since form is now inline
+                    null
+                  ) : (
+                    <>
+                      {hasExternalLink && (
+                        <Button
+                          className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                          onClick={() => {
+                            window.open(announcement.website_link!, "_blank", "noopener,noreferrer");
+                            onAcknowledge?.();
+                          }}
+                        >
+                          Open Link
+                        </Button>
+                      )}
                       <Button
-                        className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                        variant="outline"
+                        className="flex-1"
                         onClick={() => {
-                          window.open(announcement.website_link!, "_blank", "noopener,noreferrer");
                           onAcknowledge?.();
                         }}
                       >
-                        Open Link
+                        Acknowledge
                       </Button>
-                    )}
-                    <Button
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => {
-                        onAcknowledge?.();
-                      }}
-                    >
-                      Acknowledge
-                    </Button>
-                  </>
-                )}
-              </>
-            ) : (
-              <>
-                {/* Optional announcements */}
-                <Button
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                  onClick={() => {
-                    navigate('/attendee/announcements');
-                    onClose();
-                  }}
-                >
-                  View All Announcements
-                </Button>
-                <Button variant="outline" className="flex-1" onClick={onClose}>
-                  Close
-                </Button>
-                <Button
-                  variant="ghost"
-                  className="flex-1"
-                  onClick={() => onNeverShowAgain?.()}
-                >
-                  Do not show again
-                </Button>
-              </>
-            )}
+                    </>
+                  )}
+                </>
+              ) : (
+                <>
+                  {/* Optional announcements */}
+                  <Button
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                    onClick={() => {
+                      navigate('/attendee/announcements');
+                      onClose();
+                    }}
+                  >
+                    View All Announcements
+                  </Button>
+                  <Button variant="outline" className="flex-1" onClick={onClose}>
+                    Close
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="flex-1"
+                    onClick={() => onNeverShowAgain?.()}
+                  >
+                    Do not show again
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </DialogContent>

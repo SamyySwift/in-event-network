@@ -278,7 +278,8 @@ const VendorForm = () => {
       }
       
       setIsSubmitted(true);
-      
+      localStorage.setItem(`vendor_form_submitted_${formId}`, 'true');
+
       toast({
         title: "Success!",
         description: "Your vendor registration has been submitted successfully."

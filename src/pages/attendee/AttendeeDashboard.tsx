@@ -47,7 +47,7 @@ import FacilityIcon from "@/pages/admin/components/FacilityIcon";
 import { ProfileCompletionPopup } from "@/components/attendee/ProfileCompletionPopup";
 import { AnnouncementPopup } from "@/components/attendee/AnnouncementPopup";
 
-const AttendeeDashboardContent = () => {
+function AttendeeDashboardContent() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const { hasJoinedEvent, isLoading: contextLoading } =
@@ -84,29 +84,54 @@ const AttendeeDashboardContent = () => {
     }
   }, [shouldShowProfilePopup]);
 
-  // Show announcement popup for newest undismissed announcement
+  // Helper: check if compulsory announcement is resolved
+  const isAnnouncementResolved = useMemo(() => {
+    return (a: any): boolean => {
+      if (!a?.require_submission) return false;
+      if (a.vendor_form_id) {
+        // Resolved if form submitted (tracked client-side)
+        return localStorage.getItem(`vendor_form_submitted_${a.vendor_form_id}`) === 'true';
+      }
+      // Otherwise, resolved by acknowledgement
+      return localStorage.getItem(`announcementAcknowledged_${a.id}`) === 'true';
+    };
+  }, []);
+
+  // Show announcement popup for newest undismissed/unresolved announcement
   useEffect(() => {
     if (!dashboardData?.recentAnnouncements) return;
 
-    const undismissed = dashboardData.recentAnnouncements.filter((a: any) => {
+    const candidates = dashboardData.recentAnnouncements.filter((a: any) => {
+      if (a.require_submission) {
+        // Compulsory: show until resolved
+        return !isAnnouncementResolved(a);
+      }
+      // Optional: respect "do not show again"
       return !localStorage.getItem(`announcementDismissed_${a.id}`);
     });
 
-    if (undismissed.length > 0) {
-      undismissed.sort(
+    if (candidates.length > 0) {
+      candidates.sort(
         (a: any, b: any) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
       );
-      setPopupAnnouncement(undismissed[0]);
+      setPopupAnnouncement(candidates[0]);
     } else {
       setPopupAnnouncement(null);
     }
-  }, [dashboardData?.recentAnnouncements]);
+  }, [dashboardData?.recentAnnouncements, isAnnouncementResolved]);
 
+  // Non-compulsory: "Do not show again"
   const handleDismissAnnouncement = (announcementId?: string) => {
-    if (announcementId) {
-      localStorage.setItem(`announcementDismissed_${announcementId}`, "true");
-    }
+    if (!announcementId) return;
+    localStorage.setItem(`announcementDismissed_${announcementId}`, 'true');
+    setPopupAnnouncement(null);
+  };
+
+  // Compulsory acknowledgement
+  const handleAcknowledgeAnnouncement = (announcementId?: string) => {
+    if (!announcementId) return;
+    localStorage.setItem(`announcementAcknowledged_${announcementId}`, 'true');
     setPopupAnnouncement(null);
   };
 
@@ -713,7 +738,13 @@ const AttendeeDashboardContent = () => {
       <AnnouncementPopup
         isOpen={!!popupAnnouncement}
         announcement={popupAnnouncement}
-        onClose={() => handleDismissAnnouncement(popupAnnouncement?.id)}
+        onClose={() => setPopupAnnouncement(null)}
+        onNeverShowAgain={() => handleDismissAnnouncement(popupAnnouncement?.id)}
+        onAcknowledge={() => handleAcknowledgeAnnouncement(popupAnnouncement?.id)}
+        allowDismiss={
+          !popupAnnouncement?.require_submission ||
+          isAnnouncementResolved(popupAnnouncement)
+        }
       />
 
       <ProfileCompletionPopup

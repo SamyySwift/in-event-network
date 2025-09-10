@@ -4,7 +4,9 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AlertTriangle, Megaphone, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { InlineVendorForm } from '@/components/forms/InlineVendorForm';
 
+// Top-level types and component signature changes
 interface Announcement {
   id: string;
   title: string;
@@ -12,18 +14,29 @@ interface Announcement {
   priority?: 'high' | 'normal' | 'low' | string;
   image_url?: string | null;
   created_at?: string;
+  website_link?: string | null;
+  vendor_form_id?: string | null;
+  require_submission?: boolean | null;
 }
 
 interface AnnouncementPopupProps {
   isOpen: boolean;
   announcement: Announcement | null;
   onClose: () => void;
+  onNeverShowAgain?: () => void;
+  onAcknowledge?: () => void;
+  allowDismiss?: boolean;
 }
 
-export function AnnouncementPopup({ isOpen, announcement, onClose }: AnnouncementPopupProps) {
+export function AnnouncementPopup({ isOpen, announcement, onClose, onNeverShowAgain, onAcknowledge, allowDismiss = true }: AnnouncementPopupProps) {
   const navigate = useNavigate();
 
   if (!announcement) return null;
+
+  // Derived flags to control actions and behavior
+  const isCompulsory = !!announcement.require_submission;
+  const hasVendorForm = !!announcement.vendor_form_id;
+  const hasExternalLink = !!announcement.website_link;
 
   const priority = (announcement.priority || 'normal').toLowerCase();
   const priorityBadge = (() => {
@@ -38,7 +51,8 @@ export function AnnouncementPopup({ isOpen, announcement, onClose }: Announcemen
   })();
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    // Update the Dialog onOpenChange logic
+    <Dialog open={isOpen} onOpenChange={allowDismiss && !hasVendorForm ? onClose : () => {}}>
       <DialogContent className="sm:max-w-md max-w-[95vw] mx-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
@@ -72,19 +86,77 @@ export function AnnouncementPopup({ isOpen, announcement, onClose }: Announcemen
             />
           )}
 
+          {/* Add inline form rendering */}
+          {hasVendorForm && (
+            <div className="border rounded-lg p-4 bg-muted/10">
+              <h4 className="font-medium mb-3">Required Form</h4>
+              <InlineVendorForm 
+                formId={announcement.vendor_form_id!} 
+                onSubmitted={() => {
+                  // Mark as submitted and close popup
+                  localStorage.setItem(`vendor_form_submitted_${announcement.vendor_form_id}`, 'true');
+                  onClose();
+                }}
+              />
+            </div>
+          )}
+
+          {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-2">
-            <Button
-              className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-              onClick={() => {
-                navigate('/attendee/announcements');
-                onClose();
-              }}
-            >
-              View All Announcements
-            </Button>
-            <Button variant="outline" className="flex-1" onClick={onClose}>
-              Close
-            </Button>
+            {isCompulsory ? (
+              <>
+                {hasVendorForm ? (
+                  // Remove the navigation button since form is now inline
+                  null
+                ) : (
+                  <>
+                    {hasExternalLink && (
+                      <Button
+                        className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                        onClick={() => {
+                          window.open(announcement.website_link!, "_blank", "noopener,noreferrer");
+                          onAcknowledge?.();
+                        }}
+                      >
+                        Open Link
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        onAcknowledge?.();
+                      }}
+                    >
+                      Acknowledge
+                    </Button>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                {/* Optional announcements */}
+                <Button
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
+                  onClick={() => {
+                    navigate('/attendee/announcements');
+                    onClose();
+                  }}
+                >
+                  View All Announcements
+                </Button>
+                <Button variant="outline" className="flex-1" onClick={onClose}>
+                  Close
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="flex-1"
+                  onClick={() => onNeverShowAgain?.()}
+                >
+                  Do not show again
+                </Button>
+              </>
+            )}
           </div>
         </div>
       </DialogContent>

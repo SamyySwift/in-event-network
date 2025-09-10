@@ -99,12 +99,8 @@ const PricingSection = () => {
               <CardTitle className="text-2xl sm:text-3xl text-white mb-2 font-bold">
                 Premium
               </CardTitle>
-              <div className="flex items-center justify-center">
-                <span className="text-3xl sm:text-5xl font-bold bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
-                  ₦100,000
-                </span>
-                <span className="text-white/70 ml-2 text-base sm:text-lg">/ per event</span>
-              </div>
+              {/* Removed the price display row */}
+              {/* Previously displayed ₦100,000 and "/ per event" */}
             </CardHeader>
 
             <CardContent className="space-y-6 relative z-10 px-6 sm:px-8 pb-8">

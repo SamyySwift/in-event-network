@@ -114,7 +114,7 @@ const PricingSection = () => {
                   "Interactive polls and sentiment surveys",
                   "Capture magic with event highlights & media",
                   "Showcase partners and sponsors beautifully",
-                  "Forms hub with streamlined workflows",
+                  "Vendor hub with streamlined workflows",
                   "Smart event rules and compliance",
                   "Lightning-fast bulk check-ins",
                   "AI-powered attendee networking",

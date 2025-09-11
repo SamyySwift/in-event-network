@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import {
   Send,
   UserPlus,
@@ -51,13 +51,16 @@ import { usePayment } from "@/hooks/usePayment";
 import { useUserPresence } from "@/hooks/useUserPresence";
 import { useConnectionRequests } from "@/hooks/useConnectionRequests";
 import { useAuth } from "@/contexts/AuthContext";
-import { useLocation } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-const AttendeeNetworking = () => {
+function AttendeeNetworking() {
   const navigate = useNavigate();
   const { currentEventId } = useAttendeeEventContext();
   const { isEventPaid } = usePayment();
   const [activeTab, setActiveTab] = useState("people");
+  const queryClient = useQueryClient();
+  const { currentUser } = useAuth();
   const [selectedConversation, setSelectedConversation] = useState<{
     userId: string;
     userName: string;
@@ -66,8 +69,7 @@ const AttendeeNetworking = () => {
   const [expandedPreferences, setExpandedPreferences] = useState<Set<string>>(
     new Set()
   );
-
-  // Track which bios are expanded to support Read more/Show less without page refresh
+  // Allow long bios to expand/collapse per profile
   const [expandedBios, setExpandedBios] = useState<Set<string>>(new Set());
 
   // Pagination state
@@ -143,7 +145,6 @@ const AttendeeNetworking = () => {
 
     const dmUserId = params.get("dmUserId");
     if (dmUserId) {
-      // We may not know the name/photo yet; it will default to 'Unknown User' in the thread UI
       setSelectedConversation({
         userId: dmUserId,
         userName: "Unknown User",
@@ -151,6 +152,51 @@ const AttendeeNetworking = () => {
       setActiveTab("messages");
     }
   }, [location.search]);
+
+  // New: Deep link to switch event for Chat Room using ?event=<eventId>
+  React.useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const targetEventId = params.get("event");
+    if (!targetEventId || !currentUser?.id) return;
+    if (targetEventId === currentEventId) return;
+
+    (async () => {
+      try {
+        // Verify the user is already a participant of the target event
+        const { data: participant, error: partErr } = await supabase
+          .from("event_participants")
+          .select("id")
+          .eq("user_id", currentUser.id)
+          .eq("event_id", targetEventId)
+          .maybeSingle();
+
+        if (partErr) {
+          console.error("Error checking event participation:", partErr);
+          return;
+        }
+
+        if (participant) {
+          const { error: updateErr } = await supabase
+            .from("profiles")
+            .update({ current_event_id: targetEventId })
+            .eq("id", currentUser.id);
+
+          if (!updateErr) {
+            // Refresh attendee context so ChatRoom reads the new event
+            queryClient.invalidateQueries({ queryKey: ["attendee-context"] });
+          } else {
+            console.error("Error switching current event:", updateErr);
+          }
+        } else {
+          console.log(
+            "User is not a participant of the target event; not switching."
+          );
+        }
+      } catch (e) {
+        console.error("Deep link event switch error:", e);
+      }
+    })();
+  }, [location.search, currentUser?.id, currentEventId, queryClient]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -169,7 +215,6 @@ const AttendeeNetworking = () => {
   } = useNetworking();
 
   const { getUserStatus, getStatusColor } = useUserPresence();
-  const { currentUser } = useAuth();
 
   // Get connected users
   const connectedUsers = profiles.filter((profile) => {
@@ -266,21 +311,21 @@ const AttendeeNetworking = () => {
     const userStatus = getUserStatus(profile.id);
     // Always show green in networking tab as requested
     const statusColor = "bg-green-400";
-
+  
     // Bio truncation / expansion
     const isBioExpanded = expandedBios.has(profile.id);
     const shouldShowReadMore =
       typeof profile.bio === "string" && profile.bio.length > 160;
-
+  
     return (
       <Card
         key={profile.id}
-        className="group relative overflow-hidden bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-900/50 border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-[1.02] rounded-2xl"
+        className="group relative overflow-hidden bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-900/50 border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-[1.02] rounded-2xl h-[500px] sm:h-[480px] lg:h-[460px] xl:h-[440px] flex flex-col"
       >
         {/* Decorative Background Elements */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-connect-100/20 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-700" />
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-100/20 to-transparent rounded-full translate-y-12 -translate-x-12 group-hover:scale-125 transition-transform duration-700" />
-
+  
         <CardHeader className="relative z-10 pb-4">
           <div className="flex justify-between items-start">
             <div className="flex items-center space-x-4">
@@ -314,7 +359,7 @@ const AttendeeNetworking = () => {
                   }
                 />
               </div>
-
+  
               <div className="flex-1">
                 <CardTitle className="text-xl text-gray-900 dark:text-white font-bold mb-1">
                   {profile.name || "Unknown"}
@@ -334,21 +379,12 @@ const AttendeeNetworking = () => {
             </div>
           </div>
         </CardHeader>
-
-        {/* Make body a column: scrollable content + fixed footer */}
-        <CardContent className="relative z-10 flex-1 flex flex-col overflow-hidden">
-          {/* Scrollable content area */}
-          <div className="flex-1 min-h-0 overflow-y-auto space-y-6 pr-2">
-            {/* Content goes here */}
-          </div>
+  
+        <CardContent className="relative z-10 space-y-6 flex-1 flex flex-col overflow-hidden">
           {/* About Section */}
           {profile.bio && (
             <>
-              <div
-                className={`relative h-24 bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 backdrop-blur-sm ${
-                  isBioExpanded ? "overflow-y-auto pr-1" : ""
-                }`}
-              >
+              <div className="relative bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 backdrop-blur-sm">
                 <p
                   className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed ${
                     isBioExpanded ? "" : "line-clamp-3"
@@ -379,7 +415,6 @@ const AttendeeNetworking = () => {
               )}
             </>
           )}
-
           {/* Professional Niche */}
           {profile.niche && (
             <div className="flex items-center space-x-2">
@@ -392,7 +427,7 @@ const AttendeeNetworking = () => {
               </Badge>
             </div>
           )}
-
+  
           {/* Interests Tags */}
           {profile.tags && profile.tags.length > 0 && (
             <div className="space-y-2">
@@ -423,7 +458,7 @@ const AttendeeNetworking = () => {
               </div>
             </div>
           )}
-
+  
           {/* Networking Preferences */}
           {profile.networking_preferences &&
             profile.networking_preferences.length > 0 && (
@@ -479,7 +514,7 @@ const AttendeeNetworking = () => {
                 </div>
               </div>
             )}
-
+  
           {/* Social Links */}
           {socialLinks.length > 0 && (
             <div className="flex justify-between items-center">
@@ -497,7 +532,7 @@ const AttendeeNetworking = () => {
               </div>
             </div>
           )}
-
+  
           {/* Action Buttons */}
           <div className="flex space-x-3 pt-4">
             <Button

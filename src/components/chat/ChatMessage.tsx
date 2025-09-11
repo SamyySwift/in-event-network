@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Quote, Clock } from 'lucide-react';
+import { Quote, Clock, Trash2 } from 'lucide-react'; // added Trash2
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
@@ -13,6 +13,8 @@ interface ChatMessageProps {
   onQuote: (message: any) => void;
   onConnect?: (userId: string) => void;
   onMessage?: (userId: string, userName: string, userPhoto?: string) => void;
+  canDelete?: boolean;                 // added
+  onDelete?: (message: any) => Promise<void>; // added
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({ 
@@ -20,7 +22,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   isOwn, 
   onQuote, 
   onConnect, 
-  onMessage 
+  onMessage,
+  canDelete,          // added
+  onDelete            // added
 }) => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const timeAgo = formatDistanceToNow(new Date(message.created_at), { addSuffix: true });
@@ -86,6 +90,18 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               className="absolute -right-8 top-0 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
             >
               <Quote className="h-4 w-4" />
+            </Button>
+          )}
+
+          {/* Delete Button (when allowed) */}
+          {canDelete && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => onDelete?.(message)}
+              className={`absolute ${isOwn ? '-left-8' : '-right-8'} bottom-0 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0`}
+            >
+              <Trash2 className="h-4 w-4 text-red-600" />
             </Button>
           )}
         </div>

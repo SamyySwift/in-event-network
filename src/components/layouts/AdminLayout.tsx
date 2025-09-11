@@ -326,13 +326,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     },
     {
       name: "Forms",
-      href: "/admin/vendor-hub",
-      icon: (
-        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
-          <FileText size={14} className="text-purple-600" />
-        </div>
-      ),
+      href: "/admin/forms",
+      icon: FileText,
+      current: false,
     },
+    // Remove the Vendor Hub duplicate item
+    // { name: "Vendor Hub", href: "/admin/vendor-hub", icon: ..., current: false },
     {
       name: "Vendor Hub",
       href: "/admin/vendor-hub",

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from '@/hooks/use-toast';
-import { CheckCircle, Store, Star, Calendar, Clock, MapPin } from 'lucide-react';
+import { CheckCircle, FileText, Star, Calendar, Clock, MapPin } from 'lucide-react';
 import { VendorForm as VendorFormType, VendorFormField, VendorSubmission } from '@/types/vendorForm';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
@@ -474,7 +474,8 @@ const VendorForm = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Card className="w-full max-w-md">
           <CardContent className="text-center py-8">
-            <Store className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            {/* <Store ... /> */}
+            <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
             <h2 className="text-xl font-semibold mb-2">Form Not Found</h2>
             <p className="text-gray-600 mb-4">
               The vendor registration form you're looking for doesn't exist or is no longer active.
@@ -552,7 +553,8 @@ const VendorForm = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Store className="h-6 w-6" />
+              {/* <Store className="h-6 w-6" /> */}
+              <FileText className="h-6 w-6" />
               {form.title}
             </CardTitle>
             {form.description && (
@@ -601,3 +603,9 @@ const VendorForm = () => {
 };
 
 export default VendorForm;
+
+// Submission success copy
+toast({
+  title: "Success!",
+  description: "Your form has been submitted successfully."
+});

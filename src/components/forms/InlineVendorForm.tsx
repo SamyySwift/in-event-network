@@ -50,18 +50,39 @@ export const InlineVendorForm: React.FC<InlineVendorFormProps> = ({ formId, onSu
           return;
         }
 
-        // Map DB row to fields (same defaults used in VendorForm.tsx)
+        const { data: fieldsData, error: fieldsError } = await supabase
+          .from('vendor_form_fields')
+          .select('*')
+          .eq('form_id', formData.id)
+          .order('field_order', { ascending: true });
+
+        if (fieldsError) {
+          console.error('Error fetching form fields:', fieldsError);
+        }
+
+        const mapOptions = (input: any): string[] | undefined => {
+          if (!input) return undefined;
+          if (typeof input === 'string') {
+            try { return JSON.parse(input); } catch { return undefined; }
+          }
+          return Array.isArray(input) ? input as string[] : undefined;
+        };
+
+        const dynamicFields = (fieldsData || []).map((f) => ({
+          id: f.field_id || f.id,
+          label: f.label,
+          type: (f.field_type as 'text' | 'textarea' | 'email' | 'phone') || 'text',
+          required: !!f.is_required,
+          placeholder: f.placeholder || undefined,
+          // description optional in inline; can be added if needed
+          options: mapOptions(f.field_options),
+        }));
+
         const mapped: VendorFormType = {
           id: formData.id,
           title: formData.form_title,
           description: formData.form_description || '',
-          fields: [
-            { id: '1', label: 'Business Name', type: 'text', required: true, placeholder: 'Enter your business name' },
-            { id: '2', label: 'Product/Service Description', type: 'textarea', required: true, placeholder: 'Describe your products or services' },
-            { id: '3', label: 'Contact Email', type: 'email', required: true, placeholder: 'your@email.com' },
-            { id: '4', label: 'Phone Number', type: 'phone', required: true, placeholder: '+1234567890' },
-            { id: '5', label: 'Instagram Handle', type: 'text', required: false, placeholder: '@yourbusiness' },
-          ],
+          fields: dynamicFields,
           isActive: formData.is_active,
           createdAt: formData.created_at,
         };
@@ -124,7 +145,9 @@ export const InlineVendorForm: React.FC<InlineVendorFormProps> = ({ formId, onSu
       setIsSubmitted(true);
       // Persist submission for compulsory announcements
       localStorage.setItem(`vendor_form_submitted_${formId}`, 'true');
-      toast({ title: 'Success!', description: 'Your vendor registration has been submitted successfully.' });
+      // Submission success copy
+      // toast when submitted:
+      // toast({ title: 'Success!', description: 'Your form has been submitted successfully.' });
       onSubmitted?.();
     } catch (err) {
       toast({ title: 'Error', description: 'Failed to submit form. Please try again.', variant: 'destructive' });

@@ -78,6 +78,13 @@ function AdminVendorHubContent() {
     null
   );
 
+  // Edit form state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingFormId, setEditingFormId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editFields, setEditFields] = useState<VendorFormField[]>([]);
+
   // Form creation state
   const [formTitle, setFormTitle] = useState("");
   const [formDescription, setFormDescription] = useState("");
@@ -240,6 +247,46 @@ function AdminVendorHubContent() {
     }
   };
 
+  // Helper: fetch vendor_form_fields for a form
+  const fetchFormFields = async (formId: string): Promise<VendorFormField[]> => {
+    const { data: fieldsData, error: fieldsError } = await supabase
+      .from('vendor_form_fields')
+      .select('*')
+      .eq('form_id', formId)
+      .order('field_order', { ascending: true });
+
+    if (fieldsError) {
+      console.error('Error fetching form fields:', fieldsError);
+      return [];
+    }
+
+    const mapOptions = (input: any): string[] | undefined => {
+      if (!input) return undefined;
+      if (typeof input === 'string') {
+        try { return JSON.parse(input); } catch { return undefined; }
+      }
+      return Array.isArray(input) ? input as string[] : undefined;
+    };
+    const mapValidation = (input: any): VendorFormField['validation'] | undefined => {
+      if (!input) return undefined;
+      if (typeof input === 'string') {
+        try { return JSON.parse(input); } catch { return undefined; }
+      }
+      return input as VendorFormField['validation'];
+    };
+
+    return (fieldsData || []).map((f) => ({
+      id: f.field_id || f.id,
+      label: f.label,
+      type: (f.field_type as VendorFormField['type']) || 'text',
+      required: !!f.is_required,
+      placeholder: f.placeholder || undefined,
+      description: f.field_description || undefined,
+      options: mapOptions(f.field_options),
+      validation: mapValidation(f.validation_rules),
+    }));
+  };
+
   const handleCreateForm = async () => {
     if (!formTitle.trim()) {
       toast({
@@ -360,16 +407,60 @@ function AdminVendorHubContent() {
     );
   };
 
-  const deleteForm = (formId: string) => {
-    setVendorForms((prev) => prev.filter((form) => form.id !== formId));
-    toast({
-      title: "Success",
-      description: "Form deleted successfully",
-    });
+  const deleteForm = async (formId: string) => {
+    try {
+      // Remove submissions first (safety even if DB has cascade)
+      const { error: subErr } = await supabase
+        .from('vendor_submissions')
+        .delete()
+        .eq('form_id', formId);
+      if (subErr) {
+        console.error('Error deleting submissions:', subErr);
+      }
+
+      // Remove fields next
+      const { error: fieldsErr } = await supabase
+        .from('vendor_form_fields')
+        .delete()
+        .eq('form_id', formId);
+      if (fieldsErr) {
+        console.error('Error deleting fields:', fieldsErr);
+      }
+
+      // Finally remove the form
+      const { error: formErr } = await supabase
+        .from('vendor_forms')
+        .delete()
+        .eq('id', formId);
+      if (formErr) {
+        console.error('Error deleting form:', formErr);
+        toast({
+          title: "Error",
+          description: "Failed to delete form. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      await loadVendorForms();
+      await loadSubmissions();
+
+      toast({
+        title: "Success",
+        description: "Form deleted successfully",
+      });
+    } catch (err) {
+      console.error('Error deleting form:', err);
+      toast({
+        title: "Error",
+        description: "Failed to delete form. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const generateFormUrl = (formId: string) => {
-    return `${window.location.origin}/vendor-form/${formId}`;
+    return `${window.location.origin}/forms/${formId}`;
   };
 
   const copyFormUrl = (formId: string) => {
@@ -381,9 +472,76 @@ function AdminVendorHubContent() {
     });
   };
 
-  const viewSubmissions = (form: VendorForm) => {
-    setSelectedForm(form);
+  const viewSubmissions = async (form: VendorForm) => {
+    const dynamicFields = await fetchFormFields(form.id);
+    setSelectedForm({ ...form, fields: dynamicFields.length ? dynamicFields : form.fields });
     setSubmissionsDialogOpen(true);
+  };
+
+  // Edit form flow
+  const openEditForm = async (form: VendorForm) => {
+    setEditingFormId(form.id);
+    setEditTitle(form.title);
+    setEditDescription(form.description || "");
+    const dynamicFields = await fetchFormFields(form.id);
+    setEditFields(dynamicFields.length ? dynamicFields : form.fields);
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdateForm = async () => {
+    if (!editingFormId) return;
+    try {
+      // Update basic metadata
+      const { error: updateErr } = await supabase
+        .from('vendor_forms')
+        .update({
+          form_title: editTitle,
+          form_description: editDescription || null,
+        })
+        .eq('id', editingFormId);
+      if (updateErr) throw updateErr;
+
+      // Replace fields for simplicity (preserve field_id values)
+      const { error: delErr } = await supabase
+        .from('vendor_form_fields')
+        .delete()
+        .eq('form_id', editingFormId);
+      if (delErr) throw delErr;
+
+      const toInsert = editFields.map((field, index) => ({
+        form_id: editingFormId,
+        field_id: field.id,
+        label: field.label,
+        field_type: field.type,
+        is_required: field.required,
+        placeholder: field.placeholder || null,
+        field_description: field.description || null,
+        field_options: field.options ? JSON.stringify(field.options) : null,
+        validation_rules: field.validation ? JSON.stringify(field.validation) : null,
+        field_order: index,
+      }));
+
+      const { error: insErr } = await supabase
+        .from('vendor_form_fields')
+        .insert(toInsert);
+      if (insErr) throw insErr;
+
+      await loadVendorForms();
+
+      toast({
+        title: "Success",
+        description: "Form updated successfully",
+      });
+      setEditDialogOpen(false);
+      setEditingFormId(null);
+    } catch (err) {
+      console.error('Error updating form:', err);
+      toast({
+        title: "Error",
+        description: "Failed to update form. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const exportSubmissions = (
@@ -521,7 +679,7 @@ function AdminVendorHubContent() {
   };
 
   const copyFormURL = (formId: string) => {
-    const url = `${window.location.origin}/vendor-form/${formId}`;
+    const url = `${window.location.origin}/forms/${formId}`;
     navigator.clipboard
       .writeText(url)
       .then(() => {
@@ -899,6 +1057,10 @@ function AdminVendorHubContent() {
                                     <Eye className="h-4 w-4 mr-2" />
                                     View Submissions
                                   </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => openEditForm(form)}>
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Edit Form
+                                  </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => generateQRCode(form.id)}>
                                     <QrCode className="h-4 w-4 mr-2" />
                                     Generate QR Code
@@ -1024,7 +1186,7 @@ function AdminVendorHubContent() {
                   <div className="p-4 bg-white rounded-lg">
                     <QRCodeSVG
                       id={`qr-code-${selectedFormForQR}`}
-                      value={`${window.location.origin}/vendor-form/${selectedFormForQR}`}
+                      value={`${window.location.origin}/forms/${selectedFormForQR}`}
                       size={200}
                       level="M"
                       includeMargin={true}
@@ -1032,7 +1194,7 @@ function AdminVendorHubContent() {
                   </div>
                   <div className="text-center space-y-2 w-full">
                     <p className="text-sm text-muted-foreground break-all">
-                      {`${window.location.origin}/vendor-form/${selectedFormForQR}`}
+                      {`${window.location.origin}/forms/${selectedFormForQR}`}
                     </p>
                     <div className="flex flex-col sm:flex-row gap-2 w-full">
                       <Button
@@ -1169,6 +1331,64 @@ function AdminVendorHubContent() {
                   </Table>
                 </div>
               )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Form Dialog */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className="max-w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader className="pb-6">
+              <DialogTitle className="text-xl">Edit Form</DialogTitle>
+              <DialogDescription>Update form details and fields</DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="editFormTitle" className="text-sm font-medium">Form Title</Label>
+                  <Input
+                    id="editFormTitle"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    placeholder="Form Title"
+                    className="h-11"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editFormDescription" className="text-sm font-medium">Description</Label>
+                  <Textarea
+                    id="editFormDescription"
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    placeholder="Brief description..."
+                    rows={2}
+                    className="resize-none"
+                  />
+                </div>
+              </div>
+
+              <VendorFormFieldBuilder
+                fields={editFields}
+                onFieldsChange={setEditFields}
+              />
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t">
+                <Button
+                  onClick={handleUpdateForm}
+                  disabled={!editTitle.trim() || !editingFormId}
+                  className="flex-1 h-11"
+                >
+                  Save Changes
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setEditDialogOpen(false)}
+                  className="flex-1 h-11"
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

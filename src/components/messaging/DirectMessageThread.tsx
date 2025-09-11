@@ -229,7 +229,7 @@ const DirectMessageBubble: React.FC<DirectMessageBubbleProps> = ({ message, isOw
   const timeAgo = formatDistanceToNow(new Date(message.created_at), { addSuffix: true });
   const profile = isOwn ? message.sender_profile : message.recipient_profile;
   const profileName = profile?.name || 'Unknown User';
-  const isFromAdmin = message.sender_profile?.role === 'admin';
+  const isFromAdmin = profile?.role === 'host' || profile?.role === 'admin';
 
   return (
     <div className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>

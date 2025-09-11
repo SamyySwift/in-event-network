@@ -535,6 +535,23 @@ const AdminNetworking = () => {
           </TabsContent>
         </Tabs>
 
+        {/* DM Dialog */}
+        <Dialog open={dmOpen} onOpenChange={setDmOpen}>
+          <DialogContent className="max-w-3xl w-[95vw]">
+            <DialogHeader>
+              <DialogTitle>Direct Message</DialogTitle>
+            </DialogHeader>
+            {dmRecipient && (
+              <DirectMessageThread
+                recipientId={dmRecipient.id}
+                recipientName={dmRecipient.name}
+                recipientPhoto={dmRecipient.photo_url}
+                onBack={() => setDmOpen(false)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
         {error && (
           <div className="bg-destructive/10 text-destructive p-3 rounded-lg text-sm">
             Error loading networking data: {error.message}

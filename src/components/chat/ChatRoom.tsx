@@ -16,7 +16,7 @@ import { QuotedMessage } from './QuotedMessage';
 const ChatRoom = ({ eventId }: { eventId?: string }) => {
   const { currentUser } = useAuth();
   const { currentEventId, hasJoinedEvent } = useAttendeeEventContext();
-  const { messages, loading, sendMessage } = useChat(eventId);
+  const { messages, loading, sendMessage, deleteMessage } = useChat(eventId);
   const [newMessage, setNewMessage] = useState('');
   const [quotedMessage, setQuotedMessage] = useState<any>(null);
   const [isUserScrolling, setIsUserScrolling] = useState(false);
@@ -132,6 +132,7 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
                   message={message}
                   isOwn={message.user_id === currentUser?.id}
                   onQuote={handleQuoteMessage}
+                  onDelete={(id) => deleteMessage(id)}
                 />
               ))
             )}

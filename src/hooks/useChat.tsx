@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
 
+// Top-level of file: ChatMessage interface and useChat hook
 export interface ChatMessage {
   id: string;
   user_id: string;
@@ -14,8 +15,22 @@ export interface ChatMessage {
   created_at: string;
   updated_at: string;
   user_profile?: {
+    id?: string;
     name: string;
+    email?: string;
+    role?: 'host' | 'attendee' | string;
     photo_url?: string;
+    bio?: string | null;
+    niche?: string | null;
+    location?: string | null;
+    company?: string | null;
+    links?: {
+      twitter?: string | null;
+      linkedin?: string | null;
+      instagram?: string | null;
+      github?: string | null;
+      website?: string | null;
+    };
   };
   quoted_message?: ChatMessage;
 }
@@ -46,7 +61,6 @@ export const useChat = (overrideEventId?: string) => {
     try {
       console.log('Fetching chat messages for event:', effectiveEventId);
       
-      // First get the messages for the current event only
       const { data: messagesData, error: messagesError } = await supabase
         .from('chat_messages')
         .select('*')
@@ -61,11 +75,11 @@ export const useChat = (overrideEventId?: string) => {
 
       console.log('Messages fetched:', messagesData);
 
-      // Then get user profiles for all unique user IDs
-      const userIds = [...new Set(messagesData?.map(msg => msg.user_id) || [])];
-      const { data: profilesData, error: profilesError } = await supabase
+      const userIds = [...new Set(messagesData?.map((msg) => msg.user_id) || [])];
+
+      const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, name, photo_url')
+        .select('id, name, email, role, photo_url, bio, niche, company, twitter_link, linkedin_link, instagram_link, github_link, website_link')
         .in('id', userIds);
 
       if (profilesError) {
@@ -73,18 +87,37 @@ export const useChat = (overrideEventId?: string) => {
       }
 
       // Create a map of user profiles
-      const profilesMap = new Map();
-      profilesData?.forEach(profile => {
-        profilesMap.set(profile.id, profile);
+      const profilesMap = new Map<string, any>();
+      profiles?.forEach((p) => {
+        profilesMap.set(p.id, p);
       });
 
       // Combine messages with user profiles
-      const messagesWithProfiles = messagesData?.map(message => ({
-        ...message,
-        user_profile: profilesMap.get(message.user_id) || { name: 'Unknown User' }
-      })) || [];
+      const messagesWithProfiles: ChatMessage[] = (messagesData || []).map((message: any) => {
+        const p = profilesMap.get(message.user_id);
+        const user_profile = p
+          ? {
+              id: p.id,
+              name: p.name,
+              email: p.email,
+              role: p.role,
+              photo_url: p.photo_url,
+              bio: p.bio,
+              niche: p.niche,
+              company: p.company,
+              links: {
+                twitter: p.twitter_link ?? null,
+                linkedin: p.linkedin_link ?? null,
+                instagram: p.instagram_link ?? null,
+                github: p.github_link ?? null,
+                website: p.website_link ?? null,
+              },
+            }
+          : { name: 'Unknown User' };
 
-      console.log('Messages with profiles:', messagesWithProfiles);
+        return { ...message, user_profile };
+      });
+
       setMessages(messagesWithProfiles);
     } catch (error) {
       console.error('Error in fetchMessages:', error);
@@ -121,7 +154,7 @@ export const useChat = (overrideEventId?: string) => {
           // Get the user profile for the new message
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
-            .select('id, name, photo_url')
+            .select('id, name, role, photo_url')
             .eq('id', payload.new.user_id)
             .single();
 
@@ -138,12 +171,17 @@ export const useChat = (overrideEventId?: string) => {
           setMessages(prev => [...prev, newMessage]);
         }
       )
-      .subscribe((status) => {
-        console.log('Realtime subscription status:', status);
-      });
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'chat_messages' },
+        (payload) => {
+          const deleted = payload.old as any;
+          setMessages((prev) => prev.filter((m) => m.id !== deleted.id));
+        }
+      )
+      .subscribe();
 
     return () => {
-      console.log('Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
   };
@@ -195,9 +233,30 @@ export const useChat = (overrideEventId?: string) => {
     }
   };
 
+  const deleteMessage = async (messageId: string) => {
+    try {
+      const { error } = await supabase.from('chat_messages').delete().eq('id', messageId);
+      if (error) throw error;
+      // Optimistic UI in case realtime is delayed
+      setMessages((prev) => prev.filter((m) => m.id !== messageId));
+      toast({
+        title: 'Message deleted',
+        description: 'The message has been removed.',
+      });
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      toast({
+        title: 'Delete failed',
+        description: 'Could not delete the message.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   return {
     messages,
     loading,
     sendMessage,
+    deleteMessage,
   };
 };

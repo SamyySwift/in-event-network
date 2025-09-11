@@ -107,9 +107,7 @@ const AttendeeNetworking = () => {
       .filter((x) => x.score >= 30)
       .sort((a, b) => b.score - a.score)
       .map((x) => x.profile);
-    const rest = withScores
-      .filter((x) => x.score < 30)
-      .map((x) => x.profile);
+    const rest = withScores.filter((x) => x.score < 30).map((x) => x.profile);
     return [...top, ...rest];
   }, [filteredProfiles, calculateProfileCompletion]);
 
@@ -266,6 +264,11 @@ const AttendeeNetworking = () => {
     // Always show green in networking tab as requested
     const statusColor = "bg-green-400";
 
+    // Bio truncation / expansion
+    const isBioExpanded = expandedBios.has(profile.id);
+    const shouldShowReadMore =
+      typeof profile.bio === "string" && profile.bio.length > 160;
+
     return (
       <Card
         key={profile.id}
@@ -329,14 +332,49 @@ const AttendeeNetworking = () => {
           </div>
         </CardHeader>
 
-        <CardContent className="relative z-10 space-y-6">
+        {/* Make body a column: scrollable content + fixed footer */}
+        <CardContent className="relative z-10 flex-1 flex flex-col overflow-hidden">
+          {/* Scrollable content area */}
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-6 pr-2">
+            {/* Content goes here */}
+          </div>
           {/* About Section */}
           {profile.bio && (
-            <div className="bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 backdrop-blur-sm">
-              <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">
-                {profile.bio}
-              </p>
-            </div>
+            <>
+              <div
+                className={`relative h-24 bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 backdrop-blur-sm ${
+                  isBioExpanded ? "overflow-y-auto pr-1" : ""
+                }`}
+              >
+                <p
+                  className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed ${
+                    isBioExpanded ? "" : "line-clamp-3"
+                  }`}
+                >
+                  {profile.bio}
+                </p>
+                {!isBioExpanded && shouldShowReadMore && (
+                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-white dark:from-gray-800 to-transparent" />
+                )}
+              </div>
+
+              {shouldShowReadMore && (
+                <button
+                  type="button"
+                  aria-expanded={isBioExpanded}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const next = new Set(expandedBios);
+                    if (isBioExpanded) next.delete(profile.id);
+                    else next.add(profile.id);
+                    setExpandedBios(next);
+                  }}
+                  className="mt-2 text-xs font-medium text-connect-600 hover:text-connect-700 dark:text-connect-400 dark:hover:text-connect-300 hover:underline"
+                >
+                  {isBioExpanded ? "Show less" : "Read more"}
+                </button>
+              )}
+            </>
           )}
 
           {/* Professional Niche */}
@@ -683,7 +721,9 @@ const AttendeeNetworking = () => {
           {sortedProfiles.length > 0 && (
             <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
               <span>
-                Showing {startIndex + 1}-{Math.min(endIndex, sortedProfiles.length)} of {sortedProfiles.length} attendees
+                Showing {startIndex + 1}-
+                {Math.min(endIndex, sortedProfiles.length)} of{" "}
+                {sortedProfiles.length} attendees
               </span>
               <span>
                 Page {currentPage} of {totalPages}

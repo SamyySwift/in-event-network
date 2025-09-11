@@ -67,6 +67,9 @@ const AttendeeNetworking = () => {
     new Set()
   );
 
+  // Track which bios are expanded to support Read more/Show less without page refresh
+  const [expandedBios, setExpandedBios] = useState<Set<string>>(new Set());
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;

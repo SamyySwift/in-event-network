@@ -499,7 +499,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: "/forms/:formId",
+    path: "/vendor-form/:formId",
     element: <VendorForm />,
   },
 ]);

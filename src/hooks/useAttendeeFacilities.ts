@@ -19,53 +19,20 @@ export interface Facility {
 
 export const useAttendeeFacilities = () => {
   const { currentUser } = useAuth();
+  const { useAttendeeEventContext } = require('@/contexts/AttendeeEventContext');
+  const { currentEventId } = useAttendeeEventContext();
 
   const { data: facilities = [], isLoading, error } = useQuery({
-    queryKey: ['attendee-facilities', currentUser?.id],
+    queryKey: ['attendee-facilities', currentUser?.id, currentEventId],
     queryFn: async (): Promise<Facility[]> => {
-      if (!currentUser?.id) {
-        throw new Error('User not authenticated');
-      }
-
-      // Get the user's current event from their profile
-      const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('current_event_id')
-        .eq('id', currentUser.id)
-        .single();
-
-      if (!userProfile?.current_event_id) {
+      if (!currentUser?.id || !currentEventId) {
         return [];
       }
 
-      // Get the current event to find the host
-      const { data: currentEvent } = await supabase
-        .from('events')
-        .select('host_id')
-        .eq('id', userProfile.current_event_id)
-        .single();
-
-      if (!currentEvent?.host_id) {
-        return [];
-      }
-
-      // Get all events from the same host
-      const { data: hostEvents } = await supabase
-        .from('events')
-        .select('id')
-        .eq('host_id', currentEvent.host_id);
-
-      const eventIds = hostEvents?.map(e => e.id) || [];
-
-      if (eventIds.length === 0) {
-        return [];
-      }
-
-      // Get facilities for events from this host only
       const { data: facilities, error } = await supabase
         .from('facilities')
         .select('*')
-        .in('event_id', eventIds)
+        .eq('event_id', currentEventId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -73,21 +40,13 @@ export const useAttendeeFacilities = () => {
         throw error;
       }
 
-      // Type cast and validate the contact_type field
-      const processedFacilities = (facilities || []).map(facility => ({
+      return (facilities || []).map(facility => ({
         ...facility,
         contact_type: (facility.contact_type as 'none' | 'phone' | 'whatsapp') || 'none'
       }));
-      
-      console.log('Fetched facilities with images:', processedFacilities.filter(f => f.image_url));
-      return processedFacilities;
     },
-    enabled: !!currentUser?.id,
+    enabled: !!currentUser?.id && !!currentEventId,
   });
 
-  return {
-    facilities,
-    isLoading,
-    error,
-  };
+  return { facilities, isLoading, error };
 };

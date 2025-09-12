@@ -27,39 +27,22 @@ interface Announcement {
 
 export const useAttendeeAnnouncements = () => {
   const { currentUser } = useAuth();
+  const { useAttendeeEventContext } = require('@/contexts/AttendeeEventContext');
+  const { currentEventId } = useAttendeeEventContext();
 
   const { data: announcements = [], isLoading, error } = useQuery({
-    queryKey: ['attendee-announcements', currentUser?.id],
+    queryKey: ['attendee-announcements', currentUser?.id, currentEventId],
     queryFn: async () => {
-      if (!currentUser?.id) {
-        console.log('No current user found');
+      if (!currentUser?.id || !currentEventId) {
         return [];
       }
 
-      // Get the user's current event ID from their profile
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('current_event_id')
-        .eq('id', currentUser.id)
-        .single();
+      console.log('Fetching announcements for event:', currentEventId);
 
-      if (profileError) {
-        console.error('Error fetching user profile:', profileError);
-        return [];
-      }
-
-      if (!profile?.current_event_id) {
-        console.log('No current event found for user');
-        return [];
-      }
-
-      console.log('Fetching announcements for event:', profile.current_event_id);
-
-      // Fetch announcements for the user's current event
       const { data, error } = await supabase
         .from('announcements')
         .select('*')
-        .eq('event_id', profile.current_event_id)
+        .eq('event_id', currentEventId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -70,13 +53,9 @@ export const useAttendeeAnnouncements = () => {
       console.log('Attendee announcements fetched:', data?.length || 0, data);
       return data as Announcement[];
     },
-    enabled: !!currentUser?.id,
-    refetchInterval: 30000, // Refetch every 30 seconds for near real-time updates
+    enabled: !!currentUser?.id && !!currentEventId,
+    refetchInterval: 30000,
   });
 
-  return {
-    announcements,
-    isLoading,
-    error,
-  };
+  return { announcements, isLoading, error };
 };

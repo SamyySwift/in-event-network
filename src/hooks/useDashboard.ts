@@ -16,25 +16,13 @@ interface DashboardData {
 export const useDashboard = () => {
   const { currentUser } = useAuth();
   const queryClient = useQueryClient();
+  const { useAttendeeEventContext } = require('@/contexts/AttendeeEventContext');
+  const { currentEventId } = useAttendeeEventContext();
 
   const { data: dashboardData, isLoading, error } = useQuery({
-    queryKey: ['dashboard', currentUser?.id],
+    queryKey: ['dashboard', currentUser?.id, currentEventId],
     queryFn: async (): Promise<DashboardData> => {
-      if (!currentUser?.id) {
-        throw new Error('User not authenticated');
-      }
-
-      const now = new Date().toISOString();
-
-      // Get the user's current event from their profile
-      const { data: userProfile } = await supabase
-        .from('profiles')
-        .select('current_event_id')
-        .eq('id', currentUser.id)
-        .single();
-
-      if (!userProfile?.current_event_id) {
-        // If user has no current event, return empty data
+      if (!currentUser?.id || !currentEventId) {
         return {
           currentEvent: null,
           upcomingEvents: [],
@@ -45,7 +33,9 @@ export const useDashboard = () => {
         };
       }
 
-      // Use Promise.all to run parallel queries for better performance
+      const now = new Date().toISOString();
+
+      // Use Promise.all scoped strictly to currentEventId
       const [
         currentEventResponse,
         upcomingEventsResponse,
@@ -54,18 +44,18 @@ export const useDashboard = () => {
         upcomingSessionsResponse,
         suggestedConnectionsResponse
       ] = await Promise.all([
-        // Get current event details
         supabase
           .from('events')
           .select('*')
-          .eq('id', userProfile.current_event_id)
+          .eq('id', currentEventId)
           .single(),
-        
-        // Get upcoming events from the same host
+
+        // If you still want to show upcoming events from the same host, you may keep this; otherwise, return []
+        // Here we keep it but compute host via the current event id only
         supabase
           .from('events')
           .select('*, profiles!events_host_id_fkey(id)')
-          .eq('id', userProfile.current_event_id)
+          .eq('id', currentEventId)
           .single()
           .then(async ({ data: eventData }) => {
             if (!eventData?.host_id) return { data: [] };
@@ -78,34 +68,30 @@ export const useDashboard = () => {
               .limit(3);
           }),
 
-        // Get recent announcements for current event
         supabase
           .from('announcements')
           .select('*')
-          .eq('event_id', userProfile.current_event_id)
+          .eq('event_id', currentEventId)
           .order('created_at', { ascending: false })
           .limit(3),
 
-        // Get next speaker session
         supabase
           .from('speakers')
           .select('*')
-          .eq('event_id', userProfile.current_event_id)
+          .eq('event_id', currentEventId)
           .not('session_time', 'is', null)
           .gt('session_time', now)
           .order('session_time', { ascending: true })
           .limit(1),
 
-        // Get upcoming schedule items
         supabase
           .from('schedule_items')
           .select('*')
-          .eq('event_id', userProfile.current_event_id)
+          .eq('event_id', currentEventId)
           .gt('start_time', now)
           .order('start_time', { ascending: true })
           .limit(3),
 
-        // Get suggested connections from same event
         supabase
           .from('event_participants')
           .select(`
@@ -124,7 +110,7 @@ export const useDashboard = () => {
               linkedin_link
             )
           `)
-          .eq('event_id', userProfile.current_event_id)
+          .eq('event_id', currentEventId)
           .neq('user_id', currentUser.id)
           .limit(3)
       ]);
@@ -147,53 +133,29 @@ export const useDashboard = () => {
         suggestedConnections: suggestedConnections.slice(0, 3),
       };
     },
-    enabled: !!currentUser,
-    staleTime: 30000, // Consider data fresh for 30 seconds
-    gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+    enabled: !!currentUser && !!currentEventId,
+    staleTime: 30000,
+    gcTime: 5 * 60 * 1000,
   });
 
   // Add realtime effect
   useEffect(() => {
-    if (!currentUser?.id) return;
-
-    // Listen for realtime changes on attendee dashboard-relevant tables
-    // Listen to events, announcements, speakers, event_participants, schedule_items
-    const tables = [
-      'events',
-      'announcements',
-      'speakers',
-      'event_participants',
-      'schedule_items'
-    ];
+    if (!currentUser?.id || !currentEventId) return;
+    const tables = ['events','announcements','speakers','event_participants','schedule_items'];
 
     const channels = tables.map((table) => 
       supabase.channel(`realtime:attendee-dash:${table}`)
         .on(
           'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: table,
-          },
-          (payload) => {
-            // Broad invalidate so re-query picks up all changes
-            queryClient.invalidateQueries({ queryKey: ['dashboard', currentUser.id] });
+          { event: '*', schema: 'public', table },
+          () => {
+            queryClient.invalidateQueries({ queryKey: ['dashboard', currentUser.id, currentEventId] });
           }
         )
         .subscribe()
     );
+    return () => { channels.forEach((channel) => { try { supabase.removeChannel(channel); } catch {} }); };
+  }, [currentUser?.id, currentEventId, queryClient]);
 
-    return () => {
-      // Unsubscribe when user changes or unmounts
-      channels.forEach(channel => {
-        try { supabase.removeChannel(channel); } catch {}
-      });
-    };
-  }, [currentUser?.id, queryClient]);
-
-  return {
-    dashboardData,
-    isLoading,
-    error,
-  };
+  return { dashboardData, isLoading, error };
 };

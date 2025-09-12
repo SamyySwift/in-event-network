@@ -38,6 +38,23 @@ export function EditSponsorFormDialog({ open, onOpenChange, form }: EditSponsorF
     }
   }, [form]);
 
+  // Auto-save: persist changes shortly after edits (debounced)
+  React.useEffect(() => {
+    if (!open || !form?.id) return;
+
+    const handle = window.setTimeout(() => {
+      // Persist latest draft to DB; attendee form updates instantly via Supabase realtime
+      updateSponsorForm.mutate({
+        id: form.id,
+        form_title: formTitle,
+        form_description: formDescription,
+        form_fields: formFields,
+      });
+    }, 600);
+
+    return () => window.clearTimeout(handle);
+  }, [open, form?.id, formTitle, formDescription, formFields, updateSponsorForm]);
+
   const handleDialogChange = (openVal: boolean) => {
     onOpenChange(openVal);
   };
@@ -169,6 +186,7 @@ export function EditSponsorFormDialog({ open, onOpenChange, form }: EditSponsorF
                             if (value === 'select' && !field.options) {
                               updates.options = ['Option 1', 'Option 2'];
                             }
+                            // For checkbox we don't need options
                             updateField(field.id, updates);
                           }}
                         >
@@ -183,6 +201,7 @@ export function EditSponsorFormDialog({ open, onOpenChange, form }: EditSponsorF
                             <SelectItem value="textarea">Textarea</SelectItem>
                             <SelectItem value="select">Select</SelectItem>
                             <SelectItem value="file">File Upload</SelectItem>
+                            <SelectItem value="checkbox">Checkbox</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

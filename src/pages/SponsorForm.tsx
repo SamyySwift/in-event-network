@@ -278,6 +278,20 @@ export default function SponsorForm() {
             accept="image/*"
           />
         );
+
+      // New: checkbox (boolean)
+      case 'checkbox':
+        return (
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={!!formData[field.id]}
+              onChange={(e) => handleInputChange(field.id, e.target.checked)}
+              className="h-4 w-4"
+            />
+            <span className="text-sm text-muted-foreground">Check if applicable</span>
+          </div>
+        );
       
       default:
         return (

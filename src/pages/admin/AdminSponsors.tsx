@@ -330,6 +330,16 @@ function AdminSponsorsContent() {
                             >
                               <Share className="h-4 w-4" />
                             </Button>
+                            {/* New: Edit Form */}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => { setEditingForm(form); setEditDialogOpen(true); }}
+                              className="h-9 w-9 p-0 hover:bg-amber-100 hover:text-amber-600 dark:hover:bg-amber-900/20 rounded-xl transition-all duration-200 hover:scale-110"
+                              title="Edit Form"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="sm"

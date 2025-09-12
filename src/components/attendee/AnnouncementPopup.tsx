@@ -37,6 +37,10 @@ interface AnnouncementPopupProps {
 export function AnnouncementPopup({ isOpen, announcement, onClose, onNeverShowAgain, onAcknowledge, allowDismiss = true }: AnnouncementPopupProps) {
   const navigate = useNavigate();
 
+  // Hooks must be called unconditionally to avoid React error #310
+  const [clickedKeys, setClickedKeys] = React.useState<string[]>([]);
+  const [formSubmitted, setFormSubmitted] = React.useState(false);
+
   if (!announcement) return null;
 
   // Derived flags to control actions and behavior
@@ -51,10 +55,6 @@ export function AnnouncementPopup({ isOpen, announcement, onClose, onNeverShowAg
     (announcement as any).facebook_link ? { key: 'facebook_link', label: 'Facebook', url: (announcement as any).facebook_link } : null,
     (announcement as any).tiktok_link ? { key: 'tiktok_link', label: 'TikTok', url: (announcement as any).tiktok_link } : null,
   ].filter(Boolean) as { key: string; label: string; url: string }[];
-
-  // Track which links were clicked and whether form was submitted
-  const [clickedKeys, setClickedKeys] = React.useState<string[]>([]);
-  const [formSubmitted, setFormSubmitted] = React.useState(false);
 
   const allLinksClicked = links.length === 0 ? true : clickedKeys.length === links.length;
   const actionComplete = (hasVendorForm ? formSubmitted : true) && allLinksClicked;

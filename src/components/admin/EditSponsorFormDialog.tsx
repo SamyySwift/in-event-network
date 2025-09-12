@@ -11,10 +11,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useAdminSponsors } from '@/hooks/useAdminSponsors';
-import { Users, Plus, Trash2 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Users, Plus, Trash2 } from 'lucide-react';
+import { useAdminSponsors } from '@/hooks/useAdminSponsors';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface EditSponsorFormDialogProps {
   open: boolean;
@@ -30,27 +30,16 @@ export function EditSponsorFormDialog({ open, onOpenChange, form }: EditSponsorF
   const { updateSponsorForm } = useAdminSponsors();
 
   useEffect(() => {
-    if (!open || !form) return;
-    setFormTitle(form.form_title || '');
-    setFormDescription(form.form_description || '');
-    setFormFields(Array.isArray(form.form_fields) ? form.form_fields : []);
-  }, [open, form]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form) return;
-
-    try {
-      await updateSponsorForm.mutateAsync({
-        id: form.id,
-        form_title: formTitle,
-        form_description: formDescription,
-        form_fields: formFields,
-      });
-      onOpenChange(false);
-    } catch (error) {
-      console.error('Error updating sponsor form:', error);
+    if (form) {
+      setFormTitle(form.form_title || '');
+      setFormDescription(form.form_description || '');
+      // 确保是数组
+      setFormFields(Array.isArray(form.form_fields) ? form.form_fields : []);
     }
+  }, [form]);
+
+  const handleDialogChange = (openVal: boolean) => {
+    onOpenChange(openVal);
   };
 
   const addField = () => {
@@ -60,21 +49,33 @@ export function EditSponsorFormDialog({ open, onOpenChange, form }: EditSponsorF
       type: 'text',
       required: false,
     };
-    setFormFields([...formFields, newField]);
+    setFormFields(prev => [...prev, newField]);
   };
 
   const updateField = (id: string, updates: any) => {
-    setFormFields(formFields.map(field => 
-      field.id === id ? { ...field, ...updates } : field
-    ));
+    setFormFields(prev => prev.map(field => (field.id === id ? { ...field, ...updates } : field)));
   };
 
   const removeField = (id: string) => {
-    setFormFields(formFields.filter(field => field.id !== id));
+    setFormFields(prev => prev.filter(field => field.id !== id));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form) return;
+
+    await updateSponsorForm.mutateAsync({
+      id: form.id,
+      form_title: formTitle,
+      form_description: formDescription,
+      form_fields: formFields,
+    });
+
+    onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogChange}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="space-y-3">
           <DialogTitle className="flex items-center gap-2 text-xl">
@@ -82,15 +83,19 @@ export function EditSponsorFormDialog({ open, onOpenChange, form }: EditSponsorF
             Edit Sponsor Form
           </DialogTitle>
           <DialogDescription>
-            Update the form’s title, description, and fields.
+            Update the form title, description, and fields. Changes are synced live to the attendee form.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Form Settings */}
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Form Title</Label>
+              <Label htmlFor="formTitle" className="text-sm font-medium">
+                Form Title
+              </Label>
               <Input
+                id="formTitle"
                 value={formTitle}
                 onChange={(e) => setFormTitle(e.target.value)}
                 className="rounded-xl border-2 transition-all duration-200 focus:border-primary/50"
@@ -99,8 +104,11 @@ export function EditSponsorFormDialog({ open, onOpenChange, form }: EditSponsorF
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Form Description</Label>
+              <Label htmlFor="formDescription" className="text-sm font-medium">
+                Form Description
+              </Label>
               <Textarea
+                id="formDescription"
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
                 className="rounded-xl border-2 transition-all duration-200 focus:border-primary/50 min-h-[80px] resize-none"
@@ -109,10 +117,11 @@ export function EditSponsorFormDialog({ open, onOpenChange, form }: EditSponsorF
             </div>
           </div>
 
+          {/* Form Fields */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <Label className="text-sm font-medium">Form Fields</Label>
-              <Button 
+              <Button
                 type="button"
                 onClick={addField}
                 variant="outline"
@@ -126,7 +135,7 @@ export function EditSponsorFormDialog({ open, onOpenChange, form }: EditSponsorF
 
             <div className="space-y-3 max-h-60 overflow-y-auto">
               {formFields.map((field, index) => (
-                <Card key={field.id} className="rounded-lg border">
+                <Card key={field.id || index} className="rounded-lg border">
                   <CardHeader className="pb-3">
                     <div className="flex items-center justify-between">
                       <CardTitle className="text-sm font-medium">Field {index + 1}</CardTitle>
@@ -187,8 +196,8 @@ export function EditSponsorFormDialog({ open, onOpenChange, form }: EditSponsorF
                             type="button"
                             onClick={() => {
                               const currentOptions = field.options || [];
-                              updateField(field.id, { 
-                                options: [...currentOptions, `Option ${currentOptions.length + 1}`] 
+                              updateField(field.id, {
+                                options: [...currentOptions, `Option ${currentOptions.length + 1}`],
                               });
                             }}
                             variant="ghost"
@@ -250,20 +259,19 @@ export function EditSponsorFormDialog({ open, onOpenChange, form }: EditSponsorF
           </div>
 
           <DialogFooter className="gap-2">
-            <Button 
-              type="button" 
-              variant="outline" 
+            <Button
+              type="button"
+              variant="outline"
               onClick={() => onOpenChange(false)}
               className="rounded-xl"
             >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              disabled={updateSponsorForm.isPending}
+            <Button
+              type="submit"
               className="rounded-xl bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
             >
-              {updateSponsorForm.isPending ? 'Saving...' : 'Save Changes'}
+              Save Changes
             </Button>
           </DialogFooter>
         </form>

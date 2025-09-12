@@ -20,6 +20,8 @@ export interface Poll {
   updated_at?: string;
   vote_limit?: number | null;
   require_submission?: boolean | null;
+  start_time?: string;    // added
+  end_time?: string;      // added
 }
 
 export interface PollVote {
@@ -129,6 +131,10 @@ export const useAdminPolls = (eventId?: string) => {
           event_id: pollData.event_id,
           vote_limit: pollData.vote_limit ?? null,
           require_submission: !!pollData.require_submission,
+          start_time: now.toISOString(),          // added
+          end_time: endTime.toISOString(),        // added
+          display_as_banner: false               // match other hook’s default
+          // created_by: currentUser.id,          // uncomment if your schema expects this
         })
         .select()
         .single();

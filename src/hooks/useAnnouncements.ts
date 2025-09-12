@@ -21,6 +21,8 @@ interface Announcement {
   facebook_link?: string | null;
   tiktok_link?: string | null;
   website_link?: string | null;
+  // New: WhatsApp link
+  whatsapp_link?: string | null;
   vendor_form_id?: string | null;
   require_submission?: boolean | null;
 }

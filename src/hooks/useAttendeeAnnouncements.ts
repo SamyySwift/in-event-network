@@ -19,6 +19,10 @@ interface Announcement {
   facebook_link?: string;
   tiktok_link?: string;
   website_link?: string;
+  // New fields
+  whatsapp_link?: string;
+  vendor_form_id?: string | null;
+  require_submission?: boolean | null;
 }
 
 export const useAttendeeAnnouncements = () => {

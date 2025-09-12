@@ -63,6 +63,7 @@ type AnnouncementFormData = {
   tiktok_link?: string;
   website_link?: string;
   // New fields
+  whatsapp_link?: string; // NEW
   vendor_form_id?: string;
   require_submission?: boolean;
 };
@@ -102,6 +103,8 @@ function AdminAnnouncementsContent() {
       facebook_link: "",
       tiktok_link: "",
       website_link: "",
+      // New default
+      whatsapp_link: "",
     },
   });
 
@@ -236,9 +239,8 @@ function AdminAnnouncementsContent() {
     const cleaned = {
       ...data,
       vendor_form_id: data.vendor_form_id ? data.vendor_form_id : null,
-      require_submission: data.vendor_form_id
-        ? !!data.require_submission
-        : false,
+      // Updated: apply to links and/or form
+      require_submission: !!data.require_submission,
       created_by: currentUser?.id,
       image: selectedImage,
     };
@@ -266,6 +268,8 @@ function AdminAnnouncementsContent() {
     setValue("facebook_link", announcement.facebook_link || "");
     setValue("tiktok_link", announcement.tiktok_link || "");
     setValue("website_link", announcement.website_link || "");
+    // New: WhatsApp link
+    setValue("whatsapp_link", announcement.whatsapp_link || "");
     // New: set attached form fields
     setValue("vendor_form_id", announcement.vendor_form_id || "");
     setValue("require_submission", !!announcement.require_submission);
@@ -486,6 +490,12 @@ function AdminAnnouncementsContent() {
                         <Input
                           {...register("website_link")}
                           placeholder="Website Link"
+                          className="text-sm"
+                        />
+                        {/* New: WhatsApp link */}
+                        <Input
+                          {...register("whatsapp_link")}
+                          placeholder="WhatsApp Link (e.g. https://wa.me/...)"
                           className="text-sm"
                         />
                       </div>

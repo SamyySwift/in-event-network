@@ -15,6 +15,12 @@ interface Announcement {
   image_url?: string | null;
   created_at?: string;
   website_link?: string | null;
+  // New link fields
+  whatsapp_link?: string | null;
+  twitter_link?: string | null;
+  instagram_link?: string | null;
+  facebook_link?: string | null;
+  tiktok_link?: string | null;
   vendor_form_id?: string | null;
   require_submission?: boolean | null;
 }
@@ -36,7 +42,22 @@ export function AnnouncementPopup({ isOpen, announcement, onClose, onNeverShowAg
   // Derived flags to control actions and behavior
   const isCompulsory = !!announcement.require_submission;
   const hasVendorForm = !!announcement.vendor_form_id;
-  const hasExternalLink = !!announcement.website_link;
+  // New: collect all available links
+  const links = [
+    announcement.website_link ? { key: 'website_link', label: 'Website', url: announcement.website_link } : null,
+    (announcement as any).whatsapp_link ? { key: 'whatsapp_link', label: 'WhatsApp', url: (announcement as any).whatsapp_link } : null,
+    (announcement as any).twitter_link ? { key: 'twitter_link', label: 'Twitter/X', url: (announcement as any).twitter_link } : null,
+    (announcement as any).instagram_link ? { key: 'instagram_link', label: 'Instagram', url: (announcement as any).instagram_link } : null,
+    (announcement as any).facebook_link ? { key: 'facebook_link', label: 'Facebook', url: (announcement as any).facebook_link } : null,
+    (announcement as any).tiktok_link ? { key: 'tiktok_link', label: 'TikTok', url: (announcement as any).tiktok_link } : null,
+  ].filter(Boolean) as { key: string; label: string; url: string }[];
+
+  // Track which links were clicked and whether form was submitted
+  const [clickedKeys, setClickedKeys] = React.useState<string[]>([]);
+  const [formSubmitted, setFormSubmitted] = React.useState(false);
+
+  const allLinksClicked = links.length === 0 ? true : clickedKeys.length === links.length;
+  const actionComplete = (hasVendorForm ? formSubmitted : true) && allLinksClicked;
 
   const priority = (announcement.priority || 'normal').toLowerCase();
   const priorityBadge = (() => {
@@ -51,8 +72,18 @@ export function AnnouncementPopup({ isOpen, announcement, onClose, onNeverShowAg
   })();
 
   return (
-    // Update the Dialog onOpenChange logic
-    <Dialog open={isOpen} onOpenChange={allowDismiss && !hasVendorForm ? onClose : () => {}}>
+    // Update Dialog close control: block closing when compulsory until actions complete
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          if (!isCompulsory || actionComplete) {
+            onClose();
+          }
+          // else: ignore close attempt
+        }
+      }}
+    >
       <DialogContent className="max-w-[95vw] sm:max-w-md w-full p-0 overflow-hidden rounded-xl">
         <div className="flex flex-col max-h-[90dvh] sm:max-h-[85vh]">
           <DialogHeader className="px-4 sm:px-6 pt-4 pb-3 border-b sticky top-0 z-10 bg-white/95 backdrop-blur">
@@ -89,18 +120,51 @@ export function AnnouncementPopup({ isOpen, announcement, onClose, onNeverShowAg
                 />
               )}
 
-              {/* Add inline form rendering */}
+              {/* Inline form rendering (if any) */}
               {hasVendorForm && (
                 <div className="border rounded-lg p-4 bg-muted/10">
                   <h4 className="font-medium mb-3">Required Form</h4>
                   <InlineVendorForm 
                     formId={announcement.vendor_form_id!} 
                     onSubmitted={() => {
-                      // Mark as submitted and close popup
+                      // Mark as submitted; auto-close only if link actions are also complete or not required
                       localStorage.setItem(`vendor_form_submitted_${announcement.vendor_form_id}`, 'true');
-                      onClose();
+                      setFormSubmitted(true);
+                      if (!isCompulsory || (isCompulsory && allLinksClicked)) {
+                        onClose();
+                      }
                     }}
                   />
+                </div>
+              )}
+
+              {/* New: Show ALL links (never hide) */}
+              {links.length > 0 && (
+                <div className="border rounded-lg p-4 bg-muted/10">
+                  <h4 className="font-medium mb-3">Links</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {links.map((l) => (
+                      <Button
+                        key={l.key}
+                        variant="secondary"
+                        className="justify-center"
+                        onClick={() => {
+                          window.open(l.url, "_blank", "noopener,noreferrer");
+                          setClickedKeys((prev) =>
+                            prev.includes(l.key) ? prev : [...prev, l.key]
+                          );
+                          onAcknowledge?.();
+                        }}
+                      >
+                        Open {l.label}
+                      </Button>
+                    ))}
+                  </div>
+                  {isCompulsory && !actionComplete && (
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Please open all links{hasVendorForm ? " and submit the form" : ""} to continue.
+                    </p>
+                  )}
                 </div>
               )}
             </div>
@@ -110,33 +174,14 @@ export function AnnouncementPopup({ isOpen, announcement, onClose, onNeverShowAg
             <div className="flex flex-col sm:flex-row gap-2">
               {isCompulsory ? (
                 <>
-                  {hasVendorForm ? (
-                    // Remove the navigation button since form is now inline
-                    null
-                  ) : (
-                    <>
-                      {hasExternalLink && (
-                        <Button
-                          className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700"
-                          onClick={() => {
-                            window.open(announcement.website_link!, "_blank", "noopener,noreferrer");
-                            onAcknowledge?.();
-                          }}
-                        >
-                          Open Link
-                        </Button>
-                      )}
-                      <Button
-                        variant="outline"
-                        className="flex-1"
-                        onClick={() => {
-                          onAcknowledge?.();
-                        }}
-                      >
-                        Acknowledge
-                      </Button>
-                    </>
-                  )}
+                  {/* Compulsory: close only after actions complete */}
+                  <Button
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:opacity-60"
+                    disabled={!actionComplete}
+                    onClick={() => onClose()}
+                  >
+                    Close
+                  </Button>
                 </>
               ) : (
                 <>

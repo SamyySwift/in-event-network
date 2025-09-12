@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAdminSponsors } from '@/hooks/useAdminSponsors';
 import { CreateSponsorFormDialog } from '@/components/admin/CreateSponsorFormDialog';
+import { EditSponsorFormDialog } from '@/components/admin/EditSponsorFormDialog';
 import { SponsorFormQRCode } from '@/components/admin/SponsorFormQRCode';
 import { SponsorsTable } from '@/components/admin/SponsorsTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -19,6 +20,12 @@ function AdminSponsorsContent() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [selectedForm, setSelectedForm] = useState<any>(null);
+  // Edit dialog state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editForm, setEditForm] = useState<any>(null);
+  // Delete confirmation state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   
   const { selectedEventId, adminEvents, isLoading: isEventLoading, error: eventError } = useAdminEventContext();
   
@@ -119,9 +126,9 @@ function AdminSponsorsContent() {
   };
 
   const handleDeleteForm = (formId: string) => {
-    if (window.confirm('Are you sure you want to delete this form? This action cannot be undone.')) {
-      deleteSponsorForm.mutate(formId);
-    }
+    // Open confirmation dialog instead of window.confirm
+    setDeletingId(formId);
+    setDeleteDialogOpen(true);
   };
 
   const handleShowQR = (form: any) => {
@@ -297,7 +304,19 @@ function AdminSponsorsContent() {
                               {form.is_active ? "🟢 Active" : "⏸️ Inactive"}
                             </Badge>
                           </div>
-                          <div className="flex gap-1">
+                          <div className="flex flex-wrap gap-1 justify-end sm:flex-nowrap">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setEditForm(form);
+                                setEditDialogOpen(true);
+                              }}
+                              className="h-9 w-9 p-0 hover:bg-amber-100 hover:text-amber-600 dark:hover:bg-amber-900/20 rounded-xl transition-all duration-200 hover:scale-110"
+                              title="Edit Form"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -399,6 +418,48 @@ function AdminSponsorsContent() {
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
       />
+
+      {/* Edit form dialog */}
+      <EditSponsorFormDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        form={editForm}
+      />
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete form?</DialogTitle>
+          </DialogHeader>
+          <div className="text-sm text-muted-foreground">
+            Are you sure you want to delete this form? This action cannot be undone.
+          </div>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => setDeleteDialogOpen(false)} className="rounded-xl">
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              className="rounded-xl"
+              onClick={async () => {
+                if (!deletingId) return;
+                try {
+                  await deleteSponsorForm.mutateAsync(deletingId);
+                  setDeleteDialogOpen(false);
+                } catch {
+                  // Error toast is handled in the hook
+                } finally {
+                  setDeletingId(null);
+                }
+              }}
+              disabled={deleteSponsorForm.isPending}
+            >
+              {deleteSponsorForm.isPending ? 'Deleting...' : 'Delete'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={qrDialogOpen} onOpenChange={setQrDialogOpen}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">

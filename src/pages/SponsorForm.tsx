@@ -77,6 +77,52 @@ export default function SponsorForm() {
     }
   }, [formId, navigate]);
 
+  // Realtime subscription: keep attendee form in sync with admin edits/deletes
+  useEffect(() => {
+    if (!form?.id) return;
+
+    const channel = supabase
+      .channel(`sponsor_form_${form.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sponsor_forms',
+          filter: `id=eq.${form.id}`,
+        },
+        (payload) => {
+          if (payload.eventType === 'DELETE') {
+            toast({
+              title: 'Form removed',
+              description: 'This sponsor form is no longer available.',
+              variant: 'destructive',
+            });
+            navigate('/');
+            return;
+          }
+
+          // Update local form state with latest admin edits
+          const nextForm = payload.new as any;
+          setForm(nextForm);
+
+          // If admin deactivates the form while attendee is viewing it
+          if (nextForm && nextForm.is_active === false) {
+            toast({
+              title: 'Form closed',
+              description: 'This sponsor form is no longer accepting responses.',
+            });
+            navigate('/');
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [form?.id, navigate]);
+
   const handleInputChange = (fieldId: string, value: any) => {
     setFormData(prev => ({
       ...prev,

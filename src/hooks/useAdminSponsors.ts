@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdminEventContext } from './useAdminEventContext';
 import { toast } from '@/hooks/use-toast';
+import { useEffect } from 'react';
 
 export const useAdminSponsors = () => {
   const queryClient = useQueryClient();
@@ -149,15 +150,30 @@ export const useAdminSponsors = () => {
     },
   });
 
-  // Delete sponsor form
+  // Delete sponsor form (resilient: fallback to soft-delete on failure)
   const deleteSponsorForm = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('sponsor_forms')
-        .delete()
-        .eq('id', id);
+      try {
+        const { error } = await supabase
+          .from('sponsor_forms')
+          .delete()
+          .eq('id', id);
 
-      if (error) throw error;
+        if (error) throw error;
+      } catch (err: any) {
+        // Fallback: soft-delete by setting is_active = false
+        const { error: softErr } = await supabase
+          .from('sponsor_forms')
+          .update({ is_active: false })
+          .eq('id', id);
+
+        if (softErr) {
+          throw softErr;
+        } else {
+          // Indicate soft-delete succeeded
+          throw new Error('Form could not be hard deleted due to constraints. It has been deactivated instead.');
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['sponsorForms', selectedEventId] });
@@ -167,13 +183,56 @@ export const useAdminSponsors = () => {
       });
     },
     onError: (error) => {
+      // If it reached here: either we threw a message after soft delete or both operations failed
+      queryClient.invalidateQueries({ queryKey: ['sponsorForms', selectedEventId] });
       toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
+        title: "Notice",
+        description: error.message || "Delete failed. The form may have been deactivated instead.",
       });
     },
   });
+
+  // Realtime: auto-invalidate when forms or sponsors change
+  useEffect(() => {
+    if (!selectedEventId) return;
+
+    const formsChannel = supabase
+      .channel(`sponsor_forms_${selectedEventId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sponsor_forms',
+          filter: `event_id=eq.${selectedEventId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['sponsorForms', selectedEventId] });
+        }
+      )
+      .subscribe();
+
+    const sponsorsChannel = supabase
+      .channel(`sponsors_${selectedEventId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'sponsors',
+          filter: `event_id=eq.${selectedEventId}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['sponsors', selectedEventId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(formsChannel);
+      supabase.removeChannel(sponsorsChannel);
+    };
+  }, [selectedEventId, queryClient]);
 
   const stats = {
     totalSubmissions: sponsors.length,

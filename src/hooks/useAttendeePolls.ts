@@ -19,6 +19,7 @@ export interface Poll {
   created_at: string;
   vote_limit?: number | null;
   totalVotes?: number;
+  require_submission?: boolean | null;
 }
 
 export interface PollVote {

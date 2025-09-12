@@ -46,6 +46,8 @@ import FacilityIcon from "@/pages/admin/components/FacilityIcon";
 
 import { ProfileCompletionPopup } from "@/components/attendee/ProfileCompletionPopup";
 import { AnnouncementPopup } from "@/components/attendee/AnnouncementPopup";
+import { useAttendeePolls, Poll as AttendeePoll } from "@/hooks/useAttendeePolls";
+import { PollPopup } from "@/components/attendee/PollPopup";
 
 function AttendeeDashboardContent() {
   const navigate = useNavigate();
@@ -59,6 +61,66 @@ function AttendeeDashboardContent() {
     Set<string>
   >(new Set());
   const [popupAnnouncement, setPopupAnnouncement] = useState<any | null>(null);
+
+  // Polls: fetch data and build queue
+  const { polls: attendeePolls, userVotes, submitVote } = useAttendeePolls();
+
+  const [pollQueue, setPollQueue] = React.useState<AttendeePoll[]>([]);
+  const [currentPollIndex, setCurrentPollIndex] = React.useState(0);
+  const currentPoll = pollQueue[currentPollIndex] || null;
+
+  const hasUserVotedForPoll = React.useCallback(
+    (pollId: string) => userVotes.some((v) => v.poll_id === pollId),
+    [userVotes]
+  );
+
+  const isPollDismissed = React.useCallback(
+    (pollId: string) => localStorage.getItem(`poll_dismissed_${pollId}`) === "true",
+    []
+  );
+
+  const dismissPoll = React.useCallback((pollId: string) => {
+    localStorage.setItem(`poll_dismissed_${pollId}`, "true");
+  }, []);
+
+  const advancePollQueue = React.useCallback(() => {
+    setCurrentPollIndex((prev) => {
+      const next = prev + 1;
+      if (next >= pollQueue.length) {
+        setPollQueue([]);
+        return 0;
+      }
+      return next;
+    });
+  }, [pollQueue.length]);
+
+  // Rebuild queue when polls or votes change
+  React.useEffect(() => {
+    if (!attendeePolls || attendeePolls.length === 0) {
+      setPollQueue([]);
+      setCurrentPollIndex(0);
+      return;
+    }
+
+    const active = attendeePolls.filter((p) => p.is_active);
+
+    const notDone = active.filter((p) => {
+      const voted = hasUserVotedForPoll(p.id);
+      const dismissed = isPollDismissed(p.id);
+      if (p.require_submission) {
+        return !voted; // required polls must be answered
+      }
+      return !voted && !dismissed; // optional: allow dismissed to hide
+    });
+
+    notDone.sort(
+      (a, b) =>
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+
+    setPollQueue(notDone);
+    setCurrentPollIndex(0);
+  }, [attendeePolls, hasUserVotedForPoll, isPollDismissed]);
 
   // Memoize profile completion check to avoid unnecessary recalculation
   const shouldShowProfilePopup = useMemo(() => {
@@ -751,6 +813,35 @@ function AttendeeDashboardContent() {
         isOpen={showProfilePopup && !popupAnnouncement}
         onClose={() => setShowProfilePopup(false)}
       />
+
+      {/* Poll Popup */}
+      <PollPopup
+        isOpen={!!currentPoll}
+        poll={currentPoll}
+        onClose={() => {
+          if (!currentPoll?.require_submission) {
+            advancePollQueue();
+          }
+        }}
+        onSkip={() => {
+          if (currentPoll && !currentPoll.require_submission) {
+            dismissPoll(currentPoll.id);
+            advancePollQueue();
+          }
+        }}
+        onSubmitVote={(pollId, optionId) =>
+          submitVote(
+            { pollId, optionId },
+            { onSuccess: () => advancePollQueue() }
+          )
+        }
+        allowDismiss={!currentPoll?.require_submission}
+        userVoteOptionId={
+          currentPoll
+            ? userVotes.find((v) => v.poll_id === currentPoll.id)?.option_id ?? null
+            : null
+        }
+      />
     </>
   );
 };
@@ -828,3 +919,5 @@ const AttendeeDashboard = () => {
 };
 
 export default AttendeeDashboard;
+
+

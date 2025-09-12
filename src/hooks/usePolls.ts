@@ -16,6 +16,7 @@ export interface Poll {
   created_by?: string;
   created_at: string;
   updated_at?: string;
+  require_submission?: boolean | null;
 }
 
 export interface PollVote {

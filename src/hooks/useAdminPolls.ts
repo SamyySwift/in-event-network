@@ -19,6 +19,7 @@ export interface Poll {
   created_at: string;
   updated_at?: string;
   vote_limit?: number | null;
+  require_submission?: boolean | null;
 }
 
 export interface PollVote {
@@ -126,11 +127,8 @@ export const useAdminPolls = (eventId?: string) => {
           is_active: pollData.is_active,
           show_results: pollData.show_results,
           event_id: pollData.event_id,
-          created_by: currentUser.id,
-          start_time: now.toISOString(),
-          end_time: endTime.toISOString(),
-          display_as_banner: false,
-          vote_limit: pollData.vote_limit
+          vote_limit: pollData.vote_limit ?? null,
+          require_submission: !!pollData.require_submission,
         })
         .select()
         .single();

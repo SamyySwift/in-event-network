@@ -27,6 +27,7 @@ const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
   const [isActive, setIsActive] = useState(true);
   const [showResults, setShowResults] = useState(false);
   const [voteLimit, setVoteLimit] = useState<number | undefined>(undefined);
+  const [requireSubmission, setRequireSubmission] = useState(false);
   
   const { selectedEventId } = useAdminEventContext();
   const { createPoll, isCreating } = useAdminPolls(selectedEventId || undefined);
@@ -86,7 +87,8 @@ const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
       is_active: isActive,
       show_results: showResults,
       event_id: selectedEventId,
-      vote_limit: voteLimit || null
+      vote_limit: voteLimit || null,
+      require_submission: requireSubmission,
     };
 
     createPoll(pollData);
@@ -187,6 +189,15 @@ const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
                 onCheckedChange={setShowResults}
               />
               <Label htmlFor="results">Show results immediately</Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="require-submission"
+                checked={requireSubmission}
+                onCheckedChange={setRequireSubmission}
+              />
+              <Label htmlFor="require-submission">Require Submission (make pop-up compulsory)</Label>
             </div>
           </div>
 

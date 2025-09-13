@@ -151,10 +151,10 @@ export const useChat = (overrideEventId?: string) => {
         async (payload) => {
           console.log('New message received:', payload);
           
-          // Get the user profile for the new message
+          // Get the user profile for the new message (FULL profile fields)
           const { data: profileData, error: profileError } = await supabase
             .from('profiles')
-            .select('id, name, role, photo_url')
+            .select('id, name, email, role, photo_url, bio, niche, company, twitter_link, linkedin_link, instagram_link, github_link, website_link')
             .eq('id', payload.new.user_id)
             .single();
 
@@ -164,7 +164,25 @@ export const useChat = (overrideEventId?: string) => {
 
           const newMessage = {
             ...payload.new,
-            user_profile: profileData || { name: 'Unknown User' }
+            user_profile: profileData
+              ? {
+                  id: profileData.id,
+                  name: profileData.name,
+                  email: profileData.email,
+                  role: profileData.role,
+                  photo_url: profileData.photo_url,
+                  bio: profileData.bio,
+                  niche: profileData.niche,
+                  company: profileData.company,
+                  links: {
+                    twitter: profileData.twitter_link ?? null,
+                    linkedin: profileData.linkedin_link ?? null,
+                    instagram: profileData.instagram_link ?? null,
+                    github: profileData.github_link ?? null,
+                    website: profileData.website_link ?? null,
+                  },
+                }
+              : { name: 'Unknown User' }
           } as ChatMessage;
 
           console.log('Adding new message to state:', newMessage);

@@ -1,14 +1,14 @@
-
-import React, { useState } from 'react';
-import { Quote, Clock } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { formatDistanceToNow } from 'date-fns';
-import { QuotedMessage } from './QuotedMessage';
-import { AttendeeProfileModal } from '@/components/attendee/AttendeeProfileModal';
-import { Badge } from '@/components/ui/badge';
-import { Trash2 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+// Top imports
+import React, { useState, useRef } from "react";
+import { Quote, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { formatDistanceToNow } from "date-fns";
+import { QuotedMessage } from "./QuotedMessage";
+import { AttendeeProfileModal } from "@/components/attendee/AttendeeProfileModal";
+import { Badge } from "@/components/ui/badge";
+import { Trash2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ChatMessageProps {
   message: any;
@@ -19,117 +19,208 @@ interface ChatMessageProps {
   onDelete?: (id: string) => void | Promise<void>;
 }
 
-export const ChatMessage: React.FC<ChatMessageProps> = ({ 
-  message, 
-  isOwn, 
-  onQuote, 
-  onConnect, 
+export const ChatMessage: React.FC<ChatMessageProps> = ({
+  message,
+  isOwn,
+  onQuote,
+  onConnect,
   onMessage,
-  onDelete
+  onDelete,
 }) => {
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const timeAgo = formatDistanceToNow(new Date(message.created_at), { addSuffix: true });
+  const timeAgo = formatDistanceToNow(new Date(message.created_at), {
+    addSuffix: true,
+  });
 
   const handleAvatarClick = () => {
     if (!isOwn && message.user_profile) {
       setShowProfileModal(true);
     }
   };
+
+  // CHANGE: widen delete permission to include admins too (optional, but common)
   const { currentUser } = useAuth();
-  const canDelete = isOwn || currentUser?.role === 'host';
-  const isFromAdmin = message.user_profile?.role === 'host' || message.user_profile?.role === 'admin';
+  const canDelete =
+    isOwn || currentUser?.role === "host";
+
+  // --- NEW: swipe-to-reply state/refs ---
+  const [translateX, setTranslateX] = useState(0);
+  const startXRef = useRef<number | null>(null);
+  const isSwipingRef = useRef(false);
+  const swipeTriggeredRef = useRef(false);
+  const SWIPE_TRIGGER_PX = 60; // drag distance to trigger quote
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (!onQuote) return;
+    swipeTriggeredRef.current = false;
+    isSwipingRef.current = true;
+    startXRef.current = e.touches[0]?.clientX ?? null;
+    setTranslateX(0);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (!onQuote || !isSwipingRef.current || startXRef.current == null) return;
+    const currentX = e.touches[0]?.clientX ?? 0;
+    const deltaX = currentX - startXRef.current;
+
+    // Allow swiping in from either side, but ignore tiny moves
+    if (Math.abs(deltaX) < 2) return;
+
+    // Only show movement in the direction “towards” reply:
+    // For non-own messages, swipe right-to-left; for own, swipe left-to-right
+    const intendedDir = isOwn ? -1 : 1;
+    const adjusted = Math.max(0, intendedDir * deltaX);
+    setTranslateX(adjusted);
+
+    if (!swipeTriggeredRef.current && adjusted > SWIPE_TRIGGER_PX) {
+      swipeTriggeredRef.current = true;
+      onQuote?.(message);
+    }
+  };
+
+  const onTouchEnd = () => {
+    isSwipingRef.current = false;
+    startXRef.current = null;
+    // Snap back
+    setTranslateX(0);
+  };
+
+  const isFromAdmin =
+    message.user_profile?.role === "host" ||
+    message.user_profile?.role === "admin";
 
   return (
     <>
-      <div className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''} group`}>
+      <div className={`flex gap-3 ${isOwn ? "flex-row-reverse" : ""} group`}>
         {/* Avatar and main container */}
-        <Avatar 
-          className={`h-8 w-8 flex-shrink-0 ${!isOwn ? 'cursor-pointer hover:ring-2 hover:ring-connect-500 transition-all' : ''}`}
+        <Avatar
+          className={`h-8 w-8 flex-shrink-0 ${
+            !isOwn
+              ? "cursor-pointer hover:ring-2 hover:ring-connect-500 transition-all"
+              : ""
+          }`}
           onClick={handleAvatarClick}
         >
           {message.user_profile?.photo_url ? (
-            <AvatarImage src={message.user_profile.photo_url} alt={message.user_profile?.name} />
+            <AvatarImage
+              src={message.user_profile.photo_url}
+              alt={message.user_profile?.name}
+            />
           ) : (
             <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300 text-sm">
-              {message.user_profile?.name?.charAt(0) || 'U'}
+              {message.user_profile?.name?.charAt(0) || "U"}
             </AvatarFallback>
           )}
         </Avatar>
 
-      <div className={`flex-1 min-w-0 ${isOwn ? 'text-right' : ''}`}>
-        <div className={`flex items-center gap-2 mb-1 ${isOwn ? 'justify-end' : ''}`}>
-          {!isOwn && isFromAdmin && (
-            <Badge variant="destructive" className="text-[10px] px-1.5 py-0">Admin</Badge>
-          )}
-          <span className="text-xs text-gray-500 dark:text-gray-400">{timeAgo}</span>
-        </div>
-
-        {/* NEW: quoted preview above the message if replying */}
-        {message.quoted_message && (
-          <div className={`mb-1 ${isOwn ? 'ml-auto' : ''} max-w-[80%]`}>
-            <QuotedMessage message={message.quoted_message} compact />
+        <div className={`flex-1 min-w-0 ${isOwn ? "text-right" : ""} relative`}>
+          <div
+            className={`flex items-center gap-2 mb-1 ${
+              isOwn ? "justify-end" : ""
+            }`}
+          >
+            {!isOwn && isFromAdmin && (
+              <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                Admin
+              </Badge>
+            )}
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {timeAgo}
+            </span>
           </div>
-        )}
 
-        {/* Main Message */}
-        <div
-          className={`rounded-lg px-3 py-2 break-words ${
-            isOwn
-              ? 'bg-connect-600 text-white ml-auto'
-              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
-          } max-w-[80%] ${isOwn ? 'ml-auto' : ''}`}
-        >
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
-        </div>
+          {/* NEW: quoted preview above the message if replying */}
+          {message.quoted_message && (
+            <div className={`mb-1 ${isOwn ? "ml-auto" : ""} max-w-[80%]`}>
+              <QuotedMessage message={message.quoted_message} compact />
+            </div>
+          )}
 
-        {/* Quote Button (allow quoting any message) */}
-        {onQuote && (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => onQuote(message)}
-            className={`absolute ${isOwn ? '-left-8' : '-right-8'} top-0 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0`}
-            title="Quote to reply"
-          >
-            <Quote className="h-4 w-4" />
-          </Button>
-        )}
-
-        {/* Delete Button (owner or admin) */}
-        {canDelete && onDelete && (
-          <Button
-            size="sm"
-            variant="ghost"
-            onClick={() => {
-              if (confirm('Delete this message?')) onDelete(message.id);
+          {/* Main Message */}
+          <div
+            className={`rounded-lg px-3 py-2 break-words ${
+              isOwn
+                ? "bg-connect-600 text-white ml-auto"
+                : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+            } max-w-[80%] ${isOwn ? "ml-auto" : ""}`}
+            // NEW: swipe-to-reply handlers + swipe transform
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+            style={{
+              transform: translateX
+                ? `translateX(${isOwn ? -translateX : translateX}px)`
+                : undefined,
+              transition: isSwipingRef.current
+                ? "none"
+                : "transform 150ms ease",
             }}
-            className={`absolute ${isOwn ? '-left-8' : '-right-8'} top-8 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 text-destructive`}
-            title="Delete message"
           >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">
+              {message.content}
+            </p>
+          </div>
+
+          {/* Quote Button (allow quoting any message) */}
+          {onQuote && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => onQuote(message)}
+              // CHANGE: visible on mobile, hover-reveal on desktop
+              className={`absolute ${
+                isOwn ? "-left-8" : "-right-8"
+              } top-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-8 w-8 p-0`}
+              title="Quote to reply"
+              aria-label="Quote to reply"
+            >
+              <Quote className="h-4 w-4" />
+            </Button>
+          )}
+
+          {/* Delete Button (owner/host/admin) */}
+          {canDelete && onDelete && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => {
+                if (confirm("Delete this message?")) onDelete(message.id);
+              }}
+              // CHANGE: visible on mobile, hover-reveal on desktop
+              className={`absolute ${
+                isOwn ? "-left-8" : "-right-8"
+              } top-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-8 w-8 p-0 text-destructive`}
+              title="Delete message"
+              aria-label="Delete message"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Profile Modal */}
       <AttendeeProfileModal
         isOpen={showProfileModal}
         onClose={() => setShowProfileModal(false)}
-        attendee={message.user_profile ? {
-          id: message.user_id,
-          name: message.user_profile.name,
-          email: message.user_profile.email,
-          photo_url: message.user_profile.photo_url,
-          bio: message.user_profile.bio,
-          niche: message.user_profile.niche,
-          location: message.user_profile.location,
-          company: message.user_profile.company,
-          links: message.user_profile.links
-        } : null}
+        attendee={
+          message.user_profile
+            ? {
+                id: message.user_id,
+                name: message.user_profile.name,
+                email: message.user_profile.email,
+                photo_url: message.user_profile.photo_url,
+                bio: message.user_profile.bio,
+                niche: message.user_profile.niche,
+                location: message.user_profile.location,
+                company: message.user_profile.company,
+                links: message.user_profile.links,
+              }
+            : null
+        }
         onConnect={onConnect}
         onMessage={onMessage}
       />
     </>
   );
-}
+};

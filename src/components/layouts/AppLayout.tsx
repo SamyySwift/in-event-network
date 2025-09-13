@@ -53,13 +53,19 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       return location.pathname === path;
     }
     // For other routes, check if path matches exactly or starts with path + "/"
-    return location.pathname === path || location.pathname.startsWith(path + "/");
+    return (
+      location.pathname === path || location.pathname.startsWith(path + "/")
+    );
   };
   const attendeeNavigation = [
     {
       name: "Dashboard",
       href: "/attendee",
-      icon: <Users size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
+          <Users className="text-purple-600" />
+        </div>
+      ),
     },
     {
       name: "My Tickets",
@@ -258,7 +264,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         {currentUser && (
           <div className="flex items-center space-x-2">
             <ThemeToggle />
-            <NotificationBadge 
+            <NotificationBadge
               count={unreadCount}
               size="md"
               onClick={() => navigate("/attendee/notifications")}
@@ -322,7 +328,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   {currentUser.role}
                 </p>
               </div>
-              <NotificationBadge 
+              <NotificationBadge
                 count={unreadCount}
                 size="sm"
                 onClick={() => navigate("/attendee/notifications")}

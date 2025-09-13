@@ -275,13 +275,13 @@ const AttendeeNetworking = () => {
     return (
       <Card
         key={profile.id}
-        className="group relative overflow-hidden bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-900/50 border-0 shadow-lg hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 hover:scale-[1.02] rounded-2xl"
+        className="group relative overflow-hidden bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-900/50 border-0 shadow-lg hover:shadow-2xl transition-all duration-500 rounded-2xl h-full flex flex-col"
       >
         {/* Decorative Background Elements */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-connect-100/20 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-700" />
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-100/20 to-transparent rounded-full translate-y-12 -translate-x-12 group-hover:scale-125 transition-transform duration-700" />
 
-        <CardHeader className="relative z-10 pb-4">
+        <CardHeader className="relative z-10 pb-3">
           <div className="flex justify-between items-start">
             <div className="flex items-center space-x-4">
               <div className="relative">
@@ -335,207 +335,208 @@ const AttendeeNetworking = () => {
           </div>
         </CardHeader>
 
-        {/* Make body a column: scrollable content + fixed footer */}
-        <CardContent className="relative z-10 flex-1 flex flex-col overflow-hidden">
-          {/* Scrollable content area */}
-          <div className="flex-1 min-h-0 overflow-y-auto space-y-6 pr-2">
-            {/* Content goes here */}
-          </div>
-          {/* About Section */}
-          {profile.bio && (
-            <>
-              <div
-                className={`relative h-24 bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 backdrop-blur-sm ${
-                  isBioExpanded ? "overflow-y-auto pr-1" : ""
-                }`}
-              >
-                <p
-                  className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed ${
-                    isBioExpanded ? "" : "line-clamp-3"
+        {/* Body: scrollable content + sticky bottom actions */}
+        <CardContent className="relative z-10 flex-1 flex flex-col overflow-hidden p-5 gap-4">
+          {/* Scrollable content area with consistent vertical spacing */}
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1">
+            {/* About Section */}
+            {profile.bio && (
+              <>
+                <div
+                  className={`relative bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 backdrop-blur-sm ${
+                    isBioExpanded ? "max-h-48 overflow-y-auto pr-1" : ""
                   }`}
                 >
-                  {profile.bio}
-                </p>
-                {!isBioExpanded && shouldShowReadMore && (
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-white dark:from-gray-800 to-transparent" />
-                )}
-              </div>
+                  <p
+                    className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed ${
+                      isBioExpanded ? "" : "line-clamp-3"
+                    }`}
+                  >
+                    {profile.bio}
+                  </p>
+                  {!isBioExpanded && shouldShowReadMore && (
+                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-white dark:from-gray-800 to-transparent" />
+                  )}
+                </div>
 
-              {shouldShowReadMore && (
-                <button
-                  type="button"
-                  aria-expanded={isBioExpanded}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    const next = new Set(expandedBios);
-                    if (isBioExpanded) next.delete(profile.id);
-                    else next.add(profile.id);
-                    setExpandedBios(next);
-                  }}
-                  className="mt-2 text-xs font-medium text-connect-600 hover:text-connect-700 dark:text-connect-400 dark:hover:text-connect-300 hover:underline"
+                {shouldShowReadMore && (
+                  <button
+                    type="button"
+                    aria-expanded={isBioExpanded}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const next = new Set(expandedBios);
+                      if (isBioExpanded) next.delete(profile.id);
+                      else next.add(profile.id);
+                      setExpandedBios(next);
+                    }}
+                    className="text-xs font-medium text-connect-600 hover:text-connect-700 dark:text-connect-400 dark:hover:text-connect-300 hover:underline"
+                  >
+                    {isBioExpanded ? "Show less" : "Read more"}
+                  </button>
+                )}
+              </>
+            )}
+
+            {/* Professional Niche */}
+            {profile.niche && (
+              <div className="flex items-center gap-2">
+                <Sparkles size={16} className="text-purple-500" />
+                <Badge
+                  variant="outline"
+                  className="bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700 font-medium"
                 >
-                  {isBioExpanded ? "Show less" : "Read more"}
-                </button>
-              )}
-            </>
-          )}
-
-          {/* Professional Niche */}
-          {profile.niche && (
-            <div className="flex items-center space-x-2">
-              <Sparkles size={16} className="text-purple-500" />
-              <Badge
-                variant="outline"
-                className="bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700 font-medium"
-              >
-                {profile.niche}
-              </Badge>
-            </div>
-          )}
-
-          {/* Interests Tags */}
-          {profile.tags && profile.tags.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Heart size={14} className="text-red-400" />
-                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                  Interests
-                </span>
+                  {profile.niche}
+                </Badge>
               </div>
-              <div className="flex flex-wrap gap-2">
-                {profile.tags.slice(0, 3).map((tag: string, index: number) => (
-                  <Badge
-                    key={index}
-                    variant="outline"
-                    className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700 text-xs hover:scale-105 transition-transform duration-200"
-                  >
-                    {tag}
-                  </Badge>
-                ))}
-                {profile.tags.length > 3 && (
-                  <Badge
-                    variant="outline"
-                    className="bg-gray-50 dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-600 text-xs"
-                  >
-                    +{profile.tags.length - 3} more
-                  </Badge>
-                )}
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* Networking Preferences */}
-          {profile.networking_preferences &&
-            profile.networking_preferences.length > 0 && (
+            {/* Interests Tags */}
+            {profile.tags && profile.tags.length > 0 && (
               <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <Network size={14} className="text-blue-400" />
+                <div className="flex items-center gap-2">
+                  <Heart size={14} className="text-red-400" />
                   <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                    Looking to connect with
+                    Interests
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {(expandedPreferences.has(profile.id)
-                    ? profile.networking_preferences
-                    : profile.networking_preferences.slice(0, 2)
-                  ).map((pref: string, index: number) => (
+                  {profile.tags.slice(0, 3).map((tag: string, index: number) => (
                     <Badge
                       key={index}
                       variant="outline"
-                      className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 text-xs animate-fade-in"
+                      className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700 text-xs"
                     >
-                      {pref}
+                      {tag}
                     </Badge>
                   ))}
-                  {profile.networking_preferences.length > 2 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const newExpanded = new Set(expandedPreferences);
-                        if (expandedPreferences.has(profile.id)) {
-                          newExpanded.delete(profile.id);
-                        } else {
-                          newExpanded.add(profile.id);
-                        }
-                        setExpandedPreferences(newExpanded);
-                      }}
-                      className="h-auto p-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                  {profile.tags.length > 3 && (
+                    <Badge
+                      variant="outline"
+                      className="bg-gray-50 dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-600 text-xs"
                     >
-                      {expandedPreferences.has(profile.id) ? (
-                        <>
-                          <ChevronUp size={12} className="mr-1" />
-                          Show less
-                        </>
-                      ) : (
-                        <>
-                          <ChevronDown size={12} className="mr-1" />+
-                          {profile.networking_preferences.length - 2} more
-                        </>
-                      )}
-                    </Button>
+                      +{profile.tags.length - 3} more
+                    </Badge>
                   )}
                 </div>
               </div>
             )}
 
-          {/* Social Links */}
-          {socialLinks.length > 0 && (
-            <div className="flex justify-between items-center">
-              <div className="flex space-x-2">
-                {socialLinks.slice(0, 4).map((link, index) => (
-                  <button
-                    key={index}
-                    onClick={() => window.open(link.url, "_blank")}
-                    className="p-2 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 hover:from-connect-100 hover:to-connect-200 transition-all duration-300 text-gray-600 dark:text-gray-300 hover:text-connect-600 dark:hover:text-connect-400 transform hover:scale-110"
-                    title={`Follow on ${link.platform}`}
-                  >
-                    {getSocialIcon(link.platform)}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+            {/* Networking Preferences */}
+            {profile.networking_preferences &&
+              profile.networking_preferences.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Network size={14} className="text-blue-400" />
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                      Looking to connect with
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {(expandedPreferences.has(profile.id)
+                      ? profile.networking_preferences
+                      : profile.networking_preferences.slice(0, 2)
+                    ).map((pref: string, index: number) => (
+                      <Badge
+                        key={index}
+                        variant="outline"
+                        className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 text-xs"
+                      >
+                        {pref}
+                      </Badge>
+                    ))}
+                    {profile.networking_preferences.length > 2 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const newExpanded = new Set(expandedPreferences);
+                          if (expandedPreferences.has(profile.id)) {
+                            newExpanded.delete(profile.id);
+                          } else {
+                            newExpanded.add(profile.id);
+                          }
+                          setExpandedPreferences(newExpanded);
+                        }}
+                        className="h-auto px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md"
+                      >
+                        {expandedPreferences.has(profile.id) ? (
+                          <>
+                            <ChevronUp size={12} className="mr-1" />
+                            Show less
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown size={12} className="mr-1" />+
+                            {profile.networking_preferences.length - 2} more
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
 
-          {/* Action Buttons */}
-          <div className="flex space-x-3 pt-4">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() =>
-                handleMessage(
-                  profile.id,
-                  profile.name || "",
-                  profile.photo_url || undefined
-                )
-              }
-              className="flex-1 h-10 bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-600 hover:border-connect-300 transition-all duration-300"
-            >
-              <MessageSquare size={16} className="mr-2" />
-              Message
-            </Button>
-            {showConnectButton && (
+            {/* Social Links */}
+            {socialLinks.length > 0 && (
+              <div className="flex justify-between items-center">
+                <div className="flex gap-2">
+                  {socialLinks.slice(0, 4).map((link, index) => (
+                    <button
+                      key={index}
+                      onClick={() => window.open(link.url, "_blank")}
+                      className="p-2 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 hover:from-connect-100 hover:to-connect-200 text-gray-600 dark:text-gray-300 hover:text-connect-600 dark:hover:text-connect-400 transition-colors"
+                      title={`Follow on ${link.platform}`}
+                    >
+                      {getSocialIcon(link.platform)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Sticky bottom action bar */}
+          <div className="-mx-5 px-5 pt-3 pb-4 sticky bottom-0 bg-white/85 dark:bg-gray-900/85 backdrop-blur border-t border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-3">
               <Button
                 size="sm"
+                variant="outline"
                 onClick={() =>
-                  isReceivedRequest
-                    ? handleAcceptConnection(profile.id)
-                    : handleConnect(profile.id)
+                  handleMessage(
+                    profile.id,
+                    profile.name || "",
+                    profile.photo_url || undefined
+                  )
                 }
-                className="flex-1 h-10 bg-gradient-to-r from-connect-500 to-connect-600 hover:from-connect-600 hover:to-connect-700 text-white border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
-                disabled={isConnected || isSentRequest}
+                className="flex-1 h-10 bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-600"
               >
-                <UserPlus size={16} className="mr-2" />
-                {isReceivedRequest
-                  ? "Accept"
-                  : isSentRequest
-                  ? "Pending"
-                  : isConnected
-                  ? "Connected"
-                  : "Connect"}
+                <MessageSquare size={16} className="mr-2" />
+                Message
               </Button>
-            )}
+              {showConnectButton && (
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    isReceivedRequest
+                      ? handleAcceptConnection(profile.id)
+                      : handleConnect(profile.id)
+                  }
+                  className="flex-1 h-10 bg-gradient-to-r from-connect-500 to-connect-600 hover:from-connect-600 hover:to-connect-700 text-white border-0 shadow-md"
+                  disabled={isConnected || isSentRequest}
+                >
+                  <UserPlus size={16} className="mr-2" />
+                  {isReceivedRequest
+                    ? "Accept"
+                    : isSentRequest
+                    ? "Pending"
+                    : isConnected
+                    ? "Connected"
+                    : "Connect"}
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

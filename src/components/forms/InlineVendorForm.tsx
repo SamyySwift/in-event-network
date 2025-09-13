@@ -1,3 +1,4 @@
+// Top-level component: InlineVendorForm
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -90,6 +91,76 @@ export const InlineVendorForm: React.FC<InlineVendorFormProps> = ({ formId, onSu
     };
 
     loadForm();
+  }, [formId]);
+
+  useEffect(() => {
+    // Re-fetch helper reused from load effect
+    const reload = async () => {
+      try {
+        const { data: formData } = await supabase
+          .from('vendor_forms')
+          .select(`
+            *,
+            vendor_form_fields(*)
+          `)
+          .eq('id', formId)
+          .eq('is_active', true)
+          .single();
+        if (!formData) return;
+  
+        const mappedFields = (formData.vendor_form_fields || [])
+          .sort((a: any, b: any) => (a.field_order ?? 0) - (b.field_order ?? 0))
+          .map((ff: any) => {
+            const t = ff.field_type as VendorFormType['fields'][number]['type'];
+            const safeType =
+              t === 'text' || t === 'textarea' || t === 'email' || t === 'phone'
+                ? t
+                : 'text';
+            return {
+              id: ff.field_id,
+              label: ff.label,
+              type: safeType,
+              required: ff.is_required,
+              placeholder: ff.placeholder || '',
+            };
+          });
+  
+        setForm(prev => prev ? {
+          ...prev,
+          fields: mappedFields,
+          isActive: formData.is_active,
+          title: formData.form_title,
+          description: formData.form_description || '',
+        } : {
+          id: formData.id,
+          title: formData.form_title,
+          description: formData.form_description || '',
+          fields: mappedFields,
+          isActive: formData.is_active,
+          createdAt: formData.created_at,
+        });
+      } catch {
+        // ignore
+      }
+    };
+  
+    const channel = supabase
+      .channel(`vendor_form_sync_${formId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'vendor_form_fields', filter: `form_id=eq.${formId}` },
+        () => reload()
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'vendor_forms', filter: `id=eq.${formId}` },
+        () => reload()
+      )
+      .subscribe();
+  
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [formId]);
 
   const setValue = (id: string, value: string) => {

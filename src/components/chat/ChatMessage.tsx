@@ -138,10 +138,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
           {/* Main Message */}
           <div
-            className={`rounded-lg px-3 py-2 break-words ${
+            className={`relative rounded-lg px-3 py-2 break-words ${
               isOwn
-                ? "bg-connect-600 text-white ml-auto"
-                : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700"
+                ? "bg-connect-600 text-white ml-auto pl-10"
+                : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 pr-10"
             } max-w-[80%] ${isOwn ? "ml-auto" : ""}`}
             // NEW: swipe-to-reply handlers + swipe transform
             onTouchStart={onTouchStart}
@@ -159,43 +159,41 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             <p className="text-sm leading-relaxed whitespace-pre-wrap">
               {message.content}
             </p>
+
+            {/* Quote Button (allow quoting any message) */}
+            {onQuote && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onQuote(message)}
+                className={`absolute ${
+                  isOwn ? "left-1" : "right-1"
+                } top-1 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-8 w-8 p-0`}
+                title="Quote to reply"
+                aria-label="Quote to reply"
+              >
+                <Quote className="h-4 w-4" />
+              </Button>
+            )}
+
+            {/* Delete Button (owner/host) */}
+            {canDelete && onDelete && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  if (confirm("Delete this message?")) onDelete(message.id);
+                }}
+                className={`absolute ${
+                  isOwn ? "left-1" : "right-1"
+                } top-9 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-8 w-8 p-0 text-destructive`}
+                title="Delete message"
+                aria-label="Delete message"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
-
-          {/* Quote Button (allow quoting any message) */}
-          {onQuote && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => onQuote(message)}
-              // CHANGE: visible on mobile, hover-reveal on desktop
-              className={`absolute ${
-                isOwn ? "-left-8" : "-right-8"
-              } top-0 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-8 w-8 p-0`}
-              title="Quote to reply"
-              aria-label="Quote to reply"
-            >
-              <Quote className="h-4 w-4" />
-            </Button>
-          )}
-
-          {/* Delete Button (owner/host/admin) */}
-          {canDelete && onDelete && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => {
-                if (confirm("Delete this message?")) onDelete(message.id);
-              }}
-              // CHANGE: visible on mobile, hover-reveal on desktop
-              className={`absolute ${
-                isOwn ? "-left-8" : "-right-8"
-              } top-8 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-8 w-8 p-0 text-destructive`}
-              title="Delete message"
-              aria-label="Delete message"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          )}
         </div>
       </div>
 

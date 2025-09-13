@@ -24,7 +24,7 @@ interface Event {
   banner_url?: string;
 }
 
-const VendorForm = () => {
+function VendorForm() {
   const { formId } = useParams<{ formId: string }>();
   const navigate = useNavigate();
   const [form, setForm] = useState<VendorFormType | null>(null);
@@ -42,7 +42,7 @@ const VendorForm = () => {
       }
 
       try {
-        // Fetch vendor form with event details
+        // Fetch vendor form with event details and dynamic fields
         const { data: formData, error: formError } = await supabase
           .from('vendor_forms')
           .select(`
@@ -55,7 +55,8 @@ const VendorForm = () => {
               end_time,
               location,
               banner_url
-            )
+            ),
+            vendor_form_fields(*)
           `)
           .eq('id', formId)
           .eq('is_active', true)
@@ -66,48 +67,29 @@ const VendorForm = () => {
           setForm(null);
           setEvent(null);
         } else {
-          // Map database form to VendorFormType
+          // Map DB fields -> UI fields
+          const mappedFields: VendorFormField[] = (formData.vendor_form_fields || [])
+            .sort((a: any, b: any) => (a.field_order ?? 0) - (b.field_order ?? 0))
+            .map((ff: any) => ({
+              id: ff.field_id,
+              label: ff.label,
+              type: ff.field_type,
+              required: ff.is_required,
+              placeholder: ff.placeholder || '',
+              description: ff.field_description || '',
+              options: ff.field_options
+                ? (typeof ff.field_options === 'string' ? JSON.parse(ff.field_options) : ff.field_options)
+                : undefined,
+              validation: ff.validation_rules
+                ? (typeof ff.validation_rules === 'string' ? JSON.parse(ff.validation_rules) : ff.validation_rules)
+                : undefined,
+            }));
+
           const mappedForm: VendorFormType = {
             id: formData.id,
             title: formData.form_title,
             description: formData.form_description || '',
-            fields: [
-              {
-                id: "1",
-                label: "Business Name",
-                type: "text",
-                required: true,
-                placeholder: "Enter your business name",
-              },
-              {
-                id: "2",
-                label: "Product/Service Description",
-                type: "textarea",
-                required: true,
-                placeholder: "Describe your products or services",
-              },
-              {
-                id: "3",
-                label: "Contact Email",
-                type: "email",
-                required: true,
-                placeholder: "your@email.com",
-              },
-              {
-                id: "4",
-                label: "Phone Number",
-                type: "phone",
-                required: true,
-                placeholder: "+1234567890",
-              },
-              {
-                id: "5",
-                label: "Instagram Handle",
-                type: "text",
-                required: false,
-                placeholder: "@yourbusiness",
-              },
-            ],
+            fields: mappedFields,
             isActive: formData.is_active,
             createdAt: formData.created_at,
             submissionsCount: 0,
@@ -118,7 +100,7 @@ const VendorForm = () => {
               categories: [],
             },
           };
-          
+
           setForm(mappedForm);
           setEvent(formData.events as Event);
         }
@@ -132,6 +114,58 @@ const VendorForm = () => {
     };
 
     loadFormAndEvent();
+  }, [formId]);
+
+  // Helper to refresh only fields (preserve already entered responses for unchanged field ids)
+  const reloadFields = async () => {
+    if (!formId) return;
+    const { data: fieldsData, error } = await supabase
+      .from('vendor_form_fields')
+      .select('*')
+      .eq('form_id', formId)
+      .order('field_order', { ascending: true });
+
+    if (error) {
+      console.error('Error reloading fields:', error);
+      return;
+    }
+
+    const mappedFields: VendorFormField[] = (fieldsData || []).map((ff: any) => ({
+      id: ff.field_id,
+      label: ff.label,
+      type: ff.field_type,
+      required: ff.is_required,
+      placeholder: ff.placeholder || '',
+      description: ff.field_description || '',
+      options: ff.field_options
+        ? (typeof ff.field_options === 'string' ? JSON.parse(ff.field_options) : ff.field_options)
+        : undefined,
+      validation: ff.validation_rules
+        ? (typeof ff.validation_rules === 'string' ? JSON.parse(ff.validation_rules) : ff.validation_rules)
+        : undefined,
+    }));
+
+    setForm((prev) => (prev ? { ...prev, fields: mappedFields } : prev));
+  };
+
+  // Optional: realtime subscription so attendee sees new fields without refreshing
+  useEffect(() => {
+    if (!formId) return;
+
+    const channel = supabase
+      .channel(`vendor_form_fields_${formId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'vendor_form_fields', filter: `form_id=eq.${formId}` },
+        () => {
+          reloadFields();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [formId]);
 
   const handleInputChange = (fieldId: string, value: string | number | boolean | string[]) => {

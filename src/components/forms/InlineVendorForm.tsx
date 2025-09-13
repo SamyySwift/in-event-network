@@ -40,7 +40,10 @@ export const InlineVendorForm: React.FC<InlineVendorFormProps> = ({ formId, onSu
       try {
         const { data: formData, error } = await supabase
           .from('vendor_forms')
-          .select('*')
+          .select(`
+            *,
+            vendor_form_fields(*)
+          `)
           .eq('id', formId)
           .eq('is_active', true)
           .single();
@@ -50,18 +53,30 @@ export const InlineVendorForm: React.FC<InlineVendorFormProps> = ({ formId, onSu
           return;
         }
 
-        // Map DB row to fields (same defaults used in VendorForm.tsx)
+        const mappedFields = (formData.vendor_form_fields || [])
+          .sort((a: any, b: any) => (a.field_order ?? 0) - (b.field_order ?? 0))
+          .map((ff: any) => {
+            const t = ff.field_type as VendorFormType['fields'][number]['type'];
+            // If this Inline form only supports a subset, fallback unknowns to 'text'
+            const safeType =
+              t === 'text' || t === 'textarea' || t === 'email' || t === 'phone'
+                ? t
+                : 'text';
+
+            return {
+              id: ff.field_id,
+              label: ff.label,
+              type: safeType,
+              required: ff.is_required,
+              placeholder: ff.placeholder || '',
+            };
+          });
+
         const mapped: VendorFormType = {
           id: formData.id,
           title: formData.form_title,
           description: formData.form_description || '',
-          fields: [
-            { id: '1', label: 'Business Name', type: 'text', required: true, placeholder: 'Enter your business name' },
-            { id: '2', label: 'Product/Service Description', type: 'textarea', required: true, placeholder: 'Describe your products or services' },
-            { id: '3', label: 'Contact Email', type: 'email', required: true, placeholder: 'your@email.com' },
-            { id: '4', label: 'Phone Number', type: 'phone', required: true, placeholder: '+1234567890' },
-            { id: '5', label: 'Instagram Handle', type: 'text', required: false, placeholder: '@yourbusiness' },
-          ],
+          fields: mappedFields,
           isActive: formData.is_active,
           createdAt: formData.created_at,
         };

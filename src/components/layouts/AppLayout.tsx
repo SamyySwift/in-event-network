@@ -63,101 +63,61 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     {
       name: "Dashboard",
       href: "/attendee",
-      icon: (
-        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
-          <Users className="text-purple-600" />
-        </div>
-      ),
+      icon: <Users className="text-muted-foreground" />,
     },
     {
       name: "My Tickets",
       href: "/attendee/my-tickets",
-      icon: (
-        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
-          <Tickets className="text-purple-600" />
-        </div>
-      ),
+      icon: <Tickets className="text-muted-foreground" />,
     },
     {
       name: "Profile",
       href: "/attendee/profile",
-      icon: (
-        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
-          <User className="text-purple-600" />
-        </div>
-      ),
+      icon: <User className="text-muted-foreground" />,
     },
     {
       name: "Networking",
       href: "/attendee/networking",
-      icon: (
-        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
-          <UserPlus className="text-purple-600" />
-        </div>
-      ),
+      icon: <UserPlus className="text-muted-foreground" />,
     },
     {
       name: "Event Schedule",
       href: "/attendee/schedule",
-      icon: (
-        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
-          <Calendar className="text-purple-600" />
-        </div>
-      ),
+      icon: <Calendar className="text-muted-foreground" />,
     },
     {
       name: "Q&A",
       href: "/attendee/questions",
       icon: (
         <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
-          <MessageSquare className="text-purple-600" />
+          <MessageSquare className="text-purple-500" />
         </div>
       ),
     },
     {
       name: "Event Facilities",
       href: "/attendee/map",
-      icon: (
-        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
-          <MapPin className="text-purple-600" />
-        </div>
-      ),
+      icon: <MapPin className="text-muted-foreground" />,
     },
     {
       name: "Polls",
       href: "/attendee/polls",
-      icon: (
-        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
-          <BarChart className="text-purple-600" />
-        </div>
-      ),
+      icon: <BarChart className="text-muted-foreground" />,
     },
     {
       name: "Suggestions",
       href: "/attendee/suggestions",
-      icon: (
-        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
-          <Lightbulb className="text-purple-600" />
-        </div>
-      ),
+      icon: <Lightbulb className="text-muted-foreground" />,
     },
     {
       name: "Announcements",
       href: "/attendee/announcements",
-      icon: (
-        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
-          <Megaphone className="text-purple-600" />
-        </div>
-      ),
+      icon: <Megaphone className="text-muted-foreground" />,
     },
     {
       name: "Event Rules",
       href: "/attendee/rules",
-      icon: (
-        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
-          <BookOpen className="text-purple-600" />
-        </div>
-      ),
+      icon: <BookOpen className="text-muted-foreground" />,
     },
   ];
   const hostNavigation = [

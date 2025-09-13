@@ -5,7 +5,7 @@ import { useNotificationCount } from "@/hooks/useNotificationCount";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AdminFormPersistenceProvider } from "@/hooks/useAdminFormPersistence";
 import {
-  Calendar,
+  Calendar1,
   Users,
   Bell,
   MessageSquare,
@@ -136,8 +136,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Dashboard",
       href: "/admin",
       icon: (
-        <div className="flex items-center justify-center w-5 h-5  rounded-md bg-purple-100">
-          <BarChart4 size={14} className="text-purple-600" />
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
+          <BarChart4 className="text-purple-600" />
         </div>
       ),
     },
@@ -145,8 +145,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Events",
       href: "/admin/events",
       icon: (
-        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
-          <Calendar size={14} className="text-purple-600" />
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
+          <Calendar1 className="text-purple-600" />
         </div>
       ),
     },
@@ -154,7 +154,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Tickets",
       href: "/admin/tickets",
       icon: (
-        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
           <Ticket size={14} className="text-purple-600" />
         </div>
       ),
@@ -163,7 +163,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Check-In",
       href: "/admin/checkin",
       icon: (
-        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
           <Scan size={14} className="text-purple-600" />
         </div>
       ),
@@ -172,7 +172,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Wallet",
       href: "/admin/wallet",
       icon: (
-        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
           <DollarSign size={14} className="text-purple-600" />
         </div>
       ),
@@ -186,7 +186,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Attendees",
       href: "/admin/attendees",
       icon: (
-        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
           <Users size={14} className="text-purple-600" />
         </div>
       ),
@@ -195,7 +195,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Networking",
       href: "/admin/networking",
       icon: (
-        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
           <Network size={14} className="text-purple-600" />
         </div>
       ),
@@ -204,7 +204,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Speakers",
       href: "/admin/speakers",
       icon: (
-        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
           <User size={14} className="text-purple-600" />
         </div>
       ),
@@ -218,7 +218,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Announcements",
       href: "/admin/announcements",
       icon: (
-        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
           <Megaphone size={14} className="text-purple-600" />
         </div>
       ),
@@ -227,7 +227,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Schedule",
       href: "/admin/schedule",
       icon: (
-        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
           <Clock size={14} className="text-purple-600" />
         </div>
       ),
@@ -236,7 +236,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Event Preview",
       href: "/admin/event-preview",
       icon: (
-        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
           <Eye size={14} className="text-purple-600" />
         </div>
       ),
@@ -245,7 +245,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Polls & Surveys",
       href: "/admin/polls",
       icon: (
-        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
           <BarChart size={14} className="text-purple-600" />
         </div>
       ),
@@ -254,7 +254,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Facilities",
       href: "/admin/facilities",
       icon: (
-        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
           <MapPin size={14} className="text-purple-600" />
         </div>
       ),
@@ -263,7 +263,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Highlights",
       href: "/admin/highlights",
       icon: (
-        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
           <Camera size={14} className="text-purple-600" />
         </div>
       ),
@@ -277,7 +277,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Event Rules",
       href: "/admin/rules",
       icon: (
-        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
           <BookText size={14} className="text-purple-600" />
         </div>
       ),
@@ -286,7 +286,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Questions",
       href: "/admin/questions",
       icon: (
-        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
           <MessageSquare size={14} className="text-purple-600" />
         </div>
       ),
@@ -295,7 +295,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Suggestions",
       href: "/admin/suggestions",
       icon: (
-        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
           <MessageCircle size={14} className="text-purple-600" />
         </div>
       ),
@@ -304,7 +304,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Notifications",
       href: "/admin/notifications",
       icon: (
-        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
           <Bell size={14} className="text-purple-600" />
         </div>
       ),
@@ -319,7 +319,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Sponsors & Partners",
       href: "/admin/sponsors",
       icon: (
-        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
           <Star size={14} className="text-purple-600" />
         </div>
       ),
@@ -328,17 +328,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Forms",
       href: "/admin/vendor-hub",
       icon: (
-        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
           <FileText size={14} className="text-purple-600" />
-        </div>
-      ),
-    },
-    {
-      name: "Vendor Hub",
-      href: "/admin/vendor-hub",
-      icon: (
-        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
-          <Store size={14} className="text-purple-600" />
         </div>
       ),
     },
@@ -351,7 +342,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       name: "Settings",
       href: "/admin/settings",
       icon: (
-        <div className="flex items-center justify-center w-5 h-5 rounded-md bg-purple-100">
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
           <Settings size={14} className="text-purple-600" />
         </div>
       ),
@@ -364,8 +355,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       <div className="p-4 border-b border-sidebar-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <img src="/logo.png" alt="Kconect Logo" className="h-8 w-8 mr-2" />
-            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+            <img src="/logo.png" alt="Kconect Logo" className="h-6 w-6 mr-2" />
+            <span className="text-md font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
               Kconect
             </span>
           </div>
@@ -382,7 +373,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   alt={currentUser.name}
                 />
               ) : (
-                <AvatarFallback className="bg-primary text-primary-foreground">
+                <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-purple-500 text-primary-foreground">
                   {currentUser.name.charAt(0).toUpperCase()}
                 </AvatarFallback>
               )}
@@ -522,15 +513,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   <img
                     src="/logo.png"
                     alt="Kconect Logo"
-                    className="h-8 w-8 mr-2"
+                    className="h-6 w-6 mr-2"
                   />
-                  <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                  <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
                     Kconect
                   </span>
                 </>
               )}
               {!sidebarOpen && (
-                <img src="/logo.png" alt="Kconect Logo" className="h-8 w-8" />
+                <img src="/logo.png" alt="Kconect Logo" className="h-6 w-6" />
               )}
             </div>
 
@@ -560,14 +551,14 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   sidebarOpen ? "items-center" : "justify-center"
                 } space-x-3`}
               >
-                <Avatar className="h-10 w-10 ring-2 ring-primary/20">
+                <Avatar className="h-10 w-10 ring-2 ring-primary/2=">
                   {currentUser.photoUrl ? (
                     <AvatarImage
                       src={currentUser.photoUrl}
                       alt={currentUser.name}
                     />
                   ) : (
-                    <AvatarFallback className="bg-primary text-primary-foreground">
+                    <AvatarFallback className="bg-gradient-to-r from-cyan-500 to-purple-500 text-primary-foreground">
                       {currentUser.name.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   )}
@@ -734,7 +725,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                   <span className="absolute -top-1 -right-1 h-5 w-5 bg-primary text-primary-foreground rounded-full text-xs flex items-center justify-center">
                     {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
-                  )}
+                )}
               </Button>
 
               <Avatar className="h-9 w-9 cursor-pointer ring-2 ring-primary/20 hover:ring-primary/40 transition-all">

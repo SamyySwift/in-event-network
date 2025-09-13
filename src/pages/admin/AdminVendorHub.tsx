@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Plus,
   Users,
@@ -119,6 +119,18 @@ function AdminVendorHubContent() {
     },
   ]);
 
+  // Edit dialog state and autosave controls
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingForm, setEditingForm] = useState<VendorForm | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editFields, setEditFields] = useState<VendorFormField[]>([]);
+  const originalFieldIdsRef = useRef<Set<string>>(new Set());
+  const saveTimerRef = useRef<number | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+
   const { selectedEventId } = useAdminEventContext();
 
   // Load data from Supabase on component mount
@@ -137,7 +149,8 @@ function AdminVendorHubContent() {
         .from('vendor_forms')
         .select(`
           *,
-          vendor_submissions(count)
+          vendor_submissions(count),
+          vendor_form_fields(*)
         `)
         .eq('event_id', selectedEventId)
         .order('created_at', { ascending: false });
@@ -151,43 +164,26 @@ function AdminVendorHubContent() {
         id: form.id,
         title: form.form_title,
         description: form.form_description || '',
-        fields: [
-          {
-            id: "1",
-            label: "Business Name",
-            type: "text",
-            required: true,
-            placeholder: "Enter your business name",
-          },
-          {
-            id: "2",
-            label: "Product/Service Description",
-            type: "textarea",
-            required: true,
-            placeholder: "Describe your products or services",
-          },
-          {
-            id: "3",
-            label: "Contact Email",
-            type: "email",
-            required: true,
-            placeholder: "your@email.com",
-          },
-          {
-            id: "4",
-            label: "Phone Number",
-            type: "phone",
-            required: true,
-            placeholder: "+1234567890",
-          },
-          {
-            id: "5",
-            label: "Instagram Handle",
-            type: "text",
-            required: false,
-            placeholder: "@yourbusiness",
-          },
-        ],
+        fields: (form.vendor_form_fields || [])
+          .sort((a: any, b: any) => (a.field_order ?? 0) - (b.field_order ?? 0))
+          .map((ff: any) => ({
+            id: ff.field_id,
+            label: ff.label,
+            type: ff.field_type,
+            required: ff.is_required,
+            placeholder: ff.placeholder || "",
+            description: ff.field_description || "",
+            options: ff.field_options
+              ? (typeof ff.field_options === "string"
+                  ? JSON.parse(ff.field_options)
+                  : ff.field_options)
+              : undefined,
+            validation: ff.validation_rules
+              ? (typeof ff.validation_rules === "string"
+                  ? JSON.parse(ff.validation_rules)
+                  : ff.validation_rules)
+              : undefined,
+          })),
         isActive: form.is_active,
         createdAt: form.created_at,
         submissionsCount: form.vendor_submissions?.[0]?.count || 0,
@@ -352,16 +348,73 @@ function AdminVendorHubContent() {
     setFormFields((prev) => prev.filter((field) => field.id !== id));
   };
 
-  const toggleFormStatus = (formId: string) => {
+  const toggleFormStatus = async (formId: string, nextStatus?: boolean) => {
+    const current = vendorForms.find((f) => f.id === formId);
+    if (!current) return;
+
+    const target = typeof nextStatus === 'boolean' ? nextStatus : !current.isActive;
+
+    // Optimistic UI
     setVendorForms((prev) =>
       prev.map((form) =>
-        form.id === formId ? { ...form, isActive: !form.isActive } : form
+        form.id === formId ? { ...form, isActive: target } : form
       )
     );
+
+    const { error } = await supabase
+      .from('vendor_forms')
+      .update({ is_active: target })
+      .eq('id', formId);
+
+    if (error) {
+      // Revert on failure
+      setVendorForms((prev) =>
+        prev.map((form) =>
+          form.id === formId ? { ...form, isActive: current.isActive } : form
+        )
+      );
+      toast({
+        title: "Error",
+        description: "Failed to update form status. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Success",
+      description: `Form ${target ? 'activated' : 'deactivated'} successfully`,
+    });
+
+    // Keep local state and backend in sync
+    await loadVendorForms();
   };
 
-  const deleteForm = (formId: string) => {
+  const deleteForm = async (formId: string) => {
+    const previousForms = vendorForms;
+
+    // Optimistic UI removal
     setVendorForms((prev) => prev.filter((form) => form.id !== formId));
+
+    const { error } = await supabase
+      .from('vendor_forms')
+      .delete()
+      .eq('id', formId);
+
+    if (error) {
+      // Revert if delete failed
+      setVendorForms(previousForms);
+      toast({
+        title: "Error",
+        description: "Failed to delete form. Please try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Ensure full consistency after mutation
+    await loadVendorForms();
+
     toast({
       title: "Success",
       description: "Form deleted successfully",
@@ -538,6 +591,170 @@ function AdminVendorHubContent() {
         });
       });
   };
+
+  // Open edit dialog and load latest fields from DB
+  const openEditForm = async (form: VendorForm) => {
+    setEditingForm(form);
+    setEditTitle(form.title);
+    setEditDescription(form.description || "");
+    setEditFields(form.fields);
+    originalFieldIdsRef.current = new Set(form.fields.map((f) => f.id));
+    setSaveError(null);
+    setEditDialogOpen(true);
+
+    // 再次从数据库获取字段，确保是最新
+    const { data, error } = await supabase
+      .from('vendor_form_fields')
+      .select('*')
+      .eq('form_id', form.id)
+      .order('field_order', { ascending: true });
+    if (!error && data) {
+      const mapped = (data || []).map((ff: any) => ({
+        id: ff.field_id,
+        label: ff.label,
+        type: ff.field_type,
+        required: ff.is_required,
+        placeholder: ff.placeholder || "",
+        description: ff.field_description || "",
+        options: ff.field_options
+          ? (typeof ff.field_options === "string"
+              ? JSON.parse(ff.field_options)
+              : ff.field_options)
+          : undefined,
+        validation: ff.validation_rules
+          ? (typeof ff.validation_rules === "string"
+              ? JSON.parse(ff.validation_rules)
+              : ff.validation_rules)
+          : undefined,
+      }));
+      setEditFields(mapped);
+      originalFieldIdsRef.current = new Set(mapped.map((f) => f.id));
+    }
+  };
+
+  const saveEdits = async () => {
+    if (!editingForm) return;
+    setIsSaving(true);
+    setSaveError(null);
+    try {
+      // 1) 更新表单元数据（标题、描述）
+      if (
+        editTitle !== editingForm.title ||
+        (editDescription || "") !== (editingForm.description || "")
+      ) {
+        const { error: formErr } = await supabase
+          .from('vendor_forms')
+          .update({
+            form_title: editTitle,
+            form_description: editDescription || null,
+          })
+          .eq('id', editingForm.id);
+        if (formErr) throw formErr;
+      }
+
+      // 2) 计算字段的增/改/删
+      const existingIds = originalFieldIdsRef.current;
+      const currentIds = new Set(editFields.map((f) => f.id));
+      const toInsert = editFields.filter((f) => !existingIds.has(f.id));
+      const toUpdate = editFields.filter((f) => existingIds.has(f.id));
+      const toDelete = Array.from(existingIds).filter((id) => !currentIds.has(id));
+
+      // 更新已有字段（逐条更新以设置不同 field_order）
+      await Promise.all(
+        toUpdate.map((f) =>
+          supabase
+            .from('vendor_form_fields')
+            .update({
+              label: f.label,
+              field_type: f.type,
+              is_required: f.required,
+              placeholder: f.placeholder || null,
+              field_description: (f as any).description || null,
+              field_options: (f as any).options
+                ? JSON.stringify((f as any).options)
+                : null,
+              validation_rules: (f as any).validation
+                ? JSON.stringify((f as any).validation)
+                : null,
+              field_order: editFields.findIndex((x) => x.id === f.id),
+            })
+            .eq('form_id', editingForm.id)
+            .eq('field_id', f.id)
+        )
+      );
+
+      // 插入新字段
+      if (toInsert.length) {
+        const payload = toInsert.map((f) => ({
+          form_id: editingForm.id,
+          field_id: f.id,
+          label: f.label,
+          field_type: f.type,
+          is_required: f.required,
+          placeholder: f.placeholder || null,
+          field_description: (f as any).description || null,
+          field_options: (f as any).options
+            ? JSON.stringify((f as any).options)
+            : null,
+          validation_rules: (f as any).validation
+            ? JSON.stringify((f as any).validation)
+            : null,
+          field_order: editFields.findIndex((x) => x.id === f.id),
+        }));
+        const { error: insErr } = await supabase
+          .from('vendor_form_fields')
+          .insert(payload);
+        if (insErr) throw insErr;
+      }
+
+      // 删除移除的字段
+      if (toDelete.length) {
+        const { error: delErr } = await supabase
+          .from('vendor_form_fields')
+          .delete()
+          .eq('form_id', editingForm.id)
+          .in('field_id', toDelete);
+        if (delErr) throw delErr;
+      }
+
+      // 刷新状态与列表
+      originalFieldIdsRef.current = new Set(editFields.map((f) => f.id));
+      setEditingForm((prev) =>
+        prev
+          ? { ...prev, title: editTitle, description: editDescription, fields: editFields }
+          : prev
+      );
+      await loadVendorForms();
+
+      setLastSavedAt(new Date().toLocaleTimeString());
+      setIsSaving(false);
+    } catch (e: any) {
+      setIsSaving(false);
+      setSaveError(e?.message || "Failed to save changes");
+      toast({
+        title: "Save failed",
+        description: "Your edits are kept locally. Please continue editing; we will retry saving automatically.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // 自动保存（防抖 800ms）
+  useEffect(() => {
+    if (!editDialogOpen || !editingForm) return;
+    if (saveTimerRef.current) {
+      window.clearTimeout(saveTimerRef.current);
+    }
+    saveTimerRef.current = window.setTimeout(() => {
+      saveEdits();
+    }, 800) as unknown as number;
+
+    return () => {
+      if (saveTimerRef.current) {
+        window.clearTimeout(saveTimerRef.current);
+      }
+    };
+  }, [editTitle, editDescription, editFields, editDialogOpen, editingForm?.id]);
 
   const filteredSubmissions = selectedForm
     ? getFormSubmissions(selectedForm.id).filter(
@@ -907,6 +1124,10 @@ function AdminVendorHubContent() {
                                     <Copy className="h-4 w-4 mr-2" />
                                     Copy URL
                                   </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => openEditForm(form)}>
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Edit Form
+                                  </DropdownMenuItem>
                                   <DropdownMenuItem 
                                     onClick={() => deleteForm(form.id)}
                                     className="text-destructive focus:text-destructive"
@@ -1169,6 +1390,72 @@ function AdminVendorHubContent() {
                   </Table>
                 </div>
               )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Form Dialog */}
+        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+          <DialogContent className="max-w-[95vw] sm:max-w-5xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader className="pb-4">
+              <DialogTitle className="text-xl">Edit Form</DialogTitle>
+              <div className="text-sm text-muted-foreground">
+                {isSaving
+                  ? "Saving…"
+                  : saveError
+                    ? <span className="text-destructive">Save failed</span>
+                    : lastSavedAt
+                      ? `All changes saved at ${lastSavedAt}`
+                      : "All changes saved"}
+              </div>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="editTitle" className="text-sm font-medium">Form Title</Label>
+                  <Input
+                    id="editTitle"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    placeholder="Form Title"
+                    className="h-11"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="editDescription" className="text-sm font-medium">Description</Label>
+                  <Textarea
+                    id="editDescription"
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    placeholder="Brief description of the form purpose..."
+                    rows={2}
+                    className="resize-none"
+                  />
+                </div>
+              </div>
+
+              <VendorFormFieldBuilder
+                fields={editFields}
+                onFieldsChange={setEditFields}
+              />
+            </div>
+
+            <div className="flex items-center justify-between pt-6 border-t">
+              <div className="text-sm text-muted-foreground">
+                {isSaving
+                  ? "Saving…"
+                  : saveError
+                    ? <span className="text-destructive">Save failed</span>
+                    : lastSavedAt
+                      ? `Saved at ${lastSavedAt}`
+                      : ""}
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
+                  Close
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>

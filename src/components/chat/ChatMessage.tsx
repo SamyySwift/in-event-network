@@ -64,7 +64,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           <span className="text-xs text-gray-500 dark:text-gray-400">{timeAgo}</span>
         </div>
 
-        {/* NEW: quoted preview (if this message is replying to another) */}
+        {/* NEW: quoted preview above the message if replying */}
         {message.quoted_message && (
           <div className={`mb-1 ${isOwn ? 'ml-auto' : ''} max-w-[80%]`}>
             <QuotedMessage message={message.quoted_message} compact />

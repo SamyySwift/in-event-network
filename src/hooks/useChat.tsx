@@ -92,7 +92,7 @@ export const useChat = (overrideEventId?: string) => {
         profilesMap.set(p.id, p);
       });
 
-      // NEW: fetch quoted messages (and ensure their profiles are available)
+      // NEW: fetch and hydrate quoted messages (and ensure their profiles exist)
       const quotedIds = [
         ...new Set(
           (messagesData || [])
@@ -101,7 +101,7 @@ export const useChat = (overrideEventId?: string) => {
         ),
       ];
 
-      let quotedMessagesMap = new Map<string, any>();
+      let quotedMessagesMap = new Map<string, ChatMessage>();
       if (quotedIds.length > 0) {
         const { data: quotedMsgs, error: quotedErr } = await supabase
           .from('chat_messages')
@@ -109,10 +109,9 @@ export const useChat = (overrideEventId?: string) => {
           .in('id', quotedIds);
 
         if (!quotedErr && quotedMsgs) {
-          const quotedUserIds = [
-            ...new Set(quotedMsgs.map((q: any) => q.user_id)),
-          ];
+          const quotedUserIds = [...new Set(quotedMsgs.map((q: any) => q.user_id))];
           const missingUserIds = quotedUserIds.filter((id) => !profilesMap.has(id));
+
           if (missingUserIds.length > 0) {
             const { data: moreProfiles } = await supabase
               .from('profiles')
@@ -121,7 +120,7 @@ export const useChat = (overrideEventId?: string) => {
               )
               .in('id', missingUserIds);
 
-            moreProfiles?.forEach((p) => profilesMap.set(p.id, p));
+            moreProfiles?.forEach((p: any) => profilesMap.set(p.id, p));
           }
 
           quotedMsgs.forEach((qm: any) => {
@@ -146,42 +145,40 @@ export const useChat = (overrideEventId?: string) => {
                 }
               : { name: 'Unknown User' };
 
-            quotedMessagesMap.set(qm.id, { ...qm, user_profile: q_user_profile });
+            quotedMessagesMap.set(qm.id, { ...qm, user_profile: q_user_profile } as ChatMessage);
           });
         }
       }
 
       // Combine messages with user profiles and attach quoted_message
-      const messagesWithProfiles: ChatMessage[] = (messagesData || []).map(
-        (message: any) => {
-          const p = profilesMap.get(message.user_id);
-          const user_profile = p
-            ? {
-                id: p.id,
-                name: p.name,
-                email: p.email,
-                role: p.role,
-                photo_url: p.photo_url,
-                bio: p.bio,
-                niche: p.niche,
-                company: p.company,
-                links: {
-                  twitter: p.twitter_link ?? null,
-                  linkedin: p.linkedin_link ?? null,
-                  instagram: p.instagram_link ?? null,
-                  github: p.github_link ?? null,
-                  website: p.website_link ?? null,
-                },
-              }
-            : { name: 'Unknown User' };
+      const messagesWithProfiles: ChatMessage[] = (messagesData || []).map((message: any) => {
+        const p = profilesMap.get(message.user_id);
+        const user_profile = p
+          ? {
+              id: p.id,
+              name: p.name,
+              email: p.email,
+              role: p.role,
+              photo_url: p.photo_url,
+              bio: p.bio,
+              niche: p.niche,
+              company: p.company,
+              links: {
+                twitter: p.twitter_link ?? null,
+                linkedin: p.linkedin_link ?? null,
+                instagram: p.instagram_link ?? null,
+                github: p.github_link ?? null,
+                website: p.website_link ?? null,
+              },
+            }
+          : { name: 'Unknown User' };
 
-          const quoted_message = message.quoted_message_id
-            ? quotedMessagesMap.get(message.quoted_message_id) ?? null
-            : null;
+        const quoted_message = message.quoted_message_id
+          ? quotedMessagesMap.get(message.quoted_message_id) ?? null
+          : null;
 
-          return { ...message, user_profile, quoted_message };
-        }
-      );
+        return { ...message, user_profile, quoted_message };
+      });
 
       setMessages(messagesWithProfiles);
     } catch (error) {
@@ -211,7 +208,7 @@ export const useChat = (overrideEventId?: string) => {
           event: 'INSERT',
           schema: 'public',
           table: 'chat_messages',
-          filter: `event_id=eq.${effectiveEventId}`,
+          filter: `event_id=eq.${effectiveEventId}`
         },
         async (payload) => {
           console.log('New message received:', payload);
@@ -294,7 +291,7 @@ export const useChat = (overrideEventId?: string) => {
             quoted_message, // NEW
           } as ChatMessage;
 
-          setMessages((prev) => [...prev, newMessage]);
+          setMessages(prev => [...prev, newMessage]);
         }
       )
       .on(

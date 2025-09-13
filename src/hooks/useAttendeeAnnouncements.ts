@@ -27,22 +27,39 @@ interface Announcement {
 
 export const useAttendeeAnnouncements = () => {
   const { currentUser } = useAuth();
-  const { useAttendeeEventContext } = require('@/contexts/AttendeeEventContext');
-  const { currentEventId } = useAttendeeEventContext();
 
   const { data: announcements = [], isLoading, error } = useQuery({
-    queryKey: ['attendee-announcements', currentUser?.id, currentEventId],
+    queryKey: ['attendee-announcements', currentUser?.id],
     queryFn: async () => {
-      if (!currentUser?.id || !currentEventId) {
+      if (!currentUser?.id) {
+        console.log('No current user found');
         return [];
       }
 
-      console.log('Fetching announcements for event:', currentEventId);
+      // Get the user's current event ID from their profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('current_event_id')
+        .eq('id', currentUser.id)
+        .single();
 
+      if (profileError) {
+        console.error('Error fetching user profile:', profileError);
+        return [];
+      }
+
+      if (!profile?.current_event_id) {
+        console.log('No current event found for user');
+        return [];
+      }
+
+      console.log('Fetching announcements for event:', profile.current_event_id);
+
+      // Fetch announcements for the user's current event
       const { data, error } = await supabase
         .from('announcements')
         .select('*')
-        .eq('event_id', currentEventId)
+        .eq('event_id', profile.current_event_id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -53,9 +70,13 @@ export const useAttendeeAnnouncements = () => {
       console.log('Attendee announcements fetched:', data?.length || 0, data);
       return data as Announcement[];
     },
-    enabled: !!currentUser?.id && !!currentEventId,
-    refetchInterval: 30000,
+    enabled: !!currentUser?.id,
+    refetchInterval: 30000, // Refetch every 30 seconds for near real-time updates
   });
 
-  return { announcements, isLoading, error };
+  return {
+    announcements,
+    isLoading,
+    error,
+  };
 };

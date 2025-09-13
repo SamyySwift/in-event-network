@@ -17,35 +17,43 @@ export interface Rule {
 
 export const useAttendeeRules = () => {
   const { currentUser } = useAuth();
-  const { currentEventId, hasJoinedEvent } = useAttendeeEventContext();
+  const { hostEvents, hasJoinedEvent } = useAttendeeEventContext();
 
   const { data: rules = [], isLoading, error } = useQuery({
-    queryKey: ['attendee-rules', currentUser?.id, currentEventId],
+    queryKey: ['attendee-rules', currentUser?.id, hostEvents],
     queryFn: async () => {
-      if (!currentUser?.id || !hasJoinedEvent || !currentEventId) {
+      if (!currentUser?.id || !hasJoinedEvent || hostEvents.length === 0) {
         return [];
       }
 
       try {
-        console.log('Fetching rules for attendee current event:', currentEventId);
+        console.log('Fetching rules for attendee events:', hostEvents);
+        
+        // Only fetch rules for events from the same host
         const { data, error } = await supabase
           .from('rules')
           .select('*')
-          .eq('event_id', currentEventId)
+          .in('event_id', hostEvents)
           .order('created_at', { ascending: false });
-
+        
         if (error) {
           console.error('Error fetching attendee rules:', error);
           throw error;
         }
+        
+        console.log('Attendee rules fetched successfully:', data?.length || 0);
         return (data || []) as Rule[];
       } catch (err) {
         console.error('Unexpected error fetching attendee rules:', err);
         throw err;
       }
     },
-    enabled: !!currentUser?.id && hasJoinedEvent && !!currentEventId,
+    enabled: !!currentUser?.id && hasJoinedEvent && hostEvents.length > 0,
   });
 
-  return { rules, isLoading, error };
+  return {
+    rules,
+    isLoading,
+    error,
+  };
 };

@@ -34,53 +34,17 @@ export const useJoinEvent = () => {
     },
     onSuccess: (data) => {
       if (data?.success) {
-        console.log('Successfully joined event, resetting attendee session and invalidating caches...');
-
-        // Session reset: clear attendee-related caches to avoid residual data
-        queryClient.removeQueries({
-          predicate: (q) => {
-            const key = Array.isArray(q.queryKey) ? String(q.queryKey[0]) : '';
-            return (
-              key === 'dashboard' ||
-              key === 'current-event-id' ||
-              key === 'is-participant' ||
-              key === 'user-profile' ||
-              key.startsWith('attendee-')
-            );
-          },
-        });
-
-        // Clear event-scoped localStorage entries
-        const patterns = [
-          /^announcementDismissed_/,
-          /^announcementAcknowledged_/,
-          /^vendor_form_submitted_/,
-          /^poll_dismissed_/,
-        ];
-        const keysToRemove: string[] = [];
-        for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i);
-          if (!k) continue;
-          if (patterns.some((p) => p.test(k))) {
-            keysToRemove.push(k);
-          }
-        }
-        keysToRemove.forEach((k) => localStorage.removeItem(k));
-
-        // Persist the active event id for verification across the app
-        if (data?.event_id) {
-          sessionStorage.setItem('active_event_id', data.event_id);
-        }
-        // Remove transient pending code
-        sessionStorage.removeItem('pendingEventCode');
-        localStorage.removeItem('pendingEventCode');
-
-        // Invalidate commonly used queries that will be repopulated
-        queryClient.invalidateQueries({ queryKey: ['attendee-context'] });
+        console.log('Successfully joined event, invalidating caches...');
+        
+        // Invalidate all networking-related queries to refresh data
         queryClient.invalidateQueries({ queryKey: ['attendee-networking'] });
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['attendee-context'] });
         queryClient.invalidateQueries({ queryKey: ['user-profile'] });
-
+        
+        // Force a refetch of networking data
+        queryClient.refetchQueries({ queryKey: ['attendee-networking'] });
+        
+        
         // Navigate to attendee dashboard
         navigate('/attendee');
       } else {

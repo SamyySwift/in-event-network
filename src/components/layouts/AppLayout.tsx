@@ -23,6 +23,8 @@ import {
   Lightbulb,
   Ticket,
   Store,
+  Tickets,
+  Book,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -70,52 +72,92 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     {
       name: "My Tickets",
       href: "/attendee/my-tickets",
-      icon: <Ticket size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
+          <Tickets className="text-purple-600" />
+        </div>
+      ),
     },
     {
       name: "Profile",
       href: "/attendee/profile",
-      icon: <User size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
+          <User className="text-purple-600" />
+        </div>
+      ),
     },
     {
       name: "Networking",
       href: "/attendee/networking",
-      icon: <UserPlus size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
+          <UserPlus className="text-purple-600" />
+        </div>
+      ),
     },
     {
       name: "Event Schedule",
       href: "/attendee/schedule",
-      icon: <Calendar size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
+          <Calendar className="text-purple-600" />
+        </div>
+      ),
     },
     {
       name: "Q&A",
       href: "/attendee/questions",
-      icon: <MessageSquare size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
+          <MessageSquare className="text-purple-600" />
+        </div>
+      ),
     },
     {
       name: "Event Facilities",
       href: "/attendee/map",
-      icon: <MapPin size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
+          <MapPin className="text-purple-600" />
+        </div>
+      ),
     },
     {
       name: "Polls",
       href: "/attendee/polls",
-      icon: <BarChart size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
+          <BarChart className="text-purple-600" />
+        </div>
+      ),
     },
     {
       name: "Suggestions",
       href: "/attendee/suggestions",
-      icon: <Lightbulb size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
+          <Lightbulb className="text-purple-600" />
+        </div>
+      ),
     },
     {
       name: "Announcements",
       href: "/attendee/announcements",
-      icon: <Megaphone size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
+          <Megaphone className="text-purple-600" />
+        </div>
+      ),
     },
     {
       name: "Event Rules",
       href: "/attendee/rules",
-      icon: <BookOpen size={20} />,
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
+          <BookOpen className="text-purple-600" />
+        </div>
+      ),
     },
   ];
   const hostNavigation = [
@@ -182,9 +224,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   <img
                     src="/logo.png"
                     alt="Kconect Logo"
-                    className="h-8 w-8 mr-2"
+                    className="h-6 w-6 mr-2"
                   />
-                  <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                  <span className="text-md font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
                     Kconect
                   </span>
                 </SheetTitle>
@@ -255,8 +297,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             </SheetContent>
           </Sheet>
 
-          <img src="/logo.png" alt="Kconect Logo" className="h-8 w-8 mr-2" />
-          <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+          <img src="/logo.png" alt="Kconect Logo" className="h-6 w-6 mr-2" />
+          <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
             Kconect
           </span>
         </div>
@@ -297,9 +339,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               <img
                 src="/logo.png"
                 alt="Kconect Logo"
-                className="h-8 w-8 mr-2"
+                className="h-6 w-6 mr-2"
               />
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
                 Kconect
               </span>
             </div>

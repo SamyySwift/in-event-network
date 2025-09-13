@@ -63,6 +63,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           )}
           <span className="text-xs text-gray-500 dark:text-gray-400">{timeAgo}</span>
         </div>
+
+        {/* NEW: quoted preview (if this message is replying to another) */}
+        {message.quoted_message && (
+          <div className={`mb-1 ${isOwn ? 'ml-auto' : ''} max-w-[80%]`}>
+            <QuotedMessage message={message.quoted_message} compact />
+          </div>
+        )}
+
         {/* Main Message */}
         <div
           className={`rounded-lg px-3 py-2 break-words ${
@@ -74,13 +82,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
         </div>
 
-        {/* Quote Button */}
-        {!isOwn && (
+        {/* Quote Button (allow quoting any message) */}
+        {onQuote && (
           <Button
             size="sm"
             variant="ghost"
             onClick={() => onQuote(message)}
-            className="absolute -right-8 top-0 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
+            className={`absolute ${isOwn ? '-left-8' : '-right-8'} top-0 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0`}
+            title="Quote to reply"
           >
             <Quote className="h-4 w-4" />
           </Button>

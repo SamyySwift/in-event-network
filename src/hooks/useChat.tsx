@@ -92,31 +92,96 @@ export const useChat = (overrideEventId?: string) => {
         profilesMap.set(p.id, p);
       });
 
-      // Combine messages with user profiles
-      const messagesWithProfiles: ChatMessage[] = (messagesData || []).map((message: any) => {
-        const p = profilesMap.get(message.user_id);
-        const user_profile = p
-          ? {
-              id: p.id,
-              name: p.name,
-              email: p.email,
-              role: p.role,
-              photo_url: p.photo_url,
-              bio: p.bio,
-              niche: p.niche,
-              company: p.company,
-              links: {
-                twitter: p.twitter_link ?? null,
-                linkedin: p.linkedin_link ?? null,
-                instagram: p.instagram_link ?? null,
-                github: p.github_link ?? null,
-                website: p.website_link ?? null,
-              },
-            }
-          : { name: 'Unknown User' };
+      // NEW: fetch quoted messages (and ensure their profiles are available)
+      const quotedIds = [
+        ...new Set(
+          (messagesData || [])
+            .map((m: any) => m.quoted_message_id)
+            .filter(Boolean) as string[]
+        ),
+      ];
 
-        return { ...message, user_profile };
-      });
+      let quotedMessagesMap = new Map<string, any>();
+      if (quotedIds.length > 0) {
+        const { data: quotedMsgs, error: quotedErr } = await supabase
+          .from('chat_messages')
+          .select('*')
+          .in('id', quotedIds);
+
+        if (!quotedErr && quotedMsgs) {
+          const quotedUserIds = [
+            ...new Set(quotedMsgs.map((q: any) => q.user_id)),
+          ];
+          const missingUserIds = quotedUserIds.filter((id) => !profilesMap.has(id));
+          if (missingUserIds.length > 0) {
+            const { data: moreProfiles } = await supabase
+              .from('profiles')
+              .select(
+                'id, name, email, role, photo_url, bio, niche, company, twitter_link, linkedin_link, instagram_link, github_link, website_link'
+              )
+              .in('id', missingUserIds);
+
+            moreProfiles?.forEach((p) => profilesMap.set(p.id, p));
+          }
+
+          quotedMsgs.forEach((qm: any) => {
+            const qp = profilesMap.get(qm.user_id);
+            const q_user_profile = qp
+              ? {
+                  id: qp.id,
+                  name: qp.name,
+                  email: qp.email,
+                  role: qp.role,
+                  photo_url: qp.photo_url,
+                  bio: qp.bio,
+                  niche: qp.niche,
+                  company: qp.company,
+                  links: {
+                    twitter: qp.twitter_link ?? null,
+                    linkedin: qp.linkedin_link ?? null,
+                    instagram: qp.instagram_link ?? null,
+                    github: qp.github_link ?? null,
+                    website: qp.website_link ?? null,
+                  },
+                }
+              : { name: 'Unknown User' };
+
+            quotedMessagesMap.set(qm.id, { ...qm, user_profile: q_user_profile });
+          });
+        }
+      }
+
+      // Combine messages with user profiles and attach quoted_message
+      const messagesWithProfiles: ChatMessage[] = (messagesData || []).map(
+        (message: any) => {
+          const p = profilesMap.get(message.user_id);
+          const user_profile = p
+            ? {
+                id: p.id,
+                name: p.name,
+                email: p.email,
+                role: p.role,
+                photo_url: p.photo_url,
+                bio: p.bio,
+                niche: p.niche,
+                company: p.company,
+                links: {
+                  twitter: p.twitter_link ?? null,
+                  linkedin: p.linkedin_link ?? null,
+                  instagram: p.instagram_link ?? null,
+                  github: p.github_link ?? null,
+                  website: p.website_link ?? null,
+                },
+              }
+            : { name: 'Unknown User' };
+
+          const quoted_message = message.quoted_message_id
+            ? quotedMessagesMap.get(message.quoted_message_id) ?? null
+            : null;
+
+          return { ...message, user_profile, quoted_message };
+        }
+      );
 
       setMessages(messagesWithProfiles);
     } catch (error) {
@@ -146,7 +211,7 @@ export const useChat = (overrideEventId?: string) => {
           event: 'INSERT',
           schema: 'public',
           table: 'chat_messages',
-          filter: `event_id=eq.${effectiveEventId}`
+          filter: `event_id=eq.${effectiveEventId}`,
         },
         async (payload) => {
           console.log('New message received:', payload);
@@ -160,6 +225,49 @@ export const useChat = (overrideEventId?: string) => {
 
           if (profileError) {
             console.error('Error fetching profile for new message:', profileError);
+          }
+
+          // NEW: hydrate quoted message (if any)
+          let quoted_message: ChatMessage | null = null;
+          if (payload.new.quoted_message_id) {
+            const { data: qmsg } = await supabase
+              .from('chat_messages')
+              .select('*')
+              .eq('id', payload.new.quoted_message_id)
+              .single();
+
+            if (qmsg) {
+              const { data: qprofile } = await supabase
+                .from('profiles')
+                .select(
+                  'id, name, email, role, photo_url, bio, niche, company, twitter_link, linkedin_link, instagram_link, github_link, website_link'
+                )
+                .eq('id', qmsg.user_id)
+                .single();
+
+              quoted_message = {
+                ...qmsg,
+                user_profile: qprofile
+                  ? {
+                      id: qprofile.id,
+                      name: qprofile.name,
+                      email: qprofile.email,
+                      role: qprofile.role,
+                      photo_url: qprofile.photo_url,
+                      bio: qprofile.bio,
+                      niche: qprofile.niche,
+                      company: qprofile.company,
+                      links: {
+                        twitter: qprofile.twitter_link ?? null,
+                        linkedin: qprofile.linkedin_link ?? null,
+                        instagram: qprofile.instagram_link ?? null,
+                        github: qprofile.github_link ?? null,
+                        website: qprofile.website_link ?? null,
+                      },
+                    }
+                  : { name: 'Unknown User' },
+              } as ChatMessage;
+            }
           }
 
           const newMessage = {
@@ -182,11 +290,11 @@ export const useChat = (overrideEventId?: string) => {
                     website: profileData.website_link ?? null,
                   },
                 }
-              : { name: 'Unknown User' }
+              : { name: 'Unknown User' },
+            quoted_message, // NEW
           } as ChatMessage;
 
-          console.log('Adding new message to state:', newMessage);
-          setMessages(prev => [...prev, newMessage]);
+          setMessages((prev) => [...prev, newMessage]);
         }
       )
       .on(

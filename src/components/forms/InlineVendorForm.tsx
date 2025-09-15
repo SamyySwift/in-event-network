@@ -53,6 +53,18 @@ interface InlineVendorFormProps {
   onSubmitted?: () => void;
 }
 
+// Add a tiny helper to safely parse JSON-ish columns
+const parseMaybeJSON = <T,>(val: any, fallback: T): T => {
+  try {
+    if (val == null) return fallback;
+    if (typeof val === 'string') return JSON.parse(val) as T;
+    if (typeof val === 'object') return (val as T);
+    return fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 export const InlineVendorForm: React.FC<InlineVendorFormProps> = ({ formId, onSubmitted }) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -83,12 +95,18 @@ export const InlineVendorForm: React.FC<InlineVendorFormProps> = ({ formId, onSu
         const mappedFields = (formData.vendor_form_fields || [])
           .sort((a: any, b: any) => (a.field_order ?? 0) - (b.field_order ?? 0))
           .map((ff: any) => {
-            const t = ff.field_type as VendorFormType['fields'][number]['type'];
+            // Normalize field types to the inline renderer's union
+            const rawType = ff.field_type as string;
+            const normalizedType = rawType === 'checkboxes' ? 'checkbox' : rawType;
             const supportedTypes: VendorFormType['fields'][number]['type'][] = [
               'text', 'textarea', 'email', 'phone', 'url', 'number', 'date',
               'select', 'checkbox', 'radio', 'file', 'rating', 'address', 'currency'
             ];
-            const safeType = supportedTypes.includes(t) ? t : 'text';
+            const safeType = supportedTypes.includes(normalizedType as any) ? (normalizedType as any) : 'text';
+
+            // Parse DB columns that may be JSON strings or objects
+            const options = parseMaybeJSON<string[]>(ff.field_options, []);
+            const validation = parseMaybeJSON<Record<string, any>>(ff.validation_rules, {});
 
             return {
               id: ff.field_id,
@@ -96,8 +114,8 @@ export const InlineVendorForm: React.FC<InlineVendorFormProps> = ({ formId, onSu
               type: safeType,
               required: ff.is_required,
               placeholder: ff.placeholder || '',
-              options: Array.isArray(ff.options) ? ff.options : [],
-              validation: ff.validation || {},
+              options,
+              validation,
             };
           });
 
@@ -139,20 +157,25 @@ export const InlineVendorForm: React.FC<InlineVendorFormProps> = ({ formId, onSu
         const mappedFields = (formData.vendor_form_fields || [])
           .sort((a: any, b: any) => (a.field_order ?? 0) - (b.field_order ?? 0))
           .map((ff: any) => {
-            const t = ff.field_type as VendorFormType['fields'][number]['type'];
+            const rawType = ff.field_type as string;
+            const normalizedType = rawType === 'checkboxes' ? 'checkbox' : rawType;
             const supportedTypes: VendorFormType['fields'][number]['type'][] = [
               'text', 'textarea', 'email', 'phone', 'url', 'number', 'date',
               'select', 'checkbox', 'radio', 'file', 'rating', 'address', 'currency'
             ];
-            const safeType = supportedTypes.includes(t) ? t : 'text';
+            const safeType = supportedTypes.includes(normalizedType as any) ? (normalizedType as any) : 'text';
+
+            const options = parseMaybeJSON<string[]>(ff.field_options, []);
+            const validation = parseMaybeJSON<Record<string, any>>(ff.validation_rules, {});
+
             return {
               id: ff.field_id,
               label: ff.label,
               type: safeType,
               required: ff.is_required,
               placeholder: ff.placeholder || '',
-              options: Array.isArray(ff.options) ? ff.options : [],
-              validation: ff.validation || {},
+              options,
+              validation,
             };
           });
   

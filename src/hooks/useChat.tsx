@@ -41,6 +41,7 @@ export const useChat = (overrideEventId?: string) => {
   const { toast } = useToast();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
+  const [participantPoints, setParticipantPoints] = useState<Record<string, number>>({});
 
   const effectiveEventId = overrideEventId ?? currentEventId;
 
@@ -180,6 +181,27 @@ export const useChat = (overrideEventId?: string) => {
         return { ...message, user_profile, quoted_message };
       });
 
+      // Fetch points for all users in this chat/event and build a map
+      type ChatPointsRow = { user_id: string; points: number };
+
+      const basePointsQuery =
+        (supabase.from('chat_participation_points' as any) as any)
+          .select('user_id, points')
+          .eq('event_id', effectiveEventId);
+
+      const { data: pointsRows, error: pointsErr } = userIds.length
+        ? await basePointsQuery.in('user_id', userIds as string[])
+        : await basePointsQuery;
+
+      if (pointsErr) {
+        console.error('Error fetching chat points:', pointsErr);
+      }
+
+      const pointsMap: Record<string, number> = {};
+      (pointsRows as ChatPointsRow[] | null)?.forEach((r) => {
+        pointsMap[r.user_id] = r.points;
+      });
+      setParticipantPoints(pointsMap);
       setMessages(messagesWithProfiles);
     } catch (error) {
       console.error('Error in fetchMessages:', error);
@@ -381,5 +403,6 @@ export const useChat = (overrideEventId?: string) => {
     loading,
     sendMessage,
     deleteMessage,
+    participantPoints,
   };
 };

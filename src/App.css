@@ -123,3 +123,27 @@
 .dom-fix * {
   position: relative;
 }
+
+/* Fire glow for 1000+ points */
+.fire-glow {
+  box-shadow: 0 0 10px rgba(255, 94, 0, 0.5), 0 0 20px rgba(255, 94, 0, 0.4);
+  animation: firePulse 2.2s ease-in-out infinite;
+  border: 1px solid rgba(255, 94, 0, 0.5);
+}
+@keyframes firePulse {
+  0% { box-shadow: 0 0 6px rgba(255,94,0,.35), 0 0 12px rgba(255,94,0,.25); }
+  50% { box-shadow: 0 0 18px rgba(255,94,0,.60), 0 0 32px rgba(255,94,0,.45); }
+  100% { box-shadow: 0 0 6px rgba(255,94,0,.35), 0 0 12px rgba(255,94,0,.25); }
+}
+
+/* Diamond MVP glow for 2500+ points */
+.diamond-glow {
+  position: relative;
+  box-shadow: 0 0 12px rgba(0, 255, 255, 0.5), 0 0 24px rgba(0, 200, 255, 0.35);
+  border: 1px solid rgba(0, 200, 255, 0.5);
+  animation: diamondSparkle 2.5s ease-in-out infinite;
+}
+@keyframes diamondSparkle {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(0,255,255,.35)); }
+  50% { filter: drop-shadow(0 0 18px rgba(0,255,255,.75)); }
+}

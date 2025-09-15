@@ -17,6 +17,7 @@ interface ChatMessageProps {
   onConnect?: (userId: string) => void;
   onMessage?: (userId: string, userName: string, userPhoto?: string) => void;
   onDelete?: (id: string) => void | Promise<void>;
+  points?: number;
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -26,6 +27,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   onConnect,
   onMessage,
   onDelete,
+  points,
 }) => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const timeAgo = formatDistanceToNow(new Date(message.created_at), {

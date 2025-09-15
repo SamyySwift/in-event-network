@@ -418,6 +418,27 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_participation_points: {
+        Row: {
+          event_id: string;
+          user_id: string;
+          points: number;
+          updated_at: string;
+        };
+        Insert: {
+          event_id: string;
+          user_id: string;
+          points?: number;
+          updated_at?: string;
+        };
+        Update: {
+          event_id?: string;
+          user_id?: string;
+          points?: number;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       conversations: {

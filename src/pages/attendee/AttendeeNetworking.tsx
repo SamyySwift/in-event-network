@@ -33,6 +33,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+// imports (top of file)
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -52,7 +53,8 @@ import { useUserPresence } from "@/hooks/useUserPresence";
 import { useConnectionRequests } from "@/hooks/useConnectionRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "react-router-dom";
-import TopicsBoard from "@/components/topics/TopicsBoard";
+// Remove this import because Topics now renders inside ChatRoom
+// import TopicsBoard from "@/components/topics/TopicsBoard";
 
 const AttendeeNetworking = () => {
   const navigate = useNavigate();
@@ -136,7 +138,13 @@ const AttendeeNetworking = () => {
   React.useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tabParam = params.get("tab");
-    const allowedTabs = new Set(["people", "connections", "topics", "chats", "messages"]);
+    const allowedTabs = new Set([
+      "people",
+      "connections",
+      "topics",
+      "chats",
+      "messages",
+    ]);
 
     if (tabParam && allowedTabs.has(tabParam)) {
       setActiveTab(tabParam);
@@ -402,15 +410,17 @@ const AttendeeNetworking = () => {
                   </span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {profile.tags.slice(0, 3).map((tag: string, index: number) => (
-                    <Badge
-                      key={index}
-                      variant="outline"
-                      className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700 text-xs"
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
+                  {profile.tags
+                    .slice(0, 3)
+                    .map((tag: string, index: number) => (
+                      <Badge
+                        key={index}
+                        variant="outline"
+                        className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700 text-xs"
+                      >
+                        {tag}
+                      </Badge>
+                    ))}
                   {profile.tags.length > 3 && (
                     <Badge
                       variant="outline"
@@ -674,10 +684,12 @@ const AttendeeNetworking = () => {
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
-          <TabsList className="grid grid-cols-5 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl p-1 shadow-lg">
+          <TabsList className="grid grid-cols-4 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl p-1 shadow-lg">
             <TabsTrigger
               value="people"
-              className={`data-[state=active]:bg-white data-[state=active]:shadow ${activeTab === "people" ? "" : ""}`}
+              className={`data-[state=active]:bg-white data-[state=active]:shadow ${
+                activeTab === "people" ? "" : ""
+              }`}
             >
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
@@ -686,25 +698,21 @@ const AttendeeNetworking = () => {
             </TabsTrigger>
             <TabsTrigger
               value="connections"
-              className={`data-[state=active]:bg-white data-[state=active]:shadow ${activeTab === "connections" ? "" : ""}`}
+              className={`data-[state=active]:bg-white data-[state=active]:shadow ${
+                activeTab === "connections" ? "" : ""
+              }`}
             >
               <div className="flex items-center gap-2">
                 <Heart className="h-4 w-4" />
                 <span>Connections</span>
               </div>
             </TabsTrigger>
-            <TabsTrigger
-              value="topics"
-              className={`data-[state=active]:bg-white data-[state=active]:shadow ${activeTab === "topics" ? "" : ""}`}
-            >
-              <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4" />
-                <span>Topics</span>
-              </div>
-            </TabsTrigger>
+            {/* Topics tab trigger removed */}
             <TabsTrigger
               value="chats"
-              className={`data-[state=active]:bg-white data-[state=active]:shadow ${activeTab === "chats" ? "" : ""}`}
+              className={`data-[state=active]:bg-white data-[state=active]:shadow ${
+                activeTab === "chats" ? "" : ""
+              }`}
             >
               <div className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
@@ -713,7 +721,9 @@ const AttendeeNetworking = () => {
             </TabsTrigger>
             <TabsTrigger
               value="messages"
-              className={`data-[state=active]:bg-white data-[state=active]:shadow ${activeTab === "messages" ? "" : ""}`}
+              className={`data-[state=active]:bg-white data-[state=active]:shadow ${
+                activeTab === "messages" ? "" : ""
+              }`}
             >
               <div className="flex items-center gap-2">
                 <Send className="h-4 w-4" />
@@ -875,12 +885,7 @@ const AttendeeNetworking = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="topics" className="space-y-8">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
-            <TopicsBoard />
-          </div>
-        </TabsContent>
-
+        {/* Messages */}
         <TabsContent value="messages" className="mt-6">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 h-[600px] flex flex-col">
             {selectedConversation ? (
@@ -897,5 +902,4 @@ const AttendeeNetworking = () => {
     </>
   );
 };
-
 export default AttendeeNetworking;

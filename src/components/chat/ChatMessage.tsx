@@ -89,6 +89,17 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     message.user_profile?.role === "host" ||
     message.user_profile?.role === "admin";
 
+  // NEW: basic image URL detector
+  const isImageUrl = (s: string) => {
+    if (!s) return false;
+    try {
+      const url = new URL(s);
+      return /\.(png|jpe?g|gif|webp|svg)$/i.test(url.pathname);
+    } catch {
+      return false;
+    }
+  };
+
   return (
     <>
       <div className={`flex gap-3 ${isOwn ? "flex-row-reverse" : ""} group`}>
@@ -156,9 +167,26 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 : "transform 150ms ease",
             }}
           >
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">
-              {message.content}
-            </p>
+            {isImageUrl(message.content) ? (
+              <a
+                href={message.content}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`block ${isOwn ? "ml-auto" : ""}`}
+                title="Open image in new tab"
+              >
+                <img
+                  src={message.content}
+                  alt="Shared image"
+                  className="max-h-64 max-w-full rounded-md border border-gray-200 dark:border-gray-700 object-contain bg-white"
+                  loading="lazy"
+                />
+              </a>
+            ) : (
+              <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                {message.content}
+              </p>
+            )}
 
             {/* Quote Button (allow quoting any message) */}
             {onQuote && (
@@ -175,7 +203,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 <Quote className="h-4 w-4" />
               </Button>
             )}
-
             {/* Delete Button (owner/host) */}
             {canDelete && onDelete && (
               <Button

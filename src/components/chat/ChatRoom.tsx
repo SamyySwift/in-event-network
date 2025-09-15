@@ -1,6 +1,7 @@
 
+// ChatRoom component
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, MessageCircle, AlertCircle } from 'lucide-react'; // swapped User for MessageCircle
+import { Send, MessageCircle, AlertCircle, Sparkles, Image as ImageIcon, Loader2 } from 'lucide-react'; // add Image + Loader2
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,6 +13,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
 import { ChatMessage } from './ChatMessage';
 import { QuotedMessage } from './QuotedMessage';
+import TopicsBoard from '@/components/topics/TopicsBoard'; // added TopicsBoard import
+import { supabase } from '@/integrations/supabase/client'; // NEW
+import { useToast } from '@/hooks/use-toast'; // NEW
 
 const ChatRoom = ({ eventId }: { eventId?: string }) => {
   const { currentUser } = useAuth();
@@ -23,6 +27,11 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const previousMessageCount = useRef(messages.length);
+  const { toast } = useToast(); // NEW
+
+  // NEW: image upload state + ref
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -70,6 +79,100 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
     }
   };
 
+  // NEW: image upload handler
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const allowed = [
+      'image/png',
+      'image/jpeg',
+      'image/jpg',
+      'image/gif',
+      'image/webp',
+      'image/svg+xml',
+    ];
+    const maxBytes = 10 * 1024 * 1024; // 10MB
+
+    if (!allowed.includes(file.type)) {
+      toast({
+        title: 'Unsupported file type',
+        description: 'Please upload a PNG, JPG, GIF, WEBP, or SVG image.',
+        variant: 'destructive',
+      });
+      e.target.value = '';
+      return;
+    }
+    if (file.size > maxBytes) {
+      toast({
+        title: 'File too large',
+        description: 'Please upload an image under 10MB.',
+        variant: 'destructive',
+      });
+      e.target.value = '';
+      return;
+    }
+
+    const activeEventId = eventId ?? currentEventId;
+    if (!activeEventId || !currentUser?.id) {
+      toast({
+        title: 'Cannot upload',
+        description: 'You must be in an event and logged in to share images.',
+        variant: 'destructive',
+      });
+      e.target.value = '';
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+
+      const ext = (file.name.split('.').pop() || 'png').toLowerCase();
+      const path = `chat-uploads/${activeEventId}/${currentUser.id}/${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('chat-uploads')
+        .upload(path, file, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: file.type,
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage.from('chat-uploads').getPublicUrl(path);
+      const publicUrl = data.publicUrl;
+
+      await sendMessage(publicUrl, quotedMessage?.id);
+
+      toast({
+        title: 'Image shared',
+        description: 'Your image has been uploaded to the chat.',
+      });
+
+      // reset quoted reply if any
+      setQuotedMessage(null);
+
+      // force scroll to bottom
+      setIsUserScrolling(false);
+      setTimeout(scrollToBottom, 100);
+    } catch (err) {
+      console.error('Image upload failed:', err);
+      toast({
+        title: 'Upload failed',
+        description: 'Please try again or choose a smaller image.',
+        variant: 'destructive',
+      });
+    } finally {
+      setUploadingImage(false);
+      if (e.target) e.target.value = '';
+    }
+  };
+
+  // NEW: mobile view toggle for Chat vs Topics
+  const [mobileView, setMobileView] = useState<'chat' | 'topics'>('chat');
+  const isAdminOverride = !!eventId;
+
   // Show message if user hasn't joined an event (unless eventId override provided)
   if (!eventId && (!hasJoinedEvent || !currentEventId)) {
     return (
@@ -85,21 +188,8 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
       </Card>
     );
   }
-
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex justify-center items-center h-32">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-connect-600"></div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
-    <Card className="h-[600px] flex flex-col">
+    <Card className="h-[70vh] md:h-[600px] flex flex-col"> {/* was h-[600px], now responsive */}
       {/* New Stylish Header */}
       <div className="flex flex-col items-center p-4 border-b bg-gradient-to-r from-primary-50 via-white to-primary-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 rounded-t-md">
         <div className="flex items-center gap-3">
@@ -109,79 +199,149 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
         <div className="mt-2">
           <Badge variant="secondary" className="text-xs font-medium">{messages.length} messages</Badge>
         </div>
-      </div>
 
-      <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
-        {/* Messages Area with Custom Scroll Implementation */}
-        <div 
-          ref={scrollAreaRef}
-          className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 scroll-smooth"
-          style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--border)) transparent' }}
-          onScroll={handleScroll}
-        >
-          <div className="p-4 space-y-3 min-h-full">
-            {messages.length === 0 ? (
-              <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No messages yet. Start the conversation with your fellow attendees!</p>
-              </div>
-            ) : (
-              messages.map((message) => (
-                <ChatMessage
-                  key={message.id}
-                  message={message}
-                  isOwn={message.user_id === currentUser?.id}
-                  onQuote={handleQuoteMessage}
-                  onDelete={(id) => deleteMessage(id)}
-                />
-              ))
-            )}
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
-
-        {/* Quote Preview */}
-        {quotedMessage && (
-          <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border-t">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                Replying to {quotedMessage.user_profile?.name}
-              </span>
+        {/* NEW: Mobile toggle (hidden on md+) */}
+        {!isAdminOverride && (
+          <div className="mt-3 md:hidden">
+            <div className="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
               <Button
                 size="sm"
-                variant="ghost"
-                onClick={() => setQuotedMessage(null)}
-                className="h-6 w-6 p-0"
+                variant={mobileView === 'chat' ? 'default' : 'ghost'}
+                className={`rounded-none ${mobileView === 'chat' ? 'bg-connect-600 text-white' : ''}`}
+                onClick={() => setMobileView('chat')}
               >
-                ×
+                Chat
+              </Button>
+              <Button
+                size="sm"
+                variant={mobileView === 'topics' ? 'default' : 'ghost'}
+                className={`rounded-none ${mobileView === 'topics' ? 'bg-connect-600 text-white' : ''}`}
+                onClick={() => setMobileView('topics')}
+              >
+                Topics
               </Button>
             </div>
-            <QuotedMessage message={quotedMessage} compact />
           </div>
         )}
+      </div>
 
-        {/* Message Input */}
-        <div className="p-4 border-t bg-white dark:bg-gray-800">
-          <div className="flex gap-2">
-            <Input
-              value={newMessage}
-              onChange={(e) => setNewMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder="Type your message..."
-              className="flex-1"
-              maxLength={500}
-            />
-            <Button 
-              onClick={handleSendMessage}
-              disabled={!newMessage.trim()}
-              className="bg-connect-600 hover:bg-connect-700"
+      <CardContent className="flex-1 flex flex-col p-0 overflow-hidden min-h-0">
+        {/* NEW: Responsive layout - grid on md+, toggled on mobile */}
+        <div className="flex-1 flex flex-col md:grid md:grid-cols-3 md:divide-x md:divide-gray-200 dark:md:divide-gray-700 min-h-0">
+          {/* Chat Column */}
+          <div className={`flex-1 flex flex-col ${mobileView === 'chat' ? 'block' : 'hidden'} md:flex md:col-span-2 min-h-0`}>
+            {/* Messages Area with Custom Scroll Implementation */}
+            <div 
+              ref={scrollAreaRef}
+              className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 scroll-smooth"
+              style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--border)) transparent' }}
+              onScroll={handleScroll}
             >
-              <Send className="h-4 w-4" />
-            </Button>
+              <div className="p-4 space-y-3 min-h-full">
+                {messages.length === 0 ? (
+                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                    <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No messages yet. Start the conversation with your fellow attendees!</p>
+                  </div>
+                ) : (
+                  messages.map((message) => (
+                    <ChatMessage
+                      key={message.id}
+                      message={message}
+                      isOwn={message.user_id === currentUser?.id}
+                      onQuote={handleQuoteMessage}
+                      onDelete={(id) => deleteMessage(id)}
+                    />
+                  ))
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+            </div>
+
+            {/* Quote Preview */}
+            {quotedMessage && (
+              <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border-t">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                    Replying to {quotedMessage.user_profile?.name}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setQuotedMessage(null)}
+                    className="h-6 w-6 p-0"
+                  >
+                    ×
+                  </Button>
+                </div>
+                <QuotedMessage message={quotedMessage} compact />
+              </div>
+            )}
+
+            {/* Message Input */}
+            <div className="p-4 border-t bg-white dark:bg-gray-800">
+              <div className="flex gap-2">
+                {/* NEW: Upload image button + hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,image/svg+xml"
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingImage}
+                  className="shrink-0"
+                  title="Upload image"
+                  aria-label="Upload image"
+                >
+                  {uploadingImage ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <ImageIcon className="h-4 w-4" />
+                  )}
+                </Button>
+
+                <Input
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Type your message..."
+                  className="flex-1"
+                  maxLength={500}
+                />
+                <Button 
+                  onClick={handleSendMessage}
+                  disabled={!newMessage.trim()}
+                  className="bg-connect-600 hover:bg-connect-700"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                Press Enter to send • {newMessage.length}/500
+              </div>
+            </div>
           </div>
-          <div className="text-xs text-gray-500 mt-1">
-            Press Enter to send • {newMessage.length}/500
-          </div>
+
+          {/* Topics Column (hidden for Admin override to avoid context mismatch) */}
+          {!isAdminOverride && (
+            <div className={`flex-1 ${mobileView === 'topics' ? 'block' : 'hidden'} md:block md:col-span-1 bg-white dark:bg-gray-800 min-h-0`}>
+              <div className="h-full flex flex-col">
+                {/* Desktop header for topics */}
+                <div className="hidden md:flex items-center gap-2 p-4 border-b bg-white dark:bg-gray-800">
+                  <Sparkles className="h-5 w-5 text-connect-600 dark:text-connect-300" />
+                  <span className="font-semibold text-gray-900 dark:text-white">Topics</span>
+                </div>
+                <div className="flex-1 overflow-y-auto p-4">
+                  <TopicsBoard />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

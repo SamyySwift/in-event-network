@@ -31,17 +31,36 @@ interface TicketData {
 export const convertToCSV = (data: any[], headers: string[]): string => {
   const csvContent = [
     headers.join(','),
-    ...data.map(row => 
+    ...data.map(row =>
       headers.map(header => {
-        const value = row[header] || '';
+        const raw = row[header];
+        // Normalize values:
+        // - null/undefined -> ''
+        // - arrays -> semicolon-joined string
+        // - objects -> JSON string
+        // - booleans -> 'true'/'false'
+        // - numbers/strings -> String(value)
+        let normalized: string;
+        if (raw === null || raw === undefined) {
+          normalized = '';
+        } else if (Array.isArray(raw)) {
+          normalized = raw.join('; ');
+        } else if (typeof raw === 'object') {
+          normalized = JSON.stringify(raw);
+        } else if (typeof raw === 'boolean') {
+          normalized = raw ? 'true' : 'false';
+        } else {
+          normalized = String(raw);
+        }
+
         // Escape commas and quotes in CSV
-        return typeof value === 'string' && (value.includes(',') || value.includes('"')) 
-          ? `"${value.replace(/"/g, '""')}"` 
-          : value;
+        return (normalized.includes(',') || normalized.includes('"'))
+          ? `"${normalized.replace(/"/g, '""')}"`
+          : normalized;
       }).join(',')
     )
   ].join('\n');
-  
+
   return csvContent;
 };
 

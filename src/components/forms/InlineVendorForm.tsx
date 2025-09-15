@@ -6,6 +6,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Loader2, CheckCircle } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Star } from 'lucide-react';
 
 type VendorFormType = {
   id: string;
@@ -16,9 +20,31 @@ type VendorFormType = {
   fields: {
     id: string;
     label: string;
-    type: 'text' | 'textarea' | 'email' | 'phone';
+    type:
+      | 'text'
+      | 'textarea'
+      | 'email'
+      | 'phone'
+      | 'url'
+      | 'number'
+      | 'date'
+      | 'select'
+      | 'checkbox'
+      | 'radio'
+      | 'file'
+      | 'rating'
+      | 'address'
+      | 'currency';
     required: boolean;
     placeholder?: string;
+    options?: string[];
+    validation?: {
+      min?: number;
+      max?: number;
+      minLength?: number;
+      maxLength?: number;
+      fileTypes?: string[];
+    };
   }[];
 };
 
@@ -31,7 +57,7 @@ export const InlineVendorForm: React.FC<InlineVendorFormProps> = ({ formId, onSu
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState<VendorFormType | null>(null);
-  const [responses, setResponses] = useState<Record<string, string>>({});
+  const [responses, setResponses] = useState<Record<string, any>>({});
   const [submitting, setSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -58,11 +84,11 @@ export const InlineVendorForm: React.FC<InlineVendorFormProps> = ({ formId, onSu
           .sort((a: any, b: any) => (a.field_order ?? 0) - (b.field_order ?? 0))
           .map((ff: any) => {
             const t = ff.field_type as VendorFormType['fields'][number]['type'];
-            // If this Inline form only supports a subset, fallback unknowns to 'text'
-            const safeType =
-              t === 'text' || t === 'textarea' || t === 'email' || t === 'phone'
-                ? t
-                : 'text';
+            const supportedTypes: VendorFormType['fields'][number]['type'][] = [
+              'text', 'textarea', 'email', 'phone', 'url', 'number', 'date',
+              'select', 'checkbox', 'radio', 'file', 'rating', 'address', 'currency'
+            ];
+            const safeType = supportedTypes.includes(t) ? t : 'text';
 
             return {
               id: ff.field_id,
@@ -70,6 +96,8 @@ export const InlineVendorForm: React.FC<InlineVendorFormProps> = ({ formId, onSu
               type: safeType,
               required: ff.is_required,
               placeholder: ff.placeholder || '',
+              options: Array.isArray(ff.options) ? ff.options : [],
+              validation: ff.validation || {},
             };
           });
 
@@ -112,16 +140,19 @@ export const InlineVendorForm: React.FC<InlineVendorFormProps> = ({ formId, onSu
           .sort((a: any, b: any) => (a.field_order ?? 0) - (b.field_order ?? 0))
           .map((ff: any) => {
             const t = ff.field_type as VendorFormType['fields'][number]['type'];
-            const safeType =
-              t === 'text' || t === 'textarea' || t === 'email' || t === 'phone'
-                ? t
-                : 'text';
+            const supportedTypes: VendorFormType['fields'][number]['type'][] = [
+              'text', 'textarea', 'email', 'phone', 'url', 'number', 'date',
+              'select', 'checkbox', 'radio', 'file', 'rating', 'address', 'currency'
+            ];
+            const safeType = supportedTypes.includes(t) ? t : 'text';
             return {
               id: ff.field_id,
               label: ff.label,
               type: safeType,
               required: ff.is_required,
               placeholder: ff.placeholder || '',
+              options: Array.isArray(ff.options) ? ff.options : [],
+              validation: ff.validation || {},
             };
           });
   
@@ -163,8 +194,40 @@ export const InlineVendorForm: React.FC<InlineVendorFormProps> = ({ formId, onSu
     };
   }, [formId]);
 
-  const setValue = (id: string, value: string) => {
+  const setValue = (id: string, value: any) => {
     setResponses(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleFileUpload = async (fieldId: string, file: File | null) => {
+    if (!file) {
+      setValue(fieldId, '');
+      return;
+    }
+
+    try {
+      const ext = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const filePath = `vendor-uploads/${formId}/${fileName}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('media')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('media')
+        .getPublicUrl(filePath);
+
+      setValue(fieldId, publicUrl);
+    } catch (e) {
+      console.error('File upload failed:', e);
+      toast({
+        title: 'Upload Error',
+        description: 'Failed to upload file. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   const validate = () => {
@@ -243,26 +306,181 @@ export const InlineVendorForm: React.FC<InlineVendorFormProps> = ({ formId, onSu
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
       {form.fields.map(field => {
-        const value = responses[field.id] || '';
+        const value = responses[field.id] ?? (field.type === 'checkbox' ? [] : '');
+
         return (
           <div key={field.id} className="space-y-1">
-            <label className="text-xs font-medium text-gray-700">{field.label}{field.required && ' *'}</label>
-            {field.type === 'textarea' ? (
-              <Textarea
-                value={value}
-                onChange={(e) => setValue(field.id, e.target.value)}
-                placeholder={field.placeholder}
-                required={field.required}
-              />
-            ) : (
-              <Input
-                type={field.type === 'phone' ? 'tel' : field.type}
-                value={value}
-                onChange={(e) => setValue(field.id, e.target.value)}
-                placeholder={field.placeholder}
-                required={field.required}
-              />
-            )}
+            <label className="text-xs font-medium text-gray-700">
+              {field.label}{field.required && ' *'}
+            </label>
+
+            {(() => {
+              switch (field.type) {
+                case 'textarea':
+                case 'address':
+                  return (
+                    <Textarea
+                      value={String(value)}
+                      onChange={(e) => setValue(field.id, e.target.value)}
+                      placeholder={field.placeholder}
+                      required={field.required}
+                      rows={field.type === 'address' ? 3 : undefined}
+                    />
+                  );
+
+                case 'select':
+                  return (
+                    <Select
+                      value={String(value)}
+                      onValueChange={(val) => setValue(field.id, val)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={field.placeholder || 'Select an option'} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {field.options?.map((option, idx) => {
+                          const clean = (option ?? '').toString().trim();
+                          const valueSafe = clean || `option_${idx + 1}`;
+                          const labelSafe = clean || `Option ${idx + 1}`;
+                          return (
+                            <SelectItem key={`${valueSafe}_${idx}`} value={valueSafe}>
+                              {labelSafe}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                  );
+
+                case 'radio':
+                  return (
+                    <RadioGroup
+                      value={String(value)}
+                      onValueChange={(val) => setValue(field.id, val)}
+                      required={field.required}
+                    >
+                      {field.options?.map((option, i) => {
+                        const clean = (option ?? '').toString().trim();
+                        const valueSafe = clean || `option_${i + 1}`;
+                        const labelSafe = clean || `Option ${i + 1}`;
+                        return (
+                          <div key={`${valueSafe}_${i}`} className="flex items-center space-x-2">
+                            <RadioGroupItem value={valueSafe} id={`${field.id}-${i}`} />
+                            <label htmlFor={`${field.id}-${i}`} className="text-sm">{labelSafe}</label>
+                          </div>
+                        );
+                      })}
+                    </RadioGroup>
+                  );
+
+                case 'checkbox': {
+                  const current: string[] = Array.isArray(value) ? value : [];
+                  return (
+                    <div className="space-y-2">
+                      {field.options?.map((option, i) => {
+                        const clean = (option ?? '').toString().trim();
+                        const valueSafe = clean || `option_${i + 1}`;
+                        const labelSafe = clean || `Option ${i + 1}`;
+                        const checked = current.includes(valueSafe);
+                        return (
+                          <div key={`${valueSafe}_${i}`} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`${field.id}-${i}`}
+                              checked={checked}
+                              onCheckedChange={(isChecked) => {
+                                const next = isChecked
+                                  ? [...current, valueSafe]
+                                  : current.filter(v => v !== valueSafe);
+                                setValue(field.id, next);
+                              }}
+                            />
+                            <label htmlFor={`${field.id}-${i}`} className="text-sm">{labelSafe}</label>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                }
+
+                case 'file': {
+                  const accept = field.validation?.fileTypes?.map(t => `.${t}`).join(',') || undefined;
+                  return (
+                    <Input
+                      type="file"
+                      accept={accept}
+                      onChange={(e) => {
+                        const f = e.target.files?.[0] || null;
+                        void handleFileUpload(field.id, f);
+                      }}
+                    />
+                  );
+                }
+
+                case 'rating': {
+                  const ratingValue = typeof value === 'number' ? value : 0;
+                  return (
+                    <div className="flex space-x-1">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          className={`h-6 w-6 cursor-pointer transition-colors ${
+                            star <= ratingValue ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                          }`}
+                          onClick={() => setValue(field.id, star)}
+                        />
+                      ))}
+                    </div>
+                  );
+                }
+
+                case 'date':
+                  return (
+                    <Input
+                      type="date"
+                      value={String(value)}
+                      onChange={(e) => setValue(field.id, e.target.value)}
+                      required={field.required}
+                    />
+                  );
+
+                case 'number':
+                case 'currency':
+                  return (
+                    <Input
+                      type="number"
+                      value={String(value)}
+                      onChange={(e) => setValue(field.id, e.target.value)}
+                      placeholder={field.placeholder}
+                      required={field.required}
+                      step={field.type === 'currency' ? '0.01' : undefined}
+                    />
+                  );
+
+                case 'url':
+                  return (
+                    <Input
+                      type="url"
+                      value={String(value)}
+                      onChange={(e) => setValue(field.id, e.target.value)}
+                      placeholder={field.placeholder}
+                      required={field.required}
+                    />
+                  );
+
+                default:
+                  return (
+                    <Input
+                      type={field.type === 'phone' ? 'tel' : (field.type as any)}
+                      value={String(value)}
+                      onChange={(e) => setValue(field.id, e.target.value)}
+                      placeholder={field.placeholder}
+                      required={field.required}
+                      minLength={field.validation?.minLength}
+                      maxLength={field.validation?.maxLength}
+                    />
+                  );
+              }
+            })()}
           </div>
         );
       })}
@@ -275,4 +493,4 @@ export const InlineVendorForm: React.FC<InlineVendorFormProps> = ({ formId, onSu
       </div>
     </form>
   );
-};
+}

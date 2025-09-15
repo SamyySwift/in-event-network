@@ -80,7 +80,22 @@ export default function AnnouncementCard({
         };
         fieldDefs.forEach((f) => {
           const header = (f.label || f.field_id || '').trim() || f.field_id;
-          row[header] = (s as any).responses?.[f.field_id] ?? '';
+          const rawVal = (s as any).responses?.[f.field_id];
+          let out: string = '';
+
+          if (Array.isArray(rawVal)) {
+            out = rawVal.join('; ');
+          } else if (rawVal !== undefined && rawVal !== null) {
+            if (typeof rawVal === 'object') {
+              out = JSON.stringify(rawVal);
+            } else if (typeof rawVal === 'boolean') {
+              out = rawVal ? 'true' : 'false';
+            } else {
+              out = String(rawVal);
+            }
+          }
+
+          row[header] = out;
         });
         return row;
       });

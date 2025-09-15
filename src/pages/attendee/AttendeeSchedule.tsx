@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
-  Calendar,
+  Calendar as CalendarIcon,
   Clock,
   MapPin,
   User,
@@ -27,7 +27,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ScheduleItemModal from "@/components/schedule/ScheduleItemModal";
 import { useAttendeeSpeakers } from "@/hooks/useAttendeeSpeakers";
 import { useAttendeeContext } from "@/hooks/useAttendeeContext";
-import { format, isToday, isTomorrow, isYesterday, parseISO } from "date-fns";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format, isToday, isTomorrow, isYesterday, parseISO, isSameDay } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import XLogo from "@/components/icons/XLogo";
 import {
@@ -80,8 +81,8 @@ interface CombinedScheduleItem {
   speaker_website?: string;
   speaker_instagram?: string;
   speaker_tiktok?: string;
-  speaker_topic?: string; // Add topic field
-  speaker_title?: string; // Add speaker title field (renamed to avoid conflict)
+  speaker_topic?: string;
+  speaker_title?: string;
   priority?: string;
   image_url?: string;
   time_allocation?: string | null;
@@ -92,16 +93,13 @@ const AttendeeSchedule = () => {
   const [selectedDate, setSelectedDate] = useState<string>("today");
   const [selectedType, setSelectedType] = useState<string>("all");
   const [scheduleItems, setScheduleItems] = useState<ScheduleItem[]>([]);
-  const [combinedItems, setCombinedItems] = useState<CombinedScheduleItem[]>(
-    []
-  );
-  const [selectedItem, setSelectedItem] = useState<CombinedScheduleItem | null>(
-    null
-  );
+  const [combinedItems, setCombinedItems] = useState<CombinedScheduleItem[]>([]);
+  const [selectedItem, setSelectedItem] = useState<CombinedScheduleItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<"list" | "grid">("list");
   const [userDateInteracted, setUserDateInteracted] = useState(false);
+  const [selectedCalendarDay, setSelectedCalendarDay] = useState<Date | undefined>(undefined);
 
   const {
     speakers,
@@ -118,6 +116,7 @@ const AttendeeSchedule = () => {
   // Handle date changes with user interaction tracking
   const handleDateChange = (value: string) => {
     setSelectedDate(value);
+    setSelectedCalendarDay(undefined); // Clear calendar selection when switching tab filters
     setUserDateInteracted(true);
   };
 
@@ -220,13 +219,13 @@ const AttendeeSchedule = () => {
   useEffect(() => {
     const combined: CombinedScheduleItem[] = [];
 
-    // Add speakers with topic support - FIX: Don't duplicate bio in description
+    // Add speakers with topic support - Don't duplicate bio in description
     if (speakers && speakers.length > 0) {
       speakers.forEach((speaker) => {
         combined.push({
           id: `speaker-${speaker.id}`,
           title: speaker.session_title || "Session Topic TBA",
-          description: null, // Don't use bio as description to avoid duplication
+          description: null,
           start_time: speaker.session_time || undefined,
           start_time_full: speaker.session_time || undefined,
           location: undefined,
@@ -241,8 +240,8 @@ const AttendeeSchedule = () => {
           speaker_instagram: speaker.instagram_link,
           speaker_tiktok: speaker.tiktok_link,
           speaker_topic: speaker.topic,
-          speaker_title: speaker.title, // Add speaker title field
-          time_allocation: speaker.time_allocation, // Add time allocation from speaker
+          speaker_title: speaker.title,
+          time_allocation: speaker.time_allocation,
         });
       });
     }
@@ -275,8 +274,7 @@ const AttendeeSchedule = () => {
     combined.sort((a, b) => {
       const getStartTime = (item: CombinedScheduleItem) => {
         if (item.start_time) return new Date(item.start_time).getTime();
-        if (item.start_time_full)
-          return new Date(item.start_time_full).getTime();
+        if (item.start_time_full) return new Date(item.start_time_full).getTime();
         return 0;
       };
       return getStartTime(a) - getStartTime(b);
@@ -284,6 +282,24 @@ const AttendeeSchedule = () => {
 
     setCombinedItems(combined);
   }, [speakers, scheduleItems]);
+
+  // Dates that have at least one scheduled item (for calendar highlighting)
+  const eventDates = useMemo(() => {
+    const set = new Set<string>();
+    combinedItems.forEach((item) => {
+      const raw = item.start_time || item.start_time_full;
+      if (raw) {
+        const d = new Date(raw);
+        d.setHours(0, 0, 0, 0);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        set.add(key);
+      }
+    });
+    return Array.from(set).map((key) => {
+      const [y, m, d] = key.split("-").map(Number);
+      return new Date(y, m - 1, d);
+    });
+  }, [combinedItems]);
 
   // Enhanced filtering
   const filteredItems = combinedItems.filter((item) => {
@@ -297,12 +313,16 @@ const AttendeeSchedule = () => {
     const matchesType = selectedType === "all" || item.type === selectedType;
 
     const matchesDate = (() => {
+      const itemDateStr = item.start_time || item.start_time_full;
+      if (selectedCalendarDay) {
+        if (!itemDateStr) return false;
+        return isSameDay(new Date(itemDateStr), selectedCalendarDay);
+      }
+
       if (selectedDate === "all") return true;
+      if (!itemDateStr) return selectedDate === "tba";
 
-      const itemDate = item.start_time || item.start_time_full;
-      if (!itemDate) return selectedDate === "tba";
-
-      const date = new Date(itemDate);
+      const date = new Date(itemDateStr);
       if (selectedDate === "today") return isToday(date);
       if (selectedDate === "tomorrow") return isTomorrow(date);
       if (selectedDate === "tba") return false;
@@ -381,7 +401,7 @@ const AttendeeSchedule = () => {
       case "schedule":
         return (
           <Badge className="bg-gradient-to-r from-green-500 to-emerald-500 text-white border-0">
-            <Calendar className="w-3 h-3 mr-1" />
+            <CalendarIcon className="w-3 h-3 mr-1" />
             Event
           </Badge>
         );
@@ -437,7 +457,7 @@ const AttendeeSchedule = () => {
   const renderSocialLinks = (item: CombinedScheduleItem) => {
     if (item.type !== "speaker") return null;
 
-    const socialLinks = [];
+    const socialLinks: { platform: string; url: string }[] = [];
     if (item.speaker_twitter)
       socialLinks.push({ platform: "x", url: item.speaker_twitter });
     if (item.speaker_linkedin)
@@ -509,7 +529,7 @@ const AttendeeSchedule = () => {
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <Calendar className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+              <CalendarIcon className="h-16 w-16 mx-auto mb-4 text-gray-400" />
               <h3 className="text-xl font-semibold mb-2 text-gray-900">
                 Unable to Load Schedule
               </h3>
@@ -532,7 +552,7 @@ const AttendeeSchedule = () => {
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <Calendar className="h-16 w-16 mx-auto mb-4 text-gray-400" />
+              <CalendarIcon className="h-16 w-16 mx-auto mb-4 text-gray-400" />
               <h3 className="text-xl font-semibold mb-2 text-gray-900">
                 No Event Selected
               </h3>
@@ -571,7 +591,7 @@ const AttendeeSchedule = () => {
 
               <div className="flex flex-wrap justify-center gap-6 text-sm sm:text-base">
                 <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
-                  <Calendar className="w-5 h-5" />
+                  <CalendarIcon className="w-5 h-5" />
                   <span className="font-medium">
                     {filteredItems.length} Sessions
                   </span>
@@ -651,6 +671,31 @@ const AttendeeSchedule = () => {
                   </Tabs>
                 </div>
               </div>
+
+              {/* Calendar displaying scheduled dates */}
+              <div className="mt-6 border-t pt-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700">Calendar</span>
+                  {selectedCalendarDay && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8"
+                      onClick={() => setSelectedCalendarDay(undefined)}
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </div>
+                <CalendarComponent
+                  mode="single"
+                  selected={selectedCalendarDay}
+                  onSelect={setSelectedCalendarDay}
+                  modifiers={{ event: eventDates }}
+                  modifiersClassNames={{ event: "bg-indigo-100 text-indigo-900 font-semibold" }}
+                  className="rounded-md border"
+                />
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -660,7 +705,7 @@ const AttendeeSchedule = () => {
           {filteredItems.length === 0 ? (
             <Card className="border-0 shadow-lg">
               <CardContent className="py-16 text-center">
-                <Calendar className="h-20 w-20 mx-auto mb-6 text-gray-300" />
+                <CalendarIcon className="h-20 w-20 mx-auto mb-6 text-gray-300" />
                 <h3 className="text-2xl font-semibold mb-3 text-gray-900">
                   No sessions found
                 </h3>
@@ -685,7 +730,7 @@ const AttendeeSchedule = () => {
                     <div className="flex items-center gap-4">
                       <div className="flex-shrink-0">
                         <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
-                          <Calendar className="w-7 h-7 text-white" />
+                          <CalendarIcon className="w-7 h-7 text-white" />
                         </div>
                       </div>
                       <div>
@@ -785,7 +830,7 @@ const AttendeeSchedule = () => {
                                     <div className="flex flex-wrap items-center gap-3 text-xs lg:text-sm text-gray-500">
                                       {dateDisplay && (
                                         <div className="flex items-center gap-1">
-                                          <Calendar className="h-3 w-3 lg:h-4 lg:w-4" />
+                                          <CalendarIcon className="h-3 w-3 lg:h-4 lg:w-4" />
                                           <span>{dateDisplay}</span>
                                         </div>
                                       )}
@@ -811,19 +856,18 @@ const AttendeeSchedule = () => {
                                               {item.speaker_name.charAt(0)}
                                             </AvatarFallback>
                                           </Avatar>
-                                           <div className="flex-1 min-w-0">
-                                             <p className="font-semibold text-gray-900 text-sm lg:text-base truncate">
-                                               {item.speaker_name}
-                                             </p>
-                                             {(item.speaker_company || item.speaker_title) && (
-                                               <p className="text-xs lg:text-sm text-gray-600 truncate">
-                                                 {item.speaker_title && item.speaker_company 
-                                                   ? `${item.speaker_title} at ${item.speaker_company}`
-                                                   : item.speaker_title || item.speaker_company
-                                                 }
-                                               </p>
-                                             )}
-                                           </div>
+                                          <div className="flex-1 min-w-0">
+                                            <p className="font-semibold text-gray-900 text-sm lg:text-base truncate">
+                                              {item.speaker_name}
+                                            </p>
+                                            {(item.speaker_company || item.speaker_title) && (
+                                              <p className="text-xs lg:text-sm text-gray-600 truncate">
+                                                {item.speaker_title && item.speaker_company
+                                                  ? `${item.speaker_title} at ${item.speaker_company}`
+                                                  : item.speaker_title || item.speaker_company}
+                                              </p>
+                                            )}
+                                          </div>
                                         </div>
                                       )}
 

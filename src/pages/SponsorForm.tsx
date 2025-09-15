@@ -261,11 +261,16 @@ export default function SponsorForm() {
               <SelectValue placeholder="Select an option" />
             </SelectTrigger>
             <SelectContent>
-              {field.options?.map((option: string) => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
+              {field.options?.map((option: string, idx: number) => {
+                const clean = (option ?? '').toString().trim();
+                const valueSafe = clean || `option_${idx + 1}`;
+                const labelSafe = clean || `Option ${idx + 1}`;
+                return (
+                  <SelectItem key={`${valueSafe}_${idx}`} value={valueSafe}>
+                    {labelSafe}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         );

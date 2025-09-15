@@ -360,9 +360,16 @@ function VendorForm() {
               <SelectValue placeholder={field.placeholder || "Select an option"} />
             </SelectTrigger>
             <SelectContent>
-              {field.options?.map((option, i) => (
-                <SelectItem key={i} value={option}>{option}</SelectItem>
-              ))}
+              {field.options?.map((option, i) => {
+                const clean = (option ?? '').toString().trim();
+                const valueSafe = clean || `option_${i + 1}`;
+                const labelSafe = clean || `Option ${i + 1}`;
+                return (
+                  <SelectItem key={`${valueSafe}_${i}`} value={valueSafe}>
+                    {labelSafe}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         );

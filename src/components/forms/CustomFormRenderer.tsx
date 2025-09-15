@@ -20,7 +20,7 @@ export function CustomFormRenderer({ formFields, values, onChange, errors }: Cus
     return null;
   }
 
-  const renderField = (field: FormField) => {
+  const renderField = (field: any) => {
     const value = values[field.id] || '';
     const error = errors?.[field.id];
 
@@ -100,16 +100,24 @@ export function CustomFormRenderer({ formFields, values, onChange, errors }: Cus
 
       case 'dropdown':
         return (
-          <Select value={value} onValueChange={(newValue) => onChange(field.id, newValue)}>
-            <SelectTrigger className={error ? 'border-red-500' : ''}>
-              <SelectValue placeholder="Select an option" />
+          <Select
+            value={String(values[field.id] ?? '')}
+            onValueChange={(val) => onChange(field.id, val)}
+            required={field.is_required}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder={field.placeholder || 'Select an option'} />
             </SelectTrigger>
             <SelectContent>
-              {field.field_options?.options?.map((option) => (
-                <SelectItem key={option.id} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
+              {field.field_options?.options?.map((option: any, idx: number) => {
+                const safeValue = (option?.value ?? '').toString().trim() || option?.id || `option_${idx + 1}`;
+                const safeLabel = (option?.label ?? '').toString().trim() || `Option ${idx + 1}`;
+                return (
+                  <SelectItem key={`${safeValue}_${idx}`} value={safeValue}>
+                    {safeLabel}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         );

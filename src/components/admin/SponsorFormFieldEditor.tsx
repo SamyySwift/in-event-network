@@ -108,11 +108,12 @@ export function SponsorFormFieldEditor({ field, isOpen, onClose, onUpdate }: Spo
   };
 
   const updateOption = (id: string, label: string) => {
-    setOptions(options.map(opt => 
-      opt.id === id 
-        ? { ...opt, label, value: label.toLowerCase().replace(/\s+/g, '_') }
-        : opt
-    ));
+    setOptions(options.map(opt => {
+      if (opt.id !== id) return opt;
+      const slug = (label ?? '').toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+      const safeValue = slug || (opt.value?.toString().trim() || `option_${opt.id}`);
+      return { ...opt, label, value: safeValue };
+    }));
   };
 
   const removeOption = (id: string) => {

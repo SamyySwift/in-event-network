@@ -88,11 +88,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     {
       name: "Q&A",
       href: "/attendee/questions",
-      icon: (
-        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
-          <MessageSquare className="text-purple-500" />
-        </div>
-      ),
+      icon: <MessageSquare className="text-purple-500" />,
     },
     {
       name: "Event Facilities",

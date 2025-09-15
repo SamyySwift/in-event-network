@@ -133,8 +133,8 @@ export const useAdminPolls = (eventId?: string) => {
           require_submission: !!pollData.require_submission,
           start_time: now.toISOString(),          // added
           end_time: endTime.toISOString(),        // added
-          display_as_banner: false               // match other hook’s default
-          // created_by: currentUser.id,          // uncomment if your schema expects this
+          display_as_banner: false,               // match other hook’s default
+          created_by: currentUser.id              // ensure RLS passes
         })
         .select()
         .single();

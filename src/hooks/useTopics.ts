@@ -61,8 +61,12 @@ export const useTopics = () => {
       // 2) Attempt to create a poll for the topic (non-fatal on failure)
       let pollId: string | null = null;
       try {
-        const optionA = { id: crypto.randomUUID(), text: "👍 Interested" };
-        const optionB = { id: crypto.randomUUID(), text: "👎 Not interested" };
+        const optionA = { id: crypto.randomUUID(), text: "👍 Interested", label: "👍 Interested" };
+        const optionB = { id: crypto.randomUUID(), text: "👎 Not interested", label: "👎 Not interested" };
+
+        // Add required start/end times for polls
+        const now = new Date();
+        const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
         const { data: poll, error: pollErr } = await (supabase.from as any)("polls")
           .insert({
@@ -72,8 +76,9 @@ export const useTopics = () => {
             show_results: true,
             event_id: currentEventId,
             created_by: currentUser.id,
-            start_time: new Date().toISOString(),
-            end_time: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+            start_time: now.toISOString(),
+            end_time: endTime.toISOString(),
+            display_as_banner: false,
           } as any)
           .select("*")
           .single();
@@ -128,11 +133,68 @@ export const useTopics = () => {
     },
   });
 
+  const ensurePollForTopic = useMutation({
+    mutationFn: async (topic: Topic) => {
+      if (topic.poll_id) return topic;
+      if (!currentUser?.id || !currentEventId) {
+        throw new Error("Missing user or event context");
+      }
+
+      const optionA = { id: crypto.randomUUID(), text: "👍 Interested", label: "👍 Interested" };
+      const optionB = { id: crypto.randomUUID(), text: "👎 Not interested", label: "👎 Not interested" };
+
+      // Add required start/end times for polls
+      const now = new Date();
+      const endTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+
+      const { data: poll, error: pollErr } = await (supabase.from as any)("polls")
+        .insert({
+          question: `Vote on topic: ${topic.title}`,
+          options: [optionA, optionB] as any,
+          is_active: true,
+          show_results: true,
+          event_id: currentEventId,
+          created_by: currentUser.id,
+          start_time: now.toISOString(),
+          end_time: endTime.toISOString(),
+          display_as_banner: false,
+        } as any)
+        .select("*")
+        .single();
+
+      if (pollErr) throw pollErr;
+
+      const pollId = poll?.id ?? null;
+      if (pollId) {
+        const { error: linkErr } = await (supabase.from as any)("topics")
+          .update({ poll_id: pollId } as any)
+          .eq("id", topic.id);
+        if (linkErr) throw linkErr;
+      }
+
+      return { ...topic, poll_id: pollId } as Topic;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["topics", currentEventId] });
+      queryClient.invalidateQueries({ queryKey: ["attendee-polls"] });
+      toast({ title: "Poll created", description: "👍/👎 voting is now available." });
+    },
+    onError: (e: any) => {
+      toast({
+        title: "Could not create poll",
+        description: e?.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     topics,
     isLoading,
     createTopic: createTopic.mutateAsync,
     closing: closeTopic.isPending,
     closeTopic: closeTopic.mutateAsync,
+    ensurePollForTopic: ensurePollForTopic.mutateAsync,
+    ensuring: ensurePollForTopic.isPending,
   };
-};
+}

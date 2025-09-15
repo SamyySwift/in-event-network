@@ -14,7 +14,7 @@ type Props = {
 };
 
 const TopicsBoard: React.FC<Props> = ({ className }) => {
-  const { topics, isLoading, createTopic, closeTopic, closing } = useTopics();
+  const { topics, isLoading, createTopic, closeTopic, closing, ensurePollForTopic, ensuring } = useTopics();
   const { polls, userVotes, submitVote, isSubmitting } = useAttendeePolls();
 
   const [title, setTitle] = useState("");
@@ -157,8 +157,19 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
                       </Button>
                     </div>
                   ) : (
-                    <div className="text-sm text-gray-500">
-                      No poll linked yet.
+                    <div className="text-sm text-gray-500 flex items-center justify-between">
+                      <span>No poll linked yet.</span>
+                      {t.status === "open" ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          disabled={ensuring}
+                          onClick={() => ensurePollForTopic(t)}
+                        >
+                          {ensuring ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : null}
+                          Create poll
+                        </Button>
+                      ) : null}
                     </div>
                   )}
 
@@ -188,4 +199,3 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
 };
 
 export default TopicsBoard;
-// ... existing code ...

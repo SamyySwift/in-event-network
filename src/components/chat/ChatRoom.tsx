@@ -1,7 +1,7 @@
 
 // ChatRoom component
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, MessageCircle, AlertCircle, Sparkles, Image as ImageIcon, Loader2 } from 'lucide-react'; // add Image + Loader2
+import { Send, MessageCircle, AlertCircle, Sparkles, Image as ImageIcon, Loader2 } from 'lucide-react'; // add icons
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -79,7 +79,7 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
     }
   };
 
-  // NEW: image upload handler
+  // NEW: image upload handler (tuned for 1MB bucket and better error messages)
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -92,7 +92,8 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
       'image/webp',
       'image/svg+xml',
     ];
-    const maxBytes = 10 * 1024 * 1024; // 10MB
+    // Match your bucket limit exactly: 1,048,576 bytes (1 MB)
+    const maxBytes = 1 * 1024 * 1024;
 
     if (!allowed.includes(file.type)) {
       toast({
@@ -106,7 +107,7 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
     if (file.size > maxBytes) {
       toast({
         title: 'File too large',
-        description: 'Please upload an image under 10MB.',
+        description: 'Your bucket limit is 1MB. Please upload an image under 1MB.',
         variant: 'destructive',
       });
       e.target.value = '';
@@ -128,17 +129,31 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
       setUploadingImage(true);
 
       const ext = (file.name.split('.').pop() || 'png').toLowerCase();
-      const path = `chat-uploads/${activeEventId}/${currentUser.id}/${Date.now()}.${ext}`;
+      // Make the path relative to the bucket root: {eventId}/{userId}/filename
+      const path = `${activeEventId}/${currentUser.id}/${Date.now()}.${ext}`;
 
       const { error: uploadError } = await supabase.storage
         .from('chat-uploads')
         .upload(path, file, {
           cacheControl: '3600',
-          upsert: false,
+          upsert: true,
           contentType: file.type,
         });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        // Provide clearer errors
+        const status = (uploadError as any)?.statusCode ?? (uploadError as any)?.status;
+        if (status === 413) {
+          throw new Error('Your image exceeds the bucket file size limit (1MB).');
+        }
+        if (status === 401 || status === 403) {
+          throw new Error('No permission to upload. Ensure bucket policies allow INSERT for authenticated users.');
+        }
+        if (status === 409) {
+          throw new Error('A file with the same name already exists. Please try again.');
+        }
+        throw uploadError;
+      }
 
       const { data } = supabase.storage.from('chat-uploads').getPublicUrl(path);
       const publicUrl = data.publicUrl;
@@ -150,17 +165,14 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
         description: 'Your image has been uploaded to the chat.',
       });
 
-      // reset quoted reply if any
       setQuotedMessage(null);
-
-      // force scroll to bottom
       setIsUserScrolling(false);
       setTimeout(scrollToBottom, 100);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Image upload failed:', err);
       toast({
         title: 'Upload failed',
-        description: 'Please try again or choose a smaller image.',
+        description: err?.message || 'Please try again or choose a smaller image.',
         variant: 'destructive',
       });
     } finally {

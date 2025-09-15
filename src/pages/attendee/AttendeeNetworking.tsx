@@ -52,6 +52,7 @@ import { useUserPresence } from "@/hooks/useUserPresence";
 import { useConnectionRequests } from "@/hooks/useConnectionRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "react-router-dom";
+import TopicsBoard from "@/components/topics/TopicsBoard";
 
 const AttendeeNetworking = () => {
   const navigate = useNavigate();
@@ -135,7 +136,7 @@ const AttendeeNetworking = () => {
   React.useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tabParam = params.get("tab");
-    const allowedTabs = new Set(["people", "connections", "chats", "messages"]);
+    const allowedTabs = new Set(["people", "connections", "topics", "chats", "messages"]);
 
     if (tabParam && allowedTabs.has(tabParam)) {
       setActiveTab(tabParam);
@@ -608,6 +609,7 @@ const AttendeeNetworking = () => {
 
   return (
     <>
+      {/* First Tabs header section */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {/* Modern Header with Purple Gradient */}
@@ -669,58 +671,59 @@ const AttendeeNetworking = () => {
         </div>
       </Tabs>
 
+      {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
-          <TabsList className="grid grid-cols-4 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl p-1 shadow-lg">
+          <TabsList className="grid grid-cols-5 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl p-1 shadow-lg">
             <TabsTrigger
               value="people"
-              className="flex items-center space-x-2 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-connect-500 data-[state=active]:to-connect-600 data-[state=active]:text-white transition-all duration-300"
+              className={`data-[state=active]:bg-white data-[state=active]:shadow ${activeTab === "people" ? "" : ""}`}
             >
-              <UserPlus size={18} />
-              <span className="text-xs sm:text-sm">Discover</span>
+              <div className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                <span>People</span>
+              </div>
             </TabsTrigger>
             <TabsTrigger
               value="connections"
-              className="flex items-center space-x-2 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-connect-500 data-[state=active]:to-connect-600 data-[state=active]:text-white transition-all duration-300"
+              className={`data-[state=active]:bg-white data-[state=active]:shadow ${activeTab === "connections" ? "" : ""}`}
             >
-              <Users size={18} />
-              <span className="text-xs sm:text-sm">Network</span>
+              <div className="flex items-center gap-2">
+                <Heart className="h-4 w-4" />
+                <span>Connections</span>
+              </div>
+            </TabsTrigger>
+            <TabsTrigger
+              value="topics"
+              className={`data-[state=active]:bg-white data-[state=active]:shadow ${activeTab === "topics" ? "" : ""}`}
+            >
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4" />
+                <span>Topics</span>
+              </div>
             </TabsTrigger>
             <TabsTrigger
               value="chats"
-              className="flex items-center space-x-2 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-connect-500 data-[state=active]:to-connect-600 data-[state=active]:text-white transition-all duration-300"
+              className={`data-[state=active]:bg-white data-[state=active]:shadow ${activeTab === "chats" ? "" : ""}`}
             >
-              <MessageSquare size={18} />
-              <span className="text-xs sm:text-sm">Chat Room</span>
+              <div className="flex items-center gap-2">
+                <MessageSquare className="h-4 w-4" />
+                <span>Chats</span>
+              </div>
             </TabsTrigger>
             <TabsTrigger
               value="messages"
-              className="flex items-center space-x-2 rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-connect-500 data-[state=active]:to-connect-600 data-[state=active]:text-white transition-all duration-300"
+              className={`data-[state=active]:bg-white data-[state=active]:shadow ${activeTab === "messages" ? "" : ""}`}
             >
-              <Send size={18} />
-              <span className="text-xs sm:text-sm">Messages</span>
+              <div className="flex items-center gap-2">
+                <Send className="h-4 w-4" />
+                <span>Messages</span>
+              </div>
             </TabsTrigger>
           </TabsList>
         </div>
-
+        {/* People */}
         <TabsContent value="people" className="space-y-8">
-          <NetworkingFilter
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            selectedNiches={selectedNiches}
-            onNicheChange={setSelectedNiches}
-            selectedNetworkingPrefs={selectedNetworkingPrefs}
-            onNetworkingPrefChange={setSelectedNetworkingPrefs}
-            selectedTags={selectedTags}
-            onTagChange={setSelectedTags}
-            showSuggestedOnly={showSuggestedOnly}
-            onSuggestedToggle={setShowSuggestedOnly}
-            availableNiches={availableNiches}
-            availableNetworkingPrefs={availableNetworkingPrefs}
-            availableTags={availableTags}
-            onClearFilters={clearAllFilters}
-          />
-
           {/* Results summary */}
           {sortedProfiles.length > 0 && (
             <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
@@ -869,6 +872,12 @@ const AttendeeNetworking = () => {
         <TabsContent value="chats">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
             <ChatRoom />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="topics" className="space-y-8">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg overflow-hidden">
+            <TopicsBoard />
           </div>
         </TabsContent>
 

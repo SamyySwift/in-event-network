@@ -34,20 +34,19 @@ export const useAttendeePolls = () => {
   const { currentUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { hostEvents, hasJoinedEvent } = useAttendeeEventContext();
+  const { hasJoinedEvent, currentEventId } = useAttendeeEventContext();
 
   const { data: polls = [], isLoading, error } = useQuery({
-    queryKey: ['attendee-polls', currentUser?.id, hostEvents],
+    queryKey: ['attendee-polls', currentUser?.id, currentEventId],
     queryFn: async (): Promise<Poll[]> => {
-      if (!currentUser?.id || !hasJoinedEvent || hostEvents.length === 0) {
+      if (!currentUser?.id || !hasJoinedEvent || !currentEventId) {
         return [];
       }
 
-      // Get polls for events from this host only
       const { data: polls, error } = await supabase
         .from('polls')
         .select('*')
-        .in('event_id', hostEvents)
+        .eq('event_id', currentEventId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -86,7 +85,7 @@ export const useAttendeePolls = () => {
 
       return pollsWithVotes as Poll[];
     },
-    enabled: !!currentUser?.id && hasJoinedEvent && hostEvents.length > 0,
+    enabled: !!currentUser?.id && hasJoinedEvent && !!currentEventId,
   });
 
   const { data: userVotes = [], isLoading: votesLoading } = useQuery({
@@ -165,7 +164,7 @@ export const useAttendeePolls = () => {
     userVotes,
     isLoading: isLoading || votesLoading,
     error,
-    submitVote: voteMutation.mutate,
+    submitVote: voteMutation.mutateAsync,
     isSubmitting: voteMutation.isPending,
   };
 };

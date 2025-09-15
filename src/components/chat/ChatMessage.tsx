@@ -91,6 +91,23 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     message.user_profile?.role === "host" ||
     message.user_profile?.role === "admin";
 
+  // NEW: achievements & styles based on points
+  const { medals, hasFireGlow, hasDiamond } = getAchievement(points ?? 0);
+  const avatarGlow =
+    hasDiamond
+      ? "ring-4 ring-cyan-300 shadow-[0_0_16px_rgba(103,232,249,0.9)] animate-pulse"
+      : hasFireGlow
+      ? "ring-2 ring-orange-400 shadow-[0_0_12px_rgba(251,146,60,0.7)] animate-pulse"
+      : medals > 0
+      ? "ring-2 ring-yellow-300"
+      : "";
+  const bubbleExtra =
+    hasDiamond
+      ? "border-2 border-cyan-300 shadow-[0_0_24px_rgba(103,232,249,0.6)]"
+      : hasFireGlow
+      ? "border-2 border-orange-300 shadow-[0_0_20px_rgba(251,146,60,0.45)]"
+      : "";
+
   // NEW: basic image URL detector
   const isImageUrl = (s: string) => {
     if (!s) return false;
@@ -106,32 +123,42 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     <>
       <div className={`flex gap-3 ${isOwn ? "flex-row-reverse" : ""} group`}>
         {/* Avatar and main container */}
-        <Avatar
-          className={`h-8 w-8 flex-shrink-0 ${
-            !isOwn
-              ? "cursor-pointer hover:ring-2 hover:ring-connect-500 transition-all"
-              : ""
-          }`}
-          onClick={handleAvatarClick}
-        >
-          {message.user_profile?.photo_url ? (
-            <AvatarImage
-              src={message.user_profile.photo_url}
-              alt={message.user_profile?.name}
-            />
-          ) : (
-            <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300 text-sm">
-              {message.user_profile?.name?.charAt(0) || "U"}
-            </AvatarFallback>
+        <div className="relative">
+          <Avatar
+            className={`h-8 w-8 flex-shrink-0 ${!isOwn ? "cursor-pointer hover:ring-2 hover:ring-connect-500 transition-all" : ""} ${avatarGlow}`}
+            onClick={handleAvatarClick}
+          >
+            {message.user_profile?.photo_url ? (
+              <AvatarImage
+                src={message.user_profile.photo_url}
+                alt={message.user_profile?.name}
+              />
+            ) : (
+              <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300 text-sm">
+                {message.user_profile?.name?.charAt(0) || "U"}
+              </AvatarFallback>
+            )}
+          </Avatar>
+
+          {/* NEW: overlay rewards near avatar */}
+          {hasDiamond && (
+            <>
+              <span className="absolute -top-1 -right-1 text-xs animate-bounce">💎</span>
+              <span className="pointer-events-none absolute -left-2 -bottom-2 text-[10px] text-cyan-400/80 animate-ping">💎</span>
+            </>
           )}
-        </Avatar>
+          {!hasDiamond && hasFireGlow && (
+            <span className="absolute -top-1 -right-1 text-xs animate-bounce">🔥</span>
+          )}
+          {medals > 0 && (
+            <span className="absolute -bottom-2 left-0 text-[10px] leading-none select-none">
+              {"🎖️".repeat(medals)}
+            </span>
+          )}
+        </div>
 
         <div className={`flex-1 min-w-0 ${isOwn ? "text-right" : ""} relative`}>
-          <div
-            className={`flex items-center gap-2 mb-1 ${
-              isOwn ? "justify-end" : ""
-            }`}
-          >
+          <div className={`flex items-center gap-2 mb-1 ${isOwn ? "justify-end" : ""}`}>
             {!isOwn && isFromAdmin && (
               <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
                 Admin
@@ -140,7 +167,23 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             <span className="text-xs text-gray-500 dark:text-gray-400">
               {timeAgo}
             </span>
+            {/* NEW: points indicator */}
+            {typeof points === "number" && (
+              <span className="text-[10px] text-gray-400">({points} pts)</span>
+            )}
           </div>
+
+          {/* NEW: tier labels */}
+          {hasDiamond && (
+            <div className={`text-[10px] font-semibold text-cyan-500 ${isOwn ? "ml-auto mr-10" : "ml-10"}`}>
+              💎 MVP
+            </div>
+          )}
+          {!hasDiamond && hasFireGlow && (
+            <div className={`text-[10px] font-semibold text-orange-500 ${isOwn ? "ml-auto mr-10" : "ml-10"} animate-pulse`}>
+              🔥 Hot Streak
+            </div>
+          )}
 
           {/* NEW: quoted preview above the message if replying */}
           {message.quoted_message && (
@@ -155,7 +198,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               isOwn
                 ? "bg-connect-600 text-white ml-auto pl-10"
                 : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 pr-10"
-            } max-w-[80%] ${isOwn ? "ml-auto" : ""}`}
+            } max-w-[80%] ${isOwn ? "ml-auto" : ""} ${bubbleExtra}`}
             // NEW: swipe-to-reply handlers + swipe transform
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
@@ -222,6 +265,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 <Trash2 className="h-4 w-4" />
               </Button>
             )}
+
+            {/* NEW: diamond sparkle near the bubble */}
+            {hasDiamond && (
+              <span className={`absolute ${isOwn ? "left-1" : "right-1"} -bottom-2 text-xs text-cyan-400/90 animate-ping select-none`}>
+                💎
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -250,4 +300,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       />
     </>
   );
+};
+
+// function getAchievement (top-level helper)
+const getAchievement = (pts: number) => {
+  const medals = pts >= 50 ? 3 : pts >= 25 ? 2 : pts >= 10 ? 1 : 0;
+  const hasFireGlow = pts >= 100;
+  const hasDiamond = pts >= 250;
+  return { medals, hasFireGlow, hasDiamond };
 };

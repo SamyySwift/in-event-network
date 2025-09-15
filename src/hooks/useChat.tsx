@@ -314,6 +314,13 @@ export const useChat = (overrideEventId?: string) => {
           } as ChatMessage;
 
           setMessages(prev => [...prev, newMessage]);
+
+          // NEW: increment the sender's points locally so badges/glow update immediately
+          const senderId = payload.new.user_id as string;
+          setParticipantPoints(prev => ({
+            ...prev,
+            [senderId]: (prev?.[senderId] ?? 0) + 1,
+          }));
         }
       )
       .on(
@@ -326,8 +333,40 @@ export const useChat = (overrideEventId?: string) => {
       )
       .subscribe();
 
+    // NEW: keep points map in sync with DB (trigger-driven updates)
+    const pointsChannel = supabase
+      .channel(`chat-points-${effectiveEventId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_participation_points',
+          filter: `event_id=eq.${effectiveEventId}`,
+        },
+        (payload) => {
+          const row = payload.new as any;
+          setParticipantPoints(prev => ({ ...prev, [row.user_id]: row.points }));
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'chat_participation_points',
+          filter: `event_id=eq.${effectiveEventId}`,
+        },
+        (payload) => {
+          const row = payload.new as any;
+          setParticipantPoints(prev => ({ ...prev, [row.user_id]: row.points }));
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(pointsChannel);
     };
   };
 

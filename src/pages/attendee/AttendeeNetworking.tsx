@@ -684,51 +684,46 @@ const AttendeeNetworking = () => {
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
-          <TabsList
-            className="relative flex flex-wrap sm:flex-nowrap w-full gap-1 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/70 p-1 shadow-lg overflow-hidden"
-          >
+          <TabsList className="flex w-full bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-indigo-500/20 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl p-1 shadow-lg">
             <TabsTrigger
               value="people"
-              className={`basis-1/2 sm:basis-auto sm:flex-1 shrink-0 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors
-                data-[state=active]:text-white data-[state=active]:shadow
-                data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:via-purple-500 data-[state=active]:to-indigo-500`}
+              className={`flex-1 data-[state=active]:bg-white data-[state=active]:shadow ${
+                activeTab === "people" ? "" : ""
+              }`}
             >
               <div className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
                 <span>People</span>
               </div>
             </TabsTrigger>
-
             <TabsTrigger
               value="connections"
-              className={`basis-1/2 sm:basis-auto sm:flex-1 shrink-0 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors
-                data-[state=active]:text-white data-[state=active]:shadow
-                data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:via-purple-500 data-[state=active]:to-indigo-500`}
+              className={`flex-1 data-[state=active]:bg-white data-[state=active]:shadow ${
+                activeTab === "connections" ? "" : ""
+              }`}
             >
               <div className="flex items-center gap-2">
                 <Heart className="h-4 w-4" />
                 <span>Connections</span>
               </div>
             </TabsTrigger>
-
             {/* Topics tab trigger removed */}
             <TabsTrigger
               value="chats"
-              className={`basis-1/2 sm:basis-auto sm:flex-1 shrink-0 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors
-                data-[state=active]:text-white data-[state=active]:shadow
-                data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:via-purple-500 data-[state=active]:to-indigo-500`}
+              className={`flex-1 data-[state=active]:bg-white data-[state=active]:shadow ${
+                activeTab === "chats" ? "" : ""
+              }`}
             >
               <div className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
                 <span>Chat Room</span>
               </div>
             </TabsTrigger>
-
             <TabsTrigger
               value="messages"
-              className={`basis-1/2 sm:basis-auto sm:flex-1 shrink-0 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors
-                data-[state=active]:text-white data-[state=active]:shadow
-                data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:via-purple-500 data-[state=active]:to-indigo-500`}
+              className={`flex-1 data-[state=active]:bg-white data-[state=active]:shadow ${
+                activeTab === "messages" ? "" : ""
+              }`}
             >
               <div className="flex items-center gap-2">
                 <Send className="h-4 w-4" />

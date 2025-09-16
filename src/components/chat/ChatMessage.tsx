@@ -159,7 +159,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
         <div className={`flex-1 min-w-0 ${isOwn ? "text-right" : ""} relative`}>
           <div className={`flex items-center gap-2 mb-1 ${isOwn ? "justify-end" : ""}`}>
-            {!isOwn && isFromAdmin && (
+            {isFromAdmin && (
               <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
                 Admin
               </Badge>

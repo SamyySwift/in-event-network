@@ -87,9 +87,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     setTranslateX(0);
   };
 
-  const isFromAdmin =
-    message.user_profile?.role === "host" ||
-    message.user_profile?.role === "admin";
+  // REPLACE this:
+  // const isFromAdmin =
+  //   message.user_profile?.role === "host" ||
+  //   message.user_profile?.role === "admin";
+  
+  // WITH this robust role check (case-insensitive + common synonyms)
+  const role = String(message.user_profile?.role ?? "").toLowerCase();
+  const isFromAdmin = ["admin", "host", "organizer", "owner", "moderator"].includes(role);
 
   // NEW: achievements & styles based on points
   const { medals, hasFireGlow, hasDiamond } = getAchievement(points ?? 0);

@@ -87,12 +87,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     setTranslateX(0);
   };
 
-  // REPLACE this:
-  // const isFromAdmin =
-  //   message.user_profile?.role === "host" ||
-  //   message.user_profile?.role === "admin";
-  
-  // WITH this robust role check (case-insensitive + common synonyms)
+  // Robust admin role detection (case-insensitive + common synonyms)
   const role = String(message.user_profile?.role ?? "").toLowerCase();
   const isFromAdmin = ["admin", "host", "organizer", "owner", "moderator"].includes(role);
 
@@ -164,33 +159,25 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
         <div className={`flex-1 min-w-0 ${isOwn ? "text-right" : ""} relative`}>
           <div className={`flex items-center gap-2 mb-1 ${isOwn ? "justify-end" : ""}`}>
-            {isFromAdmin && (
-              <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
-                Admin
-              </Badge>
-            )}
+            {/* Admin label moved out of header; now rendered above the bubble */}
             <span className="text-xs text-gray-500 dark:text-gray-400">
               {timeAgo}
             </span>
-            {/* NEW: points indicator */}
             {typeof points === "number" && (
               <span className="text-[10px] text-gray-400">({points} pts)</span>
             )}
           </div>
 
-          {/* NEW: tier labels */}
-          {hasDiamond && (
-            <div className={`text-[10px] font-semibold text-cyan-500 ${isOwn ? "ml-auto mr-10" : "ml-10"}`}>
-              💎 MVP
-            </div>
-          )}
-          {!hasDiamond && hasFireGlow && (
-            <div className={`text-[10px] font-semibold text-orange-500 ${isOwn ? "ml-auto mr-10" : "ml-10"} animate-pulse`}>
-              🔥 Hot Streak
+          {/* Admin label above the message bubble */}
+          {isFromAdmin && (
+            <div className={`mb-1 ${isOwn ? "ml-auto" : ""}`}>
+              <Badge variant="destructive" className="uppercase tracking-wide text-[10px] px-2 py-0.5">
+                Admin
+              </Badge>
             </div>
           )}
 
-          {/* NEW: quoted preview above the message if replying */}
+          {/* Quoted preview (if any) */}
           {message.quoted_message && (
             <div className={`mb-1 ${isOwn ? "ml-auto" : ""} max-w-[80%]`}>
               <QuotedMessage message={message.quoted_message} compact />

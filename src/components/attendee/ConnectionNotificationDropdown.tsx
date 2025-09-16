@@ -87,72 +87,79 @@ export const ConnectionNotificationDropdown = () => {
         <div className="p-3">
           <h3 className="font-semibold text-sm mb-3">Connection Requests</h3>
           <div className="space-y-3">
-            {pendingConnections.map((notification) => (
-              <Card key={notification.id} className="border-0 shadow-sm">
-                <CardContent className="p-3">
-                  <div className="flex items-start gap-3">
-                    <Avatar className="h-10 w-10">
-                      {notification.connection?.requester_profile?.photo_url ? (
-                        <AvatarImage 
-                          src={notification.connection.requester_profile.photo_url} 
-                          alt={notification.connection.requester_profile.name} 
-                        />
-                      ) : (
-                        <AvatarFallback>
-                          <User className="h-5 w-5" />
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 mb-1">
-                        {notification.connection?.requester_profile?.name || 'Unknown User'}
-                      </div>
+            {pendingConnections.map((notification) => {
+              const requester = notification.connection?.requester_profile;
+              const role = requester?.role?.toLowerCase();
+              const isAdminRole = role ? ['admin', 'host', 'organizer', 'owner', 'moderator', 'staff'].includes(role) : false;
+              const displayName = (requester?.name || '').trim() || (isAdminRole ? 'Admin' : 'Unknown User');
+
+              return (
+                <Card key={notification.id} className="border-0 shadow-sm">
+                  <CardContent className="p-3">
+                    <div className="flex items-start gap-3">
+                      <Avatar className="h-10 w-10">
+                        {requester?.photo_url ? (
+                          <AvatarImage 
+                            src={requester.photo_url} 
+                            alt={displayName} 
+                          />
+                        ) : (
+                          <AvatarFallback>
+                            {displayName.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
                       
-                      {notification.connection?.requester_profile?.role && (
-                        <div className="text-xs text-gray-500 mb-1">
-                          {notification.connection.requester_profile.role}
-                          {notification.connection.requester_profile.company && 
-                            ` at ${notification.connection.requester_profile.company}`
-                          }
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900 mb-1">
+                          {displayName}
                         </div>
-                      )}
-                      
-                      <p className="text-xs text-gray-600 mb-3">
-                        Wants to connect with you
-                      </p>
-                      
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          className="flex-1 h-7 text-xs"
-                          onClick={() => handleAccept(
-                            notification.connection!.id, 
-                            notification.id
-                          )}
-                        >
-                          <Check className="h-3 w-3 mr-1" />
-                          Accept
-                        </Button>
                         
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1 h-7 text-xs"
-                          onClick={() => handleDecline(
-                            notification.connection!.id, 
-                            notification.id
-                          )}
-                        >
-                          <X className="h-3 w-3 mr-1" />
-                          Decline
-                        </Button>
+                        {requester?.role && (
+                          <div className="text-xs text-gray-500 mb-1">
+                            {requester.role}
+                            {requester.company && 
+                              ` at ${requester.company}`
+                            }
+                          </div>
+                        )}
+                        
+                        <p className="text-xs text-gray-600 mb-3">
+                          Wants to connect with you
+                        </p>
+                        
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="flex-1 h-7 text-xs"
+                            onClick={() => handleAccept(
+                              notification.connection!.id, 
+                              notification.id
+                            )}
+                          >
+                            <Check className="h-3 w-3 mr-1" />
+                            Accept
+                          </Button>
+                          
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1 h-7 text-xs"
+                            onClick={() => handleDecline(
+                              notification.connection!.id, 
+                              notification.id
+                            )}
+                          >
+                            <X className="h-3 w-3 mr-1" />
+                            Decline
+                          </Button>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </DropdownMenuContent>

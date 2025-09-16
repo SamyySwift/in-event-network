@@ -60,6 +60,11 @@ export const useDirectMessages = (recipientId?: string) => {
     }
   }, [currentUser, recipientId]);
 
+  const isAdminRole = (role?: string | null) => {
+    const r = role?.toLowerCase();
+    return !!r && ['admin', 'host', 'organizer', 'owner', 'moderator', 'staff'].includes(r);
+  };
+
   const fetchConversations = async () => {
     if (!currentUser?.id) {
       console.log('No current user ID available');
@@ -124,10 +129,11 @@ export const useDirectMessages = (recipientId?: string) => {
         console.error('Error fetching profiles:', profilesError);
       }
 
-      // Create a map of user profiles
+      // Create a map of user profiles (normalized names - show "Admin" if admin role and name missing)
       const profilesMap = new Map();
       profilesData?.forEach(profile => {
-        profilesMap.set(profile.id, profile);
+        const normalizedName = (profile.name || '').trim() || (isAdminRole(profile.role) ? 'Admin' : 'Unknown User');
+        profilesMap.set(profile.id, { ...profile, name: normalizedName });
       });
 
       // Calculate unread counts and combine with profiles
@@ -206,18 +212,23 @@ export const useDirectMessages = (recipientId?: string) => {
         console.error('Error fetching profiles:', profilesError);
       }
 
-      // Create a map of user profiles
+      // Create a map of user profiles (normalized names)
       const profilesMap = new Map();
       profilesData?.forEach(profile => {
-        profilesMap.set(profile.id, profile);
+        const normalizedName = (profile.name || '').trim() || (isAdminRole(profile.role) ? 'Admin' : 'Unknown User');
+        profilesMap.set(profile.id, { ...profile, name: normalizedName });
       });
 
       // Combine messages with user profiles
-      const messagesWithProfiles = messagesData?.map(message => ({
-        ...message,
-        sender_profile: profilesMap.get(message.sender_id) || { name: 'Unknown User' },
-        recipient_profile: profilesMap.get(message.recipient_id) || { name: 'Unknown User' }
-      })) || [];
+      const messagesWithProfiles = messagesData?.map(message => {
+        const sp = profilesMap.get(message.sender_id);
+        const rp = profilesMap.get(message.recipient_id);
+        return {
+          ...message,
+          sender_profile: sp || { name: 'Unknown User' },
+          recipient_profile: rp || { name: 'Unknown User' }
+        };
+      }) || [];
 
       setMessages(messagesWithProfiles);
       
@@ -246,11 +257,7 @@ export const useDirectMessages = (recipientId?: string) => {
       .channel('direct-messages')
       .on(
         'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'direct_messages'
-        },
+        { event: 'INSERT', schema: 'public', table: 'direct_messages' },
         async (payload) => {
           console.log('New direct message received:', payload);
           
@@ -267,7 +274,8 @@ export const useDirectMessages = (recipientId?: string) => {
 
             const profilesMap = new Map();
             profilesData?.forEach(profile => {
-              profilesMap.set(profile.id, profile);
+              const normalizedName = (profile.name || '').trim() || (isAdminRole(profile.role) ? 'Admin' : 'Unknown User');
+              profilesMap.set(profile.id, { ...profile, name: normalizedName });
             });
 
             const messageWithProfiles = {

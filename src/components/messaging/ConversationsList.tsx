@@ -89,8 +89,13 @@ const ConversationItem: React.FC<ConversationItemProps> = ({ conversation, onCli
     return !!r && ['admin', 'host', 'organizer', 'owner', 'moderator', 'staff'].includes(r);
   };
   
-  const displayName = (conversation.other_user_profile?.name || '').trim() 
-    || (isAdminRole(conversation.other_user_profile?.role) ? 'Admin' : 'Unknown User');
+  // Use the same logic as getDisplayName function
+  const displayName = (() => {
+    const name = (conversation.other_user_profile?.name || '').trim();
+    if (name) return name;
+    if (isAdminRole(conversation.other_user_profile?.role)) return 'Admin';
+    return 'Unknown User'; // Only for display in the list
+  })();
 
   return (
     <div

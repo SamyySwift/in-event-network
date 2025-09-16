@@ -33,12 +33,33 @@ export const DirectMessageThread: React.FC<DirectMessageThreadProps> = ({
 }) => {
   // Use conversation props if available, otherwise use direct props
   const actualRecipientId = conversation?.userId || recipientId;
-  const actualRecipientName = conversation?.userName || recipientName || 'Unknown User';
-  const actualRecipientPhoto = conversation?.userPhoto || recipientPhoto;
+  // Helper to detect admin-like roles
+  const isAdminRole = (role?: string | null) => {
+    const r = role?.toLowerCase();
+    return !!r && ['admin', 'host', 'organizer', 'owner', 'moderator', 'staff'].includes(r);
+  };
 
   const { messages, loading, sendMessage } = useDirectMessages(actualRecipientId);
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Derive recipient name from loaded messages if provided name is missing/unknown
+  const otherSideProfileFromMessages =
+    messages.find(m => m.sender_id === actualRecipientId)?.sender_profile
+    || messages.find(m => m.recipient_id === actualRecipientId)?.recipient_profile;
+
+  const derivedNameFromMessages =
+    (otherSideProfileFromMessages?.name || '').trim()
+    || (isAdminRole(otherSideProfileFromMessages?.role) ? 'Admin' : '');
+
+  const providedName = (conversation?.userName && conversation.userName !== 'Unknown User')
+    ? conversation.userName
+    : (recipientName && recipientName !== 'Unknown User')
+      ? recipientName
+      : '';
+
+  const actualRecipientName = providedName || derivedNameFromMessages || 'Unknown User';
+  const actualRecipientPhoto = conversation?.userPhoto || recipientPhoto;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -228,8 +249,14 @@ interface DirectMessageBubbleProps {
 const DirectMessageBubble: React.FC<DirectMessageBubbleProps> = ({ message, isOwn }) => {
   const timeAgo = formatDistanceToNow(new Date(message.created_at), { addSuffix: true });
   const profile = isOwn ? message.sender_profile : message.recipient_profile;
-  const profileName = profile?.name || 'Unknown User';
-  const isFromAdmin = profile?.role === 'host' || profile?.role === 'admin';
+
+  const isAdminRole = (role?: string | null) => {
+    const r = role?.toLowerCase();
+    return !!r && ['admin', 'host', 'organizer', 'owner', 'moderator', 'staff'].includes(r);
+  };
+
+  const profileName = (profile?.name || '').trim() || (isAdminRole(profile?.role) ? 'Admin' : 'Unknown User');
+  const isFromAdmin = isAdminRole(profile?.role);
 
   return (
     <div className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>

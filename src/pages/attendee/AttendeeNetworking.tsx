@@ -152,10 +152,10 @@ const AttendeeNetworking = () => {
 
     const dmUserId = params.get("dmUserId");
     if (dmUserId) {
-      // We may not know the name/photo yet; it will default to 'Unknown User' in the thread UI
+      // We may not know the name/photo yet; leave it empty so the thread derives it (shows 'Admin' if applicable)
       setSelectedConversation({
         userId: dmUserId,
-        userName: "Unknown User",
+        userName: "", // leave empty so the thread derives the correct name (Admin if applicable)
       });
       setActiveTab("messages");
     }

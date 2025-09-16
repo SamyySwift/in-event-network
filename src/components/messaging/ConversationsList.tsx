@@ -14,6 +14,20 @@ interface ConversationsListProps {
 export const ConversationsList: React.FC<ConversationsListProps> = ({ onSelect }) => {
   const { conversations, loading } = useDirectMessages();
 
+  // Helper to detect admin-like roles
+  const isAdminRole = (role?: string | null) => {
+    const r = role?.toLowerCase();
+    return !!r && ['admin', 'host', 'organizer', 'owner', 'moderator', 'staff'].includes(r);
+  };
+
+  // Helper to get display name for conversation selection
+  const getDisplayName = (profile?: { name?: string; role?: string }) => {
+    const name = (profile?.name || '').trim();
+    if (name) return name;
+    if (isAdminRole(profile?.role)) return 'Admin';
+    return ''; // Let the thread derive the name
+  };
+
   if (loading) {
     return (
       <Card>
@@ -49,7 +63,7 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({ onSelect }
                 conversation={conversation}
                 onClick={() => onSelect(
                   conversation.other_user_id,
-                  conversation.other_user_profile?.name || 'Unknown User',
+                  getDisplayName(conversation.other_user_profile),
                   conversation.other_user_profile?.photo_url
                 )}
               />
@@ -68,6 +82,15 @@ interface ConversationItemProps {
 
 const ConversationItem: React.FC<ConversationItemProps> = ({ conversation, onClick }) => {
   const timeAgo = formatDistanceToNow(new Date(conversation.last_message_at), { addSuffix: true });
+  
+  // Helper to detect admin-like roles
+  const isAdminRole = (role?: string | null) => {
+    const r = role?.toLowerCase();
+    return !!r && ['admin', 'host', 'organizer', 'owner', 'moderator', 'staff'].includes(r);
+  };
+  
+  const displayName = (conversation.other_user_profile?.name || '').trim() 
+    || (isAdminRole(conversation.other_user_profile?.role) ? 'Admin' : 'Unknown User');
 
   return (
     <div
@@ -79,11 +102,11 @@ const ConversationItem: React.FC<ConversationItemProps> = ({ conversation, onCli
           {conversation.other_user_profile?.photo_url ? (
             <AvatarImage 
               src={conversation.other_user_profile.photo_url} 
-              alt={conversation.other_user_profile?.name} 
+              alt={displayName} 
             />
           ) : (
             <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300">
-              {(conversation.other_user_profile?.name || 'U').charAt(0).toUpperCase()}
+              {displayName.charAt(0).toUpperCase()}
             </AvatarFallback>
           )}
         </Avatar>
@@ -91,7 +114,7 @@ const ConversationItem: React.FC<ConversationItemProps> = ({ conversation, onCli
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
             <h4 className="font-medium text-gray-900 dark:text-white truncate">
-              {conversation.other_user_profile?.name || 'Unknown User'}
+              {displayName}
             </h4>
             <div className="flex items-center gap-2">
               {conversation.unread_count > 0 && (

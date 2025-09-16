@@ -88,7 +88,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     {
       name: "Q&A",
       href: "/attendee/questions",
-      icon: <MessageSquare className="text-purple-500" />,
+      icon: <MessageSquare className="text-muted-foreground" />,
     },
     {
       name: "Event Facilities",

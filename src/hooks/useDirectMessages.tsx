@@ -34,6 +34,7 @@ export interface Conversation {
   other_user_profile?: {
     name: string;
     photo_url?: string;
+    role?: string;
   };
 }
 

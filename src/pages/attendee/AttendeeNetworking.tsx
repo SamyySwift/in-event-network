@@ -684,10 +684,10 @@ const AttendeeNetworking = () => {
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
-          <TabsList className="grid grid-cols-4 bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl p-1 shadow-lg">
+          <TabsList className="flex w-full bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-indigo-500/20 backdrop-blur-sm border border-gray-200 dark:border-gray-700 rounded-2xl p-1 shadow-lg">
             <TabsTrigger
               value="people"
-              className={`data-[state=active]:bg-white data-[state=active]:shadow ${
+              className={`flex-1 data-[state=active]:bg-white data-[state=active]:shadow ${
                 activeTab === "people" ? "" : ""
               }`}
             >
@@ -698,7 +698,7 @@ const AttendeeNetworking = () => {
             </TabsTrigger>
             <TabsTrigger
               value="connections"
-              className={`data-[state=active]:bg-white data-[state=active]:shadow ${
+              className={`flex-1 data-[state=active]:bg-white data-[state=active]:shadow ${
                 activeTab === "connections" ? "" : ""
               }`}
             >
@@ -710,18 +710,18 @@ const AttendeeNetworking = () => {
             {/* Topics tab trigger removed */}
             <TabsTrigger
               value="chats"
-              className={`data-[state=active]:bg-white data-[state=active]:shadow ${
+              className={`flex-1 data-[state=active]:bg-white data-[state=active]:shadow ${
                 activeTab === "chats" ? "" : ""
               }`}
             >
               <div className="flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
-                <span>Chats</span>
+                <span>Chat Room</span>
               </div>
             </TabsTrigger>
             <TabsTrigger
               value="messages"
-              className={`data-[state=active]:bg-white data-[state=active]:shadow ${
+              className={`flex-1 data-[state=active]:bg-white data-[state=active]:shadow ${
                 activeTab === "messages" ? "" : ""
               }`}
             >

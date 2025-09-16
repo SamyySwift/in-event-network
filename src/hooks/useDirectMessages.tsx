@@ -60,6 +60,7 @@ export const useDirectMessages = (recipientId?: string) => {
     }
   }, [currentUser, recipientId]);
 
+  // Helper: treat role synonyms as admin
   const isAdminRole = (role?: string | null) => {
     const r = role?.toLowerCase();
     return !!r && ['admin', 'host', 'organizer', 'owner', 'moderator', 'staff'].includes(r);
@@ -129,10 +130,11 @@ export const useDirectMessages = (recipientId?: string) => {
         console.error('Error fetching profiles:', profilesError);
       }
 
-      // Create a map of user profiles (normalized names - show "Admin" if admin role and name missing)
+      // Create a map of user profiles (normalized names - use "Admin" if admin role and missing name)
       const profilesMap = new Map();
       profilesData?.forEach(profile => {
-        const normalizedName = (profile.name || '').trim() || (isAdminRole(profile.role) ? 'Admin' : 'Unknown User');
+        const normalizedName =
+          (profile.name || '').trim() || (isAdminRole(profile.role) ? 'Admin' : 'Unknown User');
         profilesMap.set(profile.id, { ...profile, name: normalizedName });
       });
 
@@ -215,7 +217,8 @@ export const useDirectMessages = (recipientId?: string) => {
       // Create a map of user profiles (normalized names)
       const profilesMap = new Map();
       profilesData?.forEach(profile => {
-        const normalizedName = (profile.name || '').trim() || (isAdminRole(profile.role) ? 'Admin' : 'Unknown User');
+        const normalizedName =
+          (profile.name || '').trim() || (isAdminRole(profile.role) ? 'Admin' : 'Unknown User');
         profilesMap.set(profile.id, { ...profile, name: normalizedName });
       });
 
@@ -257,7 +260,11 @@ export const useDirectMessages = (recipientId?: string) => {
       .channel('direct-messages')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'direct_messages' },
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'direct_messages'
+        },
         async (payload) => {
           console.log('New direct message received:', payload);
           
@@ -274,7 +281,8 @@ export const useDirectMessages = (recipientId?: string) => {
 
             const profilesMap = new Map();
             profilesData?.forEach(profile => {
-              const normalizedName = (profile.name || '').trim() || (isAdminRole(profile.role) ? 'Admin' : 'Unknown User');
+              const normalizedName =
+                (profile.name || '').trim() || (isAdminRole(profile.role) ? 'Admin' : 'Unknown User');
               profilesMap.set(profile.id, { ...profile, name: normalizedName });
             });
 

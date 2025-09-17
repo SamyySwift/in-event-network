@@ -39,10 +39,11 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useNotificationCount } from "@/hooks/useNotificationCount";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NotificationBadge } from "@/components/notifications/NotificationBadge";
+import { LimelightNav, NavItem } from "@/components/ui/limelight-nav";
 interface AppLayoutProps {
   children: React.ReactNode;
 }
-const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
+function AppLayout({ children }: AppLayoutProps) {
   const { currentUser, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -158,6 +159,60 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       icon: <Settings size={20} />,
     },
   ];
+  // Build attendee-only mobile nav (Limelight)
+  const attendeeMobileItems: NavItem[] = [
+    {
+      id: "att-home",
+      icon: <Users className="text-muted-foreground" />,
+      label: "Dashboard",
+      onClick: () => navigate("/attendee"),
+    },
+    {
+      id: "att-tickets",
+      icon: <Tickets className="text-muted-foreground" />,
+      label: "My Tickets",
+      onClick: () => navigate("/attendee/my-tickets"),
+    },
+    {
+      id: "att-profile",
+      icon: <User className="text-muted-foreground" />,
+      label: "Profile",
+      onClick: () => navigate("/attendee/profile"),
+    },
+    {
+      id: "att-networking",
+      icon: <UserPlus className="text-muted-foreground" />,
+      label: "Networking",
+      onClick: () => navigate("/attendee/networking"),
+    },
+    {
+      id: "att-notifications",
+      icon: <Bell className="text-muted-foreground" />,
+      label: "Notifications",
+      onClick: () => navigate("/attendee/notifications"),
+    },
+  ];
+  const attendeeMobileRoutes = [
+    "/attendee",
+    "/attendee/my-tickets",
+    "/attendee/profile",
+    "/attendee/networking",
+    "/attendee/notifications",
+  ];
+  const defaultActiveIndex = Math.max(
+    0,
+    attendeeMobileRoutes.findIndex((r) => location.pathname.startsWith(r))
+  );
+  const navBadges =
+    unreadCount > 0
+      ? {
+          "att-notifications": (
+            <Badge className="h-4 w-4 rounded-full p-0 text-xs bg-red-500 text-white flex items-center justify-center">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </Badge>
+          ),
+        }
+      : undefined;
   const navigation =
     currentUser?.role === "host" ? hostNavigation : attendeeNavigation;
   return (
@@ -375,9 +430,19 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       <main className="flex-1 md:ml-64 min-h-screen pb-16 md:pb-0">
         <div className="p-4 sm:p-6 max-w-7xl mx-auto">{children}</div>
       </main>
-
       {/* Bottom Navigation Bar for Mobile */}
-      {currentUser && (
+      {currentUser && currentUser.role === "attendee" ? (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 p-2 z-40 flex justify-center">
+          <LimelightNav
+            items={attendeeMobileItems}
+            defaultActiveIndex={defaultActiveIndex}
+            className="w-full max-w-md justify-between bg-white dark:bg-gray-800 border dark:border-gray-700 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] rounded-none"
+            limelightClassName="bg-primary"
+            iconContainerClassName="flex-1"
+            badges={navBadges}
+          />
+        </div>
+      ) : currentUser ? (
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t dark:border-gray-700 flex items-center justify-around p-2 z-40 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
           {navigation.slice(0, 4).map((item) => (
             <button
@@ -410,7 +475,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             )}
           </button>
         </nav>
-      )}
+      ) : null}
     </div>
   );
 };

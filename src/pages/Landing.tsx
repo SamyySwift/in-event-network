@@ -190,6 +190,7 @@ const Landing = () => {
       />
 
       {/* Features Section */}
+
       <section
         id="features"
         className="py-20 bg-black/20 backdrop-blur-sm border-y border-white/10"

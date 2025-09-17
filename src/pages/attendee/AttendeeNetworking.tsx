@@ -26,6 +26,7 @@ import {
 // Remove this import:
 // import AppLayout from "@/components/layouts/AppLayout";
 import { Button } from "@/components/ui/button";
+// At the imports section (top of file)
 import {
   Card,
   CardContent,
@@ -33,11 +34,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-// imports (top of file)
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { useAttendeeNetworking } from "@/hooks/useAttendeeNetworking";
 import { useNetworkingFilters } from "@/hooks/useNetworkingFilters";
 import ChatRoom from "@/components/chat/ChatRoom";
@@ -53,8 +52,7 @@ import { useUserPresence } from "@/hooks/useUserPresence";
 import { useConnectionRequests } from "@/hooks/useConnectionRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "react-router-dom";
-// Remove this import because Topics now renders inside ChatRoom
-// import TopicsBoard from "@/components/topics/TopicsBoard";
+import { NeonGradientCard } from "@/components/ui/neon-gradient-card";
 
 const AttendeeNetworking = () => {
   const navigate = useNavigate();
@@ -263,6 +261,7 @@ const AttendeeNetworking = () => {
     return links;
   };
 
+  // Inside the AttendeeNetworking component
   const renderUserCard = (profile: any, showConnectButton = true) => {
     const connectionStatus = getConnectionStatus(profile.id);
     const isConnected = connectionStatus?.status === "accepted";
@@ -282,275 +281,280 @@ const AttendeeNetworking = () => {
       typeof profile.bio === "string" && profile.bio.length > 160;
 
     return (
-      <Card
+      <NeonGradientCard
         key={profile.id}
-        className="group relative overflow-hidden bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-900/50 border-0 shadow-lg hover:shadow-2xl transition-all duration-500 rounded-2xl h-full flex flex-col"
+        className="group relative border-0 shadow-lg hover:shadow-2xl transition-all duration-500 rounded-2xl h-full flex flex-col"
+        borderSize={2}
+        borderRadius={20}
+        neonColors={{ firstColor: "#8b5cf6", secondColor: "#06b6d4" }}
       >
-        {/* Decorative Background Elements */}
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-connect-100/20 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-700" />
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-100/20 to-transparent rounded-full translate-y-12 -translate-x-12 group-hover:scale-125 transition-transform duration-700" />
+        <div className="relative z-10 h-full flex flex-col">
+          {/* Decorative Background Elements */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-connect-100/20 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-700" />
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-100/20 to-transparent rounded-full translate-y-12 -translate-x-12 group-hover:scale-125 transition-transform duration-700" />
 
-        <CardHeader className="relative z-10 pb-3">
-          <div className="flex justify-between items-start">
-            <div className="flex items-center space-x-4">
-              <div className="relative">
-                <Avatar className="h-16 w-16 ring-4 ring-white dark:ring-gray-700 shadow-lg">
-                  {profile.photo_url ? (
-                    <AvatarImage
-                      src={profile.photo_url}
-                      alt={profile.name || ""}
-                      className="object-cover"
-                    />
-                  ) : (
-                    <AvatarFallback className="bg-gradient-to-br from-connect-500 to-connect-600 text-white text-lg font-bold">
-                      {profile.name
-                        ?.split(" ")
-                        .map((n) => n[0])
-                        .join("") || "?"}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <div
-                  className={`absolute -bottom-1 -right-1 w-6 h-6 ${statusColor} rounded-full border-2 border-white dark:border-gray-800 ${
-                    userStatus === "online" ? "animate-pulse" : ""
-                  }`}
-                  title={
-                    userStatus === "online"
-                      ? "Online in dashboard"
-                      : userStatus === "away"
-                      ? "Online but away from dashboard"
-                      : "Offline"
-                  }
-                />
-              </div>
+          <CardHeader className="relative z-10 pb-3">
+            <div className="flex justify-between items-start">
+              <div className="flex items-center space-x-4">
+                <div className="relative">
+                  <Avatar className="h-16 w-16 ring-4 ring-white dark:ring-gray-700 shadow-lg">
+                    {profile.photo_url ? (
+                      <AvatarImage
+                        src={profile.photo_url}
+                        alt={profile.name || ""}
+                        className="object-cover"
+                      />
+                    ) : (
+                      <AvatarFallback className="bg-gradient-to-br from-connect-500 to-connect-600 text-white text-lg font-bold">
+                        {profile.name
+                          ?.split(" ")
+                          .map((n) => n[0])
+                          .join("") || "?"}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div
+                    className={`absolute -bottom-1 -right-1 w-6 h-6 ${statusColor} rounded-full border-2 border-white dark:border-gray-800 ${
+                      userStatus === "online" ? "animate-pulse" : ""
+                    }`}
+                    title={
+                      userStatus === "online"
+                        ? "Online in dashboard"
+                        : userStatus === "away"
+                        ? "Online but away from dashboard"
+                        : "Offline"
+                    }
+                  />
+                </div>
 
-              <div className="flex-1">
-                <CardTitle className="text-xl text-gray-900 dark:text-white font-bold mb-1">
-                  {profile.name || "Unknown"}
-                </CardTitle>
-                <CardDescription className="text-sm flex flex-col space-y-1">
-                  <span className="text-gray-600 dark:text-gray-400 font-medium">
-                    {profile.role || "No role specified"}
-                  </span>
-                  {profile.company && (
-                    <span className="text-gray-500 dark:text-gray-500 text-xs flex items-center">
-                      <MapPin size={12} className="mr-1" />
-                      {profile.company}
+                <div className="flex-1">
+                  <CardTitle className="text-xl text-gray-900 dark:text-white font-bold mb-1">
+                    {profile.name || "Unknown"}
+                  </CardTitle>
+                  <CardDescription className="text-sm flex flex-col space-y-1">
+                    <span className="text-gray-600 dark:text-gray-400 font-medium">
+                      {profile.role || "No role specified"}
                     </span>
-                  )}
-                </CardDescription>
+                    {profile.company && (
+                      <span className="text-gray-500 dark:text-gray-500 text-xs flex items-center">
+                        <MapPin size={12} className="mr-1" />
+                        {profile.company}
+                      </span>
+                    )}
+                  </CardDescription>
+                </div>
               </div>
             </div>
-          </div>
-        </CardHeader>
+          </CardHeader>
 
-        {/* Body: scrollable content + sticky bottom actions */}
-        <CardContent className="relative z-10 flex-1 flex flex-col overflow-hidden p-5 gap-4">
-          {/* Scrollable content area with consistent vertical spacing */}
-          <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1">
-            {/* About Section */}
-            {profile.bio && (
-              <>
-                <div
-                  className={`relative bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 backdrop-blur-sm ${
-                    isBioExpanded ? "max-h-48 overflow-y-auto pr-1" : ""
-                  }`}
-                >
-                  <p
-                    className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed ${
-                      isBioExpanded ? "" : "line-clamp-3"
+          {/* Body: scrollable content + sticky bottom actions */}
+          <CardContent className="relative z-10 flex-1 flex flex-col overflow-hidden p-5 gap-4">
+            {/* Scrollable content area with consistent vertical spacing */}
+            <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1">
+              {/* About Section */}
+              {profile.bio && (
+                <>
+                  <div
+                    className={`relative bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 backdrop-blur-sm ${
+                      isBioExpanded ? "max-h-48 overflow-y-auto pr-1" : ""
                     }`}
                   >
-                    {profile.bio}
-                  </p>
-                  {!isBioExpanded && shouldShowReadMore && (
-                    <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-white dark:from-gray-800 to-transparent" />
-                  )}
-                </div>
-
-                {shouldShowReadMore && (
-                  <button
-                    type="button"
-                    aria-expanded={isBioExpanded}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const next = new Set(expandedBios);
-                      if (isBioExpanded) next.delete(profile.id);
-                      else next.add(profile.id);
-                      setExpandedBios(next);
-                    }}
-                    className="text-xs font-medium text-connect-600 hover:text-connect-700 dark:text-connect-400 dark:hover:text-connect-300 hover:underline"
-                  >
-                    {isBioExpanded ? "Show less" : "Read more"}
-                  </button>
-                )}
-              </>
-            )}
-
-            {/* Professional Niche */}
-            {profile.niche && (
-              <div className="flex items-center gap-2">
-                <Sparkles size={16} className="text-purple-500" />
-                <Badge
-                  variant="outline"
-                  className="bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700 font-medium"
-                >
-                  {profile.niche}
-                </Badge>
-              </div>
-            )}
-
-            {/* Interests Tags */}
-            {profile.tags && profile.tags.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Heart size={14} className="text-red-400" />
-                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                    Interests
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {profile.tags
-                    .slice(0, 3)
-                    .map((tag: string, index: number) => (
-                      <Badge
-                        key={index}
-                        variant="outline"
-                        className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700 text-xs"
-                      >
-                        {tag}
-                      </Badge>
-                    ))}
-                  {profile.tags.length > 3 && (
-                    <Badge
-                      variant="outline"
-                      className="bg-gray-50 dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-600 text-xs"
+                    <p
+                      className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed ${
+                        isBioExpanded ? "" : "line-clamp-3"
+                      }`}
                     >
-                      +{profile.tags.length - 3} more
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            )}
+                      {profile.bio}
+                    </p>
+                    {!isBioExpanded && shouldShowReadMore && (
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-white dark:from-gray-800 to-transparent" />
+                    )}
+                  </div>
 
-            {/* Networking Preferences */}
-            {profile.networking_preferences &&
-              profile.networking_preferences.length > 0 && (
+                  {shouldShowReadMore && (
+                    <button
+                      type="button"
+                      aria-expanded={isBioExpanded}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const next = new Set(expandedBios);
+                        if (isBioExpanded) next.delete(profile.id);
+                        else next.add(profile.id);
+                        setExpandedBios(next);
+                      }}
+                      className="text-xs font-medium text-connect-600 hover:text-connect-700 dark:text-connect-400 dark:hover:text-connect-300 hover:underline"
+                    >
+                      {isBioExpanded ? "Show less" : "Read more"}
+                    </button>
+                  )}
+                </>
+              )}
+
+              {/* Professional Niche */}
+              {profile.niche && (
+                <div className="flex items-center gap-2">
+                  <Sparkles size={16} className="text-purple-500" />
+                  <Badge
+                    variant="outline"
+                    className="bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700 font-medium"
+                  >
+                    {profile.niche}
+                  </Badge>
+                </div>
+              )}
+
+              {/* Interests Tags */}
+              {profile.tags && profile.tags.length > 0 && (
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <Network size={14} className="text-blue-400" />
+                    <Heart size={14} className="text-red-400" />
                     <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                      Looking to connect with
+                      Interests
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {(expandedPreferences.has(profile.id)
-                      ? profile.networking_preferences
-                      : profile.networking_preferences.slice(0, 2)
-                    ).map((pref: string, index: number) => (
+                    {profile.tags
+                      .slice(0, 3)
+                      .map((tag: string, index: number) => (
+                        <Badge
+                          key={index}
+                          variant="outline"
+                          className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700 text-xs"
+                        >
+                          {tag}
+                        </Badge>
+                      ))}
+                    {profile.tags.length > 3 && (
                       <Badge
-                        key={index}
                         variant="outline"
-                        className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 text-xs"
+                        className="bg-gray-50 dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-600 text-xs"
                       >
-                        {pref}
+                        +{profile.tags.length - 3} more
                       </Badge>
-                    ))}
-                    {profile.networking_preferences.length > 2 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const newExpanded = new Set(expandedPreferences);
-                          if (expandedPreferences.has(profile.id)) {
-                            newExpanded.delete(profile.id);
-                          } else {
-                            newExpanded.add(profile.id);
-                          }
-                          setExpandedPreferences(newExpanded);
-                        }}
-                        className="h-auto px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md"
-                      >
-                        {expandedPreferences.has(profile.id) ? (
-                          <>
-                            <ChevronUp size={12} className="mr-1" />
-                            Show less
-                          </>
-                        ) : (
-                          <>
-                            <ChevronDown size={12} className="mr-1" />+
-                            {profile.networking_preferences.length - 2} more
-                          </>
-                        )}
-                      </Button>
                     )}
                   </div>
                 </div>
               )}
 
-            {/* Social Links */}
-            {socialLinks.length > 0 && (
-              <div className="flex justify-between items-center">
-                <div className="flex gap-2">
-                  {socialLinks.slice(0, 4).map((link, index) => (
-                    <button
-                      key={index}
-                      onClick={() => window.open(link.url, "_blank")}
-                      className="p-2 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 hover:from-connect-100 hover:to-connect-200 text-gray-600 dark:text-gray-300 hover:text-connect-600 dark:hover:text-connect-400 transition-colors"
-                      title={`Follow on ${link.platform}`}
-                    >
-                      {getSocialIcon(link.platform)}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+              {/* Networking Preferences */}
+              {profile.networking_preferences &&
+                profile.networking_preferences.length > 0 && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <Network size={14} className="text-blue-400" />
+                      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                        Looking to connect with
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {(expandedPreferences.has(profile.id)
+                        ? profile.networking_preferences
+                        : profile.networking_preferences.slice(0, 2)
+                      ).map((pref: string, index: number) => (
+                        <Badge
+                          key={index}
+                          variant="outline"
+                          className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 text-xs"
+                        >
+                          {pref}
+                        </Badge>
+                      ))}
+                      {profile.networking_preferences.length > 2 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const newExpanded = new Set(expandedPreferences);
+                            if (expandedPreferences.has(profile.id)) {
+                              newExpanded.delete(profile.id);
+                            } else {
+                              newExpanded.add(profile.id);
+                            }
+                            setExpandedPreferences(newExpanded);
+                          }}
+                          className="h-auto px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md"
+                        >
+                          {expandedPreferences.has(profile.id) ? (
+                            <>
+                              <ChevronUp size={12} className="mr-1" />
+                              Show less
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown size={12} className="mr-1" />+
+                              {profile.networking_preferences.length - 2} more
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
 
-          {/* Sticky bottom action bar */}
-          <div className="-mx-5 px-5 pt-3 pb-4 sticky bottom-0 bg-white/85 dark:bg-gray-900/85 backdrop-blur border-t border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-3">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() =>
-                  handleMessage(
-                    profile.id,
-                    profile.name || "",
-                    profile.photo_url || undefined
-                  )
-                }
-                className="flex-1 h-10 bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-600"
-              >
-                <MessageSquare size={16} className="mr-2" />
-                Message
-              </Button>
-              {showConnectButton && (
-                <Button
-                  size="sm"
-                  onClick={() =>
-                    isReceivedRequest
-                      ? handleAcceptConnection(profile.id)
-                      : handleConnect(profile.id)
-                  }
-                  className="flex-1 h-10 bg-gradient-to-r from-connect-500 to-connect-600 hover:from-connect-600 hover:to-connect-700 text-white border-0 shadow-md"
-                  disabled={isConnected || isSentRequest}
-                >
-                  <UserPlus size={16} className="mr-2" />
-                  {isReceivedRequest
-                    ? "Accept"
-                    : isSentRequest
-                    ? "Pending"
-                    : isConnected
-                    ? "Connected"
-                    : "Connect"}
-                </Button>
+              {/* Social Links */}
+              {socialLinks.length > 0 && (
+                <div className="flex justify-between items-center">
+                  <div className="flex gap-2">
+                    {socialLinks.slice(0, 4).map((link, index) => (
+                      <button
+                        key={index}
+                        onClick={() => window.open(link.url, "_blank")}
+                        className="p-2 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 hover:from-connect-100 hover:to-connect-200 text-gray-600 dark:text-gray-300 hover:text-connect-600 dark:hover:text-connect-400 transition-colors"
+                        title={`Follow on ${link.platform}`}
+                      >
+                        {getSocialIcon(link.platform)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
-          </div>
-        </CardContent>
-      </Card>
+
+            {/* Sticky bottom action bar */}
+            <div className="-mx-5 px-5 pt-3 pb-4 sticky bottom-0 bg-white/85 dark:bg-gray-900/85 backdrop-blur border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-3">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    handleMessage(
+                      profile.id,
+                      profile.name || "",
+                      profile.photo_url || undefined
+                    )
+                  }
+                  className="flex-1 h-10 bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-600"
+                >
+                  <MessageSquare size={16} className="mr-2" />
+                  Message
+                </Button>
+                {showConnectButton && (
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      isReceivedRequest
+                        ? handleAcceptConnection(profile.id)
+                        : handleConnect(profile.id)
+                    }
+                    className="flex-1 h-10 bg-gradient-to-r from-connect-500 to-connect-600 hover:from-connect-600 hover:to-connect-700 text-white border-0 shadow-md"
+                    disabled={isConnected || isSentRequest}
+                  >
+                    <UserPlus size={16} className="mr-2" />
+                    {isReceivedRequest
+                      ? "Accept"
+                      : isSentRequest
+                      ? "Pending"
+                      : isConnected
+                      ? "Connected"
+                      : "Connect"}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </div>
+      </NeonGradientCard>
     );
   };
 
@@ -684,9 +688,7 @@ const AttendeeNetworking = () => {
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
-          <TabsList
-            className="relative flex flex-wrap sm:flex-nowrap w/full gap-1 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/70 p-1 shadow-lg h-auto min-h-10 sm:h-10 overflow-visible"
-          >
+          <TabsList className="relative flex flex-wrap sm:flex-nowrap w/full gap-1 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/70 p-1 shadow-lg h-auto min-h-10 sm:h-10 overflow-visible">
             {/* People */}
             <TabsTrigger
               value="people"

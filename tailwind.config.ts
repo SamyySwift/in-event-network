@@ -153,6 +153,10 @@ export default {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: "0.5" },
         },
+        "background-position-spin": {
+          "0%": { backgroundPosition: "top center" },
+          "100%": { backgroundPosition: "bottom center" },
+        },
         float: {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-10px)" },
@@ -170,6 +174,8 @@ export default {
         enter: "fade-in 0.3s ease-out, scale-in 0.2s ease-out",
         exit: "fade-out 0.3s ease-out, scale-out 0.2s ease-out",
         "pulse-slow": "pulse-slow 3s ease-in-out infinite",
+        "background-position-spin":
+          "background-position-spin 3000ms infinite alternate",
         float: "float 6s ease-in-out infinite",
       },
       fontFamily: {

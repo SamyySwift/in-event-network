@@ -274,24 +274,23 @@ const AttendeeNetworking = () => {
     const userStatus = getUserStatus(profile.id);
     // Always show green in networking tab as requested
     const statusColor = "bg-green-400";
-
+  
     // Bio truncation / expansion
     const isBioExpanded = expandedBios.has(profile.id);
     const shouldShowReadMore =
       typeof profile.bio === "string" && profile.bio.length > 160;
-
+  
     return (
       <NeonGradientCard
         key={profile.id}
-        className="group relative border-0 shadow-lg hover:shadow-2xl transition-all duration-500 rounded-2xl h-full flex flex-col"
+        className="group relative border-0 shadow-md md:hover:shadow-2xl transition-all duration-300 md:duration-500 rounded-2xl h-full flex flex-col"
         borderSize={2}
         borderRadius={20}
         neonColors={{ firstColor: "#8b5cf6", secondColor: "#06b6d4" }}
       >
         <div className="relative z-10 h-full flex flex-col">
-          {/* Decorative Background Elements */}
-          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-connect-100/20 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-700" />
-          <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-100/20 to-transparent rounded-full translate-y-12 -translate-x-12 group-hover:scale-125 transition-transform duration-700" />
+          {/* Decorative Background Elements removed to improve performance and visuals */}
+          {/* (Removed two gradient circle divs) */}
 
           <CardHeader className="relative z-10 pb-3">
             <div className="flex justify-between items-start">
@@ -303,6 +302,7 @@ const AttendeeNetworking = () => {
                         src={profile.photo_url}
                         alt={profile.name || ""}
                         className="object-cover"
+                        loading="lazy"
                       />
                     ) : (
                       <AvatarFallback className="bg-gradient-to-br from-connect-500 to-connect-600 text-white text-lg font-bold">
@@ -512,7 +512,7 @@ const AttendeeNetworking = () => {
             </div>
 
             {/* Sticky bottom action bar */}
-            <div className="-mx-5 px-5 pt-3 pb-4 sticky bottom-0 bg-white/85 dark:bg-gray-900/85 backdrop-blur border-t border-gray-200 dark:border-gray-700">
+            <div className="-mx-5 px-5 pt-3 pb-4 sticky bottom-0 bg-transparent dark:bg-transparent backdrop-blur-0 border-t-0">
               <div className="flex items-center gap-3">
                 <Button
                   size="sm"
@@ -524,7 +524,7 @@ const AttendeeNetworking = () => {
                       profile.photo_url || undefined
                     )
                   }
-                  className="flex-1 h-10 bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 border-gray-200 dark:border-gray-600"
+                  className="flex-1 h-10"
                 >
                   <MessageSquare size={16} className="mr-2" />
                   Message
@@ -537,7 +537,7 @@ const AttendeeNetworking = () => {
                         ? handleAcceptConnection(profile.id)
                         : handleConnect(profile.id)
                     }
-                    className="flex-1 h-10 bg-gradient-to-r from-connect-500 to-connect-600 hover:from-connect-600 hover:to-connect-700 text-white border-0 shadow-md"
+                    className="flex-1 h-10 bg-connect-600 hover:bg-connect-700 text-white"
                     disabled={isConnected || isSentRequest}
                   >
                     <UserPlus size={16} className="mr-2" />

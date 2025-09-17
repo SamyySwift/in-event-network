@@ -159,9 +159,20 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
         <div className={`flex-1 min-w-0 ${isOwn ? "text-right" : ""} relative`}>
           <div className={`flex items-center gap-2 mb-1 ${isOwn ? "justify-end" : ""}`}>
-            {/* Admin label moved out of header; now rendered above the bubble */}
+            <span
+              onClick={!isOwn && message.user_profile ? handleAvatarClick : undefined}
+              role={!isOwn && message.user_profile ? "button" : undefined}
+              className={`text-xs font-semibold ${
+                isOwn
+                  ? "text-gray-800 dark:text-gray-200"
+                  : "text-connect-700 dark:text-connect-300 hover:underline"
+              } ${!isOwn && message.user_profile ? "cursor-pointer" : ""} truncate max-w-[60%]`}
+              title={message.user_profile?.name || (isOwn ? "You" : "Unknown")}
+            >
+              {message.user_profile?.name || (isOwn ? "You" : "Unknown")}
+            </span>
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              {timeAgo}
+              • {timeAgo}
             </span>
             {typeof points === "number" && (
               <span className="text-[10px] text-gray-400">({points} pts)</span>

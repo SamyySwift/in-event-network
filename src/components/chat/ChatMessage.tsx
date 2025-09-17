@@ -42,8 +42,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
   // CHANGE: widen delete permission to include admins too (optional, but common)
   const { currentUser } = useAuth();
-  const canDelete =
-    isOwn || currentUser?.role === "host";
+  const canDelete = isOwn || currentUser?.role === "host";
 
   // --- NEW: swipe-to-reply state/refs ---
   const [translateX, setTranslateX] = useState(0);
@@ -88,37 +87,35 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   };
 
   // Robust admin role detection (case-insensitive + common synonyms)
+  // Derive admin from PROFILE role (messages don't store roles)
   const role = String(message.user_profile?.role ?? "").toLowerCase();
   const isFromAdmin = ["admin", "host", "organizer", "owner", "moderator"].includes(role);
 
-  // NEW: compute a sensible display name
-  const rawName = (message.user_profile?.name ?? "").trim();
-  const displayName = rawName
-    ? rawName
-    : isFromAdmin
+  // Compute display name using profile; map unknown-name variants to Admin
+  const rawName = message.user_profile?.name ?? "";
+  const isRawNameUnknownUser = ["unknown user", "unknow user", "unknown"].includes(
+    rawName.trim().toLowerCase()
+  );
+  const displayName = isRawNameUnknownUser
     ? "Admin"
-    : isOwn
-    ? "You"
-    : "Unknown";
+    : (rawName || (isFromAdmin ? "Admin" : isOwn ? "You" : "Admin"));
 
   // NEW: achievements & styles based on points
   const { medals, hasFireGlow, hasDiamond } = getAchievement(points ?? 0);
-  const avatarGlow =
-    hasDiamond
-      ? "ring-4 ring-cyan-300 shadow-[0_0_16px_rgba(103,232,249,0.9)] animate-pulse"
-      : hasFireGlow
-      ? "ring-2 ring-orange-400 shadow-[0_0_12px_rgba(251,146,60,0.7)] animate-pulse"
-      : medals > 0
-      ? "ring-2 ring-yellow-300"
-      : "";
-  const bubbleExtra =
-    hasDiamond
-      ? "border-2 border-cyan-300 shadow-[0_0_24px_rgba(103,232,249,0.6)]"
-      : hasFireGlow
-      ? "border-2 border-orange-300 shadow-[0_0_20px_rgba(251,146,60,0.45)]"
-      : "";
+  const avatarGlow = hasDiamond
+    ? "ring-4 ring-cyan-300 shadow-[0_0_16px_rgba(103,232,249,0.9)] animate-pulse"
+    : hasFireGlow
+    ? "ring-2 ring-orange-400 shadow-[0_0_12px_rgba(251,146,60,0.7)] animate-pulse"
+    : medals > 0
+    ? "ring-2 ring-yellow-300"
+    : "";
+  const bubbleExtra = hasDiamond
+    ? "border-2 border-cyan-300 shadow-[0_0_24px_rgba(103,232,249,0.6)]"
+    : hasFireGlow
+    ? "border-2 border-orange-300 shadow-[0_0_20px_rgba(251,146,60,0.45)]"
+    : "";
 
-  // NEW: basic image URL detector
+  // Basic image URL detector
   const isImageUrl = (s: string) => {
     if (!s) return false;
     try {
@@ -135,7 +132,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         {/* Avatar and main container */}
         <div className="relative">
           <Avatar
-            className={`h-8 w-8 flex-shrink-0 ${!isOwn ? "cursor-pointer hover:ring-2 hover:ring-connect-500 transition-all" : ""} ${avatarGlow}`}
+            className={`h-8 w-8 flex-shrink-0 ${
+              !isOwn ? "cursor-pointer hover:ring-2 hover:ring-connect-500 transition-all" : ""
+            } ${avatarGlow}`}
             onClick={handleAvatarClick}
           >
             {message.user_profile?.photo_url ? (
@@ -145,16 +144,18 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               />
             ) : (
               <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300 text-sm">
-                {message.user_profile?.name?.charAt(0) || "U"}
+                {message.user_profile?.name?.charAt(0) || "A"}
               </AvatarFallback>
             )}
           </Avatar>
 
-          {/* NEW: overlay rewards near avatar */}
+          {/* overlay rewards near avatar */}
           {hasDiamond && (
             <>
               <span className="absolute -top-1 -right-1 text-xs animate-bounce">💎</span>
-              <span className="pointer-events-none absolute -left-2 -bottom-2 text-[10px] text-cyan-400/80 animate-ping">💎</span>
+              <span className="pointer-events-none absolute -left-2 -bottom-2 text-[10px] text-cyan-400/80 animate-ping">
+                💎
+              </span>
             </>
           )}
           {!hasDiamond && hasFireGlow && (
@@ -181,9 +182,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             >
               {displayName}
             </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              • {timeAgo}
-            </span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">• {timeAgo}</span>
             {typeof points === "number" && (
               <span className="text-[10px] text-gray-400">({points} pts)</span>
             )}
@@ -200,7 +199,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
           {/* Quoted preview (if any) */}
           {message.quoted_message && (
-            <div className={`mb-1 ${isOwn ? "ml-auto" : ""} max-w-[80%]`}>
+            <div className={`mb-1 ${isOwn ? "ml-auto" : ""} max-w=[80%]`}>
               <QuotedMessage message={message.quoted_message} compact />
             </div>
           )}
@@ -212,17 +211,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 ? "bg-connect-600 text-white ml-auto pl-10"
                 : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 pr-10"
             } max-w-[80%] ${isOwn ? "ml-auto" : ""} ${bubbleExtra}`}
-            // NEW: swipe-to-reply handlers + swipe transform
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
             style={{
-              transform: translateX
-                ? `translateX(${isOwn ? -translateX : translateX}px)`
-                : undefined,
-              transition: isSwipingRef.current
-                ? "none"
-                : "transform 150ms ease",
+              transform: translateX ? `translateX(${isOwn ? -translateX : translateX}px)` : undefined,
+              transition: isSwipingRef.current ? "none" : "transform 150ms ease",
             }}
           >
             {isImageUrl(message.content) ? (
@@ -241,9 +235,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 />
               </a>
             ) : (
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                {message.content}
-              </p>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
             )}
 
             {/* Quote Button (allow quoting any message) */}
@@ -252,16 +244,15 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 size="sm"
                 variant="ghost"
                 onClick={() => onQuote(message)}
-                className={`absolute ${
-                  isOwn ? "left-1" : "right-1"
-                } top-1 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-8 w-8 p-0`}
+                className={`absolute ${isOwn ? "left-1" : "right-1"} top-1 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-8 w-8 p-0`}
                 title="Quote to reply"
                 aria-label="Quote to reply"
               >
                 <Quote className="h-4 w-4" />
               </Button>
             )}
-            {/* Delete Button (owner/host) - now hover to reveal */}
+
+            {/* Delete Button (owner/host) - hover to reveal */}
             {canDelete && onDelete && (
               <Button
                 size="sm"
@@ -277,9 +268,11 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               </Button>
             )}
 
-            {/* NEW: diamond sparkle near the bubble */}
+            {/* diamond sparkle near the bubble */}
             {hasDiamond && (
-              <span className={`absolute ${isOwn ? "left-1" : "right-1"} -bottom-2 text-xs text-cyan-400/90 animate-ping select-none`}>
+              <span
+                className={`absolute ${isOwn ? "left-1" : "right-1"} -bottom-2 text-xs text-cyan-400/90 animate-ping select-none`}
+              >
                 💎
               </span>
             )}

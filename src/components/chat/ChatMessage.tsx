@@ -91,6 +91,16 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   const role = String(message.user_profile?.role ?? "").toLowerCase();
   const isFromAdmin = ["admin", "host", "organizer", "owner", "moderator"].includes(role);
 
+  // NEW: compute a sensible display name
+  const rawName = (message.user_profile?.name ?? "").trim();
+  const displayName = rawName
+    ? rawName
+    : isFromAdmin
+    ? "Admin"
+    : isOwn
+    ? "You"
+    : "Unknown";
+
   // NEW: achievements & styles based on points
   const { medals, hasFireGlow, hasDiamond } = getAchievement(points ?? 0);
   const avatarGlow =
@@ -167,9 +177,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                   ? "text-gray-800 dark:text-gray-200"
                   : "text-connect-700 dark:text-connect-300 hover:underline"
               } ${!isOwn && message.user_profile ? "cursor-pointer" : ""} truncate max-w-[60%]`}
-              title={message.user_profile?.name || (isOwn ? "You" : "Unknown")}
+              title={displayName}
             >
-              {message.user_profile?.name || (isOwn ? "You" : "Unknown")}
+              {displayName}
             </span>
             <span className="text-xs text-gray-500 dark:text-gray-400">
               • {timeAgo}
@@ -251,7 +261,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 <Quote className="h-4 w-4" />
               </Button>
             )}
-            {/* Delete Button (owner/host) */}
+            {/* Delete Button (owner/host) - now hover to reveal */}
             {canDelete && onDelete && (
               <Button
                 size="sm"
@@ -259,9 +269,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 onClick={() => {
                   if (confirm("Delete this message?")) onDelete(message.id);
                 }}
-                className={`absolute ${
-                  isOwn ? "left-1" : "right-1"
-                } top-9 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-8 w-8 p-0 text-destructive`}
+                className={`absolute ${isOwn ? "left-1" : "right-1"} top-9 z-10 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 text-destructive`}
                 title="Delete message"
                 aria-label="Delete message"
               >

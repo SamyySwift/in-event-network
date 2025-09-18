@@ -127,9 +127,9 @@ export function ExpandableTabs({
           >
             <span className="relative">
               <Icon size={20} />
-              {typeof tab.badgeCount === "number" && tab.badgeCount > 0 && (
-                <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 rounded-full bg-red-500 text-white text-[10px] leading-4 flex items-center justify-center">
-                  {tab.badgeCount > 9 ? "9+" : tab.badgeCount}
+              {!isSeparator(tab) && typeof tab.badgeCount === "number" && tab.badgeCount > 0 && (
+                <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] leading-4 flex items-center justify-center">
+                  {tab.badgeCount > 99 ? "99+" : tab.badgeCount}
                 </span>
               )}
             </span>

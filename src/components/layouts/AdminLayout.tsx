@@ -435,8 +435,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
         {currentUser && (
           <Button
-            variant="destructive"
-            className="w-full justify-start mt-4"
+            variant="ghost"
+            className="w-full justify-start mt-4 text-primary hover:bg-primary/10"
             onClick={() => {
               logout();
               navigate("/");
@@ -494,9 +494,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
         {/* Sidebar Navigation for Desktop */}
         <aside
-          className={`${
-            sidebarOpen ? "w-64" : "w-20"
-          } hidden md:flex flex-col bg-sidebar glass shadow-lg shadow-primary/5 fixed h-full transition-all duration-300 ease-in-out z-30`}
+          className={`${sidebarOpen ? "w-64" : "w-20"} hidden md:flex flex-col bg-sidebar glass shadow-lg shadow-primary/5 fixed h-full transition-all duration-300 ease-in-out z-30`}
         >
           <div
             className={`p-4 border-b border-sidebar-border flex ${
@@ -643,10 +641,8 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
             {currentUser && (
               <Button
-                variant="destructive"
-                className={`w-full ${
-                  sidebarOpen ? "justify-start" : "justify-center"
-                } mt-4`}
+                variant="ghost"
+                className={`w-full ${sidebarOpen ? "justify-start" : "justify-center"} mt-4 text-primary hover:bg-primary/10`}
                 onClick={() => {
                   logout();
                   navigate("/");

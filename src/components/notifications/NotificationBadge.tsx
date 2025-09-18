@@ -39,8 +39,8 @@ export const NotificationBadge: React.FC<NotificationBadgeProps> = ({
       <Bell className={iconSizes[size]} />
       {count > 0 && (
         <Badge 
-          variant="destructive" 
-          className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs min-w-[20px]"
+          variant="default"
+          className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs min-w-[20px] bg-primary text-primary-foreground"
         >
           {count > 99 ? '99+' : count}
         </Badge>

@@ -261,8 +261,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
                   {currentUser && (
                     <Button
-                      variant="destructive"
-                      className="justify-start mt-4"
+                      variant="ghost"
+                      className="justify-start mt-4 text-connect-600 hover:bg-connect-50 dark:text-connect-400 dark:hover:bg-connect-900/40"
                       onClick={() => {
                         logout();
                         navigate("/");
@@ -382,8 +382,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
           {currentUser && (
             <Button
-              variant="destructive"
-              className="w-full justify-start mt-6 border-t border-gray-100 dark:border-gray-700 pt-4"
+              variant="ghost"
+              className="w-full justify-start mt-6 border-t border-gray-100 dark:border-gray-700 pt-4 text-connect-600 hover:bg-connect-50 dark:text-connect-400 dark:hover:bg-connect-900/40"
               onClick={() => {
                 logout();
                 navigate("/");
@@ -446,7 +446,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             <Bell size={20} />
             <span className="text-xs mt-1">Notifications</span>
             {unreadCount > 0 && (
-              <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs bg-red-500 text-white flex items-center justify-center">
+              <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs bg-primary text-primary-foreground flex items-center justify-center">
                 {unreadCount > 9 ? "9+" : unreadCount}
               </Badge>
             )}

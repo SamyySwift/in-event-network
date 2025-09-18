@@ -24,6 +24,7 @@ import {
   Ticket,
   Store,
   Tickets,
+  LayoutDashboard,
   Book,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -39,6 +40,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useNotificationCount } from "@/hooks/useNotificationCount";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NotificationBadge } from "@/components/notifications/NotificationBadge";
+import { ExpandableTabs } from "@/components/ui/expandable-tabs";
 interface AppLayoutProps {
   children: React.ReactNode;
 }
@@ -63,7 +65,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     {
       name: "Dashboard",
       href: "/attendee",
-      icon: <Users className="text-muted-foreground" />,
+      icon: <LayoutDashboard className="text-muted-foreground" />,
     },
     {
       name: "My Tickets",
@@ -120,7 +122,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     {
       name: "Dashboard",
       href: "/host",
-      icon: <Users size={20} />,
+      icon: <LayoutDashboard size={20} />,
     },
     {
       name: "Events",
@@ -160,6 +162,29 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   ];
   const navigation =
     currentUser?.role === "host" ? hostNavigation : attendeeNavigation;
+
+  // Define attendee tabs for mobile bottom nav using ExpandableTabs
+  const attendeeTabItems = [
+    { title: "Dashboard", icon: LayoutDashboard },
+    { title: "Networking", icon: UserPlus },
+    { title: "Schedule", icon: Calendar },
+    { title: "Map", icon: MapPin },
+    { type: "separator" as const },
+    { title: "Q&A", icon: MessageSquare },
+    { title: "Polls", icon: BarChart },
+    { title: "Announcements", icon: Megaphone },
+    { title: "Notifications", icon: Bell, badgeCount: unreadCount },
+  ];
+  const indexToHref: (string | null)[] = [
+    "/attendee",
+    "/attendee/networking",
+    "/attendee/schedule",
+    "/attendee/map",
+    null,
+    "/attendee/questions",
+    "/attendee/polls",
+    "/attendee/notifications",
+  ];
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col md:flex-row">
       {/* Mobile Header */}
@@ -377,7 +402,24 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       </main>
 
       {/* Bottom Navigation Bar for Mobile */}
-      {currentUser && (
+      {currentUser && currentUser.role === "attendee" && (
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 p-2">
+          <div className="overflow-x-auto">
+            <ExpandableTabs
+              className="min-w-max flex-nowrap overflow-x-auto"
+              activeColor="text-connect-600"
+              tabs={attendeeTabItems}
+              onChange={(index) => {
+                if (index === null) return;
+                const href = indexToHref[index];
+                if (href) navigate(href);
+              }}
+            />
+          </div>
+        </div>
+      )}
+
+      {currentUser && currentUser.role !== "attendee" && (
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t dark:border-gray-700 flex items-center justify-around p-2 z-40 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
           {navigation.slice(0, 4).map((item) => (
             <button

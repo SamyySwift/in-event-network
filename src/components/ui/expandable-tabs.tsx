@@ -119,13 +119,13 @@ export function ExpandableTabs({
             onClick={() => handleSelect(index)}
             transition={transition}
             className={cn(
-              "relative flex items-center rounded-xl px-4 py-2 text-sm font-medium transition-colors duration-300",
+              "relative flex items-center rounded-xl text-sm font-medium transition-colors duration-300",
               selected === index
-                ? cn("bg-muted", activeColor, "justify-start")
-                : "text-muted-foreground hover:bg-muted hover:text-foreground justify-center"
+                ? cn("bg-muted", activeColor, "px-4 py-2 justify-start")
+                : "text-muted-foreground hover:bg-muted hover:text-foreground px-0 py-2 w-12 justify-center"
             )}
           >
-            <span className="relative flex items-center justify-center">
+            <span className="relative flex items-center justify-center w-5 h-5">
               <Icon size={20} />
               {!isSeparator(tab) &&
                 typeof tab.badgeCount === "number" &&

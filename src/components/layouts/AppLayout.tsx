@@ -403,7 +403,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
       {/* Bottom Navigation Bar for Mobile */}
       {currentUser && currentUser.role === "attendee" && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 p-2">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t dark:border-gray-700 p-2 z-40 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
           <div className="overflow-x-auto">
             <ExpandableTabs
               className="min-w-max flex-nowrap overflow-x-auto"

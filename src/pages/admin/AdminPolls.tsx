@@ -4,6 +4,7 @@ import React, { useState } from "react";
 // import AdminLayout from "@/components/layouts/AdminLayout";
 import CreatePollDialog from "@/components/admin/CreatePollDialog";
 import EventSelector from "@/components/admin/EventSelector";
+import EditPollDialog from "@/components/admin/EditPollDialog";
 import PollStatsCards from "./components/PollStatsCards";
 import PollCard from "./components/PollCard";
 import { Button } from "@/components/ui/button";
@@ -21,13 +22,16 @@ const AdminPollsContent = () => {
   const { toast } = useToast();
   const { selectedEventId, selectedEvent } = useAdminEventContext();
   const { polls, isLoading, updatePoll, deletePoll, isDeleting } = useAdminPolls(selectedEventId || undefined);
+  const total = polls.length;
 
   // Stats for cards
-  const total = polls.length;
   const active = polls.filter((p) => p.is_active).length;
   const totalVotes = polls.reduce((acc, poll) => {
     return acc + poll.options.reduce((sum, o) => sum + (o.votes || 0), 0);
   }, 0);
+
+  // Add: edit state
+  const [editingPoll, setEditingPoll] = useState<Poll | null>(null);
 
   // Filter polls based on search query
   const filteredPolls = polls.filter((poll) =>
@@ -35,10 +39,8 @@ const AdminPollsContent = () => {
   );
 
   const handleEditPoll = (poll: Poll) => {
-    toast({
-      title: "Edit functionality",
-      description: "Poll editing will be available in the next update"
-    });
+    // Open edit dialog instead of toast
+    setEditingPoll(poll);
   };
 
   const handleDeletePoll = (poll: Poll) => {
@@ -103,9 +105,7 @@ const AdminPollsContent = () => {
           <div className={`flex ${isMobile ? "flex-col gap-4" : "flex-row items-center justify-between"}`}>
             <div>
               <h2 className="text-2xl font-bold">Polls</h2>
-              <p className="text-muted-foreground mt-1">
-                Create and manage polls for your event.
-              </p>
+              <p className="text-muted-foreground">Create and manage polls for your event.</p>
             </div>
             <CreatePollDialog>
               <Button>

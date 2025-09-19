@@ -99,7 +99,7 @@ export function ExpandableTabs({
     <div
       ref={outsideClickRef}
       className={cn(
-        "flex flex-wrap items-center gap-2 rounded-2xl border bg-background p-1 shadow-sm",
+        "flex flex-wrap items-center justify-center gap-2 rounded-2xl border bg-background p-1 shadow-sm",
         className
       )}
     >
@@ -119,7 +119,7 @@ export function ExpandableTabs({
             onClick={() => handleSelect(index)}
             transition={transition}
             className={cn(
-              "relative flex items-center rounded-xl px-4 py-2 text-sm font-medium transition-colors duration-300",
+              "relative flex items-center rounded-xl px-4 py-3 text-sm font-medium transition-colors duration-300",
               selected === index
                 ? cn("bg-muted", activeColor, "justify-start")
                 : "text-muted-foreground hover:bg-muted hover:text-foreground justify-center"
@@ -130,7 +130,7 @@ export function ExpandableTabs({
               {!isSeparator(tab) &&
                 typeof tab.badgeCount === "number" &&
                 tab.badgeCount > 0 && (
-                  <span className="absolute -top-1 -right-1 h-4 min-w-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] leading-4 flex items-center justify-center">
+                  <span className="absolute -top-3 -right-3 h-4 min-w-4 px-1 rounded-full bg-primary text-primary-foreground text-[10px] leading-4 flex items-center justify-center">
                     {tab.badgeCount > 99 ? "99+" : tab.badgeCount}
                   </span>
                 )}

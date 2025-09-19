@@ -298,6 +298,8 @@ const AdminNetworking = () => {
                   <span className="text-xs sm:text-sm">Chat Room</span>
                 </TabsTrigger>
               </TabsList>
+
+              {/* Existing: Share Networking (protected) */}
               <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
                 <DialogTrigger asChild>
                   <Button variant="outline" className="gap-2 hover-scale">

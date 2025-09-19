@@ -9,12 +9,13 @@ import PollStatsCards from "./components/PollStatsCards";
 import PollCard from "./components/PollCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus } from "lucide-react";
+import { Plus, Share2, Copy, ExternalLink } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAdminPolls, Poll } from "@/hooks/useAdminPolls";
 import { useAdminEventContext } from "@/hooks/useAdminEventContext";
 import { useToast } from "@/hooks/use-toast";
 import PaymentGuard from '@/components/payment/PaymentGuard';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 const AdminPollsContent = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -59,6 +60,29 @@ const AdminPollsContent = () => {
       id: poll.id,
       show_results: !poll.show_results
     });
+  };
+
+  // Add: share link dialog state and helpers
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+
+  const generateShareableLink = () => {
+    if (!selectedEventId) return '';
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/live-polls/${selectedEventId}`;
+  };
+
+  const copyShareableLink = () => {
+    const link = generateShareableLink();
+    navigator.clipboard.writeText(link);
+    toast({
+      title: "Link copied!",
+      description: "Shareable link has been copied to clipboard",
+    });
+  };
+
+  const openInNewTab = () => {
+    const link = generateShareableLink();
+    window.open(link, '_blank');
   };
 
   return (
@@ -116,15 +140,74 @@ const AdminPollsContent = () => {
           </div>
 
           {/* Search */}
-          <div className="flex justify-between mb-4">
+          <div className="flex justify-between items-center mb-4">
             <Input 
               placeholder="Search polls..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="max-w-sm"
             />
-          </div>
+            <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2 hover-scale">
+                  <Share2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Share Live View</span>
+                  <span className="sm:hidden">Share</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-lg max-w-[95vw] w-full mx-4 rounded-xl border-0 bg-gradient-to-br from-background via-background to-primary/5 shadow-2xl">
+                <DialogHeader className="space-y-3 pb-4">
+                  <DialogTitle className="flex items-center gap-3 text-xl font-semibold">
+                    <div className="p-2 rounded-full bg-primary/10">
+                      <Share2 className="h-5 w-5 text-primary" />
+                    </div>
+                    Share Live Poll Results
+                  </DialogTitle>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Share this link so anyone can view live poll results in real-time without logging in.
+                  </p>
+                </DialogHeader>
 
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-foreground">Shareable Link</label>
+                    <div className="relative">
+                      <div className="flex items-center rounded-lg border border-border bg-muted/50 p-3 pr-12 min-h-[44px] overflow-hidden">
+                        <span className="text-sm text-foreground break-all font-mono leading-relaxed max-w-full">
+                          {generateShareableLink()}
+                        </span>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        onClick={copyShareableLink} 
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 px-3 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                        <span className="sr-only">Copy link</span>
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                    <Button 
+                      onClick={openInNewTab} 
+                      variant="outline" 
+                      className="flex-1 gap-2 h-11 border-primary/20 hover:border-primary/40 hover:bg-primary/5"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Preview Live View
+                    </Button>
+                    <Button 
+                      onClick={() => setShareDialogOpen(false)} 
+                      className="flex-1 h-11 bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
+                    >
+                      Done
+                    </Button>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
           {/* Polls List */}
           <div className="space-y-4">
             {filteredPolls.length > 0 ? (

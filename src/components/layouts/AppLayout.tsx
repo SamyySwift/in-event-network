@@ -173,7 +173,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     { title: "Q&A", icon: MessageSquare },
     { title: "Polls", icon: BarChart },
     { title: "Announcements", icon: Megaphone },
-    { title: "Notifications", icon: Bell, badgeCount: unreadCount },
+    // { title: "Notifications", icon: Bell, badgeCount: unreadCount },
   ];
   const indexToHref: (string | null)[] = [
     "/attendee",
@@ -183,7 +183,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     null,
     "/attendee/questions",
     "/attendee/polls",
-    "/attendee/notifications",
+    // "/attendee/notifications",
   ];
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col md:flex-row">

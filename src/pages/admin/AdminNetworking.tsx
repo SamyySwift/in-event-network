@@ -45,6 +45,7 @@ const AdminNetworking = () => {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
+  const [shareChatOpen, setShareChatOpen] = useState(false);
 
   // Create a wrapper component for attendee networking context
   const AttendeeNetworkingContent = () => {
@@ -99,6 +100,27 @@ const AdminNetworking = () => {
 
   const openInNewTab = () => {
     const link = generateShareableLink();
+    window.open(link, '_blank');
+  };
+
+  // Live Chat share link helpers (public)
+  const generateLiveChatLink = () => {
+    if (!selectedEventId) return '';
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/live-chat/${selectedEventId}`;
+  };
+
+  const copyLiveChatLink = () => {
+    const link = generateLiveChatLink();
+    navigator.clipboard.writeText(link);
+    toast({
+      title: "Link copied!",
+      description: "Live Chat link has been copied to clipboard",
+    });
+  };
+
+  const openLiveChat = () => {
+    const link = generateLiveChatLink();
     window.open(link, '_blank');
   };
 

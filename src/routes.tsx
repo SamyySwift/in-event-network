@@ -38,6 +38,7 @@ import AdminEventPreview from "@/pages/admin/AdminEventPreview";
 import SponsorForm from "@/pages/SponsorForm";
 import LiveQuestions from "@/pages/LiveQuestions";
 import LivePolls from "@/pages/LivePolls";
+import LiveChat from "@/pages/LiveChat";
 
 
 // Attendee Pages
@@ -339,6 +340,12 @@ export const router = createBrowserRouter([
   {
     path: "/live-polls/:eventId",
     element: <LivePolls />,
+  },
+
+  // Public live chat route
+  {
+    path: "/live-chat/:eventId",
+    element: <LiveChat />,
   },
 
   // Public check-in route

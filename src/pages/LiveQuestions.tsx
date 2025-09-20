@@ -226,7 +226,7 @@ export default function LiveQuestions() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="container mx-auto px-4 py-8 max-w-5xl lg:max-w-6xl">
         {/* Event Header */}
         <div className="mb-8">
           <div className="flex items-center gap-4 mb-4">
@@ -237,8 +237,8 @@ export default function LiveQuestions() {
               </Avatar>
             )}
             <div>
-              <h1 className="text-3xl font-bold">{event.name}</h1>
-              <p className="text-muted-foreground">Live Q&A Session</p>
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold">{event.name}</h1>
+              <p className="text-sm sm:text-base lg:text-xl text-muted-foreground">Live Q&A Session</p>
             </div>
           </div>
           
@@ -248,11 +248,11 @@ export default function LiveQuestions() {
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/20">
-                    <MessageSquare className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    <MessageSquare className="h-5 w-5 lg:h-7 lg:w-7 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{total}</p>
-                    <p className="text-sm text-muted-foreground">Total Questions</p>
+                    <p className="text-2xl sm:text-3xl lg:text-5xl font-extrabold">{total}</p>
+                    <p className="text-xs sm:text-sm lg:text-lg text-muted-foreground">Total Questions</p>
                   </div>
                 </div>
               </CardContent>
@@ -262,11 +262,11 @@ export default function LiveQuestions() {
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/20">
-                    <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    <CheckCircle className="h-5 w-5 lg:h-7 lg:w-7 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{answered}</p>
-                    <p className="text-sm text-muted-foreground">Answered</p>
+                    <p className="text-2xl sm:text-3xl lg:text-5xl font-extrabold">{answered}</p>
+                    <p className="text-xs sm:text-sm lg:text-lg text-muted-foreground">Answered</p>
                   </div>
                 </div>
               </CardContent>
@@ -276,11 +276,11 @@ export default function LiveQuestions() {
               <CardContent className="p-4">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-orange-100 dark:bg-orange-900/20">
-                    <ArrowUp className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+                    <ArrowUp className="h-5 w-5 lg:h-7 lg:w-7 text-orange-600 dark:text-orange-400" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{trending}</p>
-                    <p className="text-sm text-muted-foreground">Trending</p>
+                    <p className="text-2xl sm:text-3xl lg:text-5xl font-extrabold">{trending}</p>
+                    <p className="text-xs sm:text-sm lg:text-lg text-muted-foreground">Trending</p>
                   </div>
                 </div>
               </CardContent>
@@ -294,7 +294,7 @@ export default function LiveQuestions() {
             {TABS.map(tab => (
               <button
                 key={tab.id}
-                className={`px-4 py-2 rounded-full font-medium transition ${
+                className={`px-4 py-2 rounded-full font-medium text-sm sm:text-base lg:text-xl transition ${
                   activeTab === tab.id
                     ? "bg-primary text-primary-foreground shadow"
                     : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -327,31 +327,31 @@ export default function LiveQuestions() {
                     <div className="flex items-center gap-3">
                       {question.profiles && !question.is_anonymous ? (
                         <>
-                          <Avatar className="h-8 w-8">
+                          <Avatar className="h-8 w-8 lg:h-12 lg:w-12">
                             <AvatarImage src={question.profiles.photo_url || ''} />
                             <AvatarFallback>
                               {question.profiles.name?.charAt(0) || '?'}
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-medium text-sm">{question.profiles.name}</p>
-                            <p className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
+                            <p className="font-semibold text-sm sm:text-base lg:text-2xl">{question.profiles.name}</p>
+                            <p className="text-xs sm:text-sm lg:text-lg text-muted-foreground flex items-center gap-1">
+                              <Clock className="h-3 w-3 lg:h-4 lg:w-4" />
                               {formatDistanceToNow(new Date(question.created_at), { addSuffix: true })}
                             </p>
                           </div>
                         </>
                       ) : (
                         <>
-                          <Avatar className="h-8 w-8">
+                          <Avatar className="h-8 w-8 lg:h-12 lg:w-12">
                             <AvatarFallback>
-                              <User className="h-4 w-4" />
+                              <User className="h-4 w-4 lg:h-6 lg:w-6" />
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <p className="font-medium text-sm">Anonymous</p>
-                            <p className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Clock className="h-3 w-3" />
+                            <p className="font-semibold text-sm sm:text-base lg:text-2xl">Anonymous</p>
+                            <p className="text-xs sm:text-sm lg:text-lg text-muted-foreground flex items-center gap-1">
+                              <Clock className="h-3 w-3 lg:h-4 lg:w-4" />
                               {formatDistanceToNow(new Date(question.created_at), { addSuffix: true })}
                             </p>
                           </div>
@@ -360,14 +360,14 @@ export default function LiveQuestions() {
                     </div>
                     <div className="flex items-center gap-2">
                       {question.upvotes > 0 && (
-                        <Badge variant="secondary" className="gap-1">
-                          <ArrowUp className="h-3 w-3" />
+                        <Badge variant="secondary" className="gap-1 text-xs sm:text-sm lg:text-base">
+                          <ArrowUp className="h-3 w-3 lg:h-4 lg:w-4" />
                           {question.upvotes} {question.upvotes > 0 && <span aria-hidden="true">🔥</span>}
                         </Badge>
                       )}
                       {question.is_answered && (
-                        <Badge variant="default" className="gap-1">
-                          <CheckCircle className="h-3 w-3" />
+                        <Badge variant="default" className="gap-1 text-xs sm:text-sm lg:text-base">
+                          <CheckCircle className="h-3 w-3 lg:h-4 lg:w-4" />
                           Answered
                         </Badge>
                       )}
@@ -375,19 +375,19 @@ export default function LiveQuestions() {
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0">
-                  <p className="text-foreground mb-3">{question.content}</p>
+                  <p className="text-base sm:text-lg lg:text-2xl font-semibold text-foreground mb-3">{question.content}</p>
                   
                   {question.response && (
                     <div className="bg-muted/50 rounded-lg p-4 border-l-4 border-primary">
                       <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="outline" className="text-xs">Official Response</Badge>
+                        <Badge variant="outline" className="text-xs sm:text-sm lg:text-base">Official Response</Badge>
                         {question.response_created_at && (
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs sm:text-sm lg:text-base text-muted-foreground">
                             {formatDistanceToNow(new Date(question.response_created_at), { addSuffix: true })}
                           </span>
                         )}
                       </div>
-                      <p className="text-sm">{question.response}</p>
+                      <p className="text-base sm:text-lg lg:text-xl">{question.response}</p>
                     </div>
                   )}
                 </CardContent>
@@ -396,9 +396,9 @@ export default function LiveQuestions() {
           ) : (
             <Card>
               <CardContent className="p-8 text-center">
-                <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground opacity-30 mb-4" />
-                <h3 className="text-lg font-medium mb-2">No questions found</h3>
-                <p className="text-sm text-muted-foreground">
+                <MessageSquare className="mx-auto h-12 w-12 lg:h-16 lg:w-16 text-muted-foreground opacity-30 mb-4" />
+                <h3 className="text-xl sm:text-2xl lg:text-4xl font-bold mb-2">No questions found</h3>
+                <p className="text-base lg:text-2xl text-muted-foreground">
                   {searchQuery ? "No questions match your search criteria." : "No questions have been submitted yet."}
                 </p>
               </CardContent>
@@ -408,8 +408,8 @@ export default function LiveQuestions() {
 
         {/* Live indicator */}
         <div className="fixed bottom-4 right-4">
-          <Badge variant="default" className="gap-2 animate-pulse">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+          <Badge variant="default" className="gap-2 animate-pulse text-sm sm:text-base lg:text-xl">
+            <div className="w-2 h-2 lg:w-3 lg:h-3 bg-green-500 rounded-full animate-pulse"></div>
             Live
           </Badge>
         </div>

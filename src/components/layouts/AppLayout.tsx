@@ -183,6 +183,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     null,
     "/attendee/questions",
     "/attendee/polls",
+    "/attendee/announcements", // <-- added missing mapping
     // "/attendee/notifications",
   ];
   return (

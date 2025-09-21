@@ -12,13 +12,24 @@ import AttendeeFilters from './components/AttendeeFilters';
 import AttendeesList from './components/AttendeesList';
 import AttendeeManagementSection from './components/AttendeeManagementSection';
 import { DownloadDataButtons } from '@/components/admin/DownloadDataButtons';
+import { Switch } from '@/components/ui/switch';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from '@/components/ui/alert-dialog';
 
 const AdminAttendeesContent = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<string>('all');
   const { currentUser } = useAuth();
   const { selectedEvent, selectedEventId } = useAdminEventContext();
-  const { attendees, isLoading, error } = useAdminAttendees();
+  const { attendees, isLoading, error, bulkScanOutAll, bulkScanInAll, isBulkScanning } = useAdminAttendees();
 
   console.log('AdminAttendees - selectedEventId:', selectedEventId);
   console.log('AdminAttendees - attendees:', attendees);
@@ -41,6 +52,35 @@ const AdminAttendeesContent = () => {
     return matchesSearch && matchesRole;
   });
 
+  // Toggle state + confirm dialog for bulk scan-out
+  const [isNetworkingActive, setIsNetworkingActive] = useState(true);
+  const [confirmScanOutOpen, setConfirmScanOutOpen] = useState(false);
+
+  const handleToggleChange = async (checked: boolean) => {
+    if (!selectedEventId) return;
+    if (!checked) {
+      // Turning OFF => confirm bulk scan-out
+      setConfirmScanOutOpen(true);
+    } else {
+      // Turning ON => bulk scan-in
+      try {
+        await bulkScanInAll();
+        setIsNetworkingActive(true);
+      } catch {
+        // keep state if failed
+      }
+    }
+  };
+
+  const confirmBulkScanOut = async () => {
+    try {
+      await bulkScanOutAll();
+      setIsNetworkingActive(false);
+    } finally {
+      setConfirmScanOutOpen(false);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Event Selector and Download buttons in a responsive layout */}
@@ -57,7 +97,47 @@ const AdminAttendeesContent = () => {
             />
           </div>
         )}
+        {/* Networking Active Toggle */}
+        {selectedEventId && (
+          <div className="flex items-center justify-between lg:justify-start gap-3 border rounded-xl px-4 py-2 bg-muted/40">
+            <div className="flex flex-col">
+              <span className="text-sm font-medium">Networking Active</span>
+              <span className="text-xs text-muted-foreground">
+                Turn OFF to scan out all attendees, ON to restore them
+              </span>
+            </div>
+            <Switch
+              checked={isNetworkingActive}
+              onCheckedChange={handleToggleChange}
+              disabled={isLoading || isBulkScanning}
+            />
+          </div>
+        )}
       </div>
+
+      {/* Confirm bulk scan-out dialog */}
+      <AlertDialog open={confirmScanOutOpen} onOpenChange={setConfirmScanOutOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader className="space-y-2">
+            <AlertDialogTitle className="text-destructive">Scan Out All Attendees</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove networking presence for all {attendees.length} attendees in{' '}
+              <span className="font-semibold">{selectedEvent?.name ?? 'this event'}</span>.
+              You can restore everyone by turning the toggle back ON.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isBulkScanning}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmBulkScanOut}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+              disabled={isBulkScanning}
+            >
+              {isBulkScanning ? 'Scanning out...' : 'Yes, Scan Out All'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Show message when no event is selected */}
       {!selectedEventId && (

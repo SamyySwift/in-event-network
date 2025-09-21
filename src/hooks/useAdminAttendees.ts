@@ -260,6 +260,7 @@ export const useAdminAttendees = () => {
       return data;
     },
     onSuccess: () => {
+      // Refresh admin attendees and networking-related caches
       queryClient.invalidateQueries({ queryKey: ['admin-attendees'] });
       queryClient.invalidateQueries({ queryKey: ['admin-attendee-networking'] });
       queryClient.invalidateQueries({ queryKey: ['attendee-networking'] });
@@ -320,7 +321,7 @@ export const useAdminAttendees = () => {
     isAdding: addAttendeeMutation.isPending,
     isDeleting: deleteAttendeeMutation.isPending,
     isClearing: clearAttendeesMutation.isPending,
-    // New exports
+    // New exports:
     bulkScanOutAll: bulkScanOutAll.mutateAsync,
     bulkScanInAll: bulkScanInAll.mutateAsync,
     isBulkScanning: bulkScanOutAll.isPending || bulkScanInAll.isPending,

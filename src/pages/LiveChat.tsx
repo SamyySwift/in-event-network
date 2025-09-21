@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { MessageCircle, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ChatMessage as ChatMessageComponent } from "@/components/chat/ChatMessage";
-import { FloatingDidYouKnow } from "@/components/attendee/FloatingDidYouKnow";
 
 type DBChatMessage = {
   id: string;
@@ -286,8 +285,6 @@ export default function LiveChat() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Floating 'Did You Know' for Chat Room */}
-      <FloatingDidYouKnow />
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         {/* Header */}
         <div className="mb-8">

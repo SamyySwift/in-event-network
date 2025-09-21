@@ -1,4 +1,5 @@
 
+// function AdminAttendeesContent
 import React, { useState } from 'react';
 // Remove this import:
 // import AdminLayout from '@/components/layouts/AdminLayout';
@@ -52,9 +53,10 @@ const AdminAttendeesContent = () => {
     return matchesSearch && matchesRole;
   });
 
-  // Toggle state + confirm dialog for bulk scan-out
+  // Toggle state + confirm dialogs for irreversible actions
   const [isNetworkingActive, setIsNetworkingActive] = useState(true);
   const [confirmScanOutOpen, setConfirmScanOutOpen] = useState(false);
+  const [confirmFinalizeOpen, setConfirmFinalizeOpen] = useState(false);
 
   const handleToggleChange = async (checked: boolean) => {
     if (!selectedEventId) return;
@@ -62,13 +64,8 @@ const AdminAttendeesContent = () => {
       // Turning OFF => confirm bulk scan-out
       setConfirmScanOutOpen(true);
     } else {
-      // Turning ON => bulk scan-in
-      try {
-        await bulkScanInAll();
-        setIsNetworkingActive(true);
-      } catch {
-        // keep state if failed
-      }
+      // Turning ON => confirm irreversible finalize (cannot be undone)
+      setConfirmFinalizeOpen(true);
     }
   };
 
@@ -78,6 +75,15 @@ const AdminAttendeesContent = () => {
       setIsNetworkingActive(false);
     } finally {
       setConfirmScanOutOpen(false);
+    }
+  };
+
+  const confirmBulkScanIn = async () => {
+    try {
+      await bulkScanInAll();
+      setIsNetworkingActive(true);
+    } finally {
+      setConfirmFinalizeOpen(false);
     }
   };
 
@@ -103,7 +109,7 @@ const AdminAttendeesContent = () => {
             <div className="flex flex-col">
               <span className="text-sm font-medium">Networking Active</span>
               <span className="text-xs text-muted-foreground">
-                Turn OFF to scan out all attendees, ON to restore them
+                Warning: this action is irreversible. Turning OFF scans out all attendees. Turning ON finalizes and cannot be undone.
               </span>
             </div>
             <Switch
@@ -115,15 +121,14 @@ const AdminAttendeesContent = () => {
         )}
       </div>
 
-      {/* Confirm bulk scan-out dialog */}
+      {/* Confirm bulk scan-out dialog (OFF) */}
       <AlertDialog open={confirmScanOutOpen} onOpenChange={setConfirmScanOutOpen}>
         <AlertDialogContent>
           <AlertDialogHeader className="space-y-2">
             <AlertDialogTitle className="text-destructive">Scan Out All Attendees</AlertDialogTitle>
             <AlertDialogDescription>
               This will remove networking presence for all {attendees.length} attendees in{' '}
-              <span className="font-semibold">{selectedEvent?.name ?? 'this event'}</span>.
-              You can restore everyone by turning the toggle back ON.
+              <span className="font-semibold">{selectedEvent?.name ?? 'this event'}</span>. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -139,12 +144,36 @@ const AdminAttendeesContent = () => {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Confirm finalize dialog (ON) */}
+      <AlertDialog open={confirmFinalizeOpen} onOpenChange={setConfirmFinalizeOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader className="space-y-2">
+            <AlertDialogTitle>Finalize Networking</AlertDialogTitle>
+            <AlertDialogDescription>
+              Once you turn networking ON for{' '}
+              <span className="font-semibold">{selectedEvent?.name ?? 'this event'}</span>, this action cannot be undone.
+              Please confirm you want to proceed.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isBulkScanning}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmBulkScanIn}
+              className="bg-primary hover:bg-primary/90"
+              disabled={isBulkScanning}
+            >
+              {isBulkScanning ? 'Finalizing...' : 'Yes, Turn On'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Show message when no event is selected */}
       {!selectedEventId && (
         <div className="text-center py-12">
           <div className="p-4 rounded-full bg-primary/10 inline-block mb-4">
             <svg className="h-8 w-8 text-primary" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2v12a2 2 0 002 2z"/>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002-2v12a2 2 0 002 2z"/>
             </svg>
           </div>
           <p className="text-muted-foreground text-lg mb-2">No event selected</p>

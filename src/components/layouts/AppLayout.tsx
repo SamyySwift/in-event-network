@@ -41,6 +41,7 @@ import { useNotificationCount } from "@/hooks/useNotificationCount";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NotificationBadge } from "@/components/notifications/NotificationBadge";
 import { ExpandableTabs } from "@/components/ui/expandable-tabs";
+import { FloatingDidYouKnow } from "@/components/attendee/FloatingDidYouKnow";
 interface AppLayoutProps {
   children: React.ReactNode;
 }
@@ -401,6 +402,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       <main className="flex-1 md:ml-64 min-h-screen pb-16 md:pb-0">
         <div className="p-4 sm:p-6 max-w-7xl mx-auto">{children}</div>
       </main>
+
+      {/* Floating Did You Know (attendee only) */}
+      {currentUser && currentUser.role === "attendee" && (
+        <FloatingDidYouKnow />
+      )}
 
       {/* Bottom Navigation Bar for Mobile */}
       {currentUser && currentUser.role === "attendee" && (

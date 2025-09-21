@@ -29,7 +29,7 @@ const AdminAttendeesContent = () => {
   const [filterRole, setFilterRole] = useState<string>('all');
   const { currentUser } = useAuth();
   const { selectedEvent, selectedEventId } = useAdminEventContext();
-  const { attendees, isLoading, error } = useAdminAttendees();
+  const { attendees, isLoading, error, bulkScanOutAll, bulkScanInAll, isBulkScanning } = useAdminAttendees();
 
   console.log('AdminAttendees - selectedEventId:', selectedEventId);
   console.log('AdminAttendees - attendees:', attendees);
@@ -52,10 +52,9 @@ const AdminAttendeesContent = () => {
     return matchesSearch && matchesRole;
   });
 
-  // Toggle state and dialog for bulk scan-out
+  // Toggle state + confirm dialog for bulk scan-out
   const [isNetworkingActive, setIsNetworkingActive] = useState(true);
   const [confirmScanOutOpen, setConfirmScanOutOpen] = useState(false);
-  const { bulkScanOutAll, bulkScanInAll, isBulkScanning } = useAdminAttendees();
 
   const handleToggleChange = async (checked: boolean) => {
     if (!selectedEventId) return;
@@ -68,7 +67,7 @@ const AdminAttendeesContent = () => {
         await bulkScanInAll();
         setIsNetworkingActive(true);
       } catch {
-        // keep state unchanged if failed
+        // keep state if failed
       }
     }
   };
@@ -104,7 +103,7 @@ const AdminAttendeesContent = () => {
             <div className="flex flex-col">
               <span className="text-sm font-medium">Networking Active</span>
               <span className="text-xs text-muted-foreground">
-                Toggle OFF to scan out all attendees
+                Turn OFF to scan out all attendees, ON to restore them
               </span>
             </div>
             <Switch
@@ -119,13 +118,12 @@ const AdminAttendeesContent = () => {
       {/* Confirm bulk scan-out dialog */}
       <AlertDialog open={confirmScanOutOpen} onOpenChange={setConfirmScanOutOpen}>
         <AlertDialogContent>
-          <AlertDialogHeader>
+          <AlertDialogHeader className="space-y-2">
             <AlertDialogTitle className="text-destructive">Scan Out All Attendees</AlertDialogTitle>
             <AlertDialogDescription>
-              This will remove networking presence for all {attendees.length} attendees in{" "}
+              This will remove networking presence for all {attendees.length} attendees in{' '}
               <span className="font-semibold">{selectedEvent?.name ?? 'this event'}</span>.
-              Users remain in the event, but will no longer appear in networking views.
-              This action can be reversed by toggling back ON.
+              You can restore everyone by turning the toggle back ON.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

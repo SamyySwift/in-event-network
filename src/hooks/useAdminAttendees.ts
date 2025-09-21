@@ -244,73 +244,6 @@ export const useAdminAttendees = () => {
     },
   });
 
-  // Bulk scan OUT: set profiles.current_event_id = NULL for all attendees in this event
-  const bulkScanOutAll = useMutation({
-    mutationFn: async () => {
-      if (!currentUser?.id || !selectedEventId) {
-        throw new Error('User not authenticated or no event selected');
-      }
-      const { data, error } = await supabase.rpc('bulk_scan_out_attendees', {
-        target_event_id: selectedEventId,
-      });
-      if (error) {
-        console.error('Bulk scan-out error:', error);
-        throw error;
-      }
-      return data;
-    },
-    onSuccess: () => {
-      // Refresh admin attendees and networking-related caches
-      queryClient.invalidateQueries({ queryKey: ['admin-attendees'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-attendee-networking'] });
-      queryClient.invalidateQueries({ queryKey: ['attendee-networking'] });
-      toast({
-        title: 'All attendees scanned out',
-        description: 'Attendees are no longer active for this event.',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error',
-        description: `Failed to scan out attendees: ${error.message}`,
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Bulk scan IN: set profiles.current_event_id = event for all event participants
-  const bulkScanInAll = useMutation({
-    mutationFn: async () => {
-      if (!currentUser?.id || !selectedEventId) {
-        throw new Error('User not authenticated or no event selected');
-      }
-      const { data, error } = await supabase.rpc('bulk_scan_in_attendees', {
-        target_event_id: selectedEventId,
-      });
-      if (error) {
-        console.error('Bulk scan-in error:', error);
-        throw error;
-      }
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-attendees'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-attendee-networking'] });
-      queryClient.invalidateQueries({ queryKey: ['attendee-networking'] });
-      toast({
-        title: 'All attendees scanned in',
-        description: 'Attendees are now active for this event.',
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Error',
-        description: `Failed to scan in attendees: ${error.message}`,
-        variant: 'destructive',
-      });
-    },
-  });
-
   return {
     attendees,
     isLoading,
@@ -321,9 +254,5 @@ export const useAdminAttendees = () => {
     isAdding: addAttendeeMutation.isPending,
     isDeleting: deleteAttendeeMutation.isPending,
     isClearing: clearAttendeesMutation.isPending,
-    // New exports:
-    bulkScanOutAll: bulkScanOutAll.mutateAsync,
-    bulkScanInAll: bulkScanInAll.mutateAsync,
-    isBulkScanning: bulkScanOutAll.isPending || bulkScanInAll.isPending,
   };
 };

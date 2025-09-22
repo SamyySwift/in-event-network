@@ -140,8 +140,74 @@ function useDidYouKnowConfig(pathname: string, currentEventId: string | null) {
     },
   ];
 
+  // Global cross-feature variants to allow random tips on any page
+  const globalVariants: DidYouKnowVariant[] = [
+    {
+      id: "networking",
+      message:
+        "🤝 Did you know you can connect with other attendees and build meaningful relationships here?",
+      ctaText: "Go to Networking",
+      getHref: () => "/attendee/networking",
+    },
+    {
+      id: "polls",
+      message:
+        "📊 Did you know you can share your opinions and see live poll results instantly?",
+      ctaText: "Join a Poll",
+      getHref: () => "/attendee/polls",
+    },
+    {
+      id: "announcements",
+      message:
+        "📢 Did you know you’ll never miss an update with real-time announcements?",
+      ctaText: "View Announcements",
+      getHref: () => "/attendee/announcements",
+    },
+    {
+      id: "schedule",
+      message:
+        "📅 Did you know you can see all sessions, speakers, and updates in real time?",
+      ctaText: "View Schedule",
+      getHref: () => "/attendee/schedule",
+    },
+    {
+      id: "suggestions",
+      message:
+        "💡 Did you know you can drop suggestions to improve the event experience?",
+      ctaText: "Give a Suggestion",
+      getHref: () => "/attendee/suggestions",
+    },
+    {
+      id: "ratings",
+      message:
+        "⭐ Did you know you can rate sessions and share feedback instantly?",
+      ctaText: "Rate Now",
+      getHref: () => "/attendee/suggestions#ratings",
+    },
+    {
+      id: "qa",
+      message:
+        "❓ Did you know you can ask questions and upvote others in real time?",
+      ctaText: "Go to Q&A",
+      getHref: () => "/attendee/questions",
+    },
+    {
+      id: "chat",
+      message:
+        "💬 Did you know you can join the chat room and share your thoughts with everyone?",
+      ctaText: "Open Chat",
+      getHref: ({ currentEventId }) =>
+        currentEventId ? `/live-chat/${currentEventId}` : "/attendee/networking",
+    },
+  ];
+
   const matched = variantsMap.find(({ match }) => match(pathname));
-  const variants = matched?.variants ?? [];
+
+  // Merge page-specific variants (if any) with global variants and de-duplicate by id
+  const mergedById = new Map<string, DidYouKnowVariant>();
+  [...(matched?.variants ?? []), ...globalVariants].forEach((v) => mergedById.set(v.id, v));
+  const variants = Array.from(mergedById.values());
+
   // Randomly select one variant for this page navigation
   const selected =
     variants.length > 0

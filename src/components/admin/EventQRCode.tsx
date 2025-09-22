@@ -155,7 +155,7 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({
               <div className="flex gap-2">
                 <Input placeholder="Enter referral code" value={referralCode} onChange={e => setReferralCode(e.target.value)} className="text-xs h-8 bg-background/50" />
                 <Button onClick={handleApplyReferralCode} disabled={!referralCode.trim() || isValidatingCode} size="sm" variant="outline" className="h-8 px-3 text-xs">
-                  {isValidatingCode ? <div className="animate-spin rounded-full h-3 w-3 border-b border-current"></div> : 'Apply'}
+                  <span className="truncate">Pay Now (₦300,000)</span>
                 </Button>
               </div>
             </div>

@@ -133,7 +133,7 @@ const AdminEvents = () => {
       // Check if any existing event has been paid for
       const hasAnyPaidEvent = events.some(event => isEventPaid(event.id));
       if (!hasAnyPaidEvent) {
-        alert("You can only create one free event. Please pay ₦100,000 to unlock unlimited event creation.");
+        alert("You can only create one free event. Please pay ₦300,000 to unlock unlimited event creation.");
         return;
       }
     }

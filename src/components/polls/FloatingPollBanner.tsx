@@ -30,20 +30,19 @@ const FloatingPollBanner: React.FC<FloatingPollBannerProps> = ({
   hasUserVoted = false,
   userVote
 }) => {
-  const [selectedOption, setSelectedOption] = useState<string | null>(null);
+  const [selectedOption, setSelectedOption] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handleVote = () => {
-    if (!selectedOption) {
-      toast({
-        title: "Selection required",
-        description: "Please select an option before voting",
-        variant: "destructive"
-      });
-      return;
+  const handleVote = async () => {
+    if (!selectedOption || isSubmitting || hasUserVoted) return;
+    setIsSubmitting(true);
+    try {
+        await Promise.resolve(onVote(poll.id, selectedOption));
+    } catch (e) {
+        // 提交失败，允许重试
+        setIsSubmitting(false);
     }
-
-    onVote(poll.id, selectedOption);
   };
 
   const calculatePercentage = (votes: number) => {
@@ -114,7 +113,9 @@ const FloatingPollBanner: React.FC<FloatingPollBannerProps> = ({
       </CardContent>
       {!showResults && poll.is_active && (
         <CardFooter className="pt-0">
-          <Button onClick={handleVote} className="w-full">Vote</Button>
+          <Button onClick={handleVote} className="w-full" disabled={!selectedOption || hasUserVoted || isSubmitting}>
+            {isSubmitting ? "Submitting..." : hasUserVoted ? "Voted" : "Vote"}
+          </Button>
         </CardFooter>
       )}
     </Card>

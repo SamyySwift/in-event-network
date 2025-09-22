@@ -61,17 +61,16 @@ const PaymentGuard: React.FC<PaymentGuardProps> = ({
             </div>
             <CardTitle className="flex items-center justify-center gap-2">
               <Sparkles className="h-5 w-5 text-primary" />
-              Premium Feature Locked
+              <h3 className="text-xl font-semibold">Premium Feature Locked</h3>
             </CardTitle>
-            <CardDescription>
-              Complete payment to unlock {feature} for "{eventName}"
+            <CardDescription className="text-sm text-muted-foreground">
+              Access all premium features including speakers management, Q&amp;A, facilities, announcements, polls, highlights, sponsors, vendors hub, rules, bulk check-in, networking and more for just ₦300,000
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <p className="text-sm text-muted-foreground">
-              Access all premium features including speakers management, Q&A, facilities, announcements, polls, highlights, sponsors, vendors hub, rules, bulk check-in, networking and more for just ₦100,000
+              Access all premium features including speakers management, Q&amp;A, facilities, announcements, polls, highlights, sponsors, vendors hub, rules, bulk check-in, networking and more for just ₦300,000
             </p>
-            
             <Button 
               onClick={() => setShowPaymentModal(true)}
               className="bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700"

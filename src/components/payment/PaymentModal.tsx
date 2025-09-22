@@ -32,28 +32,20 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   const { publicKey, isLoading: isLoadingConfig } = usePaystackConfig();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const amount = getPaymentAmount(); // 100,000 NGN in kobo
-
-  const handlePaystackClick = () => {
-    // Close the modal immediately when payment button is clicked
-    onClose();
-  };
+  const amount = getPaymentAmount(); // 300,000 NGN in kobo
 
   const paystackProps = {
     email: currentUser?.email || '',
     amount,
-    currency: 'NGN',
     publicKey,
-    text: 'Pay ₦100,000',
     onSuccess: async (reference: any) => {
       console.log('Payment successful:', reference);
       setIsProcessing(true);
-      
       try {
         // Record successful payment
         recordPayment({
           eventId,
-          amount: amount / 100, // Convert back from kobo to naira for storage
+          amount: amount / 100, // Convert from kobo to naira for storage
           currency: 'NGN',
           reference: reference.reference,
           status: 'success',
@@ -89,6 +81,13 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
       console.log('Payment closed');
       setIsProcessing(false);
     },
+    metadata: {
+      custom_fields: [
+        { display_name: "Event ID", variable_name: "event_id", value: eventId },
+        { display_name: "Event Name", variable_name: "event_name", value: eventName },
+        { display_name: "User ID", variable_name: "user_id", value: currentUser?.id || '' },
+      ]
+    }
   };
 
   if (isLoadingConfig) {
@@ -138,7 +137,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
             <h3 className="font-semibold text-gray-900 mb-2 text-sm sm:text-base">{eventName}</h3>
             <div className="flex items-center justify-between">
               <span className="text-xs sm:text-sm text-gray-600">Event Access Fee</span>
-              <span className="text-lg sm:text-xl font-bold text-primary">₦100,000</span>
+              <span className="text-lg sm:text-xl font-bold text-primary">₦300,000</span>
             </div>
           </div>
 
@@ -170,22 +169,20 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
 
           {/* Payment Button */}
           <div className="space-y-3">
-            <div onClick={handlePaystackClick}>
-              <PaystackButton
-                {...paystackProps}
-                className="w-full bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white py-2 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 cursor-pointer text-sm sm:text-base"
-                disabled={isProcessing || isRecordingPayment}
-              >
-                {isProcessing || isRecordingPayment ? (
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader className="h-4 w-4 animate-spin" />
-                    Processing...
-                  </div>
-                ) : (
-                  'Pay ₦100,000'
-                )}
-              </PaystackButton>
-            </div>
+            <PaystackButton
+              {...paystackProps}
+              className="w-full bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white py-2 sm:py-3 px-4 sm:px-6 rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 cursor-pointer text-sm sm:text-base"
+              disabled={isProcessing || isRecordingPayment}
+            >
+              {isProcessing || isRecordingPayment ? (
+                <div className="flex items-center justify-center gap-2">
+                  <Loader className="h-4 w-4 animate-spin" />
+                  Processing...
+                </div>
+              ) : (
+                'Pay ₦300,000'
+              )}
+            </PaystackButton>
 
             <Button
               variant="outline"

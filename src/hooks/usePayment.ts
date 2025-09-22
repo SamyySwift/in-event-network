@@ -144,8 +144,8 @@ export const usePayment = () => {
     return isPaid;
   };
 
-  // Get payment amount (₦100,000 as specified in the landing page)
-  const getPaymentAmount = () => 10000000; // 100,000 NGN in kobo (Paystack uses kobo)
+  // Get payment amount (₦300,000 as specified in the landing page)
+  const getPaymentAmount = () => 30000000; // 300,000 NGN in kobo
 
   return {
     eventPayments,

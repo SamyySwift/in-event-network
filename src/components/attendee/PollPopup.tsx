@@ -23,18 +23,25 @@ export function PollPopup({
   onClose,
   onSkip,
   onSubmitVote,
-  allowDismiss = true,
+  allowDismiss = false,
   userVoteOptionId = null,
 }: PollPopupProps) {
   // Hooks must be called unconditionally
-  const [selected, setSelected] = React.useState<string>("");
+  const [selected, setSelected] = React.useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   if (!poll) return null;
   const isCompulsory = !!poll.require_submission;
 
-  const handleSubmit = () => {
-    if (!selected) return;
-    onSubmitVote(poll.id, selected);
+  const handleSubmit = async () => {
+    if (!selected || isSubmitting || !!userVoteOptionId) return;
+    setIsSubmitting(true);
+    try {
+        await Promise.resolve(onSubmitVote(poll.id, selected));
+    } catch (e) {
+        // 提交失败，允许重试
+        setIsSubmitting(false);
+    }
   };
 
   return (
@@ -106,9 +113,9 @@ export function PollPopup({
                     <Button
                       className="flex-1 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 disabled:opacity-60"
                       onClick={handleSubmit}
-                      disabled={!selected}
+                      disabled={!selected || !!userVoteOptionId || isSubmitting}
                     >
-                      Submit
+                      {isSubmitting ? 'Submitting...' : 'Submit Vote'}
                     </Button>
                   )}
                   <Button

@@ -143,9 +143,8 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({
           </Button> : <>
             <Button onClick={() => setShowPaymentModal(true)} size="sm" className="w-full min-h-[40px] bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-xs sm:text-sm px-3 py-2">
               <CreditCard className="h-4 w-4 mr-2 flex-shrink-0" />
-              <span className="truncate">Pay Now (₦100,000)</span>
+              <span className="truncate">Pay Now (₦300,000)</span>
             </Button>
-            
             {/* Referral Code Section */}
             <div className="space-y-2 p-3 rounded-lg bg-muted/30 border border-dashed border-muted-foreground/30">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">

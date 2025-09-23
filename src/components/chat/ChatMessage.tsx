@@ -18,6 +18,8 @@ interface ChatMessageProps {
   onMessage?: (userId: string, userName: string, userPhoto?: string) => void;
   onDelete?: (id: string) => void | Promise<void>;
   points?: number;
+  // NEW: room owner id for current room
+  roomOwnerUserId?: string;
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -28,6 +30,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   onMessage,
   onDelete,
   points,
+  roomOwnerUserId,
 }) => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const timeAgo = formatDistanceToNow(new Date(message.created_at), {
@@ -90,6 +93,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   // Derive admin from PROFILE role (messages don't store roles)
   const role = String(message.user_profile?.role ?? "").toLowerCase();
   const isFromAdmin = ["admin", "host", "organizer", "owner", "moderator"].includes(role);
+
+  // NEW: mark if user is room owner to show badge
+  const isRoomOwner = !!roomOwnerUserId && message.user_id === roomOwnerUserId;
 
   // Compute display name using profile; map unknown-name variants to Admin
   const rawName = message.user_profile?.name ?? "";
@@ -182,6 +188,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             >
               {displayName}
             </span>
+            {/* NEW: Room Owner badge right by the name (in-room) */}
+            {isRoomOwner && (
+              <Badge variant="secondary" className="uppercase tracking-wide text-[10px] px-2 py-0.5">
+                Room Owner
+              </Badge>
+            )}
             <span className="text-xs text-gray-500 dark:text-gray-400">• {timeAgo}</span>
             {typeof points === "number" && (
               <span className="text-[10px] text-gray-400">({points} pts)</span>

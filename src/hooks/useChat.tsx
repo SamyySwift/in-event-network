@@ -14,6 +14,8 @@ export interface ChatMessage {
   event_id: string | null;
   created_at: string;
   updated_at: string;
+  // NEW: room_id for room-bound messages
+  room_id?: string | null;
   user_profile?: {
     id?: string;
     name: string;
@@ -35,7 +37,7 @@ export interface ChatMessage {
   quoted_message?: ChatMessage;
 }
 
-export const useChat = (overrideEventId?: string) => {
+export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
   const { currentUser } = useAuth();
   const { currentEventId } = useAttendeeEventContext();
   const { toast } = useToast();
@@ -44,6 +46,7 @@ export const useChat = (overrideEventId?: string) => {
   const [participantPoints, setParticipantPoints] = useState<Record<string, number>>({});
 
   const effectiveEventId = overrideEventId ?? currentEventId;
+  const effectiveRoomId = overrideRoomId ?? null;
 
   useEffect(() => {
     if (currentUser && effectiveEventId) {
@@ -60,12 +63,21 @@ export const useChat = (overrideEventId?: string) => {
     }
 
     try {
-      console.log('Fetching chat messages for event:', effectiveEventId);
-      
-      const { data: messagesData, error: messagesError } = await supabase
+      console.log('Fetching chat messages for event:', effectiveEventId, 'room:', effectiveRoomId);
+
+      let query = supabase
         .from('chat_messages')
         .select('*')
-        .eq('event_id', effectiveEventId)
+        .eq('event_id', effectiveEventId as string);
+
+      // NEW: room scoping — null means global chat
+      if (effectiveRoomId) {
+        query = query.eq('room_id', effectiveRoomId);
+      } else {
+        query = query.is('room_id', null);
+      }
+
+      const { data: messagesData, error: messagesError } = await query
         .order('created_at', { ascending: true })
         .limit(100);
 
@@ -220,8 +232,7 @@ export const useChat = (overrideEventId?: string) => {
       return;
     }
 
-    console.log('Setting up realtime subscription for event:', effectiveEventId);
-    
+    console.log('Setting up realtime subscription for event:', effectiveEventId, 'room:', effectiveRoomId);
     const channel = supabase
       .channel(`chat-messages-${effectiveEventId}`)
       .on(
@@ -233,6 +244,12 @@ export const useChat = (overrideEventId?: string) => {
           filter: `event_id=eq.${effectiveEventId}`
         },
         async (payload) => {
+          // Filter new message by room_id context
+          const newMsg: any = payload.new;
+          const newRoomId = newMsg.room_id ?? null;
+          if ((effectiveRoomId && newRoomId !== effectiveRoomId) || (!effectiveRoomId && newRoomId !== null)) {
+            return;
+          }
           console.log('New message received:', payload);
           
           // Get the user profile for the new message (FULL profile fields)
@@ -370,7 +387,8 @@ export const useChat = (overrideEventId?: string) => {
     };
   };
 
-  const sendMessage = async (content: string, quotedMessageId?: string) => {
+  // Inside useChat: sendMessage
+  const sendMessage = async (content: string, quoted_message_id?: string) => {
     if (!currentUser) {
       toast({
         title: "Error",
@@ -390,22 +408,28 @@ export const useChat = (overrideEventId?: string) => {
     }
 
     try {
-      console.log('Sending message:', { content, quotedMessageId, userId: currentUser.id, eventId: effectiveEventId });
+      console.log('Sending message:', {
+        content,
+        quoted_message_id,
+        userId: currentUser.id,
+        eventId: effectiveEventId,
+        roomId: effectiveRoomId,
+      });
       
-      const { error } = await supabase
-        .from('chat_messages')
-        .insert({
-          user_id: currentUser.id,
-          content: content.trim(),
-          quoted_message_id: quotedMessageId || null,
-          event_id: effectiveEventId,
-        });
-
+      const { error } = await supabase.from('chat_messages').insert({
+        user_id: currentUser.id,
+        content,
+        quoted_message_id: quoted_message_id ?? null,
+        event_id: effectiveEventId,
+        // NEW: attach room
+        room_id: effectiveRoomId ?? null,
+      });
+  
       if (error) {
         console.error('Error sending message:', error);
         throw error;
       }
-
+  
       console.log('Message sent successfully');
     } catch (error) {
       console.error('Error in sendMessage:', error);

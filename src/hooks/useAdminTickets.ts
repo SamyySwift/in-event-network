@@ -98,21 +98,29 @@ export const useAdminTickets = (eventIdOverride?: string) => {
 
       if (error) throw error;
       
-      // Fetch profile data and form responses separately
-      const ticketsWithDetails = await Promise.all((data || []).map(async (ticket) => {
-        let profile = null;
-        let formResponses: any[] = [];
+      // Batch fetch profiles and form responses for better performance
+      const ticketIds = (data || []).map(ticket => ticket.id);
+      const userIds = (data || []).map(ticket => ticket.user_id).filter(Boolean);
 
-        if (ticket.user_id) {
-          const { data: profileData } = await supabase
-            .from('profiles')
-            .select('name, email')
-            .eq('id', ticket.user_id)
-            .single();
-          profile = profileData;
+      // Fetch all profiles in one query
+      let profilesMap: Record<string, { name: string; email: string }> = {};
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('id, name, email')
+          .in('id', userIds);
+        
+        if (profilesData) {
+          profilesMap = profilesData.reduce((acc, profile) => {
+            acc[profile.id] = { name: profile.name, email: profile.email };
+            return acc;
+          }, {} as Record<string, { name: string; email: string }>);
         }
+      }
 
-        // Fetch form responses for this ticket
+      // Fetch all form responses in one query
+      let formResponsesMap: Record<string, any[]> = {};
+      if (ticketIds.length > 0) {
         const { data: formData, error: formError } = await supabase
           .from('ticket_form_responses')
           .select(`
@@ -123,29 +131,36 @@ export const useAdminTickets = (eventIdOverride?: string) => {
               field_order
             )
           `)
-          .eq('ticket_id', ticket.id);
+          .in('ticket_id', ticketIds);
 
         if (formError) {
-          console.error('Error fetching form responses for ticket:', ticket.id, formError);
-        } else if (formData && formData.length > 0) {
-          console.log(`Found ${formData.length} form responses for ticket ${ticket.id}:`, formData);
-        }
+          console.error('Error fetching form responses:', formError);
+        } else if (formData) {
+          // Group form responses by ticket_id
+          formResponsesMap = formData.reduce((acc, response) => {
+            if (!acc[response.ticket_id]) {
+              acc[response.ticket_id] = [];
+            }
+            if (response.ticket_form_fields) {
+              acc[response.ticket_id].push(response);
+            }
+            return acc;
+          }, {} as Record<string, any[]>);
 
-        if (formData && formData.length > 0) {
-          // Sort the form responses by field order
-          formResponses = formData
-            .filter(response => response.ticket_form_fields) // Only include responses with valid field data
-            .sort((a, b) => 
+          // Sort form responses by field order within each ticket
+          Object.keys(formResponsesMap).forEach(ticketId => {
+            formResponsesMap[ticketId].sort((a, b) => 
               (a.ticket_form_fields?.field_order || 0) - (b.ticket_form_fields?.field_order || 0)
             );
-          console.log(`Processed ${formResponses.length} valid form responses for ticket ${ticket.id}`);
+          });
         }
-        
-        return {
-          ...ticket,
-          profiles: profile,
-          form_responses: formResponses
-        };
+      }
+
+      // Combine all data
+      const ticketsWithDetails = (data || []).map(ticket => ({
+        ...ticket,
+        profiles: ticket.user_id ? profilesMap[ticket.user_id] || null : null,
+        form_responses: formResponsesMap[ticket.id] || []
       }));
 
       return ticketsWithDetails;

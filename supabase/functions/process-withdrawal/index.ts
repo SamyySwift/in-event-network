@@ -321,10 +321,11 @@ serve(async (req) => {
       default:
         throw new Error(`Unknown action: ${action}`);
     }
-  } catch (error) {
-    console.error("Process withdrawal error:", error);
+  } catch (err) {
+    console.error("Process withdrawal error:", err);
+    const message = err instanceof Error ? err.message : 'An unexpected error occurred';
     return new Response(JSON.stringify({ 
-      error: error.message || "An unexpected error occurred" 
+      error: message
     }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

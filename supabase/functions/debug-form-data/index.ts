@@ -1,4 +1,4 @@
-/// <reference types="https://deno.land/x/deno@v1.28.0/lib/deno.d.ts" />
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -90,10 +90,11 @@ serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
-  } catch (error) {
-    console.error('Debug function error:', error)
+  } catch (err) {
+    console.error('Debug function error:', err)
+    const message = err instanceof Error ? err.message : String(err)
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }

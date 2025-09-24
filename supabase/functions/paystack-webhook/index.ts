@@ -1,6 +1,20 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { createHmac } from "https://deno.land/std@0.168.0/crypto/mod.ts"
+
+// HMAC SHA-512 using Web Crypto API
+async function hmacSHA512(secret: string, data: string): Promise<string> {
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw',
+    enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-512' },
+    false,
+    ['sign']
+  );
+  const signature = await crypto.subtle.sign('HMAC', key, enc.encode(data));
+  const bytes = new Uint8Array(signature);
+  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,8 +37,8 @@ serve(async (req) => {
       return new Response('Configuration error', { status: 500, headers: corsHeaders })
     }
 
-    const hash = await createHmac('sha512', secret).update(body).digest('hex')
-    if (hash !== signature) {
+    const computed = await hmacSHA512(secret, body)
+    if (!signature || computed !== signature) {
       console.error('Invalid signature')
       return new Response('Invalid signature', { status: 400, headers: corsHeaders })
     }
@@ -54,9 +68,10 @@ serve(async (req) => {
 
     return new Response('OK', { status: 200, headers: corsHeaders })
 
-  } catch (error) {
-    console.error('Webhook error:', error)
-    return new Response(JSON.stringify({ error: error.message }), {
+  } catch (err) {
+    console.error('Webhook error:', err)
+    const message = err instanceof Error ? err.message : String(err)
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     })

@@ -92,27 +92,19 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   // Robust admin role detection (case-insensitive + common synonyms)
   // Derive admin from PROFILE role (messages don't store roles)
   const role = String(message.user_profile?.role ?? "").toLowerCase();
-  const isFromAdmin = [
-    "admin",
-    "host",
-    "organizer",
-    "owner",
-    "moderator",
-  ].includes(role);
+  const isFromAdmin = ["admin", "host", "organizer", "owner", "moderator"].includes(role);
 
   // NEW: mark if user is room owner to show badge
   const isRoomOwner = !!roomOwnerUserId && message.user_id === roomOwnerUserId;
 
   // Compute display name using profile; map unknown-name variants to Admin
   const rawName = message.user_profile?.name ?? "";
-  const isRawNameUnknownUser = [
-    "unknown user",
-    "unknow user",
-    "unknown",
-  ].includes(rawName.trim().toLowerCase());
+  const isRawNameUnknownUser = ["unknown user", "unknow user", "unknown"].includes(
+    rawName.trim().toLowerCase()
+  );
   const displayName = isRawNameUnknownUser
     ? "Admin"
-    : rawName || (isFromAdmin ? "Admin" : isOwn ? "You" : "Admin");
+    : (rawName || (isFromAdmin ? "Admin" : isOwn ? "You" : "Admin"));
 
   // NEW: achievements & styles based on points
   const { medals, hasFireGlow, hasDiamond } = getAchievement(points ?? 0);
@@ -147,9 +139,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         <div className="relative">
           <Avatar
             className={`h-8 w-8 flex-shrink-0 ${
-              !isOwn
-                ? "cursor-pointer hover:ring-2 hover:ring-connect-500 transition-all"
-                : ""
+              !isOwn ? "cursor-pointer hover:ring-2 hover:ring-connect-500 transition-all" : ""
             } ${avatarGlow}`}
             onClick={handleAvatarClick}
           >
@@ -160,9 +150,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               />
             ) : (
               <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300 text-sm">
-                {message.user_profile?.name?.toLowerCase().includes("unknown")
-                  ? "A"
-                  : message.user_profile?.name?.charAt(0) || "A"}
+                {message.user_profile?.name?.charAt(0) || "A"}
               </AvatarFallback>
             )}
           </Avatar>
@@ -170,18 +158,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           {/* overlay rewards near avatar */}
           {hasDiamond && (
             <>
-              <span className="absolute -top-1 -right-1 text-xs animate-bounce">
-                💎
-              </span>
+              <span className="absolute -top-1 -right-1 text-xs animate-bounce">💎</span>
               <span className="pointer-events-none absolute -left-2 -bottom-2 text-[10px] text-cyan-400/80 animate-ping">
                 💎
               </span>
             </>
           )}
           {!hasDiamond && hasFireGlow && (
-            <span className="absolute -top-1 -right-1 text-xs animate-bounce">
-              🔥
-            </span>
+            <span className="absolute -top-1 -right-1 text-xs animate-bounce">🔥</span>
           )}
           {medals > 0 && (
             <span className="absolute -bottom-2 left-0 text-[10px] leading-none select-none">
@@ -191,39 +175,26 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         </div>
 
         <div className={`flex-1 min-w-0 ${isOwn ? "text-right" : ""} relative`}>
-          <div
-            className={`flex items-center gap-2 mb-1 ${
-              isOwn ? "justify-end" : ""
-            }`}
-          >
+          <div className={`flex items-center gap-2 mb-1 ${isOwn ? "justify-end" : ""}`}>
             <span
-              onClick={
-                !isOwn && message.user_profile ? handleAvatarClick : undefined
-              }
+              onClick={!isOwn && message.user_profile ? handleAvatarClick : undefined}
               role={!isOwn && message.user_profile ? "button" : undefined}
               className={`text-xs font-semibold ${
                 isOwn
                   ? "text-gray-800 dark:text-gray-200"
                   : "text-connect-700 dark:text-connect-300 hover:underline"
-              } ${
-                !isOwn && message.user_profile ? "cursor-pointer" : ""
-              } truncate max-w-[60%]`}
+              } ${!isOwn && message.user_profile ? "cursor-pointer" : ""} truncate max-w-[60%]`}
               title={displayName}
             >
               {displayName}
             </span>
             {/* NEW: Room Owner badge right by the name (in-room) */}
             {isRoomOwner && (
-              <Badge
-                variant="secondary"
-                className="uppercase tracking-wide text-[10px] px-2 py-0.5"
-              >
+              <Badge variant="secondary" className="uppercase tracking-wide text-[10px] px-2 py-0.5">
                 Room Owner
               </Badge>
             )}
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              • {timeAgo}
-            </span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">• {timeAgo}</span>
             {typeof points === "number" && (
               <span className="text-[10px] text-gray-400">({points} pts)</span>
             )}
@@ -232,10 +203,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           {/* Admin label above the message bubble */}
           {isFromAdmin && (
             <div className={`mb-1 ${isOwn ? "ml-auto" : ""}`}>
-              <Badge
-                variant="destructive"
-                className="uppercase tracking-wide text-[10px] px-2 py-0.5"
-              >
+              <Badge variant="destructive" className="uppercase tracking-wide text-[10px] px-2 py-0.5">
                 Admin
               </Badge>
             </div>
@@ -259,12 +227,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
             style={{
-              transform: translateX
-                ? `translateX(${isOwn ? -translateX : translateX}px)`
-                : undefined,
-              transition: isSwipingRef.current
-                ? "none"
-                : "transform 150ms ease",
+              transform: translateX ? `translateX(${isOwn ? -translateX : translateX}px)` : undefined,
+              transition: isSwipingRef.current ? "none" : "transform 150ms ease",
             }}
           >
             {isImageUrl(message.content) ? (
@@ -283,9 +247,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 />
               </a>
             ) : (
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                {message.content}
-              </p>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
             )}
 
             {/* Quote Button (allow quoting any message) */}
@@ -294,9 +256,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 size="sm"
                 variant="ghost"
                 onClick={() => onQuote(message)}
-                className={`absolute ${
-                  isOwn ? "left-1" : "right-1"
-                } top-1 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-8 w-8 p-0`}
+                className={`absolute ${isOwn ? "left-1" : "right-1"} top-1 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-8 w-8 p-0`}
                 title="Quote to reply"
                 aria-label="Quote to reply"
               >
@@ -304,16 +264,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               </Button>
             )}
 
+            {/* Delete Button - moved to the other side of the bubble (opposite of quote) */}
             {canDelete && onDelete && (
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => {
-                  if (confirm("Delete this message?")) onDelete(message.id);
-                }}
-                className={`absolute ${
-                  isOwn ? "-left-8" : "-right-8"
-                } top-1 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-8 w-8 p-0 text-destructive`}
+                onClick={() => { if (confirm("Delete this message?")) onDelete(message.id); }}
+                className={`absolute ${isOwn ? "right-1" : "left-1"} top-1 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-8 w-8 p-0 text-destructive`}
                 title="Delete message"
                 aria-label="Delete message"
               >
@@ -324,9 +281,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             {/* diamond sparkle near the bubble */}
             {hasDiamond && (
               <span
-                className={`absolute ${
-                  isOwn ? "left-1" : "right-1"
-                } -bottom-2 text-xs text-cyan-400/90 animate-ping select-none`}
+                className={`absolute ${isOwn ? "left-1" : "right-1"} -bottom-2 text-xs text-cyan-400/90 animate-ping select-none`}
               >
                 💎
               </span>

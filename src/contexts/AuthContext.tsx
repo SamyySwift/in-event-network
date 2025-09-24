@@ -206,7 +206,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     } catch (error) {
       console.error("Error fetching user profile:", error);
-      // Use the role the user selected during registration or Google OAuth as a temporary fallback
+
+      // If we already have a user in state, do NOT override it.
+      // This avoids flipping hosts back to attendee on transient read failures.
+      if (currentUser) {
+        setIsLoading(false);
+        return;
+      }
+
+      // Otherwise, use a temporary fallback role based on pending registration/Google role if available
       const pendingFallbackRole =
         (localStorage.getItem("pendingRegisterRole") as "host" | "attendee") ||
         (localStorage.getItem("pendingGoogleRole") as "host" | "attendee") ||

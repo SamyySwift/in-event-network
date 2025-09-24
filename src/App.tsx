@@ -5,6 +5,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { AttendeeEventProvider } from '@/contexts/AttendeeEventContext';
 import { Toaster } from '@/components/ui/toaster';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import { useRoleValidation } from '@/hooks/useRoleValidation';
 
 // Public pages
 import Landing from '@/pages/Landing';
@@ -60,6 +61,7 @@ import AttendeeMyTickets from '@/pages/attendee/AttendeeMyTickets';
 const queryClient = new QueryClient();
 
 function App() {
+  useRoleValidation();
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>

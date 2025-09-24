@@ -206,7 +206,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     } catch (error) {
       console.error("Error fetching user profile:", error);
-      // Fallback: set a minimal currentUser so the app can navigate after login
+      // Use the role the user selected during registration or Google OAuth as a temporary fallback
+      const pendingFallbackRole =
+        (localStorage.getItem("pendingRegisterRole") as "host" | "attendee") ||
+        (localStorage.getItem("pendingGoogleRole") as "host" | "attendee") ||
+        "attendee";
+
       setCurrentUser({
         id: supabaseUser.id,
         name:
@@ -214,7 +219,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           supabaseUser.email?.split("@")[0] ||
           "",
         email: supabaseUser.email || "",
-        role: "attendee", // default fallback; will be corrected when profile loads
+        role: pendingFallbackRole,
         photoUrl: supabaseUser.user_metadata?.avatar_url || null,
         bio: null,
         links: {
@@ -229,6 +234,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         },
         niche: null,
       });
+
+      // Clear pending flags after using them
+      localStorage.removeItem("pendingRegisterRole");
+      localStorage.removeItem("pendingGoogleRole");
+
       setIsLoading(false);
     }
   };
@@ -282,6 +292,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       setIsLoading(true);
       console.log("Attempting registration for:", email, "with role:", role);
+
+      // Preserve chosen role across the immediate post-signup flow
+      localStorage.setItem("pendingRegisterRole", role);
 
       // Clear any existing session first
       await supabase.auth.signOut();
@@ -373,8 +386,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       }
 
+      // Registration complete; clear pending role flag
+      localStorage.removeItem("pendingRegisterRole");
+
       return { error: null };
     } catch (error) {
+      // Ensure we clear pending role on error too
+      localStorage.removeItem("pendingRegisterRole");
       console.error("Error registering:", error);
       setIsLoading(false);
       return { error: error as Error };

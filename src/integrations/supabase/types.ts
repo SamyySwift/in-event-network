@@ -215,12 +215,15 @@ export type Database = {
           image_url: string | null
           instagram_link: string | null
           priority: string | null
+          require_submission: boolean
           send_immediately: boolean | null
           tiktok_link: string | null
           title: string
           twitter_link: string | null
           updated_at: string
+          vendor_form_id: string | null
           website_link: string | null
+          whatsapp_link: string | null
         }
         Insert: {
           content: string
@@ -232,12 +235,15 @@ export type Database = {
           image_url?: string | null
           instagram_link?: string | null
           priority?: string | null
+          require_submission?: boolean
           send_immediately?: boolean | null
           tiktok_link?: string | null
           title: string
           twitter_link?: string | null
           updated_at?: string
+          vendor_form_id?: string | null
           website_link?: string | null
+          whatsapp_link?: string | null
         }
         Update: {
           content?: string
@@ -249,12 +255,15 @@ export type Database = {
           image_url?: string | null
           instagram_link?: string | null
           priority?: string | null
+          require_submission?: boolean
           send_immediately?: boolean | null
           tiktok_link?: string | null
           title?: string
           twitter_link?: string | null
           updated_at?: string
+          vendor_form_id?: string | null
           website_link?: string | null
+          whatsapp_link?: string | null
         }
         Relationships: [
           {
@@ -262,6 +271,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "announcements_vendor_form_id_fkey"
+            columns: ["vendor_form_id"]
+            isOneToOne: false
+            referencedRelation: "vendor_forms"
             referencedColumns: ["id"]
           },
         ]
@@ -273,6 +289,7 @@ export type Database = {
           event_id: string | null
           id: string
           quoted_message_id: string | null
+          room_id: string | null
           updated_at: string
           user_id: string
         }
@@ -282,6 +299,7 @@ export type Database = {
           event_id?: string | null
           id?: string
           quoted_message_id?: string | null
+          room_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -291,6 +309,7 @@ export type Database = {
           event_id?: string | null
           id?: string
           quoted_message_id?: string | null
+          room_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -307,6 +326,111 @@ export type Database = {
             columns: ["quoted_message_id"]
             isOneToOne: false
             referencedRelation: "chat_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_room_fk"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_participation_points: {
+        Row: {
+          event_id: string
+          points: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          event_id: string
+          points?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          event_id?: string
+          points?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_participation_points_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_participation_points_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_participation_points_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_rooms: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string
+          event_id: string
+          id: string
+          name: string
+          tag: string | null
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by: string
+          event_id: string
+          id?: string
+          name: string
+          tag?: string | null
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string
+          event_id?: string
+          id?: string
+          name?: string
+          tag?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_rooms_event_fk"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_rooms_owner_fk"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_rooms_owner_fk"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -1082,6 +1206,7 @@ export type Database = {
           is_active: boolean | null
           options: Json
           question: string
+          require_submission: boolean
           show_results: boolean | null
           start_time: string
           updated_at: string | null
@@ -1097,6 +1222,7 @@ export type Database = {
           is_active?: boolean | null
           options: Json
           question: string
+          require_submission?: boolean
           show_results?: boolean | null
           start_time: string
           updated_at?: string | null
@@ -1112,6 +1238,7 @@ export type Database = {
           is_active?: boolean | null
           options?: Json
           question?: string
+          require_submission?: boolean
           show_results?: boolean | null
           start_time?: string
           updated_at?: string | null
@@ -1278,6 +1405,49 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      room_members: {
+        Row: {
+          id: string
+          joined_at: string
+          room_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string
+          room_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string
+          room_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "room_members_room_fk"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "chat_rooms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_members_user_fk"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "room_members_user_fk"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "public_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -2051,6 +2221,47 @@ export type Database = {
           },
         ]
       }
+      topics: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_id: string
+          id: string
+          poll_id: string | null
+          status: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_id: string
+          id?: string
+          poll_id?: string | null
+          status?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_id?: string
+          id?: string
+          poll_id?: string | null
+          status?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topics_poll_id_fkey"
+            columns: ["poll_id"]
+            isOneToOne: false
+            referencedRelation: "polls"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       vendor_form_fields: {
         Row: {
           created_at: string
@@ -2395,6 +2606,14 @@ export type Database = {
         Args: { new_role: string; target_email: string }
         Returns: Json
       }
+      bulk_scan_in_attendees: {
+        Args: { target_event_id: string }
+        Returns: number
+      }
+      bulk_scan_out_attendees: {
+        Args: { target_event_id: string }
+        Returns: number
+      }
       calculate_ticket_pricing: {
         Args: {
           base_price: number
@@ -2505,7 +2724,6 @@ export type Database = {
           linkedin_link: string
           name: string
           networking_preferences: string[]
-          networking_visible: boolean
           niche: string
           photo_url: string
           role: string

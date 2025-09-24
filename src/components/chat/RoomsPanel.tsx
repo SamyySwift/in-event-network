@@ -28,11 +28,11 @@ const RoomsPanel: React.FC<RoomsPanelProps> = ({ eventId, onEnterRoom }) => {
   };
 
   return (
-    <div className="h-full flex flex-col min-h-0">
-      <div className="p-4 border-b flex items-center justify-between flex-shrink-0">
+    <div className="h-full flex flex-col">
+      <div className="p-4 border-b flex items-center justify-between">
         <div className="font-semibold">Rooms</div>
       </div>
-      <div className="p-4 border-b grid grid-cols-1 md:grid-cols-4 gap-3 flex-shrink-0">
+      <div className="p-4 border-b grid grid-cols-1 md:grid-cols-4 gap-3">
         <Input placeholder="Room name" value={name} onChange={e => setName(e.target.value)} />
         <Input placeholder="Tag (category)" value={tag} onChange={e => setTag(e.target.value)} />
         <input type="color" value={color} onChange={e => setColor(e.target.value)} className="h-10 w-full rounded-md border" title="Pick color" />
@@ -42,15 +42,8 @@ const RoomsPanel: React.FC<RoomsPanelProps> = ({ eventId, onEnterRoom }) => {
         </Button>
       </div>
 
-      {/* Fixed mobile scrolling with proper height constraints */}
-      <div 
-        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 space-y-3"
-        style={{ 
-          WebkitOverflowScrolling: 'touch',
-          touchAction: 'pan-y',
-          overscrollBehavior: 'contain'
-        }}
-      >
+      {/* Fix: Make this scrollable on mobile with proper touch scrolling */}
+      <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-3" style={{ WebkitOverflowScrolling: 'touch' }}>
         {loading ? (
           <div className="text-sm text-gray-500">Loading rooms...</div>
         ) : rooms.length === 0 ? (
@@ -59,16 +52,16 @@ const RoomsPanel: React.FC<RoomsPanelProps> = ({ eventId, onEnterRoom }) => {
           rooms.map((room) => {
             const count = participantCounts[room.id] ?? 0;
             return (
-              <Card key={room.id} className="hover:shadow-sm transition cursor-pointer flex-shrink-0" onClick={() => { onEnterRoom(room.id); joinRoom(room.id); }}>
+              <Card key={room.id} className="hover:shadow-sm transition cursor-pointer" onClick={() => { onEnterRoom(room.id); joinRoom(room.id); }}>
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="h-6 w-6 rounded flex-shrink-0" style={{ backgroundColor: room.color || '#3b82f6' }} />
-                    <div className="min-w-0">
-                      <div className="font-medium truncate">{room.name}</div>
-                      {room.tag && <div className="text-xs text-gray-500 truncate">{room.tag}</div>}
+                    <span className="h-6 w-6 rounded" style={{ backgroundColor: room.color || '#3b82f6' }} />
+                    <div>
+                      <div className="font-medium">{room.name}</div>
+                      {room.tag && <div className="text-xs text-gray-500">{room.tag}</div>}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-2">
                     <Badge variant="secondary" className="flex items-center gap-1">
                       <Users className="h-3 w-3" />
                       {count}

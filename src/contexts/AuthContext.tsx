@@ -150,6 +150,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           niche: data.niche,
         };
         console.log("Profile loaded successfully:", userProfile);
+        // Store the user's role for fallback on future errors
+        localStorage.setItem("lastKnownUserRole", userProfile.role);
         setCurrentUser(userProfile);
         setIsLoading(false);
       } else {
@@ -201,6 +203,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         };
 
         console.log("New profile created:", userProfile);
+        // Store the user's role for fallback on future errors
+        localStorage.setItem("lastKnownUserRole", userProfile.role);
         setCurrentUser(userProfile);
         setIsLoading(false);
       }
@@ -214,8 +218,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         return;
       }
 
-      // Otherwise, use a temporary fallback role based on pending registration/Google role if available
+      // Use the last known role as fallback, then pending roles, then default to attendee
       const pendingFallbackRole =
+        (localStorage.getItem("lastKnownUserRole") as "host" | "attendee") ||
         (localStorage.getItem("pendingRegisterRole") as "host" | "attendee") ||
         (localStorage.getItem("pendingGoogleRole") as "host" | "attendee") ||
         "attendee";
@@ -417,6 +422,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       
       // Clear all auth-related localStorage items
       localStorage.removeItem("pendingGoogleRole");
+      localStorage.removeItem("lastKnownUserRole");
       localStorage.removeItem("redirectAfterLogin");
       localStorage.removeItem("pendingTicketingUrl");
       sessionStorage.removeItem("pendingEventCode");

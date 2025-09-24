@@ -11,6 +11,18 @@ export const useRoleValidation = () => {
   const navigate = useNavigate();
   const hasValidated = useRef(false);
 
+  // Immediate redirect for misplaced hosts
+  useEffect(() => {
+    if (currentUser && !isLoading && normalizeRole(currentUser.role) === 'host') {
+      const currentPath = window.location.pathname;
+      if (currentPath.startsWith('/attendee')) {
+        console.log('Host user detected on attendee route, redirecting to admin');
+        navigate('/admin', { replace: true });
+        return;
+      }
+    }
+  }, [currentUser, isLoading, navigate]);
+
   useEffect(() => {
     const validateRole = async () => {
       // Only validate once per session and only when auth is fully loaded

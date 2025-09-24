@@ -2786,6 +2786,14 @@ export type Database = {
         Args: { event_uuid: string }
         Returns: boolean
       }
+      is_admin_role: {
+        Args: { role_text: string }
+        Returns: boolean
+      }
+      is_admin_user: {
+        Args: { user_uuid: string }
+        Returns: boolean
+      }
       is_event_host: {
         Args: { event_uuid: string }
         Returns: boolean

@@ -1,6 +1,6 @@
 // ChatRoom component
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, MessageCircle, AlertCircle, Sparkles, Image as ImageIcon, Loader2, ArrowDown } from 'lucide-react';
+import { Send, MessageCircle, AlertCircle, Sparkles, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -146,9 +146,9 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
   }
 
   return (
-    <Card className="h-[70vh] md:h-[600px] flex flex-col border border-white/30 bg-white/70 dark:bg-gray-900/60 backdrop-blur-md shadow-xl">
-      {/* Header: soft gradient */}
-      <div className="flex flex-col items-center p-4 border-b bg-gradient-to-r from-white/40 via-white/10 to-white/40 dark:from-gray-900/20 dark:via-gray-900/10 dark:to-gray-900/20 rounded-t-md">
+    <Card className="h-[70vh] md:h-[600px] flex flex-col">
+      {/* Header */}
+      <div className="flex flex-col items-center p-4 border-b bg-gradient-to-r from-primary-50 via-white to-primary-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 rounded-t-md">
         <div className="flex items-center gap-3">
           <MessageCircle className="h-7 w-7 text-connect-600 dark:text-connect-300" />
           <span className="font-bold text-lg md:text-xl text-gray-900 dark:text-white">
@@ -159,7 +159,20 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
           <Badge variant="secondary" className="text-xs font-medium">{messages.length} messages</Badge>
         </div>
 
-        {/* Legacy mobile toggle for admin override */}
+        {/* NEW: Tabs for Chat / Rooms / Topics (hide in admin override if you prefer) */}
+        {!isAdminOverride && (
+          <div className="mt-3 w-full flex justify-center">
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
+              <TabsList className="mx-auto">
+                <TabsTrigger value="chat">Chat</TabsTrigger>
+                <TabsTrigger value="rooms">Rooms</TabsTrigger>
+                <TabsTrigger value="topics">Topics</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        )}
+
+        {/* Optional: For mobile legacy toggle keep as fallback when admin override */}
         {isAdminOverride && (
           <div className="mt-3 md:hidden">
             <div className="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -171,153 +184,137 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
       </div>
 
       <CardContent className="flex-1 flex flex-col p-0 overflow-hidden min-h-0">
+        {/* NEW: Tabs content (non-admin attendee view) */}
         {!isAdminOverride ? (
-          // Tabs wrapper now contains both TabsList and TabsContent
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col min-h-0">
-            <div className="mt-3 w-full flex justify-center">
-              <TabsList className="mx-auto rounded-full bg-white/70 dark:bg-gray-800/70 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-                <TabsTrigger value="chat" className="rounded-full data-[state=active]:bg-connect-600 data-[state=active]:text-white">Chat</TabsTrigger>
-                <TabsTrigger value="rooms" className="rounded-full data-[state=active]:bg-connect-600 data-[state=active]:text-white">Rooms</TabsTrigger>
-                <TabsTrigger value="topics" className="rounded-full data-[state=active]:bg-connect-600 data-[state=active]:text-white">Topics</TabsTrigger>
-              </TabsList>
-            </div>
-
-            <TabsContent value="chat" className="flex-1 min-h-0">
+          <>
+            <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col min-h-0">
+              <TabsContent value="chat" className="flex-1 min-h-0">
+                {/* Chat content (same as before), with selectedRoom integration */}
                 <div className="flex-1 flex flex-col min-h-0">
-                    {/* 顶部标题与工具栏 */}
-                    {selectedRoom && (
-                        <div className="p-3 border-b flex items-center justify-between bg-white/70 dark:bg-gray-800/70 backdrop-blur">
-                            <div className="flex items-center gap-2">
-                                <span className="h-4 w-4 rounded" style={{ backgroundColor: selectedRoom.color || '#3b82f6' }} />
-                                <span className="text-sm font-medium">{selectedRoom.name}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Button size="sm" variant="outline" onClick={() => setSelectedRoom(null)}>Back to Global</Button>
-                            </div>
-                        </div>
-                    )}
-                    
-                    {/* 消息容器：确保可滚动且不受输入栏影响 */}
-                    <div
-                        className="relative flex-1 min-h-0 overflow-y-auto overscroll-contain bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.07),transparent_50%),linear-gradient(to_bottom,rgba(255,255,255,0.6),transparent_30%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.12),transparent_50%),linear-gradient(to_bottom,rgba(17,24,39,0.7),transparent_30%)] scroll-smooth"
-                    >
-                        {/* 显示消息列表 */}
-                        <div className="p-4 space-y-3 min-h-full">
-                            {messages.length === 0 ? (
-                                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                                    <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                                    <p>No messages yet. Start the conversation!</p>
-                                </div>
-                            ) : (
-                                messages.map((message) => (
-                                    <ChatMessage
-                                        key={message.id}
-                                        message={message}
-                                        isOwn={message.user_id === currentUser?.id}
-                                        onQuote={handleQuoteMessage}
-                                        onDelete={(id) => deleteMessage(id)}
-                                        points={participantPoints[message.user_id] ?? 0}
-                                        roomOwnerUserId={selectedRoom?.created_by}
-                                    />
-                                ))
-                            )}
-                            <div ref={messagesEndRef} />
-                        </div>
-                        
-                        {/* Floating jump-to-latest */}
-                        {isUserScrolling && (
-                            <Button
-                                type="button"
-                                size="icon"
-                                variant="secondary"
-                                onClick={scrollToBottom}
-                                className="absolute right-4 bottom-6 rounded-full shadow-lg bg-white/90 dark:bg-gray-800/90 backdrop-blur"
-                                title="Jump to latest"
-                            >
-                                <span className="text-lg leading-none">↓</span>
-                            </Button>
-                        )}
+                  {/* Top bar when in a room */}
+                  {selectedRoom && (
+                    <div className="p-3 border-b flex items-center justify-between bg-white dark:bg-gray-800">
+                      <div className="flex items-center gap-2">
+                        <span className="h-4 w-4 rounded" style={{ backgroundColor: selectedRoom.color || '#3b82f6' }} />
+                        <span className="text-sm font-medium">{selectedRoom.name}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" variant="outline" onClick={() => setSelectedRoom(null)}>Back to Global</Button>
+                      </div>
                     </div>
-                    
-                    {/* Quote preview */}
-                    {quotedMessage && (
-                        <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border-t">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                                    Replying to {quotedMessage.user_profile?.name}
-                                </span>
-                                <Button size="sm" variant="ghost" onClick={() => setQuotedMessage(null)} className="h-6 w-6 p-0">×</Button>
-                            </div>
-                            <QuotedMessage message={quotedMessage} compact />
+                  )}
+
+                  {/* Scroll area + messages */}
+                  <div
+                    ref={scrollAreaRef}
+                    className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 scroll-smooth"
+                    style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--border)) transparent' }}
+                    onScroll={handleScroll}
+                  >
+                    <div className="p-4 space-y-3 min-h-full">
+                      {messages.length === 0 ? (
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                          <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                          <p>No messages yet. Start the conversation!</p>
                         </div>
-                    )}
-                    
-                    {/* Composer: pill style */}
-                    <div className="p-4 border-t bg-transparent">
-                        <div className="flex gap-2 items-center rounded-full border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur px-2 py-1 shadow-sm">
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,image/svg+xml"
-                                className="hidden"
-                                onChange={handleImageChange}
-                            />
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={uploadingImage}
-                                className="shrink-0 rounded-full"
-                                title="Upload image"
-                            >
-                                {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
-                            </Button>
-                    
-                            <Input
-                                value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
-                                onKeyPress={handleKeyPress}
-                                placeholder="Type your message..."
-                                className="flex-1 border-0 focus-visible:ring-0 bg-transparent"
-                                maxLength={500}
-                            />
-                            <Button onClick={handleSendMessage} disabled={!newMessage.trim()} className="rounded-full bg-connect-600 hover:bg-connect-700 shadow-sm">
-                                <Send className="h-4 w-4" />
-                            </Button>
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1 text-center">
-                            Press Enter to send • {newMessage.length}/500
-                        </div>
+                      ) : (
+                        messages.map((message) => (
+                          <ChatMessage
+                            key={message.id}
+                            message={message}
+                            isOwn={message.user_id === currentUser?.id}
+                            onQuote={handleQuoteMessage}
+                            onDelete={(id) => deleteMessage(id)}
+                            points={participantPoints[message.user_id] ?? 0}
+                            // NEW: pass room owner for badge
+                            roomOwnerUserId={selectedRoom?.created_by}
+                          />
+                        ))
+                      )}
+                      <div ref={messagesEndRef} />
                     </div>
-                </div>
-            </TabsContent>
+                  </div>
 
-            <TabsContent value="rooms" className="flex-1 min-h-0">
-              <RoomsPanel
-                eventId={eventId ?? currentEventId}
-                onEnterRoom={(roomId) => {
-                  supabase.from('chat_rooms').select('id,name,color,created_by').eq('id', roomId).single().then(({ data }) => {
-                    if (data) setSelectedRoom({ id: data.id, name: data.name, color: data.color, created_by: data.created_by });
-                  });
-                  setActiveTab('chat');
-                }}
-              />
-            </TabsContent>
+                  {/* Quote preview + input bar (unchanged except send includes room_id via useChat) */}
+                  {quotedMessage && (
+                    <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border-t">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                          Replying to {quotedMessage.user_profile?.name}
+                        </span>
+                        <Button size="sm" variant="ghost" onClick={() => setQuotedMessage(null)} className="h-6 w-6 p-0">×</Button>
+                      </div>
+                      <QuotedMessage message={quotedMessage} compact />
+                    </div>
+                  )}
 
-            <TabsContent value="topics" className="flex-1 min-h-0">
-              <div className="h-full flex flex-col">
-                <div className="hidden md:flex items-center gap-2 p-4 border-b bg-white dark:bg-gray-800">
-                  <Sparkles className="h-5 w-5 text-connect-600 dark:text-connect-300" />
-                  <span className="font-semibold text-gray-900 dark:text-white">Topics</span>
+                  <div className="p-4 border-t bg-white dark:bg-gray-800">
+                    <div className="flex gap-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,image/svg+xml"
+                        className="hidden"
+                        onChange={handleImageChange}
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingImage}
+                        className="shrink-0"
+                        title="Upload image"
+                      >
+                        {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
+                      </Button>
+                      <Input
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        placeholder="Type your message..."
+                        className="flex-1"
+                        maxLength={500}
+                      />
+                      <Button onClick={handleSendMessage} disabled={!newMessage.trim()} className="bg-connect-600 hover:bg-connect-700">
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">Press Enter to send • {newMessage.length}/500</div>
+                  </div>
                 </div>
-                <div className="flex-1 overflow-y-auto p-4">
-                  <TopicsBoard />
+              </TabsContent>
+
+              <TabsContent value="rooms" className="flex-1 min-h-0">
+                <RoomsPanel
+                  eventId={eventId ?? currentEventId}
+                  onEnterRoom={(roomId) => {
+                    // We will fetch room info minimally to show header
+                    // Simplicity: setSelectedRoom with only id; owner id will be filled on next message fetch if needed from room object
+                    // Better: query immediately to get created_by/color/name
+                    // For now, do a lightweight fetch:
+                    supabase.from('chat_rooms').select('id,name,color,created_by').eq('id', roomId).single().then(({ data }) => {
+                      if (data) setSelectedRoom({ id: data.id, name: data.name, color: data.color, created_by: data.created_by });
+                    });
+                    setActiveTab('chat');
+                  }}
+                />
+              </TabsContent>
+
+              <TabsContent value="topics" className="flex-1 min-h-0">
+                <div className="h-full flex flex-col">
+                  <div className="hidden md:flex items-center gap-2 p-4 border-b bg-white dark:bg-gray-800">
+                    <Sparkles className="h-5 w-5 text-connect-600 dark:text-connect-300" />
+                    <span className="font-semibold text-gray-900 dark:text-white">Topics</span>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-4">
+                    <TopicsBoard />
+                  </div>
                 </div>
-              </div>
-            </TabsContent>
-          </Tabs>
+              </TabsContent>
+            </Tabs>
+          </>
         ) : (
-          // Admin override retains old split view
+          // Admin override retains old split view (optional), but now messages are still room-aware if selectedRoom is set externally
           <div className="flex-1 flex flex-col md:grid md:grid-cols-3 md:divide-x md:divide-gray-200 dark:md:divide-gray-700 min-h-0">
             {/* ... existing code ... */}
           </div>

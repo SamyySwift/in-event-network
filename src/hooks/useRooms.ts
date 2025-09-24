@@ -102,16 +102,11 @@ export const useRooms = (overrideEventId?: string) => {
   const joinRoom = async (roomId: string) => {
     if (!currentUser?.id) return;
     try {
-      // Prefer a plain insert and gracefully ignore duplicates (unique violation)
-      const { error } = await supabase.from('room_members').insert({
+      const { error } = await supabase.from('room_members').upsert({
         room_id: roomId,
         user_id: currentUser.id,
-      });
-
-      if (error && (error as any).code !== '23505') {
-        // If it wasn't a duplicate-key error, rethrow
-        throw error;
-      }
+      }, { onConflict: 'room_id,user_id' });
+      if (error) throw error;
 
       const room = rooms.find(r => r.id === roomId) || null;
       setSelectedRoom(room);

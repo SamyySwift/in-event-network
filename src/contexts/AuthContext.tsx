@@ -117,45 +117,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const getUserProfile = async (supabaseUser: SupabaseUser) => {
     try {
       console.log("Fetching profile for user:", supabaseUser.id);
-  
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", supabaseUser.id)
         .single();
-  
+
       if (error && error.code !== "PGRST116") {
         // PGRST116 = no rows returned
         console.error("Error fetching profile:", error);
         throw error;
       }
-  
+
       if (data) {
-        // Profile exists - check if there's a pending role update from Google OAuth
-        const pendingRole = localStorage.getItem("pendingGoogleRole") as "host" | "attendee";
-  
-        if (pendingRole && pendingRole !== data.role) {
-          console.log(`Updating existing profile role from ${data.role} to ${pendingRole}`);
-          
-          // Update the role in the database
-          const { error: updateError } = await supabase
-            .from("profiles")
-            .update({ role: pendingRole })
-            .eq("id", supabaseUser.id);
-            
-          if (updateError) {
-            console.error("Error updating profile role:", updateError);
-            // Don't remove pendingRole if update failed
-          } else {
-            data.role = pendingRole; // Update local data
-            localStorage.removeItem("pendingGoogleRole");
-          }
-        } else {
-          // Remove pendingRole if no update needed
-          localStorage.removeItem("pendingGoogleRole");
-        }
-        
-        // Profile exists
         const userProfile: User = {
           id: data.id,
           name: data.name || "",
@@ -232,6 +206,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     } catch (error) {
       console.error("Error fetching user profile:", error);
+      // Fallback: set a minimal currentUser so the app can navigate after login
+      setCurrentUser({
+        id: supabaseUser.id,
+        name:
+          supabaseUser.user_metadata?.full_name ||
+          supabaseUser.email?.split("@")[0] ||
+          "",
+        email: supabaseUser.email || "",
+        role: "attendee", // default fallback; will be corrected when profile loads
+        photoUrl: supabaseUser.user_metadata?.avatar_url || null,
+        bio: null,
+        links: {
+          twitter: null,
+          facebook: null,
+          linkedin: null,
+          instagram: null,
+          snapchat: null,
+          tiktok: null,
+          github: null,
+          website: null,
+        },
+        niche: null,
+      });
       setIsLoading(false);
     }
   };

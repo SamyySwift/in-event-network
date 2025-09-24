@@ -146,7 +146,7 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
   }
 
   return (
-    <Card className="h-[70vh] md:h-[600px] flex flex-col border border-white/30 bg-white/70 dark:bg-gray-900/60 backdrop-blur-md shadow-xl">
+    <Card className="flex flex-col border border-white/30 bg-white/70 dark:bg-gray-900/60 backdrop-blur-md shadow-xl h-full">
       {/* Header: soft gradient */}
       <div className="flex flex-col items-center p-4 border-b bg-gradient-to-r from-white/40 via-white/10 to-white/40 dark:from-gray-900/20 dark:via-gray-900/10 dark:to-gray-900/20 rounded-t-md">
         <div className="flex items-center gap-3">
@@ -182,112 +182,107 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
               </TabsList>
             </div>
 
-            <TabsContent value="chat" className="flex-1 min-h-0">
-                <div className="flex-1 flex flex-col min-h-0">
-                    {/* 顶部标题与工具栏 */}
-                    {selectedRoom && (
-                        <div className="p-3 border-b flex items-center justify-between bg-white/70 dark:bg-gray-800/70 backdrop-blur">
-                            <div className="flex items-center gap-2">
-                                <span className="h-4 w-4 rounded" style={{ backgroundColor: selectedRoom.color || '#3b82f6' }} />
-                                <span className="text-sm font-medium">{selectedRoom.name}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Button size="sm" variant="outline" onClick={() => setSelectedRoom(null)}>Back to Global</Button>
-                            </div>
+            <TabsContent value="chat" className="flex-1 min-h-0 flex flex-col">
+                {/* 顶部标题与工具栏 */}
+                {selectedRoom && (
+                    <div className="p-3 border-b flex items-center justify-between bg-white/70 dark:bg-gray-800/70 backdrop-blur">
+                        <div className="flex items-center gap-2">
+                            <span className="h-4 w-4 rounded" style={{ backgroundColor: selectedRoom.color || '#3b82f6' }} />
+                            <span className="text-sm font-medium">{selectedRoom.name}</span>
                         </div>
-                    )}
-                    
-                    {/* 消息容器：确保可滚动且不受输入栏影响 */}
-                    <div
-                        className="relative flex-1 min-h-0 overflow-y-auto overscroll-contain bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.07),transparent_50%),linear-gradient(to_bottom,rgba(255,255,255,0.6),transparent_30%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.12),transparent_50%),linear-gradient(to_bottom,rgba(17,24,39,0.7),transparent_30%)] scroll-smooth"
-                    >
-                        {/* 显示消息列表 */}
-                        <div className="p-4 space-y-3 min-h-full">
-                            {messages.length === 0 ? (
-                                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                                    <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                                    <p>No messages yet. Start the conversation!</p>
-                                </div>
-                            ) : (
-                                messages.map((message) => (
-                                    <ChatMessage
-                                        key={message.id}
-                                        message={message}
-                                        isOwn={message.user_id === currentUser?.id}
-                                        onQuote={handleQuoteMessage}
-                                        onDelete={(id) => deleteMessage(id)}
-                                        points={participantPoints[message.user_id] ?? 0}
-                                        roomOwnerUserId={selectedRoom?.created_by}
-                                    />
-                                ))
-                            )}
-                            <div ref={messagesEndRef} />
+                        <div className="flex items-center gap-2">
+                            <Button size="sm" variant="outline" onClick={() => setSelectedRoom(null)}>Back to Global</Button>
                         </div>
-                        
-                        {/* Floating jump-to-latest */}
-                        {isUserScrolling && (
-                            <Button
-                                type="button"
-                                size="icon"
-                                variant="secondary"
-                                onClick={scrollToBottom}
-                                className="absolute right-4 bottom-6 rounded-full shadow-lg bg-white/90 dark:bg-gray-800/90 backdrop-blur"
-                                title="Jump to latest"
-                            >
-                                <span className="text-lg leading-none">↓</span>
-                            </Button>
+                    </div>
+                )}
+                
+                {/* 消息容器：确保可滚动 */}
+                <div className="flex-1 overflow-y-auto bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.07),transparent_50%),linear-gradient(to_bottom,rgba(255,255,255,0.6),transparent_30%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.12),transparent_50%),linear-gradient(to_bottom,rgba(17,24,39,0.7),transparent_30%)] scroll-smooth">
+                    <div className="p-4 space-y-3">
+                        {messages.length === 0 ? (
+                            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                                <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                                <p>No messages yet. Start the conversation!</p>
+                            </div>
+                        ) : (
+                            messages.map((message) => (
+                                <ChatMessage
+                                    key={message.id}
+                                    message={message}
+                                    isOwn={message.user_id === currentUser?.id}
+                                    onQuote={handleQuoteMessage}
+                                    onDelete={(id) => deleteMessage(id)}
+                                    points={participantPoints[message.user_id] ?? 0}
+                                    roomOwnerUserId={selectedRoom?.created_by}
+                                />
+                            ))
                         )}
+                        <div ref={messagesEndRef} />
                     </div>
                     
-                    {/* Quote preview */}
-                    {quotedMessage && (
-                        <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border-t">
-                            <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                                    Replying to {quotedMessage.user_profile?.name}
-                                </span>
-                                <Button size="sm" variant="ghost" onClick={() => setQuotedMessage(null)} className="h-6 w-6 p-0">×</Button>
-                            </div>
-                            <QuotedMessage message={quotedMessage} compact />
-                        </div>
+                    {/* Floating jump-to-latest */}
+                    {isUserScrolling && (
+                        <Button
+                            type="button"
+                            size="icon"
+                            variant="secondary"
+                            onClick={scrollToBottom}
+                            className="absolute right-4 bottom-6 rounded-full shadow-lg bg-white/90 dark:bg-gray-800/90 backdrop-blur"
+                            title="Jump to latest"
+                        >
+                            <span className="text-lg leading-none">↓</span>
+                        </Button>
                     )}
-                    
-                    {/* Composer: pill style */}
-                    <div className="p-4 border-t bg-transparent">
-                        <div className="flex gap-2 items-center rounded-full border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur px-2 py-1 shadow-sm">
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,image/svg+xml"
-                                className="hidden"
-                                onChange={handleImageChange}
-                            />
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={uploadingImage}
-                                className="shrink-0 rounded-full"
-                                title="Upload image"
-                            >
-                                {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
-                            </Button>
-                    
-                            <Input
-                                value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
-                                onKeyPress={handleKeyPress}
-                                placeholder="Type your message..."
-                                className="flex-1 border-0 focus-visible:ring-0 bg-transparent"
-                                maxLength={500}
-                            />
-                            <Button onClick={handleSendMessage} disabled={!newMessage.trim()} className="rounded-full bg-connect-600 hover:bg-connect-700 shadow-sm">
-                                <Send className="h-4 w-4" />
-                            </Button>
+                </div>
+                
+                {/* Quote preview */}
+                {quotedMessage && (
+                    <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border-t">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                                Replying to {quotedMessage.user_profile?.name}
+                            </span>
+                            <Button size="sm" variant="ghost" onClick={() => setQuotedMessage(null)} className="h-6 w-6 p-0">×</Button>
                         </div>
-                        <div className="text-xs text-gray-500 mt-1 text-center">
-                            Press Enter to send • {newMessage.length}/500
-                        </div>
+                        <QuotedMessage message={quotedMessage} compact />
+                    </div>
+                )}
+                
+                {/* Input area - fixed at bottom */}
+                <div className="p-4 border-t bg-transparent">
+                    <div className="flex gap-2 items-center rounded-full border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur px-2 py-1 shadow-sm">
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,image/svg+xml"
+                            className="hidden"
+                            onChange={handleImageChange}
+                        />
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploadingImage}
+                            className="shrink-0 rounded-full"
+                            title="Upload image"
+                        >
+                            {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
+                        </Button>
+                    
+                        <Input
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            onKeyPress={handleKeyPress}
+                            placeholder="Type your message..."
+                            className="flex-1 border-0 focus-visible:ring-0 bg-transparent"
+                            maxLength={500}
+                        />
+                        <Button onClick={handleSendMessage} disabled={!newMessage.trim()} className="rounded-full bg-connect-600 hover:bg-connect-700 shadow-sm">
+                            <Send className="h-4 w-4" />
+                        </Button>
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1 text-center">
+                        Press Enter to send • {newMessage.length}/500
                     </div>
                 </div>
             </TabsContent>

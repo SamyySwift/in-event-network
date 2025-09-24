@@ -7,6 +7,7 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { AttendeeEventProvider } from '@/contexts/AttendeeEventContext'
 import { AdminEventProvider } from '@/hooks/useAdminEventContext'
 import { Toaster } from '@/components/ui/toaster'
+import RoleSync from '@/components/auth/RoleSync'
 import { router } from './routes.tsx'
 import './index.css'
 
@@ -33,6 +34,7 @@ root.render(
       <AuthProvider>
         <AttendeeEventProvider>
           <AdminEventProvider>
+            <RoleSync />
             <RouterProvider router={router} />
             <Toaster />
           </AdminEventProvider>

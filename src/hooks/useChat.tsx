@@ -48,6 +48,7 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
   const effectiveEventId = overrideEventId ?? currentEventId;
   const effectiveRoomId = overrideRoomId ?? null;
 
+  // Re-run fetch + subscription setup when room changes
   useEffect(() => {
     if (currentUser && effectiveEventId) {
       fetchMessages();
@@ -56,7 +57,6 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
         if (typeof cleanup === 'function') cleanup();
       };
     } else {
-      // If no event, clear messages
       setMessages([]);
     }
   }, [currentUser, effectiveEventId, effectiveRoomId]);
@@ -240,7 +240,7 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
 
     console.log('Setting up realtime subscription for event:', effectiveEventId, 'room:', effectiveRoomId);
 
-    // Scope by room on the server side to avoid cross-room updates
+    // Scope by room on the server side to avoid cross-room payloads
     const messageFilter = effectiveRoomId
       ? `event_id=eq.${effectiveEventId},room_id=eq.${effectiveRoomId}`
       : `event_id=eq.${effectiveEventId},room_id=is.null`;
@@ -399,7 +399,7 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
     };
   };
 
-  // Re-add sendMessage so it’s available in the hook return
+  // Ensure instant reflection: refresh after sending (in addition to realtime)
   const sendMessage = async (content: string, quoted_message_id?: string) => {
     if (!currentUser) {
       toast({
@@ -433,7 +433,6 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
         content,
         quoted_message_id: quoted_message_id ?? null,
         event_id: effectiveEventId,
-        // Ensure room isolation: attach the selected room_id (or null for global)
         room_id: effectiveRoomId ?? null,
       });
 
@@ -441,6 +440,9 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
         console.error('Error sending message:', error);
         throw error;
       }
+
+      // Immediate UI reflection: re-fetch messages for the active room
+      await fetchMessages();
 
       console.log('Message sent successfully');
     } catch (error) {

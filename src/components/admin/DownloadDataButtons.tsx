@@ -92,8 +92,8 @@ export const DownloadDataButtons: React.FC<DownloadDataButtonsProps> = ({
     // Combine attendee and ticket data
     return attendeesWithTickets?.map(attendee => {
       const ticket = tickets?.find(t => t.user_id === attendee.user_id);
-      const profile = Array.isArray(attendee.profiles) ? attendee.profiles[0] : attendee.profiles;
-      const ticketType = Array.isArray(ticket?.ticket_types) ? ticket.ticket_types[0] : ticket?.ticket_types;
+      const profile = attendee.profiles as any;
+      const ticketType = ticket?.ticket_types as any;
       return {
         id: attendee.id,
         name: profile?.name || 'N/A',

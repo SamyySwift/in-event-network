@@ -160,12 +160,15 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       csvData.forEach((attendee, index) => {
         const attendeeEmail = attendee.email?.toLowerCase();
         const attendeeName = attendee.name?.toLowerCase();
-        const existing = existingTickets?.find(ticket =>
-          (ticket.guest_email && ticket.guest_email.toLowerCase() === attendeeEmail) ||
-          (ticket.profiles && Array.isArray(ticket.profiles) && ticket.profiles.length > 0 && ticket.profiles[0].email && ticket.profiles[0].email.toLowerCase() === attendeeEmail) ||
-          (ticket.guest_name && ticket.guest_name.toLowerCase() === attendeeName) ||
-          (ticket.profiles && Array.isArray(ticket.profiles) && ticket.profiles.length > 0 && ticket.profiles[0].name && ticket.profiles[0].name.toLowerCase() === attendeeName)
-        );
+        const existing = existingTickets?.find(ticket => {
+          const profile = ticket.profiles as any;
+          return (
+            (ticket.guest_email && ticket.guest_email.toLowerCase() === attendeeEmail) ||
+            (profile?.email && profile.email.toLowerCase() === attendeeEmail) ||
+            (ticket.guest_name && ticket.guest_name.toLowerCase() === attendeeName) ||
+            (profile?.name && profile.name.toLowerCase() === attendeeName)
+          );
+        });
         
         if (existing) {
           found.push({

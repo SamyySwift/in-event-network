@@ -684,9 +684,7 @@ const AttendeeNetworking = () => {
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
-          <TabsList
-            className="relative flex flex-wrap sm:flex-nowrap w/full gap-1 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/70 p-1 shadow-lg h-auto min-h-10 sm:h-10 overflow-visible"
-          >
+          <TabsList className="relative flex flex-wrap sm:flex-nowrap w/full gap-1 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/70 p-1 shadow-lg h-auto min-h-10 sm:h-10 overflow-visible">
             {/* People */}
             <TabsTrigger
               value="people"

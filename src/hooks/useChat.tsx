@@ -48,12 +48,18 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
   const effectiveEventId = overrideEventId ?? currentEventId;
   const effectiveRoomId = overrideRoomId ?? null;
 
+  // Re-run fetch + subscription setup when room changes
   useEffect(() => {
     if (currentUser && effectiveEventId) {
       fetchMessages();
-      setupRealtimeSubscription();
+      const cleanup = setupRealtimeSubscription();
+      return () => {
+        if (typeof cleanup === 'function') cleanup();
+      };
+    } else {
+      setMessages([]);
     }
-  }, [currentUser, effectiveEventId]);
+  }, [currentUser, effectiveEventId, effectiveRoomId]);
 
   const fetchMessages = async () => {
     if (!effectiveEventId) {
@@ -233,15 +239,21 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
     }
 
     console.log('Setting up realtime subscription for event:', effectiveEventId, 'room:', effectiveRoomId);
+
+    // Scope by room on the server side to avoid cross-room payloads
+    const messageFilter = effectiveRoomId
+      ? `event_id=eq.${effectiveEventId},room_id=eq.${effectiveRoomId}`
+      : `event_id=eq.${effectiveEventId},room_id=is.null`;
+
     const channel = supabase
-      .channel(`chat-messages-${effectiveEventId}`)
+      .channel(`chat-messages-${effectiveEventId}-${effectiveRoomId ?? 'global'}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'chat_messages',
-          filter: `event_id=eq.${effectiveEventId}`
+          filter: messageFilter,
         },
         async (payload) => {
           // Filter new message by room_id context
@@ -387,7 +399,7 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
     };
   };
 
-  // Inside useChat: sendMessage
+  // Ensure instant reflection: refresh after sending (in addition to realtime)
   const sendMessage = async (content: string, quoted_message_id?: string) => {
     if (!currentUser) {
       toast({
@@ -415,21 +427,23 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
         eventId: effectiveEventId,
         roomId: effectiveRoomId,
       });
-      
+
       const { error } = await supabase.from('chat_messages').insert({
         user_id: currentUser.id,
         content,
         quoted_message_id: quoted_message_id ?? null,
         event_id: effectiveEventId,
-        // NEW: attach room
         room_id: effectiveRoomId ?? null,
       });
-  
+
       if (error) {
         console.error('Error sending message:', error);
         throw error;
       }
-  
+
+      // Immediate UI reflection: re-fetch messages for the active room
+      await fetchMessages();
+
       console.log('Message sent successfully');
     } catch (error) {
       console.error('Error in sendMessage:', error);

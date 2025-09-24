@@ -162,9 +162,9 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         const attendeeName = attendee.name?.toLowerCase();
         const existing = existingTickets?.find(ticket =>
           (ticket.guest_email && ticket.guest_email.toLowerCase() === attendeeEmail) ||
-          (ticket.profiles?.email && ticket.profiles.email.toLowerCase() === attendeeEmail) ||
+          (ticket.profiles?.[0]?.email && ticket.profiles[0].email.toLowerCase() === attendeeEmail) ||
           (ticket.guest_name && ticket.guest_name.toLowerCase() === attendeeName) ||
-          (ticket.profiles?.name && ticket.profiles.name.toLowerCase() === attendeeName)
+          (ticket.profiles?.[0]?.name && ticket.profiles[0].name.toLowerCase() === attendeeName)
         );
         
         if (existing) {

@@ -232,43 +232,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     } catch (error) {
       console.error("Error fetching user profile:", error);
-      // Graceful fallback: build minimal user from auth session to allow redirects
-      try {
-        const { data: userData } = await supabase.auth.getUser();
-        const sUser = userData?.user;
-        if (sUser) {
-          const fallbackRole = (sUser.user_metadata?.role as "host" | "attendee") || "attendee";
-          const userProfile: User = {
-            id: sUser.id,
-            name:
-              sUser.user_metadata?.full_name ||
-              sUser.user_metadata?.name ||
-              sUser.email?.split("@")[0] ||
-              "",
-            email: sUser.email || "",
-            role: fallbackRole,
-            photoUrl: sUser.user_metadata?.avatar_url,
-            bio: null,
-            links: {
-              twitter: null,
-              facebook: null,
-              linkedin: null,
-              instagram: null,
-              snapchat: null,
-              tiktok: null,
-              github: null,
-              website: null,
-            },
-            niche: null,
-          };
-          console.warn("Using fallback user profile from auth metadata due to profile fetch error");
-          setCurrentUser(userProfile);
-        }
-      } catch (e) {
-        console.error("Failed to construct fallback user:", e);
-      } finally {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     }
   };
 

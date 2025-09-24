@@ -112,11 +112,10 @@ serve(async (req) => {
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
-  } catch (err) {
-    console.error('Error:', err)
-    const message = err instanceof Error ? err.message : String(err)
+  } catch (error) {
+    console.error('Error:', error)
     return new Response(
-      JSON.stringify({ error: message }),
+      JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }

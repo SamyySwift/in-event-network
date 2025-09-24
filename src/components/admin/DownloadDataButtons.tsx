@@ -94,11 +94,11 @@ export const DownloadDataButtons: React.FC<DownloadDataButtonsProps> = ({
       const ticket = tickets?.find(t => t.user_id === attendee.user_id);
       return {
         id: attendee.id,
-        name: attendee.profiles?.[0]?.name || 'N/A',
-        email: attendee.profiles?.[0]?.email || 'N/A',
+        name: attendee.profiles?.name || 'N/A',
+        email: attendee.profiles?.email || 'N/A',
         phone: ticket?.guest_phone || 'N/A',
-        role: attendee.profiles?.[0]?.role || 'attendee',
-        ticket_type: ticket?.ticket_types?.[0]?.name || 'N/A',
+        role: attendee.profiles?.role || 'attendee',
+        ticket_type: ticket?.ticket_types?.name || 'N/A',
         check_in_status: ticket?.check_in_status ? 'Checked In' : 'Not Checked In',
         event_name: eventName,
         joined_at: attendee.joined_at || attendee.created_at

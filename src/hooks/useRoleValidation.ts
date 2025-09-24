@@ -1,41 +1,15 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-
-const normalizeRole = (role?: string | null): 'host' | 'attendee' =>
-  role && ['host', 'admin', 'organizer'].includes(role.toLowerCase()) ? 'host' : 'attendee';
+import { supabase } from '@/lib/supabase';
 
 export const useRoleValidation = () => {
-  const { currentUser, updateUser, isLoading } = useAuth();
+  const { currentUser, updateUser } = useAuth();
   const navigate = useNavigate();
-  const hasValidated = useRef(false);
-
-  // Immediate redirect for misplaced hosts
-  useEffect(() => {
-    if (currentUser && !isLoading && normalizeRole(currentUser.role) === 'host') {
-      const currentPath = window.location.pathname;
-      if (currentPath.startsWith('/attendee')) {
-        console.log('Host user detected on attendee route, redirecting to admin');
-        navigate('/admin', { replace: true });
-        return;
-      }
-    }
-  }, [currentUser, isLoading, navigate]);
 
   useEffect(() => {
     const validateRole = async () => {
-      // Only validate once per session and only when auth is fully loaded
-      if (!currentUser || isLoading || hasValidated.current) {
-        return;
-      }
-
-      // Wait a bit for initial auth flow to complete
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      try {
-        console.log('Validating role for user:', currentUser.id, 'Current role:', currentUser.role);
-        
+      if (currentUser) {
         // Fetch fresh role from database
         const { data, error } = await supabase
           .from('profiles')
@@ -43,44 +17,19 @@ export const useRoleValidation = () => {
           .eq('id', currentUser.id)
           .single();
 
-        if (error) {
-          console.error('Error fetching role from database:', error);
-          return;
-        }
-
-        const dbRoleNorm = normalizeRole(data?.role);
-        const currentRoleNorm = normalizeRole(currentUser.role);
-
-        if (dbRoleNorm !== currentRoleNorm) {
+        if (!error && data && data.role !== currentUser.role) {
           console.log(`Role mismatch detected. Local: ${currentUser.role}, DB: ${data.role}`);
           
-          // Update local user state using the available updateUser method (keeps DB role, normalizes local)
+          // Update local user state using the available updateUser method
           await updateUser({ role: data.role });
           
-          // Mark as validated to prevent repeated validations
-          hasValidated.current = true;
-          
-          // Redirect to correct dashboard using normalized DB role
-          const correctPath = dbRoleNorm === 'host' ? '/admin' : '/attendee';
-          console.log('Redirecting to:', correctPath);
+          // Redirect to correct dashboard
+          const correctPath = data.role === 'host' ? '/admin' : '/attendee';
           navigate(correctPath, { replace: true });
-        } else {
-          console.log('Role validation passed - no changes needed');
-          hasValidated.current = true;
         }
-      } catch (error) {
-        console.error('Error in role validation:', error);
       }
     };
 
-    // Only run if we have a current user and auth is not loading
-    if (currentUser && !isLoading) {
-      validateRole();
-    }
-  }, [currentUser, isLoading, navigate, updateUser]);
-
-  // Reset validation flag when user changes (e.g., login/logout)
-  useEffect(() => {
-    hasValidated.current = false;
-  }, [currentUser?.id]);
+    validateRole();
+  }, [currentUser, navigate, updateUser]);
 };

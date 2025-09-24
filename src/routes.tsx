@@ -125,379 +125,377 @@ import AdminSettings from "@/pages/admin/AdminSettings";
 import AdminWallet from "@/pages/admin/AdminWallet";
 import CheckIn from "@/pages/CheckIn";
 
-// Import RootLayout
-import RootLayout from "@/components/layouts/RootLayout";
-
 // Remove the markdown comments and add the missing route:
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <RootLayout />,
-    children: [
-      {
-        index: true,
-        element: <Landing />,
-      },
-      {
-        path: "guide",
-        element: <Guide />,
-      },
-      {
-        path: "discovery",
-        element: <Discovery />,
-      },
-      {
-        path: "login",
-        element: <Login />,
-      },
-      {
-        path: "register",
-        element: <Register />,
-      },
-      {
-        path: "auth/callback",
-        element: <AuthCallback />,
-      },
-      {
-        path: "scan",
-        element: <ScanQR />,
-      },
-      {
-        path: "index",
-        element: <Index />,
-      },
-      {
-        path: "buy-tickets/:eventKey",
-        element: <BuyTickets />,
-      },
-      {
-        path: "buy",
-        element: <BuyTickets />,
-      },
-      {
-        path: "join/:code",
-        element: <JoinEvent />,
-      },
-      {
-        path: "join",
-        element: <JoinEvent />,
-      },
+    element: <Landing />,
+  },
+  {
+    path: "/guide",
+    element: <Guide />,
+  },
+  {
+    path: "/discovery",
+    element: <Discovery />,
+  },
+  {
+    path: "/login",
+    element: <Login />,
+  },
+  {
+    path: "/register",
+    element: <Register />,
+  },
+  {
+    path: "/auth/callback",
+    element: <AuthCallback />,
+  },
+  {
+    path: "/scan",
+    element: <ScanQR />,
+  },
+  {
+    path: "/index",
+    element: <Index />,
+  },
+  {
+    path: "/buy-tickets/:eventKey",
+    element: <BuyTickets />,
+  },
+  {
+    path: "/buy",
+    element: <BuyTickets />,
+  },
+  {
+    path: "/join/:code",
+    element: <JoinEvent />,
+  },
+  {
+    path: "/join",
+    element: <JoinEvent />,
+  },
 
-      // Admin Routes
-      {
-        path: "admin",
-        element: (
-          <AdminRoute>
-            <AdminDashboard />
-          </AdminRoute>
-        ),
-      },
-      {
-        path: "admin/profile",
-        element: (
-          <AdminRoute>
-            <AdminProfile />
-          </AdminRoute>
-        ),
-      },
-      {
-        path: "admin/events",
-        element: (
-          <AdminRoute>
-            <AdminEvents />
-          </AdminRoute>
-        ),
-      },
-      {
-        path: "admin/attendees",
-        element: (
-          <AdminRoute>
-            <AdminAttendees />
-          </AdminRoute>
-        ),
-      },
-      {
-        path: "admin/networking",
-        element: (
-          <AdminRoute>
-            <AdminNetworking />
-          </AdminRoute>
-        ),
-      },
-      {
-        path: "admin/speakers",
-        element: (
-          <AdminRoute>
-            <AdminSpeakers />
-          </AdminRoute>
-        ),
-      },
-      {
-        path: "admin/announcements",
-        element: (
-          <AdminRoute>
-            <AdminAnnouncements />
-          </AdminRoute>
-        ),
-      },
-      {
-        path: "admin/schedule",
-        element: (
-          <AdminRoute>
-            <AdminSchedule />
-          </AdminRoute>
-        ),
-      },
-      {
-        path: "admin/polls",
-        element: (
-          <AdminRoute>
-            <AdminPolls />
-          </AdminRoute>
-        ),
-      },
-      {
-        path: "admin/facilities",
-        element: (
-          <AdminRoute>
-            <AdminFacilities />
-          </AdminRoute>
-        ),
-      },
-      {
-        path: "admin/highlights",
-        element: (
-          <AdminRoute>
-            <AdminHighlights />
-          </AdminRoute>
-        ),
-      },
-      {
-        path: "admin/event-preview",
-        element: (
-          <AdminRoute>
-            <AdminEventPreview />
-          </AdminRoute>
-        ),
-      },
-      {
-        path: "admin/rules",
-        element: (
-          <AdminRoute>
-            <AdminRules />
-          </AdminRoute>
-        ),
-      },
-      {
-        path: "admin/questions",
-        element: (
-          <AdminRoute>
-            <AdminQuestions />
-          </AdminRoute>
-        ),
-      },
+  // Admin Routes
+  {
+    path: "/admin",
+    element: (
+      <AdminRoute>
+        <AdminDashboard />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/admin/profile",
+    element: (
+      <AdminRoute>
+        <AdminProfile />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/admin/events",
+    element: (
+      <AdminRoute>
+        <AdminEvents />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/admin/attendees",
+    element: (
+      <AdminRoute>
+        <AdminAttendees />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/admin/networking",
+    element: (
+      <AdminRoute>
+        <AdminNetworking />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/admin/speakers",
+    element: (
+      <AdminRoute>
+        <AdminSpeakers />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/admin/announcements",
+    element: (
+      <AdminRoute>
+        <AdminAnnouncements />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/admin/schedule",
+    element: (
+      <AdminRoute>
+        <AdminSchedule />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/admin/polls",
+    element: (
+      <AdminRoute>
+        <AdminPolls />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/admin/facilities",
+    element: (
+      <AdminRoute>
+        <AdminFacilities />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/admin/highlights",
+    element: (
+      <AdminRoute>
+        <AdminHighlights />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/admin/event-preview",
+    element: (
+      <AdminRoute>
+        <AdminEventPreview />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/admin/rules",
+    element: (
+      <AdminRoute>
+        <AdminRules />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/admin/questions",
+    element: (
+      <AdminRoute>
+        <AdminQuestions />
+      </AdminRoute>
+    ),
+  },
 
-      {
-        path: "admin/suggestions",
-        element: (
-          <AdminRoute>
-            <AdminSuggestions />
-          </AdminRoute>
-        ),
-      },
+  {
+    path: "/admin/suggestions",
+    element: (
+      <AdminRoute>
+        <AdminSuggestions />
+      </AdminRoute>
+    ),
+  },
 
-      {
-        path: "admin/notifications",
-        element: (
-          <AdminRoute>
-            <AdminNotifications />
-          </AdminRoute>
-        ),
-      },
-      {
-        path: "admin/sponsors",
-        element: (
-          <AdminRoute>
-            <AdminSponsors />
-          </AdminRoute>
-        ),
-      },
-      {
-        path: "admin/vendor-hub",
-        element: (
-          <AdminRoute>
-            <AdminVendorHub />
-          </AdminRoute>
-        ),
-      },
+  {
+    path: "/admin/notifications",
+    element: (
+      <AdminRoute>
+        <AdminNotifications />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/admin/sponsors",
+    element: (
+      <AdminRoute>
+        <AdminSponsors />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/admin/vendor-hub",
+    element: (
+      <AdminRoute>
+        <AdminVendorHub />
+      </AdminRoute>
+    ),
+  },
 
-      // Public sponsor form route
-      {
-        path: "sponsor-form/:formId",
-        element: <SponsorForm />,
-      },
+  // Public sponsor form route
+  {
+    path: "/sponsor-form/:formId",
+    element: <SponsorForm />,
+  },
 
-      // Public live questions route
-      {
-        path: "live-questions/:eventId",
-        element: <LiveQuestions />,
-      },
+  // Public live questions route
+  {
+    path: "/live-questions/:eventId",
+    element: <LiveQuestions />,
+  },
 
-      // Public live polls route
-      {
-        path: "live-polls/:eventId",
-        element: <LivePolls />,
-      },
+  // Public live polls route
+  {
+    path: "/live-polls/:eventId",
+    element: <LivePolls />,
+  },
 
-      // Public live chat route
-      {
-        path: "live-chat/:eventId",
-        element: <LiveChat />,
-      },
+  // Public live chat route
+  {
+    path: "/live-chat/:eventId",
+    element: <LiveChat />,
+  },
 
-      // Public check-in route
-      {
-        path: "check-in/:eventId",
-        element: <CheckIn />,
-      },
+  // Public check-in route
+  {
+    path: "/check-in/:eventId",
+    element: <CheckIn />,
+  },
 
-      // Host Routes (redirect to admin)
-      {
-        path: "host",
-        element: <Navigate to="/admin" replace />,
-      },
+  // Host Routes (redirect to admin)
+  {
+    path: "/host",
+    element: <Navigate to="/admin" replace />,
+  },
 
-      // Attendee Routes
-      {
-        path: "attendee",
-        element: (
-          <AttendeeRoute>
-            <AttendeeDashboard />
-          </AttendeeRoute>
-        ),
-      },
-      {
-        path: "attendee/profile",
-        element: (
-          <AttendeeRoute>
-            <AttendeeProfile />
-          </AttendeeRoute>
-        ),
-      },
-      {
-        path: "attendee/networking",
-        element: (
-          <AttendeeRoute>
-            <AttendeeNetworking />
-          </AttendeeRoute>
-        ),
-      },
-      {
-        path: "attendee/schedule",
-        element: (
-          <AttendeeRoute>
-            <AttendeeSchedule />
-          </AttendeeRoute>
-        ),
-      },
-      {
-        path: "attendee/questions",
-        element: (
-          <AttendeeRoute>
-            <AttendeeQuestions />
-          </AttendeeRoute>
-        ),
-      },
-      {
-        path: "attendee/map",
-        element: (
-          <AttendeeRoute>
-            <AttendeeMap />
-          </AttendeeRoute>
-        ),
-      },
-      {
-        path: "attendee/polls",
-        element: (
-          <AttendeeRoute>
-            <AttendeePolls />
-          </AttendeeRoute>
-        ),
-      },
-      {
-        path: "attendee/suggestions",
-        element: (
-          <AttendeeRoute>
-            <AttendeeSuggestions />
-          </AttendeeRoute>
-        ),
-      },
-      {
-        path: "attendee/announcements",
-        element: (
-          <AttendeeRoute>
-            <AttendeeAnnouncements />
-          </AttendeeRoute>
-        ),
-      },
-      {
-        path: "attendee/rules",
-        element: (
-          <AttendeeRoute>
-            <AttendeeRules />
-          </AttendeeRoute>
-        ),
-      },
-      {
-        path: "attendee/notifications",
-        element: (
-          <AttendeeRoute>
-            <AttendeeNotifications />
-          </AttendeeRoute>
-        ),
-      },
-      {
-        path: "attendee/search",
-        element: (
-          <AttendeeRoute>
-            <AttendeeSearch />
-          </AttendeeRoute>
-        ),
-      },
-      {
-        path: "attendee/onboarding",
-        element: (
-          <AttendeeRoute>
-            <AttendeeOnboarding />
-          </AttendeeRoute>
-        ),
-      },
-      {
-        path: "attendee/my-tickets",
-        element: (
-          <AttendeeRoute>
-            <AttendeeMyTickets />
-          </AttendeeRoute>
-        ),
-      },
+  // Attendee Routes
+  {
+    path: "/attendee",
+    element: (
+      <AttendeeRoute>
+        <AttendeeDashboard />
+      </AttendeeRoute>
+    ),
+  },
+  {
+    path: "/attendee/profile",
+    element: (
+      <AttendeeRoute>
+        <AttendeeProfile />
+      </AttendeeRoute>
+    ),
+  },
+  {
+    path: "/attendee/networking",
+    element: (
+      <AttendeeRoute>
+        <AttendeeNetworking />
+      </AttendeeRoute>
+    ),
+  },
+  {
+    path: "/attendee/schedule",
+    element: (
+      <AttendeeRoute>
+        <AttendeeSchedule />
+      </AttendeeRoute>
+    ),
+  },
+  {
+    path: "/attendee/questions",
+    element: (
+      <AttendeeRoute>
+        <AttendeeQuestions />
+      </AttendeeRoute>
+    ),
+  },
+  {
+    path: "/attendee/map",
+    element: (
+      <AttendeeRoute>
+        <AttendeeMap />
+      </AttendeeRoute>
+    ),
+  },
+  {
+    path: "/attendee/polls",
+    element: (
+      <AttendeeRoute>
+        <AttendeePolls />
+      </AttendeeRoute>
+    ),
+  },
+  {
+    path: "/attendee/suggestions",
+    element: (
+      <AttendeeRoute>
+        <AttendeeSuggestions />
+      </AttendeeRoute>
+    ),
+  },
+  {
+    path: "/attendee/announcements",
+    element: (
+      <AttendeeRoute>
+        <AttendeeAnnouncements />
+      </AttendeeRoute>
+    ),
+  },
+  {
+    path: "/attendee/rules",
+    element: (
+      <AttendeeRoute>
+        <AttendeeRules />
+      </AttendeeRoute>
+    ),
+  },
+  {
+    path: "/attendee/notifications",
+    element: (
+      <AttendeeRoute>
+        <AttendeeNotifications />
+      </AttendeeRoute>
+    ),
+  },
+  {
+    path: "/attendee/search",
+    element: (
+      <AttendeeRoute>
+        <AttendeeSearch />
+      </AttendeeRoute>
+    ),
+  },
+  {
+    path: "/attendee/onboarding",
+    element: (
+      <AttendeeRoute>
+        <AttendeeOnboarding />
+      </AttendeeRoute>
+    ),
+  },
+  {
+    path: "/attendee/my-tickets",
+    element: (
+      <AttendeeRoute>
+        <AttendeeMyTickets />
+      </AttendeeRoute>
+    ),
+  },
 
-      // Add these routes in the admin routes section
-      {
-        path: "admin/tickets",
-        element: (
-          <AdminRoute>
-            <AdminTickets />
-          </AdminRoute>
-        ),
-      },
-      {
-        path: "admin/checkin",
-        element: (
-          <AdminRoute>
-            <AdminCheckIn />
-          </AdminRoute>
-        ),
-      },
+  // Catch all route - redirect to landing instead of 404
+  {
+    path: "*",
+    element: <Navigate to="/" replace />,
+  },
+  // Add these routes in the admin routes section
+  {
+    path: "/admin/tickets",
+    element: (
+      <AdminRoute>
+        <AdminTickets />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/admin/checkin",
+    element: (
+      <AdminRoute>
+        <AdminCheckIn />
+      </AdminRoute>
+    ),
+  },
   {
     path: "/admin/settings",
     element: (
@@ -515,14 +513,7 @@ export const router = createBrowserRouter([
     ),
   },
   {
-    path: "vendor-form/:formId",
+    path: "/vendor-form/:formId",
     element: <VendorForm />,
-  },
-  // Catch all route - redirect to landing instead of 404
-  {
-    path: "*",
-    element: <Navigate to="/" replace />,
-  },
-    ],
   },
 ]);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/contexts/AuthContext';
 import { useJoinEvent } from '@/hooks/useJoinEvent';
 import { useToast } from '@/hooks/use-toast';
@@ -182,8 +182,7 @@ const AuthCallback = () => {
                   }
                   
                   // Redirect based on actual user role
-                  const isAdminRole = userRole && ['host', 'admin', 'organizer'].includes(userRole);
-                  const redirectPath = isAdminRole ? '/admin' : '/attendee/dashboard';
+                  const redirectPath = userRole === 'host' ? '/admin' : '/attendee/dashboard';
                   console.log('AuthCallback - Fallback: Redirecting to:', redirectPath);
                   navigate(redirectPath, { replace: true });
                 } else {

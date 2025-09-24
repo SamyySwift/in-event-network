@@ -1,11 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from "react";
 import { User as SupabaseUser } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/lib/supabase";
 import { User } from "@/types";
-
-// Normalize DB roles to app roles
-const normalizeRole = (role?: string | null): "host" | "attendee" =>
-  role && ["host", "admin", "organizer"].includes(role.toLowerCase()) ? "host" : "attendee";
 
 interface AuthContextType {
   currentUser: User | null;
@@ -121,24 +117,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const getUserProfile = async (supabaseUser: SupabaseUser) => {
     try {
       console.log("Fetching profile for user:", supabaseUser.id);
+  
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", supabaseUser.id)
         .single();
-
+  
       if (error && error.code !== "PGRST116") {
         // PGRST116 = no rows returned
         console.error("Error fetching profile:", error);
         throw error;
       }
-
+  
       if (data) {
+        // Profile exists - check if there's a pending role update from Google OAuth
+        const pendingRole = localStorage.getItem("pendingGoogleRole") as "host" | "attendee";
+  
+        if (pendingRole && pendingRole !== data.role) {
+          console.log(`Updating existing profile role from ${data.role} to ${pendingRole}`);
+          
+          // Update the role in the database
+          const { error: updateError } = await supabase
+            .from("profiles")
+            .update({ role: pendingRole })
+            .eq("id", supabaseUser.id);
+            
+          if (updateError) {
+            console.error("Error updating profile role:", updateError);
+            // Don't remove pendingRole if update failed
+          } else {
+            data.role = pendingRole; // Update local data
+            localStorage.removeItem("pendingGoogleRole");
+          }
+        } else {
+          // Remove pendingRole if no update needed
+          localStorage.removeItem("pendingGoogleRole");
+        }
+        
+        // Profile exists
         const userProfile: User = {
           id: data.id,
           name: data.name || "",
           email: data.email || supabaseUser.email || "",
-          role: normalizeRole(data.role),
+          role: (data.role as "host" | "attendee") || "attendee",
           photoUrl: data.photo_url,
           bio: data.bio,
           links: {
@@ -154,8 +176,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           niche: data.niche,
         };
         console.log("Profile loaded successfully:", userProfile);
-        // Store the user's role for fallback on future errors
-        localStorage.setItem("lastKnownUserRole", userProfile.role);
         setCurrentUser(userProfile);
         setIsLoading(false);
       } else {
@@ -190,7 +210,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           id: newProfile.id,
           name: newProfile.name,
           email: newProfile.email,
-          role: normalizeRole(newProfile.role),
+          role: newProfile.role,
           photoUrl: newProfile.photo_url,
           bio: null,
           links: {
@@ -207,55 +227,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         };
 
         console.log("New profile created:", userProfile);
-        // Store the user's role for fallback on future errors
-        localStorage.setItem("lastKnownUserRole", userProfile.role);
         setCurrentUser(userProfile);
         setIsLoading(false);
       }
     } catch (error) {
       console.error("Error fetching user profile:", error);
-
-      // If we already have a user in state, do NOT override it.
-      // This avoids flipping hosts back to attendee on transient read failures.
-      if (currentUser) {
-        setIsLoading(false);
-        return;
-      }
-
-      // Use the last known role as fallback, then pending roles, then default to attendee
-      const pendingFallbackRole =
-        (localStorage.getItem("lastKnownUserRole") as "host" | "attendee") ||
-        (localStorage.getItem("pendingRegisterRole") as "host" | "attendee") ||
-        (localStorage.getItem("pendingGoogleRole") as "host" | "attendee") ||
-        "attendee";
-
-      setCurrentUser({
-        id: supabaseUser.id,
-        name:
-          supabaseUser.user_metadata?.full_name ||
-          supabaseUser.email?.split("@")[0] ||
-          "",
-        email: supabaseUser.email || "",
-        role: normalizeRole(pendingFallbackRole),
-        photoUrl: supabaseUser.user_metadata?.avatar_url || null,
-        bio: null,
-        links: {
-          twitter: null,
-          facebook: null,
-          linkedin: null,
-          instagram: null,
-          snapchat: null,
-          tiktok: null,
-          github: null,
-          website: null,
-        },
-        niche: null,
-      });
-
-      // Clear pending flags after using them
-      localStorage.removeItem("pendingRegisterRole");
-      localStorage.removeItem("pendingGoogleRole");
-
       setIsLoading(false);
     }
   };
@@ -309,9 +285,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       setIsLoading(true);
       console.log("Attempting registration for:", email, "with role:", role);
-
-      // Preserve chosen role across the immediate post-signup flow
-      localStorage.setItem("pendingRegisterRole", role);
 
       // Clear any existing session first
       await supabase.auth.signOut();
@@ -403,13 +376,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         }
       }
 
-      // Registration complete; clear pending role flag
-      localStorage.removeItem("pendingRegisterRole");
-
       return { error: null };
     } catch (error) {
-      // Ensure we clear pending role on error too
-      localStorage.removeItem("pendingRegisterRole");
       console.error("Error registering:", error);
       setIsLoading(false);
       return { error: error as Error };
@@ -426,7 +394,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       
       // Clear all auth-related localStorage items
       localStorage.removeItem("pendingGoogleRole");
-      localStorage.removeItem("lastKnownUserRole");
       localStorage.removeItem("redirectAfterLogin");
       localStorage.removeItem("pendingTicketingUrl");
       sessionStorage.removeItem("pendingEventCode");
@@ -495,8 +462,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (error) throw error;
 
-      const normalized = userData.role !== undefined ? normalizeRole(userData.role) : currentUser.role;
-      setCurrentUser({ ...currentUser, ...userData, role: normalized });
+      setCurrentUser({ ...currentUser, ...userData });
     } catch (error) {
       console.error("Error updating profile:", error);
     } finally {

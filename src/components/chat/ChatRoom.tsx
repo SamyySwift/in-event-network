@@ -1,6 +1,6 @@
 // ChatRoom component
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { Send, MessageCircle, AlertCircle, Sparkles, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Send, MessageCircle, AlertCircle, Sparkles, Image as ImageIcon, Loader2, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
@@ -146,9 +146,9 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
   }
 
   return (
-    <Card className="h-[70vh] md:h-[600px] flex flex-col">
+    <Card className="h-[70vh] md:h-[600px] flex flex-col border border-white/30 bg-white/70 dark:bg-gray-900/60 backdrop-blur-md shadow-xl">
       {/* Header */}
-      <div className="flex flex-col items-center p-4 border-b bg-gradient-to-r from-primary-50 via-white to-primary-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 rounded-t-md">
+      <div className="flex flex-col items-center p-4 border-b bg-gradient-to-r from-white/40 via-white/10 to-white/40 dark:from-gray-900/20 dark:via-gray-900/10 dark:to-gray-900/20 rounded-t-md">
         <div className="flex items-center gap-3">
           <MessageCircle className="h-7 w-7 text-connect-600 dark:text-connect-300" />
           <span className="font-bold text-lg md:text-xl text-gray-900 dark:text-white">
@@ -159,14 +159,13 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
           <Badge variant="secondary" className="text-xs font-medium">{messages.length} messages</Badge>
         </div>
 
-        {/* NEW: Tabs for Chat / Rooms / Topics (hide in admin override if you prefer) */}
         {!isAdminOverride && (
           <div className="mt-3 w-full flex justify-center">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-              <TabsList className="mx-auto">
-                <TabsTrigger value="chat">Chat</TabsTrigger>
-                <TabsTrigger value="rooms">Rooms</TabsTrigger>
-                <TabsTrigger value="topics">Topics</TabsTrigger>
+              <TabsList className="mx-auto rounded-full bg-white/70 dark:bg-gray-800/70 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+                <TabsTrigger value="chat" className="rounded-full data-[state=active]:bg-connect-600 data-[state=active]:text-white">Chat</TabsTrigger>
+                <TabsTrigger value="rooms" className="rounded-full data-[state=active]:bg-connect-600 data-[state=active]:text-white">Rooms</TabsTrigger>
+                <TabsTrigger value="topics" className="rounded-full data-[state=active]:bg-connect-600 data-[state=active]:text-white">Topics</TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
@@ -184,16 +183,13 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
       </div>
 
       <CardContent className="flex-1 flex flex-col p-0 overflow-hidden min-h-0">
-        {/* NEW: Tabs content (non-admin attendee view) */}
         {!isAdminOverride ? (
           <>
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col min-h-0">
               <TabsContent value="chat" className="flex-1 min-h-0">
-                {/* Chat content (same as before), with selectedRoom integration */}
                 <div className="flex-1 flex flex-col min-h-0">
-                  {/* Top bar when in a room */}
                   {selectedRoom && (
-                    <div className="p-3 border-b flex items-center justify-between bg-white dark:bg-gray-800">
+                    <div className="p-3 border-b flex items-center justify-between bg-white/70 dark:bg-gray-800/70 backdrop-blur">
                       <div className="flex items-center gap-2">
                         <span className="h-4 w-4 rounded" style={{ backgroundColor: selectedRoom.color || '#3b82f6' }} />
                         <span className="text-sm font-medium">{selectedRoom.name}</span>
@@ -207,7 +203,7 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
                   {/* Scroll area + messages */}
                   <div
                     ref={scrollAreaRef}
-                    className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 scroll-smooth"
+                    className="relative flex-1 overflow-y-auto bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.07),transparent_50%),linear-gradient(to_bottom,rgba(255,255,255,0.6),transparent_30%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.12),transparent_50%),linear-gradient(to_bottom,rgba(17,24,39,0.7),transparent_30%)] scroll-smooth"
                     style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--border)) transparent' }}
                     onScroll={handleScroll}
                   >
@@ -233,9 +229,23 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
                       )}
                       <div ref={messagesEndRef} />
                     </div>
+
+                    {/* Floating scroll-to-bottom button */}
+                    {isUserScrolling && (
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="secondary"
+                        onClick={scrollToBottom}
+                        className="absolute right-4 bottom-6 rounded-full shadow-lg bg-white/90 dark:bg-gray-800/90 backdrop-blur"
+                        title="Jump to latest"
+                      >
+                        <ArrowDown className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
 
-                  {/* Quote preview + input bar (unchanged except send includes room_id via useChat) */}
+                  {/* Quote preview + input */}
                   {quotedMessage && (
                     <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border-t">
                       <div className="flex items-center justify-between mb-2">

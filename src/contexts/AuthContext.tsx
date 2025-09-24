@@ -3,6 +3,10 @@ import { User as SupabaseUser } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@/types";
 
+// Normalize DB roles to app roles
+const normalizeRole = (role?: string | null): "host" | "attendee" =>
+  role && ["host", "admin", "organizer"].includes(role.toLowerCase()) ? "host" : "attendee";
+
 interface AuthContextType {
   currentUser: User | null;
   isAuthenticated: boolean;
@@ -134,7 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           id: data.id,
           name: data.name || "",
           email: data.email || supabaseUser.email || "",
-          role: (data.role as "host" | "attendee") || "attendee",
+          role: normalizeRole(data.role),
           photoUrl: data.photo_url,
           bio: data.bio,
           links: {
@@ -186,7 +190,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           id: newProfile.id,
           name: newProfile.name,
           email: newProfile.email,
-          role: newProfile.role,
+          role: normalizeRole(newProfile.role),
           photoUrl: newProfile.photo_url,
           bio: null,
           links: {
@@ -232,7 +236,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           supabaseUser.email?.split("@")[0] ||
           "",
         email: supabaseUser.email || "",
-        role: pendingFallbackRole,
+        role: normalizeRole(pendingFallbackRole),
         photoUrl: supabaseUser.user_metadata?.avatar_url || null,
         bio: null,
         links: {
@@ -491,7 +495,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (error) throw error;
 
-      setCurrentUser({ ...currentUser, ...userData });
+      const normalized = userData.role !== undefined ? normalizeRole(userData.role) : currentUser.role;
+      setCurrentUser({ ...currentUser, ...userData, role: normalized });
     } catch (error) {
       console.error("Error updating profile:", error);
     } finally {

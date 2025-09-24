@@ -3,6 +3,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 
+const normalizeRole = (role?: string | null): 'host' | 'attendee' =>
+  role && ['host', 'admin', 'organizer'].includes(role.toLowerCase()) ? 'host' : 'attendee';
+
 export const useRoleValidation = () => {
   const { currentUser, updateUser, isLoading } = useAuth();
   const navigate = useNavigate();
@@ -33,17 +36,20 @@ export const useRoleValidation = () => {
           return;
         }
 
-        if (data && data.role !== currentUser.role) {
+        const dbRoleNorm = normalizeRole(data?.role);
+        const currentRoleNorm = normalizeRole(currentUser.role);
+
+        if (dbRoleNorm !== currentRoleNorm) {
           console.log(`Role mismatch detected. Local: ${currentUser.role}, DB: ${data.role}`);
           
-          // Update local user state using the available updateUser method
+          // Update local user state using the available updateUser method (keeps DB role, normalizes local)
           await updateUser({ role: data.role });
           
           // Mark as validated to prevent repeated validations
           hasValidated.current = true;
           
-          // Redirect to correct dashboard
-          const correctPath = data.role === 'host' ? '/admin' : '/attendee';
+          // Redirect to correct dashboard using normalized DB role
+          const correctPath = dbRoleNorm === 'host' ? '/admin' : '/attendee';
           console.log('Redirecting to:', correctPath);
           navigate(correctPath, { replace: true });
         } else {

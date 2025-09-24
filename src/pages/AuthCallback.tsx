@@ -182,7 +182,8 @@ const AuthCallback = () => {
                   }
                   
                   // Redirect based on actual user role
-                  const redirectPath = userRole === 'host' ? '/admin' : '/attendee/dashboard';
+                  const isAdminRole = userRole && ['host', 'admin', 'organizer'].includes(userRole);
+                  const redirectPath = isAdminRole ? '/admin' : '/attendee/dashboard';
                   console.log('AuthCallback - Fallback: Redirecting to:', redirectPath);
                   navigate(redirectPath, { replace: true });
                 } else {

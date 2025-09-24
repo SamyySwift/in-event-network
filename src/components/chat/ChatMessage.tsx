@@ -296,7 +296,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 onClick={() => onQuote(message)}
                 className={`absolute ${
                   isOwn ? "left-1" : "right-1"
-                } top-1 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-8 w-8 p-0`}
+                } top-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0`}
                 title="Quote to reply"
                 aria-label="Quote to reply"
               >
@@ -313,7 +313,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 }}
                 className={`absolute ${
                   isOwn ? "-left-8" : "-right-8"
-                } top-1 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-8 w-8 p-0 text-destructive`}
+                } top-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 text-destructive`}
                 title="Delete message"
                 aria-label="Delete message"
               >

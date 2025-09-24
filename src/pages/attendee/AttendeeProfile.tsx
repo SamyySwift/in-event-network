@@ -262,6 +262,29 @@ const AttendeeProfile = () => {
         }
       } catch (error) {
         console.error("Error loading profile:", error);
+
+        // Fallback: populate minimal data from currentUser so the page renders
+        // This keeps the UI usable even if RLS temporarily blocks profile reads
+        const fallback = {
+          name: currentUser?.name || "",
+          photoUrl: currentUser?.photoUrl || "",
+          bio: currentUser?.bio || "",
+          niche: "",
+          company: "",
+          customTags: [],
+          networkingPreferences: [],
+          networkingVisible: true,
+          links: {
+            twitter: "",
+            linkedin: "",
+            github: "",
+            website: "",
+            facebook: "",
+            instagram: "",
+          },
+        };
+        setProfileData(fallback);
+
         toast({
           title: "Error loading profile",
           description: "There was a problem loading your profile data",

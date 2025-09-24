@@ -42,7 +42,8 @@ const RoomsPanel: React.FC<RoomsPanelProps> = ({ eventId, onEnterRoom }) => {
         </Button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      {/* Fix: Make this scrollable on mobile with proper touch scrolling */}
+      <div className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-3" style={{ WebkitOverflowScrolling: 'touch' }}>
         {loading ? (
           <div className="text-sm text-gray-500">Loading rooms...</div>
         ) : rooms.length === 0 ? (

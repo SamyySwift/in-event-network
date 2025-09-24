@@ -264,18 +264,18 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               </Button>
             )}
 
-            {/* 删除按钮：右上角，hover 显示；移动端默认可见 */}
+            {/* Delete Button - moved to the other side of the bubble (opposite of quote) */}
             {canDelete && onDelete && (
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => { if (confirm("Delete this message?")) onDelete(message.id); }}
-                    className="absolute right-1 top-1 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-6 w-6 p-0 text-destructive"
-                    title="Delete message"
-                    aria-label="Delete message"
-                >
-                    <Trash2 className="h-4 w-4" />
-                </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => { if (confirm("Delete this message?")) onDelete(message.id); }}
+                className={`absolute ${isOwn ? "right-1" : "left-1"} top-1 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-8 w-8 p-0 text-destructive`}
+                title="Delete message"
+                aria-label="Delete message"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             )}
 
             {/* diamond sparkle near the bubble */}

@@ -44,12 +44,6 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [participantPoints, setParticipantPoints] = useState<Record<string, number>>({});
-
-  // Pagination for older messages
-  const PAGE_SIZE = 50;
-  const [oldestCursor, setOldestCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingOlder, setLoadingOlder] = useState(false);
   
   // Profile cache to reduce redundant queries
   const profileCache = useRef(new Map<string, any>());
@@ -94,8 +88,8 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
       }
 
       const { data: messagesData, error: messagesError } = await query
-        .order('created_at', { ascending: false })
-        .limit(PAGE_SIZE);
+        .order('created_at', { ascending: true })
+        .limit(100);
 
       if (messagesError) {
         console.error('Error fetching messages:', messagesError);
@@ -104,9 +98,7 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
 
       console.log('Messages fetched:', messagesData);
 
-      const messagesDataAsc = (messagesData || []).reverse();
-
-      const userIds = [...new Set(messagesDataAsc?.map((msg) => msg.user_id) || [])];
+      const userIds = [...new Set(messagesData?.map((msg) => msg.user_id) || [])];
 
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
@@ -126,7 +118,7 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
       // NEW: fetch and hydrate quoted messages (and ensure their profiles exist)
       const quotedIds = [
         ...new Set(
-          (messagesDataAsc || [])
+          (messagesData || [])
             .map((m: any) => m.quoted_message_id)
             .filter(Boolean) as string[]
         ),
@@ -182,7 +174,7 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
       }
 
       // Combine messages with user profiles and attach quoted_message
-      const messagesWithProfiles: ChatMessage[] = (messagesDataAsc || []).map((message: any) => {
+      const messagesWithProfiles: ChatMessage[] = (messagesData || []).map((message: any) => {
         const p = profilesMap.get(message.user_id);
         const user_profile = p
           ? {
@@ -210,11 +202,6 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
 
         return { ...message, user_profile, quoted_message };
       });
-
-      // Setup pagination cursors
-      setOldestCursor(messagesWithProfiles[0]?.created_at ?? null);
-      setHasMore((messagesDataAsc?.length ?? 0) === PAGE_SIZE);
-
 
       // Fetch points for all users in this chat/event and build a map
       type ChatPointsRow = { user_id: string; points: number };
@@ -550,129 +537,6 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
     }
   };
 
-  // Load older messages when user scrolls to top
-  const loadOlder = async () => {
-    if (loadingOlder || !effectiveEventId || !oldestCursor) return;
-    setLoadingOlder(true);
-    try {
-      let query = supabase
-        .from('chat_messages')
-        .select('*')
-        .eq('event_id', effectiveEventId as string)
-        .lt('created_at', oldestCursor);
-
-      if (effectiveRoomId) {
-        query = query.eq('room_id', effectiveRoomId);
-      } else {
-        query = query.is('room_id', null);
-      }
-
-      const { data: olderData, error } = await query
-        .order('created_at', { ascending: false })
-        .limit(PAGE_SIZE);
-
-      if (error) throw error;
-
-      const batchDesc = olderData || [];
-      const batch = batchDesc.reverse();
-
-      // Hydrate profiles
-      const userIds = [...new Set(batch.map((m: any) => m.user_id))];
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, name, email, role, photo_url, bio, niche, company, twitter_link, linkedin_link, instagram_link, github_link, website_link')
-        .in('id', userIds);
-
-      const profilesMap = new Map<string, any>();
-      profiles?.forEach((p: any) => profilesMap.set(p.id, p));
-
-      // Quoted messages
-      const quotedIds = [...new Set(batch.map((m: any) => m.quoted_message_id).filter(Boolean) as string[])];
-      const quotedMessagesMap = new Map<string, ChatMessage>();
-      if (quotedIds.length) {
-        const { data: quotedMsgs } = await supabase
-          .from('chat_messages')
-          .select('*')
-          .in('id', quotedIds);
-        if (quotedMsgs) {
-          const quotedUserIds = [...new Set(quotedMsgs.map((q: any) => q.user_id))];
-          const missingUserIds = quotedUserIds.filter((id) => !profilesMap.has(id));
-          if (missingUserIds.length) {
-            const { data: moreProfiles } = await supabase
-              .from('profiles')
-              .select('id, name, email, role, photo_url, bio, niche, company, twitter_link, linkedin_link, instagram_link, github_link, website_link')
-              .in('id', missingUserIds);
-            moreProfiles?.forEach((p: any) => profilesMap.set(p.id, p));
-          }
-          quotedMsgs.forEach((qm: any) => {
-            const qp = profilesMap.get(qm.user_id);
-            const q_user_profile = qp
-              ? {
-                  id: qp.id,
-                  name: qp.name,
-                  email: qp.email,
-                  role: qp.role,
-                  photo_url: qp.photo_url,
-                  bio: qp.bio,
-                  niche: qp.niche,
-                  company: qp.company,
-                  links: {
-                    twitter: qp.twitter_link ?? null,
-                    linkedin: qp.linkedin_link ?? null,
-                    instagram: qp.instagram_link ?? null,
-                    github: qp.github_link ?? null,
-                    website: qp.website_link ?? null,
-                  },
-                }
-              : { name: 'Unknown User' };
-            const hydrated = { ...qm, user_profile: q_user_profile } as ChatMessage;
-            quotedMessagesMap.set(qm.id, hydrated);
-            quotedMessageCache.current.set(qm.id, hydrated);
-          });
-        }
-      }
-
-      const hydratedBatch: ChatMessage[] = batch.map((message: any) => {
-        const p = profilesMap.get(message.user_id);
-        const user_profile = p
-          ? {
-              id: p.id,
-              name: p.name,
-              email: p.email,
-              role: p.role,
-              photo_url: p.photo_url,
-              bio: p.bio,
-              niche: p.niche,
-              company: p.company,
-              links: {
-                twitter: p.twitter_link ?? null,
-                linkedin: p.linkedin_link ?? null,
-                instagram: p.instagram_link ?? null,
-                github: p.github_link ?? null,
-                website: p.website_link ?? null,
-              },
-            }
-          : { name: 'Unknown User' };
-
-        const quoted_message = message.quoted_message_id
-          ? quotedMessagesMap.get(message.quoted_message_id) ?? null
-          : null;
-
-        return { ...message, user_profile, quoted_message } as ChatMessage;
-      });
-
-      setMessages((prev) => [...hydratedBatch, ...prev]);
-      if (hydratedBatch.length) {
-        setOldestCursor(hydratedBatch[0].created_at);
-      }
-      setHasMore(batch.length === PAGE_SIZE);
-    } catch (err) {
-      console.error('Error loading older messages:', err);
-    } finally {
-      setLoadingOlder(false);
-    }
-  };
-
   const deleteMessage = async (messageId: string) => {
     try {
       const { error } = await supabase.from('chat_messages').delete().eq('id', messageId);
@@ -699,9 +563,5 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
     sendMessage,
     deleteMessage,
     participantPoints,
-    // pagination helpers
-    hasMore,
-    loadOlder,
-    loadingOlder,
   };
 };

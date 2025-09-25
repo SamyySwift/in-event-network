@@ -26,7 +26,7 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
   const [selectedRoom, setSelectedRoom] = useState<{ id: string; name: string; color?: string | null; created_by?: string } | null>(null);
 
   // Adjust useChat to include selected room id
-  const { messages, loading, sendMessage, deleteMessage, participantPoints, hasMore, loadOlder, loadingOlder } = useChat(eventId, selectedRoom?.id || undefined);
+  const { messages, loading, sendMessage, deleteMessage, participantPoints } = useChat(eventId, selectedRoom?.id || undefined);
 
   const [newMessage, setNewMessage] = useState('');
   const [quotedMessage, setQuotedMessage] = useState<any>(null);
@@ -51,32 +51,16 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
     }
   }, [messages, isUserScrolling, scrollToBottom]);
 
-  // Debounced scroll handler for better performance + load older on top reach
+  // Debounced scroll handler for better performance
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    const el = e.currentTarget;
-    const { scrollTop, scrollHeight, clientHeight } = el;
+    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
     const isAtBottom = scrollHeight - scrollTop - clientHeight < 10;
-
+    
+    // Use requestAnimationFrame to debounce scroll updates
     requestAnimationFrame(() => {
       setIsUserScrolling(!isAtBottom);
-      console.log('Scroll Debug:', { scrollTop, scrollHeight, clientHeight, isAtBottom, isUserScrolling: !isAtBottom });
     });
-
-    // If user scrolled near the top, load older messages and maintain anchor
-    if (scrollTop < 50 && hasMore && !loadingOlder) {
-      const prevHeight = el.scrollHeight;
-      const prevTop = el.scrollTop;
-      loadOlder()?.then(() => {
-        requestAnimationFrame(() => {
-          const container = scrollAreaRef.current;
-          if (container) {
-            const newHeight = container.scrollHeight;
-            container.scrollTop = newHeight - prevHeight + prevTop;
-          }
-        });
-      });
-    }
-  }, [hasMore, loadingOlder, loadOlder]);
+  }, []);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
@@ -207,21 +191,18 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
               {/* Scroll area + messages - optimized for performance */}
               <div
                 ref={scrollAreaRef}
-                className="relative flex-1 overflow-y-auto bg-gradient-to-b from-background/80 to-background/60 overscroll-contain"
+                className="relative flex-1 overflow-y-auto bg-gradient-to-b from-background/80 to-background/60 scroll-smooth"
                 style={{ 
                   scrollbarWidth: 'thin', 
                   scrollbarColor: 'hsl(var(--border)) transparent',
+                  willChange: 'scroll-position',
                   WebkitOverflowScrolling: 'touch',
-                  touchAction: 'pan-y'
+                  contain: 'layout style paint',
+                  transform: 'translate3d(0, 0, 0)' // Hardware acceleration
                 }}
                 onScroll={handleScroll}
               >
                 <div className="p-4 space-y-3 min-h-full">
-                  {loadingOlder && (
-                    <div className="flex justify-center py-2 text-muted-foreground">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    </div>
-                  )}
                   {messages.length === 0 ? (
                     <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                       <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
@@ -243,25 +224,19 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Floating scroll to latest button */}
+                {/* Floating jump-to-latest */}
                 {isUserScrolling && (
                   <Button
                     type="button"
-                    size="sm"
+                    size="icon"
                     variant="secondary"
                     onClick={scrollToBottom}
-                    className="absolute right-4 bottom-6 z-50 rounded-full shadow-xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-2 border-connect-600/20 dark:border-connect-400/20 hover:bg-white dark:hover:bg-gray-800 hover:border-connect-600/40 transition-all duration-200 flex items-center gap-2 px-4 py-3"
-                    title="Scroll to latest messages"
+                    className="absolute right-4 bottom-6 rounded-full shadow-lg bg-white/90 dark:bg-gray-800/90 backdrop-blur"
+                    title="Jump to latest"
                   >
-                    <ArrowDown className="h-4 w-4 text-connect-600 dark:text-connect-400" />
-                    <span className="text-xs font-medium text-connect-600 dark:text-connect-400 hidden sm:inline">Latest</span>
+                    <span className="text-lg leading-none">↓</span>
                   </Button>
                 )}
-                
-                {/* Debug info - remove later */}
-                <div className="absolute top-4 left-4 bg-black/70 text-white text-xs p-2 rounded z-50 pointer-events-none">
-                  isUserScrolling: {isUserScrolling.toString()}
-                </div>
               </div>
 
               {/* Quote preview */}

@@ -1,11 +1,13 @@
-import React, { useState } from "react";
-import { Quote, Trash2 } from "lucide-react";
+// Top imports
+import React, { useState, useRef } from "react";
+import { Quote, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { QuotedMessage } from "./QuotedMessage";
 import { AttendeeProfileModal } from "@/components/attendee/AttendeeProfileModal";
 import { Badge } from "@/components/ui/badge";
+import { Trash2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 interface ChatMessageProps {
@@ -16,6 +18,7 @@ interface ChatMessageProps {
   onMessage?: (userId: string, userName: string, userPhoto?: string) => void;
   onDelete?: (id: string) => void | Promise<void>;
   points?: number;
+  // NEW: room owner id for current room
   roomOwnerUserId?: string;
 }
 
@@ -30,8 +33,6 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   roomOwnerUserId,
 }) => {
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const { currentUser } = useAuth();
-  
   const timeAgo = formatDistanceToNow(new Date(message.created_at), {
     addSuffix: true,
   });
@@ -42,14 +43,61 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     }
   };
 
+  // CHANGE: widen delete permission to include admins too (optional, but common)
+  const { currentUser } = useAuth();
   const canDelete = isOwn || currentUser?.role === "host";
 
-  // Role detection
+  // --- NEW: swipe-to-reply state/refs ---
+  const [translateX, setTranslateX] = useState(0);
+  const startXRef = useRef<number | null>(null);
+  const isSwipingRef = useRef(false);
+  const swipeTriggeredRef = useRef(false);
+  const SWIPE_TRIGGER_PX = 60; // drag distance to trigger quote
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    if (!onQuote) return;
+    swipeTriggeredRef.current = false;
+    isSwipingRef.current = true;
+    startXRef.current = e.touches[0]?.clientX ?? null;
+    setTranslateX(0);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    if (!onQuote || !isSwipingRef.current || startXRef.current == null) return;
+    const currentX = e.touches[0]?.clientX ?? 0;
+    const deltaX = currentX - startXRef.current;
+
+    // Allow swiping in from either side, but ignore tiny moves
+    if (Math.abs(deltaX) < 2) return;
+
+    // Only show movement in the direction “towards” reply:
+    // For non-own messages, swipe right-to-left; for own, swipe left-to-right
+    const intendedDir = isOwn ? -1 : 1;
+    const adjusted = Math.max(0, intendedDir * deltaX);
+    setTranslateX(adjusted);
+
+    if (!swipeTriggeredRef.current && adjusted > SWIPE_TRIGGER_PX) {
+      swipeTriggeredRef.current = true;
+      onQuote?.(message);
+    }
+  };
+
+  const onTouchEnd = () => {
+    isSwipingRef.current = false;
+    startXRef.current = null;
+    // Snap back
+    setTranslateX(0);
+  };
+
+  // Robust admin role detection (case-insensitive + common synonyms)
+  // Derive admin from PROFILE role (messages don't store roles)
   const role = String(message.user_profile?.role ?? "").toLowerCase();
   const isFromAdmin = ["admin", "host", "organizer", "owner", "moderator"].includes(role);
+
+  // NEW: mark if user is room owner to show badge
   const isRoomOwner = !!roomOwnerUserId && message.user_id === roomOwnerUserId;
 
-  // Display name
+  // Compute display name using profile; map unknown-name variants to Admin
   const rawName = message.user_profile?.name ?? "";
   const isRawNameUnknownUser = ["unknown user", "unknow user", "unknown"].includes(
     rawName.trim().toLowerCase()
@@ -58,7 +106,22 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     ? "Admin"
     : (rawName || (isFromAdmin ? "Admin" : isOwn ? "You" : "Admin"));
 
-  // Image detection
+  // NEW: achievements & styles based on points
+  const { medals, hasFireGlow, hasDiamond } = getAchievement(points ?? 0);
+  const avatarGlow = hasDiamond
+    ? "ring-4 ring-cyan-300 shadow-[0_0_16px_rgba(103,232,249,0.9)] animate-pulse"
+    : hasFireGlow
+    ? "ring-2 ring-orange-400 shadow-[0_0_12px_rgba(251,146,60,0.7)] animate-pulse"
+    : medals > 0
+    ? "ring-2 ring-yellow-300"
+    : "";
+  const bubbleExtra = hasDiamond
+    ? "border-2 border-cyan-300 shadow-[0_0_24px_rgba(103,232,249,0.6)]"
+    : hasFireGlow
+    ? "border-2 border-orange-300 shadow-[0_0_20px_rgba(251,146,60,0.45)]"
+    : "";
+
+  // Basic image URL detector
   const isImageUrl = (s: string) => {
     if (!s) return false;
     try {
@@ -71,122 +134,160 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
 
   return (
     <>
-      <div className={`flex gap-3 ${isOwn ? "flex-row-reverse" : ""} group transition-all duration-200`}>
-        {/* Avatar */}
-        <div className="flex-shrink-0">
+      <div className={`flex gap-3 ${isOwn ? "flex-row-reverse" : ""} group`}>
+        {/* Avatar and main container */}
+        <div className="relative">
           <Avatar
-            className={`h-9 w-9 ${
-              !isOwn ? "cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all" : ""
-            }`}
+            className={`h-8 w-8 flex-shrink-0 ${
+              !isOwn ? "cursor-pointer hover:ring-2 hover:ring-connect-500 transition-all" : ""
+            } ${avatarGlow}`}
             onClick={handleAvatarClick}
           >
             {message.user_profile?.photo_url ? (
               <AvatarImage
                 src={message.user_profile.photo_url}
                 alt={message.user_profile?.name}
-                className="object-cover"
               />
             ) : (
-              <AvatarFallback className="bg-muted text-foreground font-medium">
-                {message.user_profile?.name?.charAt(0)?.toUpperCase() || "U"}
+              <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300 text-sm">
+                {message.user_profile?.name?.charAt(0) || "A"}
               </AvatarFallback>
             )}
           </Avatar>
+
+          {/* overlay rewards near avatar */}
+          {hasDiamond && (
+            <>
+              <span className="absolute -top-1 -right-1 text-xs animate-bounce">💎</span>
+              <span className="pointer-events-none absolute -left-2 -bottom-2 text-[10px] text-cyan-400/80 animate-ping">
+                💎
+              </span>
+            </>
+          )}
+          {!hasDiamond && hasFireGlow && (
+            <span className="absolute -top-1 -right-1 text-xs animate-bounce">🔥</span>
+          )}
+          {medals > 0 && (
+            <span className="absolute -bottom-2 left-0 text-[10px] leading-none select-none">
+              {"🎖️".repeat(medals)}
+            </span>
+          )}
         </div>
 
-        {/* Message Content */}
-        <div className={`flex-1 min-w-0 max-w-[85%] ${isOwn ? "items-end" : "items-start"} flex flex-col`}>
-          {/* Header Info */}
-          <div className={`flex items-baseline gap-2 mb-1 ${isOwn ? "flex-row-reverse" : ""}`}>
+        <div className={`flex-1 min-w-0 ${isOwn ? "text-right" : ""} relative`}>
+          <div className={`flex items-center gap-2 mb-1 ${isOwn ? "justify-end" : ""}`}>
             <span
               onClick={!isOwn && message.user_profile ? handleAvatarClick : undefined}
-              className={`text-sm font-semibold ${
+              role={!isOwn && message.user_profile ? "button" : undefined}
+              className={`text-xs font-semibold ${
                 isOwn
-                  ? "text-foreground"
-                  : "text-primary hover:underline cursor-pointer"
-              } truncate`}
+                  ? "text-gray-800 dark:text-gray-200"
+                  : "text-connect-700 dark:text-connect-300 hover:underline"
+              } ${!isOwn && message.user_profile ? "cursor-pointer" : ""} truncate max-w-[60%]`}
+              title={displayName}
             >
               {displayName}
             </span>
-            
-            {/* Badges */}
-            {isFromAdmin && (
-              <Badge variant="destructive" className="text-xs px-1.5 py-0">
-                Admin
-              </Badge>
-            )}
+            {/* NEW: Room Owner badge right by the name (in-room) */}
             {isRoomOwner && (
-              <Badge variant="outline" className="text-xs px-1.5 py-0">
-                Owner
+              <Badge variant="secondary" className="uppercase tracking-wide text-[10px] px-2 py-0.5">
+                Room Owner
               </Badge>
             )}
-            
-            <span className="text-xs text-muted-foreground">
-              {timeAgo}
-            </span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">• {timeAgo}</span>
+            {typeof points === "number" && (
+              <span className="text-[10px] text-gray-400">({points} pts)</span>
+            )}
           </div>
 
-          {/* Quoted Message */}
+          {/* Admin label above the message bubble */}
+          {isFromAdmin && (
+            <div className={`mb-1 ${isOwn ? "ml-auto" : ""}`}>
+              <Badge variant="destructive" className="uppercase tracking-wide text-[10px] px-2 py-0.5">
+                Admin
+              </Badge>
+            </div>
+          )}
+
+          {/* Quoted preview (if any) */}
           {message.quoted_message && (
-            <div className={`mb-2 ${isOwn ? "ml-auto" : ""} max-w-full`}>
+            <div className={`mb-1 ${isOwn ? "ml-auto" : ""} max-w=[80%]`}>
               <QuotedMessage message={message.quoted_message} compact />
             </div>
           )}
 
-          {/* Message Bubble */}
+          {/* Main Message */}
           <div
-            className={`relative group/message rounded-2xl px-4 py-2.5 max-w-full break-words ${
+            className={`relative rounded-lg px-3 py-2 break-words ${
               isOwn
-                ? "bg-primary text-primary-foreground rounded-br-md"
-                : "bg-muted text-foreground rounded-bl-md border border-border"
-            }`}
+                ? "bg-connect-600 text-white ml-auto pl-10"
+                : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 pr-10"
+            } max-w-[80%] ${isOwn ? "ml-auto" : ""} ${bubbleExtra}`}
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+            style={{
+              transform: translateX ? `translateX(${isOwn ? -translateX : translateX}px)` : undefined,
+              transition: isSwipingRef.current ? "none" : "transform 150ms ease",
+            }}
           >
             {isImageUrl(message.content) ? (
               <a
                 href={message.content}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block"
+                className={`block ${isOwn ? "ml-auto" : ""}`}
+                title="Open image in new tab"
               >
                 <img
                   src={message.content}
                   alt="Shared image"
-                  className="max-h-60 max-w-full rounded-lg object-contain bg-background"
+                  className="max-h-64 max-w-full rounded-md border border-gray-200 dark:border-gray-700 object-contain bg-white"
                   loading="lazy"
                 />
               </a>
             ) : (
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                {message.content}
-              </p>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
             )}
 
-            {/* Action Buttons */}
-            <div className={`absolute -top-8 ${isOwn ? "left-0" : "right-0"} opacity-0 group-hover:opacity-100 transition-opacity bg-background border border-border rounded-full px-1 py-1 shadow-sm`}>
-              {onQuote && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => onQuote(message)}
-                  className="h-6 w-6 p-0 hover:bg-muted"
-                >
-                  <Quote className="h-3 w-3" />
-                </Button>
-              )}
-              
-              {canDelete && onDelete && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    if (confirm("Delete this message?")) onDelete(message.id);
-                  }}
-                  className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="h-3 w-3" />
-                </Button>
-              )}
-            </div>
+            {/* Quote Button (allow quoting any message) */}
+            {onQuote && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => onQuote(message)}
+                className={`absolute ${isOwn ? "left-1" : "right-1"} top-1 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-8 w-8 p-0`}
+                title="Quote to reply"
+                aria-label="Quote to reply"
+              >
+                <Quote className="h-4 w-4" />
+              </Button>
+            )}
+
+            {/* Delete Button (owner/host) - hover to reveal */}
+            {canDelete && onDelete && (
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  if (confirm("Delete this message?")) onDelete(message.id);
+                }}
+                className={`absolute ${isOwn ? "left-1" : "right-1"} top-9 z-10 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 text-destructive`}
+                title="Delete message"
+                aria-label="Delete message"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
+
+            {/* diamond sparkle near the bubble */}
+            {hasDiamond && (
+              <span
+                className={`absolute ${isOwn ? "left-1" : "right-1"} -bottom-2 text-xs text-cyan-400/90 animate-ping select-none`}
+              >
+                💎
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -215,4 +316,12 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       />
     </>
   );
+};
+
+// function getAchievement (top-level helper)
+const getAchievement = (pts: number) => {
+  const medals = pts >= 50 ? 3 : pts >= 25 ? 2 : pts >= 10 ? 1 : 0;
+  const hasFireGlow = pts >= 100;
+  const hasDiamond = pts >= 250;
+  return { medals, hasFireGlow, hasDiamond };
 };

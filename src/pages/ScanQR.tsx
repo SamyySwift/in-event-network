@@ -133,13 +133,6 @@ const ScanQR = () => {
             setScanSuccess(true);
             setEventName(data?.event_name || "Event");
 
-            // Show appropriate success message
-            toast({
-              title: "Event Joined Successfully!",
-              description: `Welcome to ${data?.event_name || 'the event'}`,
-              variant: "default"
-            });
-
             // Navigate to dashboard after a short delay
             setTimeout(() => {
               navigate("/attendee/dashboard", { replace: true });
@@ -216,7 +209,7 @@ const ScanQR = () => {
                 Successfully Joined!
               </h2>
               <p className="text-muted-foreground mb-4">
-                You've successfully joined <span className="font-semibold">{eventName}</span>
+                You've joined <span className="font-semibold">{eventName}</span>
               </p>
               <p className="text-sm text-muted-foreground">
                 Redirecting to your dashboard...
@@ -244,14 +237,6 @@ const ScanQR = () => {
       onSuccess: (data: any) => {
         setScanSuccess(true);
         setEventName(data?.event_name || "Event");
-        
-        // Show success message
-        toast({
-          title: "Event Joined Successfully!",
-          description: `Welcome to ${data?.event_name || 'the event'}`,
-          variant: "default"
-        });
-        
         setTimeout(() => {
           navigate("/attendee/dashboard", { replace: true });
         }, 1000);

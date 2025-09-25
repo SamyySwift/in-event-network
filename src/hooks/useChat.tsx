@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -44,6 +44,10 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [participantPoints, setParticipantPoints] = useState<Record<string, number>>({});
+  
+  // Profile cache to reduce redundant queries
+  const profileCache = useRef(new Map<string, any>());
+  const quotedMessageCache = useRef(new Map<string, ChatMessage>());
 
   const effectiveEventId = overrideEventId ?? currentEventId;
   const effectiveRoomId = overrideRoomId ?? null;
@@ -264,57 +268,74 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
           }
           console.log('New message received:', payload);
           
-          // Get the user profile for the new message (FULL profile fields)
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('id, name, email, role, photo_url, bio, niche, company, twitter_link, linkedin_link, instagram_link, github_link, website_link')
-            .eq('id', payload.new.user_id)
-            .single();
-
-          if (profileError) {
-            console.error('Error fetching profile for new message:', profileError);
-          }
-
-          // NEW: hydrate quoted message (if any)
-          let quoted_message: ChatMessage | null = null;
-          if (payload.new.quoted_message_id) {
-            const { data: qmsg } = await supabase
-              .from('chat_messages')
-              .select('*')
-              .eq('id', payload.new.quoted_message_id)
+          // Use cached profile or fetch if not cached
+          let profileData = profileCache.current.get(payload.new.user_id);
+          if (!profileData) {
+            const { data, error: profileError } = await supabase
+              .from('profiles')
+              .select('id, name, email, role, photo_url, bio, niche, company, twitter_link, linkedin_link, instagram_link, github_link, website_link')
+              .eq('id', payload.new.user_id)
               .single();
 
-            if (qmsg) {
-              const { data: qprofile } = await supabase
-                .from('profiles')
-                .select(
-                  'id, name, email, role, photo_url, bio, niche, company, twitter_link, linkedin_link, instagram_link, github_link, website_link'
-                )
-                .eq('id', qmsg.user_id)
+            if (profileError) {
+              console.error('Error fetching profile for new message:', profileError);
+            } else {
+              profileData = data;
+              profileCache.current.set(payload.new.user_id, data);
+            }
+          }
+
+          // Use cached quoted message or fetch if not cached
+          let quoted_message: ChatMessage | null = null;
+          if (payload.new.quoted_message_id) {
+            quoted_message = quotedMessageCache.current.get(payload.new.quoted_message_id) || null;
+            
+            if (!quoted_message) {
+              const { data: qmsg } = await supabase
+                .from('chat_messages')
+                .select('*')
+                .eq('id', payload.new.quoted_message_id)
                 .single();
 
-              quoted_message = {
-                ...qmsg,
-                user_profile: qprofile
-                  ? {
-                      id: qprofile.id,
-                      name: qprofile.name,
-                      email: qprofile.email,
-                      role: qprofile.role,
-                      photo_url: qprofile.photo_url,
-                      bio: qprofile.bio,
-                      niche: qprofile.niche,
-                      company: qprofile.company,
-                      links: {
-                        twitter: qprofile.twitter_link ?? null,
-                        linkedin: qprofile.linkedin_link ?? null,
-                        instagram: qprofile.instagram_link ?? null,
-                        github: qprofile.github_link ?? null,
-                        website: qprofile.website_link ?? null,
-                      },
-                    }
-                  : { name: 'Unknown User' },
-              } as ChatMessage;
+              if (qmsg) {
+                let qprofile = profileCache.current.get(qmsg.user_id);
+                if (!qprofile) {
+                  const { data } = await supabase
+                    .from('profiles')
+                    .select(
+                      'id, name, email, role, photo_url, bio, niche, company, twitter_link, linkedin_link, instagram_link, github_link, website_link'
+                    )
+                    .eq('id', qmsg.user_id)
+                    .single();
+                  qprofile = data;
+                  if (data) profileCache.current.set(qmsg.user_id, data);
+                }
+
+                quoted_message = {
+                  ...qmsg,
+                  user_profile: qprofile
+                    ? {
+                        id: qprofile.id,
+                        name: qprofile.name,
+                        email: qprofile.email,
+                        role: qprofile.role,
+                        photo_url: qprofile.photo_url,
+                        bio: qprofile.bio,
+                        niche: qprofile.niche,
+                        company: qprofile.company,
+                        links: {
+                          twitter: qprofile.twitter_link ?? null,
+                          linkedin: qprofile.linkedin_link ?? null,
+                          instagram: qprofile.instagram_link ?? null,
+                          github: qprofile.github_link ?? null,
+                          website: qprofile.website_link ?? null,
+                        },
+                      }
+                    : { name: 'Unknown User' },
+                } as ChatMessage;
+                
+                quotedMessageCache.current.set(payload.new.quoted_message_id, quoted_message);
+              }
             }
           }
 

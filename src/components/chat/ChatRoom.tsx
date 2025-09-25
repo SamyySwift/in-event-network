@@ -51,10 +51,15 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
     }
   }, [messages, isUserScrolling, scrollToBottom]);
 
+  // Debounced scroll handler for better performance
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
     const isAtBottom = scrollHeight - scrollTop - clientHeight < 10;
-    setIsUserScrolling(!isAtBottom);
+    
+    // Use requestAnimationFrame to debounce scroll updates
+    requestAnimationFrame(() => {
+      setIsUserScrolling(!isAtBottom);
+    });
   }, []);
 
   const handleSendMessage = async () => {
@@ -183,11 +188,18 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
                 </div>
               )}
 
-              {/* Scroll area + messages */}
+              {/* Scroll area + messages - optimized for performance */}
               <div
                 ref={scrollAreaRef}
-                className="relative flex-1 overflow-y-auto bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.07),transparent_50%),linear-gradient(to_bottom,rgba(255,255,255,0.6),transparent_30%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.12),transparent_50%),linear-gradient(to_bottom,rgba(17,24,39,0.7),transparent_30%)] scroll-smooth"
-                style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--border)) transparent' }}
+                className="relative flex-1 overflow-y-auto bg-gradient-to-b from-background/80 to-background/60 scroll-smooth"
+                style={{ 
+                  scrollbarWidth: 'thin', 
+                  scrollbarColor: 'hsl(var(--border)) transparent',
+                  willChange: 'scroll-position',
+                  WebkitOverflowScrolling: 'touch',
+                  contain: 'layout style paint',
+                  transform: 'translate3d(0, 0, 0)' // Hardware acceleration
+                }}
                 onScroll={handleScroll}
               >
                 <div className="p-4 space-y-3 min-h-full">

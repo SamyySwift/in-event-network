@@ -22,7 +22,7 @@ interface ChatMessageProps {
   roomOwnerUserId?: string;
 }
 
-export const ChatMessage: React.FC<ChatMessageProps> = ({
+export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
   message,
   isOwn,
   onQuote,
@@ -97,29 +97,29 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   // NEW: mark if user is room owner to show badge
   const isRoomOwner = !!roomOwnerUserId && message.user_id === roomOwnerUserId;
 
-  // Compute display name using profile; map unknown-name variants to Admin
+  // Fix display name logic - only show "Admin" for actual admins
   const rawName = message.user_profile?.name ?? "";
-  const isRawNameUnknownUser = ["unknown user", "unknow user", "unknown"].includes(
-    rawName.trim().toLowerCase()
-  );
-  const displayName = isRawNameUnknownUser
-    ? "Admin"
-    : (rawName || (isFromAdmin ? "Admin" : isOwn ? "You" : "Admin"));
+  const displayName = rawName || (isFromAdmin ? "Admin" : isOwn ? "You" : "User");
 
-  // NEW: achievements & styles based on points
-  const { medals, hasFireGlow, hasDiamond } = getAchievement(points ?? 0);
-  const avatarGlow = hasDiamond
-    ? "ring-4 ring-cyan-300 shadow-[0_0_16px_rgba(103,232,249,0.9)] animate-pulse"
-    : hasFireGlow
-    ? "ring-2 ring-orange-400 shadow-[0_0_12px_rgba(251,146,60,0.7)] animate-pulse"
-    : medals > 0
-    ? "ring-2 ring-yellow-300"
-    : "";
-  const bubbleExtra = hasDiamond
-    ? "border-2 border-cyan-300 shadow-[0_0_24px_rgba(103,232,249,0.6)]"
-    : hasFireGlow
-    ? "border-2 border-orange-300 shadow-[0_0_20px_rgba(251,146,60,0.45)]"
-    : "";
+  // Memoized achievements & styles based on points for performance  
+  const achievement = React.useMemo(() => getAchievement(points ?? 0), [points]);
+  const { medals, hasFireGlow, hasDiamond } = achievement;
+  
+  const avatarGlow = React.useMemo(() => 
+    hasDiamond
+      ? "ring-4 ring-cyan-300 shadow-lg animate-pulse"
+      : hasFireGlow
+      ? "ring-2 ring-orange-400 shadow-md animate-pulse"
+      : medals > 0
+      ? "ring-2 ring-yellow-300"
+      : "", [hasDiamond, hasFireGlow, medals]);
+      
+  const bubbleExtra = React.useMemo(() => 
+    hasDiamond
+      ? "border-2 border-cyan-300 shadow-lg"
+      : hasFireGlow
+      ? "border-2 border-orange-300 shadow-md"
+      : "", [hasDiamond, hasFireGlow]);
 
   // Basic image URL detector
   const isImageUrl = (s: string) => {
@@ -316,9 +316,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
       />
     </>
   );
-};
+});
 
-// function getAchievement (top-level helper)
+// Memoized achievement calculation for performance
 const getAchievement = (pts: number) => {
   const medals = pts >= 50 ? 3 : pts >= 25 ? 2 : pts >= 10 ? 1 : 0;
   const hasFireGlow = pts >= 100;

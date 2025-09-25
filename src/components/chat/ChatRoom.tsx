@@ -179,9 +179,9 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex-1 flex flex-col min-h-0">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col min-h-0">
-          <div className="p-4 pb-2">
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col min-h-0 h-full">
+          <div className="p-4 pb-2 flex-shrink-0">
             <TabsList className="grid w-full grid-cols-3 bg-muted/50 backdrop-blur rounded-xl p-1">
               <TabsTrigger value="chat" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
                 Chat
@@ -195,12 +195,12 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
             </TabsList>
           </div>
 
-          <TabsContent value="chat" className="flex-1 min-h-0 m-0">
-            <div className="flex-1 flex flex-col min-h-0">
+          <TabsContent value="chat" className="flex-1 min-h-0 flex flex-col m-0">
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
               {/* Messages Area */}
               <div
                 ref={scrollAreaRef}
-                className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border/20 hover:scrollbar-thumb-border/40"
+                className="flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border/20 hover:scrollbar-thumb-border/40"
                 style={{ 
                   touchAction: 'pan-y',
                   WebkitOverflowScrolling: 'touch',
@@ -208,9 +208,9 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
                 }}
                 onScroll={handleScroll}
               >
-                <div className="p-4 space-y-4 min-h-full">
+                <div className="p-4 space-y-4">
                   {messages.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full py-12 text-center">
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
                       <div className="p-4 rounded-2xl bg-muted/20 backdrop-blur mb-4">
                         <MessageCircle className="h-8 w-8 text-muted-foreground/60" />
                       </div>

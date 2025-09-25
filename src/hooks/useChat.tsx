@@ -699,5 +699,9 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
     sendMessage,
     deleteMessage,
     participantPoints,
+    // pagination helpers
+    hasMore,
+    loadOlder,
+    loadingOlder,
   };
 };

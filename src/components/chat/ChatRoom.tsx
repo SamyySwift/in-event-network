@@ -150,48 +150,57 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
   }
 
   return (
-    <Card className="h-[70vh] md:h-[600px] flex flex-col border border-white/30 bg-white/70 dark:bg-gray-900/60 backdrop-blur-md shadow-xl">
-      {/* Header: soft gradient */}
-      <div className="flex flex-col items-center p-4 border-b bg-gradient-to-r from-white/40 via-white/10 to-white/40 dark:from-gray-900/20 dark:via-gray-900/10 dark:to-gray-900/20 rounded-t-md">
-        <div className="flex items-center gap-3">
-          <MessageCircle className="h-7 w-7 text-connect-600 dark:text-connect-300" />
-          <span className="font-bold text-lg md:text-xl text-gray-900 dark:text-white">
-            {selectedRoom ? `Room: ${selectedRoom.name}` : 'Event Chat'}
-          </span>
+    <div className="h-[80vh] md:h-[700px] flex flex-col bg-gradient-to-br from-background/95 via-background/90 to-background/95 backdrop-blur-xl border border-border/20 rounded-2xl shadow-2xl overflow-hidden">
+      {/* Modern Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 md:p-6 bg-gradient-to-r from-primary/5 via-transparent to-accent/5 border-b border-border/10">
+        <div className="flex items-center gap-3 mb-3 sm:mb-0">
+          <div className="p-2 rounded-xl bg-primary/10 backdrop-blur">
+            <MessageCircle className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="font-semibold text-lg text-foreground">
+              {selectedRoom ? selectedRoom.name : 'Event Chat'}
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {messages.length} message{messages.length !== 1 ? 's' : ''}
+            </p>
+          </div>
         </div>
-        <div className="mt-2">
-          <Badge variant="secondary" className="text-xs font-medium">{messages.length} messages</Badge>
-        </div>
+        {selectedRoom && (
+          <Button 
+            size="sm" 
+            variant="outline" 
+            onClick={() => setSelectedRoom(null)}
+            className="rounded-full bg-background/50 backdrop-blur border-border/20 hover:bg-background/80"
+          >
+            Back to Global
+          </Button>
+        )}
       </div>
 
-      <CardContent className="flex-1 flex flex-col p-0 overflow-hidden min-h-0">
+      {/* Navigation Tabs */}
+      <div className="flex-1 flex flex-col min-h-0">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col min-h-0">
-          <div className="mt-3 w-full flex justify-center">
-            <TabsList className="mx-auto rounded-full bg-white/70 dark:bg-gray-800/70 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-              <TabsTrigger value="chat" className="rounded-full data-[state=active]:bg-connect-600 data-[state=active]:text-white">Chat</TabsTrigger>
-              <TabsTrigger value="rooms" className="rounded-full data-[state=active]:bg-connect-600 data-[state=active]:text-white">Rooms</TabsTrigger>
-              <TabsTrigger value="topics" className="rounded-full data-[state=active]:bg-connect-600 data-[state=active]:text-white">Topics</TabsTrigger>
+          <div className="p-4 pb-2">
+            <TabsList className="grid w-full grid-cols-3 bg-muted/50 backdrop-blur rounded-xl p-1">
+              <TabsTrigger value="chat" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                Chat
+              </TabsTrigger>
+              <TabsTrigger value="rooms" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                Rooms
+              </TabsTrigger>
+              <TabsTrigger value="topics" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                Topics
+              </TabsTrigger>
             </TabsList>
           </div>
 
-          <TabsContent value="chat" className="flex-1 min-h-0">
+          <TabsContent value="chat" className="flex-1 min-h-0 m-0">
             <div className="flex-1 flex flex-col min-h-0">
-              {selectedRoom && (
-                <div className="p-3 border-b flex items-center justify-between bg-white/70 dark:bg-gray-800/70 backdrop-blur">
-                  <div className="flex items-center gap-2">
-                    <span className="h-4 w-4 rounded" style={{ backgroundColor: selectedRoom.color || '#3b82f6' }} />
-                    <span className="text-sm font-medium">{selectedRoom.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button size="sm" variant="outline" onClick={() => setSelectedRoom(null)}>Back to Global</Button>
-                  </div>
-                </div>
-              )}
-
-              {/* Scroll area + messages - optimized for performance */}
+              {/* Messages Area */}
               <div
                 ref={scrollAreaRef}
-                className="relative flex-1 h-full min-h-0 max-h-full overflow-y-auto md:overflow-y-scroll bg-gradient-to-b from-background/80 to-background/60 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-400 hover:scrollbar-thumb-gray-500 pointer-events-auto overscroll-y-contain"
+                className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border/20 hover:scrollbar-thumb-border/40"
                 style={{ 
                   touchAction: 'pan-y',
                   WebkitOverflowScrolling: 'touch',
@@ -199,11 +208,14 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
                 }}
                 onScroll={handleScroll}
               >
-                <div className="p-4 space-y-3 min-h-full">
+                <div className="p-4 space-y-4 min-h-full">
                   {messages.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                      <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No messages yet. Start the conversation!</p>
+                    <div className="flex flex-col items-center justify-center h-full py-12 text-center">
+                      <div className="p-4 rounded-2xl bg-muted/20 backdrop-blur mb-4">
+                        <MessageCircle className="h-8 w-8 text-muted-foreground/60" />
+                      </div>
+                      <h3 className="font-medium text-foreground mb-2">No messages yet</h3>
+                      <p className="text-sm text-muted-foreground">Start the conversation!</p>
                     </div>
                   ) : (
                     messages.map((message) => (
@@ -221,37 +233,44 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Floating jump-to-latest */}
+                {/* Floating Scroll Button */}
                 {isUserScrolling && (
                   <Button
                     type="button"
                     size="icon"
                     variant="secondary"
                     onClick={scrollToBottom}
-                    className="absolute right-4 bottom-6 rounded-full shadow-lg bg-white/90 dark:bg-gray-800/90 backdrop-blur"
+                    className="fixed bottom-24 right-6 rounded-full shadow-lg bg-background/90 backdrop-blur border-border/20 hover:bg-accent/90 z-10"
                     title="Jump to latest"
                   >
-                    <span className="text-lg leading-none">↓</span>
+                    <ArrowDown className="h-4 w-4" />
                   </Button>
                 )}
               </div>
 
-              {/* Quote preview */}
+              {/* Quote Preview */}
               {quotedMessage && (
-                <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border-t">
+                <div className="mx-4 mb-2 p-3 bg-muted/30 backdrop-blur rounded-xl border border-border/20">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                    <span className="text-sm font-medium text-primary">
                       Replying to {quotedMessage.user_profile?.name}
                     </span>
-                    <Button size="sm" variant="ghost" onClick={() => setQuotedMessage(null)} className="h-6 w-6 p-0">×</Button>
+                    <Button 
+                      size="sm" 
+                      variant="ghost" 
+                      onClick={() => setQuotedMessage(null)} 
+                      className="h-6 w-6 p-0 rounded-full hover:bg-muted/50"
+                    >
+                      ×
+                    </Button>
                   </div>
                   <QuotedMessage message={quotedMessage} compact />
                 </div>
               )}
 
-              {/* Composer: pill style */}
-              <div className="p-4 border-t bg-transparent">
-                <div className="flex gap-2 items-center rounded-full border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur px-2 py-1 shadow-sm">
+              {/* Message Composer */}
+              <div className="p-4 bg-gradient-to-t from-background/50 to-transparent backdrop-blur">
+                <div className="flex gap-3 items-end bg-background/80 backdrop-blur border border-border/20 rounded-2xl p-3 shadow-sm">
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -262,57 +281,78 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
                   <Button
                     type="button"
                     variant="ghost"
+                    size="icon"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={uploadingImage}
-                    className="shrink-0 rounded-full"
+                    className="shrink-0 rounded-xl h-10 w-10 hover:bg-muted/50"
                     title="Upload image"
                   >
-                    {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
+                    {uploadingImage ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ImageIcon className="h-4 w-4" />
+                    )}
                   </Button>
 
-                  <Input
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    placeholder="Type your message..."
-                    className="flex-1 border-0 focus-visible:ring-0 bg-transparent"
-                    maxLength={500}
-                  />
-                  <Button onClick={handleSendMessage} disabled={!newMessage.trim()} className="rounded-full bg-connect-600 hover:bg-connect-700 shadow-sm">
+                  <div className="flex-1 min-h-0">
+                    <Input
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyPress={handleKeyPress}
+                      placeholder="Type your message..."
+                      className="border-0 focus-visible:ring-0 bg-transparent text-base resize-none min-h-0 p-0"
+                      maxLength={500}
+                    />
+                    {newMessage.length > 400 && (
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {newMessage.length}/500
+                      </div>
+                    )}
+                  </div>
+                  
+                  <Button 
+                    onClick={handleSendMessage} 
+                    disabled={!newMessage.trim()} 
+                    size="icon"
+                    className="rounded-xl h-10 w-10 bg-primary hover:bg-primary/90 disabled:opacity-50"
+                  >
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="text-xs text-gray-500 mt-1 text-center">Press Enter to send • {newMessage.length}/500</div>
               </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="rooms" className="flex-1 min-h-0">
-            <RoomsPanel
-              eventId={eventId ?? currentEventId}
-              onEnterRoom={(roomId) => {
-                supabase.from('chat_rooms').select('id,name,color,created_by').eq('id', roomId).single().then(({ data }) => {
-                  if (data) setSelectedRoom({ id: data.id, name: data.name, color: data.color, created_by: data.created_by });
-                });
-                setActiveTab('chat');
-              }}
-            />
+          <TabsContent value="rooms" className="flex-1 min-h-0 m-0">
+            <div className="h-full p-4">
+              <RoomsPanel
+                eventId={eventId ?? currentEventId}
+                onEnterRoom={(roomId) => {
+                  supabase.from('chat_rooms').select('id,name,color,created_by').eq('id', roomId).single().then(({ data }) => {
+                    if (data) setSelectedRoom({ id: data.id, name: data.name, color: data.color, created_by: data.created_by });
+                  });
+                  setActiveTab('chat');
+                }}
+              />
+            </div>
           </TabsContent>
 
-          <TabsContent value="topics" className="flex-1 min-h-0">
+          <TabsContent value="topics" className="flex-1 min-h-0 m-0">
             <div className="h-full flex flex-col">
-              <div className="hidden md:flex items-center gap-2 p-4 border-b bg-white dark:bg-gray-800">
-                <Sparkles className="h-5 w-5 text-connect-600 dark:text-connect-300" />
-                <span className="font-semibold text-gray-900 dark:text-white">Topics</span>
+              <div className="flex items-center gap-3 p-4 pb-2">
+                <div className="p-2 rounded-xl bg-accent/10 backdrop-blur">
+                  <Sparkles className="h-4 w-4 text-accent-foreground" />
+                </div>
+                <h3 className="font-semibold text-foreground">Discussion Topics</h3>
               </div>
-              <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex-1 overflow-y-auto px-4 pb-4">
                 <TopicsBoard />
               </div>
             </div>
           </TabsContent>
         </Tabs>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 };
 export default ChatRoom;

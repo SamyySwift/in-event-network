@@ -244,11 +244,7 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
 
     console.log('Setting up realtime subscription for event:', effectiveEventId, 'room:', effectiveRoomId);
 
-    // Scope by room on the server side to avoid cross-room payloads
-    const messageFilter = effectiveRoomId
-      ? `event_id=eq.${effectiveEventId},room_id=eq.${effectiveRoomId}`
-      : `event_id=eq.${effectiveEventId},room_id=is.null`;
-
+    // Simplified filter - let server handle the filtering
     const channel = supabase
       .channel(`chat-messages-${effectiveEventId}-${effectiveRoomId ?? 'global'}`)
       .on(
@@ -257,124 +253,150 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
           event: 'INSERT',
           schema: 'public',
           table: 'chat_messages',
-          filter: messageFilter,
+          filter: `event_id=eq.${effectiveEventId}`,
         },
         async (payload) => {
-          // Filter new message by room_id context
           const newMsg: any = payload.new;
-          const newRoomId = newMsg.room_id ?? null;
-          if ((effectiveRoomId && newRoomId !== effectiveRoomId) || (!effectiveRoomId && newRoomId !== null)) {
-            return;
-          }
           console.log('New message received:', payload);
           
-          // Use cached profile or fetch if not cached
-          let profileData = profileCache.current.get(payload.new.user_id);
-          if (!profileData) {
-            const { data, error: profileError } = await supabase
-              .from('profiles')
-              .select('id, name, email, role, photo_url, bio, niche, company, twitter_link, linkedin_link, instagram_link, github_link, website_link')
-              .eq('id', payload.new.user_id)
-              .single();
-
-            if (profileError) {
-              console.error('Error fetching profile for new message:', profileError);
-            } else {
-              profileData = data;
-              profileCache.current.set(payload.new.user_id, data);
-            }
+          // Client-side room filtering
+          const newRoomId = newMsg.room_id ?? null;
+          const expectedRoomId = effectiveRoomId ?? null;
+          
+          if (newRoomId !== expectedRoomId) {
+            console.log('Message filtered out - wrong room:', { newRoomId, expectedRoomId });
+            return;
           }
 
-          // Use cached quoted message or fetch if not cached
-          let quoted_message: ChatMessage | null = null;
-          if (payload.new.quoted_message_id) {
-            quoted_message = quotedMessageCache.current.get(payload.new.quoted_message_id) || null;
-            
-            if (!quoted_message) {
-              const { data: qmsg } = await supabase
-                .from('chat_messages')
-                .select('*')
-                .eq('id', payload.new.quoted_message_id)
-                .single();
-
-              if (qmsg) {
-                let qprofile = profileCache.current.get(qmsg.user_id);
-                if (!qprofile) {
-                  const { data } = await supabase
-                    .from('profiles')
-                    .select(
-                      'id, name, email, role, photo_url, bio, niche, company, twitter_link, linkedin_link, instagram_link, github_link, website_link'
-                    )
-                    .eq('id', qmsg.user_id)
-                    .single();
-                  qprofile = data;
-                  if (data) profileCache.current.set(qmsg.user_id, data);
-                }
-
-                quoted_message = {
-                  ...qmsg,
-                  user_profile: qprofile
-                    ? {
-                        id: qprofile.id,
-                        name: qprofile.name,
-                        email: qprofile.email,
-                        role: qprofile.role,
-                        photo_url: qprofile.photo_url,
-                        bio: qprofile.bio,
-                        niche: qprofile.niche,
-                        company: qprofile.company,
-                        links: {
-                          twitter: qprofile.twitter_link ?? null,
-                          linkedin: qprofile.linkedin_link ?? null,
-                          instagram: qprofile.instagram_link ?? null,
-                          github: qprofile.github_link ?? null,
-                          website: qprofile.website_link ?? null,
-                        },
-                      }
-                    : { name: 'Unknown User' },
-                } as ChatMessage;
-                
-                quotedMessageCache.current.set(payload.new.quoted_message_id, quoted_message);
-              }
-            }
-          }
-
-          const newMessage = {
-            ...payload.new,
-            user_profile: profileData
-              ? {
-                  id: profileData.id,
-                  name: profileData.name,
-                  email: profileData.email,
-                  role: profileData.role,
-                  photo_url: profileData.photo_url,
-                  bio: profileData.bio,
-                  niche: profileData.niche,
-                  company: profileData.company,
-                  links: {
-                    twitter: profileData.twitter_link ?? null,
-                    linkedin: profileData.linkedin_link ?? null,
-                    instagram: profileData.instagram_link ?? null,
-                    github: profileData.github_link ?? null,
-                    website: profileData.website_link ?? null,
-                  },
-                }
-              : { name: 'Unknown User' },
-            quoted_message, // NEW
+          // Create optimistic message first (fast display)
+          const optimisticMessage = {
+            ...newMsg,
+            user_profile: { name: 'Loading...' },
+            quoted_message: null,
           } as ChatMessage;
 
-          // Prevent duplicates by checking if message already exists
+          // Add optimistic message immediately
           setMessages(prev => {
-            const exists = prev.some(msg => msg.id === newMessage.id);
-            return exists ? prev : [...prev, newMessage];
+            const exists = prev.some(msg => msg.id === optimisticMessage.id);
+            return exists ? prev : [...prev, optimisticMessage];
           });
 
-          // NEW: increment the sender's points locally so badges/glow update immediately
-          const senderId = payload.new.user_id as string;
-          setParticipantPoints(prev => ({
-            ...prev,
-            [senderId]: (prev?.[senderId] ?? 0) + 1,
-          }));
+          // Then fetch profile data in background and update
+          try {
+            let profileData = profileCache.current.get(newMsg.user_id);
+            if (!profileData) {
+              const { data, error: profileError } = await supabase
+                .from('profiles')
+                .select('id, name, email, role, photo_url, bio, niche, company, twitter_link, linkedin_link, instagram_link, github_link, website_link')
+                .eq('id', newMsg.user_id)
+                .single();
+
+              if (!profileError && data) {
+                profileData = data;
+                profileCache.current.set(newMsg.user_id, data);
+              }
+            }
+
+            // Handle quoted message if needed
+            let quoted_message: ChatMessage | null = null;
+            if (newMsg.quoted_message_id) {
+              quoted_message = quotedMessageCache.current.get(newMsg.quoted_message_id) || null;
+              
+              if (!quoted_message) {
+                const { data: qmsg } = await supabase
+                  .from('chat_messages')
+                  .select('*')
+                  .eq('id', newMsg.quoted_message_id)
+                  .single();
+
+                if (qmsg) {
+                  let qprofile = profileCache.current.get(qmsg.user_id);
+                  if (!qprofile) {
+                    const { data } = await supabase
+                      .from('profiles')
+                      .select('id, name, email, role, photo_url, bio, niche, company, twitter_link, linkedin_link, instagram_link, github_link, website_link')
+                      .eq('id', qmsg.user_id)
+                      .single();
+                    if (data) {
+                      qprofile = data;
+                      profileCache.current.set(qmsg.user_id, data);
+                    }
+                  }
+
+                  quoted_message = {
+                    ...qmsg,
+                    user_profile: qprofile
+                      ? {
+                          id: qprofile.id,
+                          name: qprofile.name,
+                          email: qprofile.email,
+                          role: qprofile.role,
+                          photo_url: qprofile.photo_url,
+                          bio: qprofile.bio,
+                          niche: qprofile.niche,
+                          company: qprofile.company,
+                          links: {
+                            twitter: qprofile.twitter_link ?? null,
+                            linkedin: qprofile.linkedin_link ?? null,
+                            instagram: qprofile.instagram_link ?? null,
+                            github: qprofile.github_link ?? null,
+                            website: qprofile.website_link ?? null,
+                          },
+                        }
+                      : { name: 'Unknown User' },
+                  } as ChatMessage;
+                  
+                  quotedMessageCache.current.set(newMsg.quoted_message_id, quoted_message);
+                }
+              }
+            }
+
+            // Update message with complete profile data
+            const completeMessage = {
+              ...newMsg,
+              user_profile: profileData
+                ? {
+                    id: profileData.id,
+                    name: profileData.name,
+                    email: profileData.email,
+                    role: profileData.role,
+                    photo_url: profileData.photo_url,
+                    bio: profileData.bio,
+                    niche: profileData.niche,
+                    company: profileData.company,
+                    links: {
+                      twitter: profileData.twitter_link ?? null,
+                      linkedin: profileData.linkedin_link ?? null,
+                      instagram: profileData.instagram_link ?? null,
+                      github: profileData.github_link ?? null,
+                      website: profileData.website_link ?? null,
+                    },
+                  }
+                : { name: 'Unknown User' },
+              quoted_message,
+            } as ChatMessage;
+
+            // Replace optimistic message with complete data
+            setMessages(prev => prev.map(msg => 
+              msg.id === completeMessage.id ? completeMessage : msg
+            ));
+
+            // Update points
+            const senderId = newMsg.user_id as string;
+            setParticipantPoints(prev => ({
+              ...prev,
+              [senderId]: (prev?.[senderId] ?? 0) + 1,
+            }));
+
+          } catch (error) {
+            console.error('Error updating message with profile data:', error);
+            // Keep optimistic message with default profile
+            setMessages(prev => prev.map(msg => 
+              msg.id === optimisticMessage.id 
+                ? { ...msg, user_profile: { name: 'Unknown User' } }
+                : msg
+            ));
+          }
         }
       )
       .on(
@@ -387,7 +409,7 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
       )
       .subscribe();
 
-    // NEW: keep points map in sync with DB (trigger-driven updates)
+    // Points subscription
     const pointsChannel = supabase
       .channel(`chat-points-${effectiveEventId}`)
       .on(
@@ -444,6 +466,31 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
       return;
     }
 
+    // Create optimistic message for instant display
+    const tempId = `temp-${Date.now()}-${Math.random()}`;
+    const optimisticMessage: ChatMessage = {
+      id: tempId,
+      user_id: currentUser.id,
+      content,
+      quoted_message_id: quoted_message_id ?? null,
+      event_id: effectiveEventId,
+      room_id: effectiveRoomId ?? null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      user_profile: {
+        id: currentUser.id,
+        name: currentUser.email?.split('@')[0] || 'You',
+        email: currentUser.email,
+        role: 'attendee',
+      },
+      quoted_message: quoted_message_id 
+        ? quotedMessageCache.current.get(quoted_message_id) || null 
+        : null,
+    };
+
+    // Add optimistic message immediately
+    setMessages(prev => [...prev, optimisticMessage]);
+
     try {
       console.log('Sending message:', {
         content,
@@ -453,24 +500,35 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
         roomId: effectiveRoomId,
       });
 
-      const { error } = await supabase.from('chat_messages').insert({
+      const { data, error } = await supabase.from('chat_messages').insert({
         user_id: currentUser.id,
         content,
         quoted_message_id: quoted_message_id ?? null,
         event_id: effectiveEventId,
         room_id: effectiveRoomId ?? null,
-      });
+      }).select().single();
 
       if (error) {
         console.error('Error sending message:', error);
+        // Remove optimistic message on error
+        setMessages(prev => prev.filter(msg => msg.id !== tempId));
         throw error;
       }
 
-      // Real-time subscription will handle the new message display
+      // Replace optimistic message with real message
+      if (data) {
+        setMessages(prev => prev.map(msg => 
+          msg.id === tempId 
+            ? { ...optimisticMessage, id: data.id, created_at: data.created_at, updated_at: data.updated_at }
+            : msg
+        ));
+      }
 
       console.log('Message sent successfully');
     } catch (error) {
       console.error('Error in sendMessage:', error);
+      // Remove optimistic message on error
+      setMessages(prev => prev.filter(msg => msg.id !== tempId));
       toast({
         title: "Error",
         description: "Failed to send message",

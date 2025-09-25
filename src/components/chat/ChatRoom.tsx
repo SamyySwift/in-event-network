@@ -191,14 +191,15 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
               {/* Scroll area + messages - optimized for performance */}
               <div
                 ref={scrollAreaRef}
-                className="relative flex-1 overflow-y-auto bg-gradient-to-b from-background/80 to-background/60 scroll-smooth"
+                className="relative flex-1 overflow-y-auto bg-gradient-to-b from-background/80 to-background/60 scroll-smooth overscroll-contain"
                 style={{ 
                   scrollbarWidth: 'thin', 
                   scrollbarColor: 'hsl(var(--border)) transparent',
                   willChange: 'scroll-position',
                   WebkitOverflowScrolling: 'touch',
                   contain: 'layout style paint',
-                  transform: 'translate3d(0, 0, 0)' // Hardware acceleration
+                  transform: 'translate3d(0, 0, 0)', // Hardware acceleration
+                  scrollBehavior: 'smooth'
                 }}
                 onScroll={handleScroll}
               >
@@ -224,17 +225,18 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Floating jump-to-latest */}
+                {/* Floating scroll to latest button */}
                 {isUserScrolling && (
                   <Button
                     type="button"
-                    size="icon"
+                    size="sm"
                     variant="secondary"
                     onClick={scrollToBottom}
-                    className="absolute right-4 bottom-6 rounded-full shadow-lg bg-white/90 dark:bg-gray-800/90 backdrop-blur"
-                    title="Jump to latest"
+                    className="absolute right-4 bottom-6 rounded-full shadow-lg bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border border-gray-200 dark:border-gray-600 hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 flex items-center gap-2 px-3 py-2"
+                    title="Scroll to latest messages"
                   >
-                    <span className="text-lg leading-none">↓</span>
+                    <ArrowDown className="h-4 w-4" />
+                    <span className="text-xs font-medium hidden sm:inline">Latest</span>
                   </Button>
                 )}
               </div>

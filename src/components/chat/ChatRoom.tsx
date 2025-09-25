@@ -59,6 +59,7 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
 
     requestAnimationFrame(() => {
       setIsUserScrolling(!isAtBottom);
+      console.log('Scroll Debug:', { scrollTop, scrollHeight, clientHeight, isAtBottom, isUserScrolling: !isAtBottom });
     });
 
     // If user scrolled near the top, load older messages and maintain anchor
@@ -252,13 +253,18 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
                     size="sm"
                     variant="secondary"
                     onClick={scrollToBottom}
-                    className="absolute right-4 bottom-6 rounded-full shadow-lg bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border border-gray-200 dark:border-gray-600 hover:bg-white dark:hover:bg-gray-800 transition-all duration-200 flex items-center gap-2 px-3 py-2"
+                    className="absolute right-4 bottom-6 z-50 rounded-full shadow-xl bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-2 border-connect-600/20 dark:border-connect-400/20 hover:bg-white dark:hover:bg-gray-800 hover:border-connect-600/40 transition-all duration-200 flex items-center gap-2 px-4 py-3"
                     title="Scroll to latest messages"
                   >
-                    <ArrowDown className="h-4 w-4" />
-                    <span className="text-xs font-medium hidden sm:inline">Latest</span>
+                    <ArrowDown className="h-4 w-4 text-connect-600 dark:text-connect-400" />
+                    <span className="text-xs font-medium text-connect-600 dark:text-connect-400 hidden sm:inline">Latest</span>
                   </Button>
                 )}
+                
+                {/* Debug info - remove later */}
+                <div className="absolute top-4 left-4 bg-black/70 text-white text-xs p-2 rounded z-50">
+                  isUserScrolling: {isUserScrolling.toString()}
+                </div>
               </div>
 
               {/* Quote preview */}

@@ -160,6 +160,10 @@ export const router = createBrowserRouter([
     element: <Index />,
   },
   {
+    path: "/index/:eventKey",
+    element: <Index />,
+  },
+  {
     path: "/buy-tickets/:eventKey",
     element: <BuyTickets />,
   },

@@ -342,7 +342,11 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
             quoted_message, // NEW
           } as ChatMessage;
 
-          setMessages(prev => [...prev, newMessage]);
+          // Prevent duplicates by checking if message already exists
+          setMessages(prev => {
+            const exists = prev.some(msg => msg.id === newMessage.id);
+            return exists ? prev : [...prev, newMessage];
+          });
 
           // NEW: increment the sender's points locally so badges/glow update immediately
           const senderId = payload.new.user_id as string;
@@ -441,8 +445,7 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
         throw error;
       }
 
-      // Immediate UI reflection: re-fetch messages for the active room
-      await fetchMessages();
+      // Real-time subscription will handle the new message display
 
       console.log('Message sent successfully');
     } catch (error) {

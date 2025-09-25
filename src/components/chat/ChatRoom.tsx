@@ -207,15 +207,12 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
               {/* Scroll area + messages - optimized for performance */}
               <div
                 ref={scrollAreaRef}
-                className="relative flex-1 overflow-y-auto bg-gradient-to-b from-background/80 to-background/60 scroll-smooth overscroll-contain"
+                className="relative flex-1 overflow-y-auto bg-gradient-to-b from-background/80 to-background/60 overscroll-contain"
                 style={{ 
                   scrollbarWidth: 'thin', 
                   scrollbarColor: 'hsl(var(--border)) transparent',
-                  willChange: 'scroll-position',
                   WebkitOverflowScrolling: 'touch',
-                  contain: 'layout style paint',
-                  transform: 'translate3d(0, 0, 0)', // Hardware acceleration
-                  scrollBehavior: 'smooth'
+                  touchAction: 'pan-y'
                 }}
                 onScroll={handleScroll}
               >
@@ -262,7 +259,7 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
                 )}
                 
                 {/* Debug info - remove later */}
-                <div className="absolute top-4 left-4 bg-black/70 text-white text-xs p-2 rounded z-50">
+                <div className="absolute top-4 left-4 bg-black/70 text-white text-xs p-2 rounded z-50 pointer-events-none">
                   isUserScrolling: {isUserScrolling.toString()}
                 </div>
               </div>

@@ -1,5 +1,5 @@
 // Top imports
-import React, { useState, useRef, memo } from "react";
+import React, { useState, useRef } from "react";
 import { Quote, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -22,7 +22,7 @@ interface ChatMessageProps {
   roomOwnerUserId?: string;
 }
 
-export const ChatMessage: React.FC<ChatMessageProps> = memo(({
+export const ChatMessage: React.FC<ChatMessageProps> = ({
   message,
   isOwn,
   onQuote,
@@ -106,22 +106,20 @@ export const ChatMessage: React.FC<ChatMessageProps> = memo(({
     ? "Admin"
     : (rawName || (isFromAdmin ? "Admin" : isOwn ? "You" : "Admin"));
 
-  // NEW: achievements & styles based on points - memoized for performance
-  const achievement = React.useMemo(() => getAchievement(points ?? 0), [points]);
-  const { medals, hasFireGlow, hasDiamond } = achievement;
-  
-  const avatarGlow = React.useMemo(() => {
-    if (hasDiamond) return "ring-2 ring-cyan-300 shadow-lg";
-    if (hasFireGlow) return "ring-2 ring-orange-400 shadow-md"; 
-    if (medals > 0) return "ring-1 ring-yellow-300";
-    return "";
-  }, [hasDiamond, hasFireGlow, medals]);
-
-  const bubbleExtra = React.useMemo(() => {
-    if (hasDiamond) return "border border-cyan-300/50 shadow-sm";
-    if (hasFireGlow) return "border border-orange-300/50 shadow-sm";
-    return "";
-  }, [hasDiamond, hasFireGlow]);
+  // NEW: achievements & styles based on points
+  const { medals, hasFireGlow, hasDiamond } = getAchievement(points ?? 0);
+  const avatarGlow = hasDiamond
+    ? "ring-4 ring-cyan-300 shadow-[0_0_16px_rgba(103,232,249,0.9)] animate-pulse"
+    : hasFireGlow
+    ? "ring-2 ring-orange-400 shadow-[0_0_12px_rgba(251,146,60,0.7)] animate-pulse"
+    : medals > 0
+    ? "ring-2 ring-yellow-300"
+    : "";
+  const bubbleExtra = hasDiamond
+    ? "border-2 border-cyan-300 shadow-[0_0_24px_rgba(103,232,249,0.6)]"
+    : hasFireGlow
+    ? "border-2 border-orange-300 shadow-[0_0_20px_rgba(251,146,60,0.45)]"
+    : "";
 
   // Basic image URL detector
   const isImageUrl = (s: string) => {
@@ -140,8 +138,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = memo(({
         {/* Avatar and main container */}
         <div className="relative">
           <Avatar
-            className={`h-8 w-8 flex-shrink-0 transition-all will-change-transform ${
-              !isOwn ? "cursor-pointer hover:ring-2 hover:ring-connect-500" : ""
+            className={`h-8 w-8 flex-shrink-0 ${
+              !isOwn ? "cursor-pointer hover:ring-2 hover:ring-connect-500 transition-all" : ""
             } ${avatarGlow}`}
             onClick={handleAvatarClick}
           >
@@ -157,12 +155,17 @@ export const ChatMessage: React.FC<ChatMessageProps> = memo(({
             )}
           </Avatar>
 
-          {/* overlay rewards near avatar - optimized animations */}
+          {/* overlay rewards near avatar */}
           {hasDiamond && (
-            <span className="absolute -top-1 -right-1 text-xs">💎</span>
+            <>
+              <span className="absolute -top-1 -right-1 text-xs animate-bounce">💎</span>
+              <span className="pointer-events-none absolute -left-2 -bottom-2 text-[10px] text-cyan-400/80 animate-ping">
+                💎
+              </span>
+            </>
           )}
           {!hasDiamond && hasFireGlow && (
-            <span className="absolute -top-1 -right-1 text-xs">🔥</span>
+            <span className="absolute -top-1 -right-1 text-xs animate-bounce">🔥</span>
           )}
           {medals > 0 && (
             <span className="absolute -bottom-2 left-0 text-[10px] leading-none select-none">
@@ -224,9 +227,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = memo(({
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
             style={{
-              transform: translateX ? `translate3d(${isOwn ? -translateX : translateX}px, 0, 0)` : undefined,
+              transform: translateX ? `translateX(${isOwn ? -translateX : translateX}px)` : undefined,
               transition: isSwipingRef.current ? "none" : "transform 150ms ease",
-              willChange: isSwipingRef.current ? "transform" : "auto",
             }}
           >
             {isImageUrl(message.content) ? (
@@ -254,7 +256,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = memo(({
                 size="sm"
                 variant="ghost"
                 onClick={() => onQuote(message)}
-                className={`absolute ${isOwn ? "left-1" : "right-1"} top-1 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-200 h-8 w-8 p-0`}
+                className={`absolute ${isOwn ? "left-1" : "right-1"} top-1 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-8 w-8 p-0`}
                 title="Quote to reply"
                 aria-label="Quote to reply"
               >
@@ -270,7 +272,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = memo(({
                 onClick={() => {
                   if (confirm("Delete this message?")) onDelete(message.id);
                 }}
-                className={`absolute ${isOwn ? "left-1" : "right-1"} top-9 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 h-8 w-8 p-0 text-destructive`}
+                className={`absolute ${isOwn ? "left-1" : "right-1"} top-9 z-10 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 text-destructive`}
                 title="Delete message"
                 aria-label="Delete message"
               >
@@ -278,10 +280,10 @@ export const ChatMessage: React.FC<ChatMessageProps> = memo(({
               </Button>
             )}
 
-            {/* diamond sparkle near the bubble - simplified */}
+            {/* diamond sparkle near the bubble */}
             {hasDiamond && (
               <span
-                className={`absolute ${isOwn ? "left-1" : "right-1"} -bottom-2 text-xs text-cyan-400/90 select-none`}
+                className={`absolute ${isOwn ? "left-1" : "right-1"} -bottom-2 text-xs text-cyan-400/90 animate-ping select-none`}
               >
                 💎
               </span>
@@ -314,7 +316,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = memo(({
       />
     </>
   );
-});
+};
 
 // function getAchievement (top-level helper)
 const getAchievement = (pts: number) => {

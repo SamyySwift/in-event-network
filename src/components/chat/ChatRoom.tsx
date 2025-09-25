@@ -40,22 +40,37 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      requestAnimationFrame(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+      });
+    }
   }, []);
+
+  const debouncedScrollHandler = useCallback(
+    (() => {
+      let timeoutId: NodeJS.Timeout;
+      return (e: React.UIEvent<HTMLDivElement>) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+          const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+          const isAtBottom = scrollHeight - scrollTop - clientHeight < 10;
+          setIsUserScrolling(!isAtBottom);
+        }, 50);
+      };
+    })(),
+    []
+  );
 
   useEffect(() => {
     const hasNewMessages = messages.length > previousMessageCount.current;
     previousMessageCount.current = messages.length;
     if (hasNewMessages && !isUserScrolling) {
-      setTimeout(scrollToBottom, 100);
+      requestAnimationFrame(() => {
+        setTimeout(scrollToBottom, 50);
+      });
     }
   }, [messages, isUserScrolling, scrollToBottom]);
-
-  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    const isAtBottom = scrollHeight - scrollTop - clientHeight < 10;
-    setIsUserScrolling(!isAtBottom);
-  }, []);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
@@ -63,7 +78,7 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
     setNewMessage('');
     setQuotedMessage(null);
     setIsUserScrolling(false);
-    setTimeout(scrollToBottom, 100);
+    requestAnimationFrame(() => setTimeout(scrollToBottom, 50));
   };
 
   const handleQuoteMessage = (message: any) => setQuotedMessage(message);
@@ -118,7 +133,7 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
       toast({ title: 'Image shared', description: 'Your image has been uploaded to the chat.' });
       setQuotedMessage(null);
       setIsUserScrolling(false);
-      setTimeout(scrollToBottom, 100);
+      requestAnimationFrame(() => setTimeout(scrollToBottom, 50));
     } catch (err: any) {
       toast({ title: 'Upload failed', description: err?.message || 'Please try again or choose a smaller image.', variant: 'destructive' });
     } finally {
@@ -186,9 +201,16 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
               {/* Scroll area + messages */}
               <div
                 ref={scrollAreaRef}
-                className="relative flex-1 overflow-y-auto bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.07),transparent_50%),linear-gradient(to_bottom,rgba(255,255,255,0.6),transparent_30%)] dark:bg-[radial-gradient(ellipse_at_top,rgba(99,102,241,0.12),transparent_50%),linear-gradient(to_bottom,rgba(17,24,39,0.7),transparent_30%)] scroll-smooth"
-                style={{ scrollbarWidth: 'thin', scrollbarColor: 'hsl(var(--border)) transparent' }}
-                onScroll={handleScroll}
+                className="relative flex-1 overflow-y-auto bg-gradient-to-b from-background/95 to-background scroll-smooth"
+                style={{ 
+                  scrollbarWidth: 'thin', 
+                  scrollbarColor: 'hsl(var(--border)) transparent',
+                  willChange: 'scroll-position',
+                  transform: 'translate3d(0,0,0)',
+                  WebkitOverflowScrolling: 'touch',
+                  contain: 'layout style paint'
+                }}
+                onScroll={debouncedScrollHandler}
               >
                 <div className="p-4 space-y-3 min-h-full">
                   {messages.length === 0 ? (

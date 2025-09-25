@@ -28,6 +28,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useDashboard } from "@/hooks/useDashboard";
+import { useAttendeeEvents } from "@/hooks/useAttendeeEvents";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   AttendeeEventProvider,
@@ -52,9 +53,10 @@ import { PollPopup } from "@/components/attendee/PollPopup";
 function AttendeeDashboardContent() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const { hasJoinedEvent, isLoading: contextLoading } =
+  const { hasJoinedEvent, isLoading: contextLoading, currentEventId } =
     useAttendeeEventContext();
   const { dashboardData, isLoading, error } = useDashboard();
+  const { events: allEvents } = useAttendeeEvents();
   const { facilities } = useAttendeeFacilities();
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [expandedAnnouncements, setExpandedAnnouncements] = useState<
@@ -367,14 +369,30 @@ function AttendeeDashboardContent() {
         </div>
 
         {/* Event Card - Enhanced single event display */}
-        {(currentEvent || upcomingEvents?.[0]) && (
-          <div className="mb-8">
-            <EventCard
-              event={currentEvent || upcomingEvents[0]}
-              isLive={!!currentEvent}
-            />
-          </div>
-        )}
+        {(() => {
+          // Find the user's current event from all events
+          const userCurrentEvent = allEvents?.find(event => event.id === currentEventId);
+          
+          // Show the user's current event if it exists, otherwise fall back to current/upcoming events
+          const eventToShow = userCurrentEvent || currentEvent || upcomingEvents?.[0];
+          
+          if (!eventToShow) return null;
+          
+          // Determine if the event is currently live
+          const now = new Date();
+          const eventStart = new Date(eventToShow.start_time);
+          const eventEnd = new Date(eventToShow.end_time);
+          const isEventLive = now >= eventStart && now <= eventEnd;
+          
+          return (
+            <div className="mb-8">
+              <EventCard
+                event={eventToShow}
+                isLive={isEventLive}
+              />
+            </div>
+          );
+        })()}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Featured Session Card */}

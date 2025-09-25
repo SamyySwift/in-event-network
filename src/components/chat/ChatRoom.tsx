@@ -26,7 +26,7 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
   const [selectedRoom, setSelectedRoom] = useState<{ id: string; name: string; color?: string | null; created_by?: string } | null>(null);
 
   // Adjust useChat to include selected room id
-  const { messages, loading, sendMessage, deleteMessage, participantPoints } = useChat(eventId, selectedRoom?.id || undefined);
+  const { messages, loading, sendMessage, deleteMessage, participantPoints, hasMore, loadOlder, loadingOlder } = useChat(eventId, selectedRoom?.id || undefined);
 
   const [newMessage, setNewMessage] = useState('');
   const [quotedMessage, setQuotedMessage] = useState<any>(null);
@@ -51,16 +51,31 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
     }
   }, [messages, isUserScrolling, scrollToBottom]);
 
-  // Debounced scroll handler for better performance
+  // Debounced scroll handler for better performance + load older on top reach
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+    const el = e.currentTarget;
+    const { scrollTop, scrollHeight, clientHeight } = el;
     const isAtBottom = scrollHeight - scrollTop - clientHeight < 10;
-    
-    // Use requestAnimationFrame to debounce scroll updates
+
     requestAnimationFrame(() => {
       setIsUserScrolling(!isAtBottom);
     });
-  }, []);
+
+    // If user scrolled near the top, load older messages and maintain anchor
+    if (scrollTop < 50 && hasMore && !loadingOlder) {
+      const prevHeight = el.scrollHeight;
+      const prevTop = el.scrollTop;
+      loadOlder()?.then(() => {
+        requestAnimationFrame(() => {
+          const container = scrollAreaRef.current;
+          if (container) {
+            const newHeight = container.scrollHeight;
+            container.scrollTop = newHeight - prevHeight + prevTop;
+          }
+        });
+      });
+    }
+  }, [hasMore, loadingOlder, loadOlder]);
 
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
@@ -204,6 +219,11 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
                 onScroll={handleScroll}
               >
                 <div className="p-4 space-y-3 min-h-full">
+                  {loadingOlder && (
+                    <div className="flex justify-center py-2 text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    </div>
+                  )}
                   {messages.length === 0 ? (
                     <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                       <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />

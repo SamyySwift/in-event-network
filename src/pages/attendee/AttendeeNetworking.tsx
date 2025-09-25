@@ -742,6 +742,24 @@ const AttendeeNetworking = () => {
         </div>
         {/* People */}
         <TabsContent value="people" className="space-y-8">
+          {/* Search and Filter Bar */}
+          <NetworkingFilter
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            selectedNiches={selectedNiches}
+            onNicheChange={setSelectedNiches}
+            selectedNetworkingPrefs={selectedNetworkingPrefs}
+            onNetworkingPrefChange={setSelectedNetworkingPrefs}
+            selectedTags={selectedTags}
+            onTagChange={setSelectedTags}
+            showSuggestedOnly={showSuggestedOnly}
+            onSuggestedToggle={setShowSuggestedOnly}
+            availableNiches={availableNiches}
+            availableNetworkingPrefs={availableNetworkingPrefs}
+            availableTags={availableTags}
+            onClearFilters={clearAllFilters}
+          />
+          
           {/* Results summary */}
           {sortedProfiles.length > 0 && (
             <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">

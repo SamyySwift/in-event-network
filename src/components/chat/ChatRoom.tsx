@@ -191,14 +191,14 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
               {/* Scroll area + messages - optimized for performance */}
               <div
                 ref={scrollAreaRef}
-                className="relative flex-1 overflow-y-auto bg-gradient-to-b from-background/80 to-background/60 scroll-smooth"
+                className="relative flex-1 overflow-y-auto bg-gradient-to-b from-background/80 to-background/60"
                 style={{ 
                   scrollbarWidth: 'thin', 
                   scrollbarColor: 'hsl(var(--border)) transparent',
-                  willChange: 'scroll-position',
+                  touchAction: 'pan-y',
                   WebkitOverflowScrolling: 'touch',
-                  contain: 'layout style paint',
-                  transform: 'translate3d(0, 0, 0)' // Hardware acceleration
+                  overscrollBehavior: 'contain',
+                  
                 }}
                 onScroll={handleScroll}
               >

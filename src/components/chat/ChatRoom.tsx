@@ -150,48 +150,80 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
   }
 
   return (
-    <Card className="h-[70vh] md:h-[600px] flex flex-col border border-white/30 bg-white/70 dark:bg-gray-900/60 backdrop-blur-md shadow-xl">
-      {/* Header: soft gradient */}
-      <div className="flex flex-col items-center p-4 border-b bg-gradient-to-r from-white/40 via-white/10 to-white/40 dark:from-gray-900/20 dark:via-gray-900/10 dark:to-gray-900/20 rounded-t-md">
-        <div className="flex items-center gap-3">
-          <MessageCircle className="h-7 w-7 text-connect-600 dark:text-connect-300" />
-          <span className="font-bold text-lg md:text-xl text-gray-900 dark:text-white">
-            {selectedRoom ? `Room: ${selectedRoom.name}` : 'Event Chat'}
-          </span>
-        </div>
-        <div className="mt-2">
-          <Badge variant="secondary" className="text-xs font-medium">{messages.length} messages</Badge>
+    <div className="fixed inset-0 md:relative md:inset-auto h-screen md:h-[85vh] flex flex-col bg-gradient-to-br from-background/95 via-background/90 to-background/85 backdrop-blur-xl border border-white/10 dark:border-white/5 shadow-2xl md:rounded-3xl overflow-hidden">
+      {/* Modern WhatsApp-style Header */}
+      <div className="relative bg-gradient-to-r from-primary/10 via-primary/5 to-primary/10 backdrop-blur-md border-b border-white/10 dark:border-white/5">
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-transparent opacity-50" />
+        <div className="relative flex items-center justify-between px-4 py-3 md:px-6 md:py-4">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                <MessageCircle className="h-5 w-5 text-primary" />
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-background" />
+            </div>
+            <div className="flex flex-col">
+              <h2 className="font-semibold text-foreground text-sm md:text-base">
+                {selectedRoom ? selectedRoom.name : 'Event Chat'}
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                {messages.length} messages • online
+              </p>
+            </div>
+          </div>
+
+          {/* Tab Pills - Mobile optimized */}
+          <div className="flex bg-white/10 dark:bg-black/10 backdrop-blur-sm rounded-2xl p-1 border border-white/20 dark:border-white/10">
+            {(['chat', 'rooms', 'topics'] as const).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-xl transition-all duration-200 ${
+                  activeTab === tab
+                    ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/25'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-white/10'
+                }`}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      <CardContent className="flex-1 flex flex-col p-0 overflow-hidden min-h-0">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col min-h-0">
-          <div className="mt-3 w-full flex justify-center">
-            <TabsList className="mx-auto rounded-full bg-white/70 dark:bg-gray-800/70 backdrop-blur supports-[backdrop-filter]:bg-white/60">
-              <TabsTrigger value="chat" className="rounded-full data-[state=active]:bg-connect-600 data-[state=active]:text-white">Chat</TabsTrigger>
-              <TabsTrigger value="rooms" className="rounded-full data-[state=active]:bg-connect-600 data-[state=active]:text-white">Rooms</TabsTrigger>
-              <TabsTrigger value="topics" className="rounded-full data-[state=active]:bg-connect-600 data-[state=active]:text-white">Topics</TabsTrigger>
-            </TabsList>
-          </div>
-
-          <TabsContent value="chat" className="flex-1 min-h-0">
-            <div className="flex-1 flex flex-col min-h-0">
-              {selectedRoom && (
-                <div className="p-3 border-b flex items-center justify-between bg-white/70 dark:bg-gray-800/70 backdrop-blur">
-                  <div className="flex items-center gap-2">
-                    <span className="h-4 w-4 rounded" style={{ backgroundColor: selectedRoom.color || '#3b82f6' }} />
-                    <span className="text-sm font-medium">{selectedRoom.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button size="sm" variant="outline" onClick={() => setSelectedRoom(null)}>Back to Global</Button>
-                  </div>
+      {/* Tab Content */}
+      <div className="flex-1 min-h-0 relative">
+        {activeTab === 'chat' && (
+          <div className="h-full flex flex-col">
+            {/* Room Info Bar */}
+            {selectedRoom && (
+              <div className="flex items-center justify-between px-4 py-2 bg-gradient-to-r from-white/5 to-transparent backdrop-blur-sm border-b border-white/5">
+                <div className="flex items-center gap-2">
+                  <div 
+                    className="w-3 h-3 rounded-full shadow-sm" 
+                    style={{ backgroundColor: selectedRoom.color || '#3b82f6' }} 
+                  />
+                  <span className="text-sm font-medium text-foreground">{selectedRoom.name}</span>
                 </div>
-              )}
+                <Button 
+                  size="sm" 
+                  variant="ghost" 
+                  onClick={() => setSelectedRoom(null)}
+                  className="text-xs h-7 px-3 rounded-full hover:bg-white/10"
+                >
+                  Back to Global
+                </Button>
+              </div>
+            )}
 
-              {/* Scroll area + messages - optimized for performance */}
+            {/* Messages Area - WhatsApp-style */}
+            <div className="relative flex-1 overflow-hidden">
+              {/* Chat Background Pattern */}
+              <div className="absolute inset-0 opacity-[0.02] bg-[radial-gradient(circle_at_center,_var(--foreground)_1px,_transparent_1px)] bg-[length:20px_20px]" />
+              
               <div
                 ref={scrollAreaRef}
-                className="relative flex-1 overflow-y-scroll bg-gradient-to-b from-background/80 to-background/60 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-gray-400 hover:scrollbar-thumb-gray-500"
+                className="h-full overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/20 hover:scrollbar-thumb-white/30 px-4 py-6"
                 style={{ 
                   touchAction: 'pan-y',
                   WebkitOverflowScrolling: 'touch',
@@ -199,95 +231,131 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
                 }}
                 onScroll={handleScroll}
               >
-                <div className="p-4 space-y-3 min-h-full">
+                <div className="space-y-4 min-h-full flex flex-col justify-end">
                   {messages.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                      <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No messages yet. Start the conversation!</p>
+                    <div className="flex-1 flex items-center justify-center">
+                      <div className="text-center py-12">
+                        <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+                          <MessageCircle className="h-10 w-10 text-primary/50" />
+                        </div>
+                        <h3 className="text-lg font-medium text-foreground mb-2">No messages yet</h3>
+                        <p className="text-muted-foreground">Start the conversation and break the ice!</p>
+                      </div>
                     </div>
                   ) : (
-                    messages.map((message) => (
-                      <ChatMessage
-                        key={message.id}
-                        message={message}
-                        isOwn={message.user_id === currentUser?.id}
-                        onQuote={handleQuoteMessage}
-                        onDelete={(id) => deleteMessage(id)}
-                        points={participantPoints[message.user_id] ?? 0}
-                        roomOwnerUserId={selectedRoom?.created_by}
-                      />
+                    messages.map((message, index) => (
+                      <div key={message.id} className="animate-fade-in">
+                        <ChatMessage
+                          message={message}
+                          isOwn={message.user_id === currentUser?.id}
+                          onQuote={handleQuoteMessage}
+                          onDelete={(id) => deleteMessage(id)}
+                          points={participantPoints[message.user_id] ?? 0}
+                          roomOwnerUserId={selectedRoom?.created_by}
+                        />
+                      </div>
                     ))
                   )}
                   <div ref={messagesEndRef} />
                 </div>
-
-                {/* Floating jump-to-latest */}
-                {isUserScrolling && (
-                  <Button
-                    type="button"
-                    size="icon"
-                    variant="secondary"
-                    onClick={scrollToBottom}
-                    className="absolute right-4 bottom-6 rounded-full shadow-lg bg-white/90 dark:bg-gray-800/90 backdrop-blur"
-                    title="Jump to latest"
-                  >
-                    <span className="text-lg leading-none">↓</span>
-                  </Button>
-                )}
               </div>
 
-              {/* Quote preview */}
-              {quotedMessage && (
-                <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/20 border-t">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                      Replying to {quotedMessage.user_profile?.name}
-                    </span>
-                    <Button size="sm" variant="ghost" onClick={() => setQuotedMessage(null)} className="h-6 w-6 p-0">×</Button>
-                  </div>
-                  <QuotedMessage message={quotedMessage} compact />
+              {/* Scroll to Bottom Fab */}
+              {isUserScrolling && (
+                <div className="absolute bottom-6 right-6 z-10">
+                  <Button
+                    onClick={scrollToBottom}
+                    size="icon"
+                    className="w-12 h-12 rounded-full bg-primary/90 hover:bg-primary shadow-lg shadow-primary/25 backdrop-blur-sm border border-white/10"
+                  >
+                    <ArrowDown className="h-5 w-5" />
+                  </Button>
                 </div>
               )}
+            </div>
 
-              {/* Composer: pill style */}
-              <div className="p-4 border-t bg-transparent">
-                <div className="flex gap-2 items-center rounded-full border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/80 backdrop-blur px-2 py-1 shadow-sm">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,image/svg+xml"
-                    className="hidden"
-                    onChange={handleImageChange}
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploadingImage}
-                    className="shrink-0 rounded-full"
-                    title="Upload image"
+            {/* Quote Preview - Modern Style */}
+            {quotedMessage && (
+              <div className="mx-4 mb-2 p-3 rounded-2xl bg-gradient-to-r from-primary/10 to-primary/5 backdrop-blur-sm border border-white/10 animate-slide-in-right">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-primary">
+                    Replying to {quotedMessage.user_profile?.name}
+                  </span>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    onClick={() => setQuotedMessage(null)} 
+                    className="h-6 w-6 p-0 rounded-full hover:bg-white/10"
                   >
-                    {uploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImageIcon className="h-4 w-4" />}
+                    ×
                   </Button>
+                </div>
+                <QuotedMessage message={quotedMessage} compact />
+              </div>
+            )}
 
+            {/* Modern Input Area - WhatsApp Style */}
+            <div className="p-4 bg-gradient-to-t from-background/50 to-transparent backdrop-blur-sm">
+              <div className="relative flex items-end gap-3 p-2 rounded-3xl bg-gradient-to-r from-white/10 to-white/5 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,image/svg+xml"
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
+                
+                {/* Attachment Button */}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingImage}
+                  className="shrink-0 w-10 h-10 rounded-full hover:bg-white/10 transition-all duration-200"
+                >
+                  {uploadingImage ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  ) : (
+                    <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                  )}
+                </Button>
+
+                {/* Message Input */}
+                <div className="flex-1 max-h-32 overflow-y-auto">
                   <Input
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="Type your message..."
-                    className="flex-1 border-0 focus-visible:ring-0 bg-transparent"
+                    placeholder="Type a message..."
+                    className="border-0 bg-transparent focus-visible:ring-0 text-foreground placeholder:text-muted-foreground resize-none text-base"
                     maxLength={500}
                   />
-                  <Button onClick={handleSendMessage} disabled={!newMessage.trim()} className="rounded-full bg-connect-600 hover:bg-connect-700 shadow-sm">
-                    <Send className="h-4 w-4" />
-                  </Button>
                 </div>
-                <div className="text-xs text-gray-500 mt-1 text-center">Press Enter to send • {newMessage.length}/500</div>
-              </div>
-            </div>
-          </TabsContent>
 
-          <TabsContent value="rooms" className="flex-1 min-h-0">
+                {/* Send Button */}
+                <Button
+                  onClick={handleSendMessage}
+                  disabled={!newMessage.trim()}
+                  size="icon"
+                  className="shrink-0 w-10 h-10 rounded-full bg-primary hover:bg-primary/90 shadow-lg shadow-primary/25 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Send className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Character Count */}
+              {newMessage.length > 400 && (
+                <div className="text-xs text-muted-foreground mt-2 text-center">
+                  {newMessage.length}/500 characters
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'rooms' && (
+          <div className="h-full p-4">
             <RoomsPanel
               eventId={eventId ?? currentEventId}
               onEnterRoom={(roomId) => {
@@ -297,22 +365,24 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
                 setActiveTab('chat');
               }}
             />
-          </TabsContent>
+          </div>
+        )}
 
-          <TabsContent value="topics" className="flex-1 min-h-0">
-            <div className="h-full flex flex-col">
-              <div className="hidden md:flex items-center gap-2 p-4 border-b bg-white dark:bg-gray-800">
-                <Sparkles className="h-5 w-5 text-connect-600 dark:text-connect-300" />
-                <span className="font-semibold text-gray-900 dark:text-white">Topics</span>
+        {activeTab === 'topics' && (
+          <div className="h-full flex flex-col">
+            <div className="hidden md:flex items-center gap-3 p-4 border-b border-white/10">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                <Sparkles className="h-4 w-4 text-primary" />
               </div>
-              <div className="flex-1 overflow-y-auto p-4">
-                <TopicsBoard />
-              </div>
+              <span className="font-semibold text-foreground">Topics</span>
             </div>
-          </TabsContent>
-        </Tabs>
-      </CardContent>
-    </Card>
+            <div className="flex-1 overflow-y-auto p-4">
+              <TopicsBoard />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 export default ChatRoom;

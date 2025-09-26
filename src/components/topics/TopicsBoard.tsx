@@ -1,4 +1,3 @@
-// ... existing code ...
 import React, { useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,8 +5,8 @@ import { Input } from "@/components/ui/input";
 import { useTopics } from "@/hooks/useTopics";
 import { useAttendeePolls } from "@/hooks/useAttendeePolls";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea"; // If not available, swap for <textarea>
+import { Loader2, Sparkles, MessageSquare, TrendingUp, Clock, Users2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 type Props = {
   className?: string;
@@ -50,46 +49,69 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
 
   return (
     <div className={`${className} min-w-0 overflow-hidden`}>
-      <Card className="rounded-2xl border-0 shadow-lg bg-card/90 backdrop-blur-sm mb-6">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2">
-            <Sparkles className="text-purple-500" size={18} />
-            Raise a Topic
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <Input
-            placeholder="What's your topic?"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="min-w-0"
-          />
-          <Textarea
-            placeholder="Add a short description (optional)"
-            value={desc}
-            onChange={(e) => setDesc(e.target.value)}
-            rows={3}
-            className="min-w-0 resize-none"
-          />
-          <div className="flex justify-end">
-            <Button onClick={handleCreate} disabled={!title.trim() || isLoading}>
-              {isLoading ? <Loader2 className="animate-spin mr-2" /> : null}
-              Post Topic
-            </Button>
+      {/* Modern Header */}
+      <div className="mb-6 p-6 rounded-3xl bg-gradient-to-br from-primary-50/50 to-accent/30 border border-border/50">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-3 rounded-2xl bg-primary/10 text-primary">
+            <MessageSquare className="h-6 w-6" />
           </div>
-        </CardContent>
-      </Card>
+          <div>
+            <h2 className="font-bold text-xl text-gradient">Discussion Topics</h2>
+            <p className="text-sm text-muted-foreground">Share ideas and spark conversations</p>
+          </div>
+        </div>
+        
+        <Card className="glass-card border-0 shadow-sm">
+          <CardContent className="p-5 space-y-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="h-4 w-4 text-primary" />
+              <span className="font-medium text-sm">Start a New Topic</span>
+            </div>
+            
+            <Input
+              placeholder="What would you like to discuss?"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="min-w-0 border-border/50 bg-background/50 focus:bg-background transition-colors h-12 text-base"
+            />
+            <Textarea
+              placeholder="Add context or details (optional)"
+              value={desc}
+              onChange={(e) => setDesc(e.target.value)}
+              rows={3}
+              className="min-w-0 resize-none border-border/50 bg-background/50 focus:bg-background transition-colors"
+            />
+            <Button 
+              onClick={handleCreate} 
+              disabled={!title.trim() || isLoading}
+              className="w-full bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 shadow-lg hover:shadow-xl transition-all duration-300 h-12"
+            >
+              {isLoading ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <Sparkles className="mr-2 h-4 w-4" />}
+              Share Topic
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center py-12 text-gray-500">
-          <Loader2 className="animate-spin mr-2" /> Loading topics...
+        <div className="flex items-center justify-center py-16">
+          <div className="text-center space-y-4">
+            <div className="animate-spin h-10 w-10 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
+            <p className="text-muted-foreground">Loading discussions...</p>
+          </div>
         </div>
       ) : topics.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
-          No topics yet. Be the first to raise one!
+        <div className="text-center py-16 space-y-6">
+          <div className="p-6 rounded-3xl bg-muted/30 w-fit mx-auto">
+            <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto" />
+          </div>
+          <div className="space-y-2">
+            <p className="text-lg font-semibold text-foreground">No topics yet</p>
+            <p className="text-muted-foreground">Be the first to start a discussion!</p>
+          </div>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {topics.map((t) => {
             const total = getTotalVotes(t.poll_id);
             const userChoice = getUserVoteForPoll(t.poll_id);
@@ -100,97 +122,141 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
             const notInterested = poll?.options?.find((o: any) =>
               String(o.text).includes("Not interested")
             );
+            const isPopular = total >= 10;
+            const isTrending = total >= 5 && t.status === "open";
 
             return (
               <Card
                 key={t.id}
-                className={`relative overflow-hidden rounded-2xl border-0 shadow-lg bg-card/95 backdrop-blur-sm min-w-0 ${t.status === "open" ? "topic-glow" : ""}`}
+                className={`group relative overflow-hidden glass-card min-w-0 transition-all duration-500 hover:-translate-y-1 hover:shadow-xl ${
+                  t.status === "open" ? "topic-glow" : ""
+                } ${isPopular ? "fire-border" : ""}`}
               >
-                <CardHeader className="pb-0">
-                  <div className="flex items-start justify-between gap-3 min-w-0">
-                    <div className="min-w-0 flex-1">
-                      <CardTitle className="text-base sm:text-lg break-words">
-                        {t.title}
-                      </CardTitle>
-                      {t.description ? (
-                        <p className="mt-1 text-sm text-muted-foreground break-words">{t.description}</p>
-                      ) : null}
+                <CardHeader className="pb-4 space-y-4">
+                  <div className="flex items-start justify-between gap-4 min-w-0">
+                    <div className="min-w-0 flex-1 space-y-3">
+                      <div className="flex items-center gap-2">
+                        {isTrending && (
+                          <div className="p-1.5 rounded-lg bg-gradient-to-br from-orange-400 to-red-500 text-white animate-pulse">
+                            <TrendingUp className="h-3 w-3" />
+                          </div>
+                        )}
+                        <CardTitle className="text-lg sm:text-xl break-words font-bold group-hover:text-primary transition-colors">
+                          {t.title}
+                        </CardTitle>
+                      </div>
+                      {t.description && (
+                        <p className="text-sm text-muted-foreground break-words leading-relaxed bg-muted/30 p-3 rounded-xl">
+                          {t.description}
+                        </p>
+                      )}
                     </div>
-                    <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 flex-shrink-0">
-                      <Badge variant={t.status === "open" ? "default" : "secondary"} className="text-xs">
-                        {t.status === "open" ? "Open" : "Closed"}
+                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                      <Badge 
+                        variant={t.status === "open" ? "default" : "secondary"} 
+                        className={`text-xs font-medium px-3 py-1 ${
+                          t.status === "open" 
+                            ? "bg-gradient-to-r from-green-400 to-green-600 text-white shadow-lg" 
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        <div className={`h-2 w-2 rounded-full mr-2 ${t.status === "open" ? "bg-white animate-pulse" : "bg-muted-foreground"}`} />
+                        {t.status === "open" ? "Live" : "Closed"}
                       </Badge>
-                      {typeof total === "number" ? (
-                        <Badge variant="outline" className="text-xs">{total} votes</Badge>
-                      ) : null}
+                      {typeof total === "number" && total > 0 && (
+                        <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30">
+                          <Users2 className="h-3 w-3 mr-1" />
+                          {total} votes
+                        </Badge>
+                      )}
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-4">
+                
+                <CardContent className="pt-0 space-y-4">
                   {t.poll_id && poll ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <Button
-                        variant={userChoice === interested?.id ? "default" : "secondary"}
+                        variant={userChoice === interested?.id ? "default" : "outline"}
                         disabled={isSubmitting || t.status !== "open" || !interested}
-                        onClick={() =>
-                          interested && handleVote(poll.id, interested.id)
-                        }
-                        className="justify-between min-w-0"
+                        onClick={() => interested && handleVote(poll.id, interested.id)}
+                        className={`justify-between min-w-0 h-12 transition-all duration-300 ${
+                          userChoice === interested?.id 
+                            ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg hover:shadow-xl" 
+                            : "hover:bg-green-50 hover:border-green-300 hover:text-green-700"
+                        }`}
                       >
-                        <span className="truncate">👍 Interested</span>
-                        <span className="ml-3 text-xs opacity-80 flex-shrink-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">👍</span>
+                          <span className="truncate font-medium">Interested</span>
+                        </div>
+                        <Badge 
+                          variant="secondary" 
+                          className={`ml-3 ${userChoice === interested?.id ? "bg-white/20 text-white" : "bg-muted"}`}
+                        >
                           {interested?.votes || 0}
-                        </span>
+                        </Badge>
                       </Button>
                       <Button
-                        variant={
-                          userChoice === notInterested?.id ? "default" : "secondary"
-                        }
+                        variant={userChoice === notInterested?.id ? "default" : "outline"}
                         disabled={isSubmitting || t.status !== "open" || !notInterested}
-                        onClick={() =>
-                          notInterested && handleVote(poll.id, notInterested.id)
-                        }
-                        className="justify-between min-w-0"
+                        onClick={() => notInterested && handleVote(poll.id, notInterested.id)}
+                        className={`justify-between min-w-0 h-12 transition-all duration-300 ${
+                          userChoice === notInterested?.id 
+                            ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg hover:shadow-xl" 
+                            : "hover:bg-red-50 hover:border-red-300 hover:text-red-700"
+                        }`}
                       >
-                        <span className="truncate">👎 Not interested</span>
-                        <span className="ml-3 text-xs opacity-80 flex-shrink-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">👎</span>
+                          <span className="truncate font-medium">Not interested</span>
+                        </div>
+                        <Badge 
+                          variant="secondary" 
+                          className={`ml-3 ${userChoice === notInterested?.id ? "bg-white/20 text-white" : "bg-muted"}`}
+                        >
                           {notInterested?.votes || 0}
-                        </span>
+                        </Badge>
                       </Button>
                     </div>
                   ) : (
-                    <div className="text-sm text-muted-foreground flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                      <span>No poll linked yet.</span>
-                      {t.status === "open" ? (
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 rounded-xl bg-muted/30">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MessageSquare className="h-4 w-4" />
+                        <span>No voting available yet</span>
+                      </div>
+                      {t.status === "open" && (
                         <Button
                           size="sm"
                           variant="outline"
                           disabled={ensuring}
                           onClick={() => ensurePollForTopic(t)}
-                          className="flex-shrink-0"
+                          className="flex-shrink-0 hover:bg-primary hover:text-primary-foreground transition-all duration-300"
                         >
-                          {ensuring ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : null}
-                          Create poll
+                          {ensuring ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : <Sparkles className="h-3 w-3 mr-2" />}
+                          Enable Voting
                         </Button>
-                      ) : null}
+                      )}
                     </div>
                   )}
 
-                  <div className="mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                    <span className="text-xs text-muted-foreground">
-                      Posted {new Date(t.created_at).toLocaleString()}
-                    </span>
-                    {t.status === "open" ? (
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pt-3 border-t border-border/50">
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      <span>Posted {new Date(t.created_at).toLocaleString()}</span>
+                    </div>
+                    {t.status === "open" && (
                       <Button
                         size="sm"
-                        variant="outline"
+                        variant="ghost"
                         disabled={closing}
                         onClick={() => closeTopic(t.id)}
-                        className="flex-shrink-0"
+                        className="flex-shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-300"
                       >
+                        {closing ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : null}
                         Close Topic
                       </Button>
-                    ) : null}
+                    )}
                   </div>
                 </CardContent>
               </Card>

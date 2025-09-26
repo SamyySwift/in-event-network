@@ -324,28 +324,44 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
           </TabsContent>
 
           <TabsContent value="rooms" className="flex-1 min-h-0 m-0">
-            <div className="h-full p-4">
-              <RoomsPanel
-                eventId={eventId ?? currentEventId}
-                onEnterRoom={(roomId) => {
-                  supabase.from('chat_rooms').select('id,name,color,created_by').eq('id', roomId).single().then(({ data }) => {
-                    if (data) setSelectedRoom({ id: data.id, name: data.name, color: data.color, created_by: data.created_by });
-                  });
-                  setActiveTab('chat');
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+              <div 
+                className="flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border/20 hover:scrollbar-thumb-border/40 p-4"
+                style={{ 
+                  touchAction: 'pan-y',
+                  WebkitOverflowScrolling: 'touch',
+                  overscrollBehavior: 'contain',
                 }}
-              />
+              >
+                <RoomsPanel
+                  eventId={eventId ?? currentEventId}
+                  onEnterRoom={(roomId) => {
+                    supabase.from('chat_rooms').select('id,name,color,created_by').eq('id', roomId).single().then(({ data }) => {
+                      if (data) setSelectedRoom({ id: data.id, name: data.name, color: data.color, created_by: data.created_by });
+                    });
+                    setActiveTab('chat');
+                  }}
+                />
+              </div>
             </div>
           </TabsContent>
 
           <TabsContent value="topics" className="flex-1 min-h-0 m-0">
-            <div className="h-full flex flex-col">
-              <div className="flex items-center gap-3 p-4 pb-2">
+            <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+              <div className="flex items-center gap-3 p-4 pb-2 flex-shrink-0">
                 <div className="p-2 rounded-xl bg-accent/10 backdrop-blur">
                   <Sparkles className="h-4 w-4 text-accent-foreground" />
                 </div>
                 <h3 className="font-semibold text-foreground">Discussion Topics</h3>
               </div>
-              <div className="flex-1 overflow-y-auto px-4 pb-4">
+              <div 
+                className="flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border/20 hover:scrollbar-thumb-border/40 px-4 pb-4"
+                style={{ 
+                  touchAction: 'pan-y',
+                  WebkitOverflowScrolling: 'touch',
+                  overscrollBehavior: 'contain',
+                }}
+              >
                 <TopicsBoard />
               </div>
             </div>

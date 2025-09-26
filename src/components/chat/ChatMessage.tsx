@@ -151,7 +151,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   className="object-cover"
                 />
               ) : (
-                <AvatarFallback className="bg-gradient-to-br from-primary/20 to-accent/20 text-primary font-bold border-0">
+                <AvatarFallback className="bg-primary/20 text-primary font-bold border-0">
                   {message.user_profile?.name?.charAt(0) || "A"}
                 </AvatarFallback>
               )}
@@ -192,14 +192,14 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
             
             {/* Room Owner Badge */}
             {isRoomOwner && (
-              <Badge className="text-xs px-2 py-0.5 bg-gradient-to-r from-amber-500/90 to-orange-500/90 text-white border-0">
+              <Badge className="text-xs px-2 py-0.5 bg-amber-500 text-white border-0">
                 👑 Room Owner
               </Badge>
             )}
             
             {/* Admin Badge */}
             {isFromAdmin && (
-              <Badge className="text-xs px-2 py-0.5 bg-gradient-to-r from-red-500/90 to-pink-500/90 text-white border-0">
+              <Badge className="text-xs px-2 py-0.5 bg-red-500 text-white border-0">
                 ⚡ Admin
               </Badge>
             )}
@@ -233,8 +233,8 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
             <div
               className={`relative px-4 py-3 rounded-2xl backdrop-blur-xl border shadow-lg ${
                 isOwn
-                  ? "bg-gradient-to-br from-primary to-accent text-primary-foreground border-primary/20 shadow-primary/20"
-                  : "bg-gradient-to-br from-background/95 to-background/85 text-foreground border-border/20 shadow-border/20"
+                  ? "bg-primary text-primary-foreground border-primary/20 shadow-primary/20"
+                  : "bg-background text-foreground border-border/20 shadow-border/20"
               } ${bubbleExtra} transition-all duration-300 hover:shadow-xl ${isOwn ? "hover:shadow-primary/30" : "hover:shadow-border/30"}`}
             >
               {/* Message Content */}
@@ -249,7 +249,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   <img
                     src={message.content}
                     alt="Shared image"
-                    className="max-h-64 max-w-full rounded-xl object-contain bg-gradient-to-br from-muted/30 to-muted/10 border border-border/20"
+                    className="max-h-64 max-w-full rounded-xl object-contain bg-muted/20 border border-border/20"
                     loading="lazy"
                   />
                 </a>

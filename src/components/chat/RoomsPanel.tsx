@@ -28,15 +28,15 @@ const RoomsPanel: React.FC<RoomsPanelProps> = ({ eventId, onEnterRoom }) => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-gradient-to-br from-background/50 to-background/30 backdrop-blur-xl rounded-2xl overflow-hidden">
+    <div className="h-full flex flex-col bg-background/40 backdrop-blur-xl rounded-2xl overflow-hidden">
       {/* Header */}
-      <div className="p-4 bg-gradient-to-r from-background/80 to-background/60 backdrop-blur-xl border-b border-border/10">
+      <div className="p-4 bg-background/70 backdrop-blur-xl border-b border-border/10">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl border border-border/20">
+          <div className="p-2 bg-primary/10 rounded-xl border border-border/20">
             <Users className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h2 className="text-lg font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <h2 className="text-lg font-bold text-primary">
               Chat Rooms
             </h2>
             <p className="text-sm text-muted-foreground">Join or create private discussions</p>
@@ -45,7 +45,7 @@ const RoomsPanel: React.FC<RoomsPanelProps> = ({ eventId, onEnterRoom }) => {
       </div>
 
       {/* Create Room Form */}
-      <div className="p-4 bg-gradient-to-r from-background/60 to-background/40 backdrop-blur-xl border-b border-border/10">
+      <div className="p-4 bg-background/50 backdrop-blur-xl border-b border-border/10">
         <div className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Input 
@@ -75,7 +75,7 @@ const RoomsPanel: React.FC<RoomsPanelProps> = ({ eventId, onEnterRoom }) => {
             <Button 
               onClick={handleCreate} 
               disabled={!canCreate}
-              className="ml-auto rounded-xl bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 shadow-lg hover:scale-105 transition-all duration-300"
+              className="ml-auto rounded-xl bg-primary hover:bg-primary/90 shadow-lg hover:scale-105 transition-all duration-300"
             >
               <PlusCircle className="h-4 w-4 mr-2" />
               Create Room
@@ -95,7 +95,7 @@ const RoomsPanel: React.FC<RoomsPanelProps> = ({ eventId, onEnterRoom }) => {
           </div>
         ) : rooms.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="p-4 bg-gradient-to-br from-muted/50 to-muted/30 backdrop-blur-xl rounded-2xl mb-4 border border-border/20">
+            <div className="p-4 bg-muted/40 backdrop-blur-xl rounded-2xl mb-4 border border-border/20">
               <Users className="h-8 w-8 text-muted-foreground/60" />
             </div>
             <h3 className="font-semibold text-foreground mb-2">No rooms yet</h3>
@@ -107,10 +107,10 @@ const RoomsPanel: React.FC<RoomsPanelProps> = ({ eventId, onEnterRoom }) => {
             return (
               <Card 
                 key={room.id} 
-                className="group relative overflow-hidden bg-gradient-to-br from-background/80 to-background/60 backdrop-blur-xl border border-border/20 rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 cursor-pointer"
+                className="group relative overflow-hidden bg-background/70 backdrop-blur-xl border border-border/20 rounded-2xl shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300 cursor-pointer"
                 onClick={() => { onEnterRoom(room.id); joinRoom(room.id); }}
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-accent/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 <CardContent className="relative p-5 flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div 
@@ -139,7 +139,7 @@ const RoomsPanel: React.FC<RoomsPanelProps> = ({ eventId, onEnterRoom }) => {
                     <Button 
                       size="sm" 
                       onClick={(e) => { e.stopPropagation(); onEnterRoom(room.id); joinRoom(room.id); }}
-                      className="rounded-xl bg-gradient-to-r from-primary/90 to-accent/90 hover:from-primary hover:to-accent shadow-md hover:scale-110 transition-all duration-300"
+                      className="rounded-xl bg-primary hover:bg-primary/90 shadow-md hover:scale-110 transition-all duration-300"
                     >
                       Join
                     </Button>

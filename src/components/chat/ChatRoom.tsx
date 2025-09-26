@@ -148,76 +148,76 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
   }
 
   return (
-    <div className="h-[85vh] max-h-[900px] flex flex-col relative overflow-hidden">
-      {/* Ultra Modern Background with Glassmorphism */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-background to-accent/3 opacity-60"></div>
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-accent/10"></div>
-      <div className="absolute inset-0 backdrop-blur-3xl bg-background/40 border border-border/20 rounded-3xl shadow-2xl"></div>
-      
-      {/* Main Container */}
-      <div className="relative z-10 h-full flex flex-col rounded-3xl overflow-hidden">
-        {/* Ultra Modern Header */}
-        <div className="relative p-6 bg-gradient-to-r from-background/80 via-background/60 to-background/80 backdrop-blur-xl border-b border-border/10">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-accent/5 opacity-50"></div>
-          <div className="relative flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl blur-lg animate-pulse"></div>
-                <div className="relative p-3 bg-gradient-to-br from-primary/10 to-accent/10 backdrop-blur-xl rounded-2xl border border-border/20">
-                  <MessageCircle className="h-6 w-6 text-primary" />
-                </div>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  {selectedRoom ? selectedRoom.name : 'Live Chat'}
-                </h1>
-                <p className="text-sm text-muted-foreground/80 font-medium">
-                  {messages.length} message{messages.length !== 1 ? 's' : ''} • {Object.keys(participantPoints).length} participants
-                </p>
-              </div>
-            </div>
-            {selectedRoom && (
-              <Button 
-                onClick={() => setSelectedRoom(null)}
-                variant="outline"
-                size="sm"
-                className="rounded-2xl bg-background/50 backdrop-blur-xl border-border/20 hover:bg-background/80 hover:scale-105 transition-all duration-300"
-              >
-                ← Global Chat
-              </Button>
-            )}
-          </div>
+    <div className="w-full">
+      {/* Modern Navigation */}
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
+        <div className="px-4 pb-4">
+          <TabsList className="grid w-full grid-cols-3 bg-background/30 backdrop-blur-xl rounded-2xl p-1.5 border border-border/20">
+            <TabsTrigger 
+              value="chat" 
+              className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/90 data-[state=active]:to-accent/90 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg font-semibold transition-all duration-300"
+            >
+              💬 Chat
+            </TabsTrigger>
+            <TabsTrigger 
+              value="rooms" 
+              className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/90 data-[state=active]:to-accent/90 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg font-semibold transition-all duration-300"
+            >
+              🏠 Rooms
+            </TabsTrigger>
+            <TabsTrigger 
+              value="topics" 
+              className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/90 data-[state=active]:to-accent/90 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg font-semibold transition-all duration-300"
+            >
+              ✨ Topics
+            </TabsTrigger>
+          </TabsList>
         </div>
 
-        {/* Modern Navigation */}
-        <div className="flex-1 flex flex-col min-h-0">
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col h-full">
-            <div className="px-6 pt-2 pb-1">
-              <TabsList className="grid w-full grid-cols-3 bg-background/30 backdrop-blur-xl rounded-2xl p-1.5 border border-border/20">
-                <TabsTrigger 
-                  value="chat" 
-                  className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/90 data-[state=active]:to-accent/90 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg font-semibold transition-all duration-300"
-                >
-                  💬 Chat
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="rooms" 
-                  className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/90 data-[state=active]:to-accent/90 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg font-semibold transition-all duration-300"
-                >
-                  🏠 Rooms
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="topics" 
-                  className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/90 data-[state=active]:to-accent/90 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg font-semibold transition-all duration-300"
-                >
-                  ✨ Topics
-                </TabsTrigger>
-              </TabsList>
-            </div>
+        {/* Chat Content - Independent Container */}
+        <TabsContent value="chat" className="m-0">
+          <div className="h-[75vh] max-h-[800px] flex flex-col relative overflow-hidden">
+            {/* Ultra Modern Background with Glassmorphism */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-background to-accent/3 opacity-60"></div>
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-accent/10"></div>
+            <div className="absolute inset-0 backdrop-blur-3xl bg-background/40 border border-border/20 rounded-3xl shadow-2xl"></div>
+            
+            {/* Chat Container */}
+            <div className="relative z-10 h-full flex flex-col rounded-3xl overflow-hidden">
+              {/* Ultra Modern Header */}
+              <div className="relative p-6 bg-gradient-to-r from-background/80 via-background/60 to-background/80 backdrop-blur-xl border-b border-border/10">
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-accent/5 opacity-50"></div>
+                <div className="relative flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl blur-lg animate-pulse"></div>
+                      <div className="relative p-3 bg-gradient-to-br from-primary/10 to-accent/10 backdrop-blur-xl rounded-2xl border border-border/20">
+                        <MessageCircle className="h-6 w-6 text-primary" />
+                      </div>
+                    </div>
+                    <div>
+                      <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                        {selectedRoom ? selectedRoom.name : 'Live Chat'}
+                      </h1>
+                      <p className="text-sm text-muted-foreground/80 font-medium">
+                        {messages.length} message{messages.length !== 1 ? 's' : ''} • {Object.keys(participantPoints).length} participants
+                      </p>
+                    </div>
+                  </div>
+                  {selectedRoom && (
+                    <Button 
+                      onClick={() => setSelectedRoom(null)}
+                      variant="outline"
+                      size="sm"
+                      className="rounded-2xl bg-background/50 backdrop-blur-xl border-border/20 hover:bg-background/80 hover:scale-105 transition-all duration-300"
+                    >
+                      ← Global Chat
+                    </Button>
+                  )}
+                </div>
+              </div>
 
-            {/* Chat Content */}
-            <TabsContent value="chat" className="flex-1 min-h-0 flex flex-col m-0 px-6">
-              <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+              <div className="flex-1 flex flex-col min-h-0 px-6">
                 {/* Messages Container */}
                 <div
                   ref={scrollAreaRef}
@@ -346,34 +346,48 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
                   </div>
                 </div>
               </div>
-            </TabsContent>
+            </div>
+          </div>
+        </TabsContent>
 
-            {/* Rooms Content */}
-            <TabsContent value="rooms" className="flex-1 min-h-0 m-0 p-0">
-              <div className="h-full px-6">
-                <RoomsPanel
-                  eventId={eventId ?? currentEventId}
-                  onEnterRoom={(roomId) => {
-                    supabase.from('chat_rooms').select('id,name,color,created_by').eq('id', roomId).single().then(({ data }) => {
-                      if (data) setSelectedRoom({ id: data.id, name: data.name, color: data.color, created_by: data.created_by });
-                    });
-                    setActiveTab('chat');
-                  }}
-                />
-              </div>
-            </TabsContent>
+        {/* Rooms Content - Independent Container */}
+        <TabsContent value="rooms" className="m-0">
+          <div className="min-h-[75vh] max-h-[800px] relative overflow-hidden">
+            {/* Modern Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-background to-accent/3 opacity-60"></div>
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-accent/10"></div>
+            <div className="absolute inset-0 backdrop-blur-3xl bg-background/40 border border-border/20 rounded-3xl shadow-2xl"></div>
+            
+            <div className="relative z-10 h-full p-6 rounded-3xl overflow-hidden">
+              <RoomsPanel
+                eventId={eventId ?? currentEventId}
+                onEnterRoom={(roomId) => {
+                  supabase.from('chat_rooms').select('id,name,color,created_by').eq('id', roomId).single().then(({ data }) => {
+                    if (data) setSelectedRoom({ id: data.id, name: data.name, color: data.color, created_by: data.created_by });
+                  });
+                  setActiveTab('chat');
+                }}
+              />
+            </div>
+          </div>
+        </TabsContent>
 
-            {/* Topics Content */}
-            <TabsContent value="topics" className="flex-1 min-h-0 m-0 p-0">
-              <div className="h-full flex flex-col px-6">
-                <div className="flex-1 overflow-y-auto">
-                  <TopicsBoard />
-                </div>
+        {/* Topics Content - Independent Container */}
+        <TabsContent value="topics" className="m-0">
+          <div className="min-h-[75vh] max-h-[800px] relative overflow-hidden">
+            {/* Modern Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-background to-accent/3 opacity-60"></div>
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-accent/10"></div>
+            <div className="absolute inset-0 backdrop-blur-3xl bg-background/40 border border-border/20 rounded-3xl shadow-2xl"></div>
+            
+            <div className="relative z-10 h-full p-6 rounded-3xl overflow-hidden">
+              <div className="h-full overflow-y-auto">
+                <TopicsBoard />
               </div>
-            </TabsContent>
-          </Tabs>
-        </div>
-      </div>
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

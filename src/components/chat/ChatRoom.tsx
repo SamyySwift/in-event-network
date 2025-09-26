@@ -192,7 +192,7 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
         {/* Modern Navigation */}
         <div className="flex-1 flex flex-col min-h-0">
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col h-full">
-            <div className="px-6 pt-4 pb-2">
+            <div className="px-6 pt-2 pb-1">
               <TabsList className="grid w-full grid-cols-3 bg-background/30 backdrop-blur-xl rounded-2xl p-1.5 border border-border/20">
                 <TabsTrigger 
                   value="chat" 
@@ -349,8 +349,8 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
             </TabsContent>
 
             {/* Rooms Content */}
-            <TabsContent value="rooms" className="flex-1 min-h-0 m-0">
-              <div className="h-full">
+            <TabsContent value="rooms" className="flex-1 min-h-0 m-0 p-0">
+              <div className="h-full px-6">
                 <RoomsPanel
                   eventId={eventId ?? currentEventId}
                   onEnterRoom={(roomId) => {
@@ -364,8 +364,8 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
             </TabsContent>
 
             {/* Topics Content */}
-            <TabsContent value="topics" className="flex-1 min-h-0 m-0">
-              <div className="h-full flex flex-col px-6 pb-6">
+            <TabsContent value="topics" className="flex-1 min-h-0 m-0 p-0">
+              <div className="h-full flex flex-col px-6">
                 <div className="flex-1 overflow-y-auto">
                   <TopicsBoard />
                 </div>

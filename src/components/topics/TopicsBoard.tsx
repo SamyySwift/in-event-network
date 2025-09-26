@@ -49,8 +49,8 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
   };
 
   return (
-    <div className={className}>
-      <Card className="rounded-2xl border-0 shadow-lg bg-white/90 backdrop-blur-sm mb-6">
+    <div className={`h-full flex flex-col ${className}`}>
+      <Card className="rounded-2xl border-0 shadow-lg bg-white/90 backdrop-blur-sm mb-4 flex-shrink-0">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="text-purple-500" size={18} />
@@ -67,7 +67,7 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
             placeholder="Add a short description (optional)"
             value={desc}
             onChange={(e) => setDesc(e.target.value)}
-            rows={3}
+            rows={2}
           />
           <div className="flex justify-end">
             <Button onClick={handleCreate} disabled={!title.trim() || isLoading}>
@@ -78,17 +78,18 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
         </CardContent>
       </Card>
 
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12 text-gray-500">
-          <Loader2 className="animate-spin mr-2" /> Loading topics...
-        </div>
-      ) : topics.length === 0 ? (
-        <div className="text-center py-12 text-gray-500">
-          No topics yet. Be the first to raise one!
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {topics.map((t) => {
+      <div className="flex-1 min-h-0">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12 text-gray-500">
+            <Loader2 className="animate-spin mr-2" /> Loading topics...
+          </div>
+        ) : topics.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">
+            No topics yet. Be the first to raise one!
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {topics.map((t) => {
             const total = getTotalVotes(t.poll_id);
             const userChoice = getUserVoteForPoll(t.poll_id);
             const poll = t.poll_id ? pollById.get(t.poll_id) : undefined;
@@ -191,9 +192,10 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
                 </CardContent>
               </Card>
             );
-          })}
-        </div>
-      )}
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

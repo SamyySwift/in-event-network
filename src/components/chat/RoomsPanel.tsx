@@ -30,7 +30,7 @@ const RoomsPanel: React.FC<RoomsPanelProps> = ({ eventId, onEnterRoom }) => {
   return (
     <div className="h-full flex flex-col bg-gradient-to-br from-background/50 to-background/30 backdrop-blur-xl rounded-2xl overflow-hidden">
       {/* Header */}
-      <div className="p-6 bg-gradient-to-r from-background/80 to-background/60 backdrop-blur-xl border-b border-border/10">
+      <div className="p-4 bg-gradient-to-r from-background/80 to-background/60 backdrop-blur-xl border-b border-border/10">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl border border-border/20">
             <Users className="h-5 w-5 text-primary" />
@@ -45,8 +45,8 @@ const RoomsPanel: React.FC<RoomsPanelProps> = ({ eventId, onEnterRoom }) => {
       </div>
 
       {/* Create Room Form */}
-      <div className="p-6 bg-gradient-to-r from-background/60 to-background/40 backdrop-blur-xl border-b border-border/10">
-        <div className="space-y-4">
+      <div className="p-4 bg-gradient-to-r from-background/60 to-background/40 backdrop-blur-xl border-b border-border/10">
+        <div className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Input 
               placeholder="Room name" 
@@ -85,7 +85,7 @@ const RoomsPanel: React.FC<RoomsPanelProps> = ({ eventId, onEnterRoom }) => {
       </div>
 
       {/* Rooms List */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border/20">
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border/20">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center space-y-3">

@@ -151,8 +151,8 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
 
   return (
     <div className="h-[80vh] md:h-[700px] flex flex-col bg-gradient-to-br from-background/95 via-background/90 to-background/95 backdrop-blur-xl border border-border/20 rounded-2xl shadow-2xl overflow-hidden">
-      {/* Modern Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 md:p-6 bg-gradient-to-r from-primary/5 via-transparent to-accent/5 border-b border-border/10">
+      {/* Modern Header with Floating Navigation */}
+      <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 md:p-6 bg-gradient-to-r from-primary/5 via-transparent to-accent/5 border-b border-border/10">
         <div className="flex items-center gap-3 mb-3 sm:mb-0">
           <div className="p-2 rounded-xl bg-primary/10 backdrop-blur">
             <MessageCircle className="h-5 w-5 text-primary" />
@@ -166,35 +166,48 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
             </p>
           </div>
         </div>
-        {selectedRoom && (
-          <Button 
-            size="sm" 
-            variant="outline" 
-            onClick={() => setSelectedRoom(null)}
-            className="rounded-full bg-background/50 backdrop-blur border-border/20 hover:bg-background/80"
-          >
-            Back to Global
-          </Button>
-        )}
-      </div>
-
-      {/* Navigation Tabs */}
-      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col min-h-0 h-full">
-          <div className="p-4 pb-2 flex-shrink-0">
-            <TabsList className="grid w-full grid-cols-3 bg-muted/50 backdrop-blur rounded-xl p-1">
-              <TabsTrigger value="chat" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+        
+        {/* Floating Pill Navigation */}
+        <div className="absolute top-4 right-4 flex items-center gap-2">
+          <div className="bg-background/80 backdrop-blur-xl border border-border/20 rounded-full p-1 shadow-lg">
+            <TabsList className="bg-transparent border-0 h-8 p-0">
+              <TabsTrigger 
+                value="chat" 
+                className="rounded-full px-3 py-1 text-xs font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+              >
                 Chat
               </TabsTrigger>
-              <TabsTrigger value="rooms" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              <TabsTrigger 
+                value="rooms" 
+                className="rounded-full px-3 py-1 text-xs font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+              >
                 Rooms
               </TabsTrigger>
-              <TabsTrigger value="topics" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              <TabsTrigger 
+                value="topics" 
+                className="rounded-full px-3 py-1 text-xs font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+              >
                 Topics
               </TabsTrigger>
             </TabsList>
           </div>
+          
+          {selectedRoom && (
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => setSelectedRoom(null)}
+              className="rounded-full bg-background/50 backdrop-blur border-border/20 hover:bg-background/80 h-8 px-3 text-xs"
+            >
+              Back to Global
+            </Button>
+          )}
+        </div>
+      </div>
 
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="flex-1 flex flex-col min-h-0 h-full">
           <TabsContent value="chat" className="flex-1 min-h-0 flex flex-col m-0">
             <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
               {/* Messages Area */}

@@ -195,12 +195,12 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
             </TabsList>
           </div>
 
-          <TabsContent value="chat">
+          <TabsContent value="chat" className="flex-1 min-h-0 flex flex-col m-0">
             <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
               {/* Messages Area */}
               <div
                 ref={scrollAreaRef}
-                className="flex-1 overflow-y-auto scrollbar scrollbar-track-muted/10 scrollbar-thumb-border/40 hover:scrollbar-thumb-border/60 scrollbar-w-2"
+                className="flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border/20 hover:scrollbar-thumb-border/40"
                 style={{ 
                   touchAction: 'pan-y',
                   WebkitOverflowScrolling: 'touch',

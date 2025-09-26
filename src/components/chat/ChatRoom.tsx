@@ -220,9 +220,7 @@ const ChatRoom = ({
             </div>
           </div>
           
-          {/* Chat Content */}
           <TabsContent value="chat" className="flex-1 min-h-0 m-0 flex flex-col">
-            {/* Messages Area */}
             <div 
               className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth scrollbar-thin scrollbar-thumb-muted/50 scrollbar-track-transparent"
               onScroll={handleScroll}
@@ -251,7 +249,6 @@ const ChatRoom = ({
               <div ref={messagesEndRef} />
             </div>
 
-            {/* Message Input Area */}
             <div className="border-t border-border/10 bg-background/50 backdrop-blur p-4">
               {quotedMessage && (
                 <div className="mb-3 relative">
@@ -311,7 +308,7 @@ const ChatRoom = ({
             </div>
           </TabsContent>
 
-          <TabsContent value="rooms" className="flex-1 min-h-0 m-0">
+          <TabsContent value="rooms" className="flex-1 min-h-0 m-0 p-0">
             <RoomsPanel eventId={eventId ?? currentEventId} onEnterRoom={roomId => {
             supabase.from('chat_rooms').select('id,name,color,created_by').eq('id', roomId).single().then(({
               data
@@ -327,8 +324,8 @@ const ChatRoom = ({
           }} />
           </TabsContent>
 
-          <TabsContent value="topics" className="flex-1 min-h-0 m-0">
-            <TopicsBoard className="p-4" />
+          <TabsContent value="topics" className="flex-1 min-h-0 m-0 p-0">
+            <TopicsBoard className="h-full" />
           </TabsContent>
         </Tabs>
       </div>

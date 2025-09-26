@@ -195,7 +195,7 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
             </TabsList>
           </div>
 
-          <TabsContent value="chat" className="flex-1 min-h-0 flex flex-col m-0">
+          <TabsContent value="chat">
             <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
               {/* Messages Area */}
               <div

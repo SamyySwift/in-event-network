@@ -134,160 +134,169 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
 
   return (
     <>
-      <div className={`flex gap-3 ${isOwn ? "flex-row-reverse" : ""} group`}>
-        {/* Avatar and main container */}
-        <div className="relative">
-          <Avatar
-            className={`h-8 w-8 flex-shrink-0 ${
-              !isOwn ? "cursor-pointer hover:ring-2 hover:ring-connect-500 transition-all" : ""
-            } ${avatarGlow}`}
-            onClick={handleAvatarClick}
-          >
-            {message.user_profile?.photo_url ? (
-              <AvatarImage
-                src={message.user_profile.photo_url}
-                alt={message.user_profile?.name}
-              />
-            ) : (
-              <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300 text-sm">
-                {message.user_profile?.name?.charAt(0) || "A"}
-              </AvatarFallback>
-            )}
-          </Avatar>
+      <div className={`flex gap-4 ${isOwn ? "flex-row-reverse" : ""} group animate-fade-in`}>
+        {/* Avatar Section */}
+        <div className="relative flex-shrink-0">
+          <div className="relative">
+            <Avatar
+              className={`h-10 w-10 border-2 border-background shadow-lg ${
+                !isOwn ? "cursor-pointer hover:scale-110 transition-all duration-300" : ""
+              } ${avatarGlow}`}
+              onClick={handleAvatarClick}
+            >
+              {message.user_profile?.photo_url ? (
+                <AvatarImage
+                  src={message.user_profile.photo_url}
+                  alt={message.user_profile?.name}
+                  className="object-cover"
+                />
+              ) : (
+                <AvatarFallback className="bg-gradient-to-br from-primary/20 to-accent/20 text-primary font-bold border-0">
+                  {message.user_profile?.name?.charAt(0) || "A"}
+                </AvatarFallback>
+              )}
+            </Avatar>
 
-          {/* overlay rewards near avatar */}
-          {hasDiamond && (
-            <>
-              <span className="absolute -top-1 -right-1 text-xs animate-bounce">💎</span>
-              <span className="pointer-events-none absolute -left-2 -bottom-2 text-[10px] text-cyan-400/80 animate-ping">
-                💎
-              </span>
-            </>
-          )}
-          {!hasDiamond && hasFireGlow && (
-            <span className="absolute -top-1 -right-1 text-xs animate-bounce">🔥</span>
-          )}
-          {medals > 0 && (
-            <span className="absolute -bottom-2 left-0 text-[10px] leading-none select-none">
-              {"🎖️".repeat(medals)}
-            </span>
-          )}
+            {/* Achievement Overlays */}
+            {hasDiamond && (
+              <>
+                <div className="absolute -top-1 -right-1 text-sm animate-bounce">💎</div>
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-cyan-400/20 to-blue-400/20 animate-pulse"></div>
+              </>
+            )}
+            {!hasDiamond && hasFireGlow && (
+              <div className="absolute -top-1 -right-1 text-sm animate-bounce">🔥</div>
+            )}
+            {medals > 0 && (
+              <div className="absolute -bottom-1 -left-1 text-xs">
+                {"🏆".repeat(Math.min(medals, 3))}
+              </div>
+            )}
+          </div>
         </div>
 
-        <div className={`flex-1 min-w-0 ${isOwn ? "text-right" : ""} relative`}>
-          <div className={`flex items-center gap-2 mb-1 ${isOwn ? "justify-end" : ""}`}>
+        {/* Message Content */}
+        <div className={`flex-1 min-w-0 ${isOwn ? "text-right" : ""} max-w-[80%]`}>
+          {/* Message Header */}
+          <div className={`flex items-center gap-2 mb-2 ${isOwn ? "justify-end" : ""}`}>
             <span
               onClick={!isOwn && message.user_profile ? handleAvatarClick : undefined}
-              role={!isOwn && message.user_profile ? "button" : undefined}
-              className={`text-xs font-semibold ${
+              className={`text-sm font-semibold ${
                 isOwn
-                  ? "text-gray-800 dark:text-gray-200"
-                  : "text-connect-700 dark:text-connect-300 hover:underline"
-              } ${!isOwn && message.user_profile ? "cursor-pointer" : ""} truncate max-w-[60%]`}
-              title={displayName}
+                  ? "text-muted-foreground"
+                  : "text-primary hover:text-primary/80 cursor-pointer"
+              } truncate`}
             >
               {displayName}
             </span>
-            {/* NEW: Room Owner badge right by the name (in-room) */}
+            
+            {/* Room Owner Badge */}
             {isRoomOwner && (
-              <Badge variant="secondary" className="uppercase tracking-wide text-[10px] px-2 py-0.5">
-                Room Owner
+              <Badge className="text-xs px-2 py-0.5 bg-gradient-to-r from-amber-500/90 to-orange-500/90 text-white border-0">
+                👑 Room Owner
               </Badge>
             )}
-            <span className="text-xs text-gray-500 dark:text-gray-400">• {timeAgo}</span>
-            {typeof points === "number" && (
-              <span className="text-[10px] text-gray-400">({points} pts)</span>
+            
+            {/* Admin Badge */}
+            {isFromAdmin && (
+              <Badge className="text-xs px-2 py-0.5 bg-gradient-to-r from-red-500/90 to-pink-500/90 text-white border-0">
+                ⚡ Admin
+              </Badge>
+            )}
+            
+            <span className="text-xs text-muted-foreground/60">• {timeAgo}</span>
+            {typeof points === "number" && points > 0 && (
+              <span className="text-xs text-muted-foreground/60">• {points} pts</span>
             )}
           </div>
 
-          {/* Admin label above the message bubble */}
-          {isFromAdmin && (
-            <div className={`mb-1 ${isOwn ? "ml-auto" : ""}`}>
-              <Badge variant="destructive" className="uppercase tracking-wide text-[10px] px-2 py-0.5">
-                Admin
-              </Badge>
-            </div>
-          )}
-
-          {/* Quoted preview (if any) */}
+          {/* Quoted Message Preview */}
           {message.quoted_message && (
-            <div className={`mb-1 ${isOwn ? "ml-auto" : ""} max-w=[80%]`}>
+            <div className={`mb-3 ${isOwn ? "ml-auto" : ""} max-w-full`}>
               <QuotedMessage message={message.quoted_message} compact />
             </div>
           )}
 
-          {/* Main Message */}
+          {/* Main Message Bubble */}
           <div
-            className={`relative rounded-lg px-3 py-2 break-words ${
-              isOwn
-                ? "bg-connect-600 text-white ml-auto pl-10"
-                : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 pr-10"
-            } max-w-[80%] ${isOwn ? "ml-auto" : ""} ${bubbleExtra}`}
+            className={`relative group/bubble ${
+              isOwn ? "ml-auto" : ""
+            }`}
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
             style={{
               transform: translateX ? `translateX(${isOwn ? -translateX : translateX}px)` : undefined,
-              transition: isSwipingRef.current ? "none" : "transform 150ms ease",
+              transition: isSwipingRef.current ? "none" : "transform 200ms cubic-bezier(0.4, 0, 0.2, 1)",
             }}
           >
-            {isImageUrl(message.content) ? (
-              <a
-                href={message.content}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`block ${isOwn ? "ml-auto" : ""}`}
-                title="Open image in new tab"
-              >
-                <img
-                  src={message.content}
-                  alt="Shared image"
-                  className="max-h-64 max-w-full rounded-md border border-gray-200 dark:border-gray-700 object-contain bg-white"
-                  loading="lazy"
-                />
-              </a>
-            ) : (
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
-            )}
+            <div
+              className={`relative px-4 py-3 rounded-2xl backdrop-blur-xl border shadow-lg ${
+                isOwn
+                  ? "bg-gradient-to-br from-primary to-accent text-primary-foreground border-primary/20 shadow-primary/20"
+                  : "bg-gradient-to-br from-background/95 to-background/85 text-foreground border-border/20 shadow-border/20"
+              } ${bubbleExtra} transition-all duration-300 hover:shadow-xl ${isOwn ? "hover:shadow-primary/30" : "hover:shadow-border/30"}`}
+            >
+              {/* Message Content */}
+              {isImageUrl(message.content) ? (
+                <a
+                  href={message.content}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block"
+                  title="Open image in new tab"
+                >
+                  <img
+                    src={message.content}
+                    alt="Shared image"
+                    className="max-h-64 max-w-full rounded-xl object-contain bg-gradient-to-br from-muted/30 to-muted/10 border border-border/20"
+                    loading="lazy"
+                  />
+                </a>
+              ) : (
+                <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                  {message.content}
+                </p>
+              )}
 
-            {/* Quote Button (allow quoting any message) */}
-            {onQuote && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => onQuote(message)}
-                className={`absolute ${isOwn ? "left-1" : "right-1"} top-1 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity h-8 w-8 p-0`}
-                title="Quote to reply"
-                aria-label="Quote to reply"
-              >
-                <Quote className="h-4 w-4" />
-              </Button>
-            )}
+              {/* Action Buttons */}
+              <div className={`absolute ${isOwn ? "left-2" : "right-2"} top-2 flex flex-col gap-1 opacity-0 group-hover/bubble:opacity-100 transition-opacity duration-200`}>
+                {/* Quote Button */}
+                {onQuote && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => onQuote(message)}
+                    className="h-7 w-7 p-0 rounded-full bg-background/80 backdrop-blur-xl border border-border/20 hover:bg-background hover:scale-110 transition-all duration-200"
+                    title="Quote message"
+                  >
+                    <Quote className="h-3 w-3" />
+                  </Button>
+                )}
 
-            {/* Delete Button (owner/host) - hover to reveal */}
-            {canDelete && onDelete && (
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  if (confirm("Delete this message?")) onDelete(message.id);
-                }}
-                className={`absolute ${isOwn ? "left-1" : "right-1"} top-9 z-10 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0 text-destructive`}
-                title="Delete message"
-                aria-label="Delete message"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            )}
+                {/* Delete Button (for owners/admins) */}
+                {canDelete && onDelete && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      if (confirm("Delete this message?")) onDelete(message.id);
+                    }}
+                    className="h-7 w-7 p-0 rounded-full bg-destructive/10 backdrop-blur-xl border border-destructive/20 text-destructive hover:bg-destructive/20 hover:scale-110 transition-all duration-200"
+                    title="Delete message"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                )}
+              </div>
 
-            {/* diamond sparkle near the bubble */}
-            {hasDiamond && (
-              <span
-                className={`absolute ${isOwn ? "left-1" : "right-1"} -bottom-2 text-xs text-cyan-400/90 animate-ping select-none`}
-              >
-                💎
-              </span>
-            )}
+              {/* Diamond Special Effect */}
+              {hasDiamond && (
+                <div className="absolute -top-1 -right-1 text-xs animate-ping">
+                  💎
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

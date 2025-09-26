@@ -181,7 +181,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
           <div className={`flex items-center gap-2 mb-2 ${isOwn ? "justify-end" : ""}`}>
             <span
               onClick={!isOwn && message.user_profile ? handleAvatarClick : undefined}
-              className={`text-sm font-semibold ${
+              className={`text-xs font-semibold ${
                 isOwn
                   ? "text-muted-foreground"
                   : "text-primary hover:text-primary/80 cursor-pointer"
@@ -204,9 +204,9 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
               </Badge>
             )}
             
-            <span className="text-xs text-muted-foreground/60">• {timeAgo}</span>
+            <span className="text-[10px] text-muted-foreground/60">• {timeAgo}</span>
             {typeof points === "number" && points > 0 && (
-              <span className="text-xs text-muted-foreground/60">• {points} pts</span>
+              <span className="text-[10px] text-muted-foreground/60">• {points} pts</span>
             )}
           </div>
 
@@ -254,7 +254,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = React.memo(({
                   />
                 </a>
               ) : (
-                <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+                <p className="text-xs leading-relaxed whitespace-pre-wrap break-words">
                   {message.content}
                 </p>
               )}

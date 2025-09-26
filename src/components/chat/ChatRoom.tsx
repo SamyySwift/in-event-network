@@ -200,7 +200,7 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
               {/* Messages Area */}
               <div
                 ref={scrollAreaRef}
-                className="flex-1 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border/20 hover:scrollbar-thumb-border/40"
+                className="flex-1 overflow-y-auto scrollbar scrollbar-track-muted/10 scrollbar-thumb-border/40 hover:scrollbar-thumb-border/60 scrollbar-w-2"
                 style={{ 
                   touchAction: 'pan-y',
                   WebkitOverflowScrolling: 'touch',

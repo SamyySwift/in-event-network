@@ -49,8 +49,8 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
   };
 
   return (
-    <div className={className}>
-      <Card className="rounded-2xl border-0 shadow-lg bg-white/90 backdrop-blur-sm mb-6">
+    <div className={`${className} min-w-0 overflow-hidden`}>
+      <Card className="rounded-2xl border-0 shadow-lg bg-card/90 backdrop-blur-sm mb-6">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="text-purple-500" size={18} />
@@ -62,12 +62,14 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
             placeholder="What's your topic?"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            className="min-w-0"
           />
           <Textarea
             placeholder="Add a short description (optional)"
             value={desc}
             onChange={(e) => setDesc(e.target.value)}
             rows={3}
+            className="min-w-0 resize-none"
           />
           <div className="flex justify-end">
             <Button onClick={handleCreate} disabled={!title.trim() || isLoading}>
@@ -102,24 +104,24 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
             return (
               <Card
                 key={t.id}
-                className={`relative overflow-hidden rounded-2xl border-0 shadow-lg bg-white/95 backdrop-blur-sm ${t.status === "open" ? "topic-glow" : ""}`}
+                className={`relative overflow-hidden rounded-2xl border-0 shadow-lg bg-card/95 backdrop-blur-sm min-w-0 ${t.status === "open" ? "topic-glow" : ""}`}
               >
                 <CardHeader className="pb-0">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <CardTitle className="text-base sm:text-lg">
+                  <div className="flex items-start justify-between gap-3 min-w-0">
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="text-base sm:text-lg break-words">
                         {t.title}
                       </CardTitle>
                       {t.description ? (
-                        <p className="mt-1 text-sm text-gray-600">{t.description}</p>
+                        <p className="mt-1 text-sm text-muted-foreground break-words">{t.description}</p>
                       ) : null}
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Badge variant={t.status === "open" ? "success" : "secondary"}>
+                    <div className="flex flex-col sm:flex-row items-end sm:items-center gap-2 flex-shrink-0">
+                      <Badge variant={t.status === "open" ? "default" : "secondary"} className="text-xs">
                         {t.status === "open" ? "Open" : "Closed"}
                       </Badge>
                       {typeof total === "number" ? (
-                        <Badge variant="info">{total} votes</Badge>
+                        <Badge variant="outline" className="text-xs">{total} votes</Badge>
                       ) : null}
                     </div>
                   </div>
@@ -133,10 +135,10 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
                         onClick={() =>
                           interested && handleVote(poll.id, interested.id)
                         }
-                        className="justify-between"
+                        className="justify-between min-w-0"
                       >
-                        <span>👍 Interested</span>
-                        <span className="ml-3 text-xs opacity-80">
+                        <span className="truncate">👍 Interested</span>
+                        <span className="ml-3 text-xs opacity-80 flex-shrink-0">
                           {interested?.votes || 0}
                         </span>
                       </Button>
@@ -148,16 +150,16 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
                         onClick={() =>
                           notInterested && handleVote(poll.id, notInterested.id)
                         }
-                        className="justify-between"
+                        className="justify-between min-w-0"
                       >
-                        <span>👎 Not interested</span>
-                        <span className="ml-3 text-xs opacity-80">
+                        <span className="truncate">👎 Not interested</span>
+                        <span className="ml-3 text-xs opacity-80 flex-shrink-0">
                           {notInterested?.votes || 0}
                         </span>
                       </Button>
                     </div>
                   ) : (
-                    <div className="text-sm text-gray-500 flex items-center justify-between">
+                    <div className="text-sm text-muted-foreground flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                       <span>No poll linked yet.</span>
                       {t.status === "open" ? (
                         <Button
@@ -165,6 +167,7 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
                           variant="outline"
                           disabled={ensuring}
                           onClick={() => ensurePollForTopic(t)}
+                          className="flex-shrink-0"
                         >
                           {ensuring ? <Loader2 className="h-3 w-3 animate-spin mr-2" /> : null}
                           Create poll
@@ -173,8 +176,8 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
                     </div>
                   )}
 
-                  <div className="mt-3 flex items-center justify-between">
-                    <span className="text-xs text-gray-500">
+                  <div className="mt-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground">
                       Posted {new Date(t.created_at).toLocaleString()}
                     </span>
                     {t.status === "open" ? (
@@ -183,6 +186,7 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
                         variant="outline"
                         disabled={closing}
                         onClick={() => closeTopic(t.id)}
+                        className="flex-shrink-0"
                       >
                         Close Topic
                       </Button>

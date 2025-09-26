@@ -155,19 +155,19 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
           <TabsList className="grid w-full grid-cols-3 bg-background/30 backdrop-blur-xl rounded-2xl p-1.5 border border-border/20">
             <TabsTrigger 
               value="chat" 
-              className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/90 data-[state=active]:to-accent/90 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg font-semibold transition-all duration-300"
+              className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg font-semibold transition-all duration-300"
             >
               💬 Chat
             </TabsTrigger>
             <TabsTrigger 
               value="rooms" 
-              className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/90 data-[state=active]:to-accent/90 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg font-semibold transition-all duration-300"
+              className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg font-semibold transition-all duration-300"
             >
               🏠 Rooms
             </TabsTrigger>
             <TabsTrigger 
               value="topics" 
-              className="rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-primary/90 data-[state=active]:to-accent/90 data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg font-semibold transition-all duration-300"
+              className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg font-semibold transition-all duration-300"
             >
               ✨ Topics
             </TabsTrigger>
@@ -177,16 +177,15 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
         {/* Chat Content - Independent Container */}
         <TabsContent value="chat" className="m-0">
           <div className="h-[75vh] max-h-[800px] flex flex-col relative overflow-hidden">
-            {/* Ultra Modern Background with Glassmorphism */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-background to-accent/3 opacity-60"></div>
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-accent/10"></div>
+            {/* Modern Background */}
+            <div className="absolute inset-0 bg-primary/5 opacity-60"></div>
             <div className="absolute inset-0 backdrop-blur-3xl bg-background/40 border border-border/20 rounded-3xl shadow-2xl"></div>
             
             {/* Chat Container */}
             <div className="relative z-10 h-full flex flex-col rounded-3xl overflow-hidden">
               {/* Ultra Modern Header */}
-              <div className="relative p-6 bg-gradient-to-r from-background/80 via-background/60 to-background/80 backdrop-blur-xl border-b border-border/10">
-                <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-accent/5 opacity-50"></div>
+              <div className="relative p-6 bg-background/80 backdrop-blur-xl border-b border-border/10">
+                <div className="absolute inset-0 bg-primary/5 opacity-50"></div>
                 <div className="relative flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className="relative">
@@ -196,7 +195,7 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
                       </div>
                     </div>
                     <div>
-                      <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                      <h1 className="text-2xl font-bold text-primary">
                         {selectedRoom ? selectedRoom.name : 'Live Chat'}
                       </h1>
                       <p className="text-sm text-muted-foreground/80 font-medium">
@@ -261,20 +260,20 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
 
                 {/* Floating Scroll Button */}
                 {isUserScrolling && (
-                  <Button
-                    onClick={scrollToBottom}
-                    size="icon"
-                    className="fixed bottom-32 right-8 rounded-full bg-gradient-to-r from-primary to-accent shadow-2xl border-0 hover:scale-110 transition-all duration-300 z-20"
-                  >
-                    <ArrowDown className="h-4 w-4" />
-                  </Button>
+                    <Button
+                      onClick={scrollToBottom}
+                      size="icon"
+                      className="fixed bottom-32 right-8 rounded-full bg-primary shadow-2xl border-0 hover:scale-110 transition-all duration-300 z-20"
+                    >
+                      <ArrowDown className="h-4 w-4" />
+                    </Button>
                 )}
 
                 {/* Quote Preview */}
                 {quotedMessage && (
-                  <div className="mb-4 p-4 bg-gradient-to-r from-background/80 to-background/60 backdrop-blur-xl rounded-2xl border border-border/20 shadow-lg">
+                  <div className="mb-4 p-4 bg-background/80 backdrop-blur-xl rounded-2xl border border-border/20 shadow-lg">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-sm font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                      <span className="text-sm font-semibold text-primary">
                         💬 Replying to {quotedMessage.user_profile?.name}
                       </span>
                       <Button 
@@ -291,10 +290,10 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
                 )}
 
                 {/* Ultra Modern Message Input */}
-                <div className="py-4">
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-accent/5 to-primary/10 rounded-3xl blur-xl"></div>
-                    <div className="relative flex gap-3 items-end bg-background/80 backdrop-blur-xl border border-border/20 rounded-3xl p-4 shadow-xl">
+                  <div className="py-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-primary/10 rounded-3xl blur-xl"></div>
+                      <div className="relative flex gap-3 items-end bg-background/80 backdrop-blur-xl border border-border/20 rounded-3xl p-4 shadow-xl">
                       <input
                         ref={fileInputRef}
                         type="file"
@@ -334,14 +333,14 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
                         )}
                       </div>
                       
-                      <Button 
-                        onClick={handleSendMessage} 
-                        disabled={!newMessage.trim()} 
-                        size="icon"
-                        className="rounded-2xl h-12 w-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 disabled:opacity-50 shadow-lg hover:scale-110 transition-all duration-300 border-0"
-                      >
-                        <Send className="h-5 w-5" />
-                      </Button>
+                        <Button 
+                          onClick={handleSendMessage} 
+                          disabled={!newMessage.trim()} 
+                          size="icon"
+                          className="rounded-2xl h-12 w-12 bg-primary hover:bg-primary/90 disabled:opacity-50 shadow-lg hover:scale-110 transition-all duration-300 border-0"
+                        >
+                          <Send className="h-5 w-5" />
+                        </Button>
                     </div>
                   </div>
                 </div>
@@ -354,8 +353,7 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
         <TabsContent value="rooms" className="m-0">
           <div className="min-h-[75vh] max-h-[800px] relative overflow-hidden">
             {/* Modern Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-background to-accent/3 opacity-60"></div>
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-accent/10"></div>
+            <div className="absolute inset-0 bg-primary/5 opacity-60"></div>
             <div className="absolute inset-0 backdrop-blur-3xl bg-background/40 border border-border/20 rounded-3xl shadow-2xl"></div>
             
             <div className="relative z-10 h-full p-6 rounded-3xl overflow-hidden">
@@ -376,8 +374,7 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
         <TabsContent value="topics" className="m-0">
           <div className="min-h-[75vh] max-h-[800px] relative overflow-hidden">
             {/* Modern Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-primary/3 via-background to-accent/3 opacity-60"></div>
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-accent/10"></div>
+            <div className="absolute inset-0 bg-primary/5 opacity-60"></div>
             <div className="absolute inset-0 backdrop-blur-3xl bg-background/40 border border-border/20 rounded-3xl shadow-2xl"></div>
             
             <div className="relative z-10 h-full p-6 rounded-3xl overflow-hidden">

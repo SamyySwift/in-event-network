@@ -80,7 +80,14 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
         </CardContent>
       </Card>
 
-      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border/20">
+      <div 
+        className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border/20 hover:scrollbar-thumb-border/40"
+        style={{ 
+          touchAction: 'pan-y',
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
+        }}
+      >
         {isLoading ? (
           <div className="flex items-center justify-center py-12 text-gray-500">
             <Loader2 className="animate-spin mr-2" /> Loading topics...

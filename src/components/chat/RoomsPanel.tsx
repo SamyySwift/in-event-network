@@ -87,7 +87,14 @@ const RoomsPanel: React.FC<RoomsPanelProps> = ({ eventId, onEnterRoom }) => {
       </div>
 
       {/* Rooms List */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border/20">
+      <div 
+        className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border/20 hover:scrollbar-thumb-border/40"
+        style={{ 
+          touchAction: 'pan-y',
+          WebkitOverflowScrolling: 'touch',
+          overscrollBehavior: 'contain',
+        }}
+      >
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center space-y-3">
@@ -113,38 +120,38 @@ const RoomsPanel: React.FC<RoomsPanelProps> = ({ eventId, onEnterRoom }) => {
                 onClick={() => { onEnterRoom(room.id); joinRoom(room.id); }}
               >
                 <div className="absolute inset-0 bg-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <CardContent className="relative p-5 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div 
-                      className="h-12 w-12 rounded-2xl border-2 border-white/20 shadow-lg flex items-center justify-center font-bold text-white text-lg"
-                      style={{ backgroundColor: room.color || '#3b82f6' }}
-                    >
-                      {room.name.charAt(0).toUpperCase()}
+                <CardContent className="relative p-5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4 flex-1 min-w-0">
+                      <div 
+                        className="h-12 w-12 rounded-2xl border-2 border-white/20 shadow-lg flex items-center justify-center font-bold text-white text-lg flex-shrink-0"
+                        style={{ backgroundColor: room.color || '#3b82f6' }}
+                      >
+                        {room.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors duration-200 truncate">
+                          {room.name}
+                        </h3>
+                        {room.tag && (
+                          <p className="text-sm text-muted-foreground truncate">{room.tag}</p>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors duration-200">
-                        {room.name}
-                      </h3>
-                      {room.tag && (
-                        <p className="text-sm text-muted-foreground">{room.tag}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Badge 
-                      variant="secondary" 
-                      className="flex items-center gap-1.5 bg-background/60 backdrop-blur-xl border border-border/20 px-3 py-1"
-                    >
-                      <Users className="h-3 w-3" />
-                      <span className="font-medium">{count}</span>
-                    </Badge>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0 ml-2">
+                      <Badge 
+                        variant="secondary" 
+                        className="flex items-center gap-1.5 bg-background/60 backdrop-blur-xl border border-border/20 px-2 py-1"
+                      >
+                        <Users className="h-3 w-3" />
+                        <span className="font-medium text-xs">{count}</span>
+                      </Badge>
                       {currentUser?.id === room.created_by && (
                         <Button 
                           size="sm"
                           variant="destructive"
                           onClick={(e) => { e.stopPropagation(); deleteRoom(room.id); }}
-                          className="rounded-xl shadow-md hover:scale-110 transition-all duration-300"
+                          className="rounded-xl shadow-md hover:scale-110 transition-all duration-300 h-8 w-8 p-0"
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>
@@ -152,7 +159,7 @@ const RoomsPanel: React.FC<RoomsPanelProps> = ({ eventId, onEnterRoom }) => {
                       <Button 
                         size="sm" 
                         onClick={(e) => { e.stopPropagation(); onEnterRoom(room.id); joinRoom(room.id); }}
-                        className="rounded-xl bg-primary hover:bg-primary/90 shadow-md hover:scale-110 transition-all duration-300"
+                        className="rounded-xl bg-primary hover:bg-primary/90 shadow-md hover:scale-110 transition-all duration-300 text-xs px-3"
                       >
                         Join
                       </Button>

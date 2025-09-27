@@ -540,27 +540,27 @@ const AdminNetworking = () => {
           </TabsContent>
 
           <TabsContent value="chat" className="m-0">
-            <div className="min-h-[75vh] max-h-[800px] relative overflow-hidden">
+            <div className="h-[calc(100vh-300px)] sm:h-[75vh] max-h-[800px] flex flex-col relative overflow-hidden">
               {/* Modern Background */}
               <div className="absolute inset-0 bg-primary/5 opacity-60"></div>
               <div className="absolute inset-0 backdrop-blur-3xl bg-background/40 border border-border/20 rounded-3xl shadow-2xl"></div>
               
-              <div className="relative z-10 h-full rounded-3xl overflow-hidden">
-                {/* Header */}
-                <div className="p-6 bg-background/80 backdrop-blur-xl border-b border-border/10">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 bg-primary/10 rounded-2xl border border-border/20">
-                      <MessageSquare className="h-5 w-5 text-primary" />
+              <div className="relative z-10 h-full flex flex-col rounded-3xl overflow-hidden">
+                {/* Header - Compact on mobile */}
+                <div className="p-4 sm:p-6 bg-background/80 backdrop-blur-xl border-b border-border/10 flex-shrink-0">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="p-2 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl border border-border/20">
+                      <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
                     </div>
                     <div>
-                      <h2 className="text-xl font-bold text-primary">Event Chat Room</h2>
-                      <p className="text-sm text-muted-foreground">Participate in the live event chat as an admin moderator</p>
+                      <h2 className="text-lg sm:text-xl font-bold text-primary">Event Chat Room</h2>
+                      <p className="text-xs sm:text-sm text-muted-foreground">Admin chat moderator</p>
                     </div>
                   </div>
                 </div>
                 
-                {/* Chat Content */}
-                <div className="h-[calc(75vh-120px)] max-h-[680px] overflow-hidden">
+                {/* Chat Content - Takes remaining space */}
+                <div className="flex-1 min-h-0 overflow-hidden">
                   <AdminChatRoom eventId={eventId} />
                 </div>
               </div>

@@ -539,23 +539,32 @@ const AdminNetworking = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="chat" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="h-5 w-5" />
-                  Event Chat Room
-                </CardTitle>
-                <CardDescription>
-                  Participate in the live event chat as an admin moderator.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[600px]">
+          <TabsContent value="chat" className="m-0">
+            <div className="min-h-[75vh] max-h-[800px] relative overflow-hidden">
+              {/* Modern Background */}
+              <div className="absolute inset-0 bg-primary/5 opacity-60"></div>
+              <div className="absolute inset-0 backdrop-blur-3xl bg-background/40 border border-border/20 rounded-3xl shadow-2xl"></div>
+              
+              <div className="relative z-10 h-full rounded-3xl overflow-hidden">
+                {/* Header */}
+                <div className="p-6 bg-background/80 backdrop-blur-xl border-b border-border/10">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-primary/10 rounded-2xl border border-border/20">
+                      <MessageSquare className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-primary">Event Chat Room</h2>
+                      <p className="text-sm text-muted-foreground">Participate in the live event chat as an admin moderator</p>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Chat Content */}
+                <div className="h-[calc(75vh-120px)] max-h-[680px] overflow-hidden">
                   <AdminChatRoom eventId={eventId} />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
 

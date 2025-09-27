@@ -212,21 +212,16 @@ export default function BuyTickets() {
   // Handle error state
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-accent/5 to-primary/10 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md glass-card border-primary/20 shadow-2xl">
-          <CardHeader className="text-center">
-            <CardTitle className="bg-gradient-to-r from-destructive to-destructive/70 bg-clip-text text-transparent text-2xl font-bold">
-              Event Not Found
-            </CardTitle>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center text-red-600">Event Not Found</CardTitle>
           </CardHeader>
           <CardContent className="text-center">
-            <p className="text-muted-foreground mb-6 leading-relaxed">
+            <p className="text-gray-600 mb-4">
               The event you're looking for doesn't exist or may have been removed.
             </p>
-            <Button 
-              onClick={() => navigate('/')} 
-              className="w-full bg-gradient-to-r from-primary to-primary-600 hover:from-primary-600 hover:to-primary-700 text-primary-foreground font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
-            >
+            <Button onClick={() => navigate('/')} className="w-full">
               Go to Homepage
             </Button>
           </CardContent>
@@ -868,7 +863,7 @@ export default function BuyTickets() {
   // Show guest ticket display if applicable
   if (showGuestTickets && guestTickets.length > 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-background via-accent/5 to-primary/10 py-8">
+      <div className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-4xl mx-auto px-4">
           <GuestTicketDisplay 
             tickets={guestTickets}
@@ -881,133 +876,96 @@ export default function BuyTickets() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-accent/5 to-primary/5">
-      {/* Ultra Modern Event Banner */}
-      {event.banner_url && (
-        <div className="relative h-80 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 backdrop-blur-3xl"></div>
-          <img
-            src={event.banner_url}
-            alt={event.name}
-            className="w-full h-full object-cover opacity-80"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent">
-            <div className="max-w-4xl mx-auto px-4 h-full flex items-end pb-8">
-              <div className="glass-card p-6 rounded-3xl border border-primary/20 shadow-2xl backdrop-blur-xl">
-                <h1 className="text-4xl font-bold mb-3 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  {event.name}
-                </h1>
-                <div className="flex items-center gap-6 text-foreground/80 text-sm">
-                  <div className="flex items-center gap-2 bg-primary/10 px-3 py-1 rounded-full">
-                    <Calendar className="w-4 h-4" />
-                    <span className="font-medium">{new Date(event.start_time).toLocaleDateString()}</span>
-                  </div>
-                  {event.location && (
-                    <div className="flex items-center gap-2 bg-accent/10 px-3 py-1 rounded-full">
-                      <MapPin className="w-4 h-4" />
-                      <span className="font-medium">{event.location}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl mx-auto px-4">
+        {/* Event Header */}
+        <div className="mb-8">
+          {event.banner_url && (
+            <div className="w-full h-64 rounded-lg overflow-hidden mb-6">
+              <img 
+                src={event.banner_url} 
+                alt={event.name}
+                className="w-full h-full object-cover"
+              />
             </div>
+          )}
+          
+          <h1 className="text-3xl font-bold mb-4">{event.name}</h1>
+          
+          {event.description && (
+            <p className="text-muted-foreground mb-4">{event.description}</p>
+          )}
+          
+          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              <span>{new Date(event.start_time).toLocaleDateString()}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4" />
+              <span>
+                {new Date(event.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - 
+                {new Date(event.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </div>
+            {event.location && (
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                <span>{event.location}</span>
+              </div>
+            )}
           </div>
         </div>
-      )}
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Modern Event Info without Banner */}
-        {!event.banner_url && (
-          <div className="mb-8 text-center">
-            <div className="glass-card p-8 rounded-3xl border border-primary/20 shadow-2xl backdrop-blur-xl inline-block">
-              <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary via-accent to-primary-600 bg-clip-text text-transparent">
-                {event.name}
-              </h1>
-              <div className="flex items-center justify-center gap-6 text-foreground/80 text-sm mb-4">
-                <div className="flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full">
-                  <Calendar className="w-4 h-4" />
-                  <span className="font-medium">{new Date(event.start_time).toLocaleDateString()}</span>
-                </div>
-                {event.location && (
-                  <div className="flex items-center gap-2 bg-accent/10 px-4 py-2 rounded-full">
-                    <MapPin className="w-4 h-4" />
-                    <span className="font-medium">{event.location}</span>
-                  </div>
-                )}
-              </div>
-              {event.description && (
-                <p className="text-muted-foreground text-lg leading-relaxed max-w-2xl mx-auto">
-                  {event.description}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Ultra Modern Login Required Message */}
+        {/* Show login requirement as main content if needed */}
         {requiresLoginForPurchase && !currentUser ? (
           <div className="max-w-2xl mx-auto">
-            <Card className="glass-card border-accent/30 bg-gradient-to-r from-accent/10 to-primary/10 shadow-2xl mb-8">
-              <CardContent className="p-8">
-                <div className="flex items-center gap-6">
-                  <div className="p-4 bg-gradient-to-br from-accent to-primary rounded-2xl shadow-lg">
-                    <LogIn className="w-8 h-8 text-primary-foreground" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-bold text-2xl text-foreground mb-2 bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent">
-                      Login Required
-                    </h3>
-                    <p className="text-muted-foreground text-lg mb-4 leading-relaxed">
-                      Please log in to select and purchase tickets for this event.
-                    </p>
-                    <Button
-                      onClick={handleLoginRedirect}
-                      className="bg-gradient-to-r from-accent to-primary hover:from-accent/90 hover:to-primary/90 text-primary-foreground font-semibold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
-                    >
-                      <LogIn className="w-5 h-5 mr-2" />
-                      Login to Continue
-                    </Button>
-                  </div>
-                </div>
+            <Card className="border-primary bg-white shadow-lg">
+              <CardContent className="py-12 text-center">
+                <LogIn className="h-16 w-16 text-primary mx-auto mb-6" />
+                <h2 className="text-2xl font-semibold text-foreground mb-4">Login Required</h2>
+                <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                  Please log in to select and purchase tickets for this event
+                </p>
+                <Button 
+                  onClick={handleLoginRedirect} 
+                  size="lg" 
+                  className="bg-primary hover:bg-primary/90 min-w-48"
+                >
+                  <LogIn className="h-5 w-5 mr-2" />
+                  Login to Continue
+                </Button>
               </CardContent>
             </Card>
             
-            {/* Modern Available Tickets Preview */}
-            <Card className="glass-card border-primary/20 shadow-2xl backdrop-blur-xl">
-              <CardHeader className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 border-b border-primary/20">
-                <CardTitle className="flex items-center gap-3 text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                  <div className="p-2 bg-gradient-to-br from-primary to-accent rounded-xl shadow-lg">
-                    <Ticket className="w-6 h-6 text-primary-foreground" />
-                  </div>
+            {/* Show available ticket types preview */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Ticket className="w-5 h-5" />
                   Available Tickets
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 p-6">
+              <CardContent className="space-y-4">
                 {ticketTypes.map((ticketType) => (
-                  <div key={ticketType.id} className="flex items-center justify-between p-4 border border-primary/20 rounded-xl bg-gradient-to-r from-background/50 to-accent/5">
+                  <div key={ticketType.id} className="flex items-center justify-between p-4 border rounded-lg bg-muted/30">
                     <div className="flex-1 mr-4">
-                      <h4 className="font-semibold text-foreground/80 mb-1">{ticketType.name}</h4>
+                      <div className="mb-1">
+                        <h4 className="font-medium text-muted-foreground">{ticketType.name}</h4>
+                      </div>
                       {ticketType.description && (
                         <p className="text-sm text-muted-foreground mb-2">{ticketType.description}</p>
                       )}
-                      <div className="flex items-center gap-4 text-xs">
-                        <span className="bg-accent/10 px-3 py-1 rounded-full text-foreground/70 font-medium">
-                          {ticketType.available_quantity} available
-                        </span>
-                        <span className="bg-primary/10 px-3 py-1 rounded-full text-foreground/70 font-medium">
-                          Max {ticketType.max_tickets_per_user} per user
-                        </span>
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span>{ticketType.available_quantity} available</span>
+                        <span>Max {ticketType.max_tickets_per_user} per user</span>
                       </div>
                     </div>
                     <div className="flex flex-col items-center">
                       {ticketType.price > 0 ? (
-                        <Badge className="bg-gradient-to-r from-primary to-accent text-primary-foreground font-bold">
-                          ₦{((ticketType.display_price || ticketType.price) / 100).toLocaleString()}
-                        </Badge>
+                        <Badge variant="secondary">₦{((ticketType.display_price || ticketType.price) / 100).toLocaleString()}</Badge>
                       ) : (
-                        <Badge className="bg-gradient-to-r from-accent/20 to-primary/20 text-foreground font-bold">
-                          Free
-                        </Badge>
+                        <Badge variant="secondary">Free</Badge>
                       )}
                     </div>
                   </div>
@@ -1020,12 +978,10 @@ export default function BuyTickets() {
             {/* Enhanced Ticket Purchase Form */}
             <div className="lg:col-span-2">
               {ticketTypes.length === 0 ? (
-                <Card className="glass-card border-primary/20 shadow-2xl">
-                  <CardContent className="py-12 text-center">
-                    <div className="p-4 bg-gradient-to-br from-muted to-accent/10 rounded-2xl shadow-lg w-16 h-16 mx-auto mb-6 flex items-center justify-center">
-                      <Ticket className="h-8 w-8 text-muted-foreground" />
-                    </div>
-                    <p className="text-muted-foreground text-lg">No tickets available at this time.</p>
+                <Card>
+                  <CardContent className="py-8 text-center">
+                    <Ticket className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">No tickets available at this time.</p>
                   </CardContent>
                 </Card>
               ) : (
@@ -1039,28 +995,26 @@ export default function BuyTickets() {
               )}
             </div>
 
-            {/* Ultra Modern Purchase Summary */}
+            {/* Purchase Summary */}
             <div>
-              <Card className="sticky top-8 glass-card border-primary/20 shadow-2xl backdrop-blur-xl overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 border-b border-primary/20">
-                  <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                    Purchase Summary
-                  </CardTitle>
+              <Card className="sticky top-8">
+                <CardHeader>
+                  <CardTitle>Purchase Summary</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-6 p-6">
+                <CardContent className="space-y-4">
                   {requiresLoginForPurchase && !currentUser && (
-                    <Card className="glass-card border-accent/30 bg-gradient-to-r from-accent/10 to-primary/10 shadow-lg">
+                    <Card className="border-primary bg-primary/5">
                       <CardContent className="pt-4">
-                        <div className="flex items-center gap-3 text-primary mb-2">
+                        <div className="flex items-center gap-2 text-primary mb-2">
                           <LogIn className="h-4 w-4" />
-                          <span className="font-bold">Login Required</span>
+                          <span className="font-medium">Login Required</span>
                         </div>
                         <p className="text-sm text-muted-foreground mb-3">
                           You need to log in to purchase tickets
                         </p>
                         <Button 
                           onClick={handleLoginRedirect}
-                          className="w-full bg-gradient-to-r from-accent to-primary hover:from-accent/90 hover:to-primary/90" 
+                          className="w-full bg-primary hover:bg-primary/90" 
                         >
                           <LogIn className="h-4 w-4 mr-2" />
                           Login to Continue
@@ -1072,13 +1026,13 @@ export default function BuyTickets() {
                   {/* Step-by-step Purchase Flow */}
                   {currentUser && getTotalTickets() > 0 && !showPayment && (
                     <div className="space-y-4">
-                      <Card className="glass-card border-accent/30 bg-gradient-to-r from-accent/10 to-primary/10 shadow-lg">
+                      <Card className="border-green-200 bg-green-50">
                         <CardContent className="pt-4">
-                          <div className="flex items-center gap-3 text-accent mb-2">
+                          <div className="flex items-center gap-2 text-green-700 mb-2">
                             <User className="h-4 w-4" />
-                            <span className="font-bold">Ready to Purchase</span>
+                            <span className="font-medium">Ready to Purchase</span>
                           </div>
-                          <p className="text-sm text-muted-foreground">
+                          <p className="text-sm text-green-600">
                             All attendee information completed. Click purchase to continue.
                           </p>
                         </CardContent>
@@ -1086,12 +1040,12 @@ export default function BuyTickets() {
                     </div>
                   )}
 
-                  {/* Modern Payment Interface */}
+                  {/* Payment Interface */}
                   {showPayment && eventData && (
-                    <Card className="glass-card border-accent/30 bg-gradient-to-r from-accent/10 to-primary/10 shadow-lg">
+                    <Card className="border-green-200 bg-green-50">
                       <CardContent className="pt-4">
                         <div className="space-y-4">
-                          <h3 className="font-bold text-accent text-lg">Complete Payment</h3>
+                          <h3 className="font-medium text-green-700">Complete Payment</h3>
                           <PaystackTicketPayment
                             eventId={eventData.event.id}
                             eventName={eventData.event.name}
@@ -1122,7 +1076,7 @@ export default function BuyTickets() {
                           <Button 
                             variant="outline" 
                             onClick={() => setShowPayment(false)}
-                            className="w-full border-primary/20 hover:bg-primary/10 rounded-xl"
+                            className="w-full"
                           >
                             Cancel Payment
                           </Button>
@@ -1131,17 +1085,15 @@ export default function BuyTickets() {
                     </Card>
                   )}
 
-                  <div className="border-t border-primary/20 pt-4">
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center p-3 rounded-xl bg-gradient-to-r from-background/50 to-accent/5">
-                        <span className="font-semibold text-foreground">Total Tickets:</span>
-                        <span className="font-bold text-lg">{getTotalTickets()}</span>
+                  <div className="border-t pt-4">
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span>Total Tickets:</span>
+                        <span>{getTotalTickets()}</span>
                       </div>
-                      <div className="flex justify-between items-center p-4 rounded-xl bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20">
-                        <span className="font-bold text-xl text-foreground">Total:</span>
-                        <span className="font-bold text-2xl bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                          ₦{(getTotalPrice() / 100).toLocaleString()}
-                        </span>
+                      <div className="flex justify-between font-semibold text-lg">
+                        <span>Total:</span>
+                        <span>₦{(getTotalPrice() / 100).toLocaleString()}</span>
                       </div>
                     </div>
                   </div>
@@ -1150,25 +1102,10 @@ export default function BuyTickets() {
                     <Button
                       onClick={handlePurchase}
                       disabled={isProcessing || getTotalTickets() === 0}
-                      className="w-full bg-gradient-to-r from-primary via-accent to-primary-600 hover:from-primary-600 hover:via-accent/90 hover:to-primary-700 text-primary-foreground font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-[1.02]"
+                      className="w-full"
                       size="lg"
                     >
-                      {isProcessing ? (
-                        <>
-                          <div className="animate-spin rounded-full h-5 w-5 border-2 border-primary-foreground/30 border-t-primary-foreground mr-3"></div>
-                          Processing...
-                        </>
-                      ) : getTotalPrice() === 0 ? (
-                        <>
-                          <Ticket className="w-5 h-5 mr-2" />
-                          Get {getTotalTickets()} Free Ticket{getTotalTickets() !== 1 ? 's' : ''}
-                        </>
-                      ) : (
-                        <>
-                          <Ticket className="w-5 h-5 mr-2" />
-                          Purchase {getTotalTickets()} Ticket{getTotalTickets() !== 1 ? 's' : ''}
-                        </>
-                      )}
+                      {isProcessing ? 'Processing...' : getTotalPrice() === 0 ? `Get ${getTotalTickets()} Free Ticket${getTotalTickets() !== 1 ? 's' : ''}` : `Purchase ${getTotalTickets()} Ticket${getTotalTickets() !== 1 ? 's' : ''}`}
                     </Button>
                   )}
 
@@ -1179,39 +1116,37 @@ export default function BuyTickets() {
         )}
       </div>
 
-      {/* Ultra Modern Success Modal */}
+      {/* Success Modal */}
       {showSuccessModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md glass-card border-primary/20 shadow-2xl">
-            <CardHeader className="text-center p-8">
-              <div className="mx-auto w-20 h-20 bg-gradient-to-br from-accent to-primary rounded-full flex items-center justify-center mb-6 shadow-lg">
-                <Ticket className="w-10 h-10 text-primary-foreground" />
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <Ticket className="w-8 h-8 text-green-600" />
               </div>
-              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent">
-                Purchase Successful!
-              </CardTitle>
+              <CardTitle className="text-green-600">Purchase Successful!</CardTitle>
             </CardHeader>
-            <CardContent className="text-center space-y-6 p-8 pt-0">
-              <p className="text-foreground text-lg leading-relaxed">
-                Congratulations! You have successfully purchased <span className="font-bold">{purchasedTicketCount}</span> ticket{purchasedTicketCount > 1 ? 's' : ''} for <span className="font-bold">{eventData?.event.name}</span>.
+            <CardContent className="text-center space-y-4">
+              <p className="text-gray-600">
+                Congratulations! You have successfully purchased {purchasedTicketCount} ticket(s) for {eventData?.event.name}.
               </p>
-              <p className="text-muted-foreground">
+              <p className="text-sm text-gray-500">
                 Your tickets have been added to your account and you can view them in your dashboard.
               </p>
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-2">
                 <Button 
                   onClick={() => {
                     setShowSuccessModal(false);
                     navigate('/attendee/my-tickets');
                   }}
-                  className="flex-1 bg-gradient-to-r from-primary to-accent hover:from-primary-600 hover:to-accent/90 text-primary-foreground font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+                  className="flex-1"
                 >
                   View My Tickets
                 </Button>
                 <Button 
                   variant="outline" 
                   onClick={() => setShowSuccessModal(false)}
-                  className="flex-1 border-primary/20 hover:bg-primary/10 rounded-xl font-semibold py-3"
+                  className="flex-1"
                 >
                   Continue Shopping
                 </Button>

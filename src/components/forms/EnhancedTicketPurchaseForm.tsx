@@ -145,74 +145,56 @@ export function EnhancedTicketPurchaseForm({
   };
 
   return (
-    <div className="space-y-8">
-      {/* Ultra Modern Ticket Selection */}
-      <Card className="glass-card border-primary/20 shadow-2xl backdrop-blur-xl overflow-hidden">
-        <CardHeader className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 border-b border-primary/20">
-          <CardTitle className="flex items-center gap-3 text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            <div className="p-2 bg-gradient-to-br from-primary to-accent rounded-xl shadow-lg">
-              <Ticket className="w-6 h-6 text-primary-foreground" />
-            </div>
+    <div className="space-y-6">
+      {/* Ticket Selection */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Ticket className="w-5 h-5" />
             Select Tickets
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6 p-6">
+        <CardContent className="space-y-4">
           {ticketTypes.map((ticketType) => (
-            <div key={ticketType.id} className="group hover:scale-[1.02] transition-all duration-300">
-              <div className="flex items-center justify-between p-6 border border-primary/20 rounded-2xl bg-gradient-to-r from-background/50 to-accent/5 hover:from-primary/5 hover:to-accent/10 hover:border-primary/30 hover:shadow-lg transition-all duration-300">
-                <div className="flex-1 mr-6">
-                  <div className="mb-2">
-                    <h4 className="font-bold text-lg text-foreground group-hover:text-primary transition-colors duration-300">
-                      {ticketType.name}
-                    </h4>
-                  </div>
-                  {ticketType.description && (
-                    <p className="text-muted-foreground mb-3 leading-relaxed">{ticketType.description}</p>
-                  )}
-                  <div className="flex items-center gap-4 text-sm">
-                    <span className="bg-accent/10 px-3 py-1 rounded-full text-foreground/80 font-medium">
-                      {Math.max(0, ticketType.available_quantity - (selectedTickets[ticketType.id] || 0))} remaining
-                    </span>
-                    <span className="bg-primary/10 px-3 py-1 rounded-full text-foreground/80 font-medium">
-                      Max {ticketType.max_tickets_per_user} per user
-                    </span>
-                  </div>
+            <div key={ticketType.id} className="flex items-center justify-between p-4 border rounded-lg">
+              <div className="flex-1 mr-6">
+                <div className="mb-1">
+                  <h4 className="font-medium">{ticketType.name}</h4>
                 </div>
-                <div className="flex flex-col items-center gap-4">
-                  <div className="text-center">
-                    {ticketType.price > 0 ? (
-                      <Badge className="bg-gradient-to-r from-primary to-accent text-primary-foreground font-bold text-lg px-4 py-2 shadow-lg">
-                        ₦{((ticketType.display_price || ticketType.price) / 100).toLocaleString()}
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary" className="bg-gradient-to-r from-accent/20 to-primary/20 text-foreground font-bold text-lg px-4 py-2 shadow-lg">
-                        Free
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 bg-background/80 p-2 rounded-xl border border-primary/20 shadow-lg">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-10 w-10 rounded-xl bg-gradient-to-r from-background to-accent/10 hover:from-destructive/10 hover:to-destructive/20 border-primary/20 font-bold text-lg"
-                      onClick={() => handleQuantityChange(ticketType.id, (selectedTickets[ticketType.id] || 0) - 1)}
-                      disabled={(selectedTickets[ticketType.id] || 0) <= 0}
-                    >
-                      -
-                    </Button>
-                    <span className="w-12 text-center font-bold text-xl text-foreground bg-primary/10 py-2 px-3 rounded-lg">
-                      {selectedTickets[ticketType.id] || 0}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-10 w-10 rounded-xl bg-gradient-to-r from-background to-accent/10 hover:from-primary/10 hover:to-accent/20 border-primary/20 font-bold text-lg"
-                      onClick={() => handleQuantityChange(ticketType.id, (selectedTickets[ticketType.id] || 0) + 1)}
-                      disabled={(selectedTickets[ticketType.id] || 0) >= Math.min(ticketType.max_tickets_per_user, ticketType.available_quantity)}
-                    >
-                      +
-                    </Button>
-                  </div>
+                {ticketType.description && (
+                  <p className="text-sm text-muted-foreground mb-2">{ticketType.description}</p>
+                )}
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  <span>{Math.max(0, ticketType.available_quantity - (selectedTickets[ticketType.id] || 0))} remaining</span>
+                  <span>Max {ticketType.max_tickets_per_user} per user</span>
+                </div>
+              </div>
+              <div className="flex flex-col items-center gap-3">
+                <div className="text-center">
+                  {ticketType.price > 0 ? (
+                    <Badge variant="default">₦{((ticketType.display_price || ticketType.price) / 100).toLocaleString()}</Badge>
+                  ) : (
+                    <Badge variant="secondary">Free</Badge>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleQuantityChange(ticketType.id, (selectedTickets[ticketType.id] || 0) - 1)}
+                    disabled={(selectedTickets[ticketType.id] || 0) <= 0}
+                  >
+                    -
+                  </Button>
+                  <span className="w-8 text-center">{selectedTickets[ticketType.id] || 0}</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleQuantityChange(ticketType.id, (selectedTickets[ticketType.id] || 0) + 1)}
+                    disabled={(selectedTickets[ticketType.id] || 0) >= Math.min(ticketType.max_tickets_per_user, ticketType.available_quantity)}
+                  >
+                    +
+                  </Button>
                 </div>
               </div>
             </div>
@@ -220,46 +202,40 @@ export function EnhancedTicketPurchaseForm({
         </CardContent>
       </Card>
 
-      {/* Ultra Modern Attendee Information */}
+      {/* Attendee Information */}
       {purchaseData.length > 0 && (
-        <Card className="glass-card border-primary/20 shadow-2xl backdrop-blur-xl overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 border-b border-primary/20">
-            <CardTitle className="flex items-center gap-3 text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-              <div className="p-2 bg-gradient-to-br from-primary to-accent rounded-xl shadow-lg">
-                <Users className="w-6 h-6 text-primary-foreground" />
-              </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
               Attendee Information
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-8 p-6">
+          <CardContent className="space-y-6">
             {purchaseData.map((purchase, purchaseIndex) => {
               const ticketType = ticketTypes.find(t => t.id === purchase.ticketTypeId);
               if (!ticketType) return null;
 
               return (
-                <div key={purchase.ticketTypeId} className="space-y-6">
-                  <div className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20">
-                    <h4 className="font-bold text-lg text-foreground">{ticketType.name}</h4>
-                    <Badge className="bg-gradient-to-r from-accent/20 to-primary/20 text-foreground font-semibold px-3 py-1">
-                      {purchase.quantity} ticket{purchase.quantity > 1 ? 's' : ''}
-                    </Badge>
+                <div key={purchase.ticketTypeId} className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-medium">{ticketType.name}</h4>
+                    <Badge variant="outline">{purchase.quantity} ticket{purchase.quantity > 1 ? 's' : ''}</Badge>
                   </div>
 
                   {purchase.attendees.map((attendee, attendeeIndex) => (
-                    <div key={attendeeIndex} className="p-6 border border-primary/20 rounded-2xl space-y-6 bg-gradient-to-r from-background/50 to-accent/5 hover:from-primary/5 hover:to-accent/10 transition-all duration-300 hover:shadow-lg">
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="p-2 bg-gradient-to-br from-primary to-accent rounded-xl shadow-lg">
-                          <User className="w-5 h-5 text-primary-foreground" />
-                        </div>
-                        <span className="font-bold text-lg bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                    <div key={attendeeIndex} className="p-4 border rounded-lg space-y-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <User className="w-4 h-4" />
+                        <span className="font-medium">
                           {attendeeIndex === 0 ? 'Primary Attendee' : `Attendee ${attendeeIndex + 1}`}
                         </span>
                       </div>
 
-                      {/* Modern Basic Information */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                          <Label htmlFor={`firstName-${purchaseIndex}-${attendeeIndex}`} className="text-foreground font-semibold">
+                      {/* Basic Information */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor={`firstName-${purchaseIndex}-${attendeeIndex}`}>
                             First Name *
                           </Label>
                           <Input
@@ -267,11 +243,10 @@ export function EnhancedTicketPurchaseForm({
                             value={attendee.firstName}
                             onChange={(e) => updateAttendeeInfo(purchaseIndex, attendeeIndex, 'firstName', e.target.value)}
                             placeholder="Enter first name"
-                            className="border-primary/20 bg-background/50 focus:border-primary focus:ring-primary/20 rounded-xl h-12 font-medium"
                           />
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor={`lastName-${purchaseIndex}-${attendeeIndex}`} className="text-foreground font-semibold">
+                        <div>
+                          <Label htmlFor={`lastName-${purchaseIndex}-${attendeeIndex}`}>
                             Last Name *
                           </Label>
                           <Input
@@ -279,11 +254,10 @@ export function EnhancedTicketPurchaseForm({
                             value={attendee.lastName}
                             onChange={(e) => updateAttendeeInfo(purchaseIndex, attendeeIndex, 'lastName', e.target.value)}
                             placeholder="Enter last name"
-                            className="border-primary/20 bg-background/50 focus:border-primary focus:ring-primary/20 rounded-xl h-12 font-medium"
                           />
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor={`email-${purchaseIndex}-${attendeeIndex}`} className="text-foreground font-semibold">
+                        <div>
+                          <Label htmlFor={`email-${purchaseIndex}-${attendeeIndex}`}>
                             Email Address *
                           </Label>
                           <Input
@@ -292,11 +266,10 @@ export function EnhancedTicketPurchaseForm({
                             value={attendee.email}
                             onChange={(e) => updateAttendeeInfo(purchaseIndex, attendeeIndex, 'email', e.target.value)}
                             placeholder="Enter email address"
-                            className="border-primary/20 bg-background/50 focus:border-primary focus:ring-primary/20 rounded-xl h-12 font-medium"
                           />
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor={`phone-${purchaseIndex}-${attendeeIndex}`} className="text-foreground font-semibold">
+                        <div>
+                          <Label htmlFor={`phone-${purchaseIndex}-${attendeeIndex}`}>
                             Phone Number
                           </Label>
                           <Input
@@ -305,19 +278,16 @@ export function EnhancedTicketPurchaseForm({
                             value={attendee.phone || ''}
                             onChange={(e) => updateAttendeeInfo(purchaseIndex, attendeeIndex, 'phone', e.target.value)}
                             placeholder="Enter phone number"
-                            className="border-primary/20 bg-background/50 focus:border-primary focus:ring-primary/20 rounded-xl h-12 font-medium"
                           />
                         </div>
                       </div>
 
-                      {/* Modern Custom Form Fields */}
+                      {/* Custom Form Fields */}
                       {ticketType.formFields && ticketType.formFields.length > 0 && (
                         <>
-                          <Separator className="bg-primary/20" />
-                          <div className="space-y-6 p-4 rounded-xl bg-gradient-to-r from-accent/5 to-primary/5 border border-primary/10">
-                            <h5 className="font-bold text-lg text-foreground bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-                              Additional Information
-                            </h5>
+                          <Separator />
+                          <div className="space-y-4">
+                            <h5 className="font-medium text-sm">Additional Information</h5>
                             <CustomFormRenderer
                               formFields={ticketType.formFields}
                               values={attendee.formResponses || {}}
@@ -333,6 +303,27 @@ export function EnhancedTicketPurchaseForm({
                 </div>
               );
             })}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Purchase Summary */}
+      {getTotalTickets() > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Purchase Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex justify-between">
+                <span>Total Tickets:</span>
+                <span className="font-medium">{getTotalTickets()}</span>
+              </div>
+              <div className="flex justify-between text-lg font-medium">
+                <span>Total Price:</span>
+                <span>₦{(getTotalPrice() / 100).toLocaleString()}</span>
+              </div>
+            </div>
           </CardContent>
         </Card>
       )}

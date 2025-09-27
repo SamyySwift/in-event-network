@@ -139,6 +139,19 @@ export const useRooms = (overrideEventId?: string) => {
     }
   };
 
+  const deleteRoom = async (roomId: string) => {
+    if (!currentUser?.id) return;
+    try {
+      const { error } = await supabase.from('chat_rooms').delete().eq('id', roomId);
+      if (error) throw error;
+      if (selectedRoom?.id === roomId) setSelectedRoom(null);
+      await fetchRooms();
+      toast({ title: 'Room deleted', description: 'Room has been permanently deleted.' });
+    } catch (err: any) {
+      toast({ title: 'Delete failed', description: err?.message || 'Please try again.', variant: 'destructive' });
+    }
+  };
+
   return {
     rooms,
     loading,
@@ -148,6 +161,7 @@ export const useRooms = (overrideEventId?: string) => {
     createRoom,
     joinRoom,
     leaveRoom,
+    deleteRoom,
     refresh: fetchRooms,
   };
 };

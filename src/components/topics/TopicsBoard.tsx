@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { useTopics } from "@/hooks/useTopics";
 import { useAttendeePolls } from "@/hooks/useAttendeePolls";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, Trash2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 import { Textarea } from "@/components/ui/textarea"; // If not available, swap for <textarea>
 
 type Props = {
@@ -14,7 +15,8 @@ type Props = {
 };
 
 const TopicsBoard: React.FC<Props> = ({ className }) => {
-  const { topics, isLoading, createTopic, closeTopic, closing, ensurePollForTopic, ensuring } = useTopics();
+  const { topics, isLoading, createTopic, closeTopic, closing, ensurePollForTopic, ensuring, deleteTopic, deleting } = useTopics();
+  const { currentUser } = useAuth();
   const { polls, userVotes, submitVote, isSubmitting } = useAttendeePolls();
 
   const [title, setTitle] = useState("");
@@ -78,7 +80,7 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
         </CardContent>
       </Card>
 
-      <div className="flex-1 min-h-0">
+      <div className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border/20">
         {isLoading ? (
           <div className="flex items-center justify-center py-12 text-gray-500">
             <Loader2 className="animate-spin mr-2" /> Loading topics...
@@ -88,7 +90,7 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
             No topics yet. Be the first to raise one!
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 p-4">
             {topics.map((t) => {
             const total = getTotalVotes(t.poll_id);
             const userChoice = getUserVoteForPoll(t.poll_id);
@@ -122,6 +124,17 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
                       {typeof total === "number" ? (
                         <Badge variant="info">{total} votes</Badge>
                       ) : null}
+                      {currentUser?.id === t.user_id && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          disabled={deleting}
+                          onClick={() => deleteTopic(t.id)}
+                          className="h-6 w-6 p-0"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardHeader>

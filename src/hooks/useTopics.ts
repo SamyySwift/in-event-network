@@ -188,6 +188,24 @@ export const useTopics = () => {
     },
   });
 
+  const deleteTopic = useMutation({
+    mutationFn: async (topicId: string) => {
+      const { error } = await supabase.from("topics" as any).delete().eq("id", topicId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["topics", currentEventId] });
+      toast({ title: "Topic deleted", description: "Topic has been permanently deleted." });
+    },
+    onError: (e: any) => {
+      toast({
+        title: "Could not delete topic",
+        description: e?.message || "Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     topics,
     isLoading,
@@ -196,5 +214,7 @@ export const useTopics = () => {
     closeTopic: closeTopic.mutateAsync,
     ensurePollForTopic: ensurePollForTopic.mutateAsync,
     ensuring: ensurePollForTopic.isPending,
+    deleteTopic: deleteTopic.mutateAsync,
+    deleting: deleteTopic.isPending,
   };
 }

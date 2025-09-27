@@ -4,7 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useRooms } from '@/hooks/useRooms';
-import { Users, PlusCircle, Loader2 } from 'lucide-react';
+import { Users, PlusCircle, Loader2, Trash2 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 type RoomsPanelProps = {
   eventId?: string;
@@ -12,7 +13,8 @@ type RoomsPanelProps = {
 };
 
 const RoomsPanel: React.FC<RoomsPanelProps> = ({ eventId, onEnterRoom }) => {
-  const { rooms, participantCounts, createRoom, joinRoom, loading } = useRooms(eventId);
+  const { rooms, participantCounts, createRoom, joinRoom, deleteRoom, loading } = useRooms(eventId);
+  const { currentUser } = useAuth();
   const [name, setName] = useState('');
   const [tag, setTag] = useState('');
   const [color, setColor] = useState('#3b82f6');
@@ -136,13 +138,25 @@ const RoomsPanel: React.FC<RoomsPanelProps> = ({ eventId, onEnterRoom }) => {
                       <Users className="h-3 w-3" />
                       <span className="font-medium">{count}</span>
                     </Badge>
-                    <Button 
-                      size="sm" 
-                      onClick={(e) => { e.stopPropagation(); onEnterRoom(room.id); joinRoom(room.id); }}
-                      className="rounded-xl bg-primary hover:bg-primary/90 shadow-md hover:scale-110 transition-all duration-300"
-                    >
-                      Join
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {currentUser?.id === room.created_by && (
+                        <Button 
+                          size="sm"
+                          variant="destructive"
+                          onClick={(e) => { e.stopPropagation(); deleteRoom(room.id); }}
+                          className="rounded-xl shadow-md hover:scale-110 transition-all duration-300"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
+                      <Button 
+                        size="sm" 
+                        onClick={(e) => { e.stopPropagation(); onEnterRoom(room.id); joinRoom(room.id); }}
+                        className="rounded-xl bg-primary hover:bg-primary/90 shadow-md hover:scale-110 transition-all duration-300"
+                      >
+                        Join
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

@@ -25,9 +25,13 @@ const JoinEvent = () => {
     if (authLoading) return;
 
     if (!currentUser) {
-      // User not authenticated, redirect to register with the code
+      // User not authenticated, redirect to register with the code or event id
       if (accessCode) {
-        navigate(`/register?eventCode=${accessCode}&role=attendee`, { replace: true });
+        if (/^\d{6}$/.test(accessCode)) {
+          navigate(`/register?eventCode=${accessCode}&role=attendee`, { replace: true });
+        } else {
+          navigate(`/register?eventId=${accessCode}&role=attendee`, { replace: true });
+        }
       } else {
         setJoinStatus('error');
         setErrorMessage('No access code provided');

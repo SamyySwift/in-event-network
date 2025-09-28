@@ -1,3 +1,4 @@
+// Register component (partial)
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -20,11 +21,13 @@ import { AlertCircle, Network, Eye, EyeOff, Calendar, MapPin, User } from "lucid
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FcGoogle } from "react-icons/fc";
 import { Badge } from "@/components/ui/badge";
+import { useEventById } from "@/hooks/useEventById";
 
 const Register = () => {
   const [searchParams] = useSearchParams();
   const defaultRole = searchParams.get("role") || "attendee";
   const eventCode = searchParams.get("eventCode");
+  const eventIdParam = searchParams.get("eventId");
 
   // Determine QR context using URL or stored code (persists across reloads)
   const effectiveEventCode =
@@ -33,7 +36,11 @@ const Register = () => {
     localStorage.getItem("pendingEventCode");
 
   // If coming from QR code, force attendee role and prevent admin registration
-  const isFromQRCode = !!effectiveEventCode;
+  const effectiveEventId =
+    eventIdParam ||
+    sessionStorage.getItem("pendingEventId") ||
+    localStorage.getItem("pendingEventId");
+  const isFromQRCode = !!(effectiveEventCode || effectiveEventId);
   const allowedRoles = isFromQRCode ? ["attendee"] : ["host", "attendee"];
 
   const [name, setName] = useState("");
@@ -65,7 +72,8 @@ const Register = () => {
 
   const { register, signInWithGoogle, currentUser, isLoading } = useAuth();
   const { joinEvent } = useJoinEvent();
-  const { data: eventData, isLoading: isLoadingEvent, error: eventError } = useEventByAccessCode(effectiveEventCode);
+  const { data: eventDataByCode, isLoading: isLoadingByCode, error: eventErrorByCode } = useEventByAccessCode(effectiveEventCode);
+  const { data: eventDataById, isLoading: isLoadingById, error: eventErrorById } = useEventById(effectiveEventId);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -73,12 +81,16 @@ const Register = () => {
   console.log('Register component - Debug info:', { 
     eventCode,
     effectiveEventCode,
+    effectiveEventId,
     isFromQRCode, 
-    eventData, 
-    isLoadingEvent, 
-    eventError,
+    eventDataByCode, 
+    eventDataById,
+    isLoadingByCode,
+    isLoadingById,
+    eventErrorByCode,
+    eventErrorById,
     hasSticky: !!stickyEventData,
-    shouldShowBanner: isFromQRCode && (stickyEventData || eventData)
+    shouldShowBanner: isFromQRCode && (stickyEventData || eventDataByCode || eventDataById)
   });
 
   const handleGoogleSignUp = async () => {
@@ -123,17 +135,22 @@ const Register = () => {
      if (effectiveEventCode) {
        console.log("Storing event code in session and local storage:", effectiveEventCode);
        sessionStorage.setItem("pendingEventCode", effectiveEventCode);
-       localStorage.setItem("pendingEventCode", effectiveEventCode); // Backup in localStorage
-       console.log("Event code stored. SessionStorage:", sessionStorage.getItem("pendingEventCode"), "LocalStorage:", localStorage.getItem("pendingEventCode"));
+       localStorage.setItem("pendingEventCode", effectiveEventCode);
      }
-   }, [effectiveEventCode]);
+     if (effectiveEventId) {
+       console.log("Storing event id in session and local storage:", effectiveEventId);
+       sessionStorage.setItem("pendingEventId", effectiveEventId);
+       localStorage.setItem("pendingEventId", effectiveEventId);
+     }
+   }, [effectiveEventCode, effectiveEventId]);
 
   // Lock in the first successfully fetched event data so the banner never disappears
   useEffect(() => {
-    if (eventData && !stickyEventData) {
-      setStickyEventData(eventData as unknown as BannerEventData);
+    const candidate = (eventDataByCode || eventDataById) as unknown as BannerEventData | null;
+    if (candidate && !stickyEventData) {
+      setStickyEventData(candidate);
     }
-  }, [eventData, stickyEventData]);
+  }, [eventDataByCode, eventDataById, stickyEventData]);
 
   // Handle redirect when user becomes authenticated after registration
   useEffect(() => {
@@ -308,7 +325,13 @@ const Register = () => {
     );
   }
 
-  const banner = (stickyEventData ?? (!isLoadingEvent ? (eventData as any) : null)) as BannerEventData | null;
+  // Use either access-code fetched event data or event-id fetched data (whichever is available),
+  // and keep the first successful fetch sticky across the flow
+  const banner = (
+    stickyEventData ??
+    (!isLoadingByCode ? (eventDataByCode as any) : null) ??
+    (!isLoadingById ? (eventDataById as any) : null)
+  ) as BannerEventData | null;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -374,7 +397,7 @@ const Register = () => {
       )}
 
       {/* Loading state for event data */}
-      {isFromQRCode && isLoadingEvent && (
+      {isFromQRCode && (isLoadingByCode || isLoadingById) && (
         <div className="sm:mx-auto sm:w-full sm:max-w-2xl mb-8">
           <Card className="shadow-lg">
             <CardContent className="p-6">

@@ -81,6 +81,10 @@ export const AttendeeProfileModal: React.FC<AttendeeProfileModalProps> = ({
     }
   };
 
+  // Safeguards: ensure we never call .charAt on null/undefined
+  const safeName = (attendee.name ?? '').trim();
+  const displayInitial = safeName ? safeName.charAt(0).toUpperCase() : '?';
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md mx-auto max-h-[80vh] overflow-y-auto">
@@ -93,16 +97,16 @@ export const AttendeeProfileModal: React.FC<AttendeeProfileModalProps> = ({
           <div className="text-center">
             <Avatar className="h-24 w-24 mx-auto mb-4">
               {attendee.photo_url ? (
-                <AvatarImage src={attendee.photo_url} alt={attendee.name} />
+                <AvatarImage src={attendee.photo_url} alt={safeName || 'Attendee'} />
               ) : (
                 <AvatarFallback className="bg-connect-100 text-connect-600 dark:bg-connect-900 dark:text-connect-300 text-xl">
-                  {attendee.name.charAt(0).toUpperCase()}
+                  {displayInitial}
                 </AvatarFallback>
               )}
             </Avatar>
             
             <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-              {attendee.name}
+              {safeName || 'Unknown Attendee'}
             </h3>
             
             {attendee.niche && (
@@ -202,7 +206,7 @@ export const AttendeeProfileModal: React.FC<AttendeeProfileModalProps> = ({
             
             {onMessage && (
               <Button
-                onClick={() => onMessage(attendee.id, attendee.name, attendee.photo_url)}
+                onClick={() => onMessage(attendee.id, safeName || 'Attendee', attendee.photo_url)}
                 variant="outline"
                 className="flex-1"
               >

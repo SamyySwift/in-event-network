@@ -51,7 +51,8 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
   };
 
   return (
-    <div className={`h-full flex flex-col ${className}`}>
+    <div className={`h-full flex flex-col min-h-0 ${className || ''}`}>
+      {/* Header and create form */}
       <Card className="rounded-2xl border-0 shadow-lg bg-white/90 backdrop-blur-sm mb-4 flex-shrink-0">
         <CardHeader className="pb-2">
           <CardTitle className="flex items-center gap-2">
@@ -80,6 +81,7 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
         </CardContent>
       </Card>
 
+      {/* Scrollable topics list */}
       <div 
         className="flex-1 min-h-0 overflow-y-auto scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border/20 hover:scrollbar-thumb-border/40"
         style={{ 

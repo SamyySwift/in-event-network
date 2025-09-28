@@ -15,11 +15,9 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useJoinEvent } from "@/hooks/useJoinEvent";
-import { useEventByAccessCode } from "@/hooks/useEventByAccessCode";
-import { AlertCircle, Network, Eye, EyeOff, Calendar, MapPin, User } from "lucide-react";
+import { AlertCircle, Network, Eye, EyeOff } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FcGoogle } from "react-icons/fc";
-import { Badge } from "@/components/ui/badge";
 
 const Register = () => {
   const [searchParams] = useSearchParams();
@@ -45,19 +43,8 @@ const Register = () => {
 
   const { register, signInWithGoogle, currentUser, isLoading } = useAuth();
   const { joinEvent } = useJoinEvent();
-  const { data: eventData, isLoading: isLoadingEvent, error: eventError } = useEventByAccessCode(eventCode);
   const navigate = useNavigate();
   const { toast } = useToast();
-
-  // Debug logging to understand the banner visibility issue
-  console.log('Register component - Debug info:', { 
-    eventCode, 
-    isFromQRCode, 
-    eventData, 
-    isLoadingEvent, 
-    eventError,
-    shouldShowBanner: isFromQRCode && eventData 
-  });
 
   const handleGoogleSignUp = async () => {
     setErrorMessage(null);
@@ -295,69 +282,6 @@ const Register = () => {
           </span>
         </Link>
       </div>
-
-      {/* Event Banner Section - Only show when coming from QR code */}
-      {isFromQRCode && eventData && !isLoadingEvent && (
-        <div className="sm:mx-auto sm:w-full sm:max-w-2xl mb-8">
-          <Card className="overflow-hidden shadow-lg border-2 border-gradient-to-r from-cyan-400 to-purple-500">
-            {eventData.banner_url && (
-              <div className="h-48 w-full overflow-hidden">
-                <img
-                  src={eventData.banner_url}
-                  alt={eventData.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
-            <CardContent className="p-6">
-              <div className="text-center">
-                <Badge variant="secondary" className="mb-4 bg-gradient-to-r from-cyan-400 to-purple-500 text-white">
-                  You're joining this event
-                </Badge>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">{eventData.name}</h2>
-                {eventData.description && (
-                  <p className="text-gray-600 mb-4 line-clamp-2">{eventData.description}</p>
-                )}
-                <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500">
-                  {eventData.host_name && (
-                    <div className="flex items-center gap-1">
-                      <User className="h-4 w-4" />
-                      <span>Hosted by {eventData.host_name}</span>
-                    </div>
-                  )}
-                  {eventData.location && (
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4" />
-                      <span>{eventData.location}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    <span>{new Date(eventData.start_time).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Loading state for event data */}
-      {isFromQRCode && isLoadingEvent && (
-        <div className="sm:mx-auto sm:w-full sm:max-w-2xl mb-8">
-          <Card className="shadow-lg">
-            <CardContent className="p-6">
-              <div className="text-center">
-                <div className="animate-pulse">
-                  <div className="h-48 bg-gray-200 rounded-lg mb-4"></div>
-                  <div className="h-6 bg-gray-200 rounded w-3/4 mx-auto mb-2"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2 mx-auto"></div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <Card className="shadow-lg">

@@ -683,65 +683,65 @@ const AttendeeNetworking = () => {
 
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
           <TabsList
-            className="relative flex flex-nowrap w-full gap-2 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/70 p-1 shadow-lg h-auto min-h-[44px] overflow-x-auto whitespace-nowrap scrollbar-hide"
+            className="grid w-full grid-cols-4 gap-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/70 p-1 shadow-sm h-9 sm:h-10 overflow-visible"
           >
             {/* People */}
             <TabsTrigger
               value="people"
-              className={`basis-1/2 sm:basis-auto sm:flex-1 shrink-0 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors
-                data-[state=active]:text-white data-[state=active]:shadow
-                data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:via-purple-500 data-[state=active]:to-indigo-500`}
+              className="px-2.5 py-1.5 h-9 rounded-lg text-xs sm:text-sm font-medium truncate transition-colors
+                data-[state=active]:text-white
+                data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:via-purple-500 data-[state=active]:to-indigo-500"
             >
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                <span>People</span>
+              <div className="flex items-center gap-1.5">
+                <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="truncate">People</span>
               </div>
             </TabsTrigger>
 
             {/* Connections */}
             <TabsTrigger
               value="connections"
-              className={`basis-1/2 sm:basis-auto sm:flex-1 shrink-0 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors
-                data-[state=active]:text-white data-[state=active]:shadow
-                data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:via-purple-500 data-[state=active]:to-indigo-500`}
+              className="px-2.5 py-1.5 h-9 rounded-lg text-xs sm:text-sm font-medium truncate transition-colors
+                data-[state=active]:text-white
+                data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:via-purple-500 data-[state=active]:to-indigo-500"
             >
-              <div className="flex items-center gap-2">
-                <Heart className="h-4 w-4" />
-                <span>Connections</span>
+              <div className="flex items-center gap-1.5">
+                <Heart className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="truncate">Connections</span>
               </div>
             </TabsTrigger>
 
             {/* Chat Room */}
             <TabsTrigger
               value="chats"
-              className={`basis-1/2 sm:basis-auto sm:flex-1 shrink-0 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors
-                data-[state=active]:text-white data-[state=active]:shadow
-                data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:via-purple-500 data-[state=active]:to-indigo-500`}
+              className="px-2.5 py-1.5 h-9 rounded-lg text-xs sm:text-sm font-medium truncate transition-colors
+                data-[state=active]:text-white
+                data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:via-purple-500 data-[state=active]:to-indigo-500"
             >
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4" />
-                <span>Chat Room</span>
+              <div className="flex items-center gap-1.5">
+                <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="truncate">Chat Room</span>
               </div>
             </TabsTrigger>
 
             {/* Messages */}
             <TabsTrigger
               value="messages"
-              className={`basis-1/2 sm:basis-auto sm:flex-1 shrink-0 px-4 py-2 rounded-xl text-sm font-medium whitespace-nowrap transition-colors
-                data-[state=active]:text-white data-[state=active]:shadow
-                data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:via-purple-500 data-[state=active]:to-indigo-500`}
+              className="px-2.5 py-1.5 h-9 rounded-lg text-xs sm:text-sm font-medium truncate transition-colors
+                data-[state=active]:text-white
+                data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:via-purple-500 data-[state=active]:to-indigo-500"
             >
-              <div className="flex items-center gap-2">
-                <Send className="h-4 w-4" />
-                <span>Messages</span>
+              <div className="flex items-center gap-1.5">
+                <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                <span className="truncate">Messages</span>
               </div>
             </TabsTrigger>
           </TabsList>
         </div>
         {/* People */}
-        <TabsContent value="people" className="space-y-8">
+        <TabsContent value="people" className="space-y-6">
           {/* Search and Filter Bar */}
           <NetworkingFilter
             searchTerm={searchTerm}

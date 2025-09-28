@@ -138,7 +138,7 @@ const TopicsBoard: React.FC<Props> = ({ className }) => {
                           size="sm"
                           variant="destructive"
                           disabled={deleting}
-                          onClick={() => deleteTopic(t.id)}
+                          onClick={() => deleteTopic(t)}
                           className="h-6 w-6 p-0"
                         >
                           <Trash2 className="h-3 w-3" />

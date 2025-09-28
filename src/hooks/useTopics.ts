@@ -189,20 +189,49 @@ export const useTopics = () => {
   });
 
   const deleteTopic = useMutation({
-    mutationFn: async (topicId: string) => {
-      const { error } = await supabase.from("topics" as any).delete().eq("id", topicId);
+    mutationFn: async (topic: Topic) => {
+      // If there's a linked poll, delete it to keep data consistent
+      if (topic.poll_id) {
+        const { error: pollErr } = await (supabase.from as any)("polls")
+          .delete()
+          .eq("id", topic.poll_id);
+        if (pollErr) throw pollErr;
+      }
+      // Delete the topic itself
+      const { error } = await (supabase.from as any)("topics")
+        .delete()
+        .eq("id", topic.id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["topics", currentEventId] });
-      toast({ title: "Topic deleted", description: "Topic has been permanently deleted." });
+    // Optimistic update: remove the topic from cache immediately
+    onMutate: async (topic: Topic) => {
+      await queryClient.cancelQueries({ queryKey: ["topics", currentEventId] });
+      const previousTopics = queryClient.getQueryData<Topic[]>(["topics", currentEventId]);
+      queryClient.setQueryData<Topic[]>(
+        ["topics", currentEventId],
+        (old) => (old ? old.filter((t) => t.id !== topic.id) : old)
+      );
+      return { previousTopics };
     },
-    onError: (e: any) => {
+    // Roll back UI on error
+    onError: (e: any, _topic, context) => {
+      if (context?.previousTopics) {
+        queryClient.setQueryData(["topics", currentEventId], context.previousTopics);
+      }
       toast({
         title: "Could not delete topic",
         description: e?.message || "Please try again.",
         variant: "destructive",
       });
+    },
+    // Ensure cache and UI are in sync with the server
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["topics", currentEventId] });
+      queryClient.invalidateQueries({ queryKey: ["attendee-polls"] });
+    },
+    // Success toast
+    onSuccess: () => {
+      toast({ title: "Topic deleted", description: "Topic has been permanently deleted." });
     },
   });
 

@@ -43,6 +43,20 @@ const Register = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isJoiningEvent, setIsJoiningEvent] = useState(false);
 
+  // Persist event details during the whole registration flow
+  type BannerEventData = {
+    id: string;
+    name: string;
+    banner_url: string | null;
+    logo_url: string | null;
+    description: string | null;
+    start_time: string;
+    end_time: string;
+    location: string | null;
+    host_name: string | null;
+  };
+  const [stickyEventData, setStickyEventData] = useState<BannerEventData | null>(null);
+
   const { register, signInWithGoogle, currentUser, isLoading } = useAuth();
   const { joinEvent } = useJoinEvent();
   const { data: eventData, isLoading: isLoadingEvent, error: eventError } = useEventByAccessCode(eventCode);
@@ -105,6 +119,13 @@ const Register = () => {
       console.log("Event code stored. SessionStorage:", sessionStorage.getItem("pendingEventCode"), "LocalStorage:", localStorage.getItem("pendingEventCode"));
     }
   }, [eventCode]);
+
+  // Lock in the first successfully fetched event data so the banner never disappears
+  useEffect(() => {
+    if (eventData && !stickyEventData) {
+      setStickyEventData(eventData as unknown as BannerEventData);
+    }
+  }, [eventData, stickyEventData]);
 
   // Handle redirect when user becomes authenticated after registration
   useEffect(() => {
@@ -279,6 +300,8 @@ const Register = () => {
     );
   }
 
+  const banner = (stickyEventData ?? (!isLoadingEvent ? (eventData as any) : null)) as BannerEventData | null;
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="flex justify-center mb-8">
@@ -297,14 +320,14 @@ const Register = () => {
       </div>
 
       {/* Event Banner Section - Only show when coming from QR code */}
-      {isFromQRCode && eventData && !isLoadingEvent && (
+      {isFromQRCode && banner && (
         <div className="sm:mx-auto sm:w-full sm:max-w-2xl mb-8">
           <Card className="overflow-hidden shadow-lg border-2 border-gradient-to-r from-cyan-400 to-purple-500">
-            {eventData.banner_url && (
+            {banner.banner_url && (
               <div className="h-48 w-full overflow-hidden">
                 <img
-                  src={eventData.banner_url}
-                  alt={eventData.name}
+                  src={banner.banner_url}
+                  alt={banner.name}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -314,26 +337,26 @@ const Register = () => {
                 <Badge variant="secondary" className="mb-4 bg-gradient-to-r from-cyan-400 to-purple-500 text-white">
                   You're joining this event
                 </Badge>
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">{eventData.name}</h2>
-                {eventData.description && (
-                  <p className="text-gray-600 mb-4 line-clamp-2">{eventData.description}</p>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">{banner.name}</h2>
+                {banner.description && (
+                  <p className="text-gray-600 mb-4 line-clamp-2">{banner.description}</p>
                 )}
                 <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-500">
-                  {eventData.host_name && (
+                  {banner.host_name && (
                     <div className="flex items-center gap-1">
                       <User className="h-4 w-4" />
-                      <span>Hosted by {eventData.host_name}</span>
+                      <span>Hosted by {banner.host_name}</span>
                     </div>
                   )}
-                  {eventData.location && (
+                  {banner.location && (
                     <div className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
-                      <span>{eventData.location}</span>
+                      <span>{banner.location}</span>
                     </div>
                   )}
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
-                    <span>{new Date(eventData.start_time).toLocaleDateString()}</span>
+                    <span>{new Date(banner.start_time).toLocaleDateString()}</span>
                   </div>
                 </div>
               </div>

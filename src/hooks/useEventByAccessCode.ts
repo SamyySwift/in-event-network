@@ -61,8 +61,11 @@ export const useEventByAccessCode = (accessCode: string | null) => {
       };
     },
     enabled: !!accessCode,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    staleTime: Infinity, // Never mark as stale during registration flow
+    gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
     retry: 1, // Only retry once to avoid unnecessary requests
     refetchOnWindowFocus: false, // Prevent refetching when window gains focus
+    refetchOnMount: false,
+    refetchOnReconnect: false,
   });
 };

@@ -26,8 +26,14 @@ const Register = () => {
   const defaultRole = searchParams.get("role") || "attendee";
   const eventCode = searchParams.get("eventCode");
 
+  // Determine QR context using URL or stored code (persists across reloads)
+  const effectiveEventCode =
+    eventCode ||
+    sessionStorage.getItem("pendingEventCode") ||
+    localStorage.getItem("pendingEventCode");
+
   // If coming from QR code, force attendee role and prevent admin registration
-  const isFromQRCode = !!eventCode;
+  const isFromQRCode = !!effectiveEventCode;
   const allowedRoles = isFromQRCode ? ["attendee"] : ["host", "attendee"];
 
   const [name, setName] = useState("");
@@ -59,38 +65,40 @@ const Register = () => {
 
   const { register, signInWithGoogle, currentUser, isLoading } = useAuth();
   const { joinEvent } = useJoinEvent();
-  const { data: eventData, isLoading: isLoadingEvent, error: eventError } = useEventByAccessCode(eventCode);
+  const { data: eventData, isLoading: isLoadingEvent, error: eventError } = useEventByAccessCode(effectiveEventCode);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   // Debug logging to understand the banner visibility issue
   console.log('Register component - Debug info:', { 
-    eventCode, 
+    eventCode,
+    effectiveEventCode,
     isFromQRCode, 
     eventData, 
     isLoadingEvent, 
     eventError,
-    shouldShowBanner: isFromQRCode && eventData 
+    hasSticky: !!stickyEventData,
+    shouldShowBanner: isFromQRCode && (stickyEventData || eventData)
   });
 
   const handleGoogleSignUp = async () => {
     setErrorMessage(null);
     
     // Enhanced event code storage for OAuth flow with multiple storage keys and timestamp
-    if (eventCode) {
-      console.log("Storing event code for Google OAuth:", eventCode);
+    if (effectiveEventCode) {
+      console.log("Storing event code for Google OAuth:", effectiveEventCode);
       const eventData = {
-        code: eventCode,
+        code: effectiveEventCode,
         timestamp: Date.now(),
         role: role
       };
       
       // Store in multiple locations with different keys for reliability
-      localStorage.setItem('pendingEventCode', eventCode);
-      localStorage.setItem('googleOAuthEventCode', eventCode);
+      localStorage.setItem('pendingEventCode', effectiveEventCode);
+      localStorage.setItem('googleOAuthEventCode', effectiveEventCode);
       localStorage.setItem('googleOAuthEventData', JSON.stringify(eventData));
-      sessionStorage.setItem('pendingEventCode', eventCode);
-      sessionStorage.setItem('googleOAuthEventCode', eventCode);
+      sessionStorage.setItem('pendingEventCode', effectiveEventCode);
+      sessionStorage.setItem('googleOAuthEventCode', effectiveEventCode);
       
       console.log("Event code stored for OAuth. Data:", eventData);
     }
@@ -112,13 +120,13 @@ const Register = () => {
 
   // Store event code in both session and local storage when component mounts
   useEffect(() => {
-    if (eventCode) {
-      console.log("Storing event code in session and local storage:", eventCode);
-      sessionStorage.setItem("pendingEventCode", eventCode);
-      localStorage.setItem("pendingEventCode", eventCode); // Backup in localStorage
-      console.log("Event code stored. SessionStorage:", sessionStorage.getItem("pendingEventCode"), "LocalStorage:", localStorage.getItem("pendingEventCode"));
-    }
-  }, [eventCode]);
+     if (effectiveEventCode) {
+       console.log("Storing event code in session and local storage:", effectiveEventCode);
+       sessionStorage.setItem("pendingEventCode", effectiveEventCode);
+       localStorage.setItem("pendingEventCode", effectiveEventCode); // Backup in localStorage
+       console.log("Event code stored. SessionStorage:", sessionStorage.getItem("pendingEventCode"), "LocalStorage:", localStorage.getItem("pendingEventCode"));
+     }
+   }, [effectiveEventCode]);
 
   // Lock in the first successfully fetched event data so the banner never disappears
   useEffect(() => {

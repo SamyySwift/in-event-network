@@ -17,7 +17,10 @@ export const useEventByAccessCode = (accessCode: string | null) => {
   return useQuery({
     queryKey: ['event-by-access-code', accessCode],
     queryFn: async (): Promise<EventData | null> => {
-      if (!accessCode) return null;
+      if (!accessCode) {
+        console.log('No access code provided to useEventByAccessCode');
+        return null;
+      }
 
       console.log('Fetching event data for access code:', accessCode);
 
@@ -59,5 +62,7 @@ export const useEventByAccessCode = (accessCode: string | null) => {
     },
     enabled: !!accessCode,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    retry: 1, // Only retry once to avoid unnecessary requests
+    refetchOnWindowFocus: false, // Prevent refetching when window gains focus
   });
 };

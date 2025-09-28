@@ -45,9 +45,19 @@ const Register = () => {
 
   const { register, signInWithGoogle, currentUser, isLoading } = useAuth();
   const { joinEvent } = useJoinEvent();
-  const { data: eventData, isLoading: isLoadingEvent } = useEventByAccessCode(eventCode);
+  const { data: eventData, isLoading: isLoadingEvent, error: eventError } = useEventByAccessCode(eventCode);
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Debug logging to understand the banner visibility issue
+  console.log('Register component - Debug info:', { 
+    eventCode, 
+    isFromQRCode, 
+    eventData, 
+    isLoadingEvent, 
+    eventError,
+    shouldShowBanner: isFromQRCode && eventData 
+  });
 
   const handleGoogleSignUp = async () => {
     setErrorMessage(null);
@@ -287,7 +297,7 @@ const Register = () => {
       </div>
 
       {/* Event Banner Section - Only show when coming from QR code */}
-      {isFromQRCode && eventData && (
+      {isFromQRCode && eventData && !isLoadingEvent && (
         <div className="sm:mx-auto sm:w-full sm:max-w-2xl mb-8">
           <Card className="overflow-hidden shadow-lg border-2 border-gradient-to-r from-cyan-400 to-purple-500">
             {eventData.banner_url && (

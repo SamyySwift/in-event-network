@@ -351,36 +351,18 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
 
         {/* Rooms Content - Independent Container */}
         <TabsContent value="rooms" className="m-0">
-          <div className="min-h-[75vh] max-h-[800px] relative overflow-hidden">
+          {/* Fixed height like chat tab + flex for children */}
+          <div className="h-[75vh] max-h-[800px] flex flex-col relative overflow-hidden">
             {/* Modern Background */}
             <div className="absolute inset-0 bg-primary/5 opacity-60"></div>
             <div className="absolute inset-0 backdrop-blur-3xl bg-background/40 border border-border/20 rounded-3xl shadow-2xl"></div>
             
-            <div className="relative z-10 h-full p-6 rounded-3xl overflow-hidden">
+            {/* Allow children to shrink and create internal scroll areas */}
+            <div className="relative z-10 h-full p-6 rounded-3xl overflow-hidden flex flex-col min-h-0">
               <RoomsPanel
-                eventId={eventId ?? currentEventId}
-                onEnterRoom={(roomId) => {
-                  supabase.from('chat_rooms').select('id,name,color,created_by').eq('id', roomId).single().then(({ data }) => {
-                    if (data) setSelectedRoom({ id: data.id, name: data.name, color: data.color, created_by: data.created_by });
-                  });
-                  setActiveTab('chat');
-                }}
+                eventId={eventId || undefined}
+                onEnterRoom={(roomId) => setSelectedRoom(prev => prev && prev.id === roomId ? prev : { id: roomId, name: 'Room', color: null })}
               />
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* Topics Content - Independent Container */}
-        <TabsContent value="topics" className="m-0">
-          <div className="min-h-[75vh] max-h-[800px] relative overflow-hidden">
-            {/* Modern Background */}
-            <div className="absolute inset-0 bg-primary/5 opacity-60"></div>
-            <div className="absolute inset-0 backdrop-blur-3xl bg-background/40 border border-border/20 rounded-3xl shadow-2xl"></div>
-            
-            <div className="relative z-10 h-full p-6 rounded-3xl overflow-hidden">
-              <div className="h-full overflow-y-auto">
-                <TopicsBoard />
-              </div>
             </div>
           </div>
         </TabsContent>

@@ -30,7 +30,8 @@ const RoomsPanel: React.FC<RoomsPanelProps> = ({ eventId, onEnterRoom }) => {
   };
 
   return (
-    <div className="h-full flex flex-col bg-background/40 backdrop-blur-xl rounded-2xl overflow-hidden">
+    // Add min-h-0 so the flex child (list) can shrink and scroll internally
+    <div className="h-full flex flex-col min-h-0 bg-background/40 backdrop-blur-xl rounded-2xl overflow-hidden">
       {/* Header */}
       <div className="p-4 bg-background/70 backdrop-blur-xl border-b border-border/10">
         <div className="flex items-center gap-3">
@@ -88,7 +89,7 @@ const RoomsPanel: React.FC<RoomsPanelProps> = ({ eventId, onEnterRoom }) => {
 
       {/* Rooms List */}
       <div 
-        className="flex-1 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border/20 hover:scrollbar-thumb-border/40"
+        className="flex-1 min-h-0 overflow-y-auto p-4 space-y-3 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border/20 hover:scrollbar-thumb-border/40"
         style={{ 
           touchAction: 'pan-y',
           WebkitOverflowScrolling: 'touch',

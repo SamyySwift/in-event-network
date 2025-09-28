@@ -621,7 +621,7 @@ const AttendeeNetworking = () => {
     <>
       {/* First Tabs header section */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-8">
           {/* Modern Header with Purple Gradient */}
           <div className="mb-8 relative overflow-hidden">
             <div className="relative bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
@@ -684,9 +684,7 @@ const AttendeeNetworking = () => {
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
-          <TabsList
-            className="grid w-full grid-cols-4 gap-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/70 p-1 shadow-sm h-9 sm:h-10 overflow-visible"
-          >
+          <TabsList className="grid w-full grid-cols-4 gap-1 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/70 p-1 shadow-sm h-9 sm:h-10 overflow-visible">
             {/* People */}
             <TabsTrigger
               value="people"
@@ -759,7 +757,7 @@ const AttendeeNetworking = () => {
             availableTags={availableTags}
             onClearFilters={clearAllFilters}
           />
-          
+
           {/* Results summary */}
           {sortedProfiles.length > 0 && (
             <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">

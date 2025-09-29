@@ -102,6 +102,21 @@ export const useRooms = (overrideEventId?: string) => {
   const joinRoom = async (roomId: string) => {
     if (!currentUser?.id) return;
     try {
+      console.log('Attempting to join room:', roomId, 'for user:', currentUser.id);
+      
+      // Check if user is in event_participants first
+      const { data: participation, error: participationError } = await supabase
+        .from('event_participants')
+        .select('*')
+        .eq('user_id', currentUser.id)
+        .eq('event_id', effectiveEventId);
+      
+      if (participationError) {
+        console.error('Error checking participation:', participationError);
+      } else {
+        console.log('User participation status:', participation);
+      }
+      
       // Prefer a plain insert and gracefully ignore duplicates (unique violation)
       const { error } = await supabase.from('room_members').insert({
         room_id: roomId,
@@ -110,6 +125,12 @@ export const useRooms = (overrideEventId?: string) => {
 
       if (error && (error as any).code !== '23505') {
         // If it wasn't a duplicate-key error, rethrow
+        console.error('Room join error:', error);
+        
+        // Check if it's a permission error (RLS)
+        if (error.message?.includes('new row violates row-level security') || error.message?.includes('permission denied')) {
+          throw new Error('You must be a participant in this event to join rooms. Please make sure you have properly joined the event first.');
+        }
         throw error;
       }
 
@@ -118,6 +139,7 @@ export const useRooms = (overrideEventId?: string) => {
       await fetchRooms();
       toast({ title: 'Joined room', description: 'You can start chatting now.' });
     } catch (err: any) {
+      console.error('Join room failed:', err);
       toast({ title: 'Join failed', description: err?.message || 'Please try again.', variant: 'destructive' });
     }
   };

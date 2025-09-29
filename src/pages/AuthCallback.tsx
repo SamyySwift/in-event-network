@@ -38,7 +38,7 @@ function AuthCallback() {
             console.log('AuthCallback - currentUser:', currentUser);
             console.log('AuthCallback - currentUser?.role:', currentUser?.role);
             
-            // Add this at the very beginning of the checkUserAndRedirect function
+            // Enhanced debugging for Google OAuth flow
             console.log('AuthCallback - Debug info:', {
               currentUser,
               userRole: currentUser?.role,
@@ -46,6 +46,7 @@ function AuthCallback() {
               localStorageEventCode: localStorage.getItem('pendingEventCode'),
               googleOAuthEventCode: localStorage.getItem('googleOAuthEventCode'),
               googleOAuthEventData: localStorage.getItem('googleOAuthEventData'),
+              pendingGoogleRole: localStorage.getItem('pendingGoogleRole'),
               urlParams: Object.fromEntries(new URLSearchParams(window.location.search)),
               currentUrl: window.location.href
             });
@@ -133,9 +134,14 @@ function AuthCallback() {
                 return;
               }
               
-              // Default redirect based on role
+              // Clean up any remaining Google OAuth storage
+              localStorage.removeItem('pendingGoogleRole');
+              localStorage.removeItem('googleOAuthEventCode');
+              localStorage.removeItem('googleOAuthEventData');
+              
+              // Default redirect based on role - ENSURE we always redirect to the correct dashboard
               const redirectPath = currentUser.role === 'host' ? '/admin' : '/attendee';
-              console.log('AuthCallback - Default redirect to:', redirectPath);
+              console.log('AuthCallback - Default redirect to:', redirectPath, 'for role:', currentUser.role);
               navigate(redirectPath, { replace: true });
               return;
             }
@@ -149,9 +155,9 @@ function AuthCallback() {
             
             // Check if we've exceeded time limits
             if (attempt >= maxAttempts || elapsedTime >= maxTime) {
-              console.warn('AuthCallback - Timeout waiting for user data, trying fallback');
+              console.warn('AuthCallback - Timeout waiting for user data, trying direct Supabase fallback');
               
-              // Fallback: Try to get user directly from Supabase
+              // Enhanced fallback: Try to get user directly from Supabase and ensure profile exists
               try {
                 const { data: { user }, error: userError } = await supabase.auth.getUser();
                 if (userError) throw userError;
@@ -159,14 +165,40 @@ function AuthCallback() {
                 if (user) {
                   console.log('AuthCallback - Fallback: Got user from Supabase directly:', user);
                   
-                  // Get user profile to determine role
-                  const { data: profile } = await supabase
+                  // Get or create user profile to determine role
+                  let { data: profile, error: profileError } = await supabase
                     .from('profiles')
                     .select('role')
                     .eq('id', user.id)
                     .single();
                   
-                  const userRole = profile?.role;
+                  // If profile doesn't exist, create it with pending role
+                  if (profileError && profileError.code === 'PGRST116') {
+                    console.log('AuthCallback - Fallback: Profile not found, creating new profile');
+                    const pendingRole = localStorage.getItem('pendingGoogleRole') as 'host' | 'attendee' || 'attendee';
+                    
+                    const newProfile = {
+                      id: user.id,
+                      name: user.user_metadata?.full_name || user.email?.split('@')[0] || '',
+                      email: user.email || '',
+                      role: pendingRole,
+                      photo_url: user.user_metadata?.avatar_url || null,
+                    };
+
+                    const { error: insertError } = await supabase
+                      .from('profiles')
+                      .insert(newProfile);
+
+                    if (insertError) {
+                      console.error('AuthCallback - Fallback: Error creating profile:', insertError);
+                      throw insertError;
+                    }
+
+                    profile = { role: pendingRole };
+                    console.log('AuthCallback - Fallback: Created new profile with role:', pendingRole);
+                  }
+                  
+                  const userRole = profile?.role || 'attendee';
                   console.log('AuthCallback - Fallback: User role from profile:', userRole);
                   
                   // Enhanced pending event code check for fallback
@@ -191,7 +223,7 @@ function AuthCallback() {
                   }
                   
                   if (pendingEventCode && userRole === 'attendee') {
-                    console.log('AuthCallback - Fallback: Found pending event, redirecting to attendee with toast');
+                    console.log('AuthCallback - Fallback: Found pending event, clearing storage and showing toast');
                     sessionStorage.removeItem('pendingEventCode');
                     localStorage.removeItem('pendingEventCode');
                     localStorage.removeItem('googleOAuthEventCode');
@@ -203,9 +235,14 @@ function AuthCallback() {
                     });
                   }
                   
-                  // Redirect based on actual user role
+                  // Clean up Google OAuth storage
+                  localStorage.removeItem('pendingGoogleRole');
+                  localStorage.removeItem('googleOAuthEventCode');
+                  localStorage.removeItem('googleOAuthEventData');
+                  
+                  // Redirect based on actual user role - CRITICAL: Always redirect to dashboard
                   const redirectPath = userRole === 'host' ? '/admin' : '/attendee';
-                  console.log('AuthCallback - Fallback: Redirecting to:', redirectPath);
+                  console.log('AuthCallback - Fallback: Redirecting to:', redirectPath, 'for role:', userRole);
                   navigate(redirectPath, { replace: true });
                 } else {
                   console.warn('AuthCallback - Fallback: No user found, redirecting to login');
@@ -213,7 +250,8 @@ function AuthCallback() {
                 }
               } catch (fallbackError) {
                 console.error('AuthCallback - Fallback failed:', fallbackError);
-                navigate('/login?error=auth_timeout');
+                // Last resort: redirect to login with error
+                navigate('/login?error=auth_timeout', { replace: true });
               }
               return;
             }
@@ -227,11 +265,11 @@ function AuthCallback() {
           await checkUserAndRedirect();
         } else {
           console.log('AuthCallback - No session found');
-          navigate('/login?error=no_session');
+          navigate('/login?error=no_session', { replace: true });
         }
       } catch (error) {
         console.error('AuthCallback - Unexpected error:', error);
-        navigate('/login?error=unexpected');
+        navigate('/login?error=unexpected', { replace: true });
       }
     };
 
@@ -245,6 +283,11 @@ function AuthCallback() {
         <p className="text-gray-600">
           {isJoiningEvent ? "Joining event..." : "Completing sign-in..."}
         </p>
+        {retryCount > 10 && (
+          <p className="text-sm text-gray-500 mt-2">
+            Still processing... (attempt {retryCount})
+          </p>
+        )}
       </div>
     </div>
   );

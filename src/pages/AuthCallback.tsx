@@ -38,6 +38,18 @@ function AuthCallback() {
             console.log('AuthCallback - currentUser:', currentUser);
             console.log('AuthCallback - currentUser?.role:', currentUser?.role);
             
+            // Add this at the very beginning of the checkUserAndRedirect function
+            console.log('AuthCallback - Debug info:', {
+              currentUser,
+              userRole: currentUser?.role,
+              sessionStorageEventCode: sessionStorage.getItem('pendingEventCode'),
+              localStorageEventCode: localStorage.getItem('pendingEventCode'),
+              googleOAuthEventCode: localStorage.getItem('googleOAuthEventCode'),
+              googleOAuthEventData: localStorage.getItem('googleOAuthEventData'),
+              urlParams: Object.fromEntries(new URLSearchParams(window.location.search)),
+              currentUrl: window.location.href
+            });
+            
             // If we have user data, proceed with redirect logic
             if (currentUser && currentUser.role) {
               console.log('AuthCallback - User data available, proceeding with redirects');
@@ -56,7 +68,16 @@ function AuthCallback() {
                 sessionStorage.getItem('pendingEventCode') || 
                 localStorage.getItem('pendingEventCode') ||
                 localStorage.getItem('googleOAuthEventCode');
-
+              
+              // Try to get from URL parameters (in case it was passed through OAuth)
+              if (!pendingEventCode) {
+                const urlParams = new URLSearchParams(window.location.search);
+                pendingEventCode = urlParams.get('eventCode');
+                if (pendingEventCode) {
+                  console.log('AuthCallback - Retrieved event code from URL params:', pendingEventCode);
+                }
+              }
+              
               // Try to get from stored OAuth event data
               if (!pendingEventCode) {
                 try {
@@ -78,6 +99,7 @@ function AuthCallback() {
                 sessionStorage: sessionStorage.getItem('pendingEventCode'),
                 localStorage: localStorage.getItem('pendingEventCode'), 
                 googleOAuth: localStorage.getItem('googleOAuthEventCode'),
+                urlParams: new URLSearchParams(window.location.search).get('eventCode'),
                 finalCode: pendingEventCode
               });
               

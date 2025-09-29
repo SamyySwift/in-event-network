@@ -510,20 +510,37 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       setIsLoading(true);
       console.log("Attempting Google sign-in with role:", role);
-
+  
       // Store the role preference for after OAuth callback
       localStorage.setItem("pendingGoogleRole", role);
       
-      // Check if there's a pending event code and include it in OAuth state
+      // Enhanced event code storage - check multiple sources and store redundantly
       const pendingEventCode = localStorage.getItem('pendingEventCode') || 
-                              sessionStorage.getItem('pendingEventCode');
+                              sessionStorage.getItem('pendingEventCode') ||
+                              localStorage.getItem('googleOAuthEventCode');
       
-      // Build redirect URL with event context if needed
+      if (pendingEventCode) {
+        console.log("Storing event code for Google OAuth:", pendingEventCode);
+        // Store in multiple locations for reliability
+        localStorage.setItem('pendingEventCode', pendingEventCode);
+        localStorage.setItem('googleOAuthEventCode', pendingEventCode);
+        sessionStorage.setItem('pendingEventCode', pendingEventCode);
+        
+        // Also store with timestamp for debugging
+        const eventData = {
+          code: pendingEventCode,
+          timestamp: Date.now(),
+          role: role
+        };
+        localStorage.setItem('googleOAuthEventData', JSON.stringify(eventData));
+        console.log("Event code stored for OAuth with data:", eventData);
+      }
+      
+      // Build redirect URL
       let redirectUrl = `${window.location.origin}/auth/callback`;
       const queryParams: any = { role: role };
       
       if (pendingEventCode) {
-        console.log("Including event code in OAuth flow:", pendingEventCode);
         queryParams.eventCode = pendingEventCode;
       }
 

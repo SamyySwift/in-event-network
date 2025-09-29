@@ -117,10 +117,8 @@ const ScanQR = () => {
         if (pathParts.length >= 2 && pathParts[1] === "event") {
           eventId = pathParts[2];
           if (eventId) {
-            // Store eventId and navigate directly to register for attendee
-            sessionStorage.setItem("pendingEventId", eventId);
-            localStorage.setItem("pendingEventId", eventId);
-            navigate(`/register?eventId=${eventId}&role=attendee`, { replace: true });
+            // Navigate to the join route with the event ID
+            navigate(`/join/${eventId}`, { replace: true });
             return;
           }
         }
@@ -137,7 +135,7 @@ const ScanQR = () => {
 
             // Navigate to dashboard after a short delay
             setTimeout(() => {
-              navigate("/attendee/dashboard", { replace: true });
+              navigate("/attendee", { replace: true });
             }, 2000);
           },
           onError: (error: any) => {
@@ -240,7 +238,7 @@ const ScanQR = () => {
         setScanSuccess(true);
         setEventName(data?.event_name || "Event");
         setTimeout(() => {
-          navigate("/attendee/dashboard", { replace: true });
+          navigate("/attendee", { replace: true });
         }, 1000);
       },
       onError: (error: any) => {

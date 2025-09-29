@@ -351,7 +351,7 @@ const Register = () => {
       {/* Event Banner Section - Show when coming from QR code and we have event data */}
       {isFromQRCode && banner && (
         <div className="sm:mx-auto sm:w-full sm:max-w-2xl mb-8">
-          <Card className="overflow-hidden shadow-lg border-2 border-gradient-to-r from-cyan-400 to-purple-500">
+          <Card className="overflow-hidden shadow-lg border-2">
             {banner.banner_url && (
               <div className="h-48 w-full overflow-hidden">
                 <img

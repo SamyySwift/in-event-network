@@ -117,8 +117,10 @@ const ScanQR = () => {
         if (pathParts.length >= 2 && pathParts[1] === "event") {
           eventId = pathParts[2];
           if (eventId) {
-            // Navigate to the join route with the event ID
-            navigate(`/join/${eventId}`, { replace: true });
+            // Store eventId and navigate directly to register for attendee
+            sessionStorage.setItem("pendingEventId", eventId);
+            localStorage.setItem("pendingEventId", eventId);
+            navigate(`/register?eventId=${eventId}&role=attendee`, { replace: true });
             return;
           }
         }

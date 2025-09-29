@@ -77,22 +77,6 @@ const Register = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Debug logging to understand the banner visibility issue
-  console.log('Register component - Debug info:', { 
-    eventCode,
-    effectiveEventCode,
-    effectiveEventId,
-    isFromQRCode, 
-    eventDataByCode, 
-    eventDataById,
-    isLoadingByCode,
-    isLoadingById,
-    eventErrorByCode,
-    eventErrorById,
-    hasSticky: !!stickyEventData,
-    shouldShowBanner: isFromQRCode && (stickyEventData || eventDataByCode || eventDataById)
-  });
-
   const handleGoogleSignUp = async () => {
     setErrorMessage(null);
     
@@ -146,8 +130,9 @@ const Register = () => {
 
   // Lock in the first successfully fetched event data so the banner never disappears
   useEffect(() => {
-    const candidate = (eventDataByCode || eventDataById) as unknown as BannerEventData | null;
+    const candidate = eventDataByCode || eventDataById;
     if (candidate && !stickyEventData) {
+      console.log('Setting sticky event data:', candidate);
       setStickyEventData(candidate);
     }
   }, [eventDataByCode, eventDataById, stickyEventData]);
@@ -325,13 +310,26 @@ const Register = () => {
     );
   }
 
-  // Use either access-code fetched event data or event-id fetched data (whichever is available),
-  // and keep the first successful fetch sticky across the flow
-  const banner = (
-    stickyEventData ??
-    (!isLoadingByCode ? (eventDataByCode as any) : null) ??
-    (!isLoadingById ? (eventDataById as any) : null)
-  ) as BannerEventData | null;
+  // Determine which event data to show - prioritize sticky data, then any loaded data
+  const currentEventData = eventDataByCode || eventDataById;
+  const banner = stickyEventData || currentEventData;
+
+  // Debug logging to understand the banner visibility issue
+  console.log('Register component - Debug info:', { 
+    eventCode,
+    effectiveEventCode,
+    effectiveEventId,
+    isFromQRCode, 
+    eventDataByCode: !!eventDataByCode, 
+    eventDataById: !!eventDataById,
+    isLoadingByCode,
+    isLoadingById,
+    eventErrorByCode,
+    eventErrorById,
+    stickyEventData: !!stickyEventData,
+    banner: !!banner,
+    shouldShowBanner: isFromQRCode && !!banner
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -350,7 +348,7 @@ const Register = () => {
         </Link>
       </div>
 
-      {/* Event Banner Section - Only show when coming from QR code */}
+      {/* Event Banner Section - Show when coming from QR code and we have event data */}
       {isFromQRCode && banner && (
         <div className="sm:mx-auto sm:w-full sm:max-w-2xl mb-8">
           <Card className="overflow-hidden shadow-lg border-2 border-gradient-to-r from-cyan-400 to-purple-500">
@@ -396,8 +394,8 @@ const Register = () => {
         </div>
       )}
 
-      {/* Loading state for event data */}
-      {isFromQRCode && (isLoadingByCode || isLoadingById) && (
+      {/* Loading state for event data - only show if we don't have any event data yet */}
+      {isFromQRCode && !banner && (isLoadingByCode || isLoadingById) && (
         <div className="sm:mx-auto sm:w-full sm:max-w-2xl mb-8">
           <Card className="shadow-lg">
             <CardContent className="p-6">

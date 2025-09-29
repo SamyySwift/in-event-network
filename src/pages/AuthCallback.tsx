@@ -91,28 +91,28 @@ const AuthCallback = () => {
                 
                 setIsJoiningEvent(true);
                 
-                joinEvent(pendingEventCode, {
-                  onSuccess: (data: any) => {
-                    console.log('AuthCallback - Successfully joined event:', data);
-                    setIsJoiningEvent(false);
-                    navigate('/attendee/dashboard', { replace: true });
-                  },
-                  onError: (error: any) => {
-                    console.error('AuthCallback - Failed to join event:', error);
-                    setIsJoiningEvent(false);
-                    toast({
-                      title: "Account Created",
-                      description: "Your account was created, but we couldn't join the event. Please scan the QR code again.",
-                      variant: "destructive",
-                    });
-                    navigate('/attendee/dashboard', { replace: true });
-                  }
-                });
+                  joinEvent(pendingEventCode, {
+                    onSuccess: (data: any) => {
+                      console.log('AuthCallback - Successfully joined event:', data);
+                      setIsJoiningEvent(false);
+                      navigate('/attendee', { replace: true });
+                    },
+                    onError: (error: any) => {
+                      console.error('AuthCallback - Failed to join event:', error);
+                      setIsJoiningEvent(false);
+                      toast({
+                        title: "Account Created",
+                        description: "Your account was created, but we couldn't join the event. Please scan the QR code again.",
+                        variant: "destructive",
+                      });
+                      navigate('/attendee', { replace: true });
+                    }
+                  });
                 return;
               }
               
               // Default redirect based on role
-              const redirectPath = currentUser.role === 'host' ? '/admin' : '/attendee/dashboard';
+              const redirectPath = currentUser.role === 'host' ? '/admin' : '/attendee';
               console.log('AuthCallback - Default redirect to:', redirectPath);
               navigate(redirectPath, { replace: true });
               return;
@@ -182,7 +182,7 @@ const AuthCallback = () => {
                   }
                   
                   // Redirect based on actual user role
-                  const redirectPath = userRole === 'host' ? '/admin' : '/attendee/dashboard';
+                  const redirectPath = userRole === 'host' ? '/admin' : '/attendee';
                   console.log('AuthCallback - Fallback: Redirecting to:', redirectPath);
                   navigate(redirectPath, { replace: true });
                 } else {

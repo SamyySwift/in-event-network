@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useJoinEvent } from '@/hooks/useJoinEvent';
 import { useToast } from '@/hooks/use-toast';
 
-const AuthCallback = () => {
+function AuthCallback() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const { joinEvent } = useJoinEvent();

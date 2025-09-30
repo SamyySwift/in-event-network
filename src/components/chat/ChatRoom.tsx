@@ -410,26 +410,206 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
 
         {/* Rooms Content - Independent Container */}
         <TabsContent value="rooms" className="m-0">
-          {/* Fixed height like chat tab + flex for children */}
-          <div className="h-[75vh] max-h-[800px] flex flex-col relative overflow-hidden">
-            {/* Modern Background */}
-            <div className="absolute inset-0 bg-primary/5 opacity-60"></div>
-            <div className="absolute inset-0 backdrop-blur-3xl bg-background/40 border border-border/20 rounded-3xl shadow-2xl"></div>
+          {selectedRoom ? (
+            // Show room chat when a room is selected
+            <div className="h-[75vh] max-h-[800px] flex flex-col relative overflow-hidden">
+              {/* Modern Background */}
+              <div className="absolute inset-0 bg-primary/5 opacity-60"></div>
+              <div className="absolute inset-0 backdrop-blur-3xl bg-background/40 border border-border/20 rounded-3xl shadow-2xl"></div>
 
-            {/* Allow children to shrink and create internal scroll areas */}
-            <div className="relative z-10 h-full p-6 rounded-3xl overflow-hidden flex flex-col min-h-0">
-              <RoomsPanel
-                eventId={eventId || undefined}
-                onEnterRoom={(roomId) =>
-                  setSelectedRoom((prev) =>
-                    prev && prev.id === roomId
-                      ? prev
-                      : { id: roomId, name: "Room", color: null }
-                  )
-                }
-              />
+              {/* Chat Container */}
+              <div className="relative z-10 h-full flex flex-col rounded-3xl overflow-hidden">
+                {/* Ultra Modern Header */}
+                <div className="relative p-6 bg-background/80 backdrop-blur-xl border-b border-border/10">
+                  <div className="absolute inset-0 bg-primary/5 opacity-50"></div>
+                  <div className="relative flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-2xl blur-lg animate-pulse"></div>
+                        <div className="relative p-3 bg-gradient-to-br from-primary/10 to-accent/10 backdrop-blur-xl rounded-2xl border border-border/20">
+                          <Sparkles className="h-6 w-6 text-primary" />
+                        </div>
+                      </div>
+                      <div>
+                        <h1 className="text-2xl font-bold text-primary">
+                          {selectedRoom.name}
+                        </h1>
+                        <p className="text-sm text-muted-foreground/80 font-medium">
+                          {messages.length} message
+                          {messages.length !== 1 ? "s" : ""} •{" "}
+                          {Object.keys(participantPoints).length} participants
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => setSelectedRoom(null)}
+                      variant="outline"
+                      size="sm"
+                      className="rounded-2xl bg-background/50 backdrop-blur-xl border-border/20 hover:bg-background/80 hover:scale-105 transition-all duration-300"
+                    >
+                      ← Back to Rooms
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex-1 flex flex-col min-h-0 px-6">
+                  {/* Messages Container */}
+                  <div
+                    ref={scrollAreaRef}
+                    className="flex-1 overflow-y-auto space-y-4 py-4 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-border/20 hover:scrollbar-thumb-border/40"
+                    style={{
+                      touchAction: "pan-y",
+                      WebkitOverflowScrolling: "touch",
+                      overscrollBehavior: "contain",
+                    }}
+                    onScroll={handleScroll}
+                  >
+                    {messages.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-full py-20 text-center">
+                        <div className="relative mb-6">
+                          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20 rounded-3xl blur-2xl animate-pulse"></div>
+                          <div className="relative p-6 bg-gradient-to-br from-muted/50 to-muted/30 backdrop-blur-xl rounded-3xl border border-border/20">
+                            <Sparkles className="h-12 w-12 text-muted-foreground/60" />
+                          </div>
+                        </div>
+                        <h3 className="text-xl font-bold text-foreground mb-2">
+                          Start the conversation
+                        </h3>
+                        <p className="text-muted-foreground max-w-sm">
+                          Be the first to share your thoughts in this room!
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        {messages.map((message) => (
+                          <div key={message.id} className="animate-fade-in">
+                            <ChatMessage
+                              message={message}
+                              isOwn={message.user_id === currentUser?.id}
+                              onQuote={handleQuoteMessage}
+                              onDelete={(id) => deleteMessage(id)}
+                              points={participantPoints[message.user_id] ?? 0}
+                              roomOwnerUserId={selectedRoom?.created_by}
+                            />
+                          </div>
+                        ))}
+                        <div ref={messagesEndRef} />
+                      </>
+                    )}
+                  </div>
+
+                  {/* Floating Scroll Button */}
+                  {isUserScrolling && (
+                    <Button
+                      onClick={scrollToBottom}
+                      size="icon"
+                      className="fixed bottom-32 right-8 rounded-full bg-primary shadow-2xl border-0 hover:scale-110 transition-all duration-300 z-20"
+                    >
+                      <ArrowDown className="h-4 w-4" />
+                    </Button>
+                  )}
+
+                  {/* Quote Preview */}
+                  {quotedMessage && (
+                    <div className="mb-4 p-4 bg-background/80 backdrop-blur-xl rounded-2xl border border-border/20 shadow-lg">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-sm font-semibold text-primary">
+                          💬 Replying to {quotedMessage.user_profile?.name}
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setQuotedMessage(null)}
+                          className="h-8 w-8 p-0 rounded-full hover:bg-muted/50 hover:scale-110 transition-all duration-200"
+                        >
+                          ✕
+                        </Button>
+                      </div>
+                      <QuotedMessage message={quotedMessage} compact />
+                    </div>
+                  )}
+
+                  {/* Ultra Modern Message Input */}
+                  <div className="py-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-primary/10 rounded-3xl blur-xl"></div>
+                      <div className="relative flex gap-3 items-end bg-background/80 backdrop-blur-xl border border-border/20 rounded-3xl p-4 shadow-xl">
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/png,image/jpeg,image/jpg,image/gif,image/webp,image/svg+xml"
+                          className="hidden"
+                          onChange={handleImageChange}
+                        />
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={uploadingImage}
+                          className="shrink-0 rounded-2xl h-12 w-12 bg-gradient-to-br from-muted/50 to-muted/30 hover:from-muted/70 hover:to-muted/50 hover:scale-110 transition-all duration-300 border border-border/20"
+                        >
+                          {uploadingImage ? (
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                          ) : (
+                            <ImageIcon className="h-5 w-5" />
+                          )}
+                        </Button>
+
+                        <div className="flex-1 min-h-0">
+                          <Input
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            onKeyPress={handleKeyPress}
+                            placeholder="Share your thoughts..."
+                            className="border-0 focus-visible:ring-0 bg-transparent text-base p-0 placeholder:text-muted-foreground/60 font-medium"
+                            maxLength={500}
+                          />
+                          {newMessage.length > 400 && (
+                            <div className="text-xs text-muted-foreground/60 mt-2 font-medium">
+                              {newMessage.length}/500 characters
+                            </div>
+                          )}
+                        </div>
+
+                        <Button
+                          onClick={handleSendMessage}
+                          disabled={!newMessage.trim()}
+                          size="icon"
+                          className="rounded-2xl h-12 w-12 bg-primary hover:bg-primary/90 disabled:opacity-50 shadow-lg hover:scale-110 transition-all duration-300 border-0"
+                        >
+                          <Send className="h-5 w-5" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          ) : (
+            // Show rooms list when no room is selected
+            <div className="h-[75vh] max-h-[800px] flex flex-col relative overflow-hidden">
+              {/* Modern Background */}
+              <div className="absolute inset-0 bg-primary/5 opacity-60"></div>
+              <div className="absolute inset-0 backdrop-blur-3xl bg-background/40 border border-border/20 rounded-3xl shadow-2xl"></div>
+
+              {/* Allow children to shrink and create internal scroll areas */}
+              <div className="relative z-10 h-full p-6 rounded-3xl overflow-hidden flex flex-col min-h-0">
+                <RoomsPanel
+                  eventId={eventId || undefined}
+                  onEnterRoom={(roomId) => {
+                    setSelectedRoom({
+                      id: roomId,
+                      name: "Room",
+                      color: null,
+                    });
+                    setActiveTab("rooms");
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </TabsContent>
 
         {/* Topics Content - Independent Container */}

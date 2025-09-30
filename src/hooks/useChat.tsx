@@ -100,14 +100,30 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
 
       const userIds = [...new Set(messagesData?.map((msg) => msg.user_id) || [])];
 
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, name, email, role, photo_url, bio, niche, company, twitter_link, linkedin_link, instagram_link, github_link, website_link')
-        .in('id', userIds);
+      // Use RPC function to bypass RLS for event participants
+      const { data: eventAttendees, error: attendeesError } = await supabase
+        .rpc('get_event_attendees_with_profiles', { p_event_id: effectiveEventId });
 
-      if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
+      if (attendeesError) {
+        console.error('Error fetching event attendees:', attendeesError);
       }
+
+      // Create profiles map from attendees
+      const profiles = eventAttendees?.map(att => ({
+        id: att.user_id,
+        name: att.name,
+        email: att.email,
+        role: att.role,
+        photo_url: att.photo_url,
+        bio: att.bio,
+        niche: att.niche,
+        company: att.company,
+        twitter_link: att.twitter_link,
+        linkedin_link: att.linkedin_link,
+        instagram_link: att.instagram_link,
+        github_link: att.github_link,
+        website_link: att.website_link,
+      })) || [];
 
       // Create a map of user profiles
       const profilesMap = new Map<string, any>();
@@ -285,15 +301,31 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
           try {
             let profileData = profileCache.current.get(newMsg.user_id);
             if (!profileData) {
-              const { data, error: profileError } = await supabase
-                .from('profiles')
-                .select('id, name, email, role, photo_url, bio, niche, company, twitter_link, linkedin_link, instagram_link, github_link, website_link')
-                .eq('id', newMsg.user_id)
-                .single();
-
-              if (!profileError && data) {
-                profileData = data;
-                profileCache.current.set(newMsg.user_id, data);
+              // Try to get from event attendees first (bypasses RLS)
+              const { data: eventAttendees } = await supabase
+                .rpc('get_event_attendees_with_profiles', { p_event_id: effectiveEventId });
+              
+              const attendee = eventAttendees?.find((att: any) => att.user_id === newMsg.user_id);
+              
+              if (attendee) {
+                profileData = {
+                  id: attendee.user_id,
+                  name: attendee.name,
+                  email: attendee.email,
+                  role: attendee.role,
+                  photo_url: attendee.photo_url,
+                  bio: attendee.bio,
+                  niche: attendee.niche,
+                  company: attendee.company,
+                  twitter_link: attendee.twitter_link,
+                  linkedin_link: attendee.linkedin_link,
+                  instagram_link: attendee.instagram_link,
+                  github_link: attendee.github_link,
+                  website_link: attendee.website_link,
+                };
+                profileCache.current.set(newMsg.user_id, profileData);
+              } else {
+                console.warn('No profile found for user in event participants:', newMsg.user_id);
               }
             }
 

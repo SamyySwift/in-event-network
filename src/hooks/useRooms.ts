@@ -100,24 +100,34 @@ export const useRooms = (overrideEventId?: string) => {
   };
 
   const joinRoom = async (roomId: string) => {
-    if (!currentUser?.id) return;
+    if (!currentUser?.id || !effectiveEventId) return;
     try {
       console.log('Attempting to join room:', roomId, 'for user:', currentUser.id);
       
-      // Check if user is in event_participants first
+      // Ensure user is a participant of this event (required by RLS to send/read messages)
       const { data: participation, error: participationError } = await supabase
         .from('event_participants')
-        .select('*')
+        .select('id')
         .eq('user_id', currentUser.id)
         .eq('event_id', effectiveEventId);
-      
+
       if (participationError) {
         console.error('Error checking participation:', participationError);
-      } else {
-        console.log('User participation status:', participation);
+      }
+
+      if (!participation || participation.length === 0) {
+        console.log('User not a participant yet — attempting to join event:', effectiveEventId);
+        const { error: joinErr } = await supabase
+          .from('event_participants')
+          .insert({ event_id: effectiveEventId, user_id: currentUser.id });
+        if (joinErr && (joinErr as any).code !== '23505') {
+          // 23505 = unique_violation (already joined)
+          console.error('Failed to add user to event_participants:', joinErr);
+          throw new Error('You must join the event before entering rooms. Please scan the event QR again.');
+        }
       }
       
-      // Prefer a plain insert and gracefully ignore duplicates (unique violation)
+      // Now join the room (idempotent)
       const { error } = await supabase.from('room_members').insert({
         room_id: roomId,
         user_id: currentUser.id,
@@ -126,10 +136,9 @@ export const useRooms = (overrideEventId?: string) => {
       if (error && (error as any).code !== '23505') {
         // If it wasn't a duplicate-key error, rethrow
         console.error('Room join error:', error);
-        
         // Check if it's a permission error (RLS)
-        if (error.message?.includes('new row violates row-level security') || error.message?.includes('permission denied')) {
-          throw new Error('You must be a participant in this event to join rooms. Please make sure you have properly joined the event first.');
+        if (error.message?.includes('row-level security') || error.message?.includes('permission denied')) {
+          throw new Error('Access denied. Please ensure you have joined this event before entering rooms.');
         }
         throw error;
       }

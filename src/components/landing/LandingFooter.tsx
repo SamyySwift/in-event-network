@@ -90,7 +90,9 @@ const LandingFooter: React.FC = () => {
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <a
-              href="#"
+              href="https://instagram.com/__kconect"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-white/40 hover:text-cyan-400 transition-colors"
               aria-label="Instagram"
             >
@@ -98,7 +100,7 @@ const LandingFooter: React.FC = () => {
               <Instagram className="h-5 w-5" />
             </a>
             <a
-              href="mailto:support@kconnect.com"
+              href="mailto:Kconect.com@gmail.com"
               className="text-white/40 hover:text-cyan-400 transition-colors"
               aria-label="Mail"
             >

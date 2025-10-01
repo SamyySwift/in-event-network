@@ -1,5 +1,6 @@
 import React from "react";
 import { Network, Instagram, Mail } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const LandingFooter: React.FC = () => {
   // Smooth scroll function
@@ -51,12 +52,12 @@ const LandingFooter: React.FC = () => {
                 </button>
               </li>
               <li>
-                <a
-                  href="/guide"
+                <Link
+                  to="/guide"
                   className="text-white/60 hover:text-cyan-400 transition-colors"
                 >
                   Guide
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -65,20 +66,20 @@ const LandingFooter: React.FC = () => {
             <h3 className="font-semibold text-lg mb-4 text-white">Legal</h3>
             <ul className="space-y-2">
               <li>
-                <a
-                  href="/privacy"
+                <Link
+                  to="/privacy"
                   className="text-white/60 hover:text-cyan-400 transition-colors"
                 >
                   Data Privacy
-                </a>
+                </Link>
               </li>
               <li>
-                <a
-                  href="/terms"
+                <Link
+                  to="/terms"
                   className="text-white/60 hover:text-cyan-400 transition-colors"
                 >
                   Terms of Service
-                </a>
+                </Link>
               </li>
             </ul>
           </div>

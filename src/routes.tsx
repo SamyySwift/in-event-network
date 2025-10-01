@@ -13,6 +13,8 @@ import VendorForm from "./pages/VendorForm";
 import BuyTickets from "@/pages/BuyTickets";
 import JoinEvent from "@/pages/JoinEvent";
 import Discovery from "@/pages/Discovery";
+import DataPrivacy from "@/pages/DataPrivacy";
+import TermsOfService from "@/pages/TermsOfService";
 
 // Admin Pages
 import AdminLayout from "@/components/layouts/AdminLayout";
@@ -138,6 +140,14 @@ export const router = createBrowserRouter([
   {
     path: "/discovery",
     element: <Discovery />,
+  },
+  {
+    path: "/privacy",
+    element: <DataPrivacy />,
+  },
+  {
+    path: "/terms",
+    element: <TermsOfService />,
   },
   {
     path: "/login",

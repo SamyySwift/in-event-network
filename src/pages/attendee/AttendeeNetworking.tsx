@@ -53,6 +53,7 @@ import { useUserPresence } from "@/hooks/useUserPresence";
 import { useConnectionRequests } from "@/hooks/useConnectionRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "react-router-dom";
+import { useAINetworking } from "@/hooks/useAINetworking";
 // Remove this import because Topics now renders inside ChatRoom
 // import TopicsBoard from "@/components/topics/TopicsBoard";
 
@@ -76,6 +77,13 @@ const AttendeeNetworking = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  // AI Features
+  const { generateConversationStarters, matchProfiles, loading: aiLoading } = useAINetworking();
+  const [showAIMatches, setShowAIMatches] = useState(false);
+  const [aiMatches, setAIMatches] = useState<any[]>([]);
+  const [conversationStarters, setConversationStarters] = useState<{[key: string]: string[]}>({});
+  const [showStarters, setShowStarters] = useState<{[key: string]: boolean}>({});
 
   const {
     attendees: profiles,
@@ -224,6 +232,42 @@ const AttendeeNetworking = () => {
 
   const handleBackToConversations = () => {
     setSelectedConversation(null);
+  };
+
+  // AI Handlers
+  const handleAIMatch = async () => {
+    if (!currentUser || profiles.length === 0) return;
+    
+    const userProfile = profiles.find(p => p.id === currentUser.id);
+    if (!userProfile) return;
+
+    const matches = await matchProfiles(userProfile, profiles);
+    setAIMatches(matches);
+    setShowAIMatches(true);
+  };
+
+  const handleGetConversationStarters = async (targetProfile: any) => {
+    if (!currentUser || conversationStarters[targetProfile.id]) {
+      // Toggle visibility if already generated
+      setShowStarters(prev => ({
+        ...prev,
+        [targetProfile.id]: !prev[targetProfile.id]
+      }));
+      return;
+    }
+
+    const userProfile = profiles.find(p => p.id === currentUser.id);
+    if (!userProfile) return;
+
+    const starters = await generateConversationStarters(userProfile, targetProfile);
+    setConversationStarters(prev => ({
+      ...prev,
+      [targetProfile.id]: starters
+    }));
+    setShowStarters(prev => ({
+      ...prev,
+      [targetProfile.id]: true
+    }));
   };
 
   const getSocialIcon = (platform: string) => {
@@ -508,6 +552,49 @@ const AttendeeNetworking = () => {
             )}
           </div>
 
+          {/* AI Conversation Starters */}
+          {showConnectButton && (
+            <div className="space-y-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => handleGetConversationStarters(profile)}
+                disabled={aiLoading}
+                className="w-full h-auto py-2 text-xs font-medium text-connect-600 hover:text-connect-700 dark:text-connect-400 dark:hover:text-connect-300 hover:bg-connect-50 dark:hover:bg-connect-900/20"
+              >
+                <Sparkles size={14} className="mr-2" />
+                {conversationStarters[profile.id] ? 
+                  (showStarters[profile.id] ? 'Hide' : 'Show') + ' AI Conversation Starters' :
+                  'Generate Conversation Starters'
+                }
+              </Button>
+              
+              {showStarters[profile.id] && conversationStarters[profile.id] && (
+                <div className="space-y-2 animate-fade-in bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-900/10 dark:to-pink-900/10 rounded-lg p-3 border border-purple-200/50 dark:border-purple-700/50">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Sparkles size={12} className="text-purple-500" />
+                    <span className="text-xs font-semibold text-purple-700 dark:text-purple-300">
+                      AI-Suggested Conversation Starters
+                    </span>
+                  </div>
+                  {conversationStarters[profile.id].map((starter, idx) => (
+                    <div
+                      key={idx}
+                      className="p-2 bg-white/70 dark:bg-gray-800/70 rounded-md hover:bg-white dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                      onClick={() => {
+                        handleMessage(profile.id, profile.name || "", profile.photo_url);
+                      }}
+                    >
+                      <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
+                        "{starter}"
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Sticky bottom action bar */}
           <div className="-mx-5 px-5 pt-3 pb-4 sticky bottom-0 bg-white/85 dark:bg-gray-900/85 backdrop-blur border-t border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3">
@@ -740,46 +827,127 @@ const AttendeeNetworking = () => {
         </div>
         {/* People */}
         <TabsContent value="people" className="space-y-6">
-          {/* Search and Filter Bar */}
-          <NetworkingFilter
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            selectedNiches={selectedNiches}
-            onNicheChange={setSelectedNiches}
-            selectedNetworkingPrefs={selectedNetworkingPrefs}
-            onNetworkingPrefChange={setSelectedNetworkingPrefs}
-            selectedTags={selectedTags}
-            onTagChange={setSelectedTags}
-            showSuggestedOnly={showSuggestedOnly}
-            onSuggestedToggle={setShowSuggestedOnly}
-            availableNiches={availableNiches}
-            availableNetworkingPrefs={availableNetworkingPrefs}
-            availableTags={availableTags}
-            onClearFilters={clearAllFilters}
-          />
+          {/* AI Matches Toggle */}
+          <div className="flex flex-wrap gap-3 items-center justify-between bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-4 border border-purple-200 dark:border-purple-700">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+              <span className="text-sm font-semibold text-purple-900 dark:text-purple-100">
+                AI-Powered Networking
+              </span>
+            </div>
+            <Button
+              onClick={handleAIMatch}
+              disabled={aiLoading}
+              variant={showAIMatches ? "default" : "outline"}
+              className={showAIMatches 
+                ? "bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white"
+                : "border-purple-300 dark:border-purple-700 hover:bg-purple-100 dark:hover:bg-purple-900/30"
+              }
+            >
+              {aiLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                  Analyzing Profiles...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  {showAIMatches ? 'Show All' : 'Find My Best Matches'}
+                </>
+              )}
+            </Button>
+          </div>
 
-          {/* Results summary */}
-          {sortedProfiles.length > 0 && (
-            <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
-              <span>
-                Showing {startIndex + 1}-
-                {Math.min(endIndex, sortedProfiles.length)} of{" "}
-                {sortedProfiles.length} attendees
-              </span>
-              <span>
-                Page {currentPage} of {totalPages}
-              </span>
+          {/* AI Matches Display */}
+          {showAIMatches && aiMatches.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-purple-600" />
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                    Your AI-Matched Connections
+                  </h3>
+                </div>
+                <Badge variant="secondary" className="bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300">
+                  {aiMatches.length} matches
+                </Badge>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+                {aiMatches.map((match) => {
+                  const profile = profiles.find(p => p.id === match.id);
+                  if (!profile) return null;
+                  return (
+                    <div key={profile.id} className="relative">
+                      {/* Match Score Badge */}
+                      <div className="absolute -top-2 -right-2 z-10">
+                        <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
+                          <Sparkles className="h-3 w-3" />
+                          {match.score}% Match
+                        </div>
+                      </div>
+                      {/* Match Reason */}
+                      {match.reason && (
+                        <div className="absolute -top-2 left-4 right-16 z-10">
+                          <div className="bg-white dark:bg-gray-800 text-xs text-gray-600 dark:text-gray-300 px-2 py-1 rounded-lg shadow-md border border-purple-200 dark:border-purple-700 line-clamp-1">
+                            {match.reason}
+                          </div>
+                        </div>
+                      )}
+                      <div className="mt-8">
+                        {renderUserCard(profile, true)}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 
-          <div
-            id="attendees-section"
-            className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8"
-          >
-            {currentPageProfiles.map((profile) =>
-              renderUserCard(profile, true)
-            )}
-          </div>
+          {/* Regular People List - Hide when showing AI matches */}
+          {!showAIMatches && (
+            <>
+              {/* Search and Filter Bar */}
+              <NetworkingFilter
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                selectedNiches={selectedNiches}
+                onNicheChange={setSelectedNiches}
+                selectedNetworkingPrefs={selectedNetworkingPrefs}
+                onNetworkingPrefChange={setSelectedNetworkingPrefs}
+                selectedTags={selectedTags}
+                onTagChange={setSelectedTags}
+                showSuggestedOnly={showSuggestedOnly}
+                onSuggestedToggle={setShowSuggestedOnly}
+                availableNiches={availableNiches}
+                availableNetworkingPrefs={availableNetworkingPrefs}
+                availableTags={availableTags}
+                onClearFilters={clearAllFilters}
+              />
+
+              {/* Results summary */}
+              {sortedProfiles.length > 0 && (
+                <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
+                  <span>
+                    Showing {startIndex + 1}-
+                    {Math.min(endIndex, sortedProfiles.length)} of{" "}
+                    {sortedProfiles.length} attendees
+                  </span>
+                  <span>
+                    Page {currentPage} of {totalPages}
+                  </span>
+                </div>
+              )}
+
+              <div
+                id="attendees-section"
+                className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8"
+              >
+                {currentPageProfiles.map((profile) =>
+                  renderUserCard(profile, true)
+                )}
+              </div>
+            </>
+          )}
 
           {/* Pagination Controls */}
           {totalPages > 1 && (

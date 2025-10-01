@@ -75,3 +75,9 @@ verify_jwt = false
 
 [functions.delete-user-account]
 verify_jwt = true
+
+[functions.generate-conversation-starters]
+verify_jwt = true
+
+[functions.match-profiles]
+verify_jwt = true

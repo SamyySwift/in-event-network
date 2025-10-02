@@ -85,6 +85,7 @@ const AttendeeNetworking = () => {
   const { generateConversationStarters, matchProfiles, loading: aiLoading } = useAINetworking();
   const [showAIMatches, setShowAIMatches] = useState(false);
   const [aiMatches, setAIMatches] = useState<any[]>([]);
+  const [bestMatchId, setBestMatchId] = useState<string | null>(null);
   const [conversationStarters, setConversationStarters] = useState<{[key: string]: string[]}>({});
   const [showStarters, setShowStarters] = useState<{[key: string]: boolean}>({});
 
@@ -240,81 +241,89 @@ const AttendeeNetworking = () => {
   // AI Handlers
   const handleAIMatch = async () => {
     console.log('AI Match clicked', { currentUser, profilesCount: profiles.length });
-    
+
     if (!currentUser) {
       console.error('No current user found');
-      toast({
-        title: "Error",
-        description: "Please log in to use AI matching",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    if (profiles.length === 0) {
-      console.error('No profiles available');
-      toast({
-        title: "No Profiles",
-        description: "No attendee profiles found to match",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    const userProfile = profiles.find(p => p.id === currentUser.id);
-    console.log('User profile found:', !!userProfile);
-    
-    if (!userProfile) {
-      console.error('User profile not found in attendees list');
-      toast({
-        title: "Profile Error",
-        description: "Your profile wasn't found in the attendees list",
-        variant: "destructive"
-      });
+      toast({ title: 'Error', description: 'Please log in to use AI matching', variant: 'destructive' });
       return;
     }
 
-    console.log('Calling matchProfiles with', { userProfileId: userProfile.id, profilesCount: profiles.length });
-    const matches = await matchProfiles(userProfile, profiles);
-    console.log('Matches received:', matches);
-    
-    if (matches && matches.length > 0) {
-      setAIMatches(matches);
-      setShowAIMatches(true);
-      toast({
-        title: "Matches Found!",
-        description: `Found ${matches.length} great matches for you`,
-      });
-    } else {
-      toast({
-        title: "No Matches",
-        description: "Couldn't find strong matches. Try updating your profile with more details.",
-      });
+    if (profiles.length === 0) {
+      console.error('No profiles available');
+      toast({ title: 'No Profiles', description: 'No attendee profiles found to match', variant: 'destructive' });
+      return;
+    }
+
+    try {
+      // Fetch full current user profile (excluded from attendees list)
+      const { data: me, error: meErr } = await supabase
+        .from('profiles')
+        .select('id,name,role,company,bio,niche,photo_url,networking_preferences,tags')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (meErr || !me) {
+        console.error('Failed to fetch current user profile for AI match:', meErr);
+        toast({ title: 'Profile Error', description: 'Could not load your profile for matching', variant: 'destructive' });
+        return;
+      }
+
+      console.log('Calling matchProfiles with', { userProfileId: me.id, profilesCount: profiles.length });
+      const matches = await matchProfiles(me, profiles);
+      console.log('Matches received:', matches);
+
+      if (matches && matches.length > 0) {
+        // Ensure highest score first and pick best match
+        const sorted = [...matches].sort((a: any, b: any) => (b.score || 0) - (a.score || 0));
+        setAIMatches(sorted);
+        setBestMatchId(sorted[0]?.id || null);
+        setShowAIMatches(true);
+
+        const best = sorted[0];
+        const bestProfile = profiles.find(p => p.id === best?.id);
+        toast({
+          title: 'Best match found',
+          description: bestProfile ? `${bestProfile.name || 'Attendee'} • ${best?.score || 0}% match` : `Found ${sorted.length} matches`,
+        });
+
+        // Smooth scroll to AI matches section
+        setTimeout(() => {
+          document.getElementById('ai-matches')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 50);
+      } else {
+        toast({ title: 'No Matches', description: "Couldn't find strong matches. Try updating your profile with more details." });
+      }
+    } catch (e) {
+      console.error('AI match error:', e);
+      toast({ title: 'Error', description: 'Failed to run AI matching', variant: 'destructive' });
     }
   };
 
   const handleGetConversationStarters = async (targetProfile: any) => {
-    if (!currentUser || conversationStarters[targetProfile.id]) {
-      // Toggle visibility if already generated
-      setShowStarters(prev => ({
-        ...prev,
-        [targetProfile.id]: !prev[targetProfile.id]
-      }));
+    if (!currentUser) return;
+
+    // If already generated, just toggle visibility
+    if (conversationStarters[targetProfile.id]) {
+      setShowStarters(prev => ({ ...prev, [targetProfile.id]: !prev[targetProfile.id] }));
       return;
     }
 
-    const userProfile = profiles.find(p => p.id === currentUser.id);
-    if (!userProfile) return;
+    // Fetch full current user profile (excluded from attendees list)
+    const { data: me, error: meErr } = await supabase
+      .from('profiles')
+      .select('id,name,role,company,bio,niche,photo_url,networking_preferences,tags')
+      .eq('id', currentUser.id)
+      .single();
 
-    const starters = await generateConversationStarters(userProfile, targetProfile);
-    setConversationStarters(prev => ({
-      ...prev,
-      [targetProfile.id]: starters
-    }));
-    setShowStarters(prev => ({
-      ...prev,
-      [targetProfile.id]: true
-    }));
+    if (meErr || !me) {
+      console.error('Failed to fetch current user profile for starters:', meErr);
+      toast({ title: 'Profile Error', description: 'Could not load your profile for starters', variant: 'destructive' });
+      return;
+    }
+
+    const starters = await generateConversationStarters(me, targetProfile);
+    setConversationStarters(prev => ({ ...prev, [targetProfile.id]: starters }));
+    setShowStarters(prev => ({ ...prev, [targetProfile.id]: true }));
   };
 
   const handleSendConversationStarter = async (targetProfileId: string, targetProfileName: string, starterMessage: string) => {
@@ -961,7 +970,7 @@ const AttendeeNetworking = () => {
 
           {/* AI Matches Display */}
           {showAIMatches && aiMatches.length > 0 && (
-            <div className="space-y-4">
+            <div id="ai-matches" className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Sparkles className="h-5 w-5 text-purple-600" />
@@ -979,6 +988,13 @@ const AttendeeNetworking = () => {
                   if (!profile) return null;
                   return (
                     <div key={profile.id} className="relative">
+                      {profile.id === bestMatchId && (
+                        <div className="absolute -top-2 left-2 z-10">
+                          <div className="bg-connect-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow">
+                            Best Match
+                          </div>
+                        </div>
+                      )}
                       {/* Match Score Badge */}
                       <div className="absolute -top-2 -right-2 z-10">
                         <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">

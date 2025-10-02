@@ -1004,8 +1004,8 @@ const AttendeeNetworking = () => {
                       </div>
                       {/* Match Reason */}
                       {match.reason && (
-                        <div className="absolute -top-2 left-4 right-16 z-10">
-                          <div className="bg-white dark:bg-gray-800 text-xs text-gray-600 dark:text-gray-300 px-2 py-1 rounded-lg shadow-md border border-purple-200 dark:border-purple-700 line-clamp-1">
+                        <div className="mt-4 pr-24">
+                          <div className="bg-white dark:bg-gray-800 text-xs text-gray-600 dark:text-gray-300 px-2 py-1 rounded-lg shadow-md border border-purple-200 dark:border-purple-700">
                             {match.reason}
                           </div>
                         </div>

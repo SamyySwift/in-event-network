@@ -123,7 +123,7 @@ export const useDirectMessages = (recipientId?: string) => {
       // Get user profiles for all other users
       const otherUserIds = conversationsArray.map(conv => conv.other_user_id);
       const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
+        .from('public_profiles')
         .select('id, name, photo_url, role')
         .in('id', otherUserIds);
 
@@ -205,9 +205,9 @@ export const useDirectMessages = (recipientId?: string) => {
         ...messagesData?.map(msg => msg.sender_id) || [],
         ...messagesData?.map(msg => msg.recipient_id) || []
       ])];
-      
+
       const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
+        .from('public_profiles')
         .select('id, name, photo_url, role')
         .in('id', userIds);
 
@@ -223,14 +223,21 @@ export const useDirectMessages = (recipientId?: string) => {
         profilesMap.set(profile.id, { ...profile, name: normalizedName });
       });
 
-      // Combine messages with user profiles
+      // Combine messages with user profiles + safe current user fallback
       const messagesWithProfiles = messagesData?.map(message => {
         const sp = profilesMap.get(message.sender_id);
         const rp = profilesMap.get(message.recipient_id);
+
+        const safeSender =
+          sp || (message.sender_id === currentUser.id ? { name: currentUser.name || 'Me' } : { name: 'Unknown User' });
+
+        const safeRecipient =
+          rp || (message.recipient_id === currentUser.id ? { name: currentUser.name || 'Me' } : { name: 'Unknown User' });
+
         return {
           ...message,
-          sender_profile: sp || { name: 'Unknown User' },
-          recipient_profile: rp || { name: 'Unknown User' }
+          sender_profile: safeSender,
+          recipient_profile: safeRecipient
         };
       }) || [];
 
@@ -276,7 +283,7 @@ export const useDirectMessages = (recipientId?: string) => {
             
             // Get profiles for the new message
             const { data: profilesData } = await supabase
-              .from('profiles')
+              .from('public_profiles')
               .select('id, name, photo_url, role')
               .in('id', [newMessage.sender_id, newMessage.recipient_id]);
 
@@ -289,8 +296,12 @@ export const useDirectMessages = (recipientId?: string) => {
 
             const messageWithProfiles = {
               ...newMessage,
-              sender_profile: profilesMap.get(newMessage.sender_id) || { name: 'Unknown User' },
-              recipient_profile: profilesMap.get(newMessage.recipient_id) || { name: 'Unknown User' }
+              sender_profile:
+                profilesMap.get(newMessage.sender_id)
+                || (newMessage.sender_id === currentUser.id ? { name: currentUser.name || 'Me' } : { name: 'Unknown User' }),
+              recipient_profile:
+                profilesMap.get(newMessage.recipient_id)
+                || (newMessage.recipient_id === currentUser.id ? { name: currentUser.name || 'Me' } : { name: 'Unknown User' })
             } as DirectMessage;
 
             setMessages(prev => [...prev, messageWithProfiles]);

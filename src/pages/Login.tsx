@@ -13,7 +13,8 @@ import {
 } from "@/components/ui/card";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { AlertCircle, Network, Eye, EyeOff } from "lucide-react";
+// module imports
+import { AlertCircle, Network, Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FcGoogle } from "react-icons/fc";
 
@@ -39,35 +40,37 @@ const Login = () => {
 
       // Check for ticketing redirect first
       // Replace the existing buy-tickets redirect logic (around lines 42-54) with:
-      const redirectAfterLogin = localStorage.getItem('redirectAfterLogin');
-      if (redirectAfterLogin && redirectAfterLogin.includes('/buy-tickets/')) {
-      // Extract event key from the buy-tickets URL
-      const eventKeyMatch = redirectAfterLogin.match(/\/buy-tickets\/([^\/\?]+)/);
-      if (eventKeyMatch) {
-      localStorage.removeItem('redirectAfterLogin');
-      // Redirect directly to the buy-tickets page
-      navigate(redirectAfterLogin, { replace: true });
-      return;
-      }
+      const redirectAfterLogin = localStorage.getItem("redirectAfterLogin");
+      if (redirectAfterLogin && redirectAfterLogin.includes("/buy-tickets/")) {
+        // Extract event key from the buy-tickets URL
+        const eventKeyMatch = redirectAfterLogin.match(
+          /\/buy-tickets\/([^\/\?]+)/
+        );
+        if (eventKeyMatch) {
+          localStorage.removeItem("redirectAfterLogin");
+          // Redirect directly to the buy-tickets page
+          navigate(redirectAfterLogin, { replace: true });
+          return;
+        }
       }
 
       // Check if there's a pending event to join
       const pendingEventCode = sessionStorage.getItem("pendingEventCode");
-  
+
       if (pendingEventCode && currentUser.role === "attendee") {
         console.log(
           "Found pending event code, attempting to join:",
           pendingEventCode
         );
-  
+
         // Clear the stored code
         sessionStorage.removeItem("pendingEventCode");
-  
+
         // Navigate to join the event
         navigate(`/join/${pendingEventCode}`, { replace: true });
         return;
       }
-  
+
       // Normal redirect
       if (currentUser.role === "host") {
         navigate("/admin", { replace: true });
@@ -80,21 +83,21 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
-  
+
     if (!email || !password) {
       setErrorMessage("Please fill in all fields");
       return;
     }
-  
+
     if (isSubmitting) return;
-  
+
     try {
       setIsSubmitting(true);
       console.log("Attempting login for:", email);
-      
+
       // Get the result from login function
       const result = await login(email, password);
-      
+
       // Check if there was an error
       if (result.error) {
         console.error("Login error:", result.error);
@@ -103,8 +106,7 @@ const Login = () => {
         );
         return;
       }
-      
-      console.log("Login successful");
+
       toast({
         title: "Welcome back!",
         description: "You have been successfully signed in.",
@@ -124,7 +126,7 @@ const Login = () => {
     try {
       setIsSubmitting(true);
       const { error } = await signInWithGoogle("attendee"); // Default to attendee for login
-      
+
       if (error) {
         console.error("Google sign-in error:", error);
         setErrorMessage("Failed to sign in with Google. Please try again.");
@@ -164,7 +166,7 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-blue-950 text-white flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="flex justify-center mb-8">
         <Link to="/" className="flex items-center">
           <img src="/logo.png" alt="Kconect Logo" className="h-8 w-auto" />
@@ -175,66 +177,80 @@ const Login = () => {
       </div>
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <Card className="shadow-xl">
+        <Card className="bg-black/40 border border-white/10 backdrop-blur-xl shadow-2xl text-white">
           <CardHeader className="space-y-1">
             <CardTitle className="text-2xl font-bold text-center">
               Sign in to your account
             </CardTitle>
             <CardDescription className="text-center">
-              Enter your credentials to access your Connect account
+              Enter your credentials to access your K-conect account
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
               {errorMessage && (
-                <Alert variant="destructive">
+                <Alert
+                  variant="destructive"
+                  className="bg-white/10 border-white/20 text-white"
+                >
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>{errorMessage}</AlertDescription>
                 </Alert>
               )}
-
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={isSubmitting}
-                  required
-                />
+                <Label htmlFor="email" className="text-white">
+                  Email address
+                </Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 pointer-events-none" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="Email address"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={isSubmitting}
+                    required
+                    className="pl-10 bg-white/5 border-white/20 text-white placeholder:text-white/60"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password" className="text-white">
+                    Password
+                  </Label>
                   <Link
                     to="/forgot-password"
-                    className="text-sm font-medium text-connect-600 hover:text-connect-500"
+                    className="text-sm font-medium text-cyan-400 hover:text-cyan-300"
                   >
                     Forgot password?
                   </Link>
                 </div>
                 <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 pointer-events-none" />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
+                    placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     disabled={isSubmitting}
                     required
-                    className="pr-10"
+                    className="pl-10 pr-10 bg-white/5 border-white/20 text-white placeholder:text-white/60"
                   />
                   <button
                     type="button"
                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
                     onClick={() => setShowPassword(!showPassword)}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
                   >
                     {showPassword ? (
-                      <EyeOff className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                      <EyeCuteOpen className="h-4 w-4 text-white/70 hover:text-white/90" />
                     ) : (
-                      <Eye className="h-4 w-4 text-gray-400 hover:text-gray-600" />
+                      <EyeCuteClosed className="h-4 w-4 text-white/70 hover:text-white/90" />
                     )}
                   </button>
                 </div>
@@ -248,27 +264,27 @@ const Login = () => {
               >
                 {isSubmitting ? "Signing in..." : "Sign in"}
               </Button>
-              
+
               <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
+                <div className="absolute inset-0 flex items-center"></div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
+                  <span className="px-2 text-muted-foreground">
+                    Or continue with
+                  </span>
                 </div>
               </div>
 
               <Button
                 type="button"
                 variant="outline"
-                className="w-full"
+                className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20"
                 onClick={handleGoogleSignIn}
                 disabled={isSubmitting}
               >
                 <FcGoogle className="mr-2 h-4 w-4" />
-                Sign in with Google
+                Sign up with Google
               </Button>
-              
+
               <div className="text-center text-sm">
                 Don't have an account?{" "}
                 <Link
@@ -287,3 +303,32 @@ const Login = () => {
 };
 
 export default Login;
+
+// Minimal eye icons to match the design reference
+const EyeCuteOpen = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+const EyeCuteClosed = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    className={className}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="M4 12c3 3 7 3 8 3 3 0 5-1 8-3" />
+    <path d="M9 14l-1 2" />
+    <path d="M12 14v2" />
+    <path d="M15 14l1 2" />
+  </svg>
+);

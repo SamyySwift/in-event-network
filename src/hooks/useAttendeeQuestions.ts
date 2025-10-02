@@ -73,77 +73,35 @@ export const useAttendeeQuestions = () => {
         return [];
       }
 
-      // Get the current event to find the host
-      const { data: currentEvent } = await supabase
-        .from('events')
-        .select('host_id')
-        .eq('id', currentEventId)
-        .single();
-
-      if (!currentEvent?.host_id) {
-        return [];
-      }
-
-      // Get all events from the same host
-      const { data: hostEvents } = await supabase
-        .from('events')
-        .select('id')
-        .eq('host_id', currentEvent.host_id);
-
-      const eventIds = hostEvents?.map(e => e.id) || [];
-
-      if (eventIds.length === 0) {
-        return [];
-      }
-
-      // Get questions from users who have joined events from this host
-      const { data: eventParticipants } = await supabase
-        .from('event_participants')
-        .select('user_id')
-        .in('event_id', eventIds);
-
-      const participantIds = eventParticipants?.map(p => p.user_id) || [];
-
-      if (participantIds.length === 0) {
-        return [];
-      }
-
-      // Get questions from these participants for the current event
+      // Fetch all questions for the current event directly
       const { data: questionsData, error } = await supabase
-        .from('questions')
-        .select('*')
-        .in('user_id', participantIds)
-        .eq('event_id', currentEventId)
-        .order('created_at', { ascending: false });
-
+          .from('questions')
+          .select('*')
+          .eq('event_id', currentEventId)
+          .order('created_at', { ascending: false });
+      
       if (error) {
-        console.error('Error fetching attendee questions:', error);
-        throw error;
+          console.error('Error fetching attendee questions:', error);
+          throw error;
       }
-
-      // Fetch profiles for each question
+      
+      // Attach profiles unless anonymous; RLS may return null for some profiles
       const questionsWithProfiles = await Promise.all(
-        (questionsData || []).map(async (question) => {
-          if (question.is_anonymous) {
-            return {
-              ...question,
-              profiles: null
-            };
-          }
-
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('name, photo_url')
-            .eq('id', question.user_id)
-            .single();
-
-          return {
-            ...question,
-            profiles: profile
-          };
-        })
+          (questionsData || []).map(async (question) => {
+              if (question.is_anonymous) {
+                  return { ...question, profiles: null };
+              }
+      
+              const { data: profile } = await supabase
+                  .from('profiles')
+                  .select('name, photo_url')
+                  .eq('id', question.user_id)
+                  .single();
+      
+              return { ...question, profiles: profile || null };
+          })
       );
-
+      
       return questionsWithProfiles;
     },
     enabled: !!currentUser?.id && !!currentEventId,

@@ -34,31 +34,36 @@ serve(async (req) => {
       networking_preferences: p.networking_preferences || []
     }));
 
-    const systemPrompt = `You are an AI networking assistant that helps match attendees at events based on their profiles. Analyze profiles and return match scores (0-100) based on:
-- Shared interests and tags (40% weight)
-- Complementary niches and networking preferences (40% weight)
-- Professional alignment (20% weight)
+    const systemPrompt = `You are an AI networking assistant that helps match attendees at events based on their profiles. Analyze profiles and return match scores (0-100) with this priority:
 
-Return ONLY a JSON array of objects with format: [{"id": "user_id", "score": 85, "reason": "brief explanation"}]
+CRITICAL MATCHING CRITERIA (60% weight):
+1. Networking Preferences Match (40%): If user is "Looking to connect with" X, prioritize people whose niche/role matches X
+2. Complementary Professional Niches (20%): Match people in related or complementary professions
+
+SECONDARY CRITERIA (40% weight):
+3. Shared Interests/Tags (30%): Common interests indicate conversation potential
+4. Professional Alignment (10%): Similar industries or fields
+
+Return ONLY a JSON array of objects with format: [{"id": "user_id", "score": 85, "reason": "brief explanation highlighting the match"}]
 Sort by score descending. Include only profiles with score >= 60.`;
 
-    const userPrompt = `Match this user with other attendees:
+    const userPrompt = `Match this user with other attendees based on networking preferences and professional alignment:
 
 User Profile:
-- Niche: ${userContext.niche || 'Not specified'}
-- Interests: ${userContext.tags.join(', ') || 'None'}
-- Looking to connect with: ${userContext.networking_preferences.join(', ') || 'Anyone'}
+- Professional Niche/Role: ${userContext.niche || 'Not specified'}
+- Personal Interests: ${userContext.tags.join(', ') || 'None'}
+- LOOKING TO CONNECT WITH (Priority): ${userContext.networking_preferences.join(', ') || 'Anyone'}
 
 Other Attendees:
 ${profilesContext.map((p: any) => `
 ID: ${p.id}
 Name: ${p.name}
-Niche: ${p.niche || 'Not specified'}
+Professional Niche: ${p.niche || 'Not specified'}
 Interests: ${p.tags?.join(', ') || 'None'}
 Looking to connect: ${p.networking_preferences?.join(', ') || 'Anyone'}
 `).join('\n---\n')}
 
-Return matches as JSON array sorted by score.`;
+Return matches prioritizing: 1) People whose niche matches what the user wants to connect with, 2) Similar/complementary professions, 3) Shared interests.`;
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

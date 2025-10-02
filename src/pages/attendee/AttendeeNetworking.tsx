@@ -54,6 +54,8 @@ import { useConnectionRequests } from "@/hooks/useConnectionRequests";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "react-router-dom";
 import { useAINetworking } from "@/hooks/useAINetworking";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 // Remove this import because Topics now renders inside ChatRoom
 // import TopicsBoard from "@/components/topics/TopicsBoard";
 
@@ -61,6 +63,7 @@ const AttendeeNetworking = () => {
   const navigate = useNavigate();
   const { currentEventId } = useAttendeeEventContext();
   const { isEventPaid } = usePayment();
+  const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("people");
   const [selectedConversation, setSelectedConversation] = useState<{
     userId: string;
@@ -268,6 +271,36 @@ const AttendeeNetworking = () => {
       ...prev,
       [targetProfile.id]: true
     }));
+  };
+
+  const handleSendConversationStarter = async (targetProfileId: string, targetProfileName: string, starterMessage: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('direct_messages')
+        .insert({
+          sender_id: currentUser?.id,
+          recipient_id: targetProfileId,
+          content: starterMessage
+        });
+
+      if (error) throw error;
+
+      // Navigate to messages tab and open conversation
+      handleMessage(targetProfileId, targetProfileName);
+      
+      // Show success toast
+      toast({
+        title: "Message Sent",
+        description: `Your conversation starter was sent to ${targetProfileName}`,
+      });
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const getSocialIcon = (platform: string) => {
@@ -576,19 +609,27 @@ const AttendeeNetworking = () => {
                     <span className="text-xs font-semibold text-purple-700 dark:text-purple-300">
                       AI-Suggested Conversation Starters
                     </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 ml-auto">
+                      Click to send
+                    </span>
                   </div>
                   {conversationStarters[profile.id].map((starter, idx) => (
-                    <div
+                    <button
                       key={idx}
-                      className="p-2 bg-white/70 dark:bg-gray-800/70 rounded-md hover:bg-white dark:hover:bg-gray-800 transition-colors cursor-pointer"
-                      onClick={() => {
-                        handleMessage(profile.id, profile.name || "", profile.photo_url);
-                      }}
+                      type="button"
+                      className="w-full p-3 bg-white/70 dark:bg-gray-800/70 rounded-md hover:bg-connect-50 dark:hover:bg-connect-900/30 transition-all duration-200 text-left group border border-transparent hover:border-connect-300 dark:hover:border-connect-700"
+                      onClick={() => handleSendConversationStarter(profile.id, profile.name || "Unknown", starter)}
                     >
-                      <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed">
+                      <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed group-hover:text-connect-700 dark:group-hover:text-connect-300">
                         "{starter}"
                       </p>
-                    </div>
+                      <div className="flex items-center gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Send size={10} className="text-connect-600" />
+                        <span className="text-[10px] text-connect-600 dark:text-connect-400 font-medium">
+                          Send as introduction
+                        </span>
+                      </div>
+                    </button>
                   ))}
                 </div>
               )}

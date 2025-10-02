@@ -165,26 +165,7 @@ export default function AnnouncementCard({
             </Badge>
           )}
         </div>
-        <Button
-          variant="ghost"
-          size={isMobile ? "sm" : "icon"}
-          onClick={() => onEdit(announcement)}
-          disabled={isUpdating}
-          className="hover:bg-gradient-to-tr from-primary/10 to-primary/30"
-        >
-          <Pencil className="h-4 w-4" />
-          {isMobile && <span className="ml-1 text-xs">Edit</span>}
-        </Button>
-        <Button
-          variant="ghost"
-          size={isMobile ? "sm" : "icon"}
-          onClick={() => onDelete(announcement.id)}
-          disabled={isDeleting}
-          className="hover:bg-gradient-to-tr from-destructive/10 to-destructive/30"
-        >
-          <Trash2 className="h-4 w-4" />
-          {isMobile && <span className="ml-1 text-xs">Delete</span>}
-        </Button>
+        {/* Removed duplicate ghost icon action buttons to avoid confusion */}
       </div>
 
       <div className="mt-4 flex flex-col sm:flex-row flex-wrap gap-2 justify-end">

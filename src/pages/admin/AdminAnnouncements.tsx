@@ -492,13 +492,36 @@ function AdminAnnouncementsContent() {
                           placeholder="Website Link"
                           className="text-sm"
                         />
-                        {/* New: WhatsApp link */}
+                        {/* NEW: WhatsApp */}
                         <Input
                           {...register("whatsapp_link")}
-                          placeholder="WhatsApp Link (e.g. https://wa.me/...)"
+                          placeholder="WhatsApp Link"
                           className="text-sm"
                         />
                       </div>
+
+                      {/* Require Submission */}
+                      {(() => {
+                        const hasAnySocialLink =
+                          [watch("twitter_link"), watch("instagram_link"), watch("facebook_link"), watch("tiktok_link"), watch("website_link"), watch("whatsapp_link")]
+                            .some((v) => typeof v === "string" && v.trim().length > 0);
+                        const hasVendorForm = !!watch("vendor_form_id");
+                        return (
+                          <div className="mt-4">
+                            <Label>Require Submission</Label>
+                            <div className="flex items-center space-x-2">
+                              <Switch
+                                disabled={!hasVendorForm && !hasAnySocialLink}
+                                checked={!!watch("require_submission")}
+                                onCheckedChange={(checked) => setValue("require_submission", checked)}
+                              />
+                              <span className="text-sm text-muted-foreground">
+                                Attendees must submit the attached form or click a provided link
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                   <div className="flex flex-col space-y-5">

@@ -149,14 +149,30 @@ function AttendeeDashboardContent() {
   }, [shouldShowProfilePopup]);
 
   // Helper: check if compulsory announcement is resolved
+  // isAnnouncementResolved helper
   const isAnnouncementResolved = useMemo(() => {
     return (a: any): boolean => {
       if (!a?.require_submission) return false;
-      if (a.vendor_form_id) {
-        // Resolved if form submitted (tracked client-side)
+  
+      const hasVendorForm = !!a.vendor_form_id;
+      const hasAnySocialLink = !!(
+        (a.twitter_link && a.twitter_link.trim()) ||
+        (a.instagram_link && a.instagram_link.trim()) ||
+        (a.facebook_link && a.facebook_link.trim()) ||
+        (a.tiktok_link && a.tiktok_link.trim()) ||
+        (a.website_link && a.website_link.trim()) ||
+        (a.whatsapp_link && a.whatsapp_link.trim())
+      );
+  
+      if (hasVendorForm) {
         return localStorage.getItem(`vendor_form_submitted_${a.vendor_form_id}`) === 'true';
       }
-      // Otherwise, resolved by acknowledgement
+  
+      if (hasAnySocialLink) {
+        return localStorage.getItem(`announcementLinkClicked_${a.id}`) === 'true';
+      }
+  
+      // Fallback: acknowledgement
       return localStorage.getItem(`announcementAcknowledged_${a.id}`) === 'true';
     };
   }, []);

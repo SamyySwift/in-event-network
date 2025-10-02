@@ -56,8 +56,9 @@ export function AnnouncementPopup({ isOpen, announcement, onClose, onNeverShowAg
     (announcement as any).tiktok_link ? { key: 'tiktok_link', label: 'TikTok', url: (announcement as any).tiktok_link } : null,
   ].filter(Boolean) as { key: string; label: string; url: string }[];
 
-  const allLinksClicked = links.length === 0 ? true : clickedKeys.length === links.length;
-  const actionComplete = (hasVendorForm ? formSubmitted : true) && allLinksClicked;
+  const hasLinks = links.length > 0;
+  const hasClickedAtLeastOne = clickedKeys.length > 0;
+  const actionComplete = (hasVendorForm ? formSubmitted : true) && (hasLinks ? hasClickedAtLeastOne : true);
 
   const priority = (announcement.priority || 'normal').toLowerCase();
   const priorityBadge = (() => {
@@ -130,7 +131,7 @@ export function AnnouncementPopup({ isOpen, announcement, onClose, onNeverShowAg
                       // Mark as submitted; auto-close only if link actions are also complete or not required
                       localStorage.setItem(`vendor_form_submitted_${announcement.vendor_form_id}`, 'true');
                       setFormSubmitted(true);
-                      if (!isCompulsory || (isCompulsory && allLinksClicked)) {
+                      if (!isCompulsory || (isCompulsory && (!hasLinks || hasClickedAtLeastOne))) {
                         onClose();
                       }
                     }}
@@ -153,6 +154,7 @@ export function AnnouncementPopup({ isOpen, announcement, onClose, onNeverShowAg
                           setClickedKeys((prev) =>
                             prev.includes(l.key) ? prev : [...prev, l.key]
                           );
+                          localStorage.setItem(`announcementLinkClicked_${announcement.id}`, 'true');
                           onAcknowledge?.();
                         }}
                       >
@@ -162,7 +164,7 @@ export function AnnouncementPopup({ isOpen, announcement, onClose, onNeverShowAg
                   </div>
                   {isCompulsory && !actionComplete && (
                     <p className="mt-2 text-xs text-muted-foreground">
-                      Please open all links{hasVendorForm ? " and submit the form" : ""} to continue.
+                      Please open at least one link{hasVendorForm ? " and submit the form" : ""} to continue.
                     </p>
                   )}
                 </div>

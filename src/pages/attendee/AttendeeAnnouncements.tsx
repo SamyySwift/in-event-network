@@ -381,7 +381,8 @@ const AttendeeAnnouncementsContent = () => {
                    {/* Social Media Links - Show when expanded */}
                    {expandedAnnouncement === announcement.id && (
                      <>
-                       {(announcement.twitter_link || announcement.instagram_link || announcement.facebook_link || announcement.tiktok_link || announcement.website_link) && (
+                       // Inside the social links block for each announcement
+                       {(announcement.twitter_link || announcement.instagram_link || announcement.facebook_link || announcement.tiktok_link || announcement.website_link || announcement.whatsapp_link) && (
                          <div className="mt-4 pt-4 border-t border-gray-200">
                            <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">
                              <ExternalLink className="h-4 w-4" />
@@ -392,55 +393,60 @@ const AttendeeAnnouncementsContent = () => {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="h-8 px-3 text-xs"
-                                  onClick={() => window.open(announcement.twitter_link, '_blank')}
+                                  onClick={() => {
+                                    localStorage.setItem(`announcementLinkClicked_${announcement.id}`, 'true');
+                                    window.open(announcement.twitter_link!, "_blank", "noopener,noreferrer");
+                                  }}
                                 >
-                                  <FaXTwitter className="h-3 w-3 mr-1" />
-                                  Twitter/X
+                                  <FaXTwitter className="mr-2" /> Twitter/X
                                 </Button>
                               )}
                               {announcement.instagram_link && (
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="h-8 px-3 text-xs"
-                                  onClick={() => window.open(announcement.instagram_link, '_blank')}
+                                  onClick={() => {
+                                    localStorage.setItem(`announcementLinkClicked_${announcement.id}`, 'true');
+                                    window.open(announcement.instagram_link!, "_blank", "noopener,noreferrer");
+                                  }}
                                 >
-                                  <FaInstagram className="h-3 w-3 mr-1" />
-                                  Instagram
+                                  <FaInstagram className="mr-2" /> Instagram
                                 </Button>
                               )}
                               {announcement.facebook_link && (
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="h-8 px-3 text-xs"
-                                  onClick={() => window.open(announcement.facebook_link, '_blank')}
+                                  onClick={() => {
+                                    localStorage.setItem(`announcementLinkClicked_${announcement.id}`, 'true');
+                                    window.open(announcement.facebook_link!, "_blank", "noopener,noreferrer");
+                                  }}
                                 >
-                                  <FaFacebook className="h-3 w-3 mr-1" />
-                                  Facebook
+                                  <FaFacebook className="mr-2" /> Facebook
                                 </Button>
                               )}
                               {announcement.tiktok_link && (
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  className="h-8 px-3 text-xs"
-                                  onClick={() => window.open(announcement.tiktok_link, '_blank')}
+                                  onClick={() => {
+                                    localStorage.setItem(`announcementLinkClicked_${announcement.id}`, 'true');
+                                    window.open(announcement.tiktok_link!, "_blank", "noopener,noreferrer");
+                                  }}
                                 >
-                                  <FaTiktok className="h-3 w-3 mr-1" />
-                                  TikTok
+                                  <Play className="mr-2 h-4 w-4" /> TikTok
                                 </Button>
                               )}
                              {announcement.website_link && (
                                <Button
                                  variant="outline"
                                  size="sm"
-                                 className="h-8 px-3 text-xs"
-                                 onClick={() => window.open(announcement.website_link, '_blank')}
+                                 onClick={() => {
+                                   localStorage.setItem(`announcementLinkClicked_${announcement.id}`, 'true');
+                                   window.open(announcement.website_link!, "_blank", "noopener,noreferrer");
+                                 }}
                                >
-                                 <Globe className="h-3 w-3 mr-1" />
-                                 Website
+                                 <Globe className="mr-2 h-4 w-4" /> Website
                                </Button>
                              )}
                            </div>

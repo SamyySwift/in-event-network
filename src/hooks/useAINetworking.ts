@@ -9,17 +9,28 @@ export const useAINetworking = () => {
   const generateConversationStarters = async (userProfile: any, targetProfile: any) => {
     setLoading(true);
     try {
+      console.log('Calling generate-conversation-starters function', { 
+        userProfileId: userProfile.id, 
+        targetProfileId: targetProfile.id 
+      });
+      
       const { data, error } = await supabase.functions.invoke('generate-conversation-starters', {
         body: { userProfile, targetProfile }
       });
 
-      if (error) throw error;
+      console.log('Function response:', { data, error });
+
+      if (error) {
+        console.error('Function error:', error);
+        throw error;
+      }
+      
       return data.starters || [];
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating conversation starters:', error);
       toast({
         title: 'Error',
-        description: 'Failed to generate conversation starters. Using defaults.',
+        description: error?.message || 'Failed to generate conversation starters. Using defaults.',
         variant: 'destructive'
       });
       return [
@@ -35,17 +46,28 @@ export const useAINetworking = () => {
   const matchProfiles = async (userProfile: any, allProfiles: any[]) => {
     setLoading(true);
     try {
+      console.log('Calling match-profiles function', { 
+        userProfileId: userProfile.id,
+        allProfilesCount: allProfiles.length
+      });
+      
       const { data, error } = await supabase.functions.invoke('match-profiles', {
         body: { userProfile, allProfiles }
       });
 
-      if (error) throw error;
+      console.log('Function response:', { data, error });
+
+      if (error) {
+        console.error('Function error:', error);
+        throw error;
+      }
+      
       return data.matches || [];
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error matching profiles:', error);
       toast({
         title: 'Error',
-        description: 'Failed to generate AI matches.',
+        description: error?.message || 'Failed to generate AI matches.',
         variant: 'destructive'
       });
       return [];

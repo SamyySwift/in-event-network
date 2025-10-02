@@ -239,14 +239,58 @@ const AttendeeNetworking = () => {
 
   // AI Handlers
   const handleAIMatch = async () => {
-    if (!currentUser || profiles.length === 0) return;
+    console.log('AI Match clicked', { currentUser, profilesCount: profiles.length });
+    
+    if (!currentUser) {
+      console.error('No current user found');
+      toast({
+        title: "Error",
+        description: "Please log in to use AI matching",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    if (profiles.length === 0) {
+      console.error('No profiles available');
+      toast({
+        title: "No Profiles",
+        description: "No attendee profiles found to match",
+        variant: "destructive"
+      });
+      return;
+    }
     
     const userProfile = profiles.find(p => p.id === currentUser.id);
-    if (!userProfile) return;
+    console.log('User profile found:', !!userProfile);
+    
+    if (!userProfile) {
+      console.error('User profile not found in attendees list');
+      toast({
+        title: "Profile Error",
+        description: "Your profile wasn't found in the attendees list",
+        variant: "destructive"
+      });
+      return;
+    }
 
+    console.log('Calling matchProfiles with', { userProfileId: userProfile.id, profilesCount: profiles.length });
     const matches = await matchProfiles(userProfile, profiles);
-    setAIMatches(matches);
-    setShowAIMatches(true);
+    console.log('Matches received:', matches);
+    
+    if (matches && matches.length > 0) {
+      setAIMatches(matches);
+      setShowAIMatches(true);
+      toast({
+        title: "Matches Found!",
+        description: `Found ${matches.length} great matches for you`,
+      });
+    } else {
+      toast({
+        title: "No Matches",
+        description: "Couldn't find strong matches. Try updating your profile with more details.",
+      });
+    }
   };
 
   const handleGetConversationStarters = async (targetProfile: any) => {
@@ -274,17 +318,33 @@ const AttendeeNetworking = () => {
   };
 
   const handleSendConversationStarter = async (targetProfileId: string, targetProfileName: string, starterMessage: string) => {
+    console.log('Sending conversation starter', { targetProfileId, targetProfileName, starterMessage });
+    
+    if (!currentUser?.id) {
+      toast({
+        title: "Error",
+        description: "Please log in to send messages",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     try {
       const { data, error } = await supabase
         .from('direct_messages')
         .insert({
-          sender_id: currentUser?.id,
+          sender_id: currentUser.id,
           recipient_id: targetProfileId,
           content: starterMessage
         });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
+      console.log('Message sent successfully');
+      
       // Navigate to messages tab and open conversation
       handleMessage(targetProfileId, targetProfileName);
       
@@ -293,11 +353,11 @@ const AttendeeNetworking = () => {
         title: "Message Sent",
         description: `Your conversation starter was sent to ${targetProfileName}`,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending message:', error);
       toast({
         title: "Error",
-        description: "Failed to send message. Please try again.",
+        description: error?.message || "Failed to send message. Please try again.",
         variant: "destructive"
       });
     }

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdminEventContext } from "@/hooks/useAdminEventContext";
+import { useEventTheme } from "@/hooks/useEventTheme";
 import { useNotificationCount } from "@/hooks/useNotificationCount";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AdminFormPersistenceProvider } from "@/hooks/useAdminFormPersistence";
@@ -62,6 +64,8 @@ interface AdminLayoutProps {
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const { currentUser, logout } = useAuth();
+  const { selectedEventId } = useAdminEventContext();
+  const eventTheme = useEventTheme(selectedEventId);
   const { unreadCount } = useNotificationCount();
   const navigate = useNavigate();
   const location = useLocation();

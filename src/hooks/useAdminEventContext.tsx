@@ -12,6 +12,13 @@ interface Event {
   end_time: string;
   location?: string;
   created_at: string;
+  logo_url?: string;
+  custom_title?: string;
+  primary_color?: string;
+  secondary_color?: string;
+  accent_color?: string;
+  background_color?: string;
+  text_color?: string;
 }
 
 interface AdminEventContextType {

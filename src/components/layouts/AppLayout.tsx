@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAttendeeContext } from "@/hooks/useAttendeeContext";
+import { useEventTheme } from "@/hooks/useEventTheme";
 import { Button } from "@/components/ui/button";
 import {
   Calendar,
@@ -47,6 +49,8 @@ interface AppLayoutProps {
 }
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { currentUser, logout } = useAuth();
+  const { context: attendeeContext } = useAttendeeContext();
+  const eventTheme = useEventTheme(attendeeContext?.currentEventId || null);
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);

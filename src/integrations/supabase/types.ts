@@ -861,8 +861,11 @@ export type Database = {
       }
       events: {
         Row: {
+          accent_color: string | null
+          background_color: string | null
           banner_url: string | null
           created_at: string
+          custom_title: string | null
           description: string | null
           end_time: string
           event_key: string | null
@@ -871,13 +874,19 @@ export type Database = {
           location: string | null
           logo_url: string | null
           name: string
+          primary_color: string | null
+          secondary_color: string | null
           start_time: string
+          text_color: string | null
           updated_at: string
           website: string | null
         }
         Insert: {
+          accent_color?: string | null
+          background_color?: string | null
           banner_url?: string | null
           created_at?: string
+          custom_title?: string | null
           description?: string | null
           end_time: string
           event_key?: string | null
@@ -886,13 +895,19 @@ export type Database = {
           location?: string | null
           logo_url?: string | null
           name: string
+          primary_color?: string | null
+          secondary_color?: string | null
           start_time: string
+          text_color?: string | null
           updated_at?: string
           website?: string | null
         }
         Update: {
+          accent_color?: string | null
+          background_color?: string | null
           banner_url?: string | null
           created_at?: string
+          custom_title?: string | null
           description?: string | null
           end_time?: string
           event_key?: string | null
@@ -901,7 +916,10 @@ export type Database = {
           location?: string | null
           logo_url?: string | null
           name?: string
+          primary_color?: string | null
+          secondary_color?: string | null
           start_time?: string
+          text_color?: string | null
           updated_at?: string
           website?: string | null
         }

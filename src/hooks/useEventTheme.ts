@@ -38,35 +38,26 @@ export const useEventTheme = (eventId: string | null) => {
 
     // Apply theme colors to CSS variables
     if (theme.primary_color) {
-      const hsl = hexToHSL(theme.primary_color);
-      root.style.setProperty('--primary', hsl);
-      root.style.setProperty('--sidebar-primary', hsl);
-      root.style.setProperty('--sidebar-ring', hsl);
+      root.style.setProperty('--primary', hexToHSL(theme.primary_color));
     }
     if (theme.secondary_color) {
       root.style.setProperty('--secondary', hexToHSL(theme.secondary_color));
     }
     if (theme.accent_color) {
-      const hsl = hexToHSL(theme.accent_color);
-      root.style.setProperty('--accent', hsl);
-      root.style.setProperty('--sidebar-accent', hsl);
+      root.style.setProperty('--accent', hexToHSL(theme.accent_color));
     }
     if (theme.background_color) {
-      const hsl = hexToHSL(theme.background_color);
-      root.style.setProperty('--background', hsl);
-      root.style.setProperty('--card', hsl);
-      root.style.setProperty('--sidebar-background', hsl);
+      root.style.setProperty('--background', hexToHSL(theme.background_color));
+      root.style.setProperty('--card', hexToHSL(theme.background_color));
     }
     if (theme.text_color) {
-      const hsl = hexToHSL(theme.text_color);
-      root.style.setProperty('--foreground', hsl);
-      root.style.setProperty('--card-foreground', hsl);
-      root.style.setProperty('--sidebar-foreground', hsl);
+      root.style.setProperty('--foreground', hexToHSL(theme.text_color));
+      root.style.setProperty('--card-foreground', hexToHSL(theme.text_color));
     }
     
     // Apply font family
     if (theme.font_family) {
-      root.style.setProperty('font-family', theme.font_family);
+      root.style.fontFamily = theme.font_family;
       document.body.style.fontFamily = theme.font_family;
     }
 
@@ -79,11 +70,7 @@ export const useEventTheme = (eventId: string | null) => {
       root.style.removeProperty('--foreground');
       root.style.removeProperty('--card');
       root.style.removeProperty('--card-foreground');
-      root.style.removeProperty('--sidebar-background');
-      root.style.removeProperty('--sidebar-foreground');
-      root.style.removeProperty('--sidebar-primary');
-      root.style.removeProperty('--sidebar-accent');
-      root.style.removeProperty('--sidebar-ring');
+      root.style.fontFamily = '';
       document.body.style.fontFamily = '';
     };
   }, [theme]);

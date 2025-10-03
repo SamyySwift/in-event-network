@@ -869,6 +869,7 @@ export type Database = {
           description: string | null
           end_time: string
           event_key: string | null
+          font_family: string | null
           host_id: string | null
           id: string
           location: string | null
@@ -890,6 +891,7 @@ export type Database = {
           description?: string | null
           end_time: string
           event_key?: string | null
+          font_family?: string | null
           host_id?: string | null
           id?: string
           location?: string | null
@@ -911,6 +913,7 @@ export type Database = {
           description?: string | null
           end_time?: string
           event_key?: string | null
+          font_family?: string | null
           host_id?: string | null
           id?: string
           location?: string | null

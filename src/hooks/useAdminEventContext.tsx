@@ -19,6 +19,7 @@ interface Event {
   accent_color?: string;
   background_color?: string;
   text_color?: string;
+  font_family?: string;
 }
 
 interface AdminEventContextType {

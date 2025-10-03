@@ -10,6 +10,7 @@ interface EventTheme {
   accent_color?: string;
   background_color?: string;
   text_color?: string;
+  font_family?: string;
 }
 
 export const useEventTheme = (eventId: string | null) => {
@@ -20,7 +21,7 @@ export const useEventTheme = (eventId: string | null) => {
 
       const { data, error } = await supabase
         .from('events')
-        .select('custom_title, logo_url, primary_color, secondary_color, accent_color, background_color, text_color')
+        .select('custom_title, logo_url, primary_color, secondary_color, accent_color, background_color, text_color, font_family')
         .eq('id', eventId)
         .single();
 
@@ -37,19 +38,36 @@ export const useEventTheme = (eventId: string | null) => {
 
     // Apply theme colors to CSS variables
     if (theme.primary_color) {
-      root.style.setProperty('--primary', hexToHSL(theme.primary_color));
+      const hsl = hexToHSL(theme.primary_color);
+      root.style.setProperty('--primary', hsl);
+      root.style.setProperty('--sidebar-primary', hsl);
+      root.style.setProperty('--sidebar-ring', hsl);
     }
     if (theme.secondary_color) {
       root.style.setProperty('--secondary', hexToHSL(theme.secondary_color));
     }
     if (theme.accent_color) {
-      root.style.setProperty('--accent', hexToHSL(theme.accent_color));
+      const hsl = hexToHSL(theme.accent_color);
+      root.style.setProperty('--accent', hsl);
+      root.style.setProperty('--sidebar-accent', hsl);
     }
     if (theme.background_color) {
-      root.style.setProperty('--background', hexToHSL(theme.background_color));
+      const hsl = hexToHSL(theme.background_color);
+      root.style.setProperty('--background', hsl);
+      root.style.setProperty('--card', hsl);
+      root.style.setProperty('--sidebar-background', hsl);
     }
     if (theme.text_color) {
-      root.style.setProperty('--foreground', hexToHSL(theme.text_color));
+      const hsl = hexToHSL(theme.text_color);
+      root.style.setProperty('--foreground', hsl);
+      root.style.setProperty('--card-foreground', hsl);
+      root.style.setProperty('--sidebar-foreground', hsl);
+    }
+    
+    // Apply font family
+    if (theme.font_family) {
+      root.style.setProperty('font-family', theme.font_family);
+      document.body.style.fontFamily = theme.font_family;
     }
 
     // Cleanup function to reset theme on unmount
@@ -59,6 +77,14 @@ export const useEventTheme = (eventId: string | null) => {
       root.style.removeProperty('--accent');
       root.style.removeProperty('--background');
       root.style.removeProperty('--foreground');
+      root.style.removeProperty('--card');
+      root.style.removeProperty('--card-foreground');
+      root.style.removeProperty('--sidebar-background');
+      root.style.removeProperty('--sidebar-foreground');
+      root.style.removeProperty('--sidebar-primary');
+      root.style.removeProperty('--sidebar-accent');
+      root.style.removeProperty('--sidebar-ring');
+      document.body.style.fontFamily = '';
     };
   }, [theme]);
 

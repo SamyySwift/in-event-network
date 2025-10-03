@@ -357,11 +357,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const MobileSidebarContent = () => (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b border-sidebar-border">
-        <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <img src="/logo.png" alt="Kconect Logo" className="h-6 w-6 mr-2" />
+            <img 
+              src={eventTheme?.logo_url || "/logo.png"} 
+              alt={eventTheme?.custom_title || "Kconect Logo"} 
+              className="h-6 w-6 mr-2 object-contain" 
+            />
             <span className="text-md font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-              Kconect
+              {eventTheme?.custom_title || "Kconect"}
             </span>
           </div>
         </div>
@@ -513,17 +517,21 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               {sidebarOpen && (
                 <>
                   <img
-                    src="/logo.png"
-                    alt="Kconect Logo"
-                    className="h-6 w-6 mr-2"
+                    src={eventTheme?.logo_url || "/logo.png"}
+                    alt={eventTheme?.custom_title || "Kconect Logo"}
+                    className="h-6 w-6 mr-2 object-contain"
                   />
                   <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                    Kconect
+                    {eventTheme?.custom_title || "Kconect"}
                   </span>
                 </>
               )}
               {!sidebarOpen && (
-                <img src="/logo.png" alt="Kconect Logo" className="h-6 w-6" />
+                <img 
+                  src={eventTheme?.logo_url || "/logo.png"} 
+                  alt={eventTheme?.custom_title || "Kconect Logo"} 
+                  className="h-6 w-6 object-contain" 
+                />
               )}
             </div>
 

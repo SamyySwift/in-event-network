@@ -209,12 +209,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               <SheetHeader>
                 <SheetTitle className="flex items-center">
                   <img
-                    src="/logo.png"
-                    alt="Kconect Logo"
-                    className="h-6 w-6 mr-2"
+                    src={eventTheme?.logo_url || "/logo.png"}
+                    alt={eventTheme?.custom_title || "Kconect Logo"}
+                    className="h-6 w-6 mr-2 object-contain"
                   />
                   <span className="text-md font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                    Kconect
+                    {eventTheme?.custom_title || "Kconect"}
                   </span>
                 </SheetTitle>
               </SheetHeader>
@@ -284,9 +284,13 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             </SheetContent>
           </Sheet>
 
-          <img src="/logo.png" alt="Kconect Logo" className="h-6 w-6 mr-2" />
+          <img 
+            src={eventTheme?.logo_url || "/logo.png"} 
+            alt={eventTheme?.custom_title || "Kconect Logo"} 
+            className="h-6 w-6 mr-2 object-contain" 
+          />
           <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-            Kconect
+            {eventTheme?.custom_title || "Kconect"}
           </span>
         </div>
 
@@ -324,12 +328,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center">
               <img
-                src="/logo.png"
-                alt="Kconect Logo"
-                className="h-6 w-6 mr-2"
+                src={eventTheme?.logo_url || "/logo.png"}
+                alt={eventTheme?.custom_title || "Kconect Logo"}
+                className="h-6 w-6 mr-2 object-contain"
               />
               <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                Kconect
+                {eventTheme?.custom_title || "Kconect"}
               </span>
             </div>
             <ThemeToggle />

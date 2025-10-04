@@ -281,11 +281,11 @@ function AttendeeDashboardContent() {
       <div className="animate-fade-in max-w-7xl mx-auto p-6 pt-20 md:pt-6 pb-20 overflow-y-auto scroll-smooth">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <WifiOff className="h-16 w-16 text-gray-300 mx-auto mb-6" />
-            <h3 className="text-2xl font-semibold mb-3 text-gray-900">
+            <WifiOff className="h-16 w-16 text-muted-foreground mx-auto mb-6" />
+            <h3 className="text-2xl font-semibold mb-3 text-foreground">
               Connection Error
             </h3>
-            <p className="text-gray-500 mb-4">Unable to load dashboard data</p>
+            <p className="text-muted-foreground mb-4">Unable to load dashboard data</p>
             <Button
               onClick={() => window.location.reload()}
               className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
@@ -413,9 +413,9 @@ function AttendeeDashboardContent() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
           {/* Featured Session Card */}
           <div className="lg:col-span-2">
-            <Card className="border-0 shadow-xl bg-white backdrop-blur-sm overflow-hidden group hover:shadow-2xl transition-all duration-300 relative z-10">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-50/90 to-yellow-50/90 z-0"></div>
-              <CardHeader className="relative z-20 pb-4 bg-white/50 backdrop-blur-sm">
+            <Card className="border-0 shadow-xl bg-card backdrop-blur-sm overflow-hidden group hover:shadow-2xl transition-all duration-300 relative z-10">
+              <div className="absolute inset-0 bg-gradient-to-br from-amber-50/90 to-yellow-50/90 dark:from-amber-950/20 dark:to-yellow-950/20 z-0"></div>
+              <CardHeader className="relative z-20 pb-4 bg-card/50 backdrop-blur-sm">
                 <div className="flex items-center gap-3">
                   <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-yellow-600 rounded-xl flex items-center justify-center">
                     <Star className="h-7 w-7 text-white" />
@@ -429,16 +429,16 @@ function AttendeeDashboardContent() {
                 </div>
               </CardHeader>
 
-              <CardContent className="relative z-20 pb-6 bg-white/80 backdrop-blur-sm">
+              <CardContent className="relative z-20 pb-6 bg-card/80 backdrop-blur-sm">
                 {nextSession || upcomingSessions?.[0] ? (
                   <>
-                    <h3 className="text-lg font-bold mb-3 text-gray-900">
+                    <h3 className="text-lg font-bold mb-3 text-foreground">
                       {nextSession?.session_title ||
                         upcomingSessions?.[0]?.title ||
                         "Session"}
                     </h3>
                     <div className="space-y-3">
-                      <div className="flex items-center gap-3 text-gray-700">
+                      <div className="flex items-center gap-3 text-muted-foreground">
                         <Clock className="h-4 w-4 text-orange-500" />
                         <span className="text-sm font-medium">
                           {formatDate(
@@ -448,7 +448,7 @@ function AttendeeDashboardContent() {
                         </span>
                       </div>
                       {nextSession && (
-                        <div className="flex items-center gap-3 text-gray-700">
+                        <div className="flex items-center gap-3 text-muted-foreground">
                           <Users className="h-4 w-4 text-orange-500" />
                           <span className="text-sm font-medium">
                             by {nextSession.name}
@@ -456,7 +456,7 @@ function AttendeeDashboardContent() {
                         </div>
                       )}
                       {upcomingSessions?.[0]?.location && (
-                        <div className="flex items-center gap-3 text-gray-700">
+                        <div className="flex items-center gap-3 text-muted-foreground">
                           <MapPin className="h-4 w-4 text-orange-500" />
                           <span className="text-sm font-medium">
                             {upcomingSessions[0].location}
@@ -465,7 +465,7 @@ function AttendeeDashboardContent() {
                       )}
                       {(nextSession?.title ||
                         upcomingSessions?.[0]?.description) && (
-                        <p className="text-xs text-gray-600 mt-2">
+                        <p className="text-xs text-muted-foreground mt-2">
                           {nextSession?.title ||
                             upcomingSessions?.[0]?.description}
                         </p>
@@ -474,8 +474,8 @@ function AttendeeDashboardContent() {
 
                     {/* Show additional upcoming sessions */}
                     {upcomingSessions.length > 1 && (
-                      <div className="mt-4 pt-3 border-t border-gray-200">
-                        <h4 className="text-xs font-semibold text-gray-900 mb-2">
+                      <div className="mt-4 pt-3 border-t border-border">
+                        <h4 className="text-xs font-semibold text-foreground mb-2">
                           More Sessions
                         </h4>
                         <div className="space-y-1">
@@ -484,10 +484,10 @@ function AttendeeDashboardContent() {
                               key={session.id}
                               className="flex items-center justify-between text-xs"
                             >
-                              <span className="text-gray-700 truncate">
+                              <span className="text-muted-foreground truncate">
                                 {session.title}
                               </span>
-                              <span className="text-gray-500 ml-2">
+                              <span className="text-muted-foreground ml-2">
                                 {formatTime(session.start_time)}
                               </span>
                             </div>
@@ -498,15 +498,15 @@ function AttendeeDashboardContent() {
                   </>
                 ) : (
                   <div className="text-center py-4">
-                    <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-sm text-gray-500">
+                    <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground">
                       No sessions scheduled
                     </p>
                   </div>
                 )}
               </CardContent>
 
-              <CardFooter className="relative z-20 bg-white/90 backdrop-blur-sm">
+              <CardFooter className="relative z-20 bg-card/90 backdrop-blur-sm">
                 <Button
                   variant="outline"
                   className="w-full"
@@ -522,9 +522,9 @@ function AttendeeDashboardContent() {
 
         {/* Event Facilities Card */}
         <div className="mb-8">
-          <Card className="border-0 shadow-xl bg-white backdrop-blur-sm overflow-hidden group hover:shadow-2xl transition-all duration-300 relative z-10">
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/90 to-green-50/90 z-0"></div>
-            <CardHeader className="relative z-20 pb-4 bg-white/50 backdrop-blur-sm">
+          <Card className="border-0 shadow-xl bg-card backdrop-blur-sm overflow-hidden group hover:shadow-2xl transition-all duration-300 relative z-10">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/90 to-green-50/90 dark:from-emerald-950/20 dark:to-green-950/20 z-0"></div>
+            <CardHeader className="relative z-20 pb-4 bg-card/50 backdrop-blur-sm">
               <div className="flex items-center gap-3">
                 <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
                   <MapPin className="h-7 w-7 text-white" />
@@ -538,10 +538,10 @@ function AttendeeDashboardContent() {
               </div>
             </CardHeader>
 
-            <CardContent className="relative z-20 pb-6 bg-white/80 backdrop-blur-sm">
+            <CardContent className="relative z-20 pb-6 bg-card/80 backdrop-blur-sm">
               {facilities && facilities.length > 0 ? (
                 <>
-                  <p className="text-gray-600 mb-4">
+                  <p className="text-muted-foreground mb-4">
                     Discover {facilities.length} facilities available at the
                     venue, including dining, restrooms, meeting spaces, and
                     other essential services.
@@ -552,20 +552,20 @@ function AttendeeDashboardContent() {
                     {facilities.slice(0, 3).map((facility) => (
                       <div
                         key={facility.id}
-                        className="flex items-center gap-3 p-3 bg-white/60 rounded-lg border"
+                        className="flex items-center gap-3 p-3 bg-card/60 rounded-lg border border-border"
                       >
-                        <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                        <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-900/50 rounded-lg flex items-center justify-center">
                           <FacilityIcon
                             iconType={facility.icon_type}
-                            className="h-4 w-4 text-emerald-600"
+                            className="h-4 w-4 text-emerald-600 dark:text-emerald-400"
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
+                          <p className="text-sm font-medium text-foreground truncate">
                             {facility.name}
                           </p>
                           {facility.location && (
-                            <p className="text-xs text-gray-500 truncate">
+                            <p className="text-xs text-muted-foreground truncate">
                               {facility.location}
                             </p>
                           )}
@@ -575,22 +575,22 @@ function AttendeeDashboardContent() {
                   </div>
 
                   {facilities.length > 3 && (
-                    <p className="text-xs text-gray-500 mt-3 text-center">
+                    <p className="text-xs text-muted-foreground mt-3 text-center">
                       +{facilities.length - 3} more facilities available
                     </p>
                   )}
                 </>
               ) : (
                 <div className="text-center py-4">
-                  <MapPin className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-gray-500">
+                  <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground">
                     No facilities information available
                   </p>
                 </div>
               )}
             </CardContent>
 
-            <CardFooter className="relative z-20 bg-white/90 backdrop-blur-sm">
+            <CardFooter className="relative z-20 bg-card/90 backdrop-blur-sm">
               <Button
                 variant="outline"
                 className="w-full"
@@ -613,10 +613,10 @@ function AttendeeDashboardContent() {
                 </div>
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-gray-900">
+                <h2 className="text-2xl font-bold text-foreground">
                   Latest Updates
                 </h2>
-                <p className="text-gray-500">
+                <p className="text-muted-foreground">
                   Stay informed with recent announcements
                 </p>
               </div>
@@ -625,15 +625,15 @@ function AttendeeDashboardContent() {
               {recentAnnouncements.map((announcement) => (
                 <Card
                   key={announcement.id}
-                  className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 border-l-4 border-l-blue-500 bg-white backdrop-blur-sm relative z-10"
+                  className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 border-l-4 border-l-blue-500 bg-card backdrop-blur-sm relative z-10"
                 >
-                  <CardContent className="p-4 sm:p-6 bg-white/95 backdrop-blur-sm">
+                  <CardContent className="p-4 sm:p-6 bg-card/95 backdrop-blur-sm">
                     <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-6">
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-lg text-gray-900 mb-2 break-words">
+                        <h3 className="font-semibold text-lg text-foreground mb-2 break-words">
                           {announcement.title}
                         </h3>
-                        <div className="text-gray-600 leading-relaxed break-words">
+                        <div className="text-muted-foreground leading-relaxed break-words">
                           {expandedAnnouncements.has(announcement.id) ? (
                             announcement.content
                               .split("\n")
@@ -653,7 +653,7 @@ function AttendeeDashboardContent() {
                               onClick={() =>
                                 toggleAnnouncementExpanded(announcement.id)
                               }
-                              className="mt-2 h-auto p-1 text-blue-600 hover:text-blue-800 font-medium"
+                              className="mt-2 h-auto p-1 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
                             >
                               <Eye className="h-3 w-3 mr-1" />
                               {expandedAnnouncements.has(announcement.id)
@@ -674,7 +674,7 @@ function AttendeeDashboardContent() {
                         >
                           {announcement.priority}
                         </Badge>
-                        <span className="text-xs text-gray-500 whitespace-nowrap">
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
                           {formatDate(announcement.created_at)}
                         </span>
                       </div>
@@ -695,10 +695,10 @@ function AttendeeDashboardContent() {
               </div>
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-foreground">
                 Quick Actions
               </h2>
-              <p className="text-gray-500">
+              <p className="text-muted-foreground">
                 Everything you need at your fingertips
               </p>
             </div>
@@ -746,21 +746,21 @@ function AttendeeDashboardContent() {
               return (
                 <Card
                   key={action.name}
-                  className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-0 shadow-lg overflow-hidden bg-white backdrop-blur-sm hover:-translate-y-1 relative z-10"
+                  className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-0 shadow-lg overflow-hidden bg-card backdrop-blur-sm hover:-translate-y-1 relative z-10"
                   onClick={() => navigate(action.href)}
                 >
-                  <CardContent className="p-6 text-center relative bg-white/95 backdrop-blur-sm">
-                    <div className="absolute inset-0 bg-gradient-to-br from-gray-50/50 to-gray-100/50 group-hover:from-gray-100/50 group-hover:to-gray-200/50 transition-all duration-300 z-0"></div>
+                  <CardContent className="p-6 text-center relative bg-card/95 backdrop-blur-sm">
+                    <div className="absolute inset-0 bg-gradient-to-br from-muted/50 to-muted/30 group-hover:from-muted/60 group-hover:to-muted/40 transition-all duration-300 z-0"></div>
                     <div className="relative z-10">
                       <div
                         className={`w-12 h-12 bg-gradient-to-br ${action.gradient} rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform duration-300`}
                       >
                         <IconComponent className="h-6 w-6 text-white" />
                       </div>
-                      <p className="font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                      <p className="font-semibold text-foreground group-hover:text-primary transition-colors">
                         {action.name}
                       </p>
-                      <ChevronRight className="h-4 w-4 text-gray-400 group-hover:text-indigo-500 mx-auto mt-2 transition-colors" />
+                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary mx-auto mt-2 transition-colors" />
                     </div>
                   </CardContent>
                 </Card>
@@ -780,10 +780,10 @@ function AttendeeDashboardContent() {
                   </div>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">
+                  <h2 className="text-2xl font-bold text-foreground">
                     People to Meet
                   </h2>
-                  <p className="text-gray-500">
+                  <p className="text-muted-foreground">
                     Expand your network with these connections
                   </p>
                 </div>
@@ -791,7 +791,7 @@ function AttendeeDashboardContent() {
               <Button
                 variant="outline"
                 onClick={() => navigate("/attendee/networking")}
-                className="hover:bg-gray-50"
+                className="hover:bg-muted"
               >
                 View All
                 <ChevronRight className="ml-2 h-4 w-4" />
@@ -806,14 +806,14 @@ function AttendeeDashboardContent() {
 
         {/* Event Feedback */}
         {currentEvent && (
-          <Card className="border-0 shadow-xl bg-white backdrop-blur-sm overflow-hidden relative z-10">
-            <CardContent className="p-8 bg-gradient-to-r from-gray-50/95 to-gray-100/95 backdrop-blur-sm">
+          <Card className="border-0 shadow-xl bg-card backdrop-blur-sm overflow-hidden relative z-10">
+            <CardContent className="p-8 bg-gradient-to-r from-muted/95 to-muted/80 backdrop-blur-sm">
               <div className="flex flex-col sm:flex-row items-center justify-between">
                 <div className="text-center sm:text-left mb-6 sm:mb-0">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                  <h3 className="text-2xl font-bold text-foreground mb-2">
                     How's your experience?
                   </h3>
-                  <p className="text-gray-600 text-lg">
+                  <p className="text-muted-foreground text-lg">
                     Your feedback helps us create even better events
                   </p>
                 </div>
@@ -897,11 +897,11 @@ const SuggestedConnectionsCards = ({
         return (
           <Card
             key={connection.id}
-            className="group overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-white backdrop-blur-sm hover:-translate-y-1 relative z-10"
+            className="group overflow-hidden border-0 shadow-lg hover:shadow-xl transition-all duration-300 bg-card backdrop-blur-sm hover:-translate-y-1 relative z-10"
           >
-            <CardContent className="p-6 bg-white/95 backdrop-blur-sm">
+            <CardContent className="p-6 bg-card/95 backdrop-blur-sm">
               <div className="flex items-center space-x-4 mb-4">
-                <Avatar className="h-14 w-14 border-2 border-white shadow-md">
+                <Avatar className="h-14 w-14 border-2 border-border shadow-md">
                   {connection.photo_url ? (
                     <AvatarImage
                       src={connection.photo_url}
@@ -917,10 +917,10 @@ const SuggestedConnectionsCards = ({
                   )}
                 </Avatar>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-900 truncate">
+                  <h3 className="font-semibold text-foreground truncate">
                     {connection.name || "Unknown"}
                   </h3>
-                  <p className="text-sm text-gray-500 truncate">
+                  <p className="text-sm text-muted-foreground truncate">
                     {connection.niche || connection.company || "Professional"}
                   </p>
                 </div>

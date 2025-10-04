@@ -23,11 +23,9 @@ import {
   BookOpen,
   BarChart,
   Lightbulb,
-  Ticket,
-  Store,
-  Tickets,
   LayoutDashboard,
-  Book,
+  Tickets,
+  Camera,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -121,6 +119,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       name: "Event Rules",
       href: "/attendee/rules",
       icon: <BookOpen className="text-muted-foreground" />,
+    },
+    {
+      name: "Live Stream",
+      href: "/attendee/live-stream",
+      icon: <Camera className="text-muted-foreground" />,
     },
   ];
   const hostNavigation = [

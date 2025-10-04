@@ -34,9 +34,9 @@ import {
   Store,
   FileText,
   DollarSign,
-  Camera, // Add this import for highlights icon
-  Eye, // Add this import for event preview icon
-  Network, // Add this import for networking icon
+  Camera,
+  Eye,
+  Network,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -178,6 +178,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       icon: (
         <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
           <DollarSign size={14} className="text-purple-600" />
+        </div>
+      ),
+    },
+    {
+      name: "Live Stream",
+      href: "/admin/live-stream",
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
+          <Camera size={14} className="text-purple-600" />
         </div>
       ),
     },

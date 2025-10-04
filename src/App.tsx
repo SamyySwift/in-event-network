@@ -35,7 +35,6 @@ import AdminNotifications from '@/pages/admin/AdminNotifications';
 import AdminSettings from '@/pages/admin/AdminSettings';
 import AdminTickets from '@/pages/admin/AdminTickets';
 import AdminCheckIn from '@/pages/admin/AdminCheckIn';
-import AdminLiveStream from '@/pages/admin/AdminLiveStream';
 
 // Attendee pages
 import AttendeeDashboard from '@/pages/attendee/AttendeeDashboard';
@@ -51,7 +50,6 @@ import AttendeeNotifications from '@/pages/attendee/AttendeeNotifications';
 import AttendeeOnboarding from '@/pages/attendee/AttendeeOnboarding';
 import AttendeeMap from '@/pages/attendee/AttendeeMap';
 import AttendeeSearch from '@/pages/attendee/AttendeeSearch';
-import AttendeeLiveStream from '@/pages/attendee/AttendeeLiveStream';
 
 import Index from '@/pages/Index';
 import { AdminEventProvider } from '@/hooks/useAdminEventContext';
@@ -103,7 +101,6 @@ function App() {
                         <Route path="settings" element={<AdminSettings />} />
                         <Route path="tickets" element={<AdminTickets />} />
                         <Route path="checkin" element={<AdminCheckIn />} />
-                        <Route path="live-stream" element={<AdminLiveStream />} />
                       </Routes>
                     </AdminEventProvider>
                   </ProtectedRoute>
@@ -245,16 +242,6 @@ function App() {
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
                       <AttendeeOnboarding />
-                    </ProtectedRoute>
-                  </AttendeeEventProvider>
-                }
-              />
-              <Route
-                path="/attendee/live-stream"
-                element={
-                  <AttendeeEventProvider>
-                    <ProtectedRoute requiredRole="attendee">
-                      <AttendeeLiveStream />
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }

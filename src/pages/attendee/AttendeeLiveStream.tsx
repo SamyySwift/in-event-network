@@ -10,14 +10,17 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const AttendeeLiveStream = () => {
   const { context } = useAttendeeContext();
-  const currentEventId = context?.currentEventId;
+  const currentEventId = context?.currentEventId || null;
+  
+  console.log('AttendeeLiveStream - context:', context);
+  console.log('AttendeeLiveStream - currentEventId:', currentEventId);
   const {
     activeStream,
     messages,
     loading,
     joinStream,
     sendMessage,
-  } = useLiveStream(currentEventId || '');
+  } = useLiveStream(currentEventId);
 
   const [message, setMessage] = useState('');
   const videoRef = useRef<HTMLVideoElement>(null);

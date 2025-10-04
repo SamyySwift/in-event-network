@@ -35,7 +35,7 @@ const ICE_SERVERS = {
   ]
 };
 
-export const useLiveStream = (eventId: string) => {
+export const useLiveStream = (eventId: string | null) => {
   const { currentUser } = useAuth();
   const { toast } = useToast();
   const [activeStream, setActiveStream] = useState<LiveStream | null>(null);
@@ -46,8 +46,18 @@ export const useLiveStream = (eventId: string) => {
   const peerConnection = useRef<RTCPeerConnection | null>(null);
   const localStream = useRef<MediaStream | null>(null);
 
+  console.log('useLiveStream - eventId:', eventId);
+  console.log('useLiveStream - currentUser:', currentUser?.id);
+
   // Fetch active stream
   const fetchActiveStream = useCallback(async () => {
+    if (!eventId) {
+      console.log('useLiveStream - no eventId, skipping fetch');
+      setLoading(false);
+      return;
+    }
+    
+    console.log('useLiveStream - fetching stream for eventId:', eventId);
     try {
       const { data, error } = await supabase
         .from('live_streams')
@@ -56,7 +66,11 @@ export const useLiveStream = (eventId: string) => {
         .eq('is_active', true)
         .single();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error && error.code !== 'PGRST116') {
+        console.error('useLiveStream - error fetching stream:', error);
+        throw error;
+      }
+      console.log('useLiveStream - fetched stream:', data);
       setActiveStream(data);
     } catch (error) {
       console.error('Error fetching stream:', error);
@@ -277,6 +291,13 @@ export const useLiveStream = (eventId: string) => {
 
   // Subscribe to real-time updates
   useEffect(() => {
+    if (!eventId) {
+      console.log('useLiveStream - no eventId, skipping subscription');
+      setLoading(false);
+      return;
+    }
+
+    console.log('useLiveStream - setting up realtime subscription for:', eventId);
     fetchActiveStream();
 
     const channel = supabase

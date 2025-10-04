@@ -12,6 +12,8 @@ import AdminPageHeader from '@/components/admin/AdminPageHeader';
 
 const AdminLiveStream = () => {
   const { selectedEventId } = useAdminEventContext();
+  
+  console.log('AdminLiveStream - selectedEventId:', selectedEventId);
   const {
     activeStream,
     messages,
@@ -19,7 +21,7 @@ const AdminLiveStream = () => {
     startBroadcast,
     stopBroadcast,
     sendMessage,
-  } = useLiveStream(selectedEventId || '');
+  } = useLiveStream(selectedEventId || null);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');

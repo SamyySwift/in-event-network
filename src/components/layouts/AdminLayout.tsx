@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAdminEventContext } from "@/hooks/useAdminEventContext";
+import { useEventTheme } from "@/hooks/useEventTheme";
 import { useNotificationCount } from "@/hooks/useNotificationCount";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AdminFormPersistenceProvider } from "@/hooks/useAdminFormPersistence";
@@ -62,6 +64,8 @@ interface AdminLayoutProps {
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const { currentUser, logout } = useAuth();
+  const { selectedEventId } = useAdminEventContext();
+  const eventTheme = useEventTheme(selectedEventId);
   const { unreadCount } = useNotificationCount();
   const navigate = useNavigate();
   const location = useLocation();
@@ -353,11 +357,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const MobileSidebarContent = () => (
     <div className="flex flex-col h-full">
       <div className="p-4 border-b border-sidebar-border">
-        <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <img src="/logo.png" alt="Kconect Logo" className="h-6 w-6 mr-2" />
+            <img 
+              src={eventTheme?.logo_url || "/logo.png"} 
+              alt={eventTheme?.custom_title || "Kconect Logo"} 
+              className="h-6 w-6 mr-2 object-contain" 
+            />
             <span className="text-md font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-              Kconect
+              {eventTheme?.custom_title || "Kconect"}
             </span>
           </div>
         </div>
@@ -509,17 +517,21 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               {sidebarOpen && (
                 <>
                   <img
-                    src="/logo.png"
-                    alt="Kconect Logo"
-                    className="h-6 w-6 mr-2"
+                    src={eventTheme?.logo_url || "/logo.png"}
+                    alt={eventTheme?.custom_title || "Kconect Logo"}
+                    className="h-6 w-6 mr-2 object-contain"
                   />
                   <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                    Kconect
+                    {eventTheme?.custom_title || "Kconect"}
                   </span>
                 </>
               )}
               {!sidebarOpen && (
-                <img src="/logo.png" alt="Kconect Logo" className="h-6 w-6" />
+                <img 
+                  src={eventTheme?.logo_url || "/logo.png"} 
+                  alt={eventTheme?.custom_title || "Kconect Logo"} 
+                  className="h-6 w-6 object-contain" 
+                />
               )}
             </div>
 

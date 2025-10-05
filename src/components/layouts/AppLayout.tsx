@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAttendeeContext } from "@/hooks/useAttendeeContext";
-import { useEventTheme } from "@/hooks/useEventTheme";
 import { Button } from "@/components/ui/button";
 import {
   Calendar,
@@ -49,8 +47,6 @@ interface AppLayoutProps {
 }
 const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const { currentUser, logout } = useAuth();
-  const { context: attendeeContext } = useAttendeeContext();
-  const eventTheme = useEventTheme(attendeeContext?.currentEventId || null);
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -198,7 +194,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         <div className="flex items-center">
           <Sheet open={mobileSidebarOpen} onOpenChange={setMobileSidebarOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="mr-2 text-foreground hover:text-primary">
+              <Button variant="ghost" size="icon" className="mr-2">
                 <Menu size={20} />
               </Button>
             </SheetTrigger>
@@ -209,12 +205,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               <SheetHeader>
                 <SheetTitle className="flex items-center">
                   <img
-                    src={eventTheme?.logo_url || "/logo.png"}
-                    alt={eventTheme?.custom_title || "Kconect Logo"}
-                    className="h-6 w-6 mr-2 object-contain"
+                    src="/logo.png"
+                    alt="Kconect Logo"
+                    className="h-6 w-6 mr-2"
                   />
                   <span className="text-md font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                    {eventTheme?.custom_title || "Kconect"}
+                    Kconect
                   </span>
                 </SheetTitle>
               </SheetHeader>
@@ -284,13 +280,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             </SheetContent>
           </Sheet>
 
-          <img 
-            src={eventTheme?.logo_url || "/logo.png"} 
-            alt={eventTheme?.custom_title || "Kconect Logo"} 
-            className="h-6 w-6 mr-2 object-contain" 
-          />
+          <img src="/logo.png" alt="Kconect Logo" className="h-6 w-6 mr-2" />
           <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-            {eventTheme?.custom_title || "Kconect"}
+            Kconect
           </span>
         </div>
 
@@ -328,12 +320,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center">
               <img
-                src={eventTheme?.logo_url || "/logo.png"}
-                alt={eventTheme?.custom_title || "Kconect Logo"}
-                className="h-6 w-6 mr-2 object-contain"
+                src="/logo.png"
+                alt="Kconect Logo"
+                className="h-6 w-6 mr-2"
               />
               <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                {eventTheme?.custom_title || "Kconect"}
+                Kconect
               </span>
             </div>
             <ThemeToggle />

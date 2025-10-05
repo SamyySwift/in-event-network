@@ -34,7 +34,7 @@ export const NotificationBadge: React.FC<NotificationBadgeProps> = ({
       variant="ghost"
       size={size === 'sm' ? 'sm' : 'icon'}
       onClick={onClick}
-      className={cn('relative text-foreground hover:text-primary', sizeClasses[size], className)}
+      className={cn('relative', sizeClasses[size], className)}
     >
       <Bell className={iconSizes[size]} />
       {count > 0 && (

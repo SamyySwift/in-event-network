@@ -42,6 +42,9 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NotificationBadge } from "@/components/notifications/NotificationBadge";
 import { ExpandableTabs } from "@/components/ui/expandable-tabs";
 import { FloatingDidYouKnow } from "@/components/attendee/FloatingDidYouKnow";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
 interface AppLayoutProps {
   children: React.ReactNode;
 }
@@ -52,6 +55,28 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
   const { unreadCount } = useNotificationCount();
+
+  // Fetch current event branding for attendees
+  const { data: eventBranding } = useQuery({
+    queryKey: ['event-branding', currentUser?.currentEventId],
+    queryFn: async () => {
+      if (!currentUser?.currentEventId) return null;
+      
+      const { data, error } = await supabase
+        .from('events')
+        .select('logo_url, custom_title')
+        .eq('id', currentUser.currentEventId)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentUser?.currentEventId && currentUser?.role === 'attendee',
+  });
+
+  // Use custom branding if available, otherwise defaults
+  const displayLogo = eventBranding?.logo_url || "/logo.png";
+  const displayTitle = eventBranding?.custom_title || "Kconect";
   const isActive = (path: string) => {
     // For dashboard routes, check exact match
     if (path === "/" || path === "/attendee" || path === "/host") {
@@ -205,12 +230,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               <SheetHeader>
                 <SheetTitle className="flex items-center">
                   <img
-                    src="/logo.png"
-                    alt="Kconect Logo"
-                    className="h-6 w-6 mr-2"
+                    src={displayLogo}
+                    alt="Logo"
+                    className="h-6 w-6 mr-2 object-contain"
                   />
                   <span className="text-md font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                    Kconect
+                    {displayTitle}
                   </span>
                 </SheetTitle>
               </SheetHeader>
@@ -280,9 +305,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             </SheetContent>
           </Sheet>
 
-          <img src="/logo.png" alt="Kconect Logo" className="h-6 w-6 mr-2" />
+          <img src={displayLogo} alt="Logo" className="h-6 w-6 mr-2 object-contain" />
           <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-            Kconect
+            {displayTitle}
           </span>
         </div>
 
@@ -320,12 +345,12 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center">
               <img
-                src="/logo.png"
-                alt="Kconect Logo"
-                className="h-6 w-6 mr-2"
+                src={displayLogo}
+                alt="Logo"
+                className="h-6 w-6 mr-2 object-contain"
               />
               <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                Kconect
+                {displayTitle}
               </span>
             </div>
             <ThemeToggle />

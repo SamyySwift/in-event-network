@@ -163,6 +163,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           role: (data.role as "host" | "attendee") || "attendee",
           photoUrl: data.photo_url,
           bio: data.bio,
+          currentEventId: data.current_event_id,
           links: {
             twitter: data.twitter_link,
             facebook: data.facebook_link,
@@ -213,6 +214,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           role: newProfile.role,
           photoUrl: newProfile.photo_url,
           bio: null,
+          currentEventId: null,
           links: {
             twitter: null,
             facebook: null,

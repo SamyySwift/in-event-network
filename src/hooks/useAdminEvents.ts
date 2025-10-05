@@ -15,6 +15,7 @@ interface Event {
   logo_url?: string;
   website?: string;
   host_id?: string;
+  custom_title?: string;
   created_at: string;
   updated_at: string;
 }

@@ -11,6 +11,8 @@ interface Event {
   start_time: string;
   end_time: string;
   location?: string;
+  custom_title?: string | null;
+  logo_url?: string | null;
   created_at: string;
 }
 

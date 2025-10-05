@@ -34,6 +34,7 @@ import {
   Edit3
 } from "lucide-react";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
+import { BrandingSettings } from "@/components/admin/BrandingSettings";
 import { toast } from "sonner";
 function AdminSettingsContent() {
   const { currentUser } = useAuth();
@@ -88,10 +89,14 @@ function AdminSettingsContent() {
       </div>
 
       <Tabs defaultValue="general" className="space-y-6">
-        <TabsList className="grid grid-cols-3 w-full md:w-auto bg-muted/50 p-1 h-auto">
+        <TabsList className="grid grid-cols-4 w-full md:w-auto bg-muted/50 p-1 h-auto">
           <TabsTrigger value="general" className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm py-3">
             <Settings size={16} />
             <span className="hidden sm:inline">General</span>
+          </TabsTrigger>
+          <TabsTrigger value="branding" className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm py-3">
+            <Palette size={16} />
+            <span className="hidden sm:inline">Branding</span>
           </TabsTrigger>
           <TabsTrigger value="notifications" className="flex items-center gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm py-3">
             <Bell size={16} />
@@ -102,6 +107,11 @@ function AdminSettingsContent() {
             <span className="hidden sm:inline">Profile</span>
           </TabsTrigger>
         </TabsList>
+
+        {/* Branding Settings */}
+        <TabsContent value="branding" className="space-y-6">
+          <BrandingSettings />
+        </TabsContent>
 
         {/* General Settings */}
         <TabsContent value="general" className="space-y-6">

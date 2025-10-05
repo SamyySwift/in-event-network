@@ -5,6 +5,7 @@ export interface User {
   role: "host" | "attendee";
   photoUrl?: string;
   bio?: string;
+  currentEventId?: string | null;
   links?: {
     twitter?: string;
     facebook?: string;

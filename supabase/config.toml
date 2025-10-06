@@ -67,6 +67,15 @@ verify_jwt = true
 [functions.generate-speaker-info]
 verify_jwt = false
 
+[functions.auto-respond-question]
+verify_jwt = false
+
+[functions.refine-question]
+verify_jwt = false
+
+[functions.generate-profile-bio]
+verify_jwt = false
+
 [functions.verify-payment]
 verify_jwt = false
 

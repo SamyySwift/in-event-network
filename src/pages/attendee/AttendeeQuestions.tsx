@@ -7,6 +7,8 @@ import {
   Star,
   Lightbulb,
   Trash2,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import AttendeeRouteGuard from "@/components/attendee/AttendeeRouteGuard";
 import {
@@ -34,8 +36,12 @@ import FeedbackModal from "@/components/FeedbackModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAttendeeQuestions } from "@/hooks/useAttendeeQuestions";
 import { format } from "date-fns";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+
 const AttendeeQuestions = () => {
   const { currentUser } = useAuth();
+  const { toast } = useToast();
   const [newQuestion, setNewQuestion] = useState("");
   const [selectedSessionId, setSelectedSessionId] = useState("");
   const [isAnonymous, setIsAnonymous] = useState(false);
@@ -44,6 +50,7 @@ const AttendeeQuestions = () => {
     null
   );
   const [upvotedQuestions, setUpvotedQuestions] = useState<Set<string>>(new Set());
+  const [isRefiningQuestion, setIsRefiningQuestion] = useState(false);
   const {
     questions,
     sessions,
@@ -56,6 +63,43 @@ const AttendeeQuestions = () => {
     isSubmitting,
     isDeleting,
   } = useAttendeeQuestions();
+  const handleRefineQuestion = async () => {
+    if (!newQuestion.trim()) {
+      toast({
+        title: "No question to refine",
+        description: "Please enter a question first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsRefiningQuestion(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('refine-question', {
+        body: { question: newQuestion }
+      });
+
+      if (error) throw error;
+
+      if (data?.refinedQuestion) {
+        setNewQuestion(data.refinedQuestion);
+        toast({
+          title: "Question refined",
+          description: "Your question has been improved by AI",
+        });
+      }
+    } catch (error) {
+      console.error('Error refining question:', error);
+      toast({
+        title: "Failed to refine question",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefiningQuestion(false);
+    }
+  };
+
   const handleSubmitQuestion = async () => {
     if (!newQuestion.trim()) return;
     if (!currentEventId) {
@@ -313,13 +357,31 @@ const AttendeeQuestions = () => {
 
               <div>
                 <Label htmlFor="question">Your Question</Label>
-                <Textarea
-                  id="question"
-                  placeholder="Type your question here..."
-                  value={newQuestion}
-                  onChange={(e) => setNewQuestion(e.target.value)}
-                  rows={4}
-                />
+                <div className="relative">
+                  <Textarea
+                    id="question"
+                    placeholder="Type your question here..."
+                    value={newQuestion}
+                    onChange={(e) => setNewQuestion(e.target.value)}
+                    rows={4}
+                    className="pr-36"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleRefineQuestion}
+                    disabled={!newQuestion.trim() || isRefiningQuestion}
+                    className="absolute bottom-2 right-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+                  >
+                    {isRefiningQuestion ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4" />
+                    )}
+                    <span className="ml-2">Refine with AI</span>
+                  </Button>
+                </div>
               </div>
 
               <div className="flex items-center space-x-2">

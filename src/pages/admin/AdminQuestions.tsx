@@ -1,5 +1,4 @@
-
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 // Remove this import:
 // import AdminLayout from "@/components/layouts/AdminLayout";
 import QuestionStatsCards from "./components/QuestionStatsCards";
@@ -8,11 +7,14 @@ import EventSelector from "@/components/admin/EventSelector";
 import { Input } from "@/components/ui/input";
 import { useAdminQuestions } from "@/hooks/useAdminQuestions";
 import { useAdminEventContext } from "@/hooks/useAdminEventContext";
-import { Plus, Share2, Copy, ExternalLink } from "lucide-react";
+import { Plus, Share2, Copy, ExternalLink, Sparkles } from "lucide-react";
 import PaymentGuard from '@/components/payment/PaymentGuard';
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
 
 const TABS = [
   { id: "all", label: "All" },
@@ -27,6 +29,8 @@ const QuestionsContent = () => {
   const [responseText, setResponseText] = useState("");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [autoResponseEnabled, setAutoResponseEnabled] = useState(false);
+  const [processingAutoResponse, setProcessingAutoResponse] = useState<Set<string>>(new Set());
   const { toast } = useToast();
 
   const { selectedEventId, selectedEvent } = useAdminEventContext();
@@ -41,6 +45,46 @@ const QuestionsContent = () => {
     isDeleting,
     isResponding
   } = useAdminQuestions(selectedEventId || undefined);
+
+  // Auto-respond to new unanswered questions when toggle is enabled
+  useEffect(() => {
+    if (!autoResponseEnabled || !questions || !selectedEvent) return;
+
+    const unansweredQuestions = questions.filter(
+      q => !q.is_answered && !q.response && !processingAutoResponse.has(q.id)
+    );
+
+    unansweredQuestions.forEach(async (question) => {
+      setProcessingAutoResponse(prev => new Set(prev).add(question.id));
+
+      try {
+        const { data, error } = await supabase.functions.invoke('auto-respond-question', {
+          body: { 
+            question: question.content,
+            eventName: selectedEvent.name
+          }
+        });
+
+        if (error) throw error;
+
+        if (data?.response) {
+          await respondToQuestion({ questionId: question.id, response: data.response });
+          toast({
+            title: "Auto-response sent",
+            description: "AI generated response has been posted",
+          });
+        }
+      } catch (error) {
+        console.error('Error auto-responding to question:', error);
+      } finally {
+        setProcessingAutoResponse(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(question.id);
+          return newSet;
+        });
+      }
+    });
+  }, [questions, autoResponseEnabled, selectedEvent, processingAutoResponse, respondToQuestion, toast]);
 
   // Stats for cards
   const total = questions.length;
@@ -193,13 +237,26 @@ const QuestionsContent = () => {
           </div>
 
           {/* Search Bar and Share Button */}
-          <div className="flex justify-between items-center mb-4">
-            <Input
-              placeholder="Search questions..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="max-w-sm"
-            />
+          <div className="flex justify-between items-center mb-4 gap-4">
+            <div className="flex items-center gap-4 flex-1">
+              <Input
+                placeholder="Search questions..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="max-w-sm"
+              />
+              <div className="flex items-center gap-2 bg-white dark:bg-gray-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700">
+                <Sparkles className="h-4 w-4 text-purple-600" />
+                <Label htmlFor="auto-response" className="text-sm font-medium cursor-pointer whitespace-nowrap">
+                  AI Auto-Response
+                </Label>
+                <Switch
+                  id="auto-response"
+                  checked={autoResponseEnabled}
+                  onCheckedChange={setAutoResponseEnabled}
+                />
+              </div>
+            </div>
             <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
               <DialogTrigger asChild>
                 <Button variant="outline" className="gap-2 hover-scale">

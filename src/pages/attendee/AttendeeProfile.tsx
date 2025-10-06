@@ -36,6 +36,8 @@ import {
   Link,
   Shield,
   ChevronRight,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -167,6 +169,7 @@ const AttendeeProfile = () => {
   const [selectedNiche, setSelectedNiche] = useState("");
   const [selectedNetworking, setSelectedNetworking] = useState<string[]>([]);
   const [customNetworkingPref, setCustomNetworkingPref] = useState("");
+  const [isGeneratingBio, setIsGeneratingBio] = useState(false);
 
   // Auto-save functionality
   const saveFormData = (data: any) => {
@@ -319,6 +322,39 @@ const AttendeeProfile = () => {
 
   const handleProfilePictureUpdate = (imageUrl: string) => {
     setProfileData((prev) => ({ ...prev, photoUrl: imageUrl }));
+  };
+
+  const handleGenerateBio = async () => {
+    setIsGeneratingBio(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-profile-bio', {
+        body: {
+          name: profileData.name,
+          company: profileData.company,
+          niche: selectedNiche,
+          existingBio: profileData.bio
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.bio) {
+        setProfileData({ ...profileData, bio: data.bio });
+        toast({
+          title: "Bio Generated",
+          description: "Your professional bio has been created successfully",
+        });
+      }
+    } catch (error) {
+      console.error('Error generating bio:', error);
+      toast({
+        title: "Failed to generate bio",
+        description: "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingBio(false);
+    }
   };
 
   const handleSave = async () => {
@@ -501,14 +537,36 @@ const AttendeeProfile = () => {
             isEditing={isEditing}
           >
             {isEditing ? (
-              <Textarea
-                placeholder="Tell others about yourself..."
-                value={profileData.bio}
-                onChange={(e) =>
-                  setProfileData({ ...profileData, bio: e.target.value })
-                }
-                className="min-h-[100px] resize-none"
-              />
+              <div className="space-y-2">
+                <div className="relative">
+                  <Textarea
+                    placeholder="Tell others about yourself..."
+                    value={profileData.bio}
+                    onChange={(e) =>
+                      setProfileData({ ...profileData, bio: e.target.value })
+                    }
+                    className="min-h-[100px] resize-none"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleGenerateBio}
+                    disabled={isGeneratingBio || (!profileData.name && !profileData.company && !selectedNiche)}
+                    className="absolute bottom-2 right-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+                  >
+                    {isGeneratingBio ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4" />
+                    )}
+                    <span className="ml-2">Generate Bio</span>
+                  </Button>
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  AI will use your name, company, and niche to generate a professional bio
+                </p>
+              </div>
             ) : (
               <p className="text-gray-700 dark:text-gray-300 text-sm">
                 {profileData.bio || "No bio added yet."}

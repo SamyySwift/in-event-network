@@ -43,6 +43,8 @@ const AdminSpeakersContent = () => {
   const [editingSpeaker, setEditingSpeaker] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
+  const [isGeneratingBio, setIsGeneratingBio] = useState(false);
+  const [isIdentifyingImage, setIsIdentifyingImage] = useState(false);
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
@@ -283,12 +285,93 @@ const AdminSpeakersContent = () => {
       clearSavedData();
     }
   };
-  const handleImageSelect = (file: File | null) => {
+  const handleGenerateBio = async () => {
+    const name = watch('name');
+    if (!name?.trim()) {
+      toast({
+        title: "Name Required",
+        description: "Please enter the speaker's name first",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGeneratingBio(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-speaker-info', {
+        body: { name: name.trim() }
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        toast({
+          title: "Generation Failed",
+          description: data.error,
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Fill in the form fields
+      if (data.title) setValue('title', data.title);
+      if (data.company) setValue('company', data.company);
+      if (data.bio) setValue('bio', data.bio);
+
+      toast({
+        title: "Bio Generated",
+        description: "Speaker information has been generated successfully"
+      });
+    } catch (error) {
+      console.error('Error generating bio:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate speaker information. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingBio(false);
+    }
+  };
+
+  const handleImageSelect = async (file: File | null) => {
     setSelectedImage(file);
     if (file) {
       const reader = new FileReader();
-      reader.onload = e => {
-        setImagePreview(e.target?.result as string);
+      reader.onload = async (e) => {
+        const base64 = e.target?.result as string;
+        setImagePreview(base64);
+        
+        // Auto-identify speaker from image
+        setIsIdentifyingImage(true);
+        try {
+          const { data, error } = await supabase.functions.invoke('generate-speaker-info', {
+            body: { imageBase64: base64 }
+          });
+
+          if (error) throw error;
+
+          if (data.error) {
+            console.log('Image identification note:', data.error);
+            return;
+          }
+
+          // Fill in the form fields if identification was successful
+          if (data.name && !watch('name')) setValue('name', data.name);
+          if (data.title) setValue('title', data.title);
+          if (data.company) setValue('company', data.company);
+          if (data.bio) setValue('bio', data.bio);
+
+          toast({
+            title: "Speaker Identified",
+            description: "Information has been extracted from the image"
+          });
+        } catch (error) {
+          console.error('Error identifying image:', error);
+          // Don't show error toast for image identification as it's optional
+        } finally {
+          setIsIdentifyingImage(false);
+        }
       };
       reader.readAsDataURL(file);
     } else {
@@ -419,7 +502,17 @@ const AdminSpeakersContent = () => {
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)} className="grid md:grid-cols-2 gap-6">
                 <div className="flex flex-col space-y-5">
-                  <ImageUpload onImageSelect={handleImageSelect} currentImageUrl={imagePreview} label="Speaker Photo" />
+                  <div className="relative">
+                    <ImageUpload onImageSelect={handleImageSelect} currentImageUrl={imagePreview} label="Speaker Photo" />
+                    {isIdentifyingImage && (
+                      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center rounded-lg">
+                        <div className="flex items-center gap-2 text-sm">
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                          <span className="text-muted-foreground">Identifying speaker...</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="name">Name *</Label>
@@ -462,7 +555,31 @@ const AdminSpeakersContent = () => {
                   </div>
                 </div>
                 <div>
-                  <Label htmlFor="bio">Bio *</Label>
+                  <div className="flex items-center justify-between mb-2">
+                    <Label htmlFor="bio">Bio *</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={handleGenerateBio}
+                      disabled={isGeneratingBio || !watch('name')?.trim()}
+                      className="text-xs"
+                    >
+                      {isGeneratingBio ? (
+                        <>
+                          <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary mr-1"></div>
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                          Generate Bio
+                        </>
+                      )}
+                    </Button>
+                  </div>
                   <Textarea
                     id="bio"
                     {...register('bio', { required: 'Bio is required' })}

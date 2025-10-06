@@ -313,25 +313,50 @@ const AttendeeAnnouncementsContent = () => {
                         {announcement.title}
                       </h2>
                     </div>
-                    {/* Right: More/Less Button */}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleExpanded(announcement.id)}
-                      className="ml-2 shrink-0 h-8 w-18 px-2 text-indigo-600/80 font-medium hover:text-indigo-800"
-                    >
-                      <Eye className="h-4 w-4 mr-1" />
-                      {expandedAnnouncement === announcement.id
-                        ? "Less"
-                        : "More"}
-                      <ChevronRight
-                        className={`h-4 w-4 ml-1 transition-transform ${
-                          expandedAnnouncement === announcement.id
-                            ? "rotate-90"
-                            : ""
-                        }`}
-                      />
-                    </Button>
+                    {/* Right: Link Icon + More/Less Button */}
+                    <div className="flex items-center gap-2">
+                      {hasAnyLink(announcement) && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openAnnouncementLink(announcement)}
+                          className="shrink-0 h-8 w-8 p-0 rounded-full hover:bg-indigo-50"
+                          title="Open attached link"
+                        >
+                          <ExternalLink className="h-4 w-4 text-indigo-600" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleExpanded(announcement.id)}
+                        className="ml-2 shrink-0 h-8 w-18 px-2 text-indigo-600/80 font-medium hover:text-indigo-800"
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        {expandedAnnouncement === announcement.id
+                          ? "Less"
+                          : "More"}
+                        <ChevronRight
+                          className={`h-4 w-4 ml-1 transition-transform ${
+                            expandedAnnouncement === announcement.id
+                              ? "rotate-90"
+                              : ""
+                          }`}
+                        />
+                      </Button>
+                    </div>
+                    {/* Meta info row */}
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mt-2">
+                      <div className="flex items-center gap-1">
+                        <Clock className="h-3.5 w-3.5 text-indigo-400" />
+                        <span>{formatDate(announcement.created_at)}</span>
+                      </div>
+                      <span className="hidden sm:inline-block">•</span>
+                      <div className="flex items-center gap-1">
+                        <User className="h-3.5 w-3.5 text-indigo-400" />
+                        <span>Event Organizer</span>
+                      </div>
+                    </div>
                   </div>
                   {/* Meta info row */}
                   <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mt-2">
@@ -485,6 +510,30 @@ const AttendeeAnnouncements = () => {
       </AttendeeRouteGuard>
     </AttendeeEventProvider>
   );
+};
+
+const extractFirstUrlFromText = (text: string) => {
+  const match = text?.match(/https?:\/\/[^\s)]+/i);
+  return match ? match[0] : null;
+};
+
+const getAnnouncementPrimaryLink = (a: any) => {
+  return (
+    a.website_link ||
+    a.twitter_link ||
+    a.instagram_link ||
+    a.facebook_link ||
+    a.tiktok_link ||
+    a.whatsapp_link ||
+    extractFirstUrlFromText(a.content)
+  );
+};
+
+const hasAnyLink = (a: any) => !!getAnnouncementPrimaryLink(a);
+
+const openAnnouncementLink = (a: any) => {
+  const url = getAnnouncementPrimaryLink(a);
+  if (url) window.open(url, "_blank", "noopener,noreferrer");
 };
 
 export default AttendeeAnnouncements;

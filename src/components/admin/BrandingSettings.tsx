@@ -3,10 +3,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Palette, Save, Upload } from "lucide-react";
+import { Palette, Save, Upload, RotateCcw } from "lucide-react";
 import { useAdminEventContext } from "@/hooks/useAdminEventContext";
 import { useAdminEvents } from "@/hooks/useAdminEvents";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export function BrandingSettings() {
   const { selectedEvent } = useAdminEventContext();
@@ -50,6 +61,28 @@ export function BrandingSettings() {
     } catch (error) {
       console.error("Error saving branding:", error);
       toast.error("Failed to save branding");
+    }
+  };
+
+  const handleRevertBranding = async () => {
+    if (!selectedEvent?.id) {
+      toast.error("No event selected");
+      return;
+    }
+    try {
+      // Reset event branding to defaults (used in attendee layout)
+      updateEvent({
+        id: selectedEvent.id,
+        custom_title: null,
+        logo_url: null,
+      });
+      // Reset local state and preview
+      setCustomTitle("");
+      setLogoFile(null);
+      setLogoPreview("");
+    } catch (error) {
+      console.error("Error reverting branding:", error);
+      toast.error("Failed to revert branding");
     }
   };
 
@@ -148,8 +181,41 @@ export function BrandingSettings() {
           </p>
         </div>
 
-        {/* Save Button */}
-        <div className="flex justify-end pt-4">
+        {/* Save / Revert */}
+        <div className="flex justify-end pt-4 gap-2">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="destructive"
+                disabled={isUpdating}
+                className="gap-2"
+                title="Revert branding to defaults"
+              >
+                <RotateCcw className="h-4 w-4" />
+                Revert to Defaults
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Revert Branding</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will reset the event logo and custom title back to their defaults.
+                  Your uploaded logo file will remain in storage, but it won’t be used.
+                  Do you want to proceed?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleRevertBranding}
+                  className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+                >
+                  Yes, Revert
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
           <Button
             onClick={handleSaveBranding}
             disabled={isUpdating}

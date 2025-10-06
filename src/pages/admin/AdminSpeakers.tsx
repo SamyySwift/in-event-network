@@ -317,10 +317,14 @@ const AdminSpeakersContent = () => {
       if (data.title) setValue('title', data.title);
       if (data.company) setValue('company', data.company);
       if (data.bio) setValue('bio', data.bio);
+      if (data.twitter_link) setValue('twitter_link', data.twitter_link);
+      if (data.linkedin_link) setValue('linkedin_link', data.linkedin_link);
+      if (data.instagram_link) setValue('instagram_link', data.instagram_link);
+      if (data.website_link) setValue('website_link', data.website_link);
 
       toast({
         title: "Bio Generated",
-        description: "Speaker information has been generated successfully"
+        description: "Speaker information and social links have been generated successfully"
       });
     } catch (error) {
       console.error('Error generating bio:', error);
@@ -361,10 +365,14 @@ const AdminSpeakersContent = () => {
           if (data.title) setValue('title', data.title);
           if (data.company) setValue('company', data.company);
           if (data.bio) setValue('bio', data.bio);
+          if (data.twitter_link) setValue('twitter_link', data.twitter_link);
+          if (data.linkedin_link) setValue('linkedin_link', data.linkedin_link);
+          if (data.instagram_link) setValue('instagram_link', data.instagram_link);
+          if (data.website_link) setValue('website_link', data.website_link);
 
           toast({
             title: "Speaker Identified",
-            description: "Information has been extracted from the image"
+            description: "Information and social links have been extracted from the image"
           });
         } catch (error) {
           console.error('Error identifying image:', error);

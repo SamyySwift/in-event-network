@@ -33,7 +33,7 @@ serve(async (req) => {
           content: [
             {
               type: 'text',
-              text: `Identify this person and provide their professional information in JSON format with these fields: name, title, company, bio (2-3 sentences about their professional background). If you can't identify the person, return an error field explaining why.`
+              text: `Identify this person and provide their professional information in JSON format with these fields: name, title, company, bio (2-3 sentences about their professional background), twitter_link (their Twitter/X profile URL), linkedin_link (their LinkedIn profile URL), instagram_link (their Instagram profile URL), github_link (their GitHub profile URL if applicable), website_link (their personal or professional website URL). Only include social media links that you can find with reasonable confidence. If you can't identify the person, return an error field explaining why.`
             },
             {
               type: 'image_url',
@@ -49,11 +49,11 @@ serve(async (req) => {
       messages = [
         {
           role: 'system',
-          content: 'You are an expert researcher who finds accurate professional information about speakers and professionals.'
+          content: 'You are an expert researcher who finds accurate professional information about speakers and professionals, including their social media presence.'
         },
         {
           role: 'user',
-          content: `Find professional information about "${name}" and provide it in JSON format with these fields: title (their current professional title), company (their current company/organization), bio (a 2-3 sentence professional biography highlighting their expertise and achievements). If you cannot find reliable information, return an error field explaining this.`
+          content: `Find professional information about "${name}" and provide it in JSON format with these fields: title (their current professional title), company (their current company/organization), bio (a 2-3 sentence professional biography highlighting their expertise and achievements), twitter_link (their Twitter/X profile URL), linkedin_link (their LinkedIn profile URL), instagram_link (their Instagram profile URL), github_link (their GitHub profile URL if applicable), website_link (their personal or professional website URL). Only include social media links that you can find with reasonable confidence. If you cannot find reliable information, return an error field explaining this.`
         }
       ];
     } else {

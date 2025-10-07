@@ -72,7 +72,7 @@ export const useReferralCode = () => {
           const updatedUnlocked = [...currentUnlocked, eventId];
           saveLocalUnlockedEvents(updatedUnlocked);
         }
-        return { success: true, message: 'Event features unlocked successfully!' };
+        return { success: true, message: eventId === 'admin-unlock' ? 'Unlimited event creation unlocked!' : 'Event features unlocked successfully!' };
       }
 
       // For authenticated users, use database
@@ -92,7 +92,7 @@ export const useReferralCode = () => {
 
       if (existingCode) {
         // Code already exists for this user, just return success
-        return { success: true, message: 'Event features already unlocked!' };
+        return { success: true, message: eventId === 'admin-unlock' ? 'Unlimited event creation already unlocked!' : 'Event features already unlocked!' };
       }
 
       // Insert new access code record
@@ -111,7 +111,7 @@ export const useReferralCode = () => {
         throw error;
       }
 
-      return { success: true, message: 'Event features unlocked successfully!', data };
+      return { success: true, message: eventId === 'admin-unlock' ? 'Unlimited event creation unlocked!' : 'Event features unlocked successfully!', data };
     },
     onSuccess: async (result) => {
       console.log('Referral code submission successful:', result);

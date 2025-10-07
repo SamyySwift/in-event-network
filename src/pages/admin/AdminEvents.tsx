@@ -24,6 +24,8 @@ import {
   CalendarIcon,
   BarChart3,
   Activity,
+  Unlock,
+  Key,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
@@ -35,6 +37,7 @@ import { ImageUpload } from "@/components/ui/image-upload";
 import { usePayment } from "@/hooks/usePayment";
 import EventQRCode from "@/components/admin/EventQRCode";
 import PaymentGuard from '@/components/payment/PaymentGuard';
+import { useReferralCode } from "@/hooks/useReferralCode";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import {
   Popover,
@@ -59,6 +62,8 @@ type EventFormData = {
 const AdminEvents = () => {
   const [editingEvent, setEditingEvent] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [referralCode, setReferralCode] = useState("");
+  const [showReferralCard, setShowReferralCard] = useState(true);
   const { currentUser } = useAuth();
   const {
     events,
@@ -71,6 +76,7 @@ const AdminEvents = () => {
     isDeleting,
   } = useAdminEvents();
   const { isEventPaid } = usePayment();
+  const { submitReferralCode, isSubmittingCode, unlockedEvents } = useReferralCode();
 
   const form = useForm<EventFormData>({
     defaultValues: {
@@ -128,12 +134,14 @@ const AdminEvents = () => {
       return;
     }
 
-    // Check if user is trying to create a second event without payment
+    // Check if user is trying to create a second event without payment or referral code unlock
     if (!editingEvent && events.length >= 1) {
-      // Check if any existing event has been paid for
+      // Check if any existing event has been paid for OR if admin has unlocked via referral code
       const hasAnyPaidEvent = events.some(event => isEventPaid(event.id));
-      if (!hasAnyPaidEvent) {
-        alert("You can only create one free event. Please pay ₦300,000 to unlock unlimited event creation.");
+      const hasReferralUnlock = unlockedEvents.length > 0; // Admin has used referral code
+      
+      if (!hasAnyPaidEvent && !hasReferralUnlock) {
+        alert("You can only create one free event. Please enter the referral code or pay ₦300,000 to unlock unlimited event creation.");
         return;
       }
     }
@@ -234,6 +242,23 @@ const AdminEvents = () => {
     isEventUpcoming(event.start_time)
   );
 
+  const handleReferralSubmit = () => {
+    if (!referralCode.trim()) {
+      return;
+    }
+    // Use a dummy event ID for admin unlock - we're just checking the code is valid
+    submitReferralCode({ 
+      accessCode: referralCode, 
+      eventId: 'admin-unlock' 
+    }, {
+      onSuccess: () => {
+        setShowReferralCard(false);
+      }
+    });
+  };
+
+  const isUnlocked = unlockedEvents.length > 0 || events.some(event => isEventPaid(event.id));
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
@@ -268,6 +293,87 @@ const AdminEvents = () => {
             </div>
           </div>
         </div>
+
+        {/* Referral Code Unlock Card */}
+        {!isUnlocked && showReferralCard && events.length >= 1 && (
+          <Card className="mb-8 border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50">
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg">
+                    <Key className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-xl">Unlock Unlimited Events</CardTitle>
+                    <CardDescription className="mt-1">
+                      Enter your referral code to unlock unlimited event creation
+                    </CardDescription>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowReferralCard(false)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  ×
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-3">
+                <Input
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value)}
+                  placeholder="Enter referral code"
+                  className="flex-1 h-11"
+                  onKeyDown={(e) => e.key === 'Enter' && handleReferralSubmit()}
+                />
+                <Button
+                  onClick={handleReferralSubmit}
+                  disabled={isSubmittingCode || !referralCode.trim()}
+                  className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+                >
+                  {isSubmittingCode ? (
+                    <>
+                      <Loader className="h-4 w-4 mr-2 animate-spin" />
+                      Verifying...
+                    </>
+                  ) : (
+                    <>
+                      <Unlock className="h-4 w-4 mr-2" />
+                      Unlock
+                    </>
+                  )}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-3">
+                Have a referral code? Enter it here to create unlimited events without payment.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Success Message */}
+        {isUnlocked && events.length >= 1 && (
+          <Card className="mb-8 border-2 border-green-200 dark:border-green-800 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/50 dark:to-emerald-950/50">
+            <CardContent className="py-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 shadow-md">
+                  <Unlock className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="font-semibold text-green-900 dark:text-green-100">
+                    Unlimited Events Unlocked!
+                  </p>
+                  <p className="text-sm text-green-700 dark:text-green-300">
+                    You can now create as many events as you need.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Statistics Overview */}
         <div className="mb-8 sm:mb-12">

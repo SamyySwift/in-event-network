@@ -34,6 +34,57 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FcGoogle } from "react-icons/fc";
 import { Badge } from "@/components/ui/badge";
 import { useEventById } from "@/hooks/useEventById";
+import { motion } from "framer-motion";
+
+// Animation variants for smooth slide-in effects
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.1,
+    },
+  },
+};
+
+const slideFromTop = {
+  hidden: {
+    y: -30,
+    opacity: 0,
+    scale: 0.95,
+  },
+  visible: {
+    y: 0,
+    opacity: 1,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 30,
+      duration: 0.6,
+    },
+  },
+};
+
+const slideFromBottom = {
+  hidden: {
+    y: 30,
+    opacity: 0,
+    scale: 0.95,
+  },
+  visible: {
+    y: 0,
+    opacity: 1,
+    scale: 1,
+    transition: {
+      type: "spring",
+      stiffness: 300,
+      damping: 30,
+      duration: 0.6,
+    },
+  },
+};
 
 const Register = () => {
   const [searchParams] = useSearchParams();
@@ -457,181 +508,197 @@ const Register = () => {
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
-              {errorMessage && (
-                <Alert
-                  variant="destructive"
-                  className="bg-white/10 border-white/20 text-white"
-                >
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{errorMessage}</AlertDescription>
-                </Alert>
-              )}
-              <div className="space-y-2">
-                <Label
-                  htmlFor="name"
-                  className="text-white flex items-center gap-2"
-                >
-                  Full Name
-                </Label>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 pointer-events-none" />
-                  <Input
-                    id="name"
-                    placeholder="John Doe"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                    className="pl-10 bg-white/5 border-white/20 text-white placeholder:text-white/60"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label
-                  htmlFor="email"
-                  className="text-white flex items-center gap-2"
-                >
-                  Email address
-                </Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 pointer-events-none" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Email address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="pl-10 bg-white/5 border-white/20 text-white placeholder:text-white/60"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label
-                  htmlFor="password"
-                  className="text-white flex items-center gap-2"
-                >
-                  Password
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 pointer-events-none" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="pl-10 pr-10 bg-white/5 border-white/20 text-white placeholder:text-white/60"
-                  />
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
-                  >
-                    {showPassword ? (
-                      <EyeCuteOpen className="h-4 w-4 text-white/70 hover:text-white/90" />
-                    ) : (
-                      <EyeCuteClosed className="h-4 w-4 text-white/70 hover:text-white/90" />
-                    )}
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label
-                  htmlFor="confirm-password"
-                  className="text-white flex items-center gap-2"
-                >
-                  Confirm Password
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 pointer-events-none" />
-                  <Input
-                    id="confirm-password"
-                    type={showConfirmPassword ? "text" : "password"}
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    className="pl-10 pr-10 bg-white/5 border-white/20 text-white placeholder:text-white/60"
-                  />
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    aria-label={
-                      showConfirmPassword ? "Hide password" : "Show password"
-                    }
-                  >
-                    {showConfirmPassword ? (
-                      <EyeCuteOpen className="h-4 w-4 text-white/70 hover:text-white/90" />
-                    ) : (
-                      <EyeCuteClosed className="h-4 w-4 text-white/70 hover:text-white/90" />
-                    )}
-                  </button>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label className="text-white flex items-center gap-2">
-                  <Network className="h-4 w-4" /> I want to:
-                </Label>
-                {isFromQRCode && (
-                  <Alert className="bg-white/10 border-white/20 text-white">
-                    <Network className="h-4 w-4" />
-                    <AlertDescription>
-                      You're registering to join an event. Your account will be
-                      set up as an attendee.
-                    </AlertDescription>
-                  </Alert>
+              <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="space-y-4"
+              >
+                {errorMessage && (
+                  <motion.div variants={slideFromTop}>
+                    <Alert
+                      variant="destructive"
+                      className="bg-white/10 border-white/20 text-white"
+                    >
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{errorMessage}</AlertDescription>
+                    </Alert>
+                  </motion.div>
                 )}
-                <RadioGroup
-                  value={role}
-                  onValueChange={(value) =>
-                    setRole(value as "host" | "attendee")
-                  }
-                  className="flex flex-col space-y-2 mt-2"
-                  disabled={isFromQRCode}
-                >
-                  {allowedRoles.includes("host") && (
+
+                {/* Name field - slides from top */}
+                <motion.div variants={slideFromTop} className="space-y-2">
+                  <Label
+                    htmlFor="name"
+                    className="text-white flex items-center gap-2"
+                  >
+                    Full Name
+                  </Label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 pointer-events-none" />
+                    <Input
+                      id="name"
+                      placeholder="John Doe"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                      className="pl-10 bg-white/5 border-white/20 text-white placeholder:text-white/60 transition-all duration-300 focus:scale-[1.02] focus:shadow-lg focus:shadow-cyan-500/20"
+                    />
+                  </div>
+                </motion.div>
+
+                {/* Email field - slides from bottom */}
+                <motion.div variants={slideFromBottom} className="space-y-2">
+                  <Label
+                    htmlFor="email"
+                    className="text-white flex items-center gap-2"
+                  >
+                    Email address
+                  </Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 pointer-events-none" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Email address"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="pl-10 bg-white/5 border-white/20 text-white placeholder:text-white/60 transition-all duration-300 focus:scale-[1.02] focus:shadow-lg focus:shadow-purple-500/20"
+                    />
+                  </div>
+                </motion.div>
+
+                {/* Password field - slides from top */}
+                <motion.div variants={slideFromTop} className="space-y-2">
+                  <Label
+                    htmlFor="password"
+                    className="text-white flex items-center gap-2"
+                  >
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 pointer-events-none" />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      className="pl-10 pr-10 bg-white/5 border-white/20 text-white placeholder:text-white/60 transition-all duration-300 focus:scale-[1.02] focus:shadow-lg focus:shadow-cyan-500/20"
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                    >
+                      {showPassword ? (
+                        <EyeCuteOpen className="h-4 w-4 text-white/70 hover:text-white/90" />
+                      ) : (
+                        <EyeCuteClosed className="h-4 w-4 text-white/70 hover:text-white/90" />
+                      )}
+                    </button>
+                  </div>
+                </motion.div>
+
+                {/* Confirm Password field - slides from bottom */}
+                <motion.div variants={slideFromBottom} className="space-y-2">
+                  <Label
+                    htmlFor="confirm-password"
+                    className="text-white flex items-center gap-2"
+                  >
+                    Confirm Password
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 pointer-events-none" />
+                    <Input
+                      id="confirm-password"
+                      type={showConfirmPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      required
+                      className="pl-10 pr-10 bg-white/5 border-white/20 text-white placeholder:text-white/60 transition-all duration-300 focus:scale-[1.02] focus:shadow-lg focus:shadow-purple-500/20"
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      aria-label={
+                        showConfirmPassword ? "Hide password" : "Show password"
+                      }
+                    >
+                      {showConfirmPassword ? (
+                        <EyeCuteOpen className="h-4 w-4 text-white/70 hover:text-white/90" />
+                      ) : (
+                        <EyeCuteClosed className="h-4 w-4 text-white/70 hover:text-white/90" />
+                      )}
+                    </button>
+                  </div>
+                </motion.div>
+
+                {/* Role Selection - slides from top */}
+                <motion.div variants={slideFromTop} className="space-y-2">
+                  <Label className="text-white flex items-center gap-2">
+                    <Network className="h-4 w-4" /> I want to:
+                  </Label>
+                  {isFromQRCode && (
+                    <Alert className="bg-white/10 border-white/20 text-white">
+                      <Network className="h-4 w-4" />
+                      <AlertDescription>
+                        You're registering to join an event. Your account will be
+                        set up as an attendee.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  <RadioGroup
+                    value={role}
+                    onValueChange={(value) =>
+                      setRole(value as "host" | "attendee")
+                    }
+                    className="flex flex-col space-y-2 mt-2"
+                    disabled={isFromQRCode}
+                  >
+                    {allowedRoles.includes("host") && (
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem
+                          value="host"
+                          id="host"
+                          disabled={isFromQRCode}
+                        />
+                        <Label
+                          htmlFor="host"
+                          className={`font-normal cursor-pointer flex items-center gap-2 ${
+                            isFromQRCode ? "text-white/50" : "text-white"
+                          }`}
+                        >
+                          <Briefcase className="h-4 w-4" />
+                          Host events (organize networking events)
+                        </Label>
+                      </div>
+                    )}
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem
-                        value="host"
-                        id="host"
-                        disabled={isFromQRCode}
-                      />
+                      <RadioGroupItem value="attendee" id="attendee" />
                       <Label
-                        htmlFor="host"
-                        className={`font-normal cursor-pointer flex items-center gap-2 ${
-                          isFromQRCode ? "text-white/50" : "text-white"
-                        }`}
+                        htmlFor="attendee"
+                        className="font-normal cursor-pointer text-white flex items-center gap-2"
                       >
-                        <Briefcase className="h-4 w-4" />
-                        Host events (organize networking events)
+                        <Users className="h-4 w-4" />
+                        Join events (network with others)
                       </Label>
                     </div>
-                  )}
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="attendee" id="attendee" />
-                    <Label
-                      htmlFor="attendee"
-                      className="font-normal cursor-pointer text-white flex items-center gap-2"
-                    >
-                      <Users className="h-4 w-4" />
-                      Join events (network with others)
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
+                  </RadioGroup>
+                </motion.div>
+              </motion.div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600"
+                className="w-full bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 transition-all duration-300 transform hover:scale-[1.02]"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Creating account..." : "Create Account"}
@@ -647,7 +714,7 @@ const Register = () => {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20"
+                className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20 transition-all duration-300 transform hover:scale-[1.02]"
                 onClick={handleGoogleSignUp}
                 disabled={isSubmitting}
               >

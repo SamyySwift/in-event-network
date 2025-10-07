@@ -791,6 +791,28 @@ const AttendeeSchedule = () => {
                                   </div>
                                 </div>
 
+                                {/* Image Column - Show if image_url exists */}
+                                {item.image_url && (
+                                  <div className="w-full lg:w-48 xl:w-56">
+                                    <div className="relative h-48 lg:h-full min-h-[200px] overflow-hidden">
+                                      <img
+                                        src={item.image_url}
+                                        alt={item.title}
+                                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                        onError={(e) => {
+                                          // Hide image container if image fails to load
+                                          const target = e.target as HTMLImageElement;
+                                          const container = target.closest('.w-full.lg\\:w-48.xl\\:w-56') as HTMLElement;
+                                          if (container) {
+                                            container.style.display = 'none';
+                                          }
+                                        }}
+                                      />
+                                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                                    </div>
+                                  </div>
+                                )}
+
                                 {/* Main Content - Improved Layout */}
                                 <div className="flex-1 p-4 lg:p-6">
                                   <div className="flex flex-col space-y-4">

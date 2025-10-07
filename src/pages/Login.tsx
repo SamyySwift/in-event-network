@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertCircle, Network, Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FcGoogle } from "react-icons/fc";
+import { motion } from "framer-motion";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -27,6 +28,52 @@ const Login = () => {
   const { login, signInWithGoogle, currentUser, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.15,
+        delayChildren: 0.2,
+      },
+    },
+  };
+
+  const slideFromTop = {
+    hidden: { 
+      opacity: 0, 
+      y: -30,
+      scale: 0.95
+    },
+    show: { 
+      opacity: 1, 
+      y: 0,
+      scale: 1,
+      transition: { 
+        duration: 0.6, 
+        ease: [0.25, 0.46, 0.45, 0.94] // Custom easing for smooth feel
+      } 
+    },
+  };
+
+  const slideFromBottom = {
+    hidden: { 
+      opacity: 0, 
+      y: 30,
+      scale: 0.95
+    },
+    show: { 
+      opacity: 1, 
+      y: 0,
+      scale: 1,
+      transition: { 
+        duration: 0.6, 
+        ease: [0.25, 0.46, 0.45, 0.94]
+      } 
+    },
+  };
 
   // Handle redirect when user becomes authenticated
   useEffect(() => {
@@ -98,24 +145,17 @@ const Login = () => {
       // Get the result from login function
       const result = await login(email, password);
 
-      // Check if there was an error
-      if (result.error) {
+      if (result?.error) {
         console.error("Login error:", result.error);
-        setErrorMessage(
-          result.error.message || "Invalid email or password. Please try again."
-        );
+        setErrorMessage(result.error.message || "Login failed");
         return;
       }
 
-      toast({
-        title: "Welcome back!",
-        description: "You have been successfully signed in.",
-      });
-    } catch (error: any) {
-      console.error("Unexpected login error:", error);
-      setErrorMessage(
-        error.message || "An unexpected error occurred. Please try again."
-      );
+      console.log("Login successful");
+      // The redirect will be handled by the useEffect when currentUser updates
+    } catch (error) {
+      console.error("Login error:", error);
+      setErrorMessage("An unexpected error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -123,15 +163,15 @@ const Login = () => {
 
   const handleGoogleSignIn = async () => {
     setErrorMessage(null);
+
     try {
       setIsSubmitting(true);
-      const { error } = await signInWithGoogle("attendee"); // Default to attendee for login
+      const { error } = await signInWithGoogle();
 
       if (error) {
         console.error("Google sign-in error:", error);
         setErrorMessage("Failed to sign in with Google. Please try again.");
       }
-      // Note: Don't set setIsSubmitting(false) here as the OAuth redirect will handle the flow
     } catch (error) {
       console.error("Google sign-in error:", error);
       setErrorMessage("An unexpected error occurred. Please try again.");
@@ -145,9 +185,7 @@ const Login = () => {
       <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-connect-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">
-            {isSubmitting ? "Signing you in..." : "Loading..."}
-          </p>
+          <p className="text-gray-600">Loading...</p>
         </div>
       </div>
     );
@@ -188,78 +226,91 @@ const Login = () => {
           </CardHeader>
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-4">
-              {errorMessage && (
-                <Alert
-                  variant="destructive"
-                  className="bg-white/10 border-white/20 text-white"
-                >
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{errorMessage}</AlertDescription>
-                </Alert>
-              )}
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-white">
-                  Email address
-                </Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 pointer-events-none" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="Email address"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    disabled={isSubmitting}
-                    required
-                    className="pl-10 bg-white/5 border-white/20 text-white placeholder:text-white/60"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-white">
-                    Password
+              <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                animate="show"
+                className="space-y-4"
+              >
+                {errorMessage && (
+                  <motion.div variants={slideFromTop}>
+                    <Alert
+                      variant="destructive"
+                      className="bg-white/10 border-white/20 text-white"
+                    >
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{errorMessage}</AlertDescription>
+                    </Alert>
+                  </motion.div>
+                )}
+                
+                {/* Email field - slides from top */}
+                <motion.div variants={slideFromTop} className="space-y-2">
+                  <Label htmlFor="email" className="text-white">
+                    Email address
                   </Label>
-                  <Link
-                    to="/forgot-password"
-                    className="text-sm font-medium text-cyan-400 hover:text-cyan-300"
-                  >
-                    Forgot password?
-                  </Link>
-                </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 pointer-events-none" />
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={isSubmitting}
-                    required
-                    className="pl-10 pr-10 bg-white/5 border-white/20 text-white placeholder:text-white/60"
-                  />
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-label={
-                      showPassword ? "Hide password" : "Show password"
-                    }
-                  >
-                    {showPassword ? (
-                      <EyeCuteOpen className="h-4 w-4 text-white/70 hover:text-white/90" />
-                    ) : (
-                      <EyeCuteClosed className="h-4 w-4 text-white/70 hover:text-white/90" />
-                    )}
-                  </button>
-                </div>
-              </div>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 pointer-events-none" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Email address"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      disabled={isSubmitting}
+                      required
+                      className="pl-10 bg-white/5 border-white/20 text-white placeholder:text-white/60 transition-all duration-300 focus:scale-[1.02] focus:shadow-lg focus:shadow-cyan-500/20"
+                    />
+                  </div>
+                </motion.div>
+
+                {/* Password field - slides from bottom */}
+                <motion.div variants={slideFromBottom} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password" className="text-white">
+                      Password
+                    </Label>
+                    <Link
+                      to="/forgot-password"
+                      className="text-sm font-medium text-cyan-400 hover:text-cyan-300"
+                    >
+                      Forgot password?
+                    </Link>
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-white/60 pointer-events-none" />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="Password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      disabled={isSubmitting}
+                      required
+                      className="pl-10 pr-10 bg-white/5 border-white/20 text-white placeholder:text-white/60 transition-all duration-300 focus:scale-[1.02] focus:shadow-lg focus:shadow-purple-500/20"
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
+                    >
+                      {showPassword ? (
+                        <EyeCuteOpen className="h-4 w-4 text-white/70 hover:text-white/90" />
+                      ) : (
+                        <EyeCuteClosed className="h-4 w-4 text-white/70 hover:text-white/90" />
+                      )}
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-cyan-400 to-purple-500"
+                className="w-full bg-gradient-to-r from-cyan-400 to-purple-500 hover:from-cyan-500 hover:to-purple-600 transition-all duration-300 transform hover:scale-[1.02]"
                 disabled={isSubmitting}
               >
                 {isSubmitting ? "Signing in..." : "Sign in"}
@@ -277,7 +328,7 @@ const Login = () => {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20"
+                className="w-full bg-white/10 border-white/20 text-white hover:bg-white/20 transition-all duration-300 transform hover:scale-[1.02]"
                 onClick={handleGoogleSignIn}
                 disabled={isSubmitting}
               >

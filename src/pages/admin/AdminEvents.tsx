@@ -47,6 +47,8 @@ import {
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 type EventFormData = {
   name: string;
@@ -64,7 +66,9 @@ const AdminEvents = () => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [referralCode, setReferralCode] = useState("");
   const [showReferralCard, setShowReferralCard] = useState(true);
+  const [isAnalyzingBanner, setIsAnalyzingBanner] = useState(false);
   const { currentUser } = useAuth();
+  const { toast } = useToast();
   const {
     events,
     isLoading,
@@ -258,6 +262,82 @@ const AdminEvents = () => {
   };
 
   const isUnlocked = unlockedEvents.length > 0 || events.some(event => isEventPaid(event.id));
+
+  const handleBannerSelect = async (file: File | null) => {
+    setSelectedImage(file);
+    
+    if (file && !editingEvent) {
+      setIsAnalyzingBanner(true);
+      try {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const base64 = e.target?.result as string;
+          
+          const { data, error } = await supabase.functions.invoke('analyze-event-banner', {
+            body: { imageBase64: base64 }
+          });
+
+          if (error) throw error;
+
+          if (data.error) {
+            console.log('Banner analysis note:', data.error);
+            return;
+          }
+
+          // Fill in the form fields with extracted data
+          if (data.name) setValue('name', data.name);
+          if (data.description) setValue('description', data.description);
+          if (data.location) setValue('location', data.location);
+          
+          // Handle dates
+          if (data.start_date) {
+            try {
+              const startDate = new Date(data.start_date);
+              if (!isNaN(startDate.getTime())) {
+                setValue('start_date', startDate);
+              }
+            } catch (e) {
+              console.error('Error parsing start date:', e);
+            }
+          }
+          
+          if (data.start_time) {
+            setValue('start_time', data.start_time);
+          }
+          
+          if (data.end_date) {
+            try {
+              const endDate = new Date(data.end_date);
+              if (!isNaN(endDate.getTime())) {
+                setValue('end_date', endDate);
+              }
+            } catch (e) {
+              console.error('Error parsing end date:', e);
+            }
+          }
+          
+          if (data.end_time) {
+            setValue('end_time', data.end_time);
+          }
+
+          toast({
+            title: "Banner Analyzed",
+            description: "Event information has been extracted from the banner image"
+          });
+        };
+        reader.readAsDataURL(file);
+      } catch (error) {
+        console.error('Error analyzing banner:', error);
+        toast({
+          title: "Analysis Failed",
+          description: "Could not extract information from banner. Please fill in manually.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsAnalyzingBanner(false);
+      }
+    }
+  };
 
   if (isLoading) {
     return (
@@ -625,10 +705,16 @@ const AdminEvents = () => {
                     </div>
 
                     <div className="space-y-2">
-                      <Label className="text-sm font-medium">
+                      <Label className="text-sm font-medium flex items-center gap-2">
                         Event Banner Image (Optional)
+                        {isAnalyzingBanner && <span className="text-xs text-blue-600">(Analyzing...)</span>}
                       </Label>
-                      <ImageUpload onImageSelect={setSelectedImage} label="" />
+                      <ImageUpload onImageSelect={handleBannerSelect} label="" />
+                      {isAnalyzingBanner && (
+                        <p className="text-xs text-muted-foreground">
+                          AI is extracting event details from the banner...
+                        </p>
+                      )}
                     </div>
                   </div>
 

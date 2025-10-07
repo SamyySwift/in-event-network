@@ -9,8 +9,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { ImageUpload } from '@/components/ui/image-upload';
-import { RefreshCw } from 'lucide-react'; // Add this import
+import { RefreshCw, Sparkles } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { Switch } from '@/components/ui/switch';
 import { useAdminSpeakers } from '@/hooks/useAdminSpeakers';
 import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 import { useToast } from '@/hooks/use-toast';
@@ -45,6 +46,7 @@ const AdminSpeakersContent = () => {
   const [imagePreview, setImagePreview] = useState<string>('');
   const [isGeneratingBio, setIsGeneratingBio] = useState(false);
   const [isIdentifyingImage, setIsIdentifyingImage] = useState(false);
+  const [aiAutoAnalysis, setAiAutoAnalysis] = useState(true); // Toggle for AI auto-analysis
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
@@ -346,39 +348,41 @@ const AdminSpeakersContent = () => {
         const base64 = e.target?.result as string;
         setImagePreview(base64);
         
-        // Auto-identify speaker from image
-        setIsIdentifyingImage(true);
-        try {
-          const { data, error } = await supabase.functions.invoke('generate-speaker-info', {
-            body: { imageBase64: base64 }
-          });
+        // Only auto-identify if the toggle is enabled
+        if (aiAutoAnalysis) {
+          setIsIdentifyingImage(true);
+          try {
+            const { data, error } = await supabase.functions.invoke('generate-speaker-info', {
+              body: { imageBase64: base64 }
+            });
 
-          if (error) throw error;
+            if (error) throw error;
 
-          if (data.error) {
-            console.log('Image identification note:', data.error);
-            return;
+            if (data.error) {
+              console.log('Image identification note:', data.error);
+              return;
+            }
+
+            // Fill in the form fields if identification was successful
+            if (data.name && !watch('name')) setValue('name', data.name);
+            if (data.title) setValue('title', data.title);
+            if (data.company) setValue('company', data.company);
+            if (data.bio) setValue('bio', data.bio);
+            if (data.twitter_link) setValue('twitter_link', data.twitter_link);
+            if (data.linkedin_link) setValue('linkedin_link', data.linkedin_link);
+            if (data.instagram_link) setValue('instagram_link', data.instagram_link);
+            if (data.website_link) setValue('website_link', data.website_link);
+
+            toast({
+              title: "Speaker Identified",
+              description: "Information and social links have been extracted from the image"
+            });
+          } catch (error) {
+            console.error('Error identifying image:', error);
+            // Don't show error toast for image identification as it's optional
+          } finally {
+            setIsIdentifyingImage(false);
           }
-
-          // Fill in the form fields if identification was successful
-          if (data.name && !watch('name')) setValue('name', data.name);
-          if (data.title) setValue('title', data.title);
-          if (data.company) setValue('company', data.company);
-          if (data.bio) setValue('bio', data.bio);
-          if (data.twitter_link) setValue('twitter_link', data.twitter_link);
-          if (data.linkedin_link) setValue('linkedin_link', data.linkedin_link);
-          if (data.instagram_link) setValue('instagram_link', data.instagram_link);
-          if (data.website_link) setValue('website_link', data.website_link);
-
-          toast({
-            title: "Speaker Identified",
-            description: "Information and social links have been extracted from the image"
-          });
-        } catch (error) {
-          console.error('Error identifying image:', error);
-          // Don't show error toast for image identification as it's optional
-        } finally {
-          setIsIdentifyingImage(false);
         }
       };
       reader.readAsDataURL(file);
@@ -508,6 +512,19 @@ const AdminSpeakersContent = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
+              <div className="mb-4 flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <Label htmlFor="ai-toggle" className="text-sm font-medium cursor-pointer">
+                    AI Auto-Analysis
+                  </Label>
+                </div>
+                <Switch
+                  id="ai-toggle"
+                  checked={aiAutoAnalysis}
+                  onCheckedChange={setAiAutoAnalysis}
+                />
+              </div>
               <form onSubmit={handleSubmit(onSubmit)} className="grid md:grid-cols-2 gap-6">
                 <div className="flex flex-col space-y-5">
                   <div className="relative">

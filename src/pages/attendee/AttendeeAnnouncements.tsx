@@ -406,7 +406,6 @@ const AttendeeAnnouncementsContent = () => {
                    {/* Social Media Links - Show when expanded */}
                    {expandedAnnouncement === announcement.id && (
                      <>
-                       // Inside the social links block for each announcement
                        {(announcement.twitter_link || announcement.instagram_link || announcement.facebook_link || announcement.tiktok_link || announcement.website_link || announcement.whatsapp_link) && (
                          <div className="mt-4 pt-4 border-t border-gray-200">
                            <div className="flex items-center gap-2 text-sm text-gray-600 mb-2">

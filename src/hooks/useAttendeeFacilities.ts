@@ -15,6 +15,7 @@ export interface Facility {
   icon_type?: string;
   event_id?: string;
   created_at: string;
+  category?: 'facility' | 'exhibitor';
 }
 
 export const useAttendeeFacilities = () => {

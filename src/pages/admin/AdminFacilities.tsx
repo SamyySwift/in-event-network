@@ -191,7 +191,8 @@ const AdminFacilitiesContent = () => {
                   icon_type: form.iconType,
                   event_id: form.eventId,
                   image_url: undefined,
-                  imageFile: form.imageFile, // Pass the image file for upload
+                  imageFile: form.imageFile,
+                  category: form.category || 'facility',
                 });
               }}
             >

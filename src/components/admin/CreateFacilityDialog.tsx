@@ -144,7 +144,8 @@ const formSchema = z.object({
   eventId: z.string().min(1, {
     message: "Please select an event for this facility."
   }),
-  image: z.any().optional()
+  image: z.any().optional(),
+  category: z.enum(["facility", "exhibitor"]).default("facility"),
 });
 type FormData = z.infer<typeof formSchema>;
 type CreateFacilityDialogProps = {
@@ -186,7 +187,8 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
       contactType: "none",
       contactInfo: "",
       iconType: ICON_OPTIONS[0].value,
-      eventId: defaultEventId || ""
+      eventId: defaultEventId || "",
+      category: "facility",
     }
   });
 
@@ -332,6 +334,19 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div>
+            <Label>Category</Label>
+            <Select value={watch("category")} onValueChange={(val) => setValue("category", val as "facility" | "exhibitor")} disabled={isCreating}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select category" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="facility">Facility</SelectItem>
+                <SelectItem value="exhibitor">Exhibition Booth</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div>

@@ -521,7 +521,7 @@ function AttendeeDashboardContent() {
         </div>
 
         {/* Event Facilities Card */}
-        <div className="mb-8">
+        <div className="mb-8 relative z-10">
           <Card className="border-0 shadow-xl bg-white backdrop-blur-sm overflow-hidden group hover:shadow-2xl transition-all duration-300 relative z-10">
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/90 to-green-50/90 z-0"></div>
             <CardHeader className="relative z-20 pb-4 bg-white/50 backdrop-blur-sm">

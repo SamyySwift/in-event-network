@@ -17,6 +17,7 @@ export interface Facility {
   created_by?: string;
   created_at: string;
   updated_at?: string;
+  category?: 'facility' | 'exhibitor';
 }
 
 export const useFacilities = () => {
@@ -85,7 +86,8 @@ export const useFacilities = () => {
           contact_info: facilityData.contact_info,
           icon_type: facilityData.icon_type || 'building',
           event_id: facilityData.event_id,
-          created_by: currentUser.id
+          created_by: currentUser.id,
+          category: (facilityData as any).category || 'facility',
         })
         .select()
         .single();

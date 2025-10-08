@@ -18,6 +18,7 @@ export interface Facility {
   created_by?: string;
   created_at: string;
   updated_at?: string;
+  category?: 'facility' | 'exhibitor';
 }
 
 export const useAdminFacilities = (eventId?: string) => {
@@ -107,7 +108,8 @@ export const useAdminFacilities = (eventId?: string) => {
         icon_type: facilityData.icon_type || 'building',
         event_id: facilityData.event_id,
         created_by: currentUser.id,
-        image_url: imageUrl
+        image_url: imageUrl,
+        category: facilityData.category || 'facility',
       };
 
       console.log('Cleaned facility data:', cleanData);
@@ -192,6 +194,7 @@ export const useAdminFacilities = (eventId?: string) => {
       if (facilityData.icon_type) cleanData.icon_type = facilityData.icon_type;
       if (facilityData.event_id) cleanData.event_id = facilityData.event_id;
       if (imageUrl !== undefined) cleanData.image_url = imageUrl;
+      if (facilityData.category) cleanData.category = facilityData.category;
 
       const { data, error } = await supabase
         .from('facilities')

@@ -91,7 +91,8 @@ const formSchema = z.object({
   contactInfo: z.string().optional(),
   iconType: z.string().optional(),
   eventId: z.string().min(1, { message: "Please select an event for this facility." }),
-  image: z.any().optional()
+  image: z.any().optional(),
+  category: z.enum(["facility", "exhibitor"]).default("facility"),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -142,8 +143,10 @@ const EditFacilityDialog: React.FC<EditFacilityDialogProps> = ({
         contactType: facility.contact_type || "none",
         contactInfo: facility.contact_info || "",
         iconType: facility.icon_type || ICON_OPTIONS[0].value,
-        eventId: facility.event_id || events[0]?.id || ""
+        eventId: facility.event_id || (events[0]?.id ?? ""),
+        category: facility.category || "facility",
       });
+      setSelectedImage(null);
     }
   }, [facility, reset, events]);
 

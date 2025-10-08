@@ -29,7 +29,7 @@ import {
   Globe,
   Play,
 } from "lucide-react";
-import { FaInstagram, FaTiktok, FaFacebook } from 'react-icons/fa';
+import { FaInstagram, FaTiktok, FaFacebook, FaWhatsapp } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
 import { useAttendeeAnnouncements } from "@/hooks/useAttendeeAnnouncements";
 import { AttendeeEventProvider } from "@/contexts/AttendeeEventContext";
@@ -458,7 +458,7 @@ const AttendeeAnnouncementsContent = () => {
                                     window.open(announcement.tiktok_link!, "_blank", "noopener,noreferrer");
                                   }}
                                 >
-                                  <Play className="mr-2 h-4 w-4" /> TikTok
+                                  <FaTiktok className="mr-2" /> TikTok
                                 </Button>
                               )}
                              {announcement.website_link && (
@@ -471,6 +471,18 @@ const AttendeeAnnouncementsContent = () => {
                                  }}
                                >
                                  <Globe className="mr-2 h-4 w-4" /> Website
+                               </Button>
+                             )}
+                             {announcement.whatsapp_link && (
+                               <Button
+                                 variant="outline"
+                                 size="sm"
+                                 onClick={() => {
+                                   localStorage.setItem(`announcementLinkClicked_${announcement.id}`, 'true');
+                                   window.open(announcement.whatsapp_link!, "_blank", "noopener,noreferrer");
+                                 }}
+                               >
+                                 <FaWhatsapp className="mr-2" /> WhatsApp
                                </Button>
                              )}
                            </div>

@@ -345,17 +345,17 @@ const AttendeeAnnouncementsContent = () => {
                         />
                       </Button>
                     </div>
-                    {/* Meta info row */}
-                    <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mt-2">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-3.5 w-3.5 text-indigo-400" />
-                        <span>{formatDate(announcement.created_at)}</span>
-                      </div>
-                      <span className="hidden sm:inline-block">•</span>
-                      <div className="flex items-center gap-1">
-                        <User className="h-3.5 w-3.5 text-indigo-400" />
-                        <span>Event Organizer</span>
-                      </div>
+                  </div>
+                  {/* Meta info row */}
+                  <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 mt-2">
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-3.5 w-3.5 text-indigo-400" />
+                      <span>{formatDate(announcement.created_at)}</span>
+                    </div>
+                    <span className="hidden sm:inline-block">•</span>
+                    <div className="flex items-center gap-1">
+                      <User className="h-3.5 w-3.5 text-indigo-400" />
+                      <span>Event Organizer</span>
                     </div>
                   </div>
                   {/* Meta info row */}

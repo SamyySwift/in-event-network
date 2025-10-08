@@ -30,6 +30,7 @@ interface FacilityCardProps {
   isSelected?: boolean;
 }
 
+// FacilityCard (clickable location icon + text)
 const FacilityCard: React.FC<FacilityCardProps> = ({ facility, onClick, isSelected }) => {
   const getContactIcon = (contactType: string) => {
     if (contactType === "phone") return Phone;
@@ -44,6 +45,13 @@ const FacilityCard: React.FC<FacilityCardProps> = ({ facility, onClick, isSelect
     } else if (contactType === "whatsapp") {
       window.open(`https://wa.me/${contactInfo.replace(/[^0-9]/g, '')}`, '_blank');
     }
+  };
+
+  // Open Google Maps from facility card
+  const handleLocationClick = (e: React.MouseEvent, location: string) => {
+    e.stopPropagation();
+    const encodedLocation = encodeURIComponent(location);
+    window.open(`https://www.google.com/maps/search/?api=1&query=${encodedLocation}`, "_blank");
   };
 
   const ContactIcon = getContactIcon(facility.contact_type);
@@ -68,10 +76,13 @@ const FacilityCard: React.FC<FacilityCardProps> = ({ facility, onClick, isSelect
                 e.currentTarget.nextElementSibling?.classList.remove('hidden');
               }}
             />
-            <div className="hidden absolute inset-0 bg-gradient-to-br from-primary/30 via-primary/20 to-transparent flex items-center justify-center">
-              <div className="bg-background/95 backdrop-blur-xl rounded-3xl p-8 border shadow-2xl">
-                <FacilityIcon iconType={facility.icon_type} className="h-12 w-12 text-primary mx-auto mb-3" />
-                <p className="text-sm text-muted-foreground text-center font-medium">Image unavailable</p>
+            {/* Tailwind conflict fix: move flex off the hidden element */}
+            <div className="hidden absolute inset-0 bg-gradient-to-br from-primary/30 via-primary/20 to-transparent">
+              <div className="flex items-center justify-center h-full w-full">
+                <div className="bg-background/95 backdrop-blur-xl rounded-3xl p-8 border shadow-2xl">
+                  <FacilityIcon iconType={facility.icon_type} className="h-12 w-12 text-primary mx-auto mb-3" />
+                  <p className="text-sm text-muted-foreground text-center font-medium">Image unavailable</p>
+                </div>
               </div>
             </div>
           </>
@@ -119,11 +130,19 @@ const FacilityCard: React.FC<FacilityCardProps> = ({ facility, onClick, isSelect
             <h3 className="text-xl font-bold mb-2 line-clamp-1 group-hover:text-primary transition-colors">
               {facility.name}
             </h3>
-            
             {facility.location && (
               <div className="flex items-center gap-2 text-muted-foreground">
-                <MapPin className="h-4 w-4 text-primary" />
-                <span className="text-sm line-clamp-1">{facility.location}</span>
+                <MapPin
+                  className="h-4 w-4 text-primary cursor-pointer hover:text-primary/80 transition-colors"
+                  onClick={(e) => handleLocationClick(e, facility.location)}
+                  aria-label="Open in Google Maps"
+                />
+                <span
+                  className="text-sm line-clamp-1 cursor-pointer hover:text-primary transition-colors"
+                  onClick={(e) => handleLocationClick(e, facility.location)}
+                >
+                  {facility.location}
+                </span>
               </div>
             )}
           </div>
@@ -160,6 +179,7 @@ const FacilityCard: React.FC<FacilityCardProps> = ({ facility, onClick, isSelect
   );
 };
 
+// AttendeeMap (add modal maps handler + use it without title prop)
 const AttendeeMap = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFacility, setSelectedFacility] = useState<any>(null);
@@ -195,6 +215,11 @@ const AttendeeMap = () => {
     } else if (contactType === "whatsapp") {
       window.open(`https://wa.me/${contactInfo.replace(/[^0-9]/g, '')}`, '_blank');
     }
+  };
+
+  const handleModalLocationClick = (location: string) => {
+    const encodedLocation = encodeURIComponent(location);
+    window.open(`https://www.google.com/maps/search/?api=1&query=${encodedLocation}`, '_blank');
   };
 
   const ModalContactIcon = getContactIcon(selectedFacility?.contact_type);
@@ -365,12 +390,21 @@ const AttendeeMap = () => {
                 )}
 
                 {/* Location */}
-                {selectedFacility.location && (
+                {selectedFacility?.location && (
                   <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-xl">
-                    <MapPin className="h-5 w-5 text-primary mt-0.5" />
-                    <div>
+                    <MapPin
+                      className="h-5 w-5 text-primary mt-0.5 cursor-pointer hover:text-primary/80 transition-colors"
+                      onClick={() => handleModalLocationClick(selectedFacility.location)}
+                      aria-label="Open in Google Maps"
+                    />
+                    <div className="flex-1">
                       <h4 className="font-medium mb-1">Location</h4>
-                      <p className="text-muted-foreground">{selectedFacility.location}</p>
+                      <p
+                        className="text-muted-foreground cursor-pointer hover:text-primary transition-colors"
+                        onClick={() => handleModalLocationClick(selectedFacility.location)}
+                      >
+                        {selectedFacility.location}
+                      </p>
                     </div>
                   </div>
                 )}

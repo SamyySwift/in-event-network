@@ -550,24 +550,32 @@ function AttendeeDashboardContent() {
                   {/* Show first 3 facilities */}
                   <div className="space-y-3">
                     {facilities.slice(0, 3).map((facility) => (
-                      <div
-                        key={facility.id}
-                        className="flex items-center gap-3 p-3 bg-white/60 rounded-lg border"
-                      >
+                      <div key={facility.id} className="flex items-center gap-3 p-3 bg-white/60 rounded-lg border">
                         <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                          <FacilityIcon
-                            iconType={facility.icon_type}
-                            className="h-4 w-4 text-emerald-600"
-                          />
+                          <FacilityIcon iconType={facility.icon_type} className="h-4 w-4 text-emerald-600" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
-                            {facility.name}
-                          </p>
+                          <p className="text-sm font-medium text-gray-900 truncate">{facility.name}</p>
                           {facility.location && (
-                            <p className="text-xs text-gray-500 truncate">
-                              {facility.location}
-                            </p>
+                            <div className="flex items-center gap-1 text-xs text-gray-500 truncate">
+                              <MapPin
+                                className="h-3 w-3 text-emerald-600 cursor-pointer hover:text-emerald-700"
+                                onClick={() => {
+                                  const encoded = encodeURIComponent(facility.location);
+                                  window.open(`https://www.google.com/maps/search/?api=1&query=${encoded}`, "_blank");
+                                }}
+                                aria-label="Open in Google Maps"
+                              />
+                              <span
+                                className="cursor-pointer hover:text-emerald-700"
+                                onClick={() => {
+                                  const encoded = encodeURIComponent(facility.location);
+                                  window.open(`https://www.google.com/maps/search/?api=1&query=${encoded}`, "_blank");
+                                }}
+                              >
+                                {facility.location}
+                              </span>
+                            </div>
                           )}
                         </div>
                       </div>

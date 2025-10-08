@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
+import { ProfilePictureUpload } from "@/components/profile/ProfilePictureUpload";
 import { supabase } from "@/integrations/supabase/client";
 
 console.log("AdminProfile component loading...");
@@ -37,6 +38,7 @@ const AdminProfile = () => {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isEditingPhoto, setIsEditingPhoto] = useState(false);
 
   // Profile form state
   const [profileData, setProfileData] = useState({
@@ -136,6 +138,17 @@ const AdminProfile = () => {
       toast.error(error.message || "Failed to update password");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleImageUpdate = async (imageUrl: string) => {
+    try {
+      await updateUser({ photoUrl: imageUrl });
+      toast.success("Profile picture updated successfully!");
+      setIsEditingPhoto(false);
+    } catch (error: any) {
+      console.error("Error updating profile picture:", error);
+      toast.error(error.message || "Failed to update profile picture");
     }
   };
 
@@ -431,20 +444,15 @@ const AdminProfile = () => {
               <CardTitle>Profile Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center space-x-4">
-                <Avatar className="h-16 w-16">
-                  {currentUser.photoUrl ? (
-                    <AvatarImage
-                      src={currentUser.photoUrl}
-                      alt={currentUser.name}
-                    />
-                  ) : (
-                    <AvatarFallback className="bg-primary text-white text-lg">
-                      {currentUser.name?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <div className="space-y-1">
+              <div className="flex flex-col items-center space-y-4">
+                <ProfilePictureUpload
+                  currentImageUrl={currentUser.photoUrl}
+                  userId={currentUser.id}
+                  userName={currentUser.name}
+                  onImageUpdate={handleImageUpdate}
+                  isEditing={isEditingPhoto}
+                />
+                <div className="text-center space-y-1">
                   <h3 className="font-medium">{currentUser.name}</h3>
                   <p className="text-sm text-muted-foreground">
                     {currentUser.email}
@@ -472,9 +480,13 @@ const AdminProfile = () => {
                 </div>
               </div>
 
-              <Button variant="outline" className="w-full">
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => setIsEditingPhoto(!isEditingPhoto)}
+              >
                 <Upload className="h-4 w-4 mr-2" />
-                Upload Photo
+                {isEditingPhoto ? "Cancel" : "Change Photo"}
               </Button>
             </CardContent>
           </Card>

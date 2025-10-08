@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useNotificationCount } from "@/hooks/useNotificationCount";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { AdminFormPersistenceProvider } from "@/hooks/useAdminFormPersistence";
+import { useAdminEventContext } from "@/hooks/useAdminEventContext";
 import {
   Calendar1,
   Users,
@@ -63,6 +64,7 @@ interface AdminLayoutProps {
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const { currentUser, logout } = useAuth();
   const { unreadCount } = useNotificationCount();
+  const { selectedEvent } = useAdminEventContext();
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
@@ -355,9 +357,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       <div className="p-4 border-b border-sidebar-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <img src="/logo.png" alt="Kconect Logo" className="h-6 w-6 mr-2" />
+            <img 
+              src={selectedEvent?.logo_url || "/logo.png"} 
+              alt={selectedEvent?.custom_title || "Kconect Logo"} 
+              className="h-6 w-6 mr-2 object-cover rounded-sm" 
+            />
             <span className="text-md font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-              Kconect
+              {selectedEvent?.custom_title || "Kconect"}
             </span>
           </div>
         </div>
@@ -509,17 +515,21 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               {sidebarOpen && (
                 <>
                   <img
-                    src="/logo.png"
-                    alt="Kconect Logo"
-                    className="h-6 w-6 mr-2"
+                    src={selectedEvent?.logo_url || "/logo.png"}
+                    alt={selectedEvent?.custom_title || "Kconect Logo"}
+                    className="h-6 w-6 mr-2 object-cover rounded-sm"
                   />
                   <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                    Kconect
+                    {selectedEvent?.custom_title || "Kconect"}
                   </span>
                 </>
               )}
               {!sidebarOpen && (
-                <img src="/logo.png" alt="Kconect Logo" className="h-6 w-6" />
+                <img 
+                  src={selectedEvent?.logo_url || "/logo.png"} 
+                  alt={selectedEvent?.custom_title || "Kconect Logo"} 
+                  className="h-6 w-6 object-cover rounded-sm" 
+                />
               )}
             </div>
 

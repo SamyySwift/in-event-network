@@ -11,10 +11,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Trash2, Plus } from 'lucide-react';
+import { Trash2, Plus, Sparkles } from 'lucide-react';
 import { useAdminPolls } from '@/hooks/useAdminPolls';
 import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CreatePollDialogProps {
   children: React.ReactNode;
@@ -28,6 +29,8 @@ const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
   const [showResults, setShowResults] = useState(false);
   const [voteLimit, setVoteLimit] = useState<number | undefined>(undefined);
   const [requireSubmission, setRequireSubmission] = useState(false);
+  const [aiOptionCount, setAiOptionCount] = useState<number>(4);
+  const [isGeneratingOptions, setIsGeneratingOptions] = useState(false);
   
   const { selectedEventId } = useAdminEventContext();
   const { createPoll, isCreating } = useAdminPolls(selectedEventId || undefined);
@@ -47,6 +50,58 @@ const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
     const newOptions = [...options];
     newOptions[index] = value;
     setOptions(newOptions);
+  };
+
+  const handleGenerateOptions = async () => {
+    if (!question.trim()) {
+      toast({
+        title: "Question required",
+        description: "Please enter a poll question before generating options",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (aiOptionCount < 2 || aiOptionCount > 10) {
+      toast({
+        title: "Invalid option count",
+        description: "Please specify between 2 and 10 options",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsGeneratingOptions(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-poll-options', {
+        body: {
+          question: question.trim(),
+          optionCount: aiOptionCount
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.options && Array.isArray(data.options)) {
+        setOptions(data.options);
+        toast({
+          title: "Options generated",
+          description: `Successfully generated ${data.options.length} poll options`,
+        });
+      } else {
+        throw new Error('Invalid response from AI');
+      }
+    } catch (error: any) {
+      console.error('Error generating poll options:', error);
+      toast({
+        title: "Generation failed",
+        description: error.message || "Failed to generate poll options. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGeneratingOptions(false);
+    }
   };
 
   const handleSubmit = () => {
@@ -124,8 +179,32 @@ const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
           </div>
 
           <div>
-            <Label>Options</Label>
-            <div className="space-y-2 mt-2">
+            <div className="flex items-center justify-between mb-2">
+              <Label>Options</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min={2}
+                  max={10}
+                  value={aiOptionCount}
+                  onChange={(e) => setAiOptionCount(parseInt(e.target.value) || 4)}
+                  className="w-16 h-8 text-xs"
+                  placeholder="4"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateOptions}
+                  disabled={isGeneratingOptions || !question.trim()}
+                  className="text-xs"
+                >
+                  <Sparkles size={14} className="mr-1" />
+                  {isGeneratingOptions ? 'Generating...' : 'AI Generate'}
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-2">
               {options.map((option, index) => (
                 <div key={index} className="flex gap-2">
                   <Input

@@ -93,9 +93,37 @@ export const useConnectionRequests = () => {
               };
             }
 
+            // Normalize to object: Supabase returns arrays for joined relations
+            let requester_profile: {
+              name: string;
+              photo_url: string | null;
+              role: string | null;
+              company: string | null;
+            } | undefined = Array.isArray((connectionData as any)?.requester_profile)
+              ? (connectionData as any).requester_profile?.[0]
+              : (connectionData as any)?.requester_profile;
+
+            // Fallback: if RLS blocks profiles join, try public_profiles view
+            if (!requester_profile && connectionData?.requester_id) {
+              const { data: publicProfile, error: publicProfileError } = await supabase
+                .from('public_profiles')
+                .select('name, photo_url, role, company')
+                .eq('id', connectionData.requester_id)
+                .single();
+
+              if (!publicProfileError && publicProfile) {
+                requester_profile = publicProfile as typeof requester_profile;
+              } else {
+                console.warn('Requester profile not accessible due to RLS or missing:', publicProfileError);
+              }
+            }
+
             return {
               ...notification,
-              connection: connectionData
+              connection: {
+                ...connectionData,
+                requester_profile
+              }
             };
           }
           

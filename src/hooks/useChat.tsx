@@ -101,7 +101,7 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
       const userIds = [...new Set(messagesData?.map((msg) => msg.user_id) || [])];
 
       const { data: profiles, error: profilesError } = await supabase
-        .from('public_profiles')
+        .from('profiles')
         .select('id, name, email, role, photo_url, bio, niche, company, twitter_link, linkedin_link, instagram_link, github_link, website_link')
         .in('id', userIds);
 
@@ -137,8 +137,10 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
 
           if (missingUserIds.length > 0) {
             const { data: moreProfiles } = await supabase
-              .from('public_profiles')
-              .select('id, name, email, role, photo_url, bio, niche, company, twitter_link, linkedin_link, instagram_link, github_link, website_link')
+              .from('profiles')
+              .select(
+                'id, name, email, role, photo_url, bio, niche, company, twitter_link, linkedin_link, instagram_link, github_link, website_link'
+              )
               .in('id', missingUserIds);
 
             moreProfiles?.forEach((p: any) => profilesMap.set(p.id, p));
@@ -284,7 +286,7 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
             let profileData = profileCache.current.get(newMsg.user_id);
             if (!profileData) {
               const { data, error: profileError } = await supabase
-                .from('public_profiles')
+                .from('profiles')
                 .select('id, name, email, role, photo_url, bio, niche, company, twitter_link, linkedin_link, instagram_link, github_link, website_link')
                 .eq('id', newMsg.user_id)
                 .single();
@@ -311,7 +313,7 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
                   let qprofile = profileCache.current.get(qmsg.user_id);
                   if (!qprofile) {
                     const { data } = await supabase
-                      .from('public_profiles')
+                      .from('profiles')
                       .select('id, name, email, role, photo_url, bio, niche, company, twitter_link, linkedin_link, instagram_link, github_link, website_link')
                       .eq('id', qmsg.user_id)
                       .single();

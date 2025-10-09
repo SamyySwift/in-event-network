@@ -50,10 +50,12 @@ const FacilityCard: React.FC<FacilityCardProps> = ({
               className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
-                e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                const fallback = e.currentTarget.nextElementSibling as HTMLElement | null;
+                fallback?.classList.remove('hidden');
+                fallback?.classList.add('flex');
               }}
             />
-            <div className="hidden absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent flex items-center justify-center">
+            <div className="hidden absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/10 to-transparent items-center justify-center">
               <div className="bg-background/90 backdrop-blur-sm rounded-2xl p-8 border shadow-lg">
                 <FacilityIcon iconType={facility.icon_type} className="h-12 w-12 text-primary mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground text-center">Image unavailable</p>
@@ -136,7 +138,7 @@ const FacilityCard: React.FC<FacilityCardProps> = ({
 
           {/* Description */}
           {facility.description && (
-            <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line line-clamp-2">
               {facility.description}
             </p>
           )}
@@ -161,7 +163,7 @@ const FacilityCard: React.FC<FacilityCardProps> = ({
           {facility.rules && (
             <div className="pt-2 border-t border-border/50">
               <p className="text-xs text-muted-foreground mb-2">Rules & Guidelines:</p>
-              <div className="bg-muted/50 rounded-lg p-3 text-xs leading-relaxed">
+              <div className="bg-muted/50 rounded-lg p-3 text-xs leading-relaxed whitespace-pre-line">
                 {facility.rules}
               </div>
             </div>

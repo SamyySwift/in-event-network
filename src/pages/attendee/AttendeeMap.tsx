@@ -1,3 +1,4 @@
+// AttendeeMap component
 import React, { useState } from "react";
 import {
   MapPin,
@@ -23,6 +24,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useAttendeeFacilities } from "@/hooks/useAttendeeFacilities";
 import { useIsMobile } from "@/hooks/use-mobile";
 import FacilityIcon from "@/pages/admin/components/FacilityIcon";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface FacilityCardProps {
   facility: any;
@@ -185,18 +187,23 @@ const AttendeeMap = () => {
   const [selectedFacility, setSelectedFacility] = useState<any>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const isMobile = useIsMobile();
+  const [activeTab, setActiveTab] = useState<"facilities" | "exhibitors">("facilities");
 
   const { facilities, isLoading, error } = useAttendeeFacilities();
 
-  // Filter facilities based on search
-  const filteredFacilities = facilities.filter((facility) => {
-    const matchesSearch =
-      facility.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      facility.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      facility.description?.toLowerCase().includes(searchTerm.toLowerCase());
-
-    return matchesSearch;
-  });
+  // Filter facilities based on search and active tab
+  const filteredFacilities = facilities
+      .filter((facility) => {
+          const matchesSearch =
+              facility.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              facility.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+              facility.description?.toLowerCase().includes(searchTerm.toLowerCase());
+          return matchesSearch;
+      })
+      .filter((facility) => {
+          const category = facility.category ?? "facility";
+          return activeTab === "facilities" ? category === "facility" : category === "exhibitor";
+      });
 
   const handleFacilityClick = (facility: any) => {
     setSelectedFacility(facility);
@@ -324,6 +331,14 @@ const AttendeeMap = () => {
                 className="pl-12 pr-4 py-4 text-lg border-0 bg-background/80 backdrop-blur-xl shadow-lg rounded-2xl focus:ring-2 focus:ring-primary/20"
               />
             </div>
+
+            {/* Tabs: Facilities vs Exhibitors */}
+            <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as "facilities" | "exhibitors")} className="mt-4">
+              <TabsList>
+                <TabsTrigger value="facilities">Facilities</TabsTrigger>
+                <TabsTrigger value="exhibitors">Exhibitors</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
         </div>
 
@@ -383,7 +398,7 @@ const AttendeeMap = () => {
                 {selectedFacility.description && (
                   <div>
                     <h4 className="font-semibold mb-2">About this facility</h4>
-                    <p className="text-muted-foreground leading-relaxed">
+                    <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
                       {selectedFacility.description}
                     </p>
                   </div>
@@ -438,7 +453,7 @@ const AttendeeMap = () => {
                   <div>
                     <h4 className="font-semibold mb-3">Rules & Guidelines</h4>
                     <div className="bg-muted/30 rounded-xl p-4 border-l-4 border-primary">
-                      <p className="text-sm leading-relaxed">{selectedFacility.rules}</p>
+                      <p className="text-sm leading-relaxed whitespace-pre-line">{selectedFacility.rules}</p>
                     </div>
                   </div>
                 )}

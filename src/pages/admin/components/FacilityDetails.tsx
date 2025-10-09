@@ -24,7 +24,7 @@ const FacilityDetails: React.FC<FacilityDetailsProps> = ({
       {description && (
         <div>
           <span className="font-medium text-muted-foreground">Description: </span>
-          <span>{description}</span>
+          <span className="whitespace-pre-line">{description}</span>
         </div>
       )}
       
@@ -38,7 +38,7 @@ const FacilityDetails: React.FC<FacilityDetailsProps> = ({
       {rules && (
         <div>
           <span className="text-muted-foreground">Rules:</span>
-          <div className="bg-muted rounded p-2 text-xs mt-1">{rules}</div>
+          <div className="bg-muted rounded p-2 text-xs mt-1 whitespace-pre-line">{rules}</div>
         </div>
       )}
       

@@ -1,7 +1,7 @@
 
+// AdminFacilitiesContent component
 import React, { useState } from "react";
-// Remove this import:
-// import AdminLayout from "@/components/layouts/AdminLayout";
+import AdminLayout from "@/components/layouts/AdminLayout";
 import FacilityStatsCards from "./components/FacilityStatsCards";
 import FacilityCard from "./components/FacilityCard";
 import CreateFacilityDialog from "@/components/admin/CreateFacilityDialog";
@@ -15,6 +15,7 @@ import { useAdminEventContext } from "@/hooks/useAdminEventContext";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import PaymentGuard from '@/components/payment/PaymentGuard';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Helper: aggregate statistics
 function getFacilityStats(facilities: Facility[]) {
@@ -30,7 +31,7 @@ function getFacilityStats(facilities: Facility[]) {
   };
 }
 
-const AdminFacilitiesContent = () => {
+function AdminFacilitiesContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingFacility, setEditingFacility] = useState<Facility | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -47,6 +48,7 @@ const AdminFacilitiesContent = () => {
     isUpdating,
     isDeleting
   } = useAdminFacilities(selectedEventId || undefined);
+  const [activeTab, setActiveTab] = useState<"facilities" | "exhibitors">("facilities");
 
   // Filter
   const filteredFacilities = facilities.filter((f) =>
@@ -213,68 +215,75 @@ const AdminFacilitiesContent = () => {
             />
           </div>
 
-          {/* Loading state */}
-          {isLoading && (
-            <div className="flex items-center justify-center h-32">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
-                <p className="mt-2 text-muted-foreground">Loading facilities...</p>
-              </div>
-            </div>
-          )}
+          {/* Tabs: Facilities vs Exhibitors */}
+          <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as "facilities" | "exhibitors")} className="w-full">
+            <TabsList className="mb-4">
+              <TabsTrigger value="facilities">Facilities</TabsTrigger>
+              <TabsTrigger value="exhibitors">Exhibitors</TabsTrigger>
+            </TabsList>
 
-          {/* Facilities Grid */}
-          {!isLoading && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredFacilities.length > 0 ? (
-                filteredFacilities.map(facility => (
-                  <FacilityCard
-                    key={facility.id}
-                    facility={facility}
-                    isDeleting={isDeleting}
-                    onEdit={(fac) => {
-                      setEditingFacility(fac);
-                      setEditDialogOpen(true);
-                    }}
-                    onDelete={facility => deleteFacility(facility.id)}
-                  />
-                ))
-              ) : (
-                <div className="text-center py-8">
-                  <Plus className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
-                  <h3 className="mt-4 text-lg font-medium">No facilities found</h3>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {searchQuery ? 'No facilities match your search criteria.' : 'Get started by adding your first facility.'}
-                  </p>
-                  <CreateFacilityDialog
-                    events={adminEvents}
-                    defaultEventId={selectedEventId}
-                    isCreating={isCreating}
-                    onSubmit={form => {
-                      console.log('Submitting facility form:', form);
-                      createFacility({
-                        name: form.name,
-                        description: form.description || undefined,
-                        location: form.location || undefined,
-                        rules: form.rules || undefined,
-                        contact_type: form.contactType,
-                        contact_info: form.contactInfo || undefined,
-                        icon_type: form.iconType,
-                        event_id: form.eventId,
-                        image_url: undefined,
-                        imageFile: form.imageFile, // Pass the image file for upload
-                      });
-                    }}
-                  >
-                    <Button className="mt-4">
-                      <Plus size={16} className="mr-1" />
-                      Add Facility
-                    </Button>
-                  </CreateFacilityDialog>
+            <TabsContent value="facilities">
+              {!isLoading && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredFacilities.filter(f => (f.category ?? "facility") === "facility").length > 0 ? (
+                    filteredFacilities
+                      .filter(f => (f.category ?? "facility") === "facility")
+                      .map(facility => (
+                        <FacilityCard
+                          key={facility.id}
+                          facility={facility}
+                          isDeleting={isDeleting}
+                          onEdit={(fac) => {
+                            setEditingFacility(fac);
+                            setEditDialogOpen(true);
+                          }}
+                          onDelete={facility => deleteFacility(facility.id)}
+                        />
+                      ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <Plus className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
+                      <h3 className="mt-4 text-lg font-medium">No facilities found</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {searchQuery ? 'No facilities match your search criteria.' : 'Get started by adding your first facility.'}
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          )}
+            </TabsContent>
+
+            <TabsContent value="exhibitors">
+              {!isLoading && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredFacilities.filter(f => f.category === "exhibitor").length > 0 ? (
+                    filteredFacilities
+                      .filter(f => f.category === "exhibitor")
+                      .map(facility => (
+                        <FacilityCard
+                          key={facility.id}
+                          facility={facility}
+                          isDeleting={isDeleting}
+                          onEdit={(fac) => {
+                            setEditingFacility(fac);
+                            setEditDialogOpen(true);
+                          }}
+                          onDelete={facility => deleteFacility(facility.id)}
+                        />
+                      ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <Plus className="mx-auto h-12 w-12 text-muted-foreground opacity-30" />
+                      <h3 className="mt-4 text-lg font-medium">No exhibitors found</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {searchQuery ? 'No exhibitors match your search criteria.' : 'Add your first exhibitor booth.'}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
 
           {/* Edit Facility Dialog */}
           <EditFacilityDialog

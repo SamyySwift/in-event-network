@@ -207,8 +207,9 @@ export const DirectMessageThread: React.FC<DirectMessageThreadProps> = ({
             messages.map((message) => (
               <DirectMessageBubble
                 key={message.id}
+                // Use current user to determine ownership
+                isOwn={message.sender_id === currentUser?.id}
                 message={message}
-                isOwn={message.sender_id === actualRecipientId ? false : true}
               />
             ))
           )}
@@ -248,7 +249,8 @@ interface DirectMessageBubbleProps {
 
 const DirectMessageBubble: React.FC<DirectMessageBubbleProps> = ({ message, isOwn }) => {
   const timeAgo = formatDistanceToNow(new Date(message.created_at), { addSuffix: true });
-  const profile = isOwn ? message.sender_profile : message.recipient_profile;
+  // Always use the sender’s profile for avatar/name
+  const profile = message.sender_profile;
 
   const isAdminRole = (role?: string | null) => {
     const r = role?.toLowerCase();
@@ -272,6 +274,8 @@ const DirectMessageBubble: React.FC<DirectMessageBubbleProps> = ({ message, isOw
 
       <div className={`flex-1 min-w-0 ${isOwn ? 'text-right' : ''}`}>
         <div className={`flex items-center gap-2 mb-1 ${isOwn ? 'justify-end' : ''}`}>
+          {/* Show sender name */}
+          <span className="text-xs font-medium text-gray-700 dark:text-gray-200">{profileName}</span>
           {isFromAdmin && (
             <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
               Admin

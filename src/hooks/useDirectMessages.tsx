@@ -438,23 +438,41 @@ export const useDirectMessages = (recipientId?: string) => {
 
       // 5) If this was the first message with no connection, create the pending connection request automatically
       if (shouldCreatePendingConnection) {
-        const { error: createConnError } = await supabase
+        const { data: newConnection, error: createConnError } = await supabase
           .from('connections')
           .insert({
             requester_id: currentUser.id,
             recipient_id: recipientId,
             status: 'pending',
-          });
+          })
+          .select()
+          .single();
 
         if (createConnError) {
           console.error('Error creating pending connection after first message:', createConnError);
-          // We won't throw here to avoid losing the message; but we do notify
           toast({
             title: "Warning",
             description: "Message sent, but creating the connection request failed. Please try sending a connection request manually.",
           });
         } else {
           console.log('Pending connection request created automatically after first message');
+
+          // Create bell notification for recipient
+          const requesterDisplayName = (currentUser?.name || currentUser?.email?.split('@')[0] || 'An attendee');
+          const { error: notifError } = await supabase
+            .from('notifications')
+            .insert({
+              user_id: recipientId,
+              type: 'connection',
+              title: 'Connection Request',
+              message: `${requesterDisplayName} sent you a message and wants to connect.`,
+              related_id: newConnection.id,
+              is_read: false,
+            });
+
+          if (notifError) {
+            console.warn('Failed to create connection notification (after initial message):', notifError);
+          }
         }
       }
 

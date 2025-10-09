@@ -155,6 +155,23 @@ export const useNetworking = () => {
         throw error;
       }
 
+      // Create bell notification for recipient
+      const requesterDisplayName = (currentUser?.name || currentUser?.email?.split('@')[0] || 'An attendee');
+      const { error: notifError } = await supabase
+        .from('notifications')
+        .insert({
+          user_id: recipientId,
+          type: 'connection',
+          title: 'Connection Request',
+          message: `${requesterDisplayName} wants to connect with you.`,
+          related_id: data.id,
+          is_read: false,
+        });
+
+      if (notifError) {
+        console.warn('Failed to create connection notification:', notifError);
+      }
+
       console.log('Connection request created:', data);
 
       toast({

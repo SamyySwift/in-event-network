@@ -49,6 +49,7 @@ import { ProfileCompletionPopup } from "@/components/attendee/ProfileCompletionP
 import { AnnouncementPopup } from "@/components/attendee/AnnouncementPopup";
 import { useAttendeePolls, Poll as AttendeePoll } from "@/hooks/useAttendeePolls";
 import { PollPopup } from "@/components/attendee/PollPopup";
+import { useAdvertisements } from "@/hooks/useAdvertisements";
 
 function AttendeeDashboardContent() {
   const navigate = useNavigate();
@@ -58,6 +59,7 @@ function AttendeeDashboardContent() {
   const { dashboardData, isLoading, error } = useDashboard();
   const { events: allEvents } = useAttendeeEvents();
   const { facilities } = useAttendeeFacilities();
+  const { advertisements } = useAdvertisements(currentEventId || undefined);
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [expandedAnnouncements, setExpandedAnnouncements] = useState<
     Set<string>
@@ -610,6 +612,68 @@ function AttendeeDashboardContent() {
             </CardFooter>
           </Card>
         </div>
+
+        {/* Advertisements Section */}
+        {advertisements && advertisements.length > 0 && (
+          <div className="mb-8 relative z-10">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex-shrink-0">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
+                  <Star className="w-6 h-6 text-white" />
+                </div>
+              </div>
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">
+                  Sponsor Highlights
+                </h2>
+                <p className="text-gray-500">
+                  Check out our amazing sponsors
+                </p>
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              {advertisements.map((ad) => (
+                <Card
+                  key={ad.id}
+                  className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden bg-white backdrop-blur-sm relative z-10 group"
+                >
+                  {ad.image_url && (
+                    <div className="relative h-48 overflow-hidden">
+                      <img
+                        src={ad.image_url}
+                        alt={ad.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <p className="text-white text-sm font-medium">{ad.sponsor_name}</p>
+                      </div>
+                    </div>
+                  )}
+                  <CardContent className="p-6 bg-white/95 backdrop-blur-sm">
+                    <h3 className="font-semibold text-lg text-gray-900 mb-2">
+                      {ad.title}
+                    </h3>
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                      {ad.description}
+                    </p>
+                    {ad.link_url && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={() => window.open(ad.link_url, '_blank')}
+                      >
+                        Learn More
+                        <ChevronRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Recent Announcements - Improved Mobile Layout */}
         {recentAnnouncements && recentAnnouncements.length > 0 && (

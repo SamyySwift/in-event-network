@@ -51,6 +51,84 @@ import { useAttendeePolls, Poll as AttendeePoll } from "@/hooks/useAttendeePolls
 import { PollPopup } from "@/components/attendee/PollPopup";
 import { useAdvertisements } from "@/hooks/useAdvertisements";
 
+// Advertisement Carousel Component
+const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) => {
+  const [currentIndex, setCurrentIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    if (advertisements.length <= 1) return;
+    
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % advertisements.length);
+    }, 5000); // Auto-swipe every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [advertisements.length]);
+
+  const goToSlide = (index: number) => {
+    setCurrentIndex(index);
+  };
+
+  const currentAd = advertisements[currentIndex];
+
+  return (
+    <div className="relative">
+      <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden bg-white backdrop-blur-sm relative z-10 group">
+        {currentAd.image_url && (
+          <div className="relative h-48 overflow-hidden">
+            <img
+              src={currentAd.image_url}
+              alt={currentAd.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+            <div className="absolute bottom-4 left-4 right-4">
+              <p className="text-white text-sm font-medium">{currentAd.sponsor_name}</p>
+            </div>
+          </div>
+        )}
+        <CardContent className="p-6 bg-white/95 backdrop-blur-sm">
+          <h3 className="font-semibold text-lg text-gray-900 mb-2">
+            {currentAd.title}
+          </h3>
+          <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+            {currentAd.description}
+          </p>
+          {currentAd.link_url && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => window.open(currentAd.link_url, '_blank')}
+            >
+              Learn More
+              <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Carousel Indicators */}
+      {advertisements.length > 1 && (
+        <div className="flex justify-center gap-2 mt-4">
+          {advertisements.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                index === currentIndex
+                  ? 'w-8 bg-purple-600'
+                  : 'w-2 bg-gray-300 hover:bg-gray-400'
+              }`}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 function AttendeeDashboardContent() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
@@ -613,7 +691,7 @@ function AttendeeDashboardContent() {
           </Card>
         </div>
 
-        {/* Advertisements Section */}
+        {/* Advertisements Section with Auto-Swipe Carousel */}
         {advertisements && advertisements.length > 0 && (
           <div className="mb-8 relative z-10">
             <div className="flex items-center gap-4 mb-6">
@@ -624,53 +702,16 @@ function AttendeeDashboardContent() {
               </div>
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">
-                  Sponsor Highlights
+                  Advertisements
                 </h2>
                 <p className="text-gray-500">
                   Check out our amazing sponsors
                 </p>
               </div>
             </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              {advertisements.map((ad) => (
-                <Card
-                  key={ad.id}
-                  className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden bg-white backdrop-blur-sm relative z-10 group"
-                >
-                  {ad.image_url && (
-                    <div className="relative h-48 overflow-hidden">
-                      <img
-                        src={ad.image_url}
-                        alt={ad.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                      <div className="absolute bottom-4 left-4 right-4">
-                        <p className="text-white text-sm font-medium">{ad.sponsor_name}</p>
-                      </div>
-                    </div>
-                  )}
-                  <CardContent className="p-6 bg-white/95 backdrop-blur-sm">
-                    <h3 className="font-semibold text-lg text-gray-900 mb-2">
-                      {ad.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                      {ad.description}
-                    </p>
-                    {ad.link_url && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        onClick={() => window.open(ad.link_url, '_blank')}
-                      >
-                        Learn More
-                        <ChevronRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
+            {/* Carousel Container */}
+            <div className="relative">
+              <AdvertisementCarousel advertisements={advertisements} />
             </div>
           </div>
         )}

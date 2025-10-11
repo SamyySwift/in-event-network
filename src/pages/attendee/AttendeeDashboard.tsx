@@ -424,130 +424,75 @@ function AttendeeDashboardContent() {
 
   return (
     <>
-      <div className="animate-fade-in max-w-7xl mx-auto p-6 pt-8 md:pt-6 pb-20 overflow-y-auto scroll-smooth">
-        {/* Welcome Card + Advertisement Section */}
-        <div className={`mb-8 grid gap-6 ${advertisements && advertisements.length > 0 ? 'grid-cols-1 lg:grid-cols-3' : 'grid-cols-1'}`}>
-          {/* Welcome Card */}
-          <div className={advertisements && advertisements.length > 0 ? 'lg:col-span-2' : 'col-span-1'}>
-            <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-4 sm:p-6 text-white z-10 h-full">
-              <div className="absolute inset-0 bg-black/20 z-0"></div>
-              <div className="relative z-20">
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-1">
-                      <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                      <span className="text-sm font-medium uppercase tracking-wider opacity-90">
-                        Live Dashboard
-                      </span>
-                    </div>
-                    <h1 className="text-2xl sm:text-3xl font-bold mb-1">
-                      Welcome back, {currentUser?.name?.split(" ")[0]}!
-                    </h1>
-                    <p className="text-sm sm:text-base opacity-90">
-                      Your event experience, updated in real-time
-                    </p>
-                  </div>
-                  <div className="flex gap-3">
-                    <ConnectionNotificationDropdown />
-                    <Button
-                      onClick={() => navigate("/scan")}
-                      className="bg-white/20 hover:bg-white/30 border border-white/30 backdrop-blur-sm w-full sm:w-auto z-10"
-                    >
-                      <Zap className="mr-2 h-4 w-4" />
-                      <span className="truncate">Scan New Event</span>
-                    </Button>
-                  </div>
+      <div className="animate-fade-in max-w-7xl mx-auto p-6 pt-20 md:pt-6 pb-20 overflow-y-auto scroll-smooth">
+        {/* Hero Header */}
+        <div className="mb-8 relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-4 sm:p-6 text-white z-10">
+          <div className="absolute inset-0 bg-black/20 z-0"></div>
+          <div className="relative z-20">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex-1">
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                  <span className="text-sm font-medium uppercase tracking-wider opacity-90">
+                    Live Dashboard
+                  </span>
                 </div>
+                <h1 className="text-2xl sm:text-3xl font-bold mb-1">
+                  Welcome back, {currentUser?.name?.split(" ")[0]}!
+                </h1>
+                <p className="text-sm sm:text-base opacity-90">
+                  Your event experience, updated in real-time
+                </p>
               </div>
-              <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-white/10 rounded-full z-0"></div>
-              <div className="absolute -top-8 -left-8 w-24 h-24 bg-white/5 rounded-full z-0"></div>
+              <div className="flex gap-3">
+                <ConnectionNotificationDropdown />
+                <Button
+                  onClick={() => navigate("/scan")}
+                  className="bg-white/20 hover:bg-white/30 border border-white/30 backdrop-blur-sm w-full sm:w-auto z-10"
+                >
+                  <Zap className="mr-2 h-4 w-4" />
+                  <span className="truncate">Scan New Event</span>
+                </Button>
+              </div>
             </div>
           </div>
-
-          {/* Advertisement Card - Cube Shape */}
-          {advertisements && advertisements.length > 0 && (
-            <div className="lg:col-span-1">
-              <div className="relative h-full">
-                <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden bg-white backdrop-blur-sm h-full flex flex-col">
-                  <div className="flex items-center justify-between gap-3 p-4 border-b bg-gradient-to-r from-purple-50 to-pink-50">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className="flex-shrink-0">
-                        <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-600 rounded-lg flex items-center justify-center p-2">
-                          <img src="/logo.png" alt="Kconect Logo" className="w-full h-full object-contain" />
-                        </div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-bold text-gray-900 truncate">
-                          Advertisements
-                        </h3>
-                        <p className="text-xs text-gray-500 truncate">
-                          Click WhatsApp to advertise
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => window.open('https://wa.me/2349068982251', '_blank')}
-                      className="flex-shrink-0 w-9 h-9 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center transition-colors duration-200 shadow-md hover:shadow-lg"
-                      aria-label="Contact us on WhatsApp"
-                    >
-                      <MessageCircle className="w-4 h-4 text-white" />
-                    </button>
-                  </div>
-                  
-                  {advertisements[0].image_url && (
-                    <div className="relative flex-1 overflow-hidden">
-                      <img
-                        src={advertisements[0].image_url}
-                        alt={advertisements[0].title}
-                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                      <div className="absolute bottom-3 left-3 right-3">
-                        <p className="text-white text-xs font-medium">{advertisements[0].sponsor_name}</p>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <CardContent className="p-4 bg-white/95 backdrop-blur-sm">
-                    <h4 className="font-semibold text-sm text-gray-900 mb-1 line-clamp-1">
-                      {advertisements[0].title}
-                    </h4>
-                    <p className="text-gray-600 text-xs mb-3 line-clamp-2">
-                      {advertisements[0].description}
-                    </p>
-                    {advertisements[0].link_url && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full text-xs h-8"
-                        onClick={() => window.open(advertisements[0].link_url, '_blank')}
-                      >
-                        Learn More
-                        <ChevronRight className="ml-1 h-3 w-3" />
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-                
-                {/* Carousel Indicators for multiple ads */}
-                {advertisements.length > 1 && (
-                  <div className="flex justify-center gap-1.5 mt-3">
-                    {advertisements.map((_, index) => (
-                      <div
-                        key={index}
-                        className={`h-1.5 rounded-full transition-all duration-300 ${
-                          index === 0
-                            ? 'w-6 bg-purple-600'
-                            : 'w-1.5 bg-gray-300'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-white/10 rounded-full z-0"></div>
+          <div className="absolute -top-8 -left-8 w-24 h-24 bg-white/5 rounded-full z-0"></div>
         </div>
+
+        {/* Advertisements Section with Auto-Swipe Carousel */}
+        {advertisements && advertisements.length > 0 && (
+          <div className="mb-8 relative z-10">
+            <div className="flex items-center justify-between gap-4 mb-6">
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center p-2">
+                    <img src="/logo.png" alt="Kconect Logo" className="w-full h-full object-contain" />
+                  </div>
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Advertisements
+                  </h2>
+                  <p className="text-gray-500 text-sm">
+                    To advertise your brand on kconect, click on the WhatsApp icon
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => window.open('https://wa.me/2349068982251', '_blank')}
+                className="flex-shrink-0 w-10 h-10 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg hover:shadow-xl"
+                aria-label="Contact us on WhatsApp"
+              >
+                <MessageCircle className="w-5 h-5 text-white" />
+              </button>
+            </div>
+            {/* Carousel Container */}
+            <div className="relative">
+              <AdvertisementCarousel advertisements={advertisements} />
+            </div>
+          </div>
+        )}
 
         {/* Event Highlights */}
         <div className="mb-8">

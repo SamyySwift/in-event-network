@@ -14,6 +14,7 @@ import {
   Zap,
   TrendingUp,
   Eye,
+  MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -459,6 +460,40 @@ function AttendeeDashboardContent() {
           <div className="absolute -top-8 -left-8 w-24 h-24 bg-white/5 rounded-full z-0"></div>
         </div>
 
+        {/* Advertisements Section with Auto-Swipe Carousel */}
+        {advertisements && advertisements.length > 0 && (
+          <div className="mb-8 relative z-10">
+            <div className="flex items-center justify-between gap-4 mb-6">
+              <div className="flex items-center gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center p-2">
+                    <img src="/logo.png" alt="Kconect Logo" className="w-full h-full object-contain" />
+                  </div>
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Advertisements
+                  </h2>
+                  <p className="text-gray-500 text-sm">
+                    To advertise your brand on kconect, click on the WhatsApp icon
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => window.open('https://wa.me/2349068982251', '_blank')}
+                className="flex-shrink-0 w-10 h-10 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg hover:shadow-xl"
+                aria-label="Contact us on WhatsApp"
+              >
+                <MessageCircle className="w-5 h-5 text-white" />
+              </button>
+            </div>
+            {/* Carousel Container */}
+            <div className="relative">
+              <AdvertisementCarousel advertisements={advertisements} />
+            </div>
+          </div>
+        )}
+
         {/* Event Highlights */}
         <div className="mb-8">
           <HighlightsSection />
@@ -691,30 +726,6 @@ function AttendeeDashboardContent() {
           </Card>
         </div>
 
-        {/* Advertisements Section with Auto-Swipe Carousel */}
-        {advertisements && advertisements.length > 0 && (
-          <div className="mb-8 relative z-10">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center">
-                  <Star className="w-6 h-6 text-white" />
-                </div>
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Advertisements
-                </h2>
-                <p className="text-gray-500">
-                  Check out our amazing sponsors
-                </p>
-              </div>
-            </div>
-            {/* Carousel Container */}
-            <div className="relative">
-              <AdvertisementCarousel advertisements={advertisements} />
-            </div>
-          </div>
-        )}
 
         {/* Recent Announcements - Improved Mobile Layout */}
         {recentAnnouncements && recentAnnouncements.length > 0 && (

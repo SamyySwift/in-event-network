@@ -426,21 +426,21 @@ function AttendeeDashboardContent() {
     <>
       <div className="animate-fade-in max-w-7xl mx-auto p-6 pt-20 md:pt-6 pb-20 overflow-y-auto scroll-smooth">
         {/* Hero Header */}
-        <div className="mb-8 relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-6 sm:p-8 text-white z-10">
+        <div className="mb-8 relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-4 sm:p-6 text-white z-10">
           <div className="absolute inset-0 bg-black/20 z-0"></div>
           <div className="relative z-20">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
+                <div className="flex items-center gap-3 mb-1">
                   <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
                   <span className="text-sm font-medium uppercase tracking-wider opacity-90">
                     Live Dashboard
                   </span>
                 </div>
-                <h1 className="text-3xl sm:text-4xl font-bold mb-2">
+                <h1 className="text-2xl sm:text-3xl font-bold mb-1">
                   Welcome back, {currentUser?.name?.split(" ")[0]}!
                 </h1>
-                <p className="text-base sm:text-lg opacity-90">
+                <p className="text-sm sm:text-base opacity-90">
                   Your event experience, updated in real-time
                 </p>
               </div>

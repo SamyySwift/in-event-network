@@ -51,8 +51,8 @@ export const HighlightsSection = () => {
             {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="flex-shrink-0">
                 {/* Circular skeleton to match new style */}
-                <div className="w-24 h-24 rounded-full bg-muted animate-pulse" />
-                <div className="mt-3 h-3 w-20 bg-muted animate-pulse rounded" />
+                <div className="w-20 h-20 rounded-full bg-muted animate-pulse" />
+                <div className="mt-2 h-3 w-20 bg-muted animate-pulse rounded" />
               </div>
             ))}
           </div>
@@ -68,15 +68,15 @@ export const HighlightsSection = () => {
   return (
     <>
       <Card className="glass-card overflow-hidden relative">
-        <CardHeader className="bg-gradient-to-r from-primary-50/50 to-primary-100/30 dark:from-primary-900/20 dark:to-primary-800/20">
-          <CardTitle className="flex items-center gap-2 text-gradient">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
+        <CardHeader className="bg-gradient-to-r from-primary-50/50 to-primary-100/30 dark:from-primary-900/20 dark:to-primary-800/20 pb-3">
+          <CardTitle className="flex items-center gap-2 text-gradient text-lg">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
               <Star className="h-4 w-4 text-white" />
             </div>
             Event Highlights
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-4">
           <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
             {highlights.map((highlight) => {
               const coverImage = highlight.cover_image_url || 
@@ -102,7 +102,7 @@ export const HighlightsSection = () => {
                       {/* inner separator ring for contrast */}
                       <div className="rounded-full p-[2px] bg-background dark:bg-zinc-950">
                         {/* avatar circle */}
-                        <div className="relative w-24 h-24 rounded-full overflow-hidden bg-gradient-to-br from-primary-100 to-primary-200 dark:from-zinc-900 dark:to-zinc-800 shadow-lg">
+                        <div className="relative w-20 h-20 rounded-full overflow-hidden bg-gradient-to-br from-primary-100 to-primary-200 dark:from-zinc-900 dark:to-zinc-800 shadow-lg">
                           <img
                             src={coverImage}
                             alt={highlight.title}
@@ -132,7 +132,7 @@ export const HighlightsSection = () => {
                     </div>
 
                     {/* Title */}
-                    <div className="mt-3 max-w-24">
+                    <div className="mt-2 max-w-20">
                       <p className="text-xs font-medium text-foreground truncate group-hover:text-primary transition-colors duration-300">
                         {highlight.title}
                       </p>

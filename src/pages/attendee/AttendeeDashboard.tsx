@@ -47,24 +47,17 @@ import FacilityIcon from "@/pages/admin/components/FacilityIcon";
 
 import { ProfileCompletionPopup } from "@/components/attendee/ProfileCompletionPopup";
 import { AnnouncementPopup } from "@/components/attendee/AnnouncementPopup";
-import {
-  useAttendeePolls,
-  Poll as AttendeePoll,
-} from "@/hooks/useAttendeePolls";
+import { useAttendeePolls, Poll as AttendeePoll } from "@/hooks/useAttendeePolls";
 import { PollPopup } from "@/components/attendee/PollPopup";
 import { useAdvertisements } from "@/hooks/useAdvertisements";
 
 // Advertisement Carousel Component
-const AdvertisementCarousel = ({
-  advertisements,
-}: {
-  advertisements: any[];
-}) => {
+const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) => {
   const [currentIndex, setCurrentIndex] = React.useState(0);
 
   React.useEffect(() => {
     if (advertisements.length <= 1) return;
-
+    
     const interval = setInterval(() => {
       setCurrentIndex((prev) => (prev + 1) % advertisements.length);
     }, 5000); // Auto-swipe every 5 seconds
@@ -90,9 +83,7 @@ const AdvertisementCarousel = ({
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
             <div className="absolute bottom-4 left-4 right-4">
-              <p className="text-white text-sm font-medium">
-                {currentAd.sponsor_name}
-              </p>
+              <p className="text-white text-sm font-medium">{currentAd.sponsor_name}</p>
             </div>
           </div>
         )}
@@ -108,7 +99,7 @@ const AdvertisementCarousel = ({
               variant="outline"
               size="sm"
               className="w-full"
-              onClick={() => window.open(currentAd.link_url, "_blank")}
+              onClick={() => window.open(currentAd.link_url, '_blank')}
             >
               Learn More
               <ChevronRight className="ml-2 h-4 w-4" />
@@ -116,22 +107,6 @@ const AdvertisementCarousel = ({
           )}
         </CardContent>
       </Card>
-
-      {/* New CTA under the advertisement card */}
-      <div className="mt-3 flex items-center justify-between rounded-md bg-muted/40 p-3">
-        <p className="text-sm text-gray-600">
-          To advertise your brand on kconect click on the what’s app icon.
-        </p>
-        <a
-          href="https://wa.me/09068982251"
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Contact on WhatsApp"
-          className="inline-flex items-center"
-        >
-          <img src="/kconect.png" alt="Kconect Logo" className="h-6 w-6" />
-        </a>
-      </div>
 
       {/* Carousel Indicators */}
       {advertisements.length > 1 && (
@@ -142,8 +117,8 @@ const AdvertisementCarousel = ({
               onClick={() => goToSlide(index)}
               className={`h-2 rounded-full transition-all duration-300 ${
                 index === currentIndex
-                  ? "w-8 bg-purple-600"
-                  : "w-2 bg-gray-300 hover:bg-gray-400"
+                  ? 'w-8 bg-purple-600'
+                  : 'w-2 bg-gray-300 hover:bg-gray-400'
               }`}
               aria-label={`Go to slide ${index + 1}`}
             />
@@ -157,11 +132,8 @@ const AdvertisementCarousel = ({
 function AttendeeDashboardContent() {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  const {
-    hasJoinedEvent,
-    isLoading: contextLoading,
-    currentEventId,
-  } = useAttendeeEventContext();
+  const { hasJoinedEvent, isLoading: contextLoading, currentEventId } =
+    useAttendeeEventContext();
   const { dashboardData, isLoading, error } = useDashboard();
   const { events: allEvents } = useAttendeeEvents();
   const { facilities } = useAttendeeFacilities();
@@ -185,8 +157,7 @@ function AttendeeDashboardContent() {
   );
 
   const isPollDismissed = React.useCallback(
-    (pollId: string) =>
-      localStorage.getItem(`poll_dismissed_${pollId}`) === "true",
+    (pollId: string) => localStorage.getItem(`poll_dismissed_${pollId}`) === "true",
     []
   );
 
@@ -262,7 +233,7 @@ function AttendeeDashboardContent() {
   const isAnnouncementResolved = useMemo(() => {
     return (a: any): boolean => {
       if (!a?.require_submission) return false;
-
+  
       const hasVendorForm = !!a.vendor_form_id;
       const hasAnySocialLink = !!(
         (a.twitter_link && a.twitter_link.trim()) ||
@@ -272,24 +243,17 @@ function AttendeeDashboardContent() {
         (a.website_link && a.website_link.trim()) ||
         (a.whatsapp_link && a.whatsapp_link.trim())
       );
-
+  
       if (hasVendorForm) {
-        return (
-          localStorage.getItem(`vendor_form_submitted_${a.vendor_form_id}`) ===
-          "true"
-        );
+        return localStorage.getItem(`vendor_form_submitted_${a.vendor_form_id}`) === 'true';
       }
-
+  
       if (hasAnySocialLink) {
-        return (
-          localStorage.getItem(`announcementLinkClicked_${a.id}`) === "true"
-        );
+        return localStorage.getItem(`announcementLinkClicked_${a.id}`) === 'true';
       }
-
+  
       // Fallback: acknowledgement
-      return (
-        localStorage.getItem(`announcementAcknowledged_${a.id}`) === "true"
-      );
+      return localStorage.getItem(`announcementAcknowledged_${a.id}`) === 'true';
     };
   }, []);
 
@@ -320,14 +284,14 @@ function AttendeeDashboardContent() {
   // Non-compulsory: "Do not show again"
   const handleDismissAnnouncement = (announcementId?: string) => {
     if (!announcementId) return;
-    localStorage.setItem(`announcementDismissed_${announcementId}`, "true");
+    localStorage.setItem(`announcementDismissed_${announcementId}`, 'true');
     setPopupAnnouncement(null);
   };
 
   // Compulsory acknowledgement
   const handleAcknowledgeAnnouncement = (announcementId?: string) => {
     if (!announcementId) return;
-    localStorage.setItem(`announcementAcknowledged_${announcementId}`, "true");
+    localStorage.setItem(`announcementAcknowledged_${announcementId}`, 'true');
     setPopupAnnouncement(null);
   };
 
@@ -503,25 +467,25 @@ function AttendeeDashboardContent() {
         {/* Event Card - Enhanced single event display */}
         {(() => {
           // Find the user's current event from all events
-          const userCurrentEvent = allEvents?.find(
-            (event) => event.id === currentEventId
-          );
-
+          const userCurrentEvent = allEvents?.find(event => event.id === currentEventId);
+          
           // Show the user's current event if it exists, otherwise fall back to current/upcoming events
-          const eventToShow =
-            userCurrentEvent || currentEvent || upcomingEvents?.[0];
-
+          const eventToShow = userCurrentEvent || currentEvent || upcomingEvents?.[0];
+          
           if (!eventToShow) return null;
-
+          
           // Determine if the event is currently live
           const now = new Date();
           const eventStart = new Date(eventToShow.start_time);
           const eventEnd = new Date(eventToShow.end_time);
           const isEventLive = now >= eventStart && now <= eventEnd;
-
+          
           return (
             <div className="mb-8">
-              <EventCard event={eventToShow} isLive={isEventLive} />
+              <EventCard
+                event={eventToShow}
+                isLive={isEventLive}
+              />
             </div>
           );
         })()}
@@ -666,45 +630,27 @@ function AttendeeDashboardContent() {
                   {/* Show first 3 facilities */}
                   <div className="space-y-3">
                     {facilities.slice(0, 3).map((facility) => (
-                      <div
-                        key={facility.id}
-                        className="flex items-center gap-3 p-3 bg-white/60 rounded-lg border"
-                      >
+                      <div key={facility.id} className="flex items-center gap-3 p-3 bg-white/60 rounded-lg border">
                         <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                          <FacilityIcon
-                            iconType={facility.icon_type}
-                            className="h-4 w-4 text-emerald-600"
-                          />
+                          <FacilityIcon iconType={facility.icon_type} className="h-4 w-4 text-emerald-600" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">
-                            {facility.name}
-                          </p>
+                          <p className="text-sm font-medium text-gray-900 truncate">{facility.name}</p>
                           {facility.location && (
                             <div className="flex items-center gap-1 text-xs text-gray-500 truncate">
                               <MapPin
                                 className="h-3 w-3 text-emerald-600 cursor-pointer hover:text-emerald-700"
                                 onClick={() => {
-                                  const encoded = encodeURIComponent(
-                                    facility.location
-                                  );
-                                  window.open(
-                                    `https://www.google.com/maps/search/?api=1&query=${encoded}`,
-                                    "_blank"
-                                  );
+                                  const encoded = encodeURIComponent(facility.location);
+                                  window.open(`https://www.google.com/maps/search/?api=1&query=${encoded}`, "_blank");
                                 }}
                                 aria-label="Open in Google Maps"
                               />
                               <span
                                 className="cursor-pointer hover:text-emerald-700"
                                 onClick={() => {
-                                  const encoded = encodeURIComponent(
-                                    facility.location
-                                  );
-                                  window.open(
-                                    `https://www.google.com/maps/search/?api=1&query=${encoded}`,
-                                    "_blank"
-                                  );
+                                  const encoded = encodeURIComponent(facility.location);
+                                  window.open(`https://www.google.com/maps/search/?api=1&query=${encoded}`, "_blank");
                                 }}
                               >
                                 {facility.location}
@@ -758,7 +704,9 @@ function AttendeeDashboardContent() {
                 <h2 className="text-2xl font-bold text-gray-900">
                   Advertisements
                 </h2>
-                <p className="text-gray-500">Check out our amazing sponsors</p>
+                <p className="text-gray-500">
+                  Check out our amazing sponsors
+                </p>
               </div>
             </div>
             {/* Carousel Container */}
@@ -1000,12 +948,8 @@ function AttendeeDashboardContent() {
         isOpen={!!popupAnnouncement}
         announcement={popupAnnouncement}
         onClose={() => setPopupAnnouncement(null)}
-        onNeverShowAgain={() =>
-          handleDismissAnnouncement(popupAnnouncement?.id)
-        }
-        onAcknowledge={() =>
-          handleAcknowledgeAnnouncement(popupAnnouncement?.id)
-        }
+        onNeverShowAgain={() => handleDismissAnnouncement(popupAnnouncement?.id)}
+        onAcknowledge={() => handleAcknowledgeAnnouncement(popupAnnouncement?.id)}
         allowDismiss={
           !popupAnnouncement?.require_submission ||
           isAnnouncementResolved(popupAnnouncement)
@@ -1041,14 +985,13 @@ function AttendeeDashboardContent() {
         allowDismiss={!currentPoll?.require_submission}
         userVoteOptionId={
           currentPoll
-            ? userVotes.find((v) => v.poll_id === currentPoll.id)?.option_id ??
-              null
+            ? userVotes.find((v) => v.poll_id === currentPoll.id)?.option_id ?? null
             : null
         }
       />
     </>
   );
-}
+};
 
 const SuggestedConnectionsCards = ({
   suggestedConnections,
@@ -1123,3 +1066,5 @@ const AttendeeDashboard = () => {
 };
 
 export default AttendeeDashboard;
+
+

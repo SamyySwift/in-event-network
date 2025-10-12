@@ -76,23 +76,22 @@ const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) =>
     <div className="relative">
       <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden bg-white backdrop-blur-sm relative z-10 group">
         {currentAd.image_url && (
-          <div className="relative h-48 overflow-hidden">
+          <div className="relative h-40 overflow-hidden bg-gray-100">
             <img
               src={currentAd.image_url}
               alt={currentAd.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-            <div className="absolute bottom-4 left-4 right-4">
-              <p className="text-white text-sm font-medium">{currentAd.sponsor_name}</p>
+            <div className="absolute bottom-2 left-3 right-3 bg-black/70 backdrop-blur-sm rounded px-2 py-1">
+              <p className="text-white text-xs font-medium">{currentAd.sponsor_name}</p>
             </div>
           </div>
         )}
-        <CardContent className="p-6 bg-white/95 backdrop-blur-sm">
-          <h3 className="font-semibold text-lg text-gray-900 mb-2">
+        <CardContent className="p-4 bg-white/95 backdrop-blur-sm">
+          <h3 className="font-semibold text-base text-gray-900 mb-1.5">
             {currentAd.title}
           </h3>
-          <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+          <p className="text-gray-600 text-sm mb-3 line-clamp-2">
             {currentAd.description}
           </p>
           {currentAd.link_url && (
@@ -424,7 +423,7 @@ function AttendeeDashboardContent() {
 
   return (
     <>
-      <div className="animate-fade-in max-w-7xl mx-auto p-6 pt-20 md:pt-6 pb-20 overflow-y-auto scroll-smooth">
+      <div className="animate-fade-in max-w-7xl mx-auto p-6 pt-4 md:pt-6 pb-20 overflow-y-auto scroll-smooth">
         {/* Hero Header */}
         <div className="mb-8 relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 p-4 sm:p-6 text-white z-10">
           <div className="absolute inset-0 bg-black/20 z-0"></div>

@@ -74,35 +74,34 @@ const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) =>
 
   return (
     <div className="relative">
-      <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden bg-white backdrop-blur-sm relative z-10 group">
+      <Card className="border-0 shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden bg-gradient-to-br from-purple-50 via-white to-indigo-50 backdrop-blur-sm relative z-10 group">
         {currentAd.image_url && (
-          <div className="relative h-40 overflow-hidden bg-gray-100">
+          <div className="relative h-28 overflow-hidden bg-white rounded-t-lg">
             <img
               src={currentAd.image_url}
               alt={currentAd.title}
               className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
             />
-            <div className="absolute bottom-2 left-3 right-3 bg-black/70 backdrop-blur-sm rounded px-2 py-1">
-              <p className="text-white text-xs font-medium">{currentAd.sponsor_name}</p>
-            </div>
           </div>
         )}
-        <CardContent className="p-4 bg-white/95 backdrop-blur-sm">
-          <h3 className="font-semibold text-base text-gray-900 mb-1.5">
-            {currentAd.title}
-          </h3>
-          <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-            {currentAd.description}
-          </p>
+        <CardContent className="p-3 bg-gradient-to-br from-white/95 to-purple-50/50 backdrop-blur-sm">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <h3 className="font-semibold text-sm text-gray-900 line-clamp-1 flex-1">
+              {currentAd.title}
+            </h3>
+            <Badge variant="secondary" className="text-xs px-2 py-0.5 bg-purple-100 text-purple-700 flex-shrink-0">
+              {currentAd.sponsor_name}
+            </Badge>
+          </div>
           {currentAd.link_url && (
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
-              className="w-full"
+              className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white text-xs h-8"
               onClick={() => window.open(currentAd.link_url, '_blank')}
             >
               Learn More
-              <ChevronRight className="ml-2 h-4 w-4" />
+              <ChevronRight className="ml-1 h-3 w-3" />
             </Button>
           )}
         </CardContent>
@@ -474,7 +473,7 @@ function AttendeeDashboardContent() {
                     Advertisements
                   </h2>
                   <p className="text-gray-500 text-sm">
-                    To advertise your brand on kconect, click on the WhatsApp icon
+                    To advertise your brand click
                   </p>
                 </div>
               </div>

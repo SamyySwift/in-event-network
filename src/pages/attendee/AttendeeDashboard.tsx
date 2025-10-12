@@ -74,38 +74,52 @@ const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) =>
 
   return (
     <div className="relative">
-      <Card className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden bg-white backdrop-blur-sm relative z-10 group">
+      <Card 
+        className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden relative z-10 group cursor-pointer h-[400px]"
+        onClick={() => currentAd.link_url && window.open(currentAd.link_url, '_blank')}
+      >
         {currentAd.image_url && (
-          <div className="relative h-40 overflow-hidden bg-gray-100">
+          <div className="relative h-full overflow-hidden">
+            {/* Image */}
             <img
               src={currentAd.image_url}
               alt={currentAd.title}
-              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
-            <div className="absolute bottom-2 left-3 right-3 bg-black/70 backdrop-blur-sm rounded px-2 py-1">
-              <p className="text-white text-xs font-medium">{currentAd.sponsor_name}</p>
+            
+            {/* Dark Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20"></div>
+            
+            {/* Content Overlay */}
+            <div className="absolute inset-0 flex flex-col justify-between p-6">
+              {/* Top Badge */}
+              <div className="flex justify-start">
+                <Badge className="bg-white/90 text-gray-900 hover:bg-white font-semibold px-3 py-1 text-xs tracking-wide">
+                  HIGHLIGHTED EVENT
+                </Badge>
+              </div>
+              
+              {/* Bottom Content */}
+              <div className="space-y-3">
+                <div>
+                  <h3 className="text-2xl sm:text-3xl font-bold text-white leading-tight mb-2">
+                    {currentAd.title}
+                  </h3>
+                  {currentAd.description && (
+                    <p className="text-white/90 text-sm line-clamp-2">
+                      {currentAd.description}
+                    </p>
+                  )}
+                </div>
+                {currentAd.sponsor_name && (
+                  <p className="text-white/80 text-sm font-medium">
+                    By {currentAd.sponsor_name}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         )}
-        <CardContent className="p-4 bg-white/95 backdrop-blur-sm">
-          <h3 className="font-semibold text-base text-gray-900 mb-1.5">
-            {currentAd.title}
-          </h3>
-          <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-            {currentAd.description}
-          </p>
-          {currentAd.link_url && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full"
-              onClick={() => window.open(currentAd.link_url, '_blank')}
-            >
-              Learn More
-              <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-          )}
-        </CardContent>
       </Card>
 
       {/* Carousel Indicators */}

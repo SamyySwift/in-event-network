@@ -91,14 +91,7 @@ const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) =>
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20"></div>
             
             {/* Content Overlay */}
-            <div className="absolute inset-0 flex flex-col justify-between p-6">
-              {/* Top Badge */}
-              <div className="flex justify-start">
-                <Badge className="bg-white/90 text-gray-900 hover:bg-white font-semibold px-3 py-1 text-xs tracking-wide">
-                  HIGHLIGHTED EVENT
-                </Badge>
-              </div>
-              
+            <div className="absolute inset-0 flex flex-col justify-end p-6">
               {/* Bottom Content */}
               <div className="space-y-3">
                 <div>
@@ -115,6 +108,20 @@ const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) =>
                   <p className="text-white/80 text-sm font-medium">
                     By {currentAd.sponsor_name}
                   </p>
+                )}
+                {currentAd.link_url && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="bg-white/90 text-gray-900 hover:bg-white font-semibold"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window.open(currentAd.link_url, '_blank');
+                    }}
+                  >
+                    Learn More
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
                 )}
               </div>
             </div>
@@ -477,27 +484,27 @@ function AttendeeDashboardContent() {
         {advertisements && advertisements.length > 0 && (
           <div className="mb-8 relative z-10">
             <div className="flex items-center justify-between gap-4 mb-6">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center p-2">
+                  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center p-1.5">
                     <img src="/logo.png" alt="Kconect Logo" className="w-full h-full object-contain" />
                   </div>
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-900">
+                  <h2 className="text-lg font-bold text-gray-900">
                     Advertisements
                   </h2>
-                  <p className="text-gray-500 text-sm">
-                    To advertise your brand on kconect, click on the WhatsApp icon
+                  <p className="text-gray-500 text-xs">
+                    To advertise your brand click
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => window.open('https://wa.me/2349068982251', '_blank')}
-                className="flex-shrink-0 w-10 h-10 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg hover:shadow-xl"
+                className="flex-shrink-0 w-8 h-8 bg-green-500 hover:bg-green-600 rounded-full flex items-center justify-center transition-colors duration-200 shadow-lg hover:shadow-xl"
                 aria-label="Contact us on WhatsApp"
               >
-                <MessageCircle className="w-5 h-5 text-white" />
+                <MessageCircle className="w-4 h-4 text-white" />
               </button>
             </div>
             {/* Carousel Container */}

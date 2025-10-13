@@ -278,6 +278,7 @@ const AttendeeNetworking = () => {
         setAIMatches(sorted);
         setBestMatchId(sorted[0]?.id || null);
         setShowAIMatches(true);
+        setCurrentPage(1); // Reset to first page/match
 
         const best = sorted[0];
         const bestProfile = profiles.find(p => p.id === best?.id);
@@ -1001,7 +1002,83 @@ const AttendeeNetworking = () => {
                   {aiMatches.length} matches
                 </Badge>
               </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+              
+              {/* Mobile: Carousel view with navigation */}
+              <div className="lg:hidden">
+                <div className="relative">
+                  {/* Current match indicator */}
+                  <div className="text-center mb-4">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Match {Math.min(currentPage, aiMatches.length)} of {aiMatches.length}
+                    </span>
+                  </div>
+                  
+                  {/* Match card */}
+                  {aiMatches[currentPage - 1] && (() => {
+                    const match = aiMatches[currentPage - 1];
+                    const profile = profiles.find(p => p.id === match.id);
+                    if (!profile) return null;
+                    return (
+                      <div key={profile.id} className="relative">
+                        {profile.id === bestMatchId && (
+                          <div className="absolute -top-2 left-2 z-10">
+                            <div className="bg-connect-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow">
+                              Best Match
+                            </div>
+                          </div>
+                        )}
+                        {/* Match Score Badge */}
+                        <div className="absolute -top-2 -right-2 z-10">
+                          <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg flex items-center gap-1">
+                            <Sparkles className="h-3 w-3" />
+                            {match.score}% Match
+                          </div>
+                        </div>
+                        {/* Match Reason */}
+                        {match.reason && (
+                          <div className="mt-4 pr-24">
+                            <div className="bg-white dark:bg-gray-800 text-xs text-gray-600 dark:text-gray-300 px-2 py-1 rounded-lg shadow-md border border-purple-200 dark:border-purple-700">
+                              {match.reason}
+                            </div>
+                          </div>
+                        )}
+                        <div className="mt-8">
+                          {renderUserCard(profile, true)}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                  
+                  {/* Navigation buttons */}
+                  {aiMatches.length > 1 && (
+                    <div className="flex justify-center items-center gap-2 mt-6">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                        disabled={currentPage === 1}
+                        className="flex items-center gap-1"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(Math.min(aiMatches.length, currentPage + 1))}
+                        disabled={currentPage === aiMatches.length}
+                        className="flex items-center gap-1"
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              {/* Desktop: Grid view */}
+              <div className="hidden lg:grid lg:grid-cols-2 xl:grid-cols-3 gap-8">
                 {aiMatches.map((match) => {
                   const profile = profiles.find(p => p.id === match.id);
                   if (!profile) return null;

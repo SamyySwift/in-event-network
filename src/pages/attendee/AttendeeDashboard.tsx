@@ -40,8 +40,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNetworking } from "@/hooks/useNetworking";
 import { UserPlus } from "lucide-react";
 import { EventCard } from "@/components/attendee/EventCard";
-import { NotificationBadge } from "@/components/notifications/NotificationBadge";
-import { useNotificationCount } from "@/hooks/useNotificationCount";
+import { ConnectionNotificationDropdown } from "@/components/attendee/ConnectionNotificationDropdown";
 import { useAttendeeFacilities } from "@/hooks/useAttendeeFacilities";
 import { HighlightsSection } from "@/components/attendee/HighlightsSection";
 import * as LucideIcons from "lucide-react";
@@ -160,7 +159,6 @@ function AttendeeDashboardContent() {
   const { events: allEvents } = useAttendeeEvents();
   const { facilities } = useAttendeeFacilities();
   const { advertisements } = useAdvertisements(currentEventId || undefined);
-  const { unreadCount } = useNotificationCount();
   const [showProfilePopup, setShowProfilePopup] = useState(false);
   const [expandedAnnouncements, setExpandedAnnouncements] = useState<
     Set<string>
@@ -467,11 +465,7 @@ function AttendeeDashboardContent() {
                 </p>
               </div>
               <div className="flex gap-3">
-                <NotificationBadge 
-                  count={unreadCount}
-                  onClick={() => navigate("/attendee/notifications")}
-                  className="bg-white/20 hover:bg-white/30 border border-white/30 backdrop-blur-sm"
-                />
+                <ConnectionNotificationDropdown />
                 <Button
                   onClick={() => navigate("/scan")}
                   className="bg-white/20 hover:bg-white/30 border border-white/30 backdrop-blur-sm w-full sm:w-auto z-10"

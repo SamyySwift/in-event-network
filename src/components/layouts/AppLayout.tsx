@@ -26,6 +26,7 @@ import {
   Tickets,
   LayoutDashboard,
   Book,
+  Gamepad2,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -142,6 +143,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       name: "Event Rules",
       href: "/attendee/rules",
       icon: <BookOpen className="text-muted-foreground" />,
+    },
+    {
+      name: "Games",
+      href: "/attendee/games",
+      icon: <Gamepad2 className="text-muted-foreground" />,
     },
   ];
   const hostNavigation = [

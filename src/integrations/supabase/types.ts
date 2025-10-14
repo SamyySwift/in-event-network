@@ -162,47 +162,85 @@ export type Database = {
           created_by: string | null
           description: string | null
           display_order: number | null
+          duration_seconds: number | null
           end_date: string | null
+          event_id: string | null
+          facebook_link: string | null
           id: string
           image_url: string | null
+          instagram_link: string | null
           is_active: boolean | null
           link_url: string | null
+          linkedin_link: string | null
+          media_type: string | null
+          media_url: string | null
           sponsor_logo: string | null
           sponsor_name: string
           start_date: string | null
+          tiktok_link: string | null
           title: string
+          twitter_link: string | null
+          updated_at: string | null
         }
         Insert: {
           created_at?: string
           created_by?: string | null
           description?: string | null
           display_order?: number | null
+          duration_seconds?: number | null
           end_date?: string | null
+          event_id?: string | null
+          facebook_link?: string | null
           id?: string
           image_url?: string | null
+          instagram_link?: string | null
           is_active?: boolean | null
           link_url?: string | null
+          linkedin_link?: string | null
+          media_type?: string | null
+          media_url?: string | null
           sponsor_logo?: string | null
           sponsor_name: string
           start_date?: string | null
+          tiktok_link?: string | null
           title: string
+          twitter_link?: string | null
+          updated_at?: string | null
         }
         Update: {
           created_at?: string
           created_by?: string | null
           description?: string | null
           display_order?: number | null
+          duration_seconds?: number | null
           end_date?: string | null
+          event_id?: string | null
+          facebook_link?: string | null
           id?: string
           image_url?: string | null
+          instagram_link?: string | null
           is_active?: boolean | null
           link_url?: string | null
+          linkedin_link?: string | null
+          media_type?: string | null
+          media_url?: string | null
           sponsor_logo?: string | null
           sponsor_name?: string
           start_date?: string | null
+          tiktok_link?: string | null
           title?: string
+          twitter_link?: string | null
+          updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "advertisements_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       announcements: {
         Row: {
@@ -861,47 +899,68 @@ export type Database = {
       }
       events: {
         Row: {
+          accent_color: string | null
+          background_color: string | null
           banner_url: string | null
           created_at: string
+          custom_title: string | null
           description: string | null
           end_time: string
           event_key: string | null
+          font_family: string | null
           host_id: string | null
           id: string
           location: string | null
           logo_url: string | null
           name: string
+          primary_color: string | null
+          secondary_color: string | null
           start_time: string
+          text_color: string | null
           updated_at: string
           website: string | null
         }
         Insert: {
+          accent_color?: string | null
+          background_color?: string | null
           banner_url?: string | null
           created_at?: string
+          custom_title?: string | null
           description?: string | null
           end_time: string
           event_key?: string | null
+          font_family?: string | null
           host_id?: string | null
           id?: string
           location?: string | null
           logo_url?: string | null
           name: string
+          primary_color?: string | null
+          secondary_color?: string | null
           start_time: string
+          text_color?: string | null
           updated_at?: string
           website?: string | null
         }
         Update: {
+          accent_color?: string | null
+          background_color?: string | null
           banner_url?: string | null
           created_at?: string
+          custom_title?: string | null
           description?: string | null
           end_time?: string
           event_key?: string | null
+          font_family?: string | null
           host_id?: string | null
           id?: string
           location?: string | null
           logo_url?: string | null
           name?: string
+          primary_color?: string | null
+          secondary_color?: string | null
           start_time?: string
+          text_color?: string | null
           updated_at?: string
           website?: string | null
         }
@@ -909,6 +968,7 @@ export type Database = {
       }
       facilities: {
         Row: {
+          category: string
           contact_info: string | null
           contact_type: string | null
           created_at: string | null
@@ -924,6 +984,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          category?: string
           contact_info?: string | null
           contact_type?: string | null
           created_at?: string | null
@@ -939,6 +1000,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          category?: string
           contact_info?: string | null
           contact_type?: string | null
           created_at?: string | null
@@ -1031,6 +1093,120 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      live_stream_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          stream_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          stream_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          stream_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_stream_messages_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "live_streams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_stream_signals: {
+        Row: {
+          created_at: string
+          id: string
+          signal_data: Json
+          signal_type: string
+          stream_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          signal_data: Json
+          signal_type: string
+          stream_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          signal_data?: Json
+          signal_type?: string
+          stream_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_stream_signals_stream_id_fkey"
+            columns: ["stream_id"]
+            isOneToOne: false
+            referencedRelation: "live_streams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      live_streams: {
+        Row: {
+          created_at: string
+          description: string | null
+          ended_at: string | null
+          event_id: string
+          host_id: string
+          id: string
+          is_active: boolean
+          started_at: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          ended_at?: string | null
+          event_id: string
+          host_id: string
+          id?: string
+          is_active?: boolean
+          started_at?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          ended_at?: string | null
+          event_id?: string
+          host_id?: string
+          id?: string
+          is_active?: boolean
+          started_at?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "live_streams_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       media_files: {
         Row: {
@@ -2529,6 +2705,88 @@ export type Database = {
             columns: ["admin_wallet_id"]
             isOneToOne: false
             referencedRelation: "admin_wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      word_search_games: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          event_id: string
+          grid_data: Json
+          grid_size: number
+          id: string
+          is_active: boolean
+          title: string
+          updated_at: string
+          words: string[]
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          event_id: string
+          grid_data: Json
+          grid_size?: number
+          id?: string
+          is_active?: boolean
+          title: string
+          updated_at?: string
+          words: string[]
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          event_id?: string
+          grid_data?: Json
+          grid_size?: number
+          id?: string
+          is_active?: boolean
+          title?: string
+          updated_at?: string
+          words?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "word_search_games_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      word_search_scores: {
+        Row: {
+          completed_at: string
+          game_id: string
+          id: string
+          points: number
+          time_seconds: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          game_id: string
+          id?: string
+          points: number
+          time_seconds: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          game_id?: string
+          id?: string
+          points?: number
+          time_seconds?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "word_search_scores_game_id_fkey"
+            columns: ["game_id"]
+            isOneToOne: false
+            referencedRelation: "word_search_games"
             referencedColumns: ["id"]
           },
         ]

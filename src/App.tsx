@@ -35,6 +35,7 @@ import AdminNotifications from '@/pages/admin/AdminNotifications';
 import AdminSettings from '@/pages/admin/AdminSettings';
 import AdminTickets from '@/pages/admin/AdminTickets';
 import AdminCheckIn from '@/pages/admin/AdminCheckIn';
+import AdminGames from '@/pages/admin/AdminGames';
 
 // Attendee pages
 import AttendeeDashboard from '@/pages/attendee/AttendeeDashboard';
@@ -50,6 +51,7 @@ import AttendeeNotifications from '@/pages/attendee/AttendeeNotifications';
 import AttendeeOnboarding from '@/pages/attendee/AttendeeOnboarding';
 import AttendeeMap from '@/pages/attendee/AttendeeMap';
 import AttendeeSearch from '@/pages/attendee/AttendeeSearch';
+import AttendeeGames from '@/pages/attendee/AttendeeGames';
 
 import Index from '@/pages/Index';
 import { AdminEventProvider } from '@/hooks/useAdminEventContext';
@@ -101,6 +103,7 @@ function App() {
                         <Route path="settings" element={<AdminSettings />} />
                         <Route path="tickets" element={<AdminTickets />} />
                         <Route path="checkin" element={<AdminCheckIn />} />
+                        <Route path="games" element={<AdminGames />} />
                       </Routes>
                     </AdminEventProvider>
                   </ProtectedRoute>
@@ -222,6 +225,16 @@ function App() {
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
                       <AttendeeRules />
+                    </ProtectedRoute>
+                  </AttendeeEventProvider>
+                }
+              />
+              <Route
+                path="/attendee/games"
+                element={
+                  <AttendeeEventProvider>
+                    <ProtectedRoute requiredRole="attendee">
+                      <AttendeeGames />
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }

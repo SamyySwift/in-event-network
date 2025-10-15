@@ -18,12 +18,13 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const location = useLocation();
 
   useEffect(() => {
-    console.log('ProtectedRoute check:', { 
+    console.log('🔐 ProtectedRoute check:', { 
       currentUser: currentUser?.email, 
       userRole: currentUser?.role,
       requiredRole,
       isLoading,
-      path: location.pathname
+      path: location.pathname,
+      willRedirect: requiredRole && currentUser?.role !== requiredRole
     });
   }, [currentUser, requiredRole, isLoading, location.pathname]);
 
@@ -47,14 +48,15 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // If specific role required, check if user has it
   if (requiredRole && currentUser.role !== requiredRole) {
-    console.log(`Access denied: User role ${currentUser.role} != required ${requiredRole}`);
+    console.error(`❌ Access denied for ${location.pathname}: User role "${currentUser.role}" != required "${requiredRole}"`);
     
     // Redirect based on user's actual role
     const redirectPath = currentUser.role === 'host' ? '/admin' : '/attendee';
+    console.log(`🔄 Redirecting to ${redirectPath}`);
     return <Navigate to={redirectPath} replace />;
   }
 
-  console.log('Access granted');
+  console.log('✅ Access granted to', location.pathname);
   return <>{children}</>;
 };
 

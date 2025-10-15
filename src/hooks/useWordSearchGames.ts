@@ -13,6 +13,10 @@ interface WordSearchGame {
   created_by: string;
   created_at: string;
   updated_at: string;
+  difficulty?: string;
+  theme?: string;
+  hints_enabled?: boolean;
+  time_limit?: number;
 }
 
 interface WordSearchScore {
@@ -51,6 +55,10 @@ export const useWordSearchGames = (eventId: string | null) => {
       words: string[];
       grid_size: number;
       grid_data: any;
+      difficulty?: string;
+      theme?: string;
+      hints_enabled?: boolean;
+      time_limit?: number;
     }) => {
       const { data, error } = await supabase
         .from('word_search_games')

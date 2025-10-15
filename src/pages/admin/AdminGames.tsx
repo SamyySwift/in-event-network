@@ -9,7 +9,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import { Plus, Trash2, Gamepad2 } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Plus, Trash2, Gamepad2, Lightbulb } from 'lucide-react';
 import { generateWordSearchGrid } from '@/utils/wordSearchGenerator';
 import { toast } from 'sonner';
 
@@ -21,6 +22,18 @@ const AdminGames = () => {
   const [title, setTitle] = useState('');
   const [wordsInput, setWordsInput] = useState('');
   const [gridSize, setGridSize] = useState(15);
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
+  const [theme, setTheme] = useState('general');
+  const [hintsEnabled, setHintsEnabled] = useState(false);
+  const [timeLimit, setTimeLimit] = useState<number | null>(null);
+
+  const THEMED_WORDS = {
+    tech: ['JAVASCRIPT', 'PYTHON', 'DATABASE', 'CODING', 'ALGORITHM', 'BINARY', 'NETWORK', 'SOFTWARE', 'HARDWARE', 'CYBERSECURITY'],
+    business: ['STRATEGY', 'PROFIT', 'REVENUE', 'MARKETING', 'SALES', 'BUDGET', 'INVESTMENT', 'PARTNERSHIP', 'INNOVATION', 'LEADERSHIP'],
+    health: ['WELLNESS', 'NUTRITION', 'FITNESS', 'MEDICINE', 'THERAPY', 'EXERCISE', 'MINDFULNESS', 'HYGIENE', 'IMMUNITY', 'HEALTHCARE'],
+    education: ['LEARNING', 'KNOWLEDGE', 'TEACHER', 'STUDENT', 'CLASSROOM', 'STUDY', 'RESEARCH', 'ACADEMIC', 'DEGREE', 'SCHOLARSHIP'],
+    general: []
+  };
 
   const handleCreateGame = async () => {
     if (!selectedEventId) {
@@ -51,11 +64,19 @@ const AdminGames = () => {
       words,
       grid_size: gridSize,
       grid_data: { grid, positions },
+      difficulty,
+      theme,
+      hints_enabled: hintsEnabled,
+      time_limit: timeLimit,
     });
 
     setIsCreating(false);
     setTitle('');
     setWordsInput('');
+    setDifficulty('medium');
+    setTheme('general');
+    setHintsEnabled(false);
+    setTimeLimit(null);
   };
 
   const handleToggleActive = async (gameId: string, currentStatus: boolean) => {
@@ -98,6 +119,55 @@ const AdminGames = () => {
                   />
                 </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="difficulty">Difficulty Level</Label>
+                    <Select value={difficulty} onValueChange={(v: any) => setDifficulty(v)}>
+                      <SelectTrigger id="difficulty">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="easy">Easy (10x10 grid)</SelectItem>
+                        <SelectItem value="medium">Medium (15x15 grid)</SelectItem>
+                        <SelectItem value="hard">Hard (20x20 grid)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="theme">Word Theme</Label>
+                    <Select value={theme} onValueChange={setTheme}>
+                      <SelectTrigger id="theme">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="general">General</SelectItem>
+                        <SelectItem value="tech">Technology</SelectItem>
+                        <SelectItem value="business">Business</SelectItem>
+                        <SelectItem value="health">Health & Wellness</SelectItem>
+                        <SelectItem value="education">Education</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {theme !== 'general' && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const themedWords = THEMED_WORDS[theme as keyof typeof THEMED_WORDS] || [];
+                      setWordsInput(themedWords.join('\n'));
+                      const newGridSize = difficulty === 'easy' ? 10 : difficulty === 'hard' ? 20 : 15;
+                      setGridSize(newGridSize);
+                    }}
+                    className="w-full"
+                  >
+                    <Lightbulb className="w-4 h-4 mr-2" />
+                    Use {theme.charAt(0).toUpperCase() + theme.slice(1)} Themed Words
+                  </Button>
+                )}
+
                 <div>
                   <Label htmlFor="words">
                     Words (one per line, minimum 3 words)
@@ -106,21 +176,44 @@ const AdminGames = () => {
                     id="words"
                     value={wordsInput}
                     onChange={(e) => setWordsInput(e.target.value)}
-                    placeholder="Enter words, one per line"
+                    placeholder="Enter words, one per line, or use themed words above"
                     rows={8}
                   />
                 </div>
 
-                <div>
-                  <Label htmlFor="gridSize">Grid Size: {gridSize}x{gridSize}</Label>
-                  <Input
-                    id="gridSize"
-                    type="range"
-                    min="10"
-                    max="20"
-                    value={gridSize}
-                    onChange={(e) => setGridSize(Number(e.target.value))}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="gridSize">Grid Size: {gridSize}x{gridSize}</Label>
+                    <Input
+                      id="gridSize"
+                      type="range"
+                      min="10"
+                      max="20"
+                      value={gridSize}
+                      onChange={(e) => setGridSize(Number(e.target.value))}
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="timeLimit">Time Limit (optional, in seconds)</Label>
+                    <Input
+                      id="timeLimit"
+                      type="number"
+                      min="30"
+                      placeholder="No limit"
+                      value={timeLimit || ''}
+                      onChange={(e) => setTimeLimit(e.target.value ? Number(e.target.value) : null)}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="hints"
+                    checked={hintsEnabled}
+                    onCheckedChange={setHintsEnabled}
                   />
+                  <Label htmlFor="hints">Enable hints for players</Label>
                 </div>
 
                 <div className="flex gap-2">
@@ -176,7 +269,27 @@ const AdminGames = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
+                      <div className="flex gap-2 flex-wrap text-sm">
+                        <span className="px-3 py-1 bg-primary/10 text-primary rounded-full font-medium">
+                          {game.difficulty || 'medium'}
+                        </span>
+                        {game.theme && game.theme !== 'general' && (
+                          <span className="px-3 py-1 bg-secondary/10 text-secondary-foreground rounded-full">
+                            {game.theme}
+                          </span>
+                        )}
+                        {game.hints_enabled && (
+                          <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-full">
+                            Hints enabled
+                          </span>
+                        )}
+                        {game.time_limit && (
+                          <span className="px-3 py-1 bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 rounded-full">
+                            {game.time_limit}s limit
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-muted-foreground">
                         {game.words.length} words • {game.grid_size}x{game.grid_size} grid
                       </p>

@@ -2713,11 +2713,15 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          difficulty: string | null
           event_id: string
           grid_data: Json
           grid_size: number
+          hints_enabled: boolean | null
           id: string
           is_active: boolean
+          theme: string | null
+          time_limit: number | null
           title: string
           updated_at: string
           words: string[]
@@ -2725,11 +2729,15 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          difficulty?: string | null
           event_id: string
           grid_data: Json
           grid_size?: number
+          hints_enabled?: boolean | null
           id?: string
           is_active?: boolean
+          theme?: string | null
+          time_limit?: number | null
           title: string
           updated_at?: string
           words: string[]
@@ -2737,11 +2745,15 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          difficulty?: string | null
           event_id?: string
           grid_data?: Json
           grid_size?: number
+          hints_enabled?: boolean | null
           id?: string
           is_active?: boolean
+          theme?: string | null
+          time_limit?: number | null
           title?: string
           updated_at?: string
           words?: string[]

@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
+import { motion } from 'framer-motion';
 
 interface WordSearchGridProps {
   grid: any[][];
@@ -69,10 +70,12 @@ export const WordSearchGrid = ({
     return () => window.removeEventListener('mouseup', handleMouseUp);
   }, [isDragging, currentSelection]);
 
+  const cellSize = grid[0].length > 15 ? 'w-7 h-7 text-xs' : 'w-8 h-8 text-sm';
+
   return (
     <div className="inline-block select-none">
       <div
-        className="grid gap-1 p-4 bg-card rounded-lg border"
+        className="grid gap-1 p-4 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 rounded-lg border-2 border-primary/20 shadow-lg"
         style={{
           gridTemplateColumns: `repeat(${grid[0].length}, minmax(0, 1fr))`,
         }}
@@ -84,19 +87,26 @@ export const WordSearchGrid = ({
             const isCurrentlySelecting = currentSelection.includes(key);
 
             return (
-              <div
+              <motion.div
                 key={key}
                 className={cn(
-                  'w-8 h-8 flex items-center justify-center font-bold text-sm rounded cursor-pointer transition-colors',
-                  isSelected && 'bg-primary text-primary-foreground',
-                  isCurrentlySelecting && !isSelected && 'bg-primary/50',
-                  !isSelected && !isCurrentlySelecting && 'bg-muted hover:bg-muted/80'
+                  cellSize,
+                  'flex items-center justify-center font-bold rounded-md cursor-pointer transition-all duration-200',
+                  isSelected && 'bg-gradient-to-br from-green-400 to-green-600 text-white shadow-md scale-105 ring-2 ring-green-300',
+                  isCurrentlySelecting && !isSelected && 'bg-gradient-to-br from-primary to-primary-foreground text-primary-foreground shadow-sm scale-105',
+                  !isSelected && !isCurrentlySelecting && 'bg-white dark:bg-gray-800 hover:bg-primary/10 hover:scale-105 shadow-sm'
                 )}
+                whileHover={{ scale: isGameActive ? 1.1 : 1 }}
+                whileTap={{ scale: isGameActive ? 0.95 : 1 }}
+                animate={isSelected ? { 
+                  rotate: [0, -5, 5, 0],
+                  transition: { duration: 0.3 }
+                } : {}}
                 onMouseDown={() => handleMouseDown(rowIndex, colIndex)}
                 onMouseEnter={() => handleMouseEnter(rowIndex, colIndex)}
               >
                 {cell.letter}
-              </div>
+              </motion.div>
             );
           })
         )}

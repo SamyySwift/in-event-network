@@ -128,7 +128,7 @@ const AttendeeGames = () => {
 
   return (
     <AppLayout>
-      <div className="space-y-6 p-6">
+      <div className="space-y-6 p-4 md:p-6 max-w-7xl mx-auto">
         {gamesLoading ? (
           <p>Loading games...</p>
         ) : activeGames.length === 0 ? (
@@ -139,7 +139,7 @@ const AttendeeGames = () => {
           </Card>
         ) : (
           <>
-            <div className="grid lg:grid-cols-2 gap-6">
+            <div className="grid lg:grid-cols-2 gap-4 md:gap-6">
               <div className="space-y-4">
                 <Card className="relative overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 pointer-events-none" />
@@ -186,7 +186,7 @@ const AttendeeGames = () => {
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                       >
-                        <Button onClick={handleStartGame} className="w-full h-12 text-lg font-semibold bg-gradient-to-r from-primary to-secondary">
+                        <Button onClick={handleStartGame} className="w-full h-12 text-base md:text-lg font-semibold bg-gradient-to-r from-primary to-secondary">
                           {foundWords.size > 0 ? '🔄 Play Again' : '▶️ Start Game'}
                         </Button>
                       </motion.div>

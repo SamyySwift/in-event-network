@@ -70,14 +70,22 @@ export const WordSearchGrid = ({
     return () => window.removeEventListener('mouseup', handleMouseUp);
   }, [isDragging, currentSelection]);
 
-  const cellSize = grid[0].length > 15 ? 'w-7 h-7 text-xs' : 'w-8 h-8 text-sm';
+  // Responsive cell sizing based on grid size and screen
+  const gridLength = grid[0].length;
+  const getCellClasses = () => {
+    if (gridLength > 15) {
+      return 'w-5 h-5 text-[10px] sm:w-6 sm:h-6 sm:text-xs md:w-7 md:h-7 md:text-sm';
+    }
+    return 'w-6 h-6 text-xs sm:w-7 sm:h-7 sm:text-sm md:w-8 md:h-8 md:text-base';
+  };
 
   return (
-    <div className="inline-block select-none">
+    <div className="inline-block select-none w-full overflow-x-auto">
       <div
-        className="grid gap-1 p-4 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 rounded-lg border-2 border-primary/20 shadow-lg"
+        className="grid gap-0.5 sm:gap-1 p-2 sm:p-4 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 rounded-lg border-2 border-primary/20 shadow-lg mx-auto"
         style={{
           gridTemplateColumns: `repeat(${grid[0].length}, minmax(0, 1fr))`,
+          maxWidth: 'min(100%, 600px)',
         }}
       >
         {grid.map((row, rowIndex) =>
@@ -90,9 +98,9 @@ export const WordSearchGrid = ({
               <motion.div
                 key={key}
                 className={cn(
-                  cellSize,
-                  'flex items-center justify-center font-bold rounded-md cursor-pointer transition-all duration-200',
-                  isSelected && 'bg-gradient-to-br from-green-400 to-green-600 text-white shadow-md scale-105 ring-2 ring-green-300',
+                  getCellClasses(),
+                  'flex items-center justify-center font-bold rounded cursor-pointer transition-all duration-200',
+                  isSelected && 'bg-gradient-to-br from-green-400 to-green-600 text-white shadow-md scale-105 ring-1 ring-green-300',
                   isCurrentlySelecting && !isSelected && 'bg-gradient-to-br from-primary to-primary-foreground text-primary-foreground shadow-sm scale-105',
                   !isSelected && !isCurrentlySelecting && 'bg-white dark:bg-gray-800 hover:bg-primary/10 hover:scale-105 shadow-sm'
                 )}

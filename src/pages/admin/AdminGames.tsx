@@ -88,15 +88,10 @@ const AdminGames = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex items-center gap-3 mb-6">
-          <Gamepad2 className="w-8 h-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold">Games</h1>
-            <p className="text-muted-foreground">Create and manage word search games for your attendees</p>
-          </div>
-        </div>
-
+      <AdminPageHeader
+        title="Games"
+        description="Create and manage word search games for your attendees"
+      >
         <div className="space-y-4">
           {!isCreating ? (
             <Button onClick={() => setIsCreating(true)}>
@@ -310,7 +305,7 @@ const AdminGames = () => {
             )}
           </div>
         </div>
-      </div>
+      </AdminPageHeader>
     </AdminLayout>
   );
 };

@@ -36,6 +36,7 @@ import AdminSponsors from "@/pages/admin/AdminSponsors";
 import AdminVendorHub from "@/pages/admin/AdminVendorHub";
 import AdminHighlights from "@/pages/admin/AdminHighlights";
 import AdminEventPreview from "@/pages/admin/AdminEventPreview";
+import AdminGames from "@/pages/admin/AdminGames";
 
 import SponsorForm from "@/pages/SponsorForm";
 import LiveQuestions from "@/pages/LiveQuestions";
@@ -58,6 +59,7 @@ import AttendeeRules from "@/pages/attendee/AttendeeRules";
 import AttendeeNotifications from "@/pages/attendee/AttendeeNotifications";
 import AttendeeSearch from "@/pages/attendee/AttendeeSearch";
 import AttendeeOnboarding from "@/pages/attendee/AttendeeOnboarding";
+import AttendeeGames from "@/pages/attendee/AttendeeGames";
 
 import AttendeeMyTickets from "@/pages/attendee/AttendeeMyTickets";
 
@@ -485,6 +487,22 @@ export const router = createBrowserRouter([
   },
 
   // Catch all route - redirect to landing instead of 404
+  {
+    path: "/admin/games",
+    element: (
+      <AdminRoute>
+        <AdminGames />
+      </AdminRoute>
+    ),
+  },
+  {
+    path: "/attendee/games",
+    element: (
+      <AttendeeRoute>
+        <AttendeeGames />
+      </AttendeeRoute>
+    ),
+  },
   {
     path: "*",
     element: <Navigate to="/" replace />,

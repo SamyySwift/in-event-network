@@ -128,7 +128,7 @@ const AttendeeGames = () => {
 
   return (
     <AppLayout>
-      <div className="space-y-6 p-4 md:p-6 max-w-7xl mx-auto">
+      <div className="space-y-4 md:space-y-6">
         {gamesLoading ? (
           <p>Loading games...</p>
         ) : activeGames.length === 0 ? (

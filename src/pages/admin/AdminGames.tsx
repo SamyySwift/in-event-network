@@ -16,14 +16,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, Gamepad2, Lightbulb } from "lucide-react";
+import { Plus, Trash2, Gamepad2, Lightbulb, Link2, ExternalLink } from "lucide-react";
 import { generateWordSearchGrid } from "@/utils/wordSearchGenerator";
 import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 
 const AdminGames = () => {
   const { selectedEventId } = useAdminEventContext();
   const { games, isLoading, createGame, deleteGame, updateGame } =
     useWordSearchGames(selectedEventId);
+  const { toast: toastHook } = useToast();
 
   const [isCreating, setIsCreating] = useState(false);
   const [title, setTitle] = useState("");
@@ -139,12 +141,66 @@ const AdminGames = () => {
     });
   };
 
+  const generateShareableLink = () => {
+    if (!selectedEventId) return '';
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/live-games/${selectedEventId}`;
+  };
+
+  const copyShareableLink = () => {
+    const link = generateShareableLink();
+    navigator.clipboard.writeText(link);
+    toastHook({
+      title: "Link copied!",
+      description: "Shareable link has been copied to clipboard",
+    });
+  };
+
+  const openInNewTab = () => {
+    const link = generateShareableLink();
+    window.open(link, '_blank');
+  };
+
   return (
     <AdminPageHeader
       title="Games"
       description="Create and manage word search games for your attendees"
     >
       <div className="space-y-4">
+        {selectedEventId && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-foreground">Live Leaderboard Link</label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    Share this link to display the live game leaderboard
+                  </p>
+                  <div className="flex gap-2">
+                    <div className="flex-1 p-3 bg-muted rounded-lg text-sm font-mono break-all">
+                      {generateShareableLink()}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={copyShareableLink}
+                    >
+                      <Link2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={openInNewTab}
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+        
         {!isCreating ? (
           <Button onClick={() => setIsCreating(true)}>
             <Plus className="w-4 h-4 mr-2" />
@@ -336,26 +392,6 @@ const AdminGames = () => {
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
-                  </div>
-                  <CardTitle>{game.title}</CardTitle>
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <Label htmlFor={`active-${game.id}`}>Active</Label>
-                      <Switch
-                        id={`active-${game.id}`}
-                        checked={game.is_active}
-                        onCheckedChange={() =>
-                          handleToggleActive(game.id, game.is_active)
-                        }
-                      />
-                    </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => deleteGame.mutate(game.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
                   </div>
                 </CardHeader>
                 <CardContent>

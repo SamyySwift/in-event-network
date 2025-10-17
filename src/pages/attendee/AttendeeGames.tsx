@@ -30,6 +30,9 @@ const AttendeeGames = () => {
     selectedGame?.id || null
   );
 
+  // Check if current user has already completed this game
+  const userHasCompleted = scores.some(score => score.user_id === currentUser?.id);
+
   useEffect(() => {
     if (games.length > 0 && !selectedGame) {
       const activeGame = games.find((g) => g.is_active);
@@ -48,6 +51,10 @@ const AttendeeGames = () => {
   }, [isGameActive, startTime]);
 
   const handleStartGame = () => {
+    if (userHasCompleted) {
+      toast.error("You've already completed this game!");
+      return;
+    }
     setFoundWords(new Set());
     setStartTime(Date.now());
     setIsGameActive(true);
@@ -178,15 +185,21 @@ const AttendeeGames = () => {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {!isGameActive && (
+                  {!isGameActive && !userHasCompleted && (
                     <motion.div
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                     >
                       <Button onClick={handleStartGame} className="w-full h-12 text-base md:text-lg font-semibold bg-gradient-to-r from-primary to-secondary">
-                        {foundWords.size > 0 ? '🔄 Play Again' : '▶️ Start Game'}
+                        ▶️ Start Game
                       </Button>
                     </motion.div>
+                  )}
+
+                  {!isGameActive && userHasCompleted && (
+                    <div className="w-full h-12 flex items-center justify-center bg-muted rounded-lg text-muted-foreground font-medium">
+                      ✓ Game Completed
+                    </div>
                   )}
 
                   {isGameActive && selectedGame?.hints_enabled && hintsUsed < 3 && (

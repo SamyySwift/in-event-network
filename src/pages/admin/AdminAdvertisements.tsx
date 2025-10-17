@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -11,9 +11,9 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import AdminLayout from "@/components/layouts/AdminLayout"
-import { Plus, Trash2, ExternalLink } from "lucide-react"
+import { Plus, Trash2, ExternalLink, Twitter, Instagram, Linkedin, Facebook, MessageCircle } from "lucide-react"
 import { useForm } from "react-hook-form"
-import { useAdvertisements } from "@/hooks/useAdvertisements"
+import { useAdvertisements, Advertisement } from "@/hooks/useAdvertisements"
 import { useAdminEventContext } from "@/hooks/useAdminEventContext"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -23,6 +23,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { SiTiktok } from "react-icons/si"
 
 const AdminAdvertisements = () => {
   const { selectedEventId } = useAdminEventContext();
@@ -34,6 +42,8 @@ const AdminAdvertisements = () => {
     isCreating,
     isDeleting
   } = useAdvertisements(selectedEventId || undefined);
+  
+  const [selectedAd, setSelectedAd] = useState<Advertisement | null>(null);
   
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<{
     title: string;
@@ -187,7 +197,10 @@ const AdminAdvertisements = () => {
                   {advertisements.map((advertisement) => (
                     <div key={advertisement.id} className="py-4">
                       <div className="flex justify-between items-start gap-4">
-                        <div className="flex-1">
+                        <div 
+                          className="flex-1 cursor-pointer hover:opacity-80 transition-opacity"
+                          onClick={() => setSelectedAd(advertisement)}
+                        >
                           {advertisement.image_url && (
                             <img 
                               src={advertisement.image_url} 
@@ -196,24 +209,11 @@ const AdminAdvertisements = () => {
                             />
                           )}
                           <h3 className="text-lg font-semibold">{advertisement.title}</h3>
-                          <p className="text-sm text-muted-foreground mt-1">{advertisement.description}</p>
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{advertisement.description}</p>
                           <p className="text-sm mt-2">
                             Sponsor: <span className="font-medium">{advertisement.sponsor_name}</span>
                           </p>
-                          <p className="text-sm">
-                            Priority: <span className="font-medium capitalize">{advertisement.priority}</span>
-                          </p>
-                          {advertisement.link_url && (
-                            <a
-                              href={advertisement.link_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm text-primary underline inline-flex items-center gap-1 mt-2"
-                            >
-                              Visit Link
-                              <ExternalLink className="h-3 w-3" />
-                            </a>
-                          )}
+                          <p className="text-sm text-primary font-medium">Click to view details</p>
                         </div>
                         <Button
                           variant="ghost"
@@ -237,6 +237,133 @@ const AdminAdvertisements = () => {
           </Card>
         </div>
       </div>
+
+      <Dialog open={!!selectedAd} onOpenChange={() => setSelectedAd(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{selectedAd?.title}</DialogTitle>
+            <DialogDescription>
+              Sponsored by {selectedAd?.sponsor_name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {selectedAd?.image_url && (
+              <img 
+                src={selectedAd.image_url} 
+                alt={selectedAd.title}
+                className="w-full h-64 object-cover rounded-lg"
+              />
+            )}
+            
+            <div>
+              <h4 className="font-semibold mb-2">Description</h4>
+              <p className="text-muted-foreground">{selectedAd?.description}</p>
+            </div>
+
+            {selectedAd?.link_url && (
+              <div>
+                <h4 className="font-semibold mb-2">Website</h4>
+                <a
+                  href={selectedAd.link_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline inline-flex items-center gap-2"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Visit Website
+                </a>
+              </div>
+            )}
+
+            <div>
+              <h4 className="font-semibold mb-3">Connect with us</h4>
+              <div className="flex flex-wrap gap-3">
+                {selectedAd?.twitter_link && (
+                  <a
+                    href={selectedAd.twitter_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
+                  >
+                    <Twitter className="h-4 w-4" />
+                    <span className="text-sm">Twitter</span>
+                  </a>
+                )}
+                
+                {selectedAd?.instagram_link && (
+                  <a
+                    href={selectedAd.instagram_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
+                  >
+                    <Instagram className="h-4 w-4" />
+                    <span className="text-sm">Instagram</span>
+                  </a>
+                )}
+                
+                {selectedAd?.linkedin_link && (
+                  <a
+                    href={selectedAd.linkedin_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
+                  >
+                    <Linkedin className="h-4 w-4" />
+                    <span className="text-sm">LinkedIn</span>
+                  </a>
+                )}
+                
+                {selectedAd?.facebook_link && (
+                  <a
+                    href={selectedAd.facebook_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
+                  >
+                    <Facebook className="h-4 w-4" />
+                    <span className="text-sm">Facebook</span>
+                  </a>
+                )}
+                
+                {selectedAd?.tiktok_link && (
+                  <a
+                    href={selectedAd.tiktok_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
+                  >
+                    <SiTiktok className="h-4 w-4" />
+                    <span className="text-sm">TikTok</span>
+                  </a>
+                )}
+                
+                {selectedAd?.whatsapp_link && (
+                  <a
+                    href={selectedAd.whatsapp_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    <span className="text-sm">WhatsApp</span>
+                  </a>
+                )}
+              </div>
+              
+              {!selectedAd?.twitter_link && 
+               !selectedAd?.instagram_link && 
+               !selectedAd?.linkedin_link && 
+               !selectedAd?.facebook_link && 
+               !selectedAd?.tiktok_link && 
+               !selectedAd?.whatsapp_link && (
+                <p className="text-sm text-muted-foreground">No social media links available</p>
+              )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 };

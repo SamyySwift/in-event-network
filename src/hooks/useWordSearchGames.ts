@@ -144,7 +144,7 @@ export const useWordSearchScores = (gameId: string | null) => {
           )
         `)
         .eq('game_id', gameId)
-        .order('time_seconds', { ascending: true });
+        .order('points', { ascending: false });
 
       if (error) throw error;
       return data;

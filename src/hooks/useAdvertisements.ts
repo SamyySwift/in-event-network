@@ -19,12 +19,6 @@ export interface Advertisement {
   display_order?: number;
   start_date?: string;
   end_date?: string;
-  twitter_link?: string;
-  instagram_link?: string;
-  linkedin_link?: string;
-  facebook_link?: string;
-  tiktok_link?: string;
-  whatsapp_link?: string;
 }
 
 export const useAdvertisements = (eventId?: string) => {

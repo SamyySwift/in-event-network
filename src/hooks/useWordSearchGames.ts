@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -144,13 +145,39 @@ export const useWordSearchScores = (gameId: string | null) => {
           )
         `)
         .eq('game_id', gameId)
-        .order('time_seconds', { ascending: true });
+        .order('time_seconds', { ascending: true })
+        .order('completed_at', { ascending: true });
 
       if (error) throw error;
       return data;
     },
     enabled: !!gameId,
   });
+
+  // Real-time subscription for score updates
+  useEffect(() => {
+    if (!gameId) return;
+
+    const channel = supabase
+      .channel('word-search-scores-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'word_search_scores',
+          filter: `game_id=eq.${gameId}`
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['word-search-scores', gameId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [gameId, queryClient]);
 
   const submitScore = useMutation({
     mutationFn: async (scoreData: {

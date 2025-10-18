@@ -51,83 +51,122 @@ import { AnnouncementPopup } from "@/components/attendee/AnnouncementPopup";
 import { useAttendeePolls, Poll as AttendeePoll } from "@/hooks/useAttendeePolls";
 import { PollPopup } from "@/components/attendee/PollPopup";
 import { useAdvertisements } from "@/hooks/useAdvertisements";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  type CarouselApi,
+} from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 
 // Advertisement Carousel Component
 const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) => {
-  const [currentIndex, setCurrentIndex] = React.useState(0);
+  const [api, setApi] = React.useState<CarouselApi>();
+  const [current, setCurrent] = React.useState(0);
+  const autoplayPlugin = React.useRef(
+    Autoplay({ 
+      delay: 5000, 
+      stopOnInteraction: true,
+      stopOnMouseEnter: true,
+    })
+  );
 
   React.useEffect(() => {
-    if (advertisements.length <= 1) return;
-    
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % advertisements.length);
-    }, 5000); // Auto-swipe every 5 seconds
+    if (!api) return;
 
-    return () => clearInterval(interval);
-  }, [advertisements.length]);
+    setCurrent(api.selectedScrollSnap());
 
-  const goToSlide = (index: number) => {
-    setCurrentIndex(index);
-  };
+    api.on("select", () => {
+      setCurrent(api.selectedScrollSnap());
+    });
 
-  const currentAd = advertisements[currentIndex];
+    // Resume autoplay after 3 seconds of no interaction
+    api.on("pointerUp", () => {
+      setTimeout(() => {
+        autoplayPlugin.current.play();
+      }, 3000);
+    });
+  }, [api]);
+
+  const scrollTo = React.useCallback(
+    (index: number) => {
+      api?.scrollTo(index);
+    },
+    [api]
+  );
 
   return (
     <div className="relative">
-      <Card 
-        className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden relative z-10 group cursor-pointer h-[400px]"
-        onClick={() => currentAd.link_url && window.open(currentAd.link_url, '_blank')}
+      <Carousel
+        setApi={setApi}
+        opts={{
+          align: "start",
+          loop: true,
+        }}
+        plugins={[autoplayPlugin.current]}
+        className="w-full"
       >
-        {currentAd.image_url && (
-          <div className="relative h-full overflow-hidden">
-            {/* Image */}
-            <img
-              src={currentAd.image_url}
-              alt={currentAd.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
-            
-            {/* Dark Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20"></div>
-            
-            {/* Content Overlay */}
-            <div className="absolute inset-0 flex flex-col justify-end p-6">
-              {/* Bottom Content */}
-              <div className="space-y-3">
-                <div>
-                  <h3 className="text-2xl sm:text-3xl font-bold text-white leading-tight mb-2">
-                    {currentAd.title}
-                  </h3>
-                  {currentAd.description && (
-                    <p className="text-white/90 text-sm line-clamp-2">
-                      {currentAd.description}
-                    </p>
-                  )}
-                </div>
-                {currentAd.sponsor_name && (
-                  <p className="text-white/80 text-sm font-medium">
-                    By {currentAd.sponsor_name}
-                  </p>
+        <CarouselContent>
+          {advertisements.map((ad, index) => (
+            <CarouselItem key={index}>
+              <Card 
+                className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden relative z-10 group cursor-pointer h-[400px]"
+                onClick={() => ad.link_url && window.open(ad.link_url, '_blank')}
+              >
+                {ad.image_url && (
+                  <div className="relative h-full overflow-hidden">
+                    {/* Image */}
+                    <img
+                      src={ad.image_url}
+                      alt={ad.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    
+                    {/* Dark Gradient Overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20"></div>
+                    
+                    {/* Content Overlay */}
+                    <div className="absolute inset-0 flex flex-col justify-end p-6">
+                      {/* Bottom Content */}
+                      <div className="space-y-3">
+                        <div>
+                          <h3 className="text-2xl sm:text-3xl font-bold text-white leading-tight mb-2">
+                            {ad.title}
+                          </h3>
+                          {ad.description && (
+                            <p className="text-white/90 text-sm line-clamp-2">
+                              {ad.description}
+                            </p>
+                          )}
+                        </div>
+                        {ad.sponsor_name && (
+                          <p className="text-white/80 text-sm font-medium">
+                            By {ad.sponsor_name}
+                          </p>
+                        )}
+                        {ad.link_url && (
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="bg-white/90 text-gray-900 hover:bg-white font-semibold"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(ad.link_url, '_blank');
+                            }}
+                          >
+                            Learn More
+                            <ChevronRight className="ml-1 h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 )}
-                {currentAd.link_url && (
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="bg-white/90 text-gray-900 hover:bg-white font-semibold"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      window.open(currentAd.link_url, '_blank');
-                    }}
-                  >
-                    Learn More
-                    <ChevronRight className="ml-1 h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </Card>
+              </Card>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+      </Carousel>
 
       {/* Carousel Indicators */}
       {advertisements.length > 1 && (
@@ -135,9 +174,9 @@ const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) =>
           {advertisements.map((_, index) => (
             <button
               key={index}
-              onClick={() => goToSlide(index)}
+              onClick={() => scrollTo(index)}
               className={`h-2 rounded-full transition-all duration-300 ${
-                index === currentIndex
+                index === current
                   ? 'w-8 bg-purple-600'
                   : 'w-2 bg-gray-300 hover:bg-gray-400'
               }`}

@@ -185,10 +185,14 @@ export const useWordSearchScores = (gameId: string | null) => {
       user_id: string;
       time_seconds: number;
       points: number;
+      completed_at?: string;
     }) => {
       const { data, error } = await supabase
         .from('word_search_scores')
-        .upsert([scoreData], { onConflict: 'game_id,user_id' })
+        .upsert([{
+          ...scoreData,
+          completed_at: scoreData.completed_at || new Date().toISOString(),
+        }], { onConflict: 'game_id,user_id' })
         .select()
         .single();
 

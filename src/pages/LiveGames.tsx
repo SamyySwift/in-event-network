@@ -8,14 +8,12 @@ import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface LeaderboardEntry {
-  id: string;
   user_id: string;
   points: number;
   time_seconds: number;
-  profiles: {
-    name: string;
-    photo_url?: string;
-  };
+  name: string;
+  photo_url?: string;
+  completed_at: string;
 }
 
 interface Game {
@@ -37,6 +35,30 @@ const LiveGames = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [highlightedIds, setHighlightedIds] = useState<Set<string>>(new Set());
 
+  const fetchScores = async () => {
+    if (!eventId) return;
+
+    try {
+      const { data, error } = await supabase.functions.invoke('get-wordsearch-leaderboard', {
+        body: { eventId },
+      });
+
+      if (error) throw error;
+
+      const newScores: LeaderboardEntry[] = data.scores || [];
+      setScores(newScores);
+      
+      // Highlight top 3 for animation
+      const newHighlighted = new Set(newScores.slice(0, 3).map((s: LeaderboardEntry) => s.user_id));
+      setHighlightedIds(newHighlighted);
+      
+      // Clear highlight after animation
+      setTimeout(() => setHighlightedIds(new Set()), 2000);
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+    }
+  };
+
   useEffect(() => {
     if (!eventId) return;
 
@@ -56,37 +78,9 @@ const LiveGames = () => {
 
       setActiveGame(data);
       if (data) {
-        fetchScores(data.id);
+        await fetchScores();
+        setIsLoading(false);
       }
-    };
-
-    const fetchScores = async (gameId: string) => {
-      const { data, error } = await supabase
-        .from('word_search_scores')
-        .select(`
-          *,
-          profiles:user_id (
-            name,
-            photo_url
-          )
-        `)
-        .eq('game_id', gameId)
-        .order('time_seconds', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching scores:', error);
-      } else {
-        const newScores = data || [];
-        setScores(newScores);
-        
-        // Highlight top 3 for animation
-        const newHighlighted = new Set(newScores.slice(0, 3).map((s: LeaderboardEntry) => s.id));
-        setHighlightedIds(newHighlighted);
-        
-        // Clear highlight after animation
-        setTimeout(() => setHighlightedIds(new Set()), 2000);
-      }
-      setIsLoading(false);
     };
 
     fetchActiveGame();
@@ -102,9 +96,7 @@ const LiveGames = () => {
           table: 'word_search_scores',
         },
         () => {
-          if (activeGame) {
-            fetchScores(activeGame.id);
-          }
+          fetchScores();
         }
       )
       .subscribe();
@@ -112,7 +104,7 @@ const LiveGames = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [eventId, activeGame?.id]);
+  }, [eventId]);
 
   if (isLoading) {
     return (
@@ -172,11 +164,11 @@ const LiveGames = () => {
                   {scores.map((entry, index) => {
                     const rank = index + 1;
                     const showMedal = rank <= 3;
-                    const isHighlighted = highlightedIds.has(entry.id);
+                    const isHighlighted = highlightedIds.has(entry.user_id);
 
                     return (
                       <motion.div
-                        key={entry.id}
+                        key={entry.user_id}
                         layout
                         initial={{ opacity: 0, scale: 0.9, x: -50 }}
                         animate={{ 
@@ -224,15 +216,15 @@ const LiveGames = () => {
                           transition={{ duration: 0.2 }}
                         >
                           <Avatar className="w-12 h-12 border-2 border-primary/20">
-                            <AvatarImage src={entry.profiles?.photo_url} />
+                            <AvatarImage src={entry.photo_url} />
                             <AvatarFallback className="text-lg font-semibold bg-primary/10 text-primary">
-                              {entry.profiles?.name?.charAt(0) || 'U'}
+                              {entry.name?.charAt(0) || 'U'}
                             </AvatarFallback>
                           </Avatar>
                         </motion.div>
 
                         <div className="flex-1">
-                          <p className="font-semibold text-lg">{entry.profiles?.name || 'Unknown'}</p>
+                          <p className="font-semibold text-lg">{entry.name || 'Anonymous'}</p>
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Clock className="w-4 h-4" />
                             <span className="font-medium">

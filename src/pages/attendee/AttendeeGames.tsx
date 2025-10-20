@@ -113,12 +113,18 @@ const AttendeeGames = () => {
     setGameScore({ points: finalPoints, time: timeSeconds });
     setShowCelebration(true);
 
-    await submitScore.mutateAsync({
-      game_id: selectedGame.id,
-      user_id: currentUser.id,
-      time_seconds: timeSeconds,
-      points: finalPoints,
-    });
+    try {
+      await submitScore.mutateAsync({
+        game_id: selectedGame.id,
+        user_id: currentUser.id,
+        time_seconds: timeSeconds,
+        points: finalPoints,
+        completed_at: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Failed to submit score:", error);
+      toast.error("Failed to save your score. Please try again.");
+    }
   };
 
   if (!context?.currentEventId) {

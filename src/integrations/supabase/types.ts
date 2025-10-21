@@ -2771,26 +2771,32 @@ export type Database = {
       word_search_scores: {
         Row: {
           completed_at: string
+          created_at: string
           game_id: string
           id: string
           points: number
           time_seconds: number
+          updated_at: string
           user_id: string
         }
         Insert: {
           completed_at?: string
+          created_at?: string
           game_id: string
           id?: string
           points: number
           time_seconds: number
+          updated_at?: string
           user_id: string
         }
         Update: {
           completed_at?: string
+          created_at?: string
           game_id?: string
           id?: string
           points?: number
           time_seconds?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: [

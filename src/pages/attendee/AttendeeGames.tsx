@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import AppLayout from '@/components/layouts/AppLayout';
 import { useAttendeeContext } from '@/hooks/useAttendeeContext';
 import { useWordSearchGames, useWordSearchScores } from '@/hooks/useWordSearchGames';
+import { useWordSearchLeaderboard } from '@/hooks/useWordSearchLeaderboard';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,9 +27,8 @@ const AttendeeGames = () => {
   const [gameScore, setGameScore] = useState({ points: 0, time: 0 });
   const [hintsUsed, setHintsUsed] = useState(0);
 
-  const { scores, isLoading: scoresLoading, submitScore } = useWordSearchScores(
-    selectedGame?.id || null
-  );
+  const { submitScore } = useWordSearchScores(null);
+  const { scores, isLoading: scoresLoading } = useWordSearchLeaderboard(context?.currentEventId || null);
 
   // Check if current user has already completed this game
   const userHasCompleted = scores.some(score => score.user_id === currentUser?.id);
@@ -136,6 +136,17 @@ const AttendeeGames = () => {
   }
 
   const activeGames = games.filter((g) => g.is_active);
+
+  const adaptedScores = scores.map((s) => ({
+    id: s.user_id,
+    user_id: s.user_id,
+    points: s.points,
+    time_seconds: s.time_seconds,
+    completed_at: s.completed_at,
+    name: s.name,
+    photo_url: s.photo_url,
+    profiles: { name: s.name, photo_url: s.photo_url }
+  }));
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -281,7 +292,7 @@ const AttendeeGames = () => {
               {scoresLoading ? (
                 <p>Loading leaderboard...</p>
               ) : (
-                <WordSearchLeaderboard scores={scores} />
+                <WordSearchLeaderboard scores={adaptedScores as any} />
               )}
             </div>
           </div>

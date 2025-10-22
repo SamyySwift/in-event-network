@@ -145,7 +145,7 @@ export const DirectMessageThread: React.FC<DirectMessageThreadProps> = ({
         </div>
       </CardHeader>
 
-      <CardContent className="flex-1 flex flex-col p-0">
+      <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
         {/* Connection Status Banner */}
         {(isPending || isRejected) && (
           <div className="px-4 py-3 border-b bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200">
@@ -198,7 +198,7 @@ export const DirectMessageThread: React.FC<DirectMessageThreadProps> = ({
         )}
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-gray-900">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50 dark:bg-gray-900 min-h-0">
           {messages.length === 0 ? (
             <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               <p>No messages yet. Start the conversation!</p>

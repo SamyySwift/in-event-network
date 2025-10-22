@@ -54,38 +54,54 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get scores with profiles
-    const { data: scores, error: scoresError } = await supabaseAdmin
+    // Get scores first (without relying on DB relationships)
+    const { data: scoresRaw, error: scoresError } = await supabaseAdmin
       .from('word_search_scores')
       .select(`
         user_id,
         points,
         time_seconds,
-        completed_at,
-        profiles:user_id (
-          name,
-          photo_url
-        )
+        completed_at
       `)
       .eq('game_id', game.id)
       .order('time_seconds', { ascending: true })
       .order('completed_at', { ascending: true })
-      .limit(50) as { data: LeaderboardEntry[] | null; error: any };
+      .limit(50);
 
     if (scoresError) {
       console.error('Error fetching scores:', scoresError);
       throw scoresError;
     }
 
-    // Sanitize and format the response
-    const leaderboard = (scores || []).map((entry) => ({
-      user_id: entry.user_id,
-      name: entry.profiles?.name || 'Anonymous',
-      photo_url: entry.profiles?.photo_url || null,
-      points: entry.points,
-      time_seconds: entry.time_seconds,
-      completed_at: entry.completed_at,
-    }));
+    // Fetch profiles for the users in the scores
+    const userIds = Array.from(new Set((scoresRaw || []).map((s) => s.user_id))).filter(Boolean);
+    let profilesMap = new Map<string, { name: string | null; photo_url: string | null }>();
+
+    if (userIds.length > 0) {
+      const { data: profiles, error: profilesError } = await supabaseAdmin
+        .from('profiles')
+        .select('id, name, photo_url')
+        .in('id', userIds);
+
+      if (profilesError) {
+        console.error('Error fetching profiles:', profilesError);
+      } else {
+        profilesMap = new Map(profiles.map((p: any) => [p.id, { name: p.name, photo_url: p.photo_url }]));
+      }
+    }
+
+    // Build leaderboard with joined profile info
+    const leaderboard = (scoresRaw || []).map((entry: any) => {
+      const profile = profilesMap.get(entry.user_id) || null;
+      return {
+        user_id: entry.user_id,
+        name: profile?.name || 'Anonymous',
+        photo_url: profile?.photo_url || null,
+        points: entry.points,
+        time_seconds: entry.time_seconds,
+        completed_at: entry.completed_at,
+      };
+    });
 
     return new Response(
       JSON.stringify({ scores: leaderboard }),

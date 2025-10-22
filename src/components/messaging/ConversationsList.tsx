@@ -48,7 +48,7 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({ onSelect }
           Your Conversations
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-0">
+      <CardContent className="p-0 max-h-[500px] overflow-y-auto">
         {conversations.length === 0 ? (
           <div className="text-center py-8 text-gray-500 dark:text-gray-400 px-6">
             <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />

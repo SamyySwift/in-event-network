@@ -22,7 +22,7 @@ export type Database = {
           entity_id: string | null
           entity_type: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           user_agent: string | null
           user_id: string | null
         }
@@ -33,7 +33,7 @@ export type Database = {
           entity_id?: string | null
           entity_type?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id?: string | null
         }
@@ -44,7 +44,7 @@ export type Database = {
           entity_id?: string | null
           entity_type?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           user_agent?: string | null
           user_id?: string | null
         }
@@ -1585,6 +1585,177 @@ export type Database = {
           },
         ]
       }
+      quiz_games: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          event_id: string
+          id: string
+          is_active: boolean
+          title: string
+          total_questions: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_id: string
+          id?: string
+          is_active?: boolean
+          title: string
+          total_questions?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          event_id?: string
+          id?: string
+          is_active?: boolean
+          title?: string
+          total_questions?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_games_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_questions: {
+        Row: {
+          correct_answer: string
+          created_at: string
+          id: string
+          options: Json
+          question_order: number
+          question_text: string
+          quiz_game_id: string
+          time_limit: number
+        }
+        Insert: {
+          correct_answer: string
+          created_at?: string
+          id?: string
+          options?: Json
+          question_order?: number
+          question_text: string
+          quiz_game_id: string
+          time_limit?: number
+        }
+        Update: {
+          correct_answer?: string
+          created_at?: string
+          id?: string
+          options?: Json
+          question_order?: number
+          question_text?: string
+          quiz_game_id?: string
+          time_limit?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_quiz_game_id_fkey"
+            columns: ["quiz_game_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_responses: {
+        Row: {
+          answered_at: string
+          id: string
+          is_correct: boolean
+          question_id: string
+          quiz_game_id: string
+          selected_answer: string
+          time_taken: number
+          user_id: string
+        }
+        Insert: {
+          answered_at?: string
+          id?: string
+          is_correct: boolean
+          question_id: string
+          quiz_game_id: string
+          selected_answer: string
+          time_taken: number
+          user_id: string
+        }
+        Update: {
+          answered_at?: string
+          id?: string
+          is_correct?: boolean
+          question_id?: string
+          quiz_game_id?: string
+          selected_answer?: string
+          time_taken?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_responses_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_responses_quiz_game_id_fkey"
+            columns: ["quiz_game_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_scores: {
+        Row: {
+          completed_at: string
+          correct_answers: number
+          id: string
+          quiz_game_id: string
+          total_score: number
+          total_time: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          correct_answers?: number
+          id?: string
+          quiz_game_id: string
+          total_score?: number
+          total_time?: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          correct_answers?: number
+          id?: string
+          quiz_game_id?: string
+          total_score?: number
+          total_time?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_scores_quiz_game_id_fkey"
+            columns: ["quiz_game_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_games"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       room_members: {
         Row: {
           id: string
@@ -2543,7 +2714,7 @@ export type Database = {
           created_at: string
           form_id: string
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           notes: string | null
           responses: Json
           status: string
@@ -2557,7 +2728,7 @@ export type Database = {
           created_at?: string
           form_id: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           notes?: string | null
           responses?: Json
           status?: string
@@ -2571,7 +2742,7 @@ export type Database = {
           created_at?: string
           form_id?: string
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           notes?: string | null
           responses?: Json
           status?: string
@@ -2906,10 +3077,7 @@ export type Database = {
           total_fees: number
         }[]
       }
-      can_access_event_data: {
-        Args: { event_uuid: string }
-        Returns: boolean
-      }
+      can_access_event_data: { Args: { event_uuid: string }; Returns: boolean }
       checkin_ticket_by_qr_public: {
         Args: { qr_data: string; target_event_id: string }
         Returns: Json
@@ -2932,42 +3100,24 @@ export type Database = {
           user_id: string
         }[]
       }
-      generate_invite_token: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      generate_invite_token: { Args: never; Returns: string }
       generate_sponsor_qr_data: {
         Args: { sponsor_id: string }
         Returns: string
       }
-      generate_ticket_number: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      generate_unique_event_key: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      generate_unique_host_access_key: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      generate_ticket_number: { Args: never; Returns: string }
+      generate_unique_event_key: { Args: never; Returns: string }
+      generate_unique_host_access_key: { Args: never; Returns: string }
       get_admin_event_connections: {
         Args: { admin_event_ids: string[] }
         Returns: {
           connection_count: number
         }[]
       }
-      get_current_user_event: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_current_user_role: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      get_current_user_event: { Args: never; Returns: string }
+      get_current_user_role: { Args: never; Returns: string }
       get_dashboard_analytics: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           active_events: number
           completed_events: number
@@ -3030,18 +3180,9 @@ export type Database = {
           user_id: string
         }[]
       }
-      get_poll_with_results: {
-        Args: { poll_uuid: string }
-        Returns: Json
-      }
-      get_user_current_event: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
-      get_user_role: {
-        Args: Record<PropertyKey, never>
-        Returns: string
-      }
+      get_poll_with_results: { Args: { poll_uuid: string }; Returns: Json }
+      get_user_current_event: { Args: never; Returns: string }
+      get_user_role: { Args: never; Returns: string }
       grant_attendee_dashboard_access: {
         Args: { attendee_user_id: string; target_event_id: string }
         Returns: Json
@@ -3058,34 +3199,13 @@ export type Database = {
         Args: { p_admin_id: string; p_amount: number; p_event_id: string }
         Returns: undefined
       }
-      is_admin_for_event: {
-        Args: { event_uuid: string }
-        Returns: boolean
-      }
-      is_admin_role: {
-        Args: { role_text: string }
-        Returns: boolean
-      }
-      is_admin_user: {
-        Args: { user_uuid: string }
-        Returns: boolean
-      }
-      is_event_host: {
-        Args: { event_uuid: string }
-        Returns: boolean
-      }
-      is_event_owner: {
-        Args: { event_uuid: string }
-        Returns: boolean
-      }
-      is_super_admin: {
-        Args: { user_uuid?: string }
-        Returns: boolean
-      }
-      join_event_by_access_key: {
-        Args: { access_code: string }
-        Returns: Json
-      }
+      is_admin_for_event: { Args: { event_uuid: string }; Returns: boolean }
+      is_admin_role: { Args: { role_text: string }; Returns: boolean }
+      is_admin_user: { Args: { user_uuid: string }; Returns: boolean }
+      is_event_host: { Args: { event_uuid: string }; Returns: boolean }
+      is_event_owner: { Args: { event_uuid: string }; Returns: boolean }
+      is_super_admin: { Args: { user_uuid?: string }; Returns: boolean }
+      join_event_by_access_key: { Args: { access_code: string }; Returns: Json }
       log_activity: {
         Args: {
           p_action: string

@@ -3,13 +3,18 @@ import AppLayout from '@/components/layouts/AppLayout';
 import { useAttendeeContext } from '@/hooks/useAttendeeContext';
 import { useWordSearchGames, useWordSearchScores } from '@/hooks/useWordSearchGames';
 import { useWordSearchLeaderboard } from '@/hooks/useWordSearchLeaderboard';
+import { useQuizGames, useQuizQuestions, useQuizScores } from '@/hooks/useQuizGames';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { WordSearchGrid } from '@/components/games/WordSearchGrid';
 import { WordSearchLeaderboard } from '@/components/games/WordSearchLeaderboard';
+import { QuizPlayer } from '@/components/games/QuizPlayer';
+import { QuizLeaderboard } from '@/components/games/QuizLeaderboard';
+import { QuizResults } from '@/components/games/QuizResults';
 import { GameCelebration } from '@/components/games/GameCelebration';
-import { Gamepad2, Trophy, Clock, Sparkles, Lightbulb } from 'lucide-react';
+import { Gamepad2, Trophy, Clock, Sparkles, Lightbulb, Brain } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -17,8 +22,10 @@ const AttendeeGames = () => {
   const { context } = useAttendeeContext();
   const { currentUser } = useAuth();
   const { games, isLoading: gamesLoading } = useWordSearchGames(context?.currentEventId || null);
+  const { quizGames, isLoading: quizGamesLoading } = useQuizGames(context?.currentEventId || null);
   
   const [selectedGame, setSelectedGame] = useState<any>(null);
+  const [selectedQuiz, setSelectedQuiz] = useState<any>(null);
   const [foundWords, setFoundWords] = useState<Set<string>>(new Set());
   const [startTime, setStartTime] = useState<number | null>(null);
   const [isGameActive, setIsGameActive] = useState(false);
@@ -26,9 +33,14 @@ const AttendeeGames = () => {
   const [showCelebration, setShowCelebration] = useState(false);
   const [gameScore, setGameScore] = useState({ points: 0, time: 0 });
   const [hintsUsed, setHintsUsed] = useState(0);
+  const [isPlayingQuiz, setIsPlayingQuiz] = useState(false);
+  const [showQuizResults, setShowQuizResults] = useState(false);
+  const [quizResults, setQuizResults] = useState({ score: 0, correct: 0, time: 0 });
 
   const { submitScore } = useWordSearchScores(null);
   const { scores, isLoading: scoresLoading } = useWordSearchLeaderboard(context?.currentEventId || null);
+  const { questions: quizQuestions } = useQuizQuestions(selectedQuiz?.id);
+  const { scores: quizScores, isLoading: quizScoresLoading, submitScore: submitQuizScore } = useQuizScores(selectedQuiz?.id);
 
   // Check if current user has already completed this game
   const userHasCompleted = scores.some(score => score.user_id === currentUser?.id);
@@ -148,14 +160,46 @@ const AttendeeGames = () => {
     profiles: { name: s.name, photo_url: s.photo_url }
   }));
 
+  const activeQuizzes = quizGames.filter((q) => q.is_active);
+  const userHasCompletedQuiz = selectedQuiz && quizScores.some(s => s.user_id === currentUser?.id);
+
+  const handleQuizComplete = async (score: number, correctAnswers: number, totalTime: number) => {
+    if (!selectedQuiz || !currentUser) return;
+
+    setQuizResults({ score, correct: correctAnswers, time: totalTime });
+    setIsPlayingQuiz(false);
+    setShowQuizResults(true);
+
+    await submitQuizScore.mutateAsync({
+      quiz_game_id: selectedQuiz.id,
+      user_id: currentUser.id,
+      total_score: score,
+      correct_answers: correctAnswers,
+      total_time: totalTime,
+    });
+  };
+
   return (
     <div className="space-y-4 md:space-y-6">
+      <Tabs defaultValue="word-search" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="word-search">
+            <Gamepad2 className="w-4 h-4 mr-2" />
+            Word Search
+          </TabsTrigger>
+          <TabsTrigger value="quiz">
+            <Brain className="w-4 h-4 mr-2" />
+            Quiz Games
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="word-search" className="space-y-4 mt-6">
       {gamesLoading ? (
         <p>Loading games...</p>
       ) : activeGames.length === 0 ? (
         <Card>
           <CardContent className="py-8 text-center text-muted-foreground">
-            No active games at the moment. Check back later!
+            No active word search games at the moment. Check back later!
           </CardContent>
         </Card>
       ) : (
@@ -305,6 +349,111 @@ const AttendeeGames = () => {
           />
         </>
       )}
+        </TabsContent>
+
+        <TabsContent value="quiz" className="space-y-4 mt-6">
+          {quizGamesLoading ? (
+            <p>Loading quiz games...</p>
+          ) : activeQuizzes.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center text-muted-foreground">
+                No active quiz games at the moment. Check back later!
+              </CardContent>
+            </Card>
+          ) : !selectedQuiz ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {activeQuizzes.map((quiz) => (
+                <Card
+                  key={quiz.id}
+                  className="cursor-pointer hover:shadow-lg transition-shadow"
+                  onClick={() => setSelectedQuiz(quiz)}
+                >
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Brain className="w-5 h-5 text-primary" />
+                      {quiz.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {quiz.description && (
+                      <p className="text-sm text-muted-foreground mb-4">
+                        {quiz.description}
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between text-sm">
+                      <span>{quiz.total_questions} Questions</span>
+                      <Button size="sm">
+                        Start Quiz
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : isPlayingQuiz ? (
+            <QuizPlayer
+              questions={quizQuestions}
+              onComplete={handleQuizComplete}
+            />
+          ) : (
+            <div className="grid lg:grid-cols-2 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>{selectedQuiz.title}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {selectedQuiz.description && (
+                    <p className="text-muted-foreground">{selectedQuiz.description}</p>
+                  )}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Total Questions:</span>
+                      <span className="font-semibold">{quizQuestions.length}</span>
+                    </div>
+                  </div>
+
+                  {userHasCompletedQuiz ? (
+                    <div className="p-4 bg-muted rounded-lg text-center">
+                      ✓ Quiz Completed
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={() => setIsPlayingQuiz(true)}
+                      className="w-full"
+                      size="lg"
+                    >
+                      Start Quiz
+                    </Button>
+                  )}
+
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedQuiz(null)}
+                    className="w-full"
+                  >
+                    Back to Quiz List
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <QuizLeaderboard scores={quizScores} />
+            </div>
+          )}
+
+          {showQuizResults && (
+            <QuizResults
+              score={quizResults.score}
+              correctAnswers={quizResults.correct}
+              totalQuestions={quizQuestions.length}
+              totalTime={quizResults.time}
+              onClose={() => {
+                setShowQuizResults(false);
+                setSelectedQuiz(null);
+              }}
+            />
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

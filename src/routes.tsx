@@ -37,7 +37,7 @@ import AdminVendorHub from "@/pages/admin/AdminVendorHub";
 import AdminHighlights from "@/pages/admin/AdminHighlights";
 import AdminEventPreview from "@/pages/admin/AdminEventPreview";
 import AdminGames from "@/pages/admin/AdminGames";
-import AdminQuizGames from "@/pages/admin/AdminQuizGames";
+
 
 import SponsorForm from "@/pages/SponsorForm";
 import LiveQuestions from "@/pages/LiveQuestions";
@@ -500,14 +500,6 @@ export const router = createBrowserRouter([
     element: (
       <AdminRoute>
         <AdminGames />
-      </AdminRoute>
-    ),
-  },
-  {
-    path: "/admin/quiz-games",
-    element: (
-      <AdminRoute>
-        <AdminQuizGames />
       </AdminRoute>
     ),
   },

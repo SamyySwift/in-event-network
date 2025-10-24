@@ -528,6 +528,43 @@ const AdminGames = () => {
         </TabsContent>
 
         <TabsContent value="quiz" className="space-y-4">
+          {selectedEventId && (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-foreground">Live Quiz Feedback Link</label>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Share this link to display the live quiz leaderboard and results
+                    </p>
+                    <div className="flex gap-2">
+                      <div className="flex-1 p-3 bg-muted rounded-lg text-sm font-mono break-all">
+                        {`${window.location.origin}/live-games?eventId=${selectedEventId}&tab=quiz`}
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${window.location.origin}/live-games?eventId=${selectedEventId}&tab=quiz`);
+                          toast.success('Link copied to clipboard!');
+                        }}
+                      >
+                        <Link2 className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => window.open(`${window.location.origin}/live-games?eventId=${selectedEventId}&tab=quiz`, '_blank')}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="flex justify-between items-center">
             <p className="text-muted-foreground">
               Create and manage Kahoot-style quiz games for your attendees

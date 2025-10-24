@@ -360,83 +360,93 @@ const AttendeeGames = () => {
                 No active quiz games at the moment. Check back later!
               </CardContent>
             </Card>
-          ) : !selectedQuiz ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {activeQuizzes.map((quiz) => (
-                <Card
-                  key={quiz.id}
-                  className="cursor-pointer hover:shadow-lg transition-shadow"
-                  onClick={() => setSelectedQuiz(quiz)}
-                >
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Brain className="w-5 h-5 text-primary" />
-                      {quiz.title}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {quiz.description && (
-                      <p className="text-sm text-muted-foreground mb-4">
-                        {quiz.description}
-                      </p>
-                    )}
-                    <div className="flex items-center justify-between text-sm">
-                      <span>{quiz.total_questions} Questions</span>
-                      <Button size="sm">
-                        Start Quiz
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
           ) : isPlayingQuiz ? (
             <QuizPlayer
               questions={quizQuestions}
               onComplete={handleQuizComplete}
             />
           ) : (
-            <div className="grid lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>{selectedQuiz.title}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {selectedQuiz.description && (
-                    <p className="text-muted-foreground">{selectedQuiz.description}</p>
-                  )}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-muted-foreground">Total Questions:</span>
-                      <span className="font-semibold">{quizQuestions.length}</span>
-                    </div>
+            <div className="grid lg:grid-cols-2 gap-4 md:gap-6">
+              <div className="space-y-4">
+                {!selectedQuiz ? (
+                  <div className="grid gap-4">
+                    {activeQuizzes.map((quiz) => (
+                      <Card
+                        key={quiz.id}
+                        className="cursor-pointer hover:shadow-lg transition-shadow"
+                        onClick={() => setSelectedQuiz(quiz)}
+                      >
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <Brain className="w-5 h-5 text-primary" />
+                            {quiz.title}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          {quiz.description && (
+                            <p className="text-sm text-muted-foreground mb-4">
+                              {quiz.description}
+                            </p>
+                          )}
+                          <div className="flex items-center justify-between text-sm">
+                            <span>{quiz.total_questions} Questions</span>
+                            <Button size="sm">
+                              Start Quiz
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
+                ) : (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>{selectedQuiz.title}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {selectedQuiz.description && (
+                        <p className="text-muted-foreground">{selectedQuiz.description}</p>
+                      )}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-muted-foreground">Total Questions:</span>
+                          <span className="font-semibold">{quizQuestions.length}</span>
+                        </div>
+                      </div>
 
-                  {userHasCompletedQuiz ? (
-                    <div className="p-4 bg-muted rounded-lg text-center">
-                      ✓ Quiz Completed
-                    </div>
-                  ) : (
-                    <Button
-                      onClick={() => setIsPlayingQuiz(true)}
-                      className="w-full"
-                      size="lg"
-                    >
-                      Start Quiz
-                    </Button>
-                  )}
+                      {userHasCompletedQuiz ? (
+                        <div className="p-4 bg-muted rounded-lg text-center">
+                          ✓ Quiz Completed
+                        </div>
+                      ) : (
+                        <Button
+                          onClick={() => setIsPlayingQuiz(true)}
+                          className="w-full"
+                          size="lg"
+                        >
+                          Start Quiz
+                        </Button>
+                      )}
 
-                  <Button
-                    variant="outline"
-                    onClick={() => setSelectedQuiz(null)}
-                    className="w-full"
-                  >
-                    Back to Quiz List
-                  </Button>
-                </CardContent>
-              </Card>
+                      <Button
+                        variant="outline"
+                        onClick={() => setSelectedQuiz(null)}
+                        className="w-full"
+                      >
+                        Back to Quiz List
+                      </Button>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
 
-              <QuizLeaderboard scores={quizScores} />
+              <div>
+                {quizScoresLoading ? (
+                  <p>Loading leaderboard...</p>
+                ) : (
+                  <QuizLeaderboard scores={selectedQuiz ? quizScores : []} />
+                )}
+              </div>
             </div>
           )}
 

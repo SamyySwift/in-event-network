@@ -11,7 +11,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { WordSearchGrid } from '@/components/games/WordSearchGrid';
 import { WordSearchLeaderboard } from '@/components/games/WordSearchLeaderboard';
 import { QuizPlayer } from '@/components/games/QuizPlayer';
-import { QuizLeaderboard } from '@/components/games/QuizLeaderboard';
 import { QuizResults } from '@/components/games/QuizResults';
 import { GameCelebration } from '@/components/games/GameCelebration';
 import { Gamepad2, Trophy, Clock, Sparkles, Lightbulb, Brain } from 'lucide-react';
@@ -161,6 +160,16 @@ const AttendeeGames = () => {
   }));
 
   const activeQuizzes = quizGames.filter((q) => q.is_active);
+  const quizAdaptedScores = quizScores.map((s: any) => ({
+    id: s.user_id,
+    user_id: s.user_id,
+    points: s.total_score,
+    time_seconds: s.total_time,
+    completed_at: s.created_at || '',
+    name: s.profiles?.name,
+    photo_url: s.profiles?.photo_url,
+    profiles: { name: s.profiles?.name, photo_url: s.profiles?.photo_url },
+  }));
   const userHasCompletedQuiz = selectedQuiz && quizScores.some(s => s.user_id === currentUser?.id);
 
   const handleQuizComplete = async (score: number, correctAnswers: number, totalTime: number) => {

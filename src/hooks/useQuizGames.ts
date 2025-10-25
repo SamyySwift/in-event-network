@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -189,6 +190,31 @@ export const useQuizScores = (quizGameId: string | null) => {
     enabled: !!quizGameId,
   });
 
+  // Real-time subscription for score updates
+  useEffect(() => {
+    if (!quizGameId) return;
+
+    const channel = supabase
+      .channel('quiz-scores-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'quiz_scores',
+          filter: `quiz_game_id=eq.${quizGameId}`
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['quiz-scores', quizGameId] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [quizGameId, queryClient]);
+
   const submitScore = useMutation({
     mutationFn: async (scoreData: {
       quiz_game_id: string;
@@ -208,6 +234,10 @@ export const useQuizScores = (quizGameId: string | null) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quiz-scores', quizGameId] });
+      toast.success('Score submitted successfully!');
+    },
+    onError: (error: any) => {
+      toast.error('Failed to submit score: ' + error.message);
     },
   });
 

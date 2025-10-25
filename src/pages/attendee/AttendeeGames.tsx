@@ -3,7 +3,6 @@ import AppLayout from '@/components/layouts/AppLayout';
 import { useAttendeeContext } from '@/hooks/useAttendeeContext';
 import { useWordSearchGames, useWordSearchScores } from '@/hooks/useWordSearchGames';
 import { useWordSearchLeaderboard } from '@/hooks/useWordSearchLeaderboard';
-import { useQuizLeaderboard } from '@/hooks/useQuizLeaderboard';
 import { useQuizGames, useQuizQuestions, useQuizScores } from '@/hooks/useQuizGames';
 import { useAuth } from '@/contexts/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,7 +40,6 @@ const AttendeeGames = () => {
   const { scores, isLoading: scoresLoading } = useWordSearchLeaderboard(context?.currentEventId || null);
   const { questions: quizQuestions } = useQuizQuestions(selectedQuiz?.id);
   const { scores: quizScores, isLoading: quizScoresLoading, submitScore: submitQuizScore } = useQuizScores(selectedQuiz?.id);
-  const { scores: quizLeaderboardScores, isLoading: quizLeaderboardLoading } = useQuizLeaderboard(context?.currentEventId || null);
 
   // Check if current user has already completed this game
   const userHasCompleted = scores.some(score => score.user_id === currentUser?.id);
@@ -162,15 +160,15 @@ const AttendeeGames = () => {
   }));
 
   const activeQuizzes = quizGames.filter((q) => q.is_active);
-  const quizAdaptedScores = quizLeaderboardScores.map((s: any) => ({
+  const quizAdaptedScores = quizScores.map((s: any) => ({
     id: s.user_id,
     user_id: s.user_id,
     points: s.total_score,
     time_seconds: s.total_time,
-    completed_at: '',
-    name: s.name,
-    photo_url: s.photo_url,
-    profiles: { name: s.name, photo_url: s.photo_url },
+    completed_at: s.completed_at || '',
+    name: s.profiles?.name,
+    photo_url: s.profiles?.photo_url,
+    profiles: { name: s.profiles?.name, photo_url: s.profiles?.photo_url },
   }));
   const userHasCompletedQuiz = selectedQuiz && quizScores.some(s => s.user_id === currentUser?.id);
 
@@ -452,7 +450,7 @@ const AttendeeGames = () => {
               </div>
 
               <div>
-                {quizLeaderboardLoading ? (
+                {quizScoresLoading ? (
                   <p>Loading leaderboard...</p>
                 ) : (
                   <WordSearchLeaderboard scores={quizAdaptedScores as any} />

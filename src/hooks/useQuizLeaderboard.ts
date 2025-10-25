@@ -39,7 +39,6 @@ export const useQuizLeaderboard = (eventId: string | null) => {
           total_score,
           total_time,
           correct_answers,
-          created_at,
           profiles:user_id(name, photo_url),
           quiz_game_id
         `)

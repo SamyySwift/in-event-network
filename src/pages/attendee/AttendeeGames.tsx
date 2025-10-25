@@ -16,6 +16,7 @@ import { GameCelebration } from '@/components/games/GameCelebration';
 import { Gamepad2, Trophy, Clock, Sparkles, Lightbulb, Brain } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuizLeaderboard } from '@/hooks/useQuizLeaderboard';
 
 const AttendeeGames = () => {
   const { context } = useAttendeeContext();
@@ -40,6 +41,7 @@ const AttendeeGames = () => {
   const { scores, isLoading: scoresLoading } = useWordSearchLeaderboard(context?.currentEventId || null);
   const { questions: quizQuestions } = useQuizQuestions(selectedQuiz?.id);
   const { scores: quizScores, isLoading: quizScoresLoading, submitScore: submitQuizScore } = useQuizScores(selectedQuiz?.id);
+  const { scores: quizLeaderboardScores, isLoading: quizLeaderboardLoading } = useQuizLeaderboard(context?.currentEventId || null);
 
   // Check if current user has already completed this game
   const userHasCompleted = scores.some(score => score.user_id === currentUser?.id);
@@ -160,15 +162,15 @@ const AttendeeGames = () => {
   }));
 
   const activeQuizzes = quizGames.filter((q) => q.is_active);
-  const quizAdaptedScores = quizScores.map((s: any) => ({
+  const quizAdaptedScores = quizLeaderboardScores.map((s: any) => ({
     id: s.user_id,
     user_id: s.user_id,
     points: s.total_score,
     time_seconds: s.total_time,
-    completed_at: s.completed_at || '',
-    name: s.profiles?.name,
-    photo_url: s.profiles?.photo_url,
-    profiles: { name: s.profiles?.name, photo_url: s.profiles?.photo_url },
+    completed_at: '',
+    name: s.name,
+    photo_url: s.photo_url,
+    profiles: { name: s.name, photo_url: s.photo_url },
   }));
   const userHasCompletedQuiz = selectedQuiz && quizScores.some(s => s.user_id === currentUser?.id);
 
@@ -186,6 +188,14 @@ const AttendeeGames = () => {
       correct_answers: correctAnswers,
       total_time: totalTime,
     });
+  };
+
+  const handleStartQuiz = () => {
+    if (userHasCompletedQuiz) {
+      toast.error("You've already completed this quiz!");
+      return;
+    }
+    setIsPlayingQuiz(true);
   };
 
   return (
@@ -429,9 +439,10 @@ const AttendeeGames = () => {
                         </div>
                       ) : (
                         <Button
-                          onClick={() => setIsPlayingQuiz(true)}
+                          onClick={handleStartQuiz}
                           className="w-full"
                           size="lg"
+                          disabled={quizScoresLoading || !!userHasCompletedQuiz}
                         >
                           Start Quiz
                         </Button>
@@ -450,7 +461,7 @@ const AttendeeGames = () => {
               </div>
 
               <div>
-                {quizScoresLoading ? (
+                {quizLeaderboardLoading ? (
                   <p>Loading leaderboard...</p>
                 ) : (
                   <WordSearchLeaderboard scores={quizAdaptedScores as any} />

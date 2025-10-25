@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -30,6 +30,9 @@ const MEDAL_COLORS = {
 
 const LiveGames = () => {
   const { eventId } = useParams();
+  const location = useLocation();
+  const tab = new URLSearchParams(location.search).get('tab');
+  const isQuiz = tab === 'quiz';
   const [scores, setScores] = useState<LeaderboardEntry[]>([]);
   const [activeGame, setActiveGame] = useState<Game | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -39,20 +42,44 @@ const LiveGames = () => {
     if (!eventId) return;
 
     try {
-      const { data, error } = await supabase.functions.invoke('get-wordsearch-leaderboard', {
-        body: { eventId },
-      });
+      if (isQuiz) {
+        if (!activeGame?.id) return;
+        const { data, error } = await supabase
+          .from('quiz_scores')
+          .select(`
+            user_id,
+            total_score,
+            total_time,
+            correct_answers,
+            profiles:user_id(name, photo_url)
+          `)
+          .eq('quiz_game_id', activeGame.id)
+          .order('total_score', { ascending: false })
+          .order('total_time', { ascending: true });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      const newScores: LeaderboardEntry[] = data.scores || [];
-      setScores(newScores);
-      
+        const newScores: LeaderboardEntry[] = (data || []).map((r: any) => ({
+          user_id: r.user_id,
+          points: r.total_score,
+          time_seconds: r.total_time,
+          name: r.profiles?.name || 'Anonymous',
+          photo_url: r.profiles?.photo_url || undefined,
+          completed_at: ''
+        }));
+        setScores(newScores);
+      } else {
+        const { data, error } = await supabase.functions.invoke('get-wordsearch-leaderboard', {
+          body: { eventId },
+        });
+        if (error) throw error;
+        const newScores: LeaderboardEntry[] = data.scores || [];
+        setScores(newScores);
+      }
+
       // Highlight top 3 for animation
-      const newHighlighted = new Set(newScores.slice(0, 3).map((s: LeaderboardEntry) => s.user_id));
+      const newHighlighted = new Set((scores || []).slice(0, 3).map((s: LeaderboardEntry) => s.user_id));
       setHighlightedIds(newHighlighted);
-      
-      // Clear highlight after animation
       setTimeout(() => setHighlightedIds(new Set()), 2000);
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
@@ -63,8 +90,9 @@ const LiveGames = () => {
     if (!eventId) return;
 
     const fetchActiveGame = async () => {
+      const table = isQuiz ? 'quiz_games' : 'word_search_games';
       const { data, error } = await supabase
-        .from('word_search_games')
+        .from(table)
         .select('id, title, is_active')
         .eq('event_id', eventId)
         .eq('is_active', true)
@@ -87,14 +115,20 @@ const LiveGames = () => {
 
     // Subscribe to real-time updates
     const channel = supabase
-      .channel('word-search-scores-changes')
+      .channel(isQuiz ? 'quiz-scores-changes' : 'word-search-scores-changes')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'word_search_scores',
-        },
+        isQuiz
+          ? {
+              event: '*',
+              schema: 'public',
+              table: 'quiz_scores',
+            }
+          : {
+              event: '*',
+              schema: 'public',
+              table: 'word_search_scores',
+            },
         () => {
           fetchScores();
         }
@@ -104,7 +138,7 @@ const LiveGames = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [eventId]);
+  }, [eventId, isQuiz]);
 
   if (isLoading) {
     return (

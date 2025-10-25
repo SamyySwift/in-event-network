@@ -539,13 +539,13 @@ const AdminGames = () => {
                     </p>
                     <div className="flex gap-2">
                       <div className="flex-1 p-3 bg-muted rounded-lg text-sm font-mono break-all">
-                        {`${window.location.origin}/live-games?eventId=${selectedEventId}&tab=quiz`}
+                        {`${window.location.origin}/live-games/${selectedEventId}?tab=quiz`}
                       </div>
                       <Button
                         variant="outline"
                         size="icon"
                         onClick={() => {
-                          navigator.clipboard.writeText(`${window.location.origin}/live-games?eventId=${selectedEventId}&tab=quiz`);
+                          navigator.clipboard.writeText(`${window.location.origin}/live-games/${selectedEventId}?tab=quiz`);
                           toast.success('Link copied to clipboard!');
                         }}
                       >
@@ -554,7 +554,7 @@ const AdminGames = () => {
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => window.open(`${window.location.origin}/live-games?eventId=${selectedEventId}&tab=quiz`, '_blank')}
+                        onClick={() => window.open(`${window.location.origin}/live-games/${selectedEventId}?tab=quiz`, '_blank')}
                       >
                         <ExternalLink className="h-4 w-4" />
                       </Button>

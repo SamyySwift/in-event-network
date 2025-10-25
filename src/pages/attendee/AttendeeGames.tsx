@@ -453,7 +453,7 @@ const AttendeeGames = () => {
                 {quizScoresLoading ? (
                   <p>Loading leaderboard...</p>
                 ) : (
-                  <QuizLeaderboard scores={selectedQuiz ? quizScores : []} />
+                  <WordSearchLeaderboard scores={quizAdaptedScores as any} />
                 )}
               </div>
             </div>

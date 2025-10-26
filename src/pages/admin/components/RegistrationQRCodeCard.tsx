@@ -25,7 +25,7 @@ const RegistrationQRCodeCard: React.FC<RegistrationQRCodeCardProps> = ({ accessK
       {accessKey ? (
         <QRCodeGenerator
           eventName="Join Event"
-          eventUrl={`${window.location.origin}/register?code=${accessKey}`}
+          eventUrl={`${window.location.origin}/register?eventCode=${accessKey}`}
         />
       ) : (
         isLoading ?

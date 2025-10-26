@@ -27,10 +27,22 @@ const JoinEvent = () => {
     if (!currentUser) {
       // User not authenticated, redirect to register with the code or event id
       if (accessCode) {
-        if (/^\d{6}$/.test(accessCode)) {
-          navigate(`/register?eventCode=${accessCode}&role=attendee`, { replace: true });
+        const trimmedCode = accessCode.trim();
+        const isSixDigit = /^\d{6}$/.test(trimmedCode);
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(trimmedCode);
+        
+        if (isSixDigit) {
+          // 6-digit event key
+          sessionStorage.setItem('pendingEventCode', trimmedCode);
+          navigate(`/register?eventCode=${trimmedCode}&role=attendee`, { replace: true });
+        } else if (isUuid) {
+          // UUID event ID
+          sessionStorage.setItem('pendingEventId', trimmedCode);
+          navigate(`/register?eventId=${trimmedCode}&role=attendee`, { replace: true });
         } else {
-          navigate(`/register?eventId=${accessCode}&role=attendee`, { replace: true });
+          // Host access key
+          sessionStorage.setItem('pendingEventCode', trimmedCode);
+          navigate(`/register?eventCode=${trimmedCode}&role=attendee`, { replace: true });
         }
       } else {
         setJoinStatus('error');

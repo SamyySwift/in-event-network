@@ -32,7 +32,7 @@ export const useEventByAccessCode = (accessCode: string | null) => {
           .from('events')
           .select('id, name, banner_url, logo_url, description, start_time, end_time, location, host_id')
           .eq('event_key', trimmed)
-          .single();
+          .maybeSingle();
 
         if (eventError || !eventData) {
           console.error('Event not found for event key:', trimmed, eventError);
@@ -45,7 +45,7 @@ export const useEventByAccessCode = (accessCode: string | null) => {
             .from('profiles')
             .select('name')
             .eq('id', eventData.host_id)
-            .single();
+            .maybeSingle();
           hostName = hostProfile?.name ?? null;
         }
 
@@ -69,7 +69,7 @@ export const useEventByAccessCode = (accessCode: string | null) => {
         .select('id, name')
         .eq('access_key', trimmed)
         .eq('role', 'host')
-        .single();
+        .maybeSingle();
 
       if (hostError || !hostProfile) {
         console.error('Host not found for access code:', trimmed, hostError);
@@ -84,7 +84,7 @@ export const useEventByAccessCode = (accessCode: string | null) => {
         .eq('host_id', hostProfile.id)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       if (eventError || !eventData) {
         console.error('Event not found for host:', hostProfile.id, eventError);

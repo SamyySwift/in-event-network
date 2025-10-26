@@ -29,7 +29,7 @@ export const useEventById = (eventId: string | null) => {
         .from('events')
         .select('id, name, banner_url, logo_url, description, start_time, end_time, location, host_id')
         .eq('id', eventId)
-        .single();
+        .maybeSingle();
 
       if (eventError || !eventData) {
         console.error('Event not found for id:', eventId, eventError);
@@ -43,7 +43,7 @@ export const useEventById = (eventId: string | null) => {
           .from('profiles')
           .select('name')
           .eq('id', eventData.host_id)
-          .single();
+          .maybeSingle();
 
         if (hostError) {
           console.warn('Could not fetch host name for event:', eventId, hostError);

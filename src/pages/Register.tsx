@@ -378,19 +378,6 @@ const Register = () => {
     }
   };
 
-  // Show loading during registration or event joining
-  if (isSubmitting || isJoiningEvent) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-blue-950 text-white flex flex-col justify-center items-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400 mx-auto mb-4"></div>
-          <p className="text-white/80">
-            {isSubmitting ? "Creating your account..." : "Joining event..."}
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   // Don't render registration form if user is already authenticated
   if (currentUser) {

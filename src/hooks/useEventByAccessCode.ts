@@ -22,24 +22,62 @@ export const useEventByAccessCode = (accessCode: string | null) => {
         return null;
       }
 
-      console.log('Fetching event data for access code:', accessCode);
+      const trimmed = accessCode.trim();
+      console.log('Fetching event data for access code:', trimmed);
 
-      // First, find the host with this access key
+      // If it's a 6-digit code, treat it as an event_key and fetch the event directly
+      const isEventKey = /^\d{6}$/.test(trimmed);
+      if (isEventKey) {
+        const { data: eventData, error: eventError } = await supabase
+          .from('events')
+          .select('id, name, banner_url, logo_url, description, start_time, end_time, location, host_id')
+          .eq('event_key', trimmed)
+          .single();
+
+        if (eventError || !eventData) {
+          console.error('Event not found for event key:', trimmed, eventError);
+          return null;
+        }
+
+        let hostName: string | null = null;
+        if (eventData.host_id) {
+          const { data: hostProfile } = await supabase
+            .from('profiles')
+            .select('name')
+            .eq('id', eventData.host_id)
+            .single();
+          hostName = hostProfile?.name ?? null;
+        }
+
+        console.log('Found event by event_key:', eventData);
+        return {
+          id: eventData.id,
+          name: eventData.name,
+          banner_url: eventData.banner_url,
+          logo_url: eventData.logo_url,
+          description: eventData.description,
+          start_time: eventData.start_time,
+          end_time: eventData.end_time,
+          location: eventData.location,
+          host_name: hostName,
+        };
+      }
+
+      // Otherwise, treat it as a host access_key and fetch the latest event for that host
       const { data: hostProfile, error: hostError } = await supabase
         .from('profiles')
         .select('id, name')
-        .eq('access_key', accessCode)
+        .eq('access_key', trimmed)
         .eq('role', 'host')
         .single();
 
       if (hostError || !hostProfile) {
-        console.error('Host not found for access code:', accessCode, hostError);
+        console.error('Host not found for access code:', trimmed, hostError);
         return null;
       }
 
       console.log('Found host profile:', hostProfile);
 
-      // Then get the most recent event for this host
       const { data: eventData, error: eventError } = await supabase
         .from('events')
         .select('id, name, banner_url, logo_url, description, start_time, end_time, location')

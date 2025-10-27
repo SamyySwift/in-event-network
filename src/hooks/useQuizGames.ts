@@ -223,9 +223,13 @@ export const useQuizScores = (quizGameId: string | null) => {
       correct_answers: number;
       total_time: number;
     }) => {
+      const payload = {
+        ...scoreData,
+        completed_at: new Date().toISOString(),
+      };
       const { data, error } = await supabase
         .from('quiz_scores')
-        .upsert([scoreData], { onConflict: 'quiz_game_id,user_id' })
+        .upsert([payload], { onConflict: 'quiz_game_id,user_id' })
         .select()
         .single();
 
@@ -234,6 +238,8 @@ export const useQuizScores = (quizGameId: string | null) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quiz-scores', quizGameId] });
+      // Also refresh any event-level quiz leaderboards
+      queryClient.invalidateQueries({ queryKey: ['quiz-leaderboard'] });
       toast.success('Score submitted successfully!');
     },
     onError: (error: any) => {

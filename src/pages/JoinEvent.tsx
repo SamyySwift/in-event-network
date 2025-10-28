@@ -4,10 +4,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useJoinEvent } from '@/hooks/useJoinEvent';
 import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent } from '@/components/ui/card';
-import { CheckCircle, AlertCircle, Loader } from 'lucide-react';
+import { CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import EventInfoCard from '@/components/attendee/EventInfoCard';
-import { useEventByAccessCode } from '@/hooks/useEventByAccessCode';
 
 const JoinEvent = () => {
   const { code } = useParams<{ code: string }>();
@@ -17,14 +15,11 @@ const JoinEvent = () => {
   const { currentUser, isLoading: authLoading } = useAuth();
   const { joinEvent, isJoining } = useJoinEvent();
   const { toast } = useToast();
-  const [joinStatus, setJoinStatus] = useState<'loading' | 'preview' | 'joining' | 'success' | 'error'>('loading');
+  const [joinStatus, setJoinStatus] = useState<'loading' | 'success' | 'error' | 'unauthorized'>('loading');
   const [eventName, setEventName] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
   const accessCode = code || codeFromParam;
-  
-  // Fetch event details
-  const { data: eventData, isLoading: isLoadingEvent } = useEventByAccessCode(accessCode);
 
   useEffect(() => {
     if (authLoading) return;
@@ -56,119 +51,47 @@ const JoinEvent = () => {
       return;
     }
 
-    // User is authenticated and event data is loaded, show preview
-    if (currentUser && eventData && joinStatus === 'loading') {
-      setJoinStatus('preview');
-    }
-  }, [currentUser, authLoading, accessCode, eventData, joinStatus, navigate]);
-  
-  const handleConfirmJoin = () => {
-    if (!accessCode || !/^\d{6}$/.test(accessCode)) {
+    // User is authenticated, try to join the event
+    if (accessCode && /^\d{6}$/.test(accessCode)) {
+      joinEvent(accessCode, {
+        onSuccess: (data: any) => {
+          console.log('Join event success:', data);
+          setJoinStatus('success');
+          setEventName(data?.event_name || 'Event');
+          
+
+          // Navigate to attendee dashboard after a short delay
+          setTimeout(() => {
+            navigate('/attendee', { replace: true });
+          }, 2000);
+        },
+        onError: (error: any) => {
+          console.error('Join event error:', error);
+          setJoinStatus('error');
+          setErrorMessage(error?.message || "Failed to join the event. Please try again.");
+          
+          toast({
+            title: "Failed to Join Event",
+            description: error?.message || "Could not join the event. Please try again.",
+            variant: "destructive"
+          });
+        }
+      });
+    } else {
       setJoinStatus('error');
       setErrorMessage('Invalid access code format');
-      return;
     }
-    
-    setJoinStatus('joining');
-    
-    joinEvent(accessCode, {
-      onSuccess: (data: any) => {
-        console.log('Join event success:', data);
-        setJoinStatus('success');
-        setEventName(data?.event_name || 'Event');
+  }, [currentUser, authLoading, accessCode, joinEvent, navigate, toast]);
 
-        // Navigate to attendee dashboard after a short delay
-        setTimeout(() => {
-          navigate('/attendee', { replace: true });
-        }, 2000);
-      },
-      onError: (error: any) => {
-        console.error('Join event error:', error);
-        setJoinStatus('error');
-        setErrorMessage(error?.message || "Failed to join the event. Please try again.");
-        
-        toast({
-          title: "Failed to Join Event",
-          description: error?.message || "Could not join the event. Please try again.",
-          variant: "destructive"
-        });
-      }
-    });
-  };
-
-  if (authLoading || isLoadingEvent) {
+  if (authLoading || joinStatus === 'loading' || isJoining) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Card className="w-full max-w-md mx-4">
           <CardContent className="py-16 text-center">
-            <Loader className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
             <h2 className="text-xl font-semibold mb-2">
-              {authLoading ? 'Checking authentication...' : 'Loading event details...'}
+              {isJoining ? 'Joining Event...' : 'Loading...'}
             </h2>
-            <p className="text-muted-foreground">
-              Please wait while we process your request.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-  
-  // Show event preview before joining
-  if (joinStatus === 'preview' && eventData) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <div className="w-full max-w-md space-y-6">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold mb-2">Join Event</h2>
-            <p className="text-muted-foreground">Review the event details below</p>
-          </div>
-          
-          <EventInfoCard
-            eventName={eventData.name}
-            startTime={eventData.start_time}
-            endTime={eventData.end_time}
-            location={eventData.location}
-            hostName={eventData.host_name}
-            description={eventData.description}
-          />
-          
-          <div className="flex gap-3">
-            <Button
-              variant="outline"
-              onClick={() => navigate('/scan')}
-              className="flex-1"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleConfirmJoin}
-              className="flex-1"
-              disabled={isJoining}
-            >
-              {isJoining ? (
-                <>
-                  <Loader className="mr-2 h-4 w-4 animate-spin" />
-                  Joining...
-                </>
-              ) : (
-                'Join Event'
-              )}
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-  
-  // Joining state
-  if (joinStatus === 'joining' || isJoining) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <Card className="w-full max-w-md mx-4">
-          <CardContent className="py-16 text-center">
-            <Loader className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-            <h2 className="text-xl font-semibold mb-2">Joining Event...</h2>
             <p className="text-muted-foreground">
               Please wait while we process your request.
             </p>

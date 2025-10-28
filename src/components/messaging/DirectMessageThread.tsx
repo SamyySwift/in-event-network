@@ -297,15 +297,15 @@ const DirectMessageBubble: React.FC<DirectMessageBubbleProps> = ({ message, isOw
           <span className="text-xs text-gray-500 dark:text-gray-400">{timeAgo}</span>
         </div>
 
-        <div className="relative inline-block">
+        <div className="relative inline-block max-w-[80%]">
           <div
-            className={`rounded-lg px-3 py-2 break-words max-w-[80%] ${
+            className={`rounded-lg px-3 py-2 w-fit ${
               isOwn
-                ? 'bg-connect-600 text-white ml-auto'
+                ? 'bg-connect-600 text-white'
                 : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
-            } ${isOwn ? 'ml-auto' : ''}`}
+            }`}
           >
-            <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+            <p className="text-sm leading-relaxed break-words">{message.content}</p>
           </div>
           
           {/* Delete button - only show for own messages */}

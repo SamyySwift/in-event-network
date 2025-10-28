@@ -13,11 +13,14 @@ import {
   CheckCircle,
   LogOut,
   AlertTriangle,
+  Loader,
 } from "lucide-react";
 import AppLayout from "@/components/layouts/AppLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import EventInfoCard from "@/components/attendee/EventInfoCard";
+import { useEventByAccessCode } from "@/hooks/useEventByAccessCode";
 
 const ScanQR = () => {
   const navigate = useNavigate();
@@ -28,6 +31,10 @@ const ScanQR = () => {
   const [eventName, setEventName] = useState("");
   const [activeTab, setActiveTab] = useState<"scan" | "code">("scan");
   const [eventCode, setEventCode] = useState("");
+  const [scannedCode, setScannedCode] = useState<string | null>(null);
+  
+  // Fetch event details when code is scanned
+  const { data: eventData, isLoading: isLoadingEvent } = useEventByAccessCode(scannedCode);
 
   // Check if user is admin/host and show restriction message
   if (currentUser?.role === "host") {
@@ -126,45 +133,9 @@ const ScanQR = () => {
 
       if (accessCode && /^\d{6}$/.test(accessCode)) {
         console.log("Extracted access code:", accessCode);
-
-        joinEvent(accessCode, {
-          onSuccess: (data: any) => {
-            console.log("Join event success:", data);
-            setScanSuccess(true);
-            setEventName(data?.event_name || "Event");
-
-            // Navigate to dashboard after a short delay
-            setTimeout(() => {
-              navigate("/attendee", { replace: true });
-            }, 2000);
-          },
-          onError: (error: any) => {
-            console.error("Join event error:", error);
-
-            // Check if the error is due to authentication or user not found
-            if (
-              error?.message?.includes("not authenticated") ||
-              error?.message?.includes("login") ||
-              error?.code === "PGRST301" ||
-              !currentUser
-            ) {
-              // Store the access code in both storages and redirect to register with the code
-              sessionStorage.setItem("pendingEventCode", accessCode);
-              localStorage.setItem("pendingEventCode", accessCode);
-              navigate(`/register?eventCode=${accessCode}&role=attendee`, {
-                replace: true,
-              });
-              return;
-            }
-
-            toast({
-              title: "Failed to Join Event",
-              description:
-                error?.message || "Could not join the event. Please try again.",
-              variant: "destructive",
-            });
-          },
-        });
+        
+        // Set the scanned code to trigger event data fetch
+        setScannedCode(accessCode);
       } else {
         toast({
           title: "Invalid QR Code",
@@ -233,37 +204,142 @@ const ScanQR = () => {
       return;
     }
 
-    joinEvent(trimmed, {
+    // Set the scanned code to trigger event data fetch
+    setScannedCode(trimmed);
+  };
+  
+  const handleConfirmJoin = () => {
+    if (!scannedCode) return;
+    
+    joinEvent(scannedCode, {
       onSuccess: (data: any) => {
+        console.log("Join event success:", data);
         setScanSuccess(true);
         setEventName(data?.event_name || "Event");
+
+        // Navigate to dashboard after a short delay
         setTimeout(() => {
           navigate("/attendee", { replace: true });
-        }, 1000);
+        }, 2000);
       },
       onError: (error: any) => {
+        console.error("Join event error:", error);
+
+        // Check if the error is due to authentication or user not found
         if (
           error?.message?.includes("not authenticated") ||
           error?.message?.includes("login") ||
           error?.code === "PGRST301" ||
           !currentUser
         ) {
-          sessionStorage.setItem("pendingEventCode", trimmed);
-          localStorage.setItem("pendingEventCode", trimmed);
-          navigate(`/register?eventCode=${trimmed}&role=attendee`, {
+          // Store the access code in both storages and redirect to register with the code
+          sessionStorage.setItem("pendingEventCode", scannedCode);
+          localStorage.setItem("pendingEventCode", scannedCode);
+          navigate(`/register?eventCode=${scannedCode}&role=attendee`, {
             replace: true,
           });
           return;
         }
+
         toast({
-          title: "Invalid event code",
+          title: "Failed to Join Event",
           description:
-            "Invalid event code. Please check with your event organizer.",
+            error?.message || "Could not join the event. Please try again.",
           variant: "destructive",
         });
       },
     });
   };
+
+  // Show event preview when code is scanned
+  if (scannedCode && !scanSuccess) {
+    return (
+      <AppLayout>
+        <div className="max-w-2xl mx-auto py-8">
+          <div className="flex items-center mb-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setScannedCode(null);
+                setEventCode("");
+              }}
+              className="mr-4"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <h1 className="text-2xl font-bold">Confirm Event</h1>
+          </div>
+          
+          {isLoadingEvent ? (
+            <Card>
+              <CardContent className="py-16 text-center">
+                <Loader className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+                <p className="text-muted-foreground">Loading event details...</p>
+              </CardContent>
+            </Card>
+          ) : eventData ? (
+            <div className="space-y-6">
+              <EventInfoCard
+                eventName={eventData.name}
+                startTime={eventData.start_time}
+                endTime={eventData.end_time}
+                location={eventData.location}
+                hostName={eventData.host_name}
+                description={eventData.description}
+              />
+              
+              <div className="flex gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setScannedCode(null);
+                    setEventCode("");
+                  }}
+                  className="flex-1"
+                  disabled={isJoining}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleConfirmJoin}
+                  className="flex-1"
+                  disabled={isJoining}
+                >
+                  {isJoining ? (
+                    <>
+                      <Loader className="mr-2 h-4 w-4 animate-spin" />
+                      Joining...
+                    </>
+                  ) : (
+                    'Join Event'
+                  )}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="py-16 text-center">
+                <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+                <p className="text-muted-foreground mb-4">
+                  Event not found. Please check the code and try again.
+                </p>
+                <Button
+                  onClick={() => {
+                    setScannedCode(null);
+                    setEventCode("");
+                  }}
+                >
+                  Try Again
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -312,14 +388,6 @@ const ScanQR = () => {
                     width="100%"
                     height="400px"
                   />
-
-                  {isJoining && (
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground">
-                        Joining event...
-                      </p>
-                    </div>
-                  )}
                 </div>
               </TabsContent>
 
@@ -344,9 +412,9 @@ const ScanQR = () => {
                       />
                       <Button
                         onClick={handleManualJoin}
-                        disabled={isJoining || eventCode.length !== 6}
+                        disabled={eventCode.length !== 6}
                       >
-                        Join
+                        Continue
                       </Button>
                     </div>
                     <p className="text-xs text-muted-foreground">

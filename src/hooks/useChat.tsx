@@ -73,6 +73,27 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
     }
 
     try {
+      // Ensure user is in event_participants before fetching (required for RLS to see other profiles)
+      if (currentUser?.id) {
+        const { data: participation } = await supabase
+          .from('event_participants')
+          .select('id')
+          .eq('user_id', currentUser.id)
+          .eq('event_id', effectiveEventId)
+          .maybeSingle();
+
+        if (!participation) {
+          console.log('Adding user to event_participants for chat access');
+          const { error: joinErr } = await supabase
+            .from('event_participants')
+            .insert({ event_id: effectiveEventId, user_id: currentUser.id });
+          
+          if (joinErr && (joinErr as any).code !== '23505') {
+            console.error('Failed to add user to event_participants:', joinErr);
+          }
+        }
+      }
+
       console.log('Fetching chat messages for event:', effectiveEventId, 'room:', effectiveRoomId);
 
       let query = supabase

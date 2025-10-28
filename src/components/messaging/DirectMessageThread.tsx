@@ -1,7 +1,7 @@
 
 // Top-level imports section
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, ArrowLeft } from 'lucide-react';
+import { Send, ArrowLeft, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
@@ -39,7 +39,7 @@ export const DirectMessageThread: React.FC<DirectMessageThreadProps> = ({
     return !!r && ['admin', 'host', 'organizer', 'owner', 'moderator', 'staff'].includes(r);
   };
 
-  const { messages, loading, sendMessage } = useDirectMessages(actualRecipientId);
+  const { messages, loading, sendMessage, deleteMessage } = useDirectMessages(actualRecipientId);
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -216,6 +216,7 @@ export const DirectMessageThread: React.FC<DirectMessageThreadProps> = ({
                 // Use current user to determine ownership
                 isOwn={message.sender_id === currentUser?.id}
                 message={message}
+                onDelete={deleteMessage}
               />
             ))
           )}
@@ -251,9 +252,11 @@ export const DirectMessageThread: React.FC<DirectMessageThreadProps> = ({
 interface DirectMessageBubbleProps {
   message: DirectMessage;
   isOwn: boolean;
+  onDelete: (messageId: string) => void;
 }
 
-const DirectMessageBubble: React.FC<DirectMessageBubbleProps> = ({ message, isOwn }) => {
+const DirectMessageBubble: React.FC<DirectMessageBubbleProps> = ({ message, isOwn, onDelete }) => {
+  const [showDelete, setShowDelete] = useState(false);
   const timeAgo = formatDistanceToNow(new Date(message.created_at), { addSuffix: true });
   // Always use the sender’s profile for avatar/name
   const profile = message.sender_profile;
@@ -267,7 +270,11 @@ const DirectMessageBubble: React.FC<DirectMessageBubbleProps> = ({ message, isOw
   const isFromAdmin = isAdminRole(profile?.role);
 
   return (
-    <div className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''}`}>
+    <div 
+      className={`flex gap-3 ${isOwn ? 'flex-row-reverse' : ''} group`}
+      onMouseEnter={() => setShowDelete(true)}
+      onMouseLeave={() => setShowDelete(false)}
+    >
       <Avatar className="h-8 w-8 flex-shrink-0">
         {profile?.photo_url ? (
           <AvatarImage src={profile.photo_url} alt={profileName} />
@@ -290,14 +297,29 @@ const DirectMessageBubble: React.FC<DirectMessageBubbleProps> = ({ message, isOw
           <span className="text-xs text-gray-500 dark:text-gray-400">{timeAgo}</span>
         </div>
 
-        <div
-          className={`rounded-lg px-3 py-2 break-words max-w-[80%] ${
-            isOwn
-              ? 'bg-connect-600 text-white ml-auto'
-              : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
-          } ${isOwn ? 'ml-auto' : ''}`}
-        >
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+        <div className="relative inline-block">
+          <div
+            className={`rounded-lg px-3 py-2 break-words max-w-[80%] ${
+              isOwn
+                ? 'bg-connect-600 text-white ml-auto'
+                : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
+            } ${isOwn ? 'ml-auto' : ''}`}
+          >
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+          </div>
+          
+          {/* Delete button - only show for own messages */}
+          {isOwn && showDelete && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`absolute -top-2 ${isOwn ? '-left-10' : '-right-10'} opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 p-0 hover:bg-red-100 dark:hover:bg-red-900/30`}
+              onClick={() => onDelete(message.id)}
+              title="Delete message"
+            >
+              <Trash2 className="h-3.5 w-3.5 text-red-600 dark:text-red-400" />
+            </Button>
+          )}
         </div>
       </div>
     </div>

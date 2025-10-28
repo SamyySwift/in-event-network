@@ -502,11 +502,56 @@ export const useDirectMessages = (recipientId?: string) => {
     }
   };
 
+  const deleteMessage = async (messageId: string) => {
+    if (!currentUser?.id) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to delete messages",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      console.log('Deleting message:', messageId);
+      
+      const { error } = await supabase
+        .from('direct_messages')
+        .delete()
+        .eq('id', messageId)
+        .eq('sender_id', currentUser.id); // Only allow deletion of own messages
+
+      if (error) {
+        console.error('Error deleting message:', error);
+        throw error;
+      }
+
+      // Remove from local state
+      setMessages(prev => prev.filter(msg => msg.id !== messageId));
+      
+      // Refresh conversations to update last message
+      fetchConversations();
+
+      toast({
+        title: "Message deleted",
+        description: "Your message has been removed",
+      });
+    } catch (error: any) {
+      console.error('Error in deleteMessage:', error);
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to delete message",
+        variant: "destructive",
+      });
+    }
+  };
+
   return {
     messages,
     conversations,
     loading,
     sendMessage,
+    deleteMessage,
     fetchMessages,
     fetchConversations,
   };

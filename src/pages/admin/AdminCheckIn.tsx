@@ -14,7 +14,7 @@ import CSVImportDialog from '@/components/admin/CSVImportDialog';
 import { useAdminCheckIns } from '@/hooks/useAdminCheckIns';
 import { useAdminTickets } from '@/hooks/useAdminTickets';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 
@@ -28,6 +28,7 @@ function AdminCheckInContent() {
   const { selectedEventId } = useAdminEventContext();
   const { checkInTicket, checkInTicketById, checkInByQR, isCheckingIn, bulkCheckInAll, isBulkCheckingIn } = useAdminCheckIns();
   const { eventTickets, isLoadingTickets, stats } = useAdminTickets();
+  const queryClient = useQueryClient();
 
   // Search for ticket by name or ticket number
   const { data: searchResults, isLoading: isSearching, refetch: searchTicket } = useQuery({
@@ -217,7 +218,16 @@ function AdminCheckInContent() {
           </div>
           <div className="flex flex-col gap-2 w-full sm:flex-row sm:w-auto">
             <ShareableCheckInLink />
-            <CSVImportDialog onImportComplete={() => window.location.reload()} />
+            {/* Replace window reload with query invalidation */}
+            <CSVImportDialog
+              onImportComplete={() => {
+                if (selectedEventId) {
+                  queryClient.invalidateQueries({ queryKey: ['admin-event-tickets', selectedEventId] });
+                } else {
+                  queryClient.invalidateQueries({ queryKey: ['admin-event-tickets'] });
+                }
+              }}
+            />
             <Button 
               onClick={handleBulkCheckIn}
               disabled={isBulkCheckingIn || stats.totalTickets === stats.checkedInTickets}

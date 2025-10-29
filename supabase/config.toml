@@ -102,3 +102,6 @@ verify_jwt = false
 
 [functions.get-wordsearch-leaderboard]
 verify_jwt = false
+
+[functions.event-ai-assistant]
+verify_jwt = false

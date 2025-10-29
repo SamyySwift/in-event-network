@@ -58,6 +58,7 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
+import { FloatingAIAssistant } from "@/components/attendee/FloatingAIAssistant";
 
 // Advertisement Carousel Component
 const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) => {
@@ -1059,6 +1060,9 @@ function AttendeeDashboardContent() {
             : null
         }
       />
+
+      {/* AI Assistant */}
+      {currentEventId && <FloatingAIAssistant eventId={currentEventId} />}
     </>
   );
 };

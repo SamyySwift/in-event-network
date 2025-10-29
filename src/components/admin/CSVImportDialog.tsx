@@ -128,6 +128,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     }
 
     setFile(selectedFile);
+    setIsOpen(true); // Keep dialog open
     
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -136,8 +137,8 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         const { data, headers } = parseCSV(content);
         setCsvData(data);
         setCsvHeaders(headers);
+        setIsOpen(true); // Ensure dialog stays open after parsing
         
-        // Fetch form fields for this event (done separately to avoid type issues)
         toast.success(`Parsed ${data.length} attendees from CSV with ${headers.length} columns`);
         
       } catch (error) {
@@ -149,8 +150,6 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       }
     };
     reader.readAsText(selectedFile);
-    
-    // Form fields will be fetched when dialog opens
   };
 
   const generateUniqueQRData = (attendee: CSVRow): string => {

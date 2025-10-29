@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdminEventContext } from '@/hooks/useAdminEventContext';
+import * as XLSX from 'xlsx';
 
 interface CSVRow {
   name: string;
@@ -56,41 +57,65 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
   const { selectedEventId } = useAdminEventContext();
 
   const parseCSV = (content: string): { data: CSVRow[], headers: string[] } => {
-    const lines = content.trim().split('\n');
-    if (lines.length < 2) {
-      throw new Error('CSV must have at least a header row and one data row');
-    }
-
-    const headers = lines[0].split(',').map(h => h.trim());
-    const headerLowerCase = headers.map(h => h.toLowerCase());
-    const nameIndex = headerLowerCase.findIndex(h => h.includes('name'));
-    const emailIndex = headerLowerCase.findIndex(h => h.includes('email'));
-
-    if (nameIndex === -1 || emailIndex === -1) {
-      throw new Error('CSV must contain "name" and "email" columns');
-    }
-
-    const data: CSVRow[] = [];
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
-      if (values.length >= headers.length && values[nameIndex] && values[emailIndex]) {
-        const row: CSVRow = {
-          name: values[nameIndex],
-          email: values[emailIndex]
-        };
-        
-        // Add all other columns as additional properties
-        headers.forEach((header, index) => {
-          if (index !== nameIndex && index !== emailIndex && values[index]) {
-            row[header] = values[index];
-          }
-        });
-        
-        data.push(row);
+    try {
+      // Use xlsx library to properly parse CSV with support for quoted fields, commas, etc.
+      const workbook = XLSX.read(content, { type: 'string', raw: true });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      
+      // Convert to JSON with header row
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false }) as string[][];
+      
+      if (jsonData.length < 2) {
+        throw new Error('CSV must have at least a header row and one data row');
       }
-    }
 
-    return { data, headers };
+      const headers = jsonData[0].map(h => (h || '').toString().trim()).filter(h => h);
+      const headerLowerCase = headers.map(h => h.toLowerCase());
+      const nameIndex = headerLowerCase.findIndex(h => h.includes('name'));
+      const emailIndex = headerLowerCase.findIndex(h => h.includes('email'));
+
+      if (nameIndex === -1 || emailIndex === -1) {
+        throw new Error('CSV must contain "name" and "email" columns');
+      }
+
+      const data: CSVRow[] = [];
+      for (let i = 1; i < jsonData.length; i++) {
+        const values = jsonData[i];
+        if (!values || values.length === 0) continue;
+        
+        const name = (values[nameIndex] || '').toString().trim();
+        const email = (values[emailIndex] || '').toString().trim();
+        
+        if (name && email) {
+          const row: CSVRow = {
+            name,
+            email
+          };
+          
+          // Add all other columns as additional properties
+          headers.forEach((header, index) => {
+            if (index !== nameIndex && index !== emailIndex) {
+              const value = (values[index] || '').toString().trim();
+              if (value) {
+                row[header] = value;
+              }
+            }
+          });
+          
+          data.push(row);
+        }
+      }
+
+      if (data.length === 0) {
+        throw new Error('No valid data rows found in CSV');
+      }
+
+      return { data, headers };
+    } catch (error) {
+      console.error('CSV parsing error:', error);
+      throw new Error(`Failed to parse CSV: ${(error as Error).message}`);
+    }
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {

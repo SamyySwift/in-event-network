@@ -105,6 +105,3 @@ verify_jwt = false
 
 [functions.event-ai-assistant]
 verify_jwt = false
-
-[functions.analyze-csv-import]
-verify_jwt = true

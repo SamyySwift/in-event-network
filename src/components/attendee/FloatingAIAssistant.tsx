@@ -120,11 +120,11 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ eventI
 
   return (
     <Card className={cn(
-      "fixed bottom-6 right-6 shadow-2xl z-50 transition-all duration-300",
-      isMinimized ? "w-80 h-16" : "w-96 h-[600px] flex flex-col"
+      "fixed bottom-4 right-4 shadow-2xl z-50 transition-all duration-300",
+      isMinimized ? "w-72 h-14" : "w-80 sm:w-96 h-[450px] sm:h-[500px] flex flex-col"
     )}>
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-lg">
+      <div className="flex items-center justify-between p-3 border-b bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-t-lg">
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5" />
           <div>

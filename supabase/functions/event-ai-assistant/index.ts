@@ -67,6 +67,63 @@ serve(async (req) => {
       .select('name, description, location, facility_type')
       .eq('event_id', eventId);
 
+    // Fetch attendees profiles
+    const { data: attendees } = await supabase
+      .from('profiles')
+      .select('full_name, bio, interests, organization, job_title')
+      .in('id', 
+        await supabase
+          .from('event_participants')
+          .select('user_id')
+          .eq('event_id', eventId)
+          .then(({ data }) => data?.map(p => p.user_id) || [])
+      );
+
+    // Fetch sponsors
+    const { data: sponsors } = await supabase
+      .from('event_sponsors')
+      .select('name, description, tier')
+      .eq('event_id', eventId);
+
+    // Fetch rules/guidelines
+    const { data: rules } = await supabase
+      .from('event_rules')
+      .select('title, description')
+      .eq('event_id', eventId);
+
+    // Fetch polls
+    const { data: polls } = await supabase
+      .from('event_polls')
+      .select('question, options')
+      .eq('event_id', eventId);
+
+    // Web search for event context (if event name exists)
+    let webContext = '';
+    if (event?.name) {
+      try {
+        const searchQuery = `${event.name} ${event.event_type || 'event'} ${event.location || ''}`;
+        const webSearchResponse = await fetch(`https://api.tavily.com/search`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            api_key: Deno.env.get('TAVILY_API_KEY') || 'tvly-demo-key',
+            query: searchQuery,
+            search_depth: 'basic',
+            max_results: 3,
+          })
+        });
+        
+        if (webSearchResponse.ok) {
+          const webData = await webSearchResponse.json();
+          webContext = webData.results?.map((r: any) => `- ${r.title}: ${r.content}`).join('\n') || '';
+        }
+      } catch (e) {
+        console.log('Web search not available:', e);
+      }
+    }
+
     const contextInfo = `
 Event Information:
 - Name: ${event?.name || 'N/A'}
@@ -86,6 +143,20 @@ ${announcements?.map((a: any) => `- ${a.title}: ${a.content}`).join('\n') || 'No
 
 Facilities:
 ${facilities?.map((f: any) => `- ${f.name} (${f.facility_type}): ${f.description || 'Available'} at ${f.location || 'See map'}`).join('\n') || 'No facilities listed'}
+
+Attendees (${attendees?.length || 0} registered):
+${attendees?.slice(0, 20).map((a: any) => `- ${a.full_name}${a.job_title ? ` (${a.job_title})` : ''}${a.organization ? ` at ${a.organization}` : ''}${a.interests ? ` - Interests: ${a.interests}` : ''}`).join('\n') || 'No attendees data'}
+
+Sponsors:
+${sponsors?.map((s: any) => `- ${s.name}${s.tier ? ` (${s.tier} tier)` : ''}: ${s.description || ''}`).join('\n') || 'No sponsors listed'}
+
+Event Rules/Guidelines:
+${rules?.map((r: any) => `- ${r.title}: ${r.description}`).join('\n') || 'No rules available'}
+
+Active Polls:
+${polls?.map((p: any) => `- ${p.question} (Options: ${p.options?.join(', ') || 'N/A'})`).join('\n') || 'No active polls'}
+
+${webContext ? `Web Search Results:\n${webContext}\n` : ''}
 `;
 
     // Handle image generation requests
@@ -130,22 +201,26 @@ ${facilities?.map((f: any) => `- ${f.name} (${f.facility_type}): ${f.description
 Your role is to help attendees with:
 - Information about sessions, speakers, and schedule
 - Navigation and facility locations
-- Networking suggestions
-- Questions about the event
+- Networking suggestions based on attendee profiles
+- Questions about the event, sponsors, polls, and rules
 - General event-related inquiries
+- Historical context about the event or similar events
 
-Use the context provided about the event to give accurate, helpful answers. Be friendly, concise, and actionable.
+Use the comprehensive context provided about the event to give accurate, helpful answers. Be friendly, concise, and actionable.
 If asked to generate an image, politely tell the user to type their image request and you'll create it for them.
 
-Current Event Context:
+Current Event Context (including web search results):
 ${contextInfo}
 
 Important:
 - For session times, be specific about start and end times
-- For speakers, mention their expertise when relevant
+- For speakers, mention their expertise and bio when relevant
 - For locations, refer to the facilities information
-- Be encouraging about networking opportunities
-- Keep responses concise (2-3 sentences max unless more detail is needed)`;
+- Suggest networking with specific attendees based on their interests and roles
+- Reference sponsors, polls, and event rules when relevant
+- Use web search results for historical or external context
+- Keep responses concise (2-3 sentences max unless more detail is needed)
+- Always prioritize accuracy using the provided context`;
 
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

@@ -56,14 +56,12 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
 
   const { selectedEventId } = useAdminEventContext();
 
-  const parseCSV = (content: string): { data: CSVRow[], headers: string[] } => {
+  const analyzeCSVWithAI = async (content: string) => {
     try {
-      // Use xlsx library to properly parse CSV with support for quoted fields, commas, etc.
+      // First parse CSV with xlsx
       const workbook = XLSX.read(content, { type: 'string', raw: true });
       const sheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[sheetName];
-      
-      // Convert to JSON with header row
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false }) as string[][];
       
       if (jsonData.length < 2) {
@@ -71,54 +69,84 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       }
 
       const headers = jsonData[0].map(h => (h || '').toString().trim()).filter(h => h);
-      const headerLowerCase = headers.map(h => h.toLowerCase());
-      const nameIndex = headerLowerCase.findIndex(h => h.includes('name'));
-      const emailIndex = headerLowerCase.findIndex(h => h.includes('email'));
+      const sampleRows = jsonData.slice(1, 4).map(row => 
+        headers.reduce((obj, header, idx) => {
+          obj[header] = (row[idx] || '').toString().trim();
+          return obj;
+        }, {} as Record<string, string>)
+      );
+
+      toast.info('🤖 AI is analyzing your CSV structure...');
+
+      // Call AI to analyze column mapping
+      const { data: aiResult, error: aiError } = await supabase.functions.invoke('analyze-csv-import', {
+        body: { csvHeaders: headers, sampleRows }
+      });
+
+      if (aiError) throw aiError;
+      if (!aiResult.success) throw new Error(aiResult.error || 'AI analysis failed');
+
+      const { mapping } = aiResult;
+      console.log('AI Mapping:', mapping);
+
+      toast.success(`✨ AI detected: ${mapping.confidence} confidence mapping`);
+
+      // Use AI-detected column indices
+      const nameIndex = headers.indexOf(mapping.nameColumn);
+      const emailIndex = headers.indexOf(mapping.emailColumn);
+      const phoneIndex = mapping.phoneColumn ? headers.indexOf(mapping.phoneColumn) : -1;
 
       if (nameIndex === -1 || emailIndex === -1) {
-        throw new Error('CSV must contain "name" and "email" columns');
+        throw new Error('AI could not identify name and email columns reliably');
       }
 
+      // Parse all rows using AI mapping
       const data: CSVRow[] = [];
+      const seenEmails = new Set<string>();
+
       for (let i = 1; i < jsonData.length; i++) {
         const values = jsonData[i];
         if (!values || values.length === 0) continue;
         
         const name = (values[nameIndex] || '').toString().trim();
-        const email = (values[emailIndex] || '').toString().trim();
+        const email = (values[emailIndex] || '').toString().trim().toLowerCase();
         
-        if (name && email) {
-          const row: CSVRow = {
-            name,
-            email
-          };
-          
-          // Add all other columns as additional properties
-          headers.forEach((header, index) => {
-            if (index !== nameIndex && index !== emailIndex) {
-              const value = (values[index] || '').toString().trim();
-              if (value) {
-                row[header] = value;
-              }
-            }
-          });
-          
-          data.push(row);
+        // Skip if no name/email or if email is duplicate
+        if (!name || !email || seenEmails.has(email)) continue;
+        
+        seenEmails.add(email);
+        
+        const row: CSVRow = { name, email };
+        
+        // Add phone if detected
+        if (phoneIndex !== -1) {
+          const phone = (values[phoneIndex] || '').toString().trim();
+          if (phone) row['phone'] = phone;
         }
+        
+        // Add all other columns
+        headers.forEach((header, index) => {
+          if (index !== nameIndex && index !== emailIndex && index !== phoneIndex) {
+            const value = (values[index] || '').toString().trim();
+            if (value) row[header] = value;
+          }
+        });
+        
+        data.push(row);
       }
 
       if (data.length === 0) {
         throw new Error('No valid data rows found in CSV');
       }
 
-      return { data, headers };
+      return { data, headers, mapping };
     } catch (error) {
-      console.error('CSV parsing error:', error);
-      throw new Error(`Failed to parse CSV: ${(error as Error).message}`);
+      console.error('CSV analysis error:', error);
+      throw error;
     }
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (!selectedFile) return;
 
@@ -128,25 +156,29 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     }
 
     setFile(selectedFile);
-    setIsOpen(true); // Keep dialog open
+    setIsOpen(true);
+    setIsProcessing(true);
     
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const content = e.target?.result as string;
-        const { data, headers } = parseCSV(content);
+        const { data, headers, mapping } = await analyzeCSVWithAI(content);
+        
         setCsvData(data);
         setCsvHeaders(headers);
-        setIsOpen(true); // Ensure dialog stays open after parsing
         
-        toast.success(`Parsed ${data.length} attendees from CSV with ${headers.length} columns`);
+        toast.success(`🎉 AI analyzed ${data.length} unique attendees (duplicates removed)`);
+        
+        // Auto-import after AI analysis
+        await autoImportData(data, headers);
         
       } catch (error) {
         toast.error((error as Error).message);
         setFile(null);
         setCsvData([]);
         setCsvHeaders([]);
-        setFormFields([]);
+        setIsProcessing(false);
       }
     };
     reader.readAsText(selectedFile);
@@ -277,11 +309,52 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     return mapping;
   };
 
-  const handleImport = async () => {
-    if (!selectedEventId || csvData.length === 0) return;
+  const autoImportData = async (data: CSVRow[], headers: string[]) => {
+    if (!selectedEventId || data.length === 0) return;
 
-    setIsProcessing(true);
-    setImportResults(null);
+    try {
+      // Check for duplicates in database
+      const { data: existingTickets, error: dupError } = await supabase
+        .from('event_tickets')
+        .select('guest_email, profiles!event_tickets_user_id_fkey(email)')
+        .eq('event_id', selectedEventId);
+
+      if (dupError) throw dupError;
+
+      const existingEmails = new Set<string>();
+      existingTickets?.forEach(ticket => {
+        if (ticket.guest_email) existingEmails.add(ticket.guest_email.toLowerCase());
+        const profile = ticket.profiles as any;
+        if (profile?.email) existingEmails.add(profile.email.toLowerCase());
+      });
+
+      // Filter out database duplicates
+      const uniqueData = data.filter(row => !existingEmails.has(row.email.toLowerCase()));
+
+      if (uniqueData.length === 0) {
+        toast.warning('All attendees already exist in the system');
+        setIsProcessing(false);
+        setImportResults({
+          success: 0,
+          errors: [],
+          skipped: data.length,
+          updated: 0
+        });
+        return;
+      }
+
+      toast.info(`Importing ${uniqueData.length} new attendees...`);
+      
+      await processImport(uniqueData, headers);
+      
+    } catch (error) {
+      toast.error((error as Error).message);
+      setIsProcessing(false);
+    }
+  };
+
+  const processImport = async (data: CSVRow[], headers: string[]) => {
+    if (!selectedEventId) return;
 
     try {
       // Check for duplicates first
@@ -325,16 +398,10 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       let updatedCount = 0; // will remain zero since we no longer update existing
   
       // Process each attendee
-      for (let i = 0; i < csvData.length; i++) {
-        const attendee = csvData[i];
-        const isDuplicate = duplicates.some(d => d.csvIndex === i);
+      for (let i = 0; i < data.length; i++) {
+        const attendee = data[i];
   
         try {
-          if (isDuplicate) {
-            // Always skip duplicates to avoid overwriting any existing ticket purchases
-            skippedCount++;
-            continue;
-          }
   
           // Map possible phone columns
           const phoneValue =
@@ -429,6 +496,10 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     } finally {
       setIsProcessing(false);
     }
+  };
+
+  const handleImport = async () => {
+    await autoImportData(csvData, csvHeaders);
   };
 
   const handleClose = () => {

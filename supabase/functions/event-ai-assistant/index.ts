@@ -33,68 +33,76 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch event context
+    // Fetch comprehensive event context
     const { data: event } = await supabase
       .from('events')
-      .select('name, description, start_date, end_date, location, event_type')
+      .select('*')
       .eq('id', eventId)
       .single();
 
-    // Fetch schedule
-    const { data: schedule } = await supabase
-      .from('schedule')
-      .select('title, description, start_time, end_time, location, speaker_name')
-      .eq('event_id', eventId)
-      .order('start_time');
-
-    // Fetch speakers
+    // Fetch speakers with session details (speakers table contains schedule info)
     const { data: speakers } = await supabase
-      .from('event_speakers')
-      .select('name, title, bio, expertise')
-      .eq('event_id', eventId);
+      .from('speakers')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('created_at');
 
-    // Fetch announcements
+    // Fetch announcements with full details
     const { data: announcements } = await supabase
       .from('announcements')
-      .select('title, content')
+      .select('*')
       .eq('event_id', eventId)
-      .order('created_at', { ascending: false })
-      .limit(5);
+      .order('created_at', { ascending: false });
 
-    // Fetch facilities
+    // Fetch facilities with full details
     const { data: facilities } = await supabase
-      .from('event_facilities')
-      .select('name, description, location, facility_type')
+      .from('facilities')
+      .select('*')
       .eq('event_id', eventId);
 
-    // Fetch attendees profiles
+    // Fetch all event participants
+    const { data: participantIds } = await supabase
+      .from('event_participants')
+      .select('user_id')
+      .eq('event_id', eventId);
+
+    const userIds = participantIds?.map(p => p.user_id) || [];
+
+    // Fetch attendees profiles with full details
     const { data: attendees } = await supabase
       .from('profiles')
-      .select('full_name, bio, interests, organization, job_title')
-      .in('id', 
-        await supabase
-          .from('event_participants')
-          .select('user_id')
-          .eq('event_id', eventId)
-          .then(({ data }) => data?.map(p => p.user_id) || [])
-      );
+      .select('*')
+      .in('id', userIds);
 
     // Fetch sponsors
     const { data: sponsors } = await supabase
-      .from('event_sponsors')
-      .select('name, description, tier')
+      .from('sponsors')
+      .select('*')
       .eq('event_id', eventId);
 
     // Fetch rules/guidelines
     const { data: rules } = await supabase
-      .from('event_rules')
-      .select('title, description')
+      .from('rules')
+      .select('*')
       .eq('event_id', eventId);
 
-    // Fetch polls
+    // Fetch polls with votes
     const { data: polls } = await supabase
-      .from('event_polls')
-      .select('question, options')
+      .from('polls')
+      .select('*')
+      .eq('event_id', eventId);
+
+    // Fetch questions from attendees
+    const { data: questions } = await supabase
+      .from('questions')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('created_at', { ascending: false });
+
+    // Fetch ticket types
+    const { data: ticketTypes } = await supabase
+      .from('ticket_types')
+      .select('*')
       .eq('event_id', eventId);
 
     // Web search for event context (if event name exists)
@@ -125,38 +133,104 @@ serve(async (req) => {
     }
 
     const contextInfo = `
-Event Information:
-- Name: ${event?.name || 'N/A'}
-- Description: ${event?.description || 'N/A'}
-- Location: ${event?.location || 'N/A'}
-- Type: ${event?.event_type || 'N/A'}
-- Dates: ${event?.start_date || 'N/A'} to ${event?.end_date || 'N/A'}
+EVENT DETAILS:
+Name: ${event?.name || 'N/A'}
+Description: ${event?.description || 'N/A'}
+Location: ${event?.location || 'N/A'}
+Start: ${event?.start_time || 'N/A'}
+End: ${event?.end_time || 'N/A'}
+Website: ${event?.website || 'N/A'}
 
-Schedule (${schedule?.length || 0} sessions):
-${schedule?.map((s: any) => `- ${s.title} (${s.start_time} - ${s.end_time})${s.speaker_name ? ` by ${s.speaker_name}` : ''} at ${s.location || 'TBD'}`).join('\n') || 'No schedule available'}
+SPEAKERS & SCHEDULE (${speakers?.length || 0} total):
+${speakers?.map((sp: any) => `
+• ${sp.name} - ${sp.title || 'Speaker'}
+  Session: ${sp.session_title || 'TBD'}
+  Time: ${sp.session_time || 'TBD'} ${sp.time_allocation ? `(${sp.time_allocation})` : ''}
+  Topic: ${sp.topic || 'N/A'}
+  Bio: ${sp.bio || 'N/A'}
+  Company: ${sp.company || 'N/A'}
+  Expertise: ${sp.expertise || 'N/A'}
+  LinkedIn: ${sp.linkedin_link || 'N/A'}
+  Twitter: ${sp.twitter_link || 'N/A'}
+`).join('\n') || 'No speakers/sessions listed yet'}
 
-Speakers (${speakers?.length || 0} total):
-${speakers?.map((sp: any) => `- ${sp.name}, ${sp.title || 'Speaker'}${sp.expertise ? ` (${sp.expertise})` : ''}`).join('\n') || 'No speakers listed'}
+ANNOUNCEMENTS (${announcements?.length || 0} total):
+${announcements?.map((a: any) => `
+• ${a.title}
+  ${a.content}
+  Priority: ${a.priority || 'normal'}
+  Posted: ${a.created_at}
+  Requires Action: ${a.require_submission ? 'Yes' : 'No'}
+  Links: ${[a.website_link, a.instagram_link, a.twitter_link, a.facebook_link, a.whatsapp_link].filter(Boolean).join(', ') || 'None'}
+`).join('\n') || 'No announcements yet'}
 
-Recent Announcements:
-${announcements?.map((a: any) => `- ${a.title}: ${a.content}`).join('\n') || 'No announcements'}
+FACILITIES & VENUES (${facilities?.length || 0} total):
+${facilities?.map((f: any) => `
+• ${f.name} (${f.category || 'facility'})
+  Type: ${f.icon_type || 'general'}
+  Description: ${f.description || 'N/A'}
+  Location: ${f.location || 'Check event map'}
+  Contact: ${f.contact_info || 'N/A'} (${f.contact_type || 'none'})
+  Rules: ${f.rules || 'Standard venue rules apply'}
+`).join('\n') || 'No facilities information yet'}
 
-Facilities:
-${facilities?.map((f: any) => `- ${f.name} (${f.facility_type}): ${f.description || 'Available'} at ${f.location || 'See map'}`).join('\n') || 'No facilities listed'}
+ATTENDEES PROFILES (${attendees?.length || 0} registered):
+${attendees?.slice(0, 50).map((a: any) => `
+• ${a.full_name || a.name || 'Anonymous'}
+  Email: ${a.email || 'N/A'}
+  Job: ${a.job_title || 'N/A'} at ${a.organization || 'N/A'}
+  Bio: ${a.bio || 'N/A'}
+  Interests: ${a.interests || 'N/A'}
+  Skills: ${a.skills || 'N/A'}
+  LinkedIn: ${a.linkedin_url || 'N/A'}
+  Looking for: ${a.looking_for || 'networking'}
+`).join('\n') || 'No attendee profiles available yet'}
 
-Attendees (${attendees?.length || 0} registered):
-${attendees?.slice(0, 20).map((a: any) => `- ${a.full_name}${a.job_title ? ` (${a.job_title})` : ''}${a.organization ? ` at ${a.organization}` : ''}${a.interests ? ` - Interests: ${a.interests}` : ''}`).join('\n') || 'No attendees data'}
+SPONSORS (${sponsors?.length || 0} total):
+${sponsors?.map((s: any) => `
+• ${s.name} - ${s.tier || 'Sponsor'}
+  Description: ${s.description || 'N/A'}
+  Website: ${s.website_url || 'N/A'}
+  Logo: ${s.logo_url || 'N/A'}
+`).join('\n') || 'No sponsors yet'}
 
-Sponsors:
-${sponsors?.map((s: any) => `- ${s.name}${s.tier ? ` (${s.tier} tier)` : ''}: ${s.description || ''}`).join('\n') || 'No sponsors listed'}
+EVENT RULES & GUIDELINES (${rules?.length || 0} items):
+${rules?.map((r: any) => `
+• ${r.title}
+  ${r.description || 'No details'}
+  Type: ${r.rule_type || 'general'}
+  Category: ${r.category || 'do'}
+`).join('\n') || 'No specific rules listed'}
 
-Event Rules/Guidelines:
-${rules?.map((r: any) => `- ${r.title}: ${r.description}`).join('\n') || 'No rules available'}
+POLLS (${polls?.length || 0} active):
+${polls?.map((p: any) => `
+• ${p.question}
+  Options: ${Array.isArray(p.options) ? p.options.join(', ') : 'N/A'}
+  Status: ${p.is_active ? 'Active' : 'Closed'}
+  Show Results: ${p.show_results ? 'Yes' : 'No'}
+  Banner: ${p.display_as_banner ? 'Yes' : 'No'}
+`).join('\n') || 'No polls available'}
 
-Active Polls:
-${polls?.map((p: any) => `- ${p.question} (Options: ${p.options?.join(', ') || 'N/A'})`).join('\n') || 'No active polls'}
+QUESTIONS FROM ATTENDEES (${questions?.length || 0} total):
+${questions?.slice(0, 30).map((q: any) => `
+• Q: ${q.content}
+  Asked by: ${q.is_anonymous ? 'Anonymous' : 'Attendee'}
+  Status: ${q.is_answered ? 'Answered' : 'Pending'}
+  ${q.response ? `Answer: ${q.response}` : 'Not answered yet'}
+  Upvotes: ${q.upvotes || 0}
+  Session: ${q.session_id || 'General'}
+`).join('\n') || 'No questions asked yet'}
 
-${webContext ? `Web Search Results:\n${webContext}\n` : ''}
+TICKET TYPES (${ticketTypes?.length || 0} available):
+${ticketTypes?.map((t: any) => `
+• ${t.name} - ₦${t.price || 0}
+  Quantity: ${t.quantity || 'Unlimited'}
+  Available: ${t.available_quantity || 'N/A'}
+  Description: ${t.description || 'N/A'}
+  Sales: ${t.sales_start_date || 'N/A'} to ${t.sales_end_date || 'N/A'}
+`).join('\n') || 'No ticket information'}
+
+${webContext ? `\nWEB SEARCH CONTEXT:\n${webContext}\n` : ''}
 `;
 
     // Handle image generation requests
@@ -197,30 +271,45 @@ ${webContext ? `Web Search Results:\n${webContext}\n` : ''}
     }
 
     // Regular text response
-    const systemPrompt = `You are a helpful AI assistant for the event "${event?.name || 'this event'}". 
-Your role is to help attendees with:
-- Information about sessions, speakers, and schedule
-- Navigation and facility locations
-- Networking suggestions based on attendee profiles
-- Questions about the event, sponsors, polls, and rules
-- General event-related inquiries
-- Historical context about the event or similar events
+    const systemPrompt = `You are an intelligent AI event assistant for "${event?.name || 'this event'}". Your goal is to provide comprehensive, accurate, and actionable information to attendees.
 
-Use the comprehensive context provided about the event to give accurate, helpful answers. Be friendly, concise, and actionable.
-If asked to generate an image, politely tell the user to type their image request and you'll create it for them.
+KEY CAPABILITIES:
+1. Event Information: Details about timing, location, description
+2. Schedule & Sessions: Session times, topics, speakers, locations
+3. Speaker Information: Bios, expertise, topics they're covering
+4. Networking: Match attendees based on interests, skills, job roles
+5. Facilities: Locations of venues, restrooms, food areas, etc.
+6. Q&A: Answer questions about the event or connect to relevant info
+7. Announcements: Latest updates and important notifications
+8. Polls & Engagement: Information about active polls
+9. Tickets & Logistics: Ticket types, pricing, availability
+10. Web Context: Use search results for historical or background info
 
-Current Event Context (including web search results):
+COMPREHENSIVE EVENT CONTEXT:
 ${contextInfo}
 
-Important:
-- For session times, be specific about start and end times
-- For speakers, mention their expertise and bio when relevant
-- For locations, refer to the facilities information
-- Suggest networking with specific attendees based on their interests and roles
-- Reference sponsors, polls, and event rules when relevant
-- Use web search results for historical or external context
-- Keep responses concise (2-3 sentences max unless more detail is needed)
-- Always prioritize accuracy using the provided context`;
+RESPONSE GUIDELINES:
+- Be warm, friendly, and conversational
+- Give specific, actionable information (times, locations, names)
+- For networking questions, suggest 2-3 specific attendees with reasons based on their profiles
+- When discussing schedule, always include exact times and locations
+- Reference speakers by name and mention their expertise
+- For facility questions, be specific about locations and provide navigation help
+- Always cite information from the event context when answering
+- If information isn't available, say so clearly and suggest alternatives
+- Keep responses focused but thorough (3-5 sentences typically)
+- Use bullet points for lists of items
+- For questions about past questions, summarize what attendees are asking about
+
+NETWORKING STRATEGY:
+When suggesting networking connections, analyze:
+- Common interests and skills
+- Complementary job roles
+- Similar organizations or industries  
+- What they're looking for (mentioned in profiles)
+- Give personalized reasons why they should connect
+
+Always be accurate and use the provided context as your source of truth.`;
 
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

@@ -57,6 +57,7 @@ enable_sms_confirmations = false
 enabled = true
 port = 54330
 ip_version = "ipv4"
+  enabled = ["event-ai-assistant", "analyze-csv-import"]
 
 [functions.get-paystack-config]
 verify_jwt = true
@@ -105,3 +106,6 @@ verify_jwt = false
 
 [functions.event-ai-assistant]
 verify_jwt = false
+
+[functions.analyze-csv-import]
+verify_jwt = true

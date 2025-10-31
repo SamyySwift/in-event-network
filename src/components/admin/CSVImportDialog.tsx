@@ -53,6 +53,9 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     skipped: number;
     updated: number;
   } | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysisResult, setAnalysisResult] = useState<any>(null);
+  const [importProgress, setImportProgress] = useState(0);
 
   const { selectedEventId } = useAdminEventContext();
 
@@ -118,7 +121,35 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     }
   };
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const analyzeCSVWithAI = async (content: string, headers: string[]) => {
+    setIsAnalyzing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('analyze-csv-import', {
+        body: { csvContent: content, headers }
+      });
+
+      if (error) throw error;
+      
+      setAnalysisResult(data.analysis);
+      toast.success(`AI analyzed CSV with ${data.analysis.confidence} confidence`);
+      
+      // Auto-start import after successful analysis
+      setTimeout(() => {
+        handleImport();
+      }, 1000);
+      
+    } catch (error) {
+      console.error('AI analysis error:', error);
+      toast.error('AI analysis failed, using fallback method');
+      // Fallback to standard parsing
+      const { data } = parseCSV(content);
+      setCsvData(data);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (!selectedFile) return;
 
@@ -131,7 +162,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     setIsOpen(true); // Keep dialog open
     
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const content = e.target?.result as string;
         const { data, headers } = parseCSV(content);
@@ -139,7 +170,12 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         setCsvHeaders(headers);
         setIsOpen(true); // Ensure dialog stays open after parsing
         
-        toast.success(`Parsed ${data.length} attendees from CSV with ${headers.length} columns`);
+        toast.success(`Parsed ${data.length} attendees from CSV`, {
+          description: 'AI is analyzing the data...'
+        });
+        
+        // Trigger AI analysis
+        await analyzeCSVWithAI(content, headers);
         
       } catch (error) {
         toast.error((error as Error).message);
@@ -282,6 +318,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
 
     setIsProcessing(true);
     setImportResults(null);
+    setImportProgress(0);
 
     try {
       // Check for duplicates first
@@ -324,10 +361,13 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       let skippedCount = 0;
       let updatedCount = 0; // will remain zero since we no longer update existing
   
-      // Process each attendee
+      // Process each attendee with progress updates
       for (let i = 0; i < csvData.length; i++) {
         const attendee = csvData[i];
         const isDuplicate = duplicates.some(d => d.csvIndex === i);
+        
+        // Update progress
+        setImportProgress(Math.round((i / csvData.length) * 100));
   
         try {
           if (isDuplicate) {
@@ -428,6 +468,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       toast.error((error as Error).message);
     } finally {
       setIsProcessing(false);
+      setImportProgress(100);
     }
   };
 
@@ -490,8 +531,45 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
             </div>
           </div>
 
+          {/* AI Analysis and Processing Status */}
+          {(isAnalyzing || isProcessing) && (
+            <Card className="border-purple-200 bg-purple-50">
+              <CardContent className="p-4">
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
+                    <span className="font-medium text-purple-900">
+                      {isAnalyzing ? '🤖 AI is analyzing your CSV...' : '📥 Importing attendees...'}
+                    </span>
+                  </div>
+                  {isProcessing && (
+                    <>
+                      <div className="w-full bg-purple-200 rounded-full h-2">
+                        <div 
+                          className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                          style={{ width: `${importProgress}%` }}
+                        ></div>
+                      </div>
+                      <p className="text-sm text-purple-700">
+                        {importProgress}% complete - Creating tickets and checking for duplicates
+                      </p>
+                    </>
+                  )}
+                  {analysisResult && (
+                    <div className="mt-2 p-2 bg-white rounded border border-purple-200">
+                      <p className="text-xs text-purple-800">
+                        ✅ AI identified: Name → {analysisResult.nameColumn}, Email → {analysisResult.emailColumn}
+                        {analysisResult.phoneColumn && `, Phone → ${analysisResult.phoneColumn}`}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Preview and Options */}
-          {csvData.length > 0 && !importResults && (
+          {csvData.length > 0 && !importResults && !isProcessing && (
             <div className="space-y-4">
               <Card>
                 <CardContent className="p-4">
@@ -614,50 +692,49 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
 
           {/* Import Results */}
           {importResults && (
-            <Card>
+            <Card className="border-green-200 bg-green-50">
               <CardContent className="p-4">
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <CheckCircle className="h-5 w-5 text-green-600" />
-                    <span className="font-semibold">Import Complete</span>
+                    <h3 className="font-semibold text-green-900">Import Complete!</h3>
                   </div>
-                  
-                  <div className="flex gap-2 flex-wrap">
-                    <Badge variant="default" className="text-green-600 bg-green-100">
-                      {importResults.success} new
-                    </Badge>
-                    {importResults.updated > 0 && (
-                      <Badge variant="default" className="text-blue-600 bg-blue-100">
-                        {importResults.updated} updated
-                      </Badge>
-                    )}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="p-2 bg-white rounded border border-green-200">
+                      <p className="text-2xl font-bold text-green-600">{importResults.success}</p>
+                      <p className="text-xs text-green-700">Successfully imported</p>
+                    </div>
                     {importResults.skipped > 0 && (
-                      <Badge variant="secondary">
-                        {importResults.skipped} skipped
-                      </Badge>
+                      <div className="p-2 bg-white rounded border border-orange-200">
+                        <p className="text-2xl font-bold text-orange-600">{importResults.skipped}</p>
+                        <p className="text-xs text-orange-700">Duplicates skipped</p>
+                      </div>
                     )}
                     {importResults.errors.length > 0 && (
-                      <Badge variant="destructive">
-                        {importResults.errors.length} failed
-                      </Badge>
+                      <div className="p-2 bg-white rounded border border-red-200">
+                        <p className="text-2xl font-bold text-red-600">{importResults.errors.length}</p>
+                        <p className="text-xs text-red-700">Errors occurred</p>
+                      </div>
                     )}
                   </div>
-
                   {importResults.errors.length > 0 && (
-                    <div className="space-y-2">
-                      <h4 className="font-medium text-red-600 flex items-center gap-2">
-                        <AlertCircle className="h-4 w-4" />
-                        Errors:
-                      </h4>
-                      <div className="max-h-32 overflow-y-auto space-y-1">
-                        {importResults.errors.map((error, index) => (
-                          <div key={index} className="text-sm text-red-600 bg-red-50 p-2 rounded">
-                            {error}
-                          </div>
-                        ))}
-                      </div>
+                    <div className="mt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const errorText = importResults.errors.join('\n');
+                          navigator.clipboard.writeText(errorText);
+                          toast.success('Errors copied to clipboard');
+                        }}
+                      >
+                        Copy Error Details
+                      </Button>
                     </div>
                   )}
+                  <Button onClick={handleClose} className="w-full">
+                    Done
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -667,10 +744,10 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
           <div className="flex gap-2">
             <Button
               onClick={handleImport}
-              disabled={csvData.length === 0 || isProcessing || !selectedEventId}
+              disabled={csvData.length === 0 || isProcessing || !selectedEventId || isAnalyzing}
               className="flex-1"
             >
-              {isProcessing ? 'Importing...' : `Import ${csvData.length} Attendees`}
+              {isProcessing ? 'Importing...' : isAnalyzing ? 'Analyzing...' : `Import ${csvData.length} Attendees`}
             </Button>
             <Button variant="outline" onClick={handleClose}>
               {importResults ? 'Close' : 'Cancel'}

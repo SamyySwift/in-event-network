@@ -543,14 +543,22 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      // Prevent closing while AI is analyzing or we are importing
+      if (!open && (isAnalyzing || isProcessing)) return;
+      setIsOpen(open);
+    }}>
       <DialogTrigger asChild>
         <Button variant="outline" className="rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
           <Upload className="h-4 w-4 mr-2" />
           Import CSV
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+        <DialogContent 
+          className="max-w-2xl max-h-[80vh] overflow-y-auto"
+          onEscapeKeyDown={(e) => { if (isAnalyzing || isProcessing) e.preventDefault(); }}
+          onPointerDownOutside={(e) => { if (isAnalyzing || isProcessing) e.preventDefault(); }}
+        >
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />

@@ -130,8 +130,60 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
 
       if (error) throw error;
       
-      setAnalysisResult(data.analysis);
-      toast.success(`AI analyzed CSV with ${data.analysis.confidence} confidence`);
+      const analysis = data.analysis;
+      setAnalysisResult(analysis);
+      
+      // Re-parse CSV data using AI-identified columns with XLSX for proper CSV parsing
+      const workbook = XLSX.read(content, { type: 'string', raw: true });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false }) as string[][];
+      
+      if (jsonData.length < 2) {
+        throw new Error('CSV must have at least a header row and one data row');
+      }
+      
+      const headerRow = jsonData[0].map(h => (h || '').toString().trim()).filter(h => h);
+      const nameIndex = headerRow.findIndex(h => h === analysis.nameColumn);
+      const emailIndex = headerRow.findIndex(h => h === analysis.emailColumn);
+      const phoneIndex = analysis.phoneColumn ? headerRow.findIndex(h => h === analysis.phoneColumn) : -1;
+      
+      if (nameIndex === -1 || emailIndex === -1) {
+        throw new Error('AI could not identify required columns');
+      }
+      
+      const parsedData: CSVRow[] = [];
+      for (let i = 1; i < jsonData.length; i++) {
+        const values = jsonData[i];
+        if (!values || values.length === 0) continue;
+        
+        const name = (values[nameIndex] || '').toString().trim();
+        const email = (values[emailIndex] || '').toString().trim();
+        
+        if (name && email) {
+          const rowData: CSVRow = { name, email };
+          
+          // Add phone if identified
+          if (phoneIndex !== -1 && values[phoneIndex]) {
+            rowData.phone = (values[phoneIndex] || '').toString().trim();
+          }
+          
+          // Add all other columns
+          headerRow.forEach((header, idx) => {
+            if (idx !== nameIndex && idx !== emailIndex && idx !== phoneIndex) {
+              const value = (values[idx] || '').toString().trim();
+              if (value) {
+                rowData[header] = value;
+              }
+            }
+          });
+          
+          parsedData.push(rowData);
+        }
+      }
+      
+      setCsvData(parsedData);
+      toast.success(`AI analyzed CSV with ${analysis.confidence} confidence - found ${parsedData.length} attendees`);
       
       // Auto-start import after successful analysis
       setTimeout(() => {
@@ -142,8 +194,13 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       console.error('AI analysis error:', error);
       toast.error('AI analysis failed, using fallback method');
       // Fallback to standard parsing
-      const { data } = parseCSV(content);
-      setCsvData(data);
+      try {
+        const { data } = parseCSV(content);
+        setCsvData(data);
+      } catch (parseError) {
+        console.error('Parse error:', parseError);
+        toast.error('Failed to parse CSV');
+      }
     } finally {
       setIsAnalyzing(false);
     }

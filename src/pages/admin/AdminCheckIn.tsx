@@ -17,7 +17,6 @@ import { useAdminTickets } from '@/hooks/useAdminTickets';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdminEventContext } from '@/hooks/useAdminEventContext';
-import { DownloadDataButtons } from '@/components/admin/DownloadDataButtons';
 
 function AdminCheckInContent() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,48 +29,6 @@ function AdminCheckInContent() {
   const { checkInTicket, checkInTicketById, checkInByQR, isCheckingIn, bulkCheckInAll, isBulkCheckingIn } = useAdminCheckIns();
   const { eventTickets, isLoadingTickets, stats } = useAdminTickets();
   const queryClient = useQueryClient();
-
-  // Fetch event details for export
-  const { data: eventData } = useQuery({
-    queryKey: ['event-details', selectedEventId],
-    queryFn: async () => {
-      if (!selectedEventId) return null;
-      const { data, error } = await supabase
-        .from('events')
-        .select('name')
-        .eq('id', selectedEventId)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!selectedEventId
-  });
-
-  // Fetch attendees for export
-  const { data: attendeesData = [] } = useQuery({
-    queryKey: ['event-attendees', selectedEventId],
-    queryFn: async () => {
-      if (!selectedEventId) return [];
-      const { data, error } = await supabase
-        .from('event_participants')
-        .select(`
-          id,
-          user_id,
-          created_at,
-          joined_at,
-          profiles!fk_event_participants_user_id (
-            id,
-            name,
-            email,
-            role
-          )
-        `)
-        .eq('event_id', selectedEventId);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!selectedEventId
-  });
 
   // Search for ticket by name or ticket number
   const { data: searchResults, isLoading: isSearching, refetch: searchTicket } = useQuery({
@@ -332,12 +289,6 @@ function AdminCheckInContent() {
             </CardContent>
           </Card>
         </div>
-
-        {/* Export Data Section */}
-        <DownloadDataButtons 
-          attendees={attendeesData} 
-          eventName={eventData?.name || 'Event'} 
-        />
 
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           {/* Check-In Methods */}

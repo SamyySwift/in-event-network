@@ -1,35 +1,16 @@
 import React, { useState } from 'react';
-import { Upload, FileText, CheckCircle, AlertCircle, X } from 'lucide-react';
+import { Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdminEventContext } from '@/hooks/useAdminEventContext';
 import * as XLSX from 'xlsx';
 
-interface CSVRow {
+interface AttendeeData {
   name: string;
   email: string;
-  [key: string]: string;
-}
-
-interface FormField {
-  id: string;
-  label: string;
-  field_type: string;
-  field_order: number;
-}
-
-interface DuplicateInfo {
-  csvIndex: number;
-  existingTicket: any;
-  attendee: CSVRow;
+  phone?: string;
+  [key: string]: string | undefined;
 }
 
 interface CSVImportDialogProps {
@@ -37,789 +18,307 @@ interface CSVImportDialogProps {
 }
 
 export default function CSVImportDialog({ onImportComplete }: CSVImportDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const [csvData, setCsvData] = useState<CSVRow[]>([]);
-  const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
-  const [formFields, setFormFields] = useState<FormField[]>([]);
-  const [fieldMapping, setFieldMapping] = useState<Record<string, string>>({});
   const [isProcessing, setIsProcessing] = useState(false);
-  const [duplicates, setDuplicates] = useState<DuplicateInfo[]>([]);
-  const [skipDuplicates, setSkipDuplicates] = useState(true);
-  const [updateExisting, setUpdateExisting] = useState(false);
-  const [importResults, setImportResults] = useState<{
-    success: number;
-    errors: string[];
-    skipped: number;
-    updated: number;
-  } | null>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [analysisResult, setAnalysisResult] = useState<any>(null);
-  const [importProgress, setImportProgress] = useState(0);
-
   const { selectedEventId } = useAdminEventContext();
 
-  const parseCSV = (content: string): { data: CSVRow[], headers: string[] } => {
-    try {
-      // Use xlsx library to properly parse CSV with support for quoted fields, commas, etc.
-      const workbook = XLSX.read(content, { type: 'string', raw: true });
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      
-      // Convert to JSON with header row
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false }) as string[][];
-      
-      if (jsonData.length < 2) {
-        throw new Error('CSV must have at least a header row and one data row');
-      }
-
-      const headers = jsonData[0].map(h => (h || '').toString().trim()).filter(h => h);
-      const headerLowerCase = headers.map(h => h.toLowerCase());
-      const nameIndex = headerLowerCase.findIndex(h => h.includes('name'));
-      const emailIndex = headerLowerCase.findIndex(h => h.includes('email'));
-
-      if (nameIndex === -1 || emailIndex === -1) {
-        throw new Error('CSV must contain "name" and "email" columns');
-      }
-
-      const data: CSVRow[] = [];
-      for (let i = 1; i < jsonData.length; i++) {
-        const values = jsonData[i];
-        if (!values || values.length === 0) continue;
-        
-        const name = (values[nameIndex] || '').toString().trim();
-        const email = (values[emailIndex] || '').toString().trim();
-        
-        if (name && email) {
-          const row: CSVRow = {
-            name,
-            email
-          };
-          
-          // Add all other columns as additional properties
-          headers.forEach((header, index) => {
-            if (index !== nameIndex && index !== emailIndex) {
-              const value = (values[index] || '').toString().trim();
-              if (value) {
-                row[header] = value;
-              }
-            }
-          });
-          
-          data.push(row);
-        }
-      }
-
-      if (data.length === 0) {
-        throw new Error('No valid data rows found in CSV');
-      }
-
-      return { data, headers };
-    } catch (error) {
-      console.error('CSV parsing error:', error);
-      throw new Error(`Failed to parse CSV: ${(error as Error).message}`);
-    }
+  const generateUniqueQRData = (attendee: AttendeeData): string => {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(2, 15);
+    return `${attendee.name}|${attendee.email}|${timestamp}|${random}`;
   };
 
-  const analyzeCSVWithAI = async (content: string, headers: string[]) => {
-    setIsAnalyzing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('analyze-csv-import', {
-        body: { csvContent: content, headers }
-      });
+  const parseCSVContent = (content: string): string[][] => {
+    const workbook = XLSX.read(content, { type: 'string', raw: true });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    return XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false }) as string[][];
+  };
 
-      if (error) throw error;
-      
-      const analysis = data.analysis;
-      setAnalysisResult(analysis);
-      
-      // Re-parse CSV data using AI-identified columns with XLSX for proper CSV parsing
-      const workbook = XLSX.read(content, { type: 'string', raw: true });
-      const sheetName = workbook.SheetNames[0];
-      const worksheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false }) as string[][];
-      
-      if (jsonData.length < 2) {
-        throw new Error('CSV must have at least a header row and one data row');
-      }
-      
-      const headerRow = jsonData[0].map(h => (h || '').toString().trim()).filter(h => h);
-      const nameIndex = headerRow.findIndex(h => h === analysis.nameColumn);
-      const emailIndex = headerRow.findIndex(h => h === analysis.emailColumn);
-      const phoneIndex = analysis.phoneColumn ? headerRow.findIndex(h => h === analysis.phoneColumn) : -1;
-      
-      if (nameIndex === -1 || emailIndex === -1) {
-        throw new Error('AI could not identify required columns');
-      }
-      
-      const parsedData: CSVRow[] = [];
-      for (let i = 1; i < jsonData.length; i++) {
-        const values = jsonData[i];
-        if (!values || values.length === 0) continue;
-        
-        const name = (values[nameIndex] || '').toString().trim();
-        const email = (values[emailIndex] || '').toString().trim();
-        
-        if (name && email) {
-          const rowData: CSVRow = { name, email };
-          
-          // Add phone if identified
-          if (phoneIndex !== -1 && values[phoneIndex]) {
-            rowData.phone = (values[phoneIndex] || '').toString().trim();
-          }
-          
-          // Add all other columns
-          headerRow.forEach((header, idx) => {
-            if (idx !== nameIndex && idx !== emailIndex && idx !== phoneIndex) {
-              const value = (values[idx] || '').toString().trim();
-              if (value) {
-                rowData[header] = value;
-              }
-            }
-          });
-          
-          parsedData.push(rowData);
-        }
-      }
-      
-      setCsvData(parsedData);
-      toast.success(`AI analyzed CSV with ${analysis.confidence} confidence - found ${parsedData.length} attendees`);
-      
-      // Auto-start import after successful analysis
-      setTimeout(() => {
-        handleImport();
-      }, 1000);
-      
-    } catch (error) {
-      console.error('AI analysis error:', error);
-      toast.error('AI analysis failed, using fallback method');
-      // Fallback to standard parsing
-      try {
-        const { data } = parseCSV(content);
-        setCsvData(data);
-      } catch (parseError) {
-        console.error('Parse error:', parseError);
-        toast.error('Failed to parse CSV');
-      }
-    } finally {
-      setIsAnalyzing(false);
+  const extractAttendeesFromCSV = async (content: string): Promise<AttendeeData[]> => {
+    const jsonData = parseCSVContent(content);
+    
+    if (jsonData.length < 2) {
+      throw new Error('File must have at least a header row and one data row');
     }
+
+    const headers = jsonData[0].map(h => (h || '').toString().trim());
+    
+    // Use AI to identify columns
+    const { data: aiData, error } = await supabase.functions.invoke('analyze-csv-import', {
+      body: { headers, sampleData: jsonData.slice(1, 6).map(row => row.join('|')).join('\n') }
+    });
+
+    if (error) throw error;
+
+    const { nameColumn, emailColumn, phoneColumn } = aiData.analysis;
+    
+    const nameIdx = headers.indexOf(nameColumn);
+    const emailIdx = headers.indexOf(emailColumn);
+    const phoneIdx = phoneColumn ? headers.indexOf(phoneColumn) : -1;
+
+    if (nameIdx === -1 || emailIdx === -1) {
+      throw new Error('Could not identify name and email columns');
+    }
+
+    const attendees: AttendeeData[] = [];
+    
+    for (let i = 1; i < jsonData.length; i++) {
+      const row = jsonData[i];
+      if (!row || row.length === 0) continue;
+      
+      const name = (row[nameIdx] || '').toString().trim();
+      const email = (row[emailIdx] || '').toString().trim();
+      
+      if (!name || !email) continue;
+      
+      const attendee: AttendeeData = { name, email };
+      
+      if (phoneIdx !== -1 && row[phoneIdx]) {
+        attendee.phone = row[phoneIdx].toString().trim();
+      }
+      
+      // Add all other columns as form data
+      headers.forEach((header, idx) => {
+        if (idx !== nameIdx && idx !== emailIdx && idx !== phoneIdx && row[idx]) {
+          attendee[header] = row[idx].toString().trim();
+        }
+      });
+      
+      attendees.push(attendee);
+    }
+    
+    return attendees;
+  };
+
+  const createTicketsFromAttendees = async (attendees: AttendeeData[]) => {
+    if (!selectedEventId) throw new Error('No event selected');
+
+    // Get or create free ticket type
+    let { data: ticketTypes } = await supabase
+      .from('ticket_types')
+      .select('id, name, price')
+      .eq('event_id', selectedEventId)
+      .eq('price', 0)
+      .limit(1);
+
+    if (!ticketTypes || ticketTypes.length === 0) {
+      const { data: anyType } = await supabase
+        .from('ticket_types')
+        .select('id, name, price')
+        .eq('event_id', selectedEventId)
+        .limit(1);
+      
+      if (!anyType || anyType.length === 0) {
+        throw new Error('No ticket types found. Please create a ticket type first.');
+      }
+      ticketTypes = anyType;
+    }
+
+    const ticketType = ticketTypes[0];
+    
+    // Get extra fields from first attendee
+    const extraFields = Object.keys(attendees[0]).filter(k => 
+      k !== 'name' && k !== 'email' && k !== 'phone'
+    );
+    
+    // Create form fields for extra columns
+    const fieldMapping: Record<string, string> = {};
+    
+    if (extraFields.length > 0) {
+      const { data: existingFields } = await supabase
+        .from('ticket_form_fields')
+        .select('id, label')
+        .eq('ticket_type_id', ticketType.id);
+      
+      const existingMap = new Map(
+        (existingFields || []).map(f => [f.label.toLowerCase(), f.id])
+      );
+      
+      const toCreate = extraFields.filter(f => !existingMap.has(f.toLowerCase()));
+      
+      if (toCreate.length > 0) {
+        const { data: newFields } = await supabase
+          .from('ticket_form_fields')
+          .insert(
+            toCreate.map((label, idx) => ({
+              ticket_type_id: ticketType.id,
+              label,
+              field_type: 'short_answer',
+              is_required: false,
+              field_order: (existingFields?.length || 0) + idx
+            }))
+          )
+          .select('id, label');
+        
+        newFields?.forEach(f => fieldMapping[f.label] = f.id);
+      }
+      
+      existingFields?.forEach(f => {
+        const match = extraFields.find(ef => ef.toLowerCase() === f.label.toLowerCase());
+        if (match) fieldMapping[match] = f.id;
+      });
+    }
+
+    let successCount = 0;
+    let errorCount = 0;
+    const errors: string[] = [];
+
+    for (const attendee of attendees) {
+      try {
+        const { data: ticket, error } = await supabase
+          .from('event_tickets')
+          .insert({
+            event_id: selectedEventId,
+            ticket_type_id: ticketType.id,
+            guest_name: attendee.name,
+            guest_email: attendee.email,
+            guest_phone: attendee.phone || null,
+            price: ticketType.price,
+            payment_status: 'completed',
+            qr_code_data: generateUniqueQRData(attendee),
+            ticket_number: ''
+          })
+          .select()
+          .single();
+
+        if (error) {
+          if (error.code === '23505') {
+            errors.push(`${attendee.name}: Already exists (skipped)`);
+          } else {
+            errors.push(`${attendee.name}: ${error.message}`);
+          }
+          errorCount++;
+          continue;
+        }
+
+        // Create form responses for extra fields
+        const responses = Object.entries(fieldMapping)
+          .map(([field, fieldId]) => {
+            const value = attendee[field];
+            if (value) {
+              return {
+                ticket_id: ticket.id,
+                form_field_id: fieldId,
+                response_value: value
+              };
+            }
+            return null;
+          })
+          .filter(Boolean);
+
+        if (responses.length > 0) {
+          await supabase.from('ticket_form_responses').insert(responses);
+        }
+
+        successCount++;
+      } catch (err) {
+        errorCount++;
+        errors.push(`${attendee.name}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      }
+    }
+
+    return { successCount, errorCount, errors };
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
     if (!selectedFile) return;
 
-    if (!selectedFile.name.toLowerCase().endsWith('.csv')) {
-      toast.error('Please upload a CSV file');
+    if (!selectedEventId) {
+      toast.error('Please select an event first');
       return;
     }
 
-    setFile(selectedFile);
-    setIsOpen(true); // Keep dialog open
-    
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      try {
-        const content = e.target?.result as string;
-        const { data, headers } = parseCSV(content);
-        setCsvData(data);
-        setCsvHeaders(headers);
-        setIsOpen(true); // Ensure dialog stays open after parsing
-        
-        toast.success(`Parsed ${data.length} attendees from CSV`, {
-          description: 'AI is analyzing the data...'
-        });
-        
-        // Trigger AI analysis
-        await analyzeCSVWithAI(content, headers);
-        
-      } catch (error) {
-        toast.error((error as Error).message);
-        setFile(null);
-        setCsvData([]);
-        setCsvHeaders([]);
-        setFormFields([]);
-      }
-    };
-    reader.readAsText(selectedFile);
-  };
-
-  const generateUniqueQRData = (attendee: CSVRow): string => {
-    const timestamp = Date.now();
-    const random = Math.random().toString(36).substring(2, 15);
-    return `${attendee.name}|${attendee.email}|${timestamp}|${random}`;
-  };
-
-  const checkForDuplicates = async () => {
-    if (!selectedEventId || csvData.length === 0) return;
-
-    try {
-      // Check for existing tickets with same email or name
-      const { data: existingTickets, error } = await supabase
-        .from('event_tickets')
-        .select(`
-          id,
-          guest_name,
-          guest_email,
-          ticket_number,
-          user_id,
-          profiles:profiles!event_tickets_user_id_fkey (
-            email,
-            name
-          )
-        `)
-        .eq('event_id', selectedEventId);
-
-      if (error) throw error;
-
-      const found: DuplicateInfo[] = [];
-      csvData.forEach((attendee, index) => {
-        const attendeeEmail = attendee.email?.toLowerCase();
-        const attendeeName = attendee.name?.toLowerCase();
-        const existing = existingTickets?.find(ticket => {
-          const profile = ticket.profiles as any;
-          return (
-            (ticket.guest_email && ticket.guest_email.toLowerCase() === attendeeEmail) ||
-            (profile?.email && profile.email.toLowerCase() === attendeeEmail) ||
-            (ticket.guest_name && ticket.guest_name.toLowerCase() === attendeeName) ||
-            (profile?.name && profile.name.toLowerCase() === attendeeName)
-          );
-        });
-        
-        if (existing) {
-          found.push({
-            csvIndex: index,
-            existingTicket: existing,
-            attendee
-          });
-        }
-      });
-  
-      setDuplicates(found);
-    } catch (error) {
-      console.error('Error checking duplicates:', error);
-    }
-  };
-
-  // Auto-create/find form fields for extra CSV headers and return a header->form_field_id mapping
-  const ensureAutoFieldMapping = async (ticketTypeId: string, headers: string[]): Promise<Record<string, string>> => {
-    // Only headers beyond "name" and "email" are included in mapping (phone is also included in Form Data)
-    const extraHeaders = headers.filter(h => {
-      const hl = h.trim().toLowerCase();
-      return hl !== 'name' && hl !== 'email' && hl !== '';
-    });
-  
-    if (extraHeaders.length === 0) return {};
-  
-    const { data: existingFields, error: fieldsErr } = await supabase
-      .from('ticket_form_fields')
-      .select('id, label, field_order')
-      .eq('ticket_type_id', ticketTypeId)
-      .order('field_order', { ascending: true });
-  
-    if (fieldsErr) {
-      console.error('Error fetching existing form fields:', fieldsErr);
-      return {};
-    }
-  
-    const mapByLabel = new Map<string, { id: string; label: string }>();
-    (existingFields || []).forEach(f => {
-      mapByLabel.set(f.label.trim().toLowerCase(), { id: f.id, label: f.label });
-    });
-  
-    let nextOrder = (existingFields?.length || 0);
-    const toInsert: any[] = [];
-  
-    for (const header of extraHeaders) {
-      const key = header.trim().toLowerCase();
-      if (!mapByLabel.has(key)) {
-        toInsert.push({
-          ticket_type_id: ticketTypeId,
-          field_type: 'short_answer',
-          label: header.trim(),
-          is_required: false,
-          field_order: nextOrder++
-        });
-      }
-    }
-  
-    if (toInsert.length > 0) {
-      const { data: created, error: insertErr } = await supabase
-        .from('ticket_form_fields')
-        .insert(toInsert)
-        .select('id, label');
-  
-      if (insertErr) {
-        console.error('Error creating form fields:', insertErr);
-      } else {
-        created?.forEach((f: any) => {
-          mapByLabel.set(f.label.trim().toLowerCase(), { id: f.id, label: f.label });
-        });
-      }
-    }
-  
-    const mapping: Record<string, string> = {};
-    extraHeaders.forEach(h => {
-      const match = mapByLabel.get(h.trim().toLowerCase());
-      if (match) mapping[h] = match.id;
-    });
-  
-    // reflect in UI mapping (optional)
-    setFieldMapping(prev => ({ ...prev, ...mapping }));
-    return mapping;
-  };
-
-  const handleImport = async () => {
-    if (!selectedEventId || csvData.length === 0) return;
-
     setIsProcessing(true);
-    setImportResults(null);
-    setImportProgress(0);
-
+    
     try {
-      // Check for duplicates first
-      await checkForDuplicates();
+      const isCSV = selectedFile.name.toLowerCase().endsWith('.csv');
+      
+      if (!isCSV) {
+        toast.error('Only CSV files are supported');
+        setIsProcessing(false);
+        return;
+      }
 
-      // Prefer free (₦0) ticket type; fall back to any ticket type
-      let defaultTicketType: { id: string; name: string; price: number } | null = null;
-  
-      const { data: freeTypes, error: freeTypeError } = await supabase
-        .from('ticket_types')
-        .select('id, name, price')
-        .eq('event_id', selectedEventId)
-        .eq('price', 0)
-        .limit(1);
-  
-      if (freeTypeError) {
-        throw new Error('Failed to fetch ticket types for this event.');
+      toast.loading('Analyzing document with AI...', { id: 'processing' });
+
+      const content = await selectedFile.text();
+      const attendees = await extractAttendeesFromCSV(content);
+
+      if (attendees.length === 0) {
+        throw new Error('No attendees found in file');
       }
-  
-      if (freeTypes && freeTypes.length > 0) {
-        defaultTicketType = freeTypes[0];
-      } else {
-        const { data: anyTypes, error: anyTypeError } = await supabase
-          .from('ticket_types')
-          .select('id, name, price')
-          .eq('event_id', selectedEventId)
-          .limit(1);
-        
-        if (anyTypeError || !anyTypes || anyTypes.length === 0) {
-          throw new Error('No ticket types found for this event. Please create a ticket type first.');
-        }
-        defaultTicketType = anyTypes[0];
-      }
-  
-      // Auto-create/find form fields for extra CSV columns and build a mapping
-      const autoMapping = await ensureAutoFieldMapping(defaultTicketType.id, csvHeaders);
-  
-      const errors: string[] = [];
-      let successCount = 0;
-      let skippedCount = 0;
-      let updatedCount = 0; // will remain zero since we no longer update existing
-  
-      // Process each attendee with progress updates
-      for (let i = 0; i < csvData.length; i++) {
-        const attendee = csvData[i];
-        const isDuplicate = duplicates.some(d => d.csvIndex === i);
-        
-        // Update progress
-        setImportProgress(Math.round((i / csvData.length) * 100));
-  
-        try {
-          if (isDuplicate) {
-            // Always skip duplicates to avoid overwriting any existing ticket purchases
-            skippedCount++;
-            continue;
+
+      toast.loading(`Creating ${attendees.length} tickets...`, { id: 'processing' });
+
+      const { successCount, errorCount, errors } = await createTicketsFromAttendees(attendees);
+
+      toast.dismiss('processing');
+
+      if (successCount > 0) {
+        toast.success(
+          `Successfully created ${successCount} ticket${successCount !== 1 ? 's' : ''}`,
+          {
+            description: errorCount > 0 
+              ? `${errorCount} failed or skipped` 
+              : 'All attendees imported successfully'
           }
-  
-          // Map possible phone columns
-          const phoneValue =
-            attendee['phone'] ||
-            attendee['phone_number'] ||
-            attendee['phone number'] ||
-            attendee['mobile'] ||
-            attendee['mobile_number'] ||
-            attendee['mobile number'] ||
-            null;
-  
-          // Create new ticket
-          const { data: ticketData, error } = await supabase
-            .from('event_tickets')
-            .insert({
-              event_id: selectedEventId,
-              ticket_type_id: defaultTicketType.id,
-              guest_name: attendee.name,
-              guest_email: attendee.email,
-              guest_phone: phoneValue,
-              price: defaultTicketType.price,
-              payment_status: 'completed',
-              qr_code_data: generateUniqueQRData(attendee),
-              ticket_number: '' // Will be auto-generated by trigger
-            })
-            .select()
-            .single();
-  
-          if (error) {
-            // Provide more specific error messages
-            if (error.code === '23505' && error.message.includes('qr_code_data')) {
-              errors.push(`${attendee.name} (${attendee.email}): Duplicate entry detected`);
-            } else if (error.code === '23505') {
-              errors.push(`${attendee.name} (${attendee.email}): Already exists in system`);
-            } else {
-              errors.push(`${attendee.name} (${attendee.email}): ${error.message}`);
-            }
-          } else {
-            successCount++;
-            
-            // Build form responses for ALL extra CSV columns (auto mapping)
-            const responses: any[] = [];
-            Object.entries(autoMapping).forEach(([csvHeader, formFieldId]) => {
-              const value = attendee[csvHeader];
-              if (value !== undefined && value !== null && value !== '') {
-                responses.push({
-                  ticket_id: ticketData.id,
-                  form_field_id: formFieldId,
-                  response_value: value
-                });
-              }
-            });
-  
-            if (responses.length > 0) {
-              const { error: formError } = await supabase
-                .from('ticket_form_responses')
-                .insert(responses);
-              
-              if (formError) {
-                console.error('Error creating form responses:', formError);
-              }
-            }
-          }
-        } catch (err) {
-          errors.push(`${attendee.name} (${attendee.email}): Unexpected error occurred`);
-        }
+        );
       }
-  
-      setImportResults({
-        success: successCount,
-        errors,
-        skipped: skippedCount,
-        updated: updatedCount
-      });
-  
-      const totalProcessed = successCount + updatedCount;
-      if (totalProcessed > 0) {
-        toast.success(`Successfully processed ${totalProcessed} attendees (${successCount} new, ${updatedCount} updated)`);
-        onImportComplete?.();
+
+      if (errors.length > 0 && errors.length <= 5) {
+        errors.forEach(err => toast.error(err, { duration: 5000 }));
+      } else if (errors.length > 5) {
+        toast.error(`${errorCount} imports failed`, {
+          description: 'Check console for details'
+        });
+        console.error('Import errors:', errors);
       }
-  
-      if (skippedCount > 0) {
-        toast.info(`Skipped ${skippedCount} duplicate entries`);
-      }
-  
-      if (errors.length > 0) {
-        toast.error(`${errors.length} imports failed`);
-      }
-  
+
+      onImportComplete?.();
+      
     } catch (error) {
-      toast.error((error as Error).message);
+      toast.dismiss('processing');
+      toast.error(error instanceof Error ? error.message : 'Import failed');
+      console.error('Import error:', error);
     } finally {
       setIsProcessing(false);
-      setImportProgress(100);
+      event.target.value = '';
     }
-  };
-
-  const handleClose = () => {
-    setIsOpen(false);
-    setFile(null);
-    setCsvData([]);
-    setCsvHeaders([]);
-    setFormFields([]);
-    setFieldMapping({});
-    setDuplicates([]);
-    setImportResults(null);
-    setSkipDuplicates(true);
-    setUpdateExisting(false);
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => {
-      // Prevent closing while AI is analyzing or we are importing
-      if (!open && (isAnalyzing || isProcessing)) return;
-      setIsOpen(open);
-    }}>
-      <DialogTrigger asChild>
-        <Button variant="outline" className="rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
-          <Upload className="h-4 w-4 mr-2" />
-          Import CSV
-        </Button>
-      </DialogTrigger>
-        <DialogContent 
-          className="max-w-2xl max-h-[80vh] overflow-y-auto"
-          onEscapeKeyDown={(e) => { if (isAnalyzing || isProcessing) e.preventDefault(); }}
-          onPointerDownOutside={(e) => { if (isAnalyzing || isProcessing) e.preventDefault(); }}
+    <>
+      <input
+        type="file"
+        id="ai-document-import"
+        accept=".csv"
+        onChange={handleFileChange}
+        className="hidden"
+        disabled={isProcessing}
+      />
+      <label htmlFor="ai-document-import">
+        <Button
+          variant="outline"
+          className="rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
+          disabled={isProcessing}
+          asChild
         >
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Import Attendees from CSV
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6">
-          {/* File Upload */}
-          <div className="space-y-2">
-            <Label htmlFor="csv-file">Upload CSV File</Label>
-            <Input
-              id="csv-file"
-              type="file"
-              accept=".csv"
-              onChange={handleFileChange}
-              className="rounded-xl"
-            />
-            <div className="space-y-3">
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <p className="text-sm font-medium text-blue-800">📝 Important Note</p>
-                <p className="text-xs text-blue-700 mt-1">
-                  Before importing attendees, please create a <strong>free ticket type</strong> (₦0.00) in the Tickets page. 
-                  This will be used to assign imported attendees to the event.
-                </p>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                CSV should contain "name" and "email" columns. Additional columns will be available for mapping to form fields. Example format:
-              </p>
-              <code className="block text-xs bg-muted p-2 rounded">
-                name,email,company,phone<br/>
-                John Doe,john@example.com,Tech Corp,+1234567890<br/>
-                Jane Smith,jane@example.com,Design Ltd,+0987654321
-              </code>
-            </div>
-          </div>
-
-          {/* AI Analysis and Processing Status */}
-          {(isAnalyzing || isProcessing) && (
-            <Card className="border-purple-200 bg-purple-50">
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-600"></div>
-                    <span className="font-medium text-purple-900">
-                      {isAnalyzing ? '🤖 AI is analyzing your CSV...' : '📥 Importing attendees...'}
-                    </span>
-                  </div>
-                  {isProcessing && (
-                    <>
-                      <div className="w-full bg-purple-200 rounded-full h-2">
-                        <div 
-                          className="bg-purple-600 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${importProgress}%` }}
-                        ></div>
-                      </div>
-                      <p className="text-sm text-purple-700">
-                        {importProgress}% complete - Creating tickets and checking for duplicates
-                      </p>
-                    </>
-                  )}
-                  {analysisResult && (
-                    <div className="mt-2 p-2 bg-white rounded border border-purple-200">
-                      <p className="text-xs text-purple-800">
-                        ✅ AI identified: Name → {analysisResult.nameColumn}, Email → {analysisResult.emailColumn}
-                        {analysisResult.phoneColumn && `, Phone → ${analysisResult.phoneColumn}`}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Preview and Options */}
-          {csvData.length > 0 && !importResults && !isProcessing && (
-            <div className="space-y-4">
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold">Preview ({csvData.length} attendees)</h3>
-                    <Badge variant="secondary">{csvData.length} records</Badge>
-                  </div>
-                  <div className="max-h-40 overflow-y-auto space-y-1">
-                    {csvData.slice(0, 10).map((row, index) => (
-                      <div key={index} className="text-sm p-2 bg-muted/50 rounded">
-                        <div className="flex justify-between mb-1">
-                          <span className="font-medium">{row.name}</span>
-                          <span className="text-muted-foreground">{row.email}</span>
-                        </div>
-                        {csvHeaders.length > 2 && (
-                          <div className="text-xs text-muted-foreground">
-                            {csvHeaders
-                              .filter(h => !['name', 'email'].some(basic => 
-                                h.toLowerCase().includes(basic.toLowerCase())
-                              ))
-                              .map(header => `${header}: ${row[header] || 'N/A'}`)
-                              .join(' • ')
-                            }
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    {csvData.length > 10 && (
-                      <div className="text-sm text-muted-foreground text-center">
-                        ... and {csvData.length - 10} more
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Column Mapping for Form Fields */}
-              {formFields.length > 0 && csvHeaders.length > 2 && (
-                <Card>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold mb-3">Map CSV Columns to Form Fields</h3>
-                    <div className="space-y-3">
-                      {csvHeaders
-                        .filter(header => !['name', 'email'].some(basicField => 
-                          header.toLowerCase().includes(basicField.toLowerCase())
-                        ))
-                        .map((header) => (
-                          <div key={header} className="flex items-center justify-between">
-                            <Label className="text-sm font-medium">{header}</Label>
-                            <Select
-                              value={fieldMapping[header] || ''}
-                              onValueChange={(value) => {
-                                setFieldMapping(prev => ({
-                                  ...prev,
-                                  [header]: value === 'none' ? '' : value
-                                }));
-                              }}
-                            >
-                              <SelectTrigger className="w-48">
-                                <SelectValue placeholder="Select form field" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="none">Don't map</SelectItem>
-                                {formFields.map((field) => (
-                                  <SelectItem key={field.id} value={field.id}>
-                                    {field.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        ))}
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Map additional CSV columns to form fields to save as form responses.
-                    </p>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Duplicate Handling Options */}
-              <Card>
-                <CardContent className="p-4">
-                  <h3 className="font-semibold mb-3">Duplicate Handling</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="skip-duplicates"
-                        checked={skipDuplicates}
-                        onCheckedChange={(checked) => {
-                          setSkipDuplicates(checked as boolean);
-                          if (checked) setUpdateExisting(false);
-                        }}
-                      />
-                      <Label htmlFor="skip-duplicates" className="text-sm">
-                        Skip duplicate entries (recommended)
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="update-existing"
-                        checked={updateExisting}
-                        onCheckedChange={(checked) => {
-                          setUpdateExisting(checked as boolean);
-                          if (checked) setSkipDuplicates(false);
-                        }}
-                      />
-                      <Label htmlFor="update-existing" className="text-sm">
-                        Update existing attendees with new information
-                      </Label>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Duplicates are detected by matching email addresses or names.
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Import Results */}
-          {importResults && (
-            <Card className="border-green-200 bg-green-50">
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-green-600" />
-                    <h3 className="font-semibold text-green-900">Import Complete!</h3>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="p-2 bg-white rounded border border-green-200">
-                      <p className="text-2xl font-bold text-green-600">{importResults.success}</p>
-                      <p className="text-xs text-green-700">Successfully imported</p>
-                    </div>
-                    {importResults.skipped > 0 && (
-                      <div className="p-2 bg-white rounded border border-orange-200">
-                        <p className="text-2xl font-bold text-orange-600">{importResults.skipped}</p>
-                        <p className="text-xs text-orange-700">Duplicates skipped</p>
-                      </div>
-                    )}
-                    {importResults.errors.length > 0 && (
-                      <div className="p-2 bg-white rounded border border-red-200">
-                        <p className="text-2xl font-bold text-red-600">{importResults.errors.length}</p>
-                        <p className="text-xs text-red-700">Errors occurred</p>
-                      </div>
-                    )}
-                  </div>
-                  {importResults.errors.length > 0 && (
-                    <div className="mt-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          const errorText = importResults.errors.join('\n');
-                          navigator.clipboard.writeText(errorText);
-                          toast.success('Errors copied to clipboard');
-                        }}
-                      >
-                        Copy Error Details
-                      </Button>
-                    </div>
-                  )}
-                  <Button onClick={handleClose} className="w-full">
-                    Done
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Actions */}
-          <div className="flex gap-2">
-            <Button
-              onClick={handleImport}
-              disabled={csvData.length === 0 || isProcessing || !selectedEventId || isAnalyzing}
-              className="flex-1"
-            >
-              {isProcessing ? 'Importing...' : isAnalyzing ? 'Analyzing...' : `Import ${csvData.length} Attendees`}
-            </Button>
-            <Button variant="outline" onClick={handleClose}>
-              {importResults ? 'Close' : 'Cancel'}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+          <span>
+            {isProcessing ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              <>
+                <Upload className="h-4 w-4 mr-2" />
+                AI Import CSV
+              </>
+            )}
+          </span>
+        </Button>
+      </label>
+    </>
   );
 }

@@ -11,11 +11,11 @@ serve(async (req) => {
   }
 
   try {
-    const { csvContent, headers } = await req.json();
+    const { headers, sampleData } = await req.json();
     
-    if (!csvContent || !headers) {
+    if (!headers || !sampleData) {
       return new Response(
-        JSON.stringify({ error: 'CSV content and headers are required' }),
+        JSON.stringify({ error: 'Headers and sample data are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -28,11 +28,7 @@ serve(async (req) => {
       );
     }
 
-    // Take first 5 rows as sample
-    const rows = csvContent.split('\n').slice(0, 6); // header + 5 data rows
-    const sampleData = rows.join('\n');
-
-    const prompt = `Analyze this CSV data and intelligently identify which columns contain:
+    const prompt = `Analyze this CSV/spreadsheet data and identify which columns contain:
 1. Name/Full Name (could be "name", "full name", "attendee name", etc.)
 2. Email address (could be "email", "email address", "e-mail", etc.)
 3. Phone number (could be "phone", "mobile", "contact", "phone number", etc.)

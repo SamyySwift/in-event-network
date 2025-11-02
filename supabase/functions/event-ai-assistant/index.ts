@@ -105,11 +105,39 @@ serve(async (req) => {
       .select('*')
       .eq('event_id', eventId);
 
-    // Web search for event context (if event name exists)
+    // Analyze query to determine if web search is needed
+    const messageLower = message.toLowerCase();
+    const needsDirections = messageLower.includes('direction') || messageLower.includes('how do i get') || 
+                           messageLower.includes('how to get') || messageLower.includes('navigate') ||
+                           messageLower.includes('way to') || messageLower.includes('way from');
+    const needsSpeakerInfo = messageLower.includes('speaker') || messageLower.includes('tell me about') ||
+                             messageLower.includes('who is') || messageLower.includes('more about');
+    const needsWebSearch = needsDirections || needsSpeakerInfo || 
+                          messageLower.includes('latest') || messageLower.includes('news') ||
+                          messageLower.includes('current') || messageLower.includes('recent');
+
+    // Perform web search based on query type
     let webContext = '';
-    if (event?.name) {
+    let navigationLinks = '';
+    
+    if (needsWebSearch || event?.name) {
       try {
-        const searchQuery = `${event.name} ${event.event_type || 'event'} ${event.location || ''}`;
+        let searchQuery = '';
+        
+        if (needsDirections && event?.location) {
+          // Extract location mentions from the message
+          searchQuery = `directions to ${event.location} ${event.name}`;
+        } else if (needsSpeakerInfo) {
+          // Extract speaker name from the message if possible
+          const speakerNames = speakers?.map((s: any) => s.name.toLowerCase()) || [];
+          const mentionedSpeaker = speakerNames.find((name: string) => messageLower.includes(name));
+          searchQuery = mentionedSpeaker 
+            ? `${mentionedSpeaker} speaker ${event?.name || ''} biography career achievements`
+            : `${event?.name || ''} speakers information`;
+        } else {
+          searchQuery = `${message} ${event?.name || ''}`;
+        }
+        
         const webSearchResponse = await fetch(`https://api.tavily.com/search`, {
           method: 'POST',
           headers: {
@@ -118,17 +146,32 @@ serve(async (req) => {
           body: JSON.stringify({
             api_key: Deno.env.get('TAVILY_API_KEY') || 'tvly-demo-key',
             query: searchQuery,
-            search_depth: 'basic',
-            max_results: 3,
+            search_depth: needsSpeakerInfo ? 'advanced' : 'basic',
+            max_results: needsSpeakerInfo || needsDirections ? 5 : 3,
           })
         });
         
         if (webSearchResponse.ok) {
           const webData = await webSearchResponse.json();
-          webContext = webData.results?.map((r: any) => `- ${r.title}: ${r.content}`).join('\n') || '';
+          webContext = webData.results?.map((r: any) => 
+            `- ${r.title}: ${r.content}\n  Source: ${r.url}`
+          ).join('\n') || '';
+          
+          // Generate navigation links if directions were requested
+          if (needsDirections && event?.location) {
+            const encodedLocation = encodeURIComponent(event.location);
+            const encodedEventName = encodeURIComponent(event.name || 'event');
+            navigationLinks = `\n\nNAVIGATION LINKS:
+📍 Google Maps: https://www.google.com/maps/search/?api=1&query=${encodedLocation}
+🚗 Uber: https://m.uber.com/looking?drop[0]=${encodedLocation}
+🚕 Bolt: https://bolt.eu/
+🚙 InDrive: https://indrive.com/
+
+For Bolt and InDrive, please enter "${event.location}" as your destination in the app.`;
+          }
         }
       } catch (e) {
-        console.log('Web search not available:', e);
+        console.log('Web search error:', e);
       }
     }
 
@@ -271,35 +314,51 @@ ${webContext ? `\nWEB SEARCH CONTEXT:\n${webContext}\n` : ''}
     }
 
     // Regular text response
-    const systemPrompt = `You are an intelligent AI event assistant for "${event?.name || 'this event'}". Your goal is to provide comprehensive, accurate, and actionable information to attendees.
+    const systemPrompt = `You are an intelligent AI event assistant for "${event?.name || 'this event'}". Your goal is to provide comprehensive, accurate, and actionable information to attendees using BOTH event data AND real-time web search results.
 
 KEY CAPABILITIES:
 1. Event Information: Details about timing, location, description
 2. Schedule & Sessions: Session times, topics, speakers, locations
-3. Speaker Information: Bios, expertise, topics they're covering
+3. Speaker Information: Combine database info WITH web search for comprehensive speaker backgrounds
 4. Networking: Match attendees based on interests, skills, job roles
 5. Facilities: Locations of venues, restrooms, food areas, etc.
-6. Q&A: Answer questions about the event or connect to relevant info
+6. Navigation & Directions: Provide specific links to Google Maps, Uber, Bolt, and InDrive
 7. Announcements: Latest updates and important notifications
 8. Polls & Engagement: Information about active polls
 9. Tickets & Logistics: Ticket types, pricing, availability
-10. Web Context: Use search results for historical or background info
+10. Web Intelligence: Always supplement answers with current web search results when available
 
 COMPREHENSIVE EVENT CONTEXT:
 ${contextInfo}
 
-RESPONSE GUIDELINES:
+${webContext ? `\n🌐 LIVE WEB SEARCH RESULTS (PRIORITIZE THIS FOR CURRENT/DETAILED INFO):\n${webContext}\n` : ''}
+
+${navigationLinks ? navigationLinks : ''}
+
+CRITICAL RESPONSE GUIDELINES:
+- **FOR SPEAKER QUESTIONS**: ALWAYS combine database info with web search results. Provide detailed background, achievements, and current work from web sources
+- **FOR DIRECTIONS**: ALWAYS include the navigation links provided above (Google Maps, Uber, Bolt, InDrive)
+- **FOR UNKNOWN INFO**: If the event database doesn't have the answer, use web search results prominently
 - Be warm, friendly, and conversational
-- Give specific, actionable information (times, locations, names)
-- For networking questions, suggest 2-3 specific attendees with reasons based on their profiles
-- When discussing schedule, always include exact times and locations
-- Reference speakers by name and mention their expertise
-- For facility questions, be specific about locations and provide navigation help
-- Always cite information from the event context when answering
-- If information isn't available, say so clearly and suggest alternatives
-- Keep responses focused but thorough (3-5 sentences typically)
+- Give specific, actionable information (times, locations, names, links)
+- When web search results are available, integrate them naturally into your response
+- For speaker inquiries, provide comprehensive information beyond just the event schedule
+- For navigation queries, always provide ALL the navigation links (Google Maps, Uber, Bolt, InDrive)
+- If information isn't in either the database or web results, clearly state that and suggest alternatives
 - Use bullet points for lists of items
-- For questions about past questions, summarize what attendees are asking about
+- Always cite sources when using web search results
+
+NAVIGATION INSTRUCTIONS:
+When users ask "how do I get to [location]" or similar:
+1. Provide directions information from web search
+2. ALWAYS include the navigation links section with Google Maps, Uber, Bolt, and InDrive links
+3. Explain how to use each service
+
+SPEAKER INFORMATION PRIORITY:
+1. Start with event-specific role/session from database
+2. Enhance with comprehensive background from web search results
+3. Include achievements, current position, expertise from web sources
+4. Provide links to their social profiles from database
 
 NETWORKING STRATEGY:
 When suggesting networking connections, analyze:
@@ -309,7 +368,7 @@ When suggesting networking connections, analyze:
 - What they're looking for (mentioned in profiles)
 - Give personalized reasons why they should connect
 
-Always be accurate and use the provided context as your source of truth.`;
+Always prioritize accuracy and combine event context with web intelligence for the most helpful responses.`;
 
     const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',

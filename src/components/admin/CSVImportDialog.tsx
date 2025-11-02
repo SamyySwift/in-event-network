@@ -174,6 +174,26 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     }
 
     const ticketType = ticketTypes[0];
+
+    // Check for existing tickets to avoid duplicates
+    const emails = attendees.map(a => a.email).filter(Boolean);
+    const { data: existingTickets } = await supabase
+      .from('event_tickets')
+      .select('guest_email')
+      .eq('event_id', selectedEventId)
+      .in('guest_email', emails);
+
+    const existingEmails = new Set((existingTickets || []).map(t => t.guest_email?.toLowerCase()));
+    const newAttendees = attendees.filter(a => !existingEmails.has(a.email.toLowerCase()));
+    const duplicateCount = attendees.length - newAttendees.length;
+
+    if (duplicateCount > 0) {
+      toast.info(`Skipping ${duplicateCount} duplicate${duplicateCount !== 1 ? 's' : ''}`);
+    }
+
+    if (newAttendees.length === 0) {
+      return { successCount: 0, errorCount: 0, errors: [] };
+    }
     
     // Collect extra fields across all attendees
     const extraFieldsSet = new Set<string>();
@@ -226,11 +246,11 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     let errorCount = 0;
     const errors: string[] = [];
 
-    const BATCH_SIZE = 100;
-    setProgress({ current: 0, total: attendees.length, percentage: 0 });
+    const BATCH_SIZE = 200;
+    setProgress({ current: 0, total: newAttendees.length, percentage: 0 });
 
-    for (let start = 0; start < attendees.length; start += BATCH_SIZE) {
-      const batch = attendees.slice(start, start + BATCH_SIZE);
+    for (let start = 0; start < newAttendees.length; start += BATCH_SIZE) {
+      const batch = newAttendees.slice(start, start + BATCH_SIZE);
 
       const ticketRows = batch.map(attendee => ({
         event_id: selectedEventId,
@@ -251,61 +271,16 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
           .select('id, guest_email');
 
         if (insertError) {
-          // Fallback to per-row for this batch (likely duplicates)
-          for (const attendee of batch) {
-            try {
-              const { data: ticket, error } = await supabase
-                .from('event_tickets')
-                .insert({
-                  event_id: selectedEventId,
-                  ticket_type_id: ticketType.id,
-                  guest_name: attendee.name,
-                  guest_email: attendee.email,
-                  guest_phone: attendee.phone || null,
-                  price: ticketType.price,
-                  payment_status: 'completed',
-                  qr_code_data: generateUniqueQRData(attendee),
-                  ticket_number: ''
-                })
-                .select()
-                .single();
-
-              if (error) {
-                if ((error as any).code === '23505') {
-                  errors.push(`${attendee.name || attendee.email}: Already exists (skipped)`);
-                } else {
-                  errors.push(`${attendee.name || attendee.email}: ${error.message}`);
-                }
-                errorCount++;
-                continue;
-              }
-
-              const responses = Object.entries(fieldMapping)
-                .map(([field, fieldId]) => {
-                  const value = attendee[field];
-                  return value
-                    ? { ticket_id: ticket.id, form_field_id: fieldId, response_value: value }
-                    : null;
-                })
-                .filter(Boolean) as any[];
-
-              if (responses.length > 0) {
-                await supabase.from('ticket_form_responses').insert(responses);
-              }
-
-              successCount++;
-            } catch (err) {
-              errorCount++;
-              errors.push(`${attendee.name || attendee.email}: ${err instanceof Error ? err.message : 'Unknown error'}`);
-            }
-          }
+          errorCount += batch.length;
+          errors.push(`Batch error: ${insertError.message}`);
+          console.error('Batch insert error:', insertError);
         } else {
           // Bulk inserted OK
           successCount += inserted?.length || 0;
           setProgress({ 
-            current: Math.min(start + BATCH_SIZE, attendees.length), 
-            total: attendees.length,
-            percentage: Math.round((Math.min(start + BATCH_SIZE, attendees.length) / attendees.length) * 100)
+            current: Math.min(start + BATCH_SIZE, newAttendees.length), 
+            total: newAttendees.length,
+            percentage: Math.round((Math.min(start + BATCH_SIZE, newAttendees.length) / newAttendees.length) * 100)
           });
 
           if (inserted && inserted.length > 0 && Object.keys(fieldMapping).length > 0) {
@@ -330,52 +305,9 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
           }
         }
       } catch (e) {
-        // Unexpected batch error: fallback per-row
-        for (const attendee of batch) {
-          try {
-            const { data: ticket, error } = await supabase
-              .from('event_tickets')
-              .insert({
-                event_id: selectedEventId,
-                ticket_type_id: ticketType.id,
-                guest_name: attendee.name,
-                guest_email: attendee.email,
-                guest_phone: attendee.phone || null,
-                price: ticketType.price,
-                payment_status: 'completed',
-                qr_code_data: generateUniqueQRData(attendee),
-                ticket_number: ''
-              })
-              .select()
-              .single();
-
-            if (error) {
-              if ((error as any).code === '23505') {
-                errors.push(`${attendee.name || attendee.email}: Already exists (skipped)`);
-              } else {
-                errors.push(`${attendee.name || attendee.email}: ${error.message}`);
-              }
-              errorCount++;
-              continue;
-            }
-
-            const responses = Object.entries(fieldMapping)
-              .map(([field, fieldId]) => {
-                const value = attendee[field];
-                return value ? { ticket_id: ticket.id, form_field_id: fieldId, response_value: value } : null;
-              })
-              .filter(Boolean) as any[];
-
-            if (responses.length > 0) {
-              await supabase.from('ticket_form_responses').insert(responses);
-            }
-
-            successCount++;
-          } catch (err) {
-            errorCount++;
-            errors.push(`${attendee.name || attendee.email}: ${err instanceof Error ? err.message : 'Unknown error'}`);
-          }
-        }
+        errorCount += batch.length;
+        errors.push(`Unexpected error: ${e instanceof Error ? e.message : 'Unknown error'}`);
+        console.error('Batch processing error:', e);
       }
     }
 

@@ -34,61 +34,117 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     return XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false }) as string[][];
   };
 
-  const extractAttendeesFromCSV = async (content: string): Promise<AttendeeData[]> => {
-    const jsonData = parseCSVContent(content);
-    
-    if (jsonData.length < 2) {
-      throw new Error('File must have at least a header row and one data row');
+  const extractAttendeesFromCSV = async (rows: string[][]): Promise<AttendeeData[]> => {
+    if (!rows || rows.length === 0) {
+      throw new Error('Empty file');
     }
 
-    const headers = jsonData[0].map(h => (h || '').toString().trim());
-    
-    // Use AI to identify columns
+    // Normalize and deduplicate headers
+    const rawHeaders = rows[0].map(h => (h ?? '').toString().trim());
+    const headers: string[] = rawHeaders.map((h, idx) => h || `Column ${idx + 1}`);
+    const headerCounts: Record<string, number> = {};
+    for (let i = 0; i < headers.length; i++) {
+      const base = headers[i].toLowerCase();
+      const count = (headerCounts[base] = (headerCounts[base] || 0) + 1);
+      if (count > 1) headers[i] = `${headers[i]} (${count})`;
+    }
+
+    // Use AI to identify primary columns
     const { data: aiData, error } = await supabase.functions.invoke('analyze-csv-import', {
-      body: { headers, sampleData: jsonData.slice(1, 6).map(row => row.join('|')).join('\n') }
+      body: {
+        headers,
+        sampleData: rows
+          .slice(1, 101)
+          .map(r => (r || []).map(c => (c ?? '').toString()).join('|'))
+          .join('\n')
+      }
     });
 
     if (error) throw error;
 
-    const { nameColumn, emailColumn, phoneColumn } = aiData.analysis;
-    
-    const nameIdx = headers.indexOf(nameColumn);
-    const emailIdx = headers.indexOf(emailColumn);
-    const phoneIdx = phoneColumn ? headers.indexOf(phoneColumn) : -1;
+    const { nameColumn, emailColumn, phoneColumn } = (aiData as any)?.analysis || {};
+    const lowerHeaders = headers.map(h => h.toLowerCase());
+    let nameIdx = nameColumn ? lowerHeaders.indexOf(String(nameColumn).toLowerCase()) : -1;
+    let emailIdx = emailColumn ? lowerHeaders.indexOf(String(emailColumn).toLowerCase()) : -1;
+    let phoneIdx = phoneColumn ? lowerHeaders.indexOf(String(phoneColumn).toLowerCase()) : -1;
 
-    if (nameIdx === -1 || emailIdx === -1) {
-      throw new Error('Could not identify name and email columns');
-    }
+    const emailRe = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
+    const phoneRe = /(\+?\d{1,3}[\s-]?)?(\(?\d{2,4}\)?[\s-]?)?[\d\s-]{6,}/;
+
+    const findFirstLastNameIdx = () => {
+      const f = lowerHeaders.findIndex(h => /first.*name|given.*name/i.test(h));
+      const l = lowerHeaders.findIndex(h => /last.*name|surname|family.*name/i.test(h));
+      return { f, l };
+    };
+
+    const { f: firstIdx, l: lastIdx } = findFirstLastNameIdx();
 
     const attendees: AttendeeData[] = [];
-    
-    for (let i = 1; i < jsonData.length; i++) {
-      const row = jsonData[i];
+
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
       if (!row || row.length === 0) continue;
-      
-      const name = (row[nameIdx] || '').toString().trim();
-      const email = (row[emailIdx] || '').toString().trim();
-      
-      if (!name || !email) continue;
-      
-      const attendee: AttendeeData = { name, email };
-      
-      if (phoneIdx !== -1 && row[phoneIdx]) {
-        attendee.phone = row[phoneIdx].toString().trim();
+      const cells = row.map(v => (v ?? '').toString().trim());
+
+      let name = nameIdx >= 0 ? cells[nameIdx] : '';
+      let email = emailIdx >= 0 ? cells[emailIdx] : '';
+      let phone = phoneIdx >= 0 ? cells[phoneIdx] : '';
+
+      // Fallbacks: detect from cell patterns
+      if (!email) {
+        const eIdx = cells.findIndex(c => emailRe.test(c));
+        if (eIdx !== -1) {
+          email = cells[eIdx];
+          emailIdx = emailIdx === -1 ? eIdx : emailIdx;
+        }
       }
-      
+
+      if (!phone) {
+        const pIdx = cells.findIndex(c => phoneRe.test(c));
+        if (pIdx !== -1) {
+          phone = cells[pIdx];
+          phoneIdx = phoneIdx === -1 ? pIdx : phoneIdx;
+        }
+      }
+
+      if (!name) {
+        if (firstIdx !== -1 && lastIdx !== -1) {
+          const first = cells[firstIdx] || '';
+          const last = cells[lastIdx] || '';
+          name = `${first} ${last}`.trim();
+        } else {
+          const nIdx = cells.findIndex((c, idx) => idx !== emailIdx && idx !== phoneIdx && /[A-Za-z]/.test(c));
+          if (nIdx !== -1) name = cells[nIdx];
+        }
+      }
+
+      if (!email) continue; // require at least an email
+      if (!name) {
+        const local = email.split('@')[0];
+        name = local.replace(/[._-]+/g, ' ').replace(/\b\w/g, (s) => s.toUpperCase());
+      }
+
+      const attendee: AttendeeData = { name, email };
+      if (phone) attendee.phone = phone;
+
       // Add all other columns as form data
       headers.forEach((header, idx) => {
-        if (idx !== nameIdx && idx !== emailIdx && idx !== phoneIdx && row[idx]) {
-          attendee[header] = row[idx].toString().trim();
-        }
+        const val = cells[idx];
+        if (!val) return;
+        if (idx === nameIdx || idx === emailIdx || idx === phoneIdx) return;
+        attendee[header] = val;
       });
-      
+
       attendees.push(attendee);
     }
-    
+
+    if (attendees.length === 0) {
+      throw new Error('No attendees found in file');
+    }
+
     return attendees;
   };
+
 
   const createTicketsFromAttendees = async (attendees: AttendeeData[]) => {
     if (!selectedEventId) throw new Error('No event selected');
@@ -116,10 +172,14 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
 
     const ticketType = ticketTypes[0];
     
-    // Get extra fields from first attendee
-    const extraFields = Object.keys(attendees[0]).filter(k => 
-      k !== 'name' && k !== 'email' && k !== 'phone'
-    );
+    // Collect extra fields across all attendees
+    const extraFieldsSet = new Set<string>();
+    attendees.forEach(a => {
+      Object.keys(a).forEach(k => {
+        if (k !== 'name' && k !== 'email' && k !== 'phone') extraFieldsSet.add(k);
+      });
+    });
+    const extraFields = Array.from(extraFieldsSet);
     
     // Create form fields for extra columns
     const fieldMapping: Record<string, string> = {};
@@ -163,57 +223,150 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     let errorCount = 0;
     const errors: string[] = [];
 
-    for (const attendee of attendees) {
+    const BATCH_SIZE = 100;
+
+    for (let start = 0; start < attendees.length; start += BATCH_SIZE) {
+      const batch = attendees.slice(start, start + BATCH_SIZE);
+
+      const ticketRows = batch.map(attendee => ({
+        event_id: selectedEventId,
+        ticket_type_id: ticketType.id,
+        guest_name: attendee.name,
+        guest_email: attendee.email,
+        guest_phone: attendee.phone || null,
+        price: ticketType.price,
+        payment_status: 'completed',
+        qr_code_data: generateUniqueQRData(attendee),
+        ticket_number: ''
+      }));
+
       try {
-        const { data: ticket, error } = await supabase
+        const { data: inserted, error: insertError } = await supabase
           .from('event_tickets')
-          .insert({
-            event_id: selectedEventId,
-            ticket_type_id: ticketType.id,
-            guest_name: attendee.name,
-            guest_email: attendee.email,
-            guest_phone: attendee.phone || null,
-            price: ticketType.price,
-            payment_status: 'completed',
-            qr_code_data: generateUniqueQRData(attendee),
-            ticket_number: ''
-          })
-          .select()
-          .single();
+          .insert(ticketRows)
+          .select('id, guest_email');
 
-        if (error) {
-          if (error.code === '23505') {
-            errors.push(`${attendee.name}: Already exists (skipped)`);
-          } else {
-            errors.push(`${attendee.name}: ${error.message}`);
-          }
-          errorCount++;
-          continue;
-        }
+        if (insertError) {
+          // Fallback to per-row for this batch (likely duplicates)
+          for (const attendee of batch) {
+            try {
+              const { data: ticket, error } = await supabase
+                .from('event_tickets')
+                .insert({
+                  event_id: selectedEventId,
+                  ticket_type_id: ticketType.id,
+                  guest_name: attendee.name,
+                  guest_email: attendee.email,
+                  guest_phone: attendee.phone || null,
+                  price: ticketType.price,
+                  payment_status: 'completed',
+                  qr_code_data: generateUniqueQRData(attendee),
+                  ticket_number: ''
+                })
+                .select()
+                .single();
 
-        // Create form responses for extra fields
-        const responses = Object.entries(fieldMapping)
-          .map(([field, fieldId]) => {
-            const value = attendee[field];
-            if (value) {
-              return {
-                ticket_id: ticket.id,
-                form_field_id: fieldId,
-                response_value: value
-              };
+              if (error) {
+                if ((error as any).code === '23505') {
+                  errors.push(`${attendee.name || attendee.email}: Already exists (skipped)`);
+                } else {
+                  errors.push(`${attendee.name || attendee.email}: ${error.message}`);
+                }
+                errorCount++;
+                continue;
+              }
+
+              const responses = Object.entries(fieldMapping)
+                .map(([field, fieldId]) => {
+                  const value = attendee[field];
+                  return value
+                    ? { ticket_id: ticket.id, form_field_id: fieldId, response_value: value }
+                    : null;
+                })
+                .filter(Boolean) as any[];
+
+              if (responses.length > 0) {
+                await supabase.from('ticket_form_responses').insert(responses);
+              }
+
+              successCount++;
+            } catch (err) {
+              errorCount++;
+              errors.push(`${attendee.name || attendee.email}: ${err instanceof Error ? err.message : 'Unknown error'}`);
             }
-            return null;
-          })
-          .filter(Boolean);
+          }
+        } else {
+          // Bulk inserted OK
+          successCount += inserted?.length || 0;
 
-        if (responses.length > 0) {
-          await supabase.from('ticket_form_responses').insert(responses);
+          if (inserted && inserted.length > 0 && Object.keys(fieldMapping).length > 0) {
+            const responses: any[] = [];
+            for (let i = 0; i < inserted.length; i++) {
+              const ticket = inserted[i];
+              const attendee = batch[i];
+              for (const [field, fieldId] of Object.entries(fieldMapping)) {
+                const value = attendee[field];
+                if (value) {
+                  responses.push({
+                    ticket_id: ticket.id,
+                    form_field_id: fieldId,
+                    response_value: value
+                  });
+                }
+              }
+            }
+            if (responses.length > 0) {
+              await supabase.from('ticket_form_responses').insert(responses);
+            }
+          }
         }
+      } catch (e) {
+        // Unexpected batch error: fallback per-row
+        for (const attendee of batch) {
+          try {
+            const { data: ticket, error } = await supabase
+              .from('event_tickets')
+              .insert({
+                event_id: selectedEventId,
+                ticket_type_id: ticketType.id,
+                guest_name: attendee.name,
+                guest_email: attendee.email,
+                guest_phone: attendee.phone || null,
+                price: ticketType.price,
+                payment_status: 'completed',
+                qr_code_data: generateUniqueQRData(attendee),
+                ticket_number: ''
+              })
+              .select()
+              .single();
 
-        successCount++;
-      } catch (err) {
-        errorCount++;
-        errors.push(`${attendee.name}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+            if (error) {
+              if ((error as any).code === '23505') {
+                errors.push(`${attendee.name || attendee.email}: Already exists (skipped)`);
+              } else {
+                errors.push(`${attendee.name || attendee.email}: ${error.message}`);
+              }
+              errorCount++;
+              continue;
+            }
+
+            const responses = Object.entries(fieldMapping)
+              .map(([field, fieldId]) => {
+                const value = attendee[field];
+                return value ? { ticket_id: ticket.id, form_field_id: fieldId, response_value: value } : null;
+              })
+              .filter(Boolean) as any[];
+
+            if (responses.length > 0) {
+              await supabase.from('ticket_form_responses').insert(responses);
+            }
+
+            successCount++;
+          } catch (err) {
+            errorCount++;
+            errors.push(`${attendee.name || attendee.email}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+          }
+        }
       }
     }
 
@@ -242,8 +395,27 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
 
       toast.loading('Analyzing document with AI...', { id: 'processing' });
 
-      const content = await selectedFile.text();
-      const attendees = await extractAttendeesFromCSV(content);
+      const nameLower = selectedFile.name.toLowerCase();
+      const isExcel = nameLower.endsWith('.xlsx') || nameLower.endsWith('.xls');
+      const isTextLike = nameLower.endsWith('.csv') || nameLower.endsWith('.tsv') || nameLower.endsWith('.txt');
+
+      let rows: string[][] = [];
+      if (isExcel) {
+        const buffer = await selectedFile.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: 'array', raw: true });
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false }) as string[][];
+      } else if (isTextLike) {
+        const content = await selectedFile.text();
+        rows = parseCSVContent(content);
+      } else {
+        toast.error('Unsupported file type. Please upload CSV, TSV, TXT, or Excel files');
+        setIsProcessing(false);
+        return;
+      }
+
+      const attendees = await extractAttendeesFromCSV(rows);
 
       if (attendees.length === 0) {
         throw new Error('No attendees found in file');
@@ -292,7 +464,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       <input
         type="file"
         id="ai-document-import"
-        accept=".csv"
+        accept=".csv,.xlsx,.xls,.tsv,.txt"
         onChange={handleFileChange}
         className="hidden"
         disabled={isProcessing}

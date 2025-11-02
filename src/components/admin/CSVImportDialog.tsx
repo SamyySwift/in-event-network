@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Upload, Loader2 } from 'lucide-react';
+import { Upload, Loader2, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdminEventContext } from '@/hooks/useAdminEventContext';
@@ -19,6 +20,8 @@ interface CSVImportDialogProps {
 
 export default function CSVImportDialog({ onImportComplete }: CSVImportDialogProps) {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [progress, setProgress] = useState({ current: 0, total: 0, percentage: 0 });
+  const [showSuccess, setShowSuccess] = useState(false);
   const { selectedEventId } = useAdminEventContext();
 
   const generateUniqueQRData = (attendee: AttendeeData): string => {
@@ -224,6 +227,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     const errors: string[] = [];
 
     const BATCH_SIZE = 100;
+    setProgress({ current: 0, total: attendees.length, percentage: 0 });
 
     for (let start = 0; start < attendees.length; start += BATCH_SIZE) {
       const batch = attendees.slice(start, start + BATCH_SIZE);
@@ -298,6 +302,11 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         } else {
           // Bulk inserted OK
           successCount += inserted?.length || 0;
+          setProgress({ 
+            current: Math.min(start + BATCH_SIZE, attendees.length), 
+            total: attendees.length,
+            percentage: Math.round((Math.min(start + BATCH_SIZE, attendees.length) / attendees.length) * 100)
+          });
 
           if (inserted && inserted.length > 0 && Object.keys(fieldMapping).length > 0) {
             const responses: any[] = [];
@@ -426,8 +435,11 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       const { successCount, errorCount, errors } = await createTicketsFromAttendees(attendees);
 
       toast.dismiss('processing');
+      setProgress({ current: attendees.length, total: attendees.length, percentage: 100 });
 
       if (successCount > 0) {
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000);
         toast.success(
           `Successfully created ${successCount} ticket${successCount !== 1 ? 's' : ''}`,
           {
@@ -454,13 +466,16 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       toast.error(error instanceof Error ? error.message : 'Import failed');
       console.error('Import error:', error);
     } finally {
-      setIsProcessing(false);
+      setTimeout(() => {
+        setIsProcessing(false);
+        setProgress({ current: 0, total: 0, percentage: 0 });
+      }, 3000);
       event.target.value = '';
     }
   };
 
   return (
-    <>
+    <div className="space-y-4">
       <input
         type="file"
         id="ai-document-import"
@@ -491,6 +506,32 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
           </span>
         </Button>
       </label>
-    </>
+
+      {isProcessing && progress.total > 0 && (
+        <div className="space-y-2 p-4 rounded-lg border bg-card">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground">
+              Importing attendees...
+            </span>
+            <span className="font-medium">
+              {progress.current} / {progress.total}
+            </span>
+          </div>
+          <Progress value={progress.percentage} className="h-2" />
+          <p className="text-xs text-muted-foreground text-center">
+            {progress.percentage}% complete
+          </p>
+        </div>
+      )}
+
+      {showSuccess && (
+        <div className="flex items-center gap-2 p-4 rounded-lg border bg-success/10 border-success/20">
+          <CheckCircle2 className="h-5 w-5 text-success" />
+          <span className="text-sm font-medium text-success">
+            Import completed successfully!
+          </span>
+        </div>
+      )}
+    </div>
   );
 }

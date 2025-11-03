@@ -12,11 +12,14 @@ serve(async (req) => {
   }
 
   try {
-    const { message, eventId, action } = await req.json();
+    const { message, messages, eventId, action } = await req.json();
     
-    if (!message || !eventId) {
+    // Support both single message and conversation history
+    const conversationMessages = messages || [{ role: 'user', content: message }];
+    
+    if ((!message && !messages) || !eventId) {
       return new Response(
-        JSON.stringify({ error: 'Message and eventId are required' }),
+        JSON.stringify({ error: 'Message/messages and eventId are required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -106,7 +109,8 @@ serve(async (req) => {
       .eq('event_id', eventId);
 
     // Analyze query to determine if web search is needed
-    const messageLower = message.toLowerCase();
+    const lastUserMessage = conversationMessages[conversationMessages.length - 1]?.content || '';
+    const messageLower = lastUserMessage.toLowerCase();
     const needsDirections = messageLower.includes('direction') || messageLower.includes('how do i get') || 
                            messageLower.includes('how to get') || messageLower.includes('navigate') ||
                            messageLower.includes('way to') || messageLower.includes('way from');
@@ -135,7 +139,7 @@ serve(async (req) => {
             ? `${mentionedSpeaker} speaker ${event?.name || ''} biography career achievements`
             : `${event?.name || ''} speakers information`;
         } else {
-          searchQuery = `${message} ${event?.name || ''}`;
+          searchQuery = `${lastUserMessage} ${event?.name || ''}`;
         }
         
         const webSearchResponse = await fetch(`https://api.tavily.com/search`, {
@@ -278,6 +282,7 @@ ${webContext ? `\nWEB SEARCH CONTEXT:\n${webContext}\n` : ''}
 
     // Handle image generation requests
     if (action === 'generate_image') {
+      const lastUserMessage = conversationMessages[conversationMessages.length - 1]?.content || '';
       const imageResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -289,7 +294,7 @@ ${webContext ? `\nWEB SEARCH CONTEXT:\n${webContext}\n` : ''}
           messages: [
             {
               role: 'user',
-              content: message
+              content: lastUserMessage
             }
           ],
           modalities: ['image', 'text']
@@ -380,7 +385,7 @@ Always prioritize accuracy and combine event context with web intelligence for t
         model: 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: message }
+          ...conversationMessages
         ],
         temperature: 0.7,
         max_tokens: 500

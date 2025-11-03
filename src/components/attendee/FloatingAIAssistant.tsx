@@ -59,9 +59,15 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ eventI
     setIsLoading(true);
 
     try {
+      // Convert messages to the format expected by the AI API
+      const conversationHistory = [...messages, userMessage].map(msg => ({
+        role: msg.type === 'user' ? 'user' : 'assistant',
+        content: msg.content
+      }));
+
       const { data, error } = await supabase.functions.invoke('event-ai-assistant', {
         body: { 
-          message: inputMessage,
+          messages: conversationHistory,
           eventId,
           action: isImageMode ? 'generate_image' : 'chat'
         }

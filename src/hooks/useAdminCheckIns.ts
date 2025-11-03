@@ -236,7 +236,8 @@ export const useAdminCheckIns = (eventIdOverride?: string) => {
         .from('event_tickets')
         .select('id, ticket_number, user_id')
         .eq('event_id', actualEventId)
-        .eq('check_in_status', false);
+        .eq('check_in_status', false)
+        .limit(10000);
 
       if (fetchError) throw fetchError;
       if (!uncheckedTickets || uncheckedTickets.length === 0) {

@@ -85,7 +85,8 @@ function AdminCheckInContent() {
             )
           `)
           .eq('event_id', selectedEventId)
-          .ilike('guest_name', searchTerm);
+          .ilike('guest_name', searchTerm)
+          .limit(10000);
 
         // Search by profile name
         const { data: profileResults, error: profileError } = await supabase
@@ -107,7 +108,8 @@ function AdminCheckInContent() {
             )
           `)
           .eq('event_id', selectedEventId)
-          .not('profiles', 'is', null);
+          .not('profiles', 'is', null)
+          .limit(10000);
 
         if (guestError && profileError) {
           throw guestError || profileError;

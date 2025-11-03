@@ -94,7 +94,8 @@ export const useAdminTickets = (eventIdOverride?: string) => {
           ticket_types (*)
         `)
         .eq('event_id', actualEventId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(10000);
 
       if (error) throw error;
       

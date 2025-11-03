@@ -3,9 +3,13 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Medal, Trophy, Clock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Medal, Trophy, Clock, ChevronRight, PlayCircle, StopCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuizSession } from '@/hooks/useQuizSession';
+import { useQuizQuestions } from '@/hooks/useQuizGames';
+import { toast } from 'sonner';
 
 interface LeaderboardEntry {
   user_id: string;
@@ -37,6 +41,12 @@ const LiveGames = () => {
   const [activeGame, setActiveGame] = useState<Game | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [highlightedIds, setHighlightedIds] = useState<Set<string>>(new Set());
+  
+  const { session, startSession, nextQuestion, endSession } = useQuizSession(
+    activeGame?.id || null,
+    eventId || null
+  );
+  const { questions } = useQuizQuestions(activeGame?.id || null);
 
   const fetchScores = async () => {
     if (!eventId) return;
@@ -148,6 +158,41 @@ const LiveGames = () => {
     );
   }
 
+  const handleStartQuiz = async () => {
+    if (!activeGame?.id || !eventId) return;
+    try {
+      await startSession.mutateAsync({ quizGameId: activeGame.id, eventId });
+      toast.success('Quiz started!');
+    } catch (error) {
+      console.error('Failed to start quiz:', error);
+      toast.error('Failed to start quiz');
+    }
+  };
+
+  const handleNextQuestion = async () => {
+    if (!session || session.current_question_index >= questions.length - 1) return;
+    try {
+      await nextQuestion.mutateAsync({
+        sessionId: session.id,
+        currentIndex: session.current_question_index,
+      });
+    } catch (error) {
+      console.error('Failed to go to next question:', error);
+      toast.error('Failed to advance question');
+    }
+  };
+
+  const handleEndQuiz = async () => {
+    if (!session) return;
+    try {
+      await endSession.mutateAsync(session.id);
+      toast.success('Quiz ended!');
+    } catch (error) {
+      console.error('Failed to end quiz:', error);
+      toast.error('Failed to end quiz');
+    }
+  };
+
   if (!activeGame) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
@@ -163,6 +208,8 @@ const LiveGames = () => {
     );
   }
 
+  const currentQuestion = session ? questions[session.current_question_index] : null;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -172,6 +219,88 @@ const LiveGames = () => {
           </h1>
           <p className="text-xl text-muted-foreground">{activeGame.title}</p>
         </div>
+
+        {isQuiz && (
+          <Card className="shadow-xl mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  Quiz Control Panel
+                </span>
+                {session && (
+                  <span className="text-sm text-muted-foreground">
+                    Question {session.current_question_index + 1} of {questions.length}
+                  </span>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {!session ? (
+                <Button 
+                  onClick={handleStartQuiz}
+                  className="w-full h-16 text-lg"
+                  disabled={startSession.isPending}
+                >
+                  <PlayCircle className="w-5 h-5 mr-2" />
+                  Start Quiz
+                </Button>
+              ) : (
+                <>
+                  {currentQuestion && (
+                    <div className="space-y-4">
+                      <div className="p-6 bg-muted rounded-lg">
+                        <h3 className="text-2xl font-bold mb-4">
+                          {currentQuestion.question_text}
+                        </h3>
+                        <div className="grid grid-cols-2 gap-3">
+                          {currentQuestion.options.map((option, index) => (
+                            <div
+                              key={index}
+                              className={cn(
+                                'p-4 rounded-lg border-2 font-medium',
+                                option === currentQuestion.correct_answer
+                                  ? 'bg-green-500/20 border-green-500 text-green-700 dark:text-green-300'
+                                  : 'bg-card border-border'
+                              )}
+                            >
+                              <span className="mr-2 font-bold">
+                                {String.fromCharCode(65 + index)}.
+                              </span>
+                              {option}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        {session.current_question_index < questions.length - 1 ? (
+                          <Button
+                            onClick={handleNextQuestion}
+                            className="flex-1 h-14 text-lg"
+                            disabled={nextQuestion.isPending}
+                          >
+                            <ChevronRight className="w-5 h-5 mr-2" />
+                            Next Question
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={handleEndQuiz}
+                            variant="destructive"
+                            className="flex-1 h-14 text-lg"
+                            disabled={endSession.isPending}
+                          >
+                            <StopCircle className="w-5 h-5 mr-2" />
+                            End Quiz
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="shadow-xl">
           <CardHeader>

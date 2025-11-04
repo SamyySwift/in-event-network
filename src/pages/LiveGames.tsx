@@ -87,18 +87,59 @@ const LiveGames = () => {
 
     try {
       if (isQuiz) {
-        const { data, error } = await supabase.functions.invoke('get-quiz-leaderboard', {
-          body: { eventId },
-        });
+        if (!activeGame?.id) return;
+        
+        // Fetch cumulative scores from quiz_answers for live updating
+        const { data, error } = await supabase
+          .from('quiz_answers')
+          .select(`
+            user_id,
+            points_earned,
+            response_time,
+            profiles:user_id(name, photo_url)
+          `)
+          .eq('quiz_game_id', activeGame.id);
+
         if (error) throw error;
-        const newScores: LeaderboardEntry[] = (data.scores || []).map((r: any) => ({
-          user_id: r.user_id,
-          points: r.total_score,
-          time_seconds: r.total_time,
-          name: r.name || 'Anonymous',
-          photo_url: r.photo_url || undefined,
-          completed_at: r.completed_at || ''
-        }));
+
+        // Aggregate scores per user
+        const userScoresMap = new Map<string, {
+          points: number;
+          time: number;
+          name: string;
+          photo_url?: string;
+        }>();
+
+        (data || []).forEach((answer: any) => {
+          const existing = userScoresMap.get(answer.user_id);
+          if (existing) {
+            existing.points += answer.points_earned || 0;
+            existing.time += answer.response_time || 0;
+          } else {
+            userScoresMap.set(answer.user_id, {
+              points: answer.points_earned || 0,
+              time: answer.response_time || 0,
+              name: answer.profiles?.name || 'Anonymous',
+              photo_url: answer.profiles?.photo_url || undefined,
+            });
+          }
+        });
+
+        // Convert to array and sort
+        const newScores: LeaderboardEntry[] = Array.from(userScoresMap.entries())
+          .map(([user_id, data]) => ({
+            user_id,
+            points: data.points,
+            time_seconds: data.time,
+            name: data.name,
+            photo_url: data.photo_url,
+            completed_at: ''
+          }))
+          .sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            return a.time_seconds - b.time_seconds;
+          });
+
         setScores(newScores);
       } else {
         const { data, error } = await supabase.functions.invoke('get-wordsearch-leaderboard', {
@@ -147,14 +188,14 @@ const LiveGames = () => {
 
     // Subscribe to real-time updates
     const channel = supabase
-      .channel(isQuiz ? 'quiz-scores-changes' : 'word-search-scores-changes')
+      .channel(isQuiz ? 'quiz-answers-changes' : 'word-search-scores-changes')
       .on(
         'postgres_changes',
         isQuiz
           ? {
               event: '*',
               schema: 'public',
-              table: 'quiz_scores',
+              table: 'quiz_answers',
             }
           : {
               event: '*',

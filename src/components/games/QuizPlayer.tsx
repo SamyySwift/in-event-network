@@ -10,12 +10,10 @@ import confetti from 'canvas-confetti';
 interface QuizPlayerProps {
   questions: QuizQuestion[];
   onComplete: (score: number, correctAnswers: number, totalTime: number) => void;
-  currentQuestionIndex?: number;
-  isLiveMode?: boolean;
 }
 
-export const QuizPlayer = ({ questions, onComplete, currentQuestionIndex: externalQuestionIndex, isLiveMode = false }: QuizPlayerProps) => {
-  const [internalQuestionIndex, setInternalQuestionIndex] = useState(0);
+export const QuizPlayer = ({ questions, onComplete }: QuizPlayerProps) => {
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [score, setScore] = useState(0);
@@ -23,9 +21,6 @@ export const QuizPlayer = ({ questions, onComplete, currentQuestionIndex: extern
   const [timeLeft, setTimeLeft] = useState(questions[0]?.time_limit || 20);
   const [totalTime, setTotalTime] = useState(0);
   const [startTime, setStartTime] = useState(Date.now());
-
-  // Use external index in live mode, internal otherwise
-  const currentQuestionIndex = isLiveMode ? (externalQuestionIndex ?? 0) : internalQuestionIndex;
 
   const currentQuestion = questions[currentQuestionIndex];
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
@@ -35,14 +30,12 @@ export const QuizPlayer = ({ questions, onComplete, currentQuestionIndex: extern
   }, [currentQuestionIndex, currentQuestion]);
 
   useEffect(() => {
-    if (showFeedback || !currentQuestion) return;
+    if (showFeedback) return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          if (!isLiveMode) {
-            handleNextQuestion();
-          }
+          handleNextQuestion();
           return 0;
         }
         return prev - 1;
@@ -50,7 +43,7 @@ export const QuizPlayer = ({ questions, onComplete, currentQuestionIndex: extern
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [currentQuestionIndex, showFeedback, currentQuestion, isLiveMode]);
+  }, [currentQuestionIndex, showFeedback]);
 
   const handleAnswerSelect = (answer: string) => {
     if (showFeedback) return;
@@ -78,30 +71,15 @@ export const QuizPlayer = ({ questions, onComplete, currentQuestionIndex: extern
   };
 
   const handleNextQuestion = () => {
-    if (!isLiveMode) {
-      if (currentQuestionIndex < questions.length - 1) {
-        setInternalQuestionIndex((prev) => prev + 1);
-        setSelectedAnswer(null);
-        setShowFeedback(false);
-        setStartTime(Date.now());
-      } else {
-        onComplete(score, correctCount, totalTime);
-      }
-    }
-  };
-
-  // Reset state when question changes in live mode
-  useEffect(() => {
-    if (isLiveMode && externalQuestionIndex !== undefined) {
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex((prev) => prev + 1);
       setSelectedAnswer(null);
       setShowFeedback(false);
       setStartTime(Date.now());
-      
-      if (externalQuestionIndex >= questions.length) {
-        onComplete(score, correctCount, totalTime);
-      }
+    } else {
+      onComplete(score, correctCount, totalTime);
     }
-  }, [externalQuestionIndex, isLiveMode]);
+  };
 
   if (!currentQuestion) {
     return <div>Loading...</div>;

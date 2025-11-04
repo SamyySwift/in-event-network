@@ -28,12 +28,12 @@ export const useQuizLeaderboard = (eventId: string | null) => {
   });
 
   useEffect(() => {
-    // Realtime refresh for quiz answers (live updates)
+    // Realtime refresh for quiz scores
     const channel = supabase
       .channel('quiz-leaderboard-changes')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'quiz_answers' },
+        { event: '*', schema: 'public', table: 'quiz_scores' },
         () => {
           if (eventId) {
             queryClient.invalidateQueries({ queryKey: ['quiz-leaderboard', eventId] });

@@ -5,7 +5,6 @@ import { useWordSearchGames, useWordSearchScores } from '@/hooks/useWordSearchGa
 import { useWordSearchLeaderboard } from '@/hooks/useWordSearchLeaderboard';
 import { useQuizGames, useQuizQuestions, useQuizScores } from '@/hooks/useQuizGames';
 import { useAuth } from '@/contexts/AuthContext';
-import { useQuizSession } from '@/hooks/useQuizSession';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -43,7 +42,6 @@ const AttendeeGames = () => {
   const { questions: quizQuestions } = useQuizQuestions(selectedQuiz?.id);
   const { scores: quizScores, isLoading: quizScoresLoading, submitScore: submitQuizScore } = useQuizScores(selectedQuiz?.id);
   const { scores: quizLeaderboardScores, isLoading: quizLeaderboardLoading } = useQuizLeaderboard(context?.currentEventId || null);
-  const { session: quizSession } = useQuizSession(selectedQuiz?.id || null, context?.currentEventId || null);
 
   // Check if current user has already completed this game
   const userHasCompleted = scores.some(score => score.user_id === currentUser?.id);
@@ -195,10 +193,6 @@ const AttendeeGames = () => {
   const handleStartQuiz = () => {
     if (userHasCompletedQuiz) {
       toast.error("You've already completed this quiz!");
-      return;
-    }
-    if (!quizSession) {
-      toast.error("Quiz hasn't started yet. Please wait for the host.");
       return;
     }
     setIsPlayingQuiz(true);
@@ -385,12 +379,10 @@ const AttendeeGames = () => {
                 No active quiz games at the moment. Check back later!
               </CardContent>
             </Card>
-          ) : isPlayingQuiz && quizSession ? (
+          ) : isPlayingQuiz ? (
             <QuizPlayer
               questions={quizQuestions}
               onComplete={handleQuizComplete}
-              currentQuestionIndex={quizSession.current_question_index}
-              isLiveMode={true}
             />
           ) : (
             <div className="grid lg:grid-cols-2 gap-4 md:gap-6">
@@ -445,10 +437,6 @@ const AttendeeGames = () => {
                         <div className="p-4 bg-muted rounded-lg text-center">
                           ✓ Quiz Completed
                         </div>
-                      ) : !quizSession ? (
-                        <div className="p-4 bg-muted rounded-lg text-center text-muted-foreground">
-                          ⏳ Waiting for quiz to start...
-                        </div>
                       ) : (
                         <Button
                           onClick={handleStartQuiz}
@@ -456,7 +444,7 @@ const AttendeeGames = () => {
                           size="lg"
                           disabled={quizScoresLoading || !!userHasCompletedQuiz}
                         >
-                          Join Quiz
+                          Start Quiz
                         </Button>
                       )}
 

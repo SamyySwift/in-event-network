@@ -87,18 +87,17 @@ const LiveGames = () => {
 
     try {
       if (isQuiz) {
-        // Use server-side aggregation for live cumulative quiz leaderboard
         const { data, error } = await supabase.functions.invoke('get-quiz-leaderboard', {
           body: { eventId },
         });
         if (error) throw error;
-        const newScores: LeaderboardEntry[] = (data?.scores || []).map((s: any) => ({
-          user_id: s.user_id,
-          points: s.total_score,
-          time_seconds: s.total_time,
-          name: s.name || s.profiles?.name || 'Anonymous',
-          photo_url: s.photo_url || s.profiles?.photo_url || undefined,
-          completed_at: s.completed_at || ''
+        const newScores: LeaderboardEntry[] = (data.scores || []).map((r: any) => ({
+          user_id: r.user_id,
+          points: r.total_score,
+          time_seconds: r.total_time,
+          name: r.name || 'Anonymous',
+          photo_url: r.photo_url || undefined,
+          completed_at: r.completed_at || ''
         }));
         setScores(newScores);
       } else {
@@ -148,14 +147,14 @@ const LiveGames = () => {
 
     // Subscribe to real-time updates
     const channel = supabase
-      .channel(isQuiz ? 'quiz-answers-changes' : 'word-search-scores-changes')
+      .channel(isQuiz ? 'quiz-scores-changes' : 'word-search-scores-changes')
       .on(
         'postgres_changes',
         isQuiz
           ? {
               event: '*',
               schema: 'public',
-              table: 'quiz_answers',
+              table: 'quiz_scores',
             }
           : {
               event: '*',

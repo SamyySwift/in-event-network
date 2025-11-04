@@ -1756,57 +1756,6 @@ export type Database = {
           },
         ]
       }
-      quiz_sessions: {
-        Row: {
-          created_at: string
-          current_question_index: number
-          ended_at: string | null
-          event_id: string
-          id: string
-          is_active: boolean
-          quiz_game_id: string
-          started_at: string | null
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          current_question_index?: number
-          ended_at?: string | null
-          event_id: string
-          id?: string
-          is_active?: boolean
-          quiz_game_id: string
-          started_at?: string | null
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          current_question_index?: number
-          ended_at?: string | null
-          event_id?: string
-          id?: string
-          is_active?: boolean
-          quiz_game_id?: string
-          started_at?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "quiz_sessions_event_id_fkey"
-            columns: ["event_id"]
-            isOneToOne: false
-            referencedRelation: "events"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "quiz_sessions_quiz_game_id_fkey"
-            columns: ["quiz_game_id"]
-            isOneToOne: false
-            referencedRelation: "quiz_games"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       room_members: {
         Row: {
           id: string

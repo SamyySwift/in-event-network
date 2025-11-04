@@ -41,6 +41,8 @@ const LiveGames = () => {
   const [activeGame, setActiveGame] = useState<Game | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [highlightedIds, setHighlightedIds] = useState<Set<string>>(new Set());
+  const [liveQuestionScores, setLiveQuestionScores] = useState<LeaderboardEntry[]>([]);
+  const [showCorrectAnswer, setShowCorrectAnswer] = useState(false);
   
   const { session, startSession, nextQuestion, endSession } = useQuizSession(
     activeGame?.id || null,
@@ -48,35 +50,96 @@ const LiveGames = () => {
   );
   const { questions } = useQuizQuestions(activeGame?.id || null);
 
+  const fetchLiveQuestionScores = async () => {
+    if (!eventId || !session || !activeGame?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('quiz_answers')
+        .select(`
+          user_id,
+          response_time,
+          is_correct,
+          profiles:user_id(name, photo_url)
+        `)
+        .eq('quiz_game_id', activeGame.id)
+        .eq('question_index', session.current_question_index)
+        .order('response_time', { ascending: true });
+
+      if (error) throw error;
+
+      const liveScores: LeaderboardEntry[] = (data || []).map((r: any) => ({
+        user_id: r.user_id,
+        points: r.is_correct ? 1000 : 0,
+        time_seconds: r.response_time,
+        name: r.profiles?.name || 'Anonymous',
+        photo_url: r.profiles?.photo_url || undefined,
+        completed_at: ''
+      }));
+      setLiveQuestionScores(liveScores);
+    } catch (error) {
+      console.error('Error fetching live question scores:', error);
+    }
+  };
+
   const fetchScores = async () => {
     if (!eventId) return;
 
     try {
       if (isQuiz) {
         if (!activeGame?.id) return;
+        
+        // Fetch cumulative scores from quiz_answers for live updating
         const { data, error } = await supabase
-          .from('quiz_scores')
+          .from('quiz_answers')
           .select(`
             user_id,
-            total_score,
-            total_time,
-            correct_answers,
+            points_earned,
+            response_time,
             profiles:user_id(name, photo_url)
           `)
-          .eq('quiz_game_id', activeGame.id)
-          .order('total_score', { ascending: false })
-          .order('total_time', { ascending: true });
+          .eq('quiz_game_id', activeGame.id);
 
         if (error) throw error;
 
-        const newScores: LeaderboardEntry[] = (data || []).map((r: any) => ({
-          user_id: r.user_id,
-          points: r.total_score,
-          time_seconds: r.total_time,
-          name: r.profiles?.name || 'Anonymous',
-          photo_url: r.profiles?.photo_url || undefined,
-          completed_at: ''
-        }));
+        // Aggregate scores per user
+        const userScoresMap = new Map<string, {
+          points: number;
+          time: number;
+          name: string;
+          photo_url?: string;
+        }>();
+
+        (data || []).forEach((answer: any) => {
+          const existing = userScoresMap.get(answer.user_id);
+          if (existing) {
+            existing.points += answer.points_earned || 0;
+            existing.time += answer.response_time || 0;
+          } else {
+            userScoresMap.set(answer.user_id, {
+              points: answer.points_earned || 0,
+              time: answer.response_time || 0,
+              name: answer.profiles?.name || 'Anonymous',
+              photo_url: answer.profiles?.photo_url || undefined,
+            });
+          }
+        });
+
+        // Convert to array and sort
+        const newScores: LeaderboardEntry[] = Array.from(userScoresMap.entries())
+          .map(([user_id, data]) => ({
+            user_id,
+            points: data.points,
+            time_seconds: data.time,
+            name: data.name,
+            photo_url: data.photo_url,
+            completed_at: ''
+          }))
+          .sort((a, b) => {
+            if (b.points !== a.points) return b.points - a.points;
+            return a.time_seconds - b.time_seconds;
+          });
+
         setScores(newScores);
       } else {
         const { data, error } = await supabase.functions.invoke('get-wordsearch-leaderboard', {
@@ -125,14 +188,14 @@ const LiveGames = () => {
 
     // Subscribe to real-time updates
     const channel = supabase
-      .channel(isQuiz ? 'quiz-scores-changes' : 'word-search-scores-changes')
+      .channel(isQuiz ? 'quiz-answers-changes' : 'word-search-scores-changes')
       .on(
         'postgres_changes',
         isQuiz
           ? {
               event: '*',
               schema: 'public',
-              table: 'quiz_scores',
+              table: 'quiz_answers',
             }
           : {
               event: '*',
@@ -150,6 +213,33 @@ const LiveGames = () => {
     };
   }, [eventId, isQuiz]);
 
+  // Subscribe to live question answers
+  useEffect(() => {
+    if (!session || !activeGame?.id) return;
+
+    fetchLiveQuestionScores();
+
+    const channel = supabase
+      .channel('quiz-answers-live')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'quiz_answers',
+          filter: `quiz_game_id=eq.${activeGame.id}`,
+        },
+        () => {
+          fetchLiveQuestionScores();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session?.current_question_index, activeGame?.id]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center">
@@ -162,6 +252,8 @@ const LiveGames = () => {
     if (!activeGame?.id || !eventId) return;
     try {
       await startSession.mutateAsync({ quizGameId: activeGame.id, eventId });
+      setShowCorrectAnswer(false);
+      setLiveQuestionScores([]);
       toast.success('Quiz started!');
     } catch (error) {
       console.error('Failed to start quiz:', error);
@@ -176,6 +268,8 @@ const LiveGames = () => {
         sessionId: session.id,
         currentIndex: session.current_question_index,
       });
+      setShowCorrectAnswer(false);
+      setLiveQuestionScores([]);
     } catch (error) {
       console.error('Failed to go to next question:', error);
       toast.error('Failed to advance question');
@@ -258,7 +352,7 @@ const LiveGames = () => {
                               key={index}
                               className={cn(
                                 'p-4 rounded-lg border-2 font-medium',
-                                option === currentQuestion.correct_answer
+                                showCorrectAnswer && option === currentQuestion.correct_answer
                                   ? 'bg-green-500/20 border-green-500 text-green-700 dark:text-green-300'
                                   : 'bg-card border-border'
                               )}
@@ -272,7 +366,48 @@ const LiveGames = () => {
                         </div>
                       </div>
 
+                      {/* Live Question Leaderboard */}
+                      {liveQuestionScores.length > 0 && (
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className="text-lg">Current Question - Live Standings</CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <div className="space-y-2">
+                              {liveQuestionScores.map((entry, index) => (
+                                <motion.div
+                                  key={entry.user_id}
+                                  initial={{ opacity: 0, x: -20 }}
+                                  animate={{ opacity: 1, x: 0 }}
+                                  className="flex items-center gap-3 p-3 rounded-lg bg-muted"
+                                >
+                                  <span className="font-bold text-lg min-w-[2rem]">#{index + 1}</span>
+                                  <Avatar className="w-8 h-8">
+                                    <AvatarImage src={entry.photo_url} />
+                                    <AvatarFallback>{entry.name?.charAt(0) || 'U'}</AvatarFallback>
+                                  </Avatar>
+                                  <span className="flex-1 font-medium">{entry.name}</span>
+                                  <span className="text-sm text-muted-foreground flex items-center gap-1">
+                                    <Clock className="w-4 h-4" />
+                                    {entry.time_seconds.toFixed(1)}s
+                                  </span>
+                                </motion.div>
+                              ))}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )}
+
                       <div className="flex gap-2">
+                        {!showCorrectAnswer && (
+                          <Button
+                            onClick={() => setShowCorrectAnswer(true)}
+                            variant="outline"
+                            className="flex-1 h-14 text-lg"
+                          >
+                            Show Answer
+                          </Button>
+                        )}
                         {session.current_question_index < questions.length - 1 ? (
                           <Button
                             onClick={handleNextQuestion}

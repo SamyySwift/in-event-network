@@ -87,17 +87,29 @@ const LiveGames = () => {
 
     try {
       if (isQuiz) {
-        const { data, error } = await supabase.functions.invoke('get-quiz-leaderboard', {
-          body: { eventId },
-        });
+        if (!activeGame?.id) return;
+        const { data, error } = await supabase
+          .from('quiz_scores')
+          .select(`
+            user_id,
+            total_score,
+            total_time,
+            correct_answers,
+            profiles:user_id(name, photo_url)
+          `)
+          .eq('quiz_game_id', activeGame.id)
+          .order('total_score', { ascending: false })
+          .order('total_time', { ascending: true });
+
         if (error) throw error;
-        const newScores: LeaderboardEntry[] = (data.scores || []).map((r: any) => ({
+
+        const newScores: LeaderboardEntry[] = (data || []).map((r: any) => ({
           user_id: r.user_id,
           points: r.total_score,
           time_seconds: r.total_time,
-          name: r.name || 'Anonymous',
-          photo_url: r.photo_url || undefined,
-          completed_at: r.completed_at || ''
+          name: r.profiles?.name || 'Anonymous',
+          photo_url: r.profiles?.photo_url || undefined,
+          completed_at: ''
         }));
         setScores(newScores);
       } else {

@@ -119,10 +119,6 @@ Deno.serve(async (req) => {
       existing.total_score += ans.points_earned || 0;
       existing.total_time += ans.response_time || 0;
       if (ans.is_correct) existing.correct_answers += 1;
-      // Track latest completion timestamp if present
-      if (ans.completed_at && (!existing.completed_at || ans.completed_at > existing.completed_at)) {
-        existing.completed_at = ans.completed_at;
-      }
       totalsByUser.set(ans.user_id, existing);
     }
 
@@ -145,7 +141,7 @@ Deno.serve(async (req) => {
           total_score: totals.total_score,
           correct_answers: totals.correct_answers,
           total_time: totals.total_time,
-          completed_at: totals.completed_at,
+          completed_at: null,
           name: profile?.name || 'Anonymous',
           photo_url: profile?.photo_url || null,
           profiles: {

@@ -54,24 +54,27 @@ const LiveGames = () => {
     if (!eventId || !session || !activeGame?.id) return;
 
     try {
+      const currentQuestionLocal = questions[session.current_question_index];
+      if (!currentQuestionLocal) return;
+
       const { data, error } = await supabase
-        .from('quiz_answers')
+        .from('quiz_responses')
         .select(`
           user_id,
-          response_time,
+          time_taken,
           is_correct,
           profiles:user_id(name, photo_url)
         `)
         .eq('quiz_game_id', activeGame.id)
-        .eq('question_index', session.current_question_index)
-        .order('response_time', { ascending: true });
+        .eq('question_id', (currentQuestionLocal as any).id)
+        .order('time_taken', { ascending: true });
 
       if (error) throw error;
 
       const liveScores: LeaderboardEntry[] = (data || []).map((r: any) => ({
         user_id: r.user_id,
         points: r.is_correct ? 1000 : 0,
-        time_seconds: r.response_time,
+        time_seconds: r.time_taken,
         name: r.profiles?.name || 'Anonymous',
         photo_url: r.profiles?.photo_url || undefined,
         completed_at: ''
@@ -155,7 +158,7 @@ const LiveGames = () => {
           ? {
               event: '*',
               schema: 'public',
-              table: 'quiz_answers',
+              table: 'quiz_responses',
             }
           : {
               event: '*',
@@ -186,7 +189,7 @@ const LiveGames = () => {
         {
           event: '*',
           schema: 'public',
-          table: 'quiz_answers',
+          table: 'quiz_responses',
           filter: `quiz_game_id=eq.${activeGame.id}`,
         },
         () => {

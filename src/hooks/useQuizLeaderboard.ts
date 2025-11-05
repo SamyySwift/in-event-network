@@ -33,7 +33,7 @@ export const useQuizLeaderboard = (eventId: string | null) => {
       .channel('quiz-leaderboard-changes')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'quiz_answers' },
+        { event: '*', schema: 'public', table: 'quiz_responses' },
         () => {
           if (eventId) {
             queryClient.invalidateQueries({ queryKey: ['quiz-leaderboard', eventId] });

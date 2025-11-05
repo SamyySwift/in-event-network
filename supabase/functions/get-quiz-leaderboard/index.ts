@@ -52,8 +52,8 @@ Deno.serve(async (req) => {
 
     // 2) Prefer live aggregation from quiz_answers (updates per question)
     const { data: answers, error: answersError } = await supabaseClient
-      .from('quiz_answers')
-      .select('user_id, points_earned, is_correct, response_time, completed_at, quiz_game_id')
+      .from('quiz_responses')
+      .select('user_id, is_correct, time_taken, answered_at, quiz_game_id')
       .in('quiz_game_id', quizGameIds);
 
     if (answersError) throw answersError;
@@ -114,10 +114,12 @@ Deno.serve(async (req) => {
     // 3) Aggregate live totals from answers per user
     const totalsByUser = new Map<string, { total_score: number; correct_answers: number; total_time: number; completed_at: string | null }>();
 
-    for (const ans of answers) {
+    for (const ans of answers as any[]) {
       const existing = totalsByUser.get(ans.user_id) || { total_score: 0, correct_answers: 0, total_time: 0, completed_at: null };
-      existing.total_score += ans.points_earned || 0;
-      existing.total_time += ans.response_time || 0;
+      // Award 1000 points for each correct answer (Kahoot-style)
+      existing.total_score += ans.is_correct ? 1000 : 0;
+      // Accumulate response time
+      existing.total_time += ans.time_taken || 0;
       if (ans.is_correct) existing.correct_answers += 1;
       totalsByUser.set(ans.user_id, existing);
     }

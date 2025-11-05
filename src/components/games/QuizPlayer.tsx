@@ -5,6 +5,8 @@ import { Progress } from '@/components/ui/progress';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Trophy, CheckCircle2, XCircle } from 'lucide-react';
 import { QuizQuestion } from '@/hooks/useQuizGames';
+import { useQuizAnswers } from '@/hooks/useQuizAnswers';
+import { useAuth } from '@/contexts/AuthContext';
 import confetti from 'canvas-confetti';
 
 interface QuizPlayerProps {
@@ -12,9 +14,18 @@ interface QuizPlayerProps {
   onComplete: (score: number, correctAnswers: number, totalTime: number) => void;
   currentQuestionIndex?: number;
   isLiveMode?: boolean;
+  quizGameId?: string;
 }
 
-export const QuizPlayer = ({ questions, onComplete, currentQuestionIndex: externalQuestionIndex, isLiveMode = false }: QuizPlayerProps) => {
+export const QuizPlayer = ({ 
+  questions, 
+  onComplete, 
+  currentQuestionIndex: externalQuestionIndex, 
+  isLiveMode = false,
+  quizGameId 
+}: QuizPlayerProps) => {
+  const { currentUser } = useAuth();
+  const { submitAnswer } = useQuizAnswers();
   const [internalQuestionIndex, setInternalQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -52,8 +63,8 @@ export const QuizPlayer = ({ questions, onComplete, currentQuestionIndex: extern
     return () => clearInterval(timer);
   }, [currentQuestionIndex, showFeedback, currentQuestion, isLiveMode]);
 
-  const handleAnswerSelect = (answer: string) => {
-    if (showFeedback) return;
+  const handleAnswerSelect = async (answer: string) => {
+    if (showFeedback || !currentUser || !quizGameId) return;
 
     const timeTaken = Math.floor((Date.now() - startTime) / 1000);
     setTotalTime((prev) => prev + timeTaken);
@@ -69,6 +80,18 @@ export const QuizPlayer = ({ questions, onComplete, currentQuestionIndex: extern
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
+      });
+    }
+
+    // Save answer to database
+    if ((currentQuestion as any).id) {
+      await submitAnswer.mutateAsync({
+        quiz_game_id: quizGameId,
+        question_id: (currentQuestion as any).id,
+        user_id: currentUser.id,
+        selected_answer: answer,
+        is_correct: isCorrect,
+        time_taken: timeTaken,
       });
     }
 

@@ -391,7 +391,6 @@ const AttendeeGames = () => {
               onComplete={handleQuizComplete}
               currentQuestionIndex={quizSession.current_question_index}
               isLiveMode={true}
-              quizGameId={selectedQuiz.id}
             />
           ) : (
             <div className="grid lg:grid-cols-2 gap-4 md:gap-6">

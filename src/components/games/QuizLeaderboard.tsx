@@ -19,9 +19,9 @@ interface QuizLeaderboardProps {
 }
 
 const MEDAL_COLORS = {
-  1: 'from-yellow-400 to-yellow-600',
-  2: 'from-gray-300 to-gray-500',
-  3: 'from-orange-400 to-orange-600',
+  1: 'from-yellow-500 to-amber-600',      // Gold
+  2: 'from-slate-300 to-slate-500',        // Silver
+  3: 'from-orange-600 to-amber-800',       // Bronze
 };
 
 export const QuizLeaderboard = ({ scores }: QuizLeaderboardProps) => {

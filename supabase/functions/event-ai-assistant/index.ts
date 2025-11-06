@@ -108,38 +108,17 @@ serve(async (req) => {
       .select('*')
       .eq('event_id', eventId);
 
-    // Analyze query to determine if web search is needed - be more aggressive with web searches
+    // Analyze query to determine if web search is needed
     const lastUserMessage = conversationMessages[conversationMessages.length - 1]?.content || '';
     const messageLower = lastUserMessage.toLowerCase();
-    
-    // Expanded triggers for web search
     const needsDirections = messageLower.includes('direction') || messageLower.includes('how do i get') || 
                            messageLower.includes('how to get') || messageLower.includes('navigate') ||
-                           messageLower.includes('way to') || messageLower.includes('way from') ||
-                           messageLower.includes('location') || messageLower.includes('where is') ||
-                           messageLower.includes('address');
-                           
+                           messageLower.includes('way to') || messageLower.includes('way from');
     const needsSpeakerInfo = messageLower.includes('speaker') || messageLower.includes('tell me about') ||
-                             messageLower.includes('who is') || messageLower.includes('more about') ||
-                             messageLower.includes('background') || messageLower.includes('biography') ||
-                             messageLower.includes('career') || messageLower.includes('experience');
-                             
-    const needsGeneralInfo = messageLower.includes('what is') || messageLower.includes('explain') ||
-                            messageLower.includes('information about') || messageLower.includes('details about') ||
-                            messageLower.includes('find out') || messageLower.includes('learn about');
-                            
-    const needsCurrentInfo = messageLower.includes('latest') || messageLower.includes('news') ||
-                            messageLower.includes('current') || messageLower.includes('recent') ||
-                            messageLower.includes('trending') || messageLower.includes('update');
-    
-    // Only skip web search for purely internal event queries
-    const isPurelyInternalQuery = (messageLower.includes('my ticket') || 
-                                  messageLower.includes('poll') || 
-                                  messageLower.includes('my profile')) &&
-                                  !needsDirections && !needsSpeakerInfo;
-    
-    const needsWebSearch = !isPurelyInternalQuery && 
-                          (needsDirections || needsSpeakerInfo || needsGeneralInfo || needsCurrentInfo);
+                             messageLower.includes('who is') || messageLower.includes('more about');
+    const needsWebSearch = needsDirections || needsSpeakerInfo || 
+                          messageLower.includes('latest') || messageLower.includes('news') ||
+                          messageLower.includes('current') || messageLower.includes('recent');
 
     // Perform web search based on query type
     let webContext = '';
@@ -171,9 +150,8 @@ serve(async (req) => {
           body: JSON.stringify({
             api_key: Deno.env.get('TAVILY_API_KEY') || 'tvly-demo-key',
             query: searchQuery,
-            search_depth: 'advanced',  // Always use advanced search for better results
-            max_results: 5,  // Get more results for comprehensive answers
-            include_answer: true,  // Include AI-generated answer from Tavily
+            search_depth: needsSpeakerInfo ? 'advanced' : 'basic',
+            max_results: needsSpeakerInfo || needsDirections ? 5 : 3,
           })
         });
         

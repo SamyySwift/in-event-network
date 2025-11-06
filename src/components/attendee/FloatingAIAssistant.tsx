@@ -188,27 +188,7 @@ export const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ eventI
                         className="rounded-lg w-full"
                       />
                     )}
-                    <div className="text-sm whitespace-pre-wrap">
-                      {msg.content.split(/(https?:\/\/[^\s]+)/g).map((part, i) => {
-                        if (part.match(/^https?:\/\//)) {
-                          return (
-                            <a
-                              key={i}
-                              href={part}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className={cn(
-                                "underline hover:opacity-80 break-all",
-                                msg.type === 'user' ? 'text-white' : 'text-blue-600'
-                              )}
-                            >
-                              {part}
-                            </a>
-                          );
-                        }
-                        return <span key={i}>{part}</span>;
-                      })}
-                    </div>
+                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                     <p className={cn(
                       "text-xs",
                       msg.type === 'user' ? 'text-white/70' : 'text-gray-500'

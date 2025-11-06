@@ -25,6 +25,9 @@ export const useQuizLeaderboard = (eventId: string | null) => {
       return (data?.scores ?? []) as QuizLeaderboardEntry[];
     },
     enabled: !!eventId,
+    refetchInterval: eventId ? 1500 : false,
+    refetchOnWindowFocus: true,
+    staleTime: 0,
   });
 
   useEffect(() => {

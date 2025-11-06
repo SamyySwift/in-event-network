@@ -197,12 +197,30 @@ const LiveGames = () => {
         }
       )
       .subscribe();
-
+ 
     return () => {
       supabase.removeChannel(channel);
     };
   }, [session?.current_question_index, activeGame?.id]);
 
+  // Polling fallback for cumulative leaderboard in case realtime is restricted by RLS
+  useEffect(() => {
+    if (!eventId || !isQuiz) return;
+    const id = setInterval(() => {
+      fetchScores();
+    }, 1500);
+    return () => clearInterval(id);
+  }, [eventId, isQuiz]);
+
+  // Polling fallback for current-question live standings
+  useEffect(() => {
+    if (!session || !activeGame?.id) return;
+    const id = setInterval(() => {
+      fetchLiveQuestionScores();
+    }, 1000);
+    return () => clearInterval(id);
+  }, [session?.current_question_index, activeGame?.id]);
+ 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center">

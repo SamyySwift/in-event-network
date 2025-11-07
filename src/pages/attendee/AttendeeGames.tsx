@@ -79,19 +79,30 @@ const AttendeeGames = () => {
   };
 
   const handleHint = () => {
-    if (!selectedGame || hintsUsed >= 3) return;
+    if (!selectedGame || hintsUsed >= 3) {
+      toast.error("No more hints available!");
+      return;
+    }
+    
+    if (!isGameActive) {
+      toast.error("Start the game first!");
+      return;
+    }
     
     const remainingWords = selectedGame.words.filter(
       (w: string) => !foundWords.has(w.toUpperCase())
     );
     
-    if (remainingWords.length > 0) {
-      const randomWord = remainingWords[Math.floor(Math.random() * remainingWords.length)];
-      toast.info(`Hint: Look for "${randomWord}"`, {
-        duration: 5000,
-      });
-      setHintsUsed(prev => prev + 1);
+    if (remainingWords.length === 0) {
+      toast.info("You've found all the words!");
+      return;
     }
+    
+    const randomWord = remainingWords[Math.floor(Math.random() * remainingWords.length)];
+    toast.info(`💡 Hint: Look for "${randomWord}"`, {
+      duration: 5000,
+    });
+    setHintsUsed(prev => prev + 1);
   };
 
   const handleWordFound = (word: string) => {
@@ -288,12 +299,11 @@ const AttendeeGames = () => {
                     </div>
                   )}
 
-                  {isGameActive && selectedGame?.hints_enabled && hintsUsed < 3 && (
+                  {isGameActive && hintsUsed < 3 && (
                     <Button
                       onClick={handleHint}
                       variant="outline"
                       className="w-full"
-                      disabled={hintsUsed >= 3}
                     >
                       <Lightbulb className="w-4 h-4 mr-2" />
                       Get Hint ({3 - hintsUsed} remaining)

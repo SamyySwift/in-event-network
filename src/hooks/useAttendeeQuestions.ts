@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { getCache, setCache, slowNetworkQueryOptions } from '@/utils/queryCache';
 
 interface QuestionWithProfile {
   id: string;
@@ -13,10 +14,7 @@ interface QuestionWithProfile {
   session_id: string | null;
   event_id: string | null;
   is_anonymous: boolean;
-  profiles: {
-    name: string;
-    photo_url: string | null;
-  } | null;
+  profiles: { name: string; photo_url: string | null } | null;
 }
 
 interface Session {
@@ -26,144 +24,113 @@ interface Session {
   session_time: string | null;
 }
 
+const CACHE_KEY = 'attendee-questions';
+
 export const useAttendeeQuestions = () => {
   const { currentUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Get currentEventId first, before any queries that depend on it
   const { data: currentEventId } = useQuery({
     queryKey: ['current-event-id', currentUser?.id],
     queryFn: async (): Promise<string | null> => {
       if (!currentUser?.id) return null;
-
-      const { data: userProfile } = await supabase
+      const { data } = await supabase
         .from('profiles')
         .select('current_event_id')
         .eq('id', currentUser.id)
         .single();
-
-      return userProfile?.current_event_id || null;
+      return data?.current_event_id || null;
     },
     enabled: !!currentUser?.id,
+    ...slowNetworkQueryOptions,
   });
 
-  // Add a helper to check event participation (now after currentEventId is available)
   const isParticipantQuery = useQuery({
     queryKey: ['is-participant', currentUser?.id, currentEventId],
     queryFn: async (): Promise<boolean> => {
       if (!currentUser?.id || !currentEventId) return false;
-
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('event_participants')
         .select('id')
         .eq('user_id', currentUser.id)
         .eq('event_id', currentEventId)
         .maybeSingle();
-
       return !!data;
     },
     enabled: !!currentUser?.id && !!currentEventId,
+    ...slowNetworkQueryOptions,
   });
 
   const { data: questions = [], isLoading: questionsLoading, error: questionsError } = useQuery({
     queryKey: ['attendee-questions', currentUser?.id, currentEventId],
     queryFn: async (): Promise<QuestionWithProfile[]> => {
-      if (!currentUser?.id || !currentEventId) {
-        return [];
+      if (!currentUser?.id || !currentEventId) return [];
+
+      const { data: questionsData, error } = await supabase
+        .from('questions')
+        .select('id, content, created_at, upvotes, is_answered, user_id, session_id, event_id, is_anonymous')
+        .eq('event_id', currentEventId)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+
+      // Batch fetch profiles for non-anonymous questions
+      const userIds = [...new Set((questionsData || []).filter(q => !q.is_anonymous).map(q => q.user_id))];
+      const profilesMap: Record<string, { name: string; photo_url: string | null }> = {};
+
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, name, photo_url')
+          .in('id', userIds);
+        profiles?.forEach(p => { profilesMap[p.id] = { name: p.name || '', photo_url: p.photo_url }; });
       }
 
-      // Fetch all questions for the current event directly
-      const { data: questionsData, error } = await supabase
-          .from('questions')
-          .select('*')
-          .eq('event_id', currentEventId)
-          .order('created_at', { ascending: false });
-      
-      if (error) {
-          console.error('Error fetching attendee questions:', error);
-          throw error;
-      }
-      
-      // Attach profiles unless anonymous; RLS may return null for some profiles
-      const questionsWithProfiles = await Promise.all(
-          (questionsData || []).map(async (question) => {
-              if (question.is_anonymous) {
-                  return { ...question, profiles: null };
-              }
-      
-              const { data: profile } = await supabase
-                  .from('profiles')
-                  .select('name, photo_url')
-                  .eq('id', question.user_id)
-                  .single();
-      
-              return { ...question, profiles: profile || null };
-          })
-      );
-      
-      return questionsWithProfiles;
+      const result = (questionsData || []).map(q => ({
+        ...q,
+        profiles: q.is_anonymous ? null : profilesMap[q.user_id] || null
+      }));
+
+      setCache(`${CACHE_KEY}-${currentUser.id}`, result);
+      return result;
     },
     enabled: !!currentUser?.id && !!currentEventId,
+    ...slowNetworkQueryOptions,
+    placeholderData: () => currentUser?.id ? getCache<QuestionWithProfile[]>(`${CACHE_KEY}-${currentUser.id}`) ?? undefined : undefined,
   });
 
   const { data: sessions = [], isLoading: sessionsLoading } = useQuery({
     queryKey: ['attendee-sessions', currentUser?.id, currentEventId],
     queryFn: async (): Promise<Session[]> => {
-      if (!currentUser?.id || !currentEventId) {
-        return [];
-      }
-
-      // Get speakers/sessions for the current event
-      const { data: sessionsData, error } = await supabase
+      if (!currentUser?.id || !currentEventId) return [];
+      const { data, error } = await supabase
         .from('speakers')
         .select('id, name, session_title, session_time')
         .eq('event_id', currentEventId)
         .not('session_time', 'is', null)
         .not('session_title', 'is', null)
         .order('session_time', { ascending: true });
-
-      if (error) {
-        console.error('Error fetching attendee sessions:', error);
-        throw error;
-      }
-
-      return sessionsData || [];
+      if (error) throw error;
+      return data || [];
     },
     enabled: !!currentUser?.id && !!currentEventId,
+    ...slowNetworkQueryOptions,
   });
 
   const submitQuestionMutation = useMutation({
-    mutationFn: async (questionData: {
-      content: string;
-      isAnonymous: boolean;
-      selectedSessionId: string;
-    }) => {
-      if (!currentUser?.id) {
-        throw new Error('User not authenticated');
-      }
+    mutationFn: async (questionData: { content: string; isAnonymous: boolean; selectedSessionId: string }) => {
+      if (!currentUser?.id) throw new Error('User not authenticated');
+      if (!currentEventId) throw new Error('No current event found');
 
-      if (!currentEventId) {
-        throw new Error('No current event found');
-      }
-
-      // Check if attendee is actually part of the event
-      const { data: participant, error: participantError } = await supabase
+      const { data: participant } = await supabase
         .from('event_participants')
         .select('id')
         .eq('user_id', currentUser.id)
         .eq('event_id', currentEventId)
         .maybeSingle();
 
-      if (participantError) {
-        // log and throw for debug
-        console.error('Error checking event participant:', participantError);
-        throw new Error('Could not check event participation');
-      }
-
-      if (!participant) {
-        throw new Error('You must join the event to submit questions.');
-      }
+      if (!participant) throw new Error('You must join the event to submit questions.');
 
       const { error } = await supabase
         .from('questions')
@@ -177,103 +144,59 @@ export const useAttendeeQuestions = () => {
           is_answered: false
         }]);
 
-      if (error) {
-        // Enhanced debug: output all supabase error fields
-        console.error('Error submitting question:');
-        console.error('Message:', error.message);
-        if (error.details) console.error('Details:', error.details);
-        if (error.hint) console.error('Hint:', error.hint);
-        throw error;
-      }
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attendee-questions'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-questions'] });
-      toast({
-        title: "Success",
-        description: "Your question has been submitted!",
-      });
+      toast({ title: "Success", description: "Your question has been submitted!" });
     },
     onError: (error: any) => {
-      console.error('Failed to submit question:', error);
-      toast({
-        title: "Error",
-        description: error?.message || "Failed to submit question",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error?.message || "Failed to submit question", variant: "destructive" });
     },
   });
 
   const upvoteQuestionMutation = useMutation({
     mutationFn: async (questionId: string) => {
-      // Get current upvotes
       const { data: question, error: fetchError } = await supabase
         .from('questions')
         .select('upvotes')
         .eq('id', questionId)
         .single();
-
       if (fetchError) throw fetchError;
 
-      // Update upvotes
       const { error } = await supabase
         .from('questions')
         .update({ upvotes: question.upvotes + 1 })
         .eq('id', questionId);
-
       if (error) throw error;
-
       return questionId;
     },
-    onSuccess: (questionId) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attendee-questions'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-questions'] });
-      toast({
-        title: "Success",
-        description: "Question upvoted!",
-      });
+      toast({ title: "Success", description: "Question upvoted!" });
     },
-    onError: (error: any) => {
-      console.error('Error upvoting question:', error);
-      toast({
-        title: "Error",
-        description: "Failed to upvote question",
-        variant: "destructive",
-      });
+    onError: () => {
+      toast({ title: "Error", description: "Failed to upvote question", variant: "destructive" });
     },
   });
 
   const deleteQuestionMutation = useMutation({
     mutationFn: async (questionId: string) => {
-      if (!currentUser?.id) {
-        throw new Error('User not authenticated');
-      }
-
+      if (!currentUser?.id) throw new Error('User not authenticated');
       const { error } = await supabase
         .from('questions')
         .delete()
         .eq('id', questionId)
-        .eq('user_id', currentUser.id); // Ensure users can only delete their own questions
-
+        .eq('user_id', currentUser.id);
       if (error) throw error;
-
       return questionId;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attendee-questions'] });
-      queryClient.invalidateQueries({ queryKey: ['admin-questions'] });
-      toast({
-        title: "Success",
-        description: "Question deleted successfully!",
-      });
+      toast({ title: "Success", description: "Question deleted successfully!" });
     },
-    onError: (error: any) => {
-      console.error('Error deleting question:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete question",
-        variant: "destructive",
-      });
+    onError: () => {
+      toast({ title: "Error", description: "Failed to delete question", variant: "destructive" });
     },
   });
 

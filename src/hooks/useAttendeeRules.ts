@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
+import { getCache, setCache, slowNetworkQueryOptions } from '@/utils/queryCache';
 
 export interface Rule {
   id: string;
@@ -15,6 +16,8 @@ export interface Rule {
   updated_at?: string;
 }
 
+const CACHE_KEY = 'attendee-rules';
+
 export const useAttendeeRules = () => {
   const { currentUser } = useAuth();
   const { hostEvents, hasJoinedEvent } = useAttendeeEventContext();
@@ -26,34 +29,22 @@ export const useAttendeeRules = () => {
         return [];
       }
 
-      try {
-        console.log('Fetching rules for attendee events:', hostEvents);
-        
-        // Only fetch rules for events from the same host
-        const { data, error } = await supabase
-          .from('rules')
-          .select('*')
-          .in('event_id', hostEvents)
-          .order('created_at', { ascending: false });
-        
-        if (error) {
-          console.error('Error fetching attendee rules:', error);
-          throw error;
-        }
-        
-        console.log('Attendee rules fetched successfully:', data?.length || 0);
-        return (data || []) as Rule[];
-      } catch (err) {
-        console.error('Unexpected error fetching attendee rules:', err);
-        throw err;
-      }
+      const { data, error } = await supabase
+        .from('rules')
+        .select('id, title, content, category, priority, created_at')
+        .in('event_id', hostEvents)
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      const result = (data || []) as Rule[];
+      setCache(`${CACHE_KEY}-${currentUser.id}`, result);
+      return result;
     },
     enabled: !!currentUser?.id && hasJoinedEvent && hostEvents.length > 0,
+    ...slowNetworkQueryOptions,
+    placeholderData: () => currentUser?.id ? getCache<Rule[]>(`${CACHE_KEY}-${currentUser.id}`) ?? undefined : undefined,
   });
 
-  return {
-    rules,
-    isLoading,
-    error,
-  };
+  return { rules, isLoading, error };
 };

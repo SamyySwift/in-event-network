@@ -2,6 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { getCache, setCache, slowNetworkQueryOptions } from '@/utils/queryCache';
 
 export interface Facility {
   id: string;
@@ -18,77 +19,45 @@ export interface Facility {
   category?: 'facility' | 'exhibitor';
 }
 
+const CACHE_KEY = 'attendee-facilities';
+
 export const useAttendeeFacilities = () => {
   const { currentUser } = useAuth();
 
   const { data: facilities = [], isLoading, error } = useQuery({
     queryKey: ['attendee-facilities', currentUser?.id],
     queryFn: async (): Promise<Facility[]> => {
-      if (!currentUser?.id) {
-        throw new Error('User not authenticated');
-      }
+      if (!currentUser?.id) throw new Error('User not authenticated');
 
-      // Get the user's current event from their profile
       const { data: userProfile } = await supabase
         .from('profiles')
         .select('current_event_id')
         .eq('id', currentUser.id)
         .single();
 
-      if (!userProfile?.current_event_id) {
-        return [];
-      }
+      if (!userProfile?.current_event_id) return [];
 
-      // Get the current event to find the host
-      const { data: currentEvent } = await supabase
-        .from('events')
-        .select('host_id')
-        .eq('id', userProfile.current_event_id)
-        .single();
-
-      if (!currentEvent?.host_id) {
-        return [];
-      }
-
-      // Get all events from the same host
-      const { data: hostEvents } = await supabase
-        .from('events')
-        .select('id')
-        .eq('host_id', currentEvent.host_id);
-
-      const eventIds = hostEvents?.map(e => e.id) || [];
-
-      if (eventIds.length === 0) {
-        return [];
-      }
-
-      // Get facilities for events from this host only
+      // Get facilities for user's current event only (optimized - single query)
       const { data: facilities, error } = await supabase
         .from('facilities')
-        .select('*')
-        .in('event_id', eventIds)
+        .select('id, name, description, location, rules, contact_type, contact_info, image_url, icon_type, event_id, created_at, category')
+        .eq('event_id', userProfile.current_event_id)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching attendee facilities:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      // Type cast and validate the contact_type field
-      const processedFacilities = (facilities || []).map(facility => ({
-        ...facility,
-        contact_type: (facility.contact_type as 'none' | 'phone' | 'whatsapp') || 'none'
+      const result = (facilities || []).map(f => ({
+        ...f,
+        contact_type: (f.contact_type as 'none' | 'phone' | 'whatsapp') || 'none'
       }));
-      
-      console.log('Fetched facilities with images:', processedFacilities.filter(f => f.image_url));
-      return processedFacilities;
+
+      setCache(`${CACHE_KEY}-${currentUser.id}`, result);
+      return result;
     },
     enabled: !!currentUser?.id,
+    ...slowNetworkQueryOptions,
+    placeholderData: () => currentUser?.id ? getCache<Facility[]>(`${CACHE_KEY}-${currentUser.id}`) ?? undefined : undefined,
   });
 
-  return {
-    facilities,
-    isLoading,
-    error,
-  };
+  return { facilities, isLoading, error };
 };

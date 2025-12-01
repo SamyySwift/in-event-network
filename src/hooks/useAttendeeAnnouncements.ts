@@ -1,9 +1,8 @@
 
-// Top-level imports
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
+import { getCache, setCache, slowNetworkQueryOptions } from '@/utils/queryCache';
 
 interface Announcement {
   id: string;
@@ -21,11 +20,12 @@ interface Announcement {
   facebook_link?: string;
   tiktok_link?: string;
   website_link?: string;
-  // New fields
   whatsapp_link?: string;
   vendor_form_id?: string | null;
   require_submission?: boolean | null;
 }
+
+const CACHE_KEY = 'attendee-announcements';
 
 export const useAttendeeAnnouncements = () => {
   const { currentUser } = useAuth();
@@ -33,52 +33,32 @@ export const useAttendeeAnnouncements = () => {
   const { data: announcements = [], isLoading, error } = useQuery({
     queryKey: ['attendee-announcements', currentUser?.id],
     queryFn: async () => {
-      if (!currentUser?.id) {
-        console.log('No current user found');
-        return [];
-      }
+      if (!currentUser?.id) return [];
 
-      // Get the user's current event ID from their profile
-      const { data: profile, error: profileError } = await supabase
+      const { data: profile } = await supabase
         .from('profiles')
         .select('current_event_id')
         .eq('id', currentUser.id)
         .single();
 
-      if (profileError) {
-        console.error('Error fetching user profile:', profileError);
-        return [];
-      }
+      if (!profile?.current_event_id) return [];
 
-      if (!profile?.current_event_id) {
-        console.log('No current event found for user');
-        return [];
-      }
-
-      console.log('Fetching announcements for event:', profile.current_event_id);
-
-      // Fetch announcements for the user's current event
       const { data, error } = await supabase
         .from('announcements')
-        .select('*')
+        .select('id, title, content, priority, send_immediately, image_url, created_at, event_id, twitter_link, instagram_link, facebook_link, tiktok_link, website_link, whatsapp_link, vendor_form_id, require_submission')
         .eq('event_id', profile.current_event_id)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching attendee announcements:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log('Attendee announcements fetched:', data?.length || 0, data);
-      return data as Announcement[];
+      const result = data as Announcement[];
+      setCache(`${CACHE_KEY}-${currentUser.id}`, result);
+      return result;
     },
     enabled: !!currentUser?.id,
-    refetchInterval: 30000, // Refetch every 30 seconds for near real-time updates
+    ...slowNetworkQueryOptions,
+    placeholderData: () => currentUser?.id ? getCache<Announcement[]>(`${CACHE_KEY}-${currentUser.id}`) ?? undefined : undefined,
   });
 
-  return {
-    announcements,
-    isLoading,
-    error,
-  };
+  return { announcements, isLoading, error };
 };

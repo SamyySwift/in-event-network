@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAttendeeEventContext } from "@/contexts/AttendeeEventContext";
+import { getCache, setCache, slowNetworkQueryOptions } from '@/utils/queryCache';
 
 interface AttendeeProfile {
   id: string;
@@ -19,51 +20,33 @@ interface AttendeeProfile {
   github_link?: string;
   instagram_link?: string;
   website_link?: string;
-  networking_visible?: boolean; // Add this line
+  networking_visible?: boolean;
   created_at?: string;
 }
+
+const CACHE_KEY = 'attendee-networking';
 
 export const useAttendeeNetworking = () => {
   const { currentUser } = useAuth();
   const { currentEventId } = useAttendeeEventContext();
 
-  console.log('useAttendeeNetworking - currentUser:', currentUser?.id);
-  console.log('useAttendeeNetworking - currentEventId:', currentEventId);
-
-  const {
-    data: attendees = [],
-    isLoading,
-    error,
-  } = useQuery({
+  const { data: attendees = [], isLoading, error } = useQuery({
     queryKey: ["attendee-networking", currentUser?.id, currentEventId],
     enabled: !!currentUser?.id && !!currentEventId,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    ...slowNetworkQueryOptions,
+    placeholderData: () => currentUser?.id ? getCache<AttendeeProfile[]>(`${CACHE_KEY}-${currentUser.id}`) ?? undefined : undefined,
     queryFn: async (): Promise<AttendeeProfile[]> => {
-      if (!currentUser?.id || !currentEventId) {
-        console.log('useAttendeeNetworking - Missing required data:', { 
-          userId: currentUser?.id, 
-          eventId: currentEventId 
-        });
-        return [];
-      }
-
-      console.log('useAttendeeNetworking - Fetching attendees for event:', currentEventId);
+      if (!currentUser?.id || !currentEventId) return [];
 
       try {
-        // Use the RPC function to get attendees with profile data
         const { data, error } = await supabase.rpc('get_event_attendees_with_profiles', {
           p_event_id: currentEventId
         });
 
-        if (error) {
-          console.error('useAttendeeNetworking - RPC error:', error);
-          throw error;
-        }
-
-        console.log('useAttendeeNetworking - Raw RPC data:', data);
+        if (error) throw error;
 
         const attendeeProfiles = (data || [])
-          .filter((row: any) => row.user_id !== currentUser.id) // Exclude current user
+          .filter((row: any) => row.user_id !== currentUser.id)
           .map((row: any) => ({
             id: row.user_id,
             name: row.name || "Unknown",
@@ -82,19 +65,13 @@ export const useAttendeeNetworking = () => {
             created_at: row.created_at,
           })) as AttendeeProfile[];
 
-        console.log('useAttendeeNetworking - Processed attendees:', attendeeProfiles);
+        setCache(`${CACHE_KEY}-${currentUser.id}`, attendeeProfiles);
         return attendeeProfiles;
       } catch (error) {
         console.error('useAttendeeNetworking - Query error:', error);
         throw error;
       }
     },
-  });
-
-  console.log('useAttendeeNetworking - Final state:', { 
-    attendeesCount: attendees.length, 
-    isLoading, 
-    error: error?.message 
   });
 
   return { attendees, isLoading, error };

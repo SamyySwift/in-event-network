@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
+import { getCache, setCache, slowNetworkQueryOptions } from '@/utils/queryCache';
 
 export interface Poll {
   id: string;
@@ -30,6 +31,8 @@ export interface PollVote {
   created_at: string;
 }
 
+const CACHE_KEY = 'attendee-polls';
+
 export const useAttendeePolls = () => {
   const { currentUser } = useAuth();
   const { toast } = useToast();
@@ -39,78 +42,67 @@ export const useAttendeePolls = () => {
   const { data: polls = [], isLoading, error } = useQuery({
     queryKey: ['attendee-polls', currentUser?.id, currentEventId],
     queryFn: async (): Promise<Poll[]> => {
-      if (!currentUser?.id || !hasJoinedEvent || !currentEventId) {
-        return [];
-      }
+      if (!currentUser?.id || !hasJoinedEvent || !currentEventId) return [];
 
-      const { data: polls, error } = await supabase
-        .from('polls')
-        .select('*')
-        .eq('event_id', currentEventId)
-        .order('created_at', { ascending: false });
+      // Fetch polls and votes in parallel
+      const [pollsResponse, votesResponse] = await Promise.all([
+        supabase
+          .from('polls')
+          .select('id, question, options, is_active, show_results, event_id, created_at, vote_limit, require_submission')
+          .eq('event_id', currentEventId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('poll_votes')
+          .select('poll_id, option_id')
+      ]);
 
-      if (error) {
-        console.error('Error fetching attendee polls:', error);
-        throw error;
-      }
+      if (pollsResponse.error) throw pollsResponse.error;
 
-      // Fetch vote counts for each poll
-      const pollsWithVotes = await Promise.all(
-        (polls || []).map(async (poll) => {
-          const { data: votes } = await supabase
-            .from('poll_votes')
-            .select('option_id')
-            .eq('poll_id', poll.id);
+      // Build vote counts map
+      const voteCounts: Record<string, Record<string, number>> = {};
+      votesResponse.data?.forEach(vote => {
+        if (!voteCounts[vote.poll_id]) voteCounts[vote.poll_id] = {};
+        voteCounts[vote.poll_id][vote.option_id] = (voteCounts[vote.poll_id][vote.option_id] || 0) + 1;
+      });
 
-          const voteCounts: Record<string, number> = {};
-          votes?.forEach(vote => {
-            voteCounts[vote.option_id] = (voteCounts[vote.option_id] || 0) + 1;
-          });
+      const pollsWithVotes = (pollsResponse.data || []).map(poll => {
+        const options = (poll.options as any[]) || [];
+        const pollVotes = voteCounts[poll.id] || {};
+        const optionsWithVotes = options.map(option => ({
+          ...option,
+          votes: pollVotes[option.id] || 0
+        }));
+        const totalVotes = optionsWithVotes.reduce((acc, opt) => acc + (opt.votes || 0), 0);
+        return { ...poll, options: optionsWithVotes, totalVotes };
+      });
 
-          const options = (poll.options as any[]) || [];
-          const optionsWithVotes = options.map((option) => ({
-            ...option,
-            votes: voteCounts[option.id] || 0
-          }));
-
-          const totalVotes = optionsWithVotes.reduce((acc, option) => acc + (option.votes || 0), 0);
-
-          return {
-            ...poll,
-            options: optionsWithVotes,
-            totalVotes
-          };
-        })
-      );
-
+      setCache(`${CACHE_KEY}-${currentUser.id}`, pollsWithVotes);
       return pollsWithVotes as Poll[];
     },
     enabled: !!currentUser?.id && hasJoinedEvent && !!currentEventId,
+    ...slowNetworkQueryOptions,
+    placeholderData: () => currentUser?.id ? getCache<Poll[]>(`${CACHE_KEY}-${currentUser.id}`) ?? undefined : undefined,
   });
 
   const { data: userVotes = [], isLoading: votesLoading } = useQuery({
     queryKey: ['attendee-poll-votes', currentUser?.id],
     queryFn: async () => {
       if (!currentUser?.id) return [];
-
       const { data, error } = await supabase
         .from('poll_votes')
-        .select('*')
+        .select('id, poll_id, user_id, option_id, created_at')
         .eq('user_id', currentUser.id);
-
       if (error) throw error;
       return data as PollVote[];
     },
     enabled: !!currentUser?.id,
+    ...slowNetworkQueryOptions,
   });
 
   const voteMutation = useMutation({
     mutationFn: async ({ pollId, optionId }: { pollId: string; optionId: string }) => {
-      if (!currentUser?.id) {
-        throw new Error('User not authenticated');
-      }
+      if (!currentUser?.id) throw new Error('User not authenticated');
 
-      // First check if user already voted
       const { data: existingVote } = await supabase
         .from('poll_votes')
         .select('id')
@@ -118,11 +110,8 @@ export const useAttendeePolls = () => {
         .eq('user_id', currentUser.id)
         .single();
 
-      if (existingVote) {
-        throw new Error('You have already voted on this poll');
-      }
+      if (existingVote) throw new Error('You have already voted on this poll');
 
-      // Check if poll has vote limit and if it's reached
       const poll = polls.find(p => p.id === pollId);
       if (poll?.vote_limit && poll.totalVotes && poll.totalVotes >= poll.vote_limit) {
         throw new Error('This poll has reached its maximum number of votes');
@@ -130,11 +119,7 @@ export const useAttendeePolls = () => {
 
       const { data, error } = await supabase
         .from('poll_votes')
-        .insert([{
-          poll_id: pollId,
-          user_id: currentUser.id,
-          option_id: optionId
-        }])
+        .insert([{ poll_id: pollId, user_id: currentUser.id, option_id: optionId }])
         .select()
         .single();
 
@@ -144,18 +129,10 @@ export const useAttendeePolls = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['attendee-poll-votes'] });
       queryClient.invalidateQueries({ queryKey: ['attendee-polls'] });
-      toast({
-        title: 'Vote Submitted',
-        description: 'Thank you for your feedback!',
-      });
+      toast({ title: 'Vote Submitted', description: 'Thank you for your feedback!' });
     },
     onError: (error) => {
-      toast({
-        title: 'Error',
-        description: error.message || 'Failed to submit vote. Please try again.',
-        variant: 'destructive',
-      });
-      console.error('Error submitting vote:', error);
+      toast({ title: 'Error', description: error.message || 'Failed to submit vote.', variant: 'destructive' });
     },
   });
 

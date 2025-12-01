@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, Suspense } from "react";
+import React, { useState, useEffect, useMemo, Suspense, lazy } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Calendar,
@@ -42,7 +42,6 @@ import { UserPlus } from "lucide-react";
 import { EventCard } from "@/components/attendee/EventCard";
 import { ConnectionNotificationDropdown } from "@/components/attendee/ConnectionNotificationDropdown";
 import { useAttendeeFacilities } from "@/hooks/useAttendeeFacilities";
-import { HighlightsSection } from "@/components/attendee/HighlightsSection";
 import * as LucideIcons from "lucide-react";
 import FacilityIcon from "@/pages/admin/components/FacilityIcon";
 
@@ -58,7 +57,10 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
-import { FloatingAIAssistant } from "@/components/attendee/FloatingAIAssistant";
+
+// Lazy load heavy components for faster initial render
+const FloatingAIAssistant = lazy(() => import("@/components/attendee/FloatingAIAssistant").then(m => ({ default: m.FloatingAIAssistant })));
+const HighlightsSection = lazy(() => import("@/components/attendee/HighlightsSection").then(m => ({ default: m.HighlightsSection })));
 
 // Advertisement Carousel Component
 const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) => {

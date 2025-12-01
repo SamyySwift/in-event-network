@@ -171,57 +171,132 @@ const AttendeeProfile = () => {
   const [customNetworkingPref, setCustomNetworkingPref] = useState("");
   const [isGeneratingBio, setIsGeneratingBio] = useState(false);
 
-  // Auto-save functionality
-  const saveFormData = (data: any) => {
-    if (!currentUser?.id) return;
+  // Reference to track if we have unsaved changes
+  const hasUnsavedChanges = React.useRef(false);
+  const lastSavedData = React.useRef<string>("");
+
+  // Auto-save to database function
+  const autoSaveToDatabase = async () => {
+    if (!currentUser?.id || !hasUnsavedChanges.current) return;
+    
     try {
-      localStorage.setItem(`attendee-profile-${currentUser.id}`, JSON.stringify(data));
+      await supabase
+        .from("profiles")
+        .update({
+          name: profileData.name,
+          photo_url: profileData.photoUrl,
+          bio: profileData.bio,
+          niche: selectedNiche,
+          company: profileData.company,
+          tags: profileData.customTags,
+          networking_preferences: selectedNetworking,
+          networking_visible: profileData.networkingVisible,
+          twitter_link: profileData.links.twitter,
+          linkedin_link: profileData.links.linkedin,
+          github_link: profileData.links.github,
+          website_link: profileData.links.website,
+          facebook_link: profileData.links.facebook,
+          instagram_link: profileData.links.instagram,
+        })
+        .eq("id", currentUser.id);
+      
+      hasUnsavedChanges.current = false;
+      lastSavedData.current = JSON.stringify({ profileData, selectedNiche, selectedNetworking });
     } catch (error) {
-      console.error("Error saving form data:", error);
+      console.error("Auto-save failed:", error);
     }
   };
 
-  const clearSavedData = () => {
-    if (!currentUser?.id) return;
-    try {
-      localStorage.removeItem(`attendee-profile-${currentUser.id}`);
-    } catch (error) {
-      console.error("Error clearing saved data:", error);
-    }
-  };
-
-  // Auto-save when form data changes
+  // Track changes
   useEffect(() => {
-    if (isEditing) {
-      const formData = {
-        profileData,
-        selectedNiche,
-        selectedNetworking,
-        newTag,
-        customNetworkingPref,
-      };
-      saveFormData(formData);
+    if (isLoading) return;
+    const currentData = JSON.stringify({ profileData, selectedNiche, selectedNetworking });
+    if (lastSavedData.current && currentData !== lastSavedData.current) {
+      hasUnsavedChanges.current = true;
     }
-  }, [profileData, selectedNiche, selectedNetworking, newTag, customNetworkingPref, isEditing, currentUser?.id]);
+  }, [profileData, selectedNiche, selectedNetworking, isLoading]);
 
-  // Restore saved data when starting to edit
+  // Debounced auto-save while editing (save every 3 seconds if there are changes)
   useEffect(() => {
-    if (isEditing && currentUser?.id) {
-      const savedData = localStorage.getItem(`attendee-profile-${currentUser.id}`);
-      if (savedData) {
-        try {
-          const parsed = JSON.parse(savedData);
-          if (parsed.profileData) setProfileData(parsed.profileData);
-          if (parsed.selectedNiche) setSelectedNiche(parsed.selectedNiche);
-          if (parsed.selectedNetworking) setSelectedNetworking(parsed.selectedNetworking);
-          if (parsed.newTag) setNewTag(parsed.newTag);
-          if (parsed.customNetworkingPref) setCustomNetworkingPref(parsed.customNetworkingPref);
-        } catch (error) {
-          console.error("Error restoring saved profile data:", error);
-        }
+    if (isLoading) return;
+    
+    const autoSaveInterval = setInterval(() => {
+      if (hasUnsavedChanges.current) {
+        autoSaveToDatabase();
+      }
+    }, 3000);
+
+    return () => clearInterval(autoSaveInterval);
+  }, [currentUser?.id, profileData, selectedNiche, selectedNetworking, isLoading]);
+
+  // Save when leaving the page (beforeunload)
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (hasUnsavedChanges.current && currentUser?.id) {
+        // Use sendBeacon for reliable save on page close
+        const data = {
+          name: profileData.name,
+          photo_url: profileData.photoUrl,
+          bio: profileData.bio,
+          niche: selectedNiche,
+          company: profileData.company,
+          tags: profileData.customTags,
+          networking_preferences: selectedNetworking,
+          networking_visible: profileData.networkingVisible,
+          twitter_link: profileData.links.twitter,
+          linkedin_link: profileData.links.linkedin,
+          github_link: profileData.links.github,
+          website_link: profileData.links.website,
+          facebook_link: profileData.links.facebook,
+          instagram_link: profileData.links.instagram,
+        };
+        // Store in localStorage as backup for next load
+        localStorage.setItem(`attendee-profile-pending-${currentUser.id}`, JSON.stringify(data));
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [currentUser?.id, profileData, selectedNiche, selectedNetworking]);
+
+  // Save when component unmounts (navigating away)
+  useEffect(() => {
+    return () => {
+      if (hasUnsavedChanges.current && currentUser?.id) {
+        autoSaveToDatabase();
+      }
+    };
+  }, []);
+
+  // Check for pending saves from previous session
+  useEffect(() => {
+    if (!currentUser?.id || isLoading) return;
+    
+    const pendingData = localStorage.getItem(`attendee-profile-pending-${currentUser.id}`);
+    if (pendingData) {
+      try {
+        const data = JSON.parse(pendingData);
+        // Apply pending save to database
+        supabase
+          .from("profiles")
+          .update(data)
+          .eq("id", currentUser.id)
+          .then(() => {
+            localStorage.removeItem(`attendee-profile-pending-${currentUser.id}`);
+          });
+      } catch (error) {
+        console.error("Error applying pending save:", error);
+        localStorage.removeItem(`attendee-profile-pending-${currentUser.id}`);
       }
     }
-  }, [isEditing, currentUser?.id]);
+  }, [currentUser?.id, isLoading]);
+
+  // Initialize lastSavedData after loading
+  useEffect(() => {
+    if (!isLoading) {
+      lastSavedData.current = JSON.stringify({ profileData, selectedNiche, selectedNetworking });
+    }
+  }, [isLoading]);
 
   // ... existing code ...
   useEffect(() => {
@@ -398,8 +473,10 @@ const AttendeeProfile = () => {
       });
 
       setIsEditing(false);
-      // Clear saved form data after successful save
-      clearSavedData();
+      // Mark as saved
+      hasUnsavedChanges.current = false;
+      lastSavedData.current = JSON.stringify({ profileData, selectedNiche, selectedNetworking });
+      localStorage.removeItem(`attendee-profile-pending-${currentUser?.id}`);
       toast({
         title: "Profile updated",
         description: "Your profile has been updated successfully",

@@ -30,7 +30,7 @@ export const useGuestDashboard = (eventId: string | null) => {
           .from('events')
           .select('*')
           .eq('id', eventId)
-          .single(),
+          .maybeSingle(),
 
         // Get announcements
         supabase

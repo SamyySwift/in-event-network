@@ -80,7 +80,8 @@ export const GuestEventProvider: React.FC<{ children: ReactNode }> = ({ children
   const value: GuestEventContextType = {
     guestEventId,
     guestEvent,
-    isGuestMode: !!guestEventId && !isLoading,
+    // isGuestMode should be true as soon as we have a guestEventId, regardless of loading state
+    isGuestMode: !!guestEventId,
     isLoading,
     setGuestEvent,
     clearGuestEvent,

@@ -42,7 +42,7 @@ const ScanQR = () => {
         .from('event_access_codes')
         .select('event_id')
         .eq('access_code', accessCode)
-        .single();
+        .maybeSingle();
 
       if (accessError || !accessData) {
         toast({
@@ -59,7 +59,7 @@ const ScanQR = () => {
         .from('events')
         .select('id, name')
         .eq('id', accessData.event_id)
-        .single();
+        .maybeSingle();
 
       if (eventError || !eventData) {
         toast({

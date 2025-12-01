@@ -149,6 +149,16 @@ const Register = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  // Debug logging for event banner
+  console.log('Register - Debug:', {
+    eventCode,
+    effectiveEventCode,
+    isFromQRCode,
+    eventDataByCode,
+    isLoadingByCode,
+    eventErrorByCode,
+  });
+
   const handleGoogleSignUp = async () => {
     setErrorMessage(null);
 

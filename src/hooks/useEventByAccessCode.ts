@@ -25,42 +25,72 @@ export const useEventByAccessCode = (accessCode: string | null) => {
       const trimmed = accessCode.trim();
       console.log('Fetching event data for access code:', trimmed);
 
-      // If it's a 6-digit code, treat it as an event_key and fetch the event directly
-      const isEventKey = /^\d{6}$/.test(trimmed);
-      if (isEventKey) {
-        const { data: eventData, error: eventError } = await supabase
+      // If it's a 6-digit code, try event_key first, then fall back to host access_key
+      const isSixDigitCode = /^\d{6}$/.test(trimmed);
+      if (isSixDigitCode) {
+        // First, try to find event by event_key
+        const { data: eventByKey, error: eventKeyError } = await supabase
           .from('events')
           .select('id, name, banner_url, logo_url, description, start_time, end_time, location, host_id')
           .eq('event_key', trimmed)
           .maybeSingle();
 
-        if (eventError || !eventData) {
-          console.error('Event not found for event key:', trimmed, eventError);
-          return null;
+        if (eventByKey) {
+          console.log('Found event by event_key:', eventByKey);
+          let hostName: string | null = null;
+          if (eventByKey.host_id) {
+            const { data: hostProfile } = await supabase
+              .from('profiles')
+              .select('name')
+              .eq('id', eventByKey.host_id)
+              .maybeSingle();
+            hostName = hostProfile?.name ?? null;
+          }
+
+          return {
+            id: eventByKey.id,
+            name: eventByKey.name,
+            banner_url: eventByKey.banner_url,
+            logo_url: eventByKey.logo_url,
+            description: eventByKey.description,
+            start_time: eventByKey.start_time,
+            end_time: eventByKey.end_time,
+            location: eventByKey.location,
+            host_name: hostName,
+          };
         }
 
-        let hostName: string | null = null;
-        if (eventData.host_id) {
-          const { data: hostProfile } = await supabase
-            .from('profiles')
-            .select('name')
-            .eq('id', eventData.host_id)
+        console.log('No event found by event_key, trying host access_key...');
+
+        // Fall back to host access_key lookup
+        const { data: hostProfile, error: hostError } = await supabase
+          .from('profiles')
+          .select('id, name')
+          .eq('access_key', trimmed)
+          .eq('role', 'host')
+          .maybeSingle();
+
+        if (hostProfile) {
+          console.log('Found host by access_key:', hostProfile);
+          const { data: eventData, error: eventError } = await supabase
+            .from('events')
+            .select('id, name, banner_url, logo_url, description, start_time, end_time, location')
+            .eq('host_id', hostProfile.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
             .maybeSingle();
-          hostName = hostProfile?.name ?? null;
+
+          if (eventData) {
+            console.log('Found event for host:', eventData);
+            return {
+              ...eventData,
+              host_name: hostProfile.name,
+            };
+          }
         }
 
-        console.log('Found event by event_key:', eventData);
-        return {
-          id: eventData.id,
-          name: eventData.name,
-          banner_url: eventData.banner_url,
-          logo_url: eventData.logo_url,
-          description: eventData.description,
-          start_time: eventData.start_time,
-          end_time: eventData.end_time,
-          location: eventData.location,
-          host_name: hostName,
-        };
+        console.error('No event found for 6-digit code:', trimmed);
+        return null;
       }
 
       // Otherwise, treat it as a host access_key and fetch the latest event for that host

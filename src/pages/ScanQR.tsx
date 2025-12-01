@@ -5,7 +5,6 @@ import QRCodeScanner from "@/components/QRCodeScanner";
 import { useToast } from "@/hooks/use-toast";
 import { useJoinEvent } from "@/hooks/useJoinEvent";
 import { useAuth } from "@/contexts/AuthContext";
-import { useGuestEventContext } from "@/contexts/GuestEventContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -19,78 +18,16 @@ import AppLayout from "@/components/layouts/AppLayout";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/lib/supabase";
 
 const ScanQR = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { joinEvent, isJoining } = useJoinEvent();
   const { currentUser, logout } = useAuth();
-  const { setGuestEvent } = useGuestEventContext();
   const [scanSuccess, setScanSuccess] = useState(false);
   const [eventName, setEventName] = useState("");
   const [activeTab, setActiveTab] = useState<"scan" | "code">("scan");
   const [eventCode, setEventCode] = useState("");
-  const [isJoiningAsGuest, setIsJoiningAsGuest] = useState(false);
-
-  // Helper function to join as guest (unauthenticated)
-  const joinAsGuest = async (accessCode: string) => {
-    setIsJoiningAsGuest(true);
-    try {
-      // Look up the event by access code
-      const { data: accessData, error: accessError } = await supabase
-        .from('event_access_codes')
-        .select('event_id')
-        .eq('access_code', accessCode)
-        .maybeSingle();
-
-      if (accessError || !accessData) {
-        toast({
-          title: "Invalid Code",
-          description: "This event code is not valid. Please check with your event organizer.",
-          variant: "destructive",
-        });
-        setIsJoiningAsGuest(false);
-        return;
-      }
-
-      // Fetch event details
-      const { data: eventData, error: eventError } = await supabase
-        .from('events')
-        .select('id, name')
-        .eq('id', accessData.event_id)
-        .maybeSingle();
-
-      if (eventError || !eventData) {
-        toast({
-          title: "Event Not Found",
-          description: "Could not find the event. Please try again.",
-          variant: "destructive",
-        });
-        setIsJoiningAsGuest(false);
-        return;
-      }
-
-      // Set guest event context
-      setGuestEvent(eventData.id);
-      setScanSuccess(true);
-      setEventName(eventData.name);
-
-      // Navigate to attendee dashboard after a short delay
-      setTimeout(() => {
-        navigate("/attendee", { replace: true });
-      }, 1500);
-    } catch (error) {
-      console.error('Error joining as guest:', error);
-      toast({
-        title: "Error",
-        description: "Failed to join the event. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsJoiningAsGuest(false);
-    }
-  };
 
   // Check if user is admin/host and show restriction message
   if (currentUser?.role === "host") {
@@ -190,33 +127,44 @@ const ScanQR = () => {
       if (accessCode && /^\d{6}$/.test(accessCode)) {
         console.log("Extracted access code:", accessCode);
 
-        // If user is authenticated, use the full join flow
-        if (currentUser) {
-          joinEvent(accessCode, {
-            onSuccess: (data: any) => {
-              console.log("Join event success:", data);
-              setScanSuccess(true);
-              setEventName(data?.event_name || "Event");
+        joinEvent(accessCode, {
+          onSuccess: (data: any) => {
+            console.log("Join event success:", data);
+            setScanSuccess(true);
+            setEventName(data?.event_name || "Event");
 
-              // Navigate to dashboard after a short delay
-              setTimeout(() => {
-                navigate("/attendee", { replace: true });
-              }, 2000);
-            },
-            onError: (error: any) => {
-              console.error("Join event error:", error);
-              toast({
-                title: "Failed to Join Event",
-                description:
-                  error?.message || "Could not join the event. Please try again.",
-                variant: "destructive",
+            // Navigate to dashboard after a short delay
+            setTimeout(() => {
+              navigate("/attendee", { replace: true });
+            }, 2000);
+          },
+          onError: (error: any) => {
+            console.error("Join event error:", error);
+
+            // Check if the error is due to authentication or user not found
+            if (
+              error?.message?.includes("not authenticated") ||
+              error?.message?.includes("login") ||
+              error?.code === "PGRST301" ||
+              !currentUser
+            ) {
+              // Store the access code in both storages and redirect to register with the code
+              sessionStorage.setItem("pendingEventCode", accessCode);
+              localStorage.setItem("pendingEventCode", accessCode);
+              navigate(`/register?eventCode=${accessCode}&role=attendee`, {
+                replace: true,
               });
-            },
-          });
-        } else {
-          // User is not authenticated - join as guest
-          joinAsGuest(accessCode);
-        }
+              return;
+            }
+
+            toast({
+              title: "Failed to Join Event",
+              description:
+                error?.message || "Could not join the event. Please try again.",
+              variant: "destructive",
+            });
+          },
+        });
       } else {
         toast({
           title: "Invalid QR Code",
@@ -285,29 +233,36 @@ const ScanQR = () => {
       return;
     }
 
-    // If user is authenticated, use the full join flow
-    if (currentUser) {
-      joinEvent(trimmed, {
-        onSuccess: (data: any) => {
-          setScanSuccess(true);
-          setEventName(data?.event_name || "Event");
-          setTimeout(() => {
-            navigate("/attendee", { replace: true });
-          }, 1000);
-        },
-        onError: (error: any) => {
-          toast({
-            title: "Invalid event code",
-            description:
-              "Invalid event code. Please check with your event organizer.",
-            variant: "destructive",
+    joinEvent(trimmed, {
+      onSuccess: (data: any) => {
+        setScanSuccess(true);
+        setEventName(data?.event_name || "Event");
+        setTimeout(() => {
+          navigate("/attendee", { replace: true });
+        }, 1000);
+      },
+      onError: (error: any) => {
+        if (
+          error?.message?.includes("not authenticated") ||
+          error?.message?.includes("login") ||
+          error?.code === "PGRST301" ||
+          !currentUser
+        ) {
+          sessionStorage.setItem("pendingEventCode", trimmed);
+          localStorage.setItem("pendingEventCode", trimmed);
+          navigate(`/register?eventCode=${trimmed}&role=attendee`, {
+            replace: true,
           });
-        },
-      });
-    } else {
-      // User is not authenticated - join as guest
-      joinAsGuest(trimmed);
-    }
+          return;
+        }
+        toast({
+          title: "Invalid event code",
+          description:
+            "Invalid event code. Please check with your event organizer.",
+          variant: "destructive",
+        });
+      },
+    });
   };
 
   return (
@@ -389,7 +344,7 @@ const ScanQR = () => {
                       />
                       <Button
                         onClick={handleManualJoin}
-                        disabled={isJoining || isJoiningAsGuest || eventCode.length !== 6}
+                        disabled={isJoining || eventCode.length !== 6}
                       >
                         Join
                       </Button>
@@ -400,7 +355,7 @@ const ScanQR = () => {
                     </p>
                   </div>
 
-                  {(isJoining || isJoiningAsGuest) && (
+                  {isJoining && (
                     <div>
                       <p className="text-sm text-muted-foreground">
                         Joining event...

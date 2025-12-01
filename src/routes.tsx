@@ -68,10 +68,6 @@ import AttendeeMyTickets from "@/pages/attendee/AttendeeMyTickets";
 // Host Pages
 import HostDashboard from "@/pages/host/HostDashboard";
 
-// Guest-aware route component
-import GuestAwareRoute from "@/components/attendee/GuestAwareRoute";
-import { GuestEventProvider } from "@/contexts/GuestEventContext";
-
 // Auth Guard Component
 const ProtectedRoute = ({
   children,
@@ -119,18 +115,12 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// Attendee Guard Component - Now uses GuestAwareRoute for guest access support
-const AttendeeRoute = ({ children, requiresAuth = false, featureName = 'this feature' }: { 
-  children: React.ReactNode;
-  requiresAuth?: boolean;
-  featureName?: string;
-}) => {
+// Attendee Guard Component
+const AttendeeRoute = ({ children }: { children: React.ReactNode }) => {
   return (
-    <GuestEventProvider>
-      <GuestAwareRoute requiresAuth={requiresAuth} featureName={featureName}>
-        {children}
-      </GuestAwareRoute>
-    </GuestEventProvider>
+    <ProtectedRoute allowedRoles={["attendee"]}>
+      <AppLayout>{children}</AppLayout>
+    </ProtectedRoute>
   );
 };
 
@@ -177,11 +167,7 @@ export const router = createBrowserRouter([
   },
   {
     path: "/scan",
-    element: (
-      <GuestEventProvider>
-        <ScanQR />
-      </GuestEventProvider>
-    ),
+    element: <ScanQR />,
   },
   {
     path: "/index",
@@ -395,7 +381,6 @@ export const router = createBrowserRouter([
   },
 
   // Attendee Routes
-  // Guest accessible pages (no auth required)
   {
     path: "/attendee",
     element: (
@@ -405,10 +390,34 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: "/attendee/profile",
+    element: (
+      <AttendeeRoute>
+        <AttendeeProfile />
+      </AttendeeRoute>
+    ),
+  },
+  {
+    path: "/attendee/networking",
+    element: (
+      <AttendeeRoute>
+        <AttendeeNetworking />
+      </AttendeeRoute>
+    ),
+  },
+  {
     path: "/attendee/schedule",
     element: (
       <AttendeeRoute>
         <AttendeeSchedule />
+      </AttendeeRoute>
+    ),
+  },
+  {
+    path: "/attendee/questions",
+    element: (
+      <AttendeeRoute>
+        <AttendeeQuestions />
       </AttendeeRoute>
     ),
   },
@@ -429,6 +438,14 @@ export const router = createBrowserRouter([
     ),
   },
   {
+    path: "/attendee/suggestions",
+    element: (
+      <AttendeeRoute>
+        <AttendeeSuggestions />
+      </AttendeeRoute>
+    ),
+  },
+  {
     path: "/attendee/announcements",
     element: (
       <AttendeeRoute>
@@ -444,44 +461,10 @@ export const router = createBrowserRouter([
       </AttendeeRoute>
     ),
   },
-  
-  // Auth required pages (interactive features)
-  {
-    path: "/attendee/profile",
-    element: (
-      <AttendeeRoute requiresAuth featureName="your profile">
-        <AttendeeProfile />
-      </AttendeeRoute>
-    ),
-  },
-  {
-    path: "/attendee/networking",
-    element: (
-      <AttendeeRoute requiresAuth featureName="networking with other attendees">
-        <AttendeeNetworking />
-      </AttendeeRoute>
-    ),
-  },
-  {
-    path: "/attendee/questions",
-    element: (
-      <AttendeeRoute requiresAuth featureName="asking questions">
-        <AttendeeQuestions />
-      </AttendeeRoute>
-    ),
-  },
-  {
-    path: "/attendee/suggestions",
-    element: (
-      <AttendeeRoute requiresAuth featureName="submitting suggestions">
-        <AttendeeSuggestions />
-      </AttendeeRoute>
-    ),
-  },
   {
     path: "/attendee/notifications",
     element: (
-      <AttendeeRoute requiresAuth featureName="notifications">
+      <AttendeeRoute>
         <AttendeeNotifications />
       </AttendeeRoute>
     ),
@@ -489,7 +472,7 @@ export const router = createBrowserRouter([
   {
     path: "/attendee/search",
     element: (
-      <AttendeeRoute requiresAuth featureName="searching attendees">
+      <AttendeeRoute>
         <AttendeeSearch />
       </AttendeeRoute>
     ),
@@ -497,7 +480,7 @@ export const router = createBrowserRouter([
   {
     path: "/attendee/onboarding",
     element: (
-      <AttendeeRoute requiresAuth featureName="onboarding">
+      <AttendeeRoute>
         <AttendeeOnboarding />
       </AttendeeRoute>
     ),
@@ -505,7 +488,7 @@ export const router = createBrowserRouter([
   {
     path: "/attendee/my-tickets",
     element: (
-      <AttendeeRoute requiresAuth featureName="your tickets">
+      <AttendeeRoute>
         <AttendeeMyTickets />
       </AttendeeRoute>
     ),
@@ -523,7 +506,7 @@ export const router = createBrowserRouter([
   {
     path: "/attendee/games",
     element: (
-      <AttendeeRoute requiresAuth featureName="playing games">
+      <AttendeeRoute>
         <AttendeeGames />
       </AttendeeRoute>
     ),

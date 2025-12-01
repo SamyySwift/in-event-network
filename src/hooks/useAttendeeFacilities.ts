@@ -2,7 +2,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useGuestEventContext } from '@/contexts/GuestEventContext';
 
 export interface Facility {
   id: string;
@@ -19,30 +18,24 @@ export interface Facility {
   category?: 'facility' | 'exhibitor';
 }
 
-export const useAttendeeFacilities = (overrideEventId?: string) => {
+export const useAttendeeFacilities = () => {
   const { currentUser } = useAuth();
-  const { guestEventId } = useGuestEventContext();
-  
-  // Use override > guest event > authenticated user's event
-  const directEventId = overrideEventId || (!currentUser ? guestEventId : null);
 
   const { data: facilities = [], isLoading, error } = useQuery({
-    queryKey: ['attendee-facilities', currentUser?.id, directEventId],
+    queryKey: ['attendee-facilities', currentUser?.id],
     queryFn: async (): Promise<Facility[]> => {
-      let targetEventId = directEventId;
-
-      // If no direct event ID, get from user profile
-      if (!targetEventId && currentUser?.id) {
-        const { data: userProfile } = await supabase
-          .from('profiles')
-          .select('current_event_id')
-          .eq('id', currentUser.id)
-          .single();
-
-        targetEventId = userProfile?.current_event_id || null;
+      if (!currentUser?.id) {
+        throw new Error('User not authenticated');
       }
 
-      if (!targetEventId) {
+      // Get the user's current event from their profile
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('current_event_id')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (!userProfile?.current_event_id) {
         return [];
       }
 
@@ -50,7 +43,7 @@ export const useAttendeeFacilities = (overrideEventId?: string) => {
       const { data: currentEvent } = await supabase
         .from('events')
         .select('host_id')
-        .eq('id', targetEventId)
+        .eq('id', userProfile.current_event_id)
         .single();
 
       if (!currentEvent?.host_id) {
@@ -87,9 +80,10 @@ export const useAttendeeFacilities = (overrideEventId?: string) => {
         contact_type: (facility.contact_type as 'none' | 'phone' | 'whatsapp') || 'none'
       }));
       
+      console.log('Fetched facilities with images:', processedFacilities.filter(f => f.image_url));
       return processedFacilities;
     },
-    enabled: !!currentUser?.id || !!directEventId,
+    enabled: !!currentUser?.id,
   });
 
   return {

@@ -2,7 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useGuestEventContext } from '@/contexts/GuestEventContext';
+import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
 
 export interface Rule {
   id: string;
@@ -15,71 +15,40 @@ export interface Rule {
   updated_at?: string;
 }
 
-export const useAttendeeRules = (overrideEventId?: string) => {
+export const useAttendeeRules = () => {
   const { currentUser } = useAuth();
-  const { guestEventId } = useGuestEventContext();
-  
-  // Use override > guest event > authenticated user's event
-  const directEventId = overrideEventId || (!currentUser ? guestEventId : null);
+  const { hostEvents, hasJoinedEvent } = useAttendeeEventContext();
 
   const { data: rules = [], isLoading, error } = useQuery({
-    queryKey: ['attendee-rules', currentUser?.id, directEventId],
+    queryKey: ['attendee-rules', currentUser?.id, hostEvents],
     queryFn: async () => {
-      let targetEventId = directEventId;
-
-      // If no direct event ID, get from user profile
-      if (!targetEventId && currentUser?.id) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('current_event_id')
-          .eq('id', currentUser.id)
-          .single();
-
-        targetEventId = profile?.current_event_id || null;
-      }
-
-      if (!targetEventId) {
+      if (!currentUser?.id || !hasJoinedEvent || hostEvents.length === 0) {
         return [];
       }
 
-      // Get the event's host
-      const { data: event } = await supabase
-        .from('events')
-        .select('host_id')
-        .eq('id', targetEventId)
-        .single();
-
-      if (!event?.host_id) {
-        return [];
+      try {
+        console.log('Fetching rules for attendee events:', hostEvents);
+        
+        // Only fetch rules for events from the same host
+        const { data, error } = await supabase
+          .from('rules')
+          .select('*')
+          .in('event_id', hostEvents)
+          .order('created_at', { ascending: false });
+        
+        if (error) {
+          console.error('Error fetching attendee rules:', error);
+          throw error;
+        }
+        
+        console.log('Attendee rules fetched successfully:', data?.length || 0);
+        return (data || []) as Rule[];
+      } catch (err) {
+        console.error('Unexpected error fetching attendee rules:', err);
+        throw err;
       }
-
-      // Get all events from the same host
-      const { data: hostEvents } = await supabase
-        .from('events')
-        .select('id')
-        .eq('host_id', event.host_id);
-
-      const eventIds = hostEvents?.map(e => e.id) || [];
-
-      if (eventIds.length === 0) {
-        return [];
-      }
-
-      // Fetch rules for all host events
-      const { data, error } = await supabase
-        .from('rules')
-        .select('*')
-        .in('event_id', eventIds)
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching attendee rules:', error);
-        throw error;
-      }
-      
-      return (data || []) as Rule[];
     },
-    enabled: !!currentUser?.id || !!directEventId,
+    enabled: !!currentUser?.id && hasJoinedEvent && hostEvents.length > 0,
   });
 
   return {

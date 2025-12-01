@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useGuestEventContext } from '@/contexts/GuestEventContext';
+import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
 
 export interface Poll {
   id: string;
@@ -30,39 +30,23 @@ export interface PollVote {
   created_at: string;
 }
 
-export const useAttendeePolls = (overrideEventId?: string) => {
+export const useAttendeePolls = () => {
   const { currentUser } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { guestEventId } = useGuestEventContext();
-  
-  // Use override > guest event > need to fetch from user profile
-  const directEventId = overrideEventId || (!currentUser ? guestEventId : null);
+  const { hasJoinedEvent, currentEventId } = useAttendeeEventContext();
 
   const { data: polls = [], isLoading, error } = useQuery({
-    queryKey: ['attendee-polls', currentUser?.id, directEventId],
+    queryKey: ['attendee-polls', currentUser?.id, currentEventId],
     queryFn: async (): Promise<Poll[]> => {
-      let targetEventId = directEventId;
-
-      // If no direct event ID, get from user profile
-      if (!targetEventId && currentUser?.id) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('current_event_id')
-          .eq('id', currentUser.id)
-          .single();
-
-        targetEventId = profile?.current_event_id || null;
-      }
-
-      if (!targetEventId) {
+      if (!currentUser?.id || !hasJoinedEvent || !currentEventId) {
         return [];
       }
 
       const { data: polls, error } = await supabase
         .from('polls')
         .select('*')
-        .eq('event_id', targetEventId)
+        .eq('event_id', currentEventId)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -101,7 +85,7 @@ export const useAttendeePolls = (overrideEventId?: string) => {
 
       return pollsWithVotes as Poll[];
     },
-    enabled: !!currentUser?.id || !!directEventId,
+    enabled: !!currentUser?.id && hasJoinedEvent && !!currentEventId,
   });
 
   const { data: userVotes = [], isLoading: votesLoading } = useQuery({
@@ -123,7 +107,7 @@ export const useAttendeePolls = (overrideEventId?: string) => {
   const voteMutation = useMutation({
     mutationFn: async ({ pollId, optionId }: { pollId: string; optionId: string }) => {
       if (!currentUser?.id) {
-        throw new Error('Please sign in to vote');
+        throw new Error('User not authenticated');
       }
 
       // First check if user already voted
@@ -175,9 +159,6 @@ export const useAttendeePolls = (overrideEventId?: string) => {
     },
   });
 
-  // Check if user is a guest (not authenticated)
-  const isGuest = !currentUser;
-
   return {
     polls,
     userVotes,
@@ -185,6 +166,5 @@ export const useAttendeePolls = (overrideEventId?: string) => {
     error,
     submitVote: voteMutation.mutateAsync,
     isSubmitting: voteMutation.isPending,
-    isGuest,
   };
 };

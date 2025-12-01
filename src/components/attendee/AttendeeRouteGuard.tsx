@@ -1,8 +1,7 @@
 
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/contexts/AuthContext';
-import { useGuestEventContext } from '@/contexts/GuestEventContext';
+import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
 import { Loader } from 'lucide-react';
 
 interface AttendeeRouteGuardProps {
@@ -14,10 +13,9 @@ const AttendeeRouteGuard: React.FC<AttendeeRouteGuardProps> = ({
   children, 
   requireEvent = true 
 }) => {
-  const { currentUser, isLoading: authLoading } = useAuth();
-  const { isGuestMode, isLoading: guestLoading } = useGuestEventContext();
+  const { hasJoinedEvent, isLoading } = useAttendeeEventContext();
 
-  if (authLoading || guestLoading) {
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
@@ -28,10 +26,7 @@ const AttendeeRouteGuard: React.FC<AttendeeRouteGuardProps> = ({
     );
   }
 
-  // Allow access if user is authenticated OR in guest mode
-  const hasAccess = !!currentUser || isGuestMode;
-
-  if (requireEvent && !hasAccess) {
+  if (requireEvent && !hasJoinedEvent) {
     return <Navigate to="/scan" replace />;
   }
 

@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { useGuestEventContext } from '@/contexts/GuestEventContext';
+import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
 
 interface Announcement {
   id: string;
@@ -21,48 +21,47 @@ interface Announcement {
   facebook_link?: string;
   tiktok_link?: string;
   website_link?: string;
+  // New fields
   whatsapp_link?: string;
   vendor_form_id?: string | null;
   require_submission?: boolean | null;
 }
 
-export const useAttendeeAnnouncements = (overrideEventId?: string) => {
+export const useAttendeeAnnouncements = () => {
   const { currentUser } = useAuth();
-  const { guestEventId } = useGuestEventContext();
-  
-  // Use override > guest event > authenticated user's event
-  const directEventId = overrideEventId || (!currentUser ? guestEventId : null);
 
   const { data: announcements = [], isLoading, error } = useQuery({
-    queryKey: ['attendee-announcements', currentUser?.id, directEventId],
+    queryKey: ['attendee-announcements', currentUser?.id],
     queryFn: async () => {
-      let targetEventId = directEventId;
-
-      // If no direct event ID, get from user profile
-      if (!targetEventId && currentUser?.id) {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('current_event_id')
-          .eq('id', currentUser.id)
-          .single();
-
-        if (profileError) {
-          console.error('Error fetching user profile:', profileError);
-          return [];
-        }
-
-        targetEventId = profile?.current_event_id || null;
-      }
-
-      if (!targetEventId) {
+      if (!currentUser?.id) {
+        console.log('No current user found');
         return [];
       }
 
-      // Fetch announcements for the event
+      // Get the user's current event ID from their profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('current_event_id')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (profileError) {
+        console.error('Error fetching user profile:', profileError);
+        return [];
+      }
+
+      if (!profile?.current_event_id) {
+        console.log('No current event found for user');
+        return [];
+      }
+
+      console.log('Fetching announcements for event:', profile.current_event_id);
+
+      // Fetch announcements for the user's current event
       const { data, error } = await supabase
         .from('announcements')
         .select('*')
-        .eq('event_id', targetEventId)
+        .eq('event_id', profile.current_event_id)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -70,10 +69,11 @@ export const useAttendeeAnnouncements = (overrideEventId?: string) => {
         throw error;
       }
 
+      console.log('Attendee announcements fetched:', data?.length || 0, data);
       return data as Announcement[];
     },
-    enabled: !!currentUser?.id || !!directEventId,
-    refetchInterval: 30000,
+    enabled: !!currentUser?.id,
+    refetchInterval: 30000, // Refetch every 30 seconds for near real-time updates
   });
 
   return {

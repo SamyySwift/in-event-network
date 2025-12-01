@@ -347,7 +347,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
       {/* Sidebar Navigation for Desktop */}
       <aside className="hidden md:flex flex-col w-64 bg-white dark:bg-gray-800 border-r dark:border-gray-700 shadow-sm fixed h-full">
-        <div className="p-4 border-b dark:border-gray-700 flex-shrink-0">
+        <div className="p-4 border-b dark:border-gray-700">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center">
               <img
@@ -393,7 +393,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
           )}
         </div>
 
-        <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto min-h-0">
+        <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
           {navigation.map((item) => (
             <Button
               key={item.name}

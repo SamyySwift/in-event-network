@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import AppLayout from '@/components/layouts/AppLayout';
-import { useAuth } from '@/contexts/AuthContext';
-import AuthPrompt from '@/components/auth/AuthPrompt';
 import { useAttendeeContext } from '@/hooks/useAttendeeContext';
 import { useWordSearchGames, useWordSearchScores } from '@/hooks/useWordSearchGames';
 import { useWordSearchLeaderboard } from '@/hooks/useWordSearchLeaderboard';
 import { useQuizGames, useQuizQuestions, useQuizScores } from '@/hooks/useQuizGames';
+import { useAuth } from '@/contexts/AuthContext';
 import { useQuizSession } from '@/hooks/useQuizSession';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,14 +20,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useQuizLeaderboard } from '@/hooks/useQuizLeaderboard';
 
 const AttendeeGames = () => {
-  const { currentUser } = useAuth();
-  
-  // Show auth prompt if not authenticated
-  if (!currentUser) {
-    return <AuthPrompt feature="games and competitions" />;
-  }
-  
   const { context } = useAttendeeContext();
+  const { currentUser } = useAuth();
   const { games, isLoading: gamesLoading } = useWordSearchGames(context?.currentEventId || null);
   const { quizGames, isLoading: quizGamesLoading } = useQuizGames(context?.currentEventId || null);
   
@@ -86,30 +79,19 @@ const AttendeeGames = () => {
   };
 
   const handleHint = () => {
-    if (!selectedGame || hintsUsed >= 3) {
-      toast.error("No more hints available!");
-      return;
-    }
-    
-    if (!isGameActive) {
-      toast.error("Start the game first!");
-      return;
-    }
+    if (!selectedGame || hintsUsed >= 3) return;
     
     const remainingWords = selectedGame.words.filter(
       (w: string) => !foundWords.has(w.toUpperCase())
     );
     
-    if (remainingWords.length === 0) {
-      toast.info("You've found all the words!");
-      return;
+    if (remainingWords.length > 0) {
+      const randomWord = remainingWords[Math.floor(Math.random() * remainingWords.length)];
+      toast.info(`Hint: Look for "${randomWord}"`, {
+        duration: 5000,
+      });
+      setHintsUsed(prev => prev + 1);
     }
-    
-    const randomWord = remainingWords[Math.floor(Math.random() * remainingWords.length)];
-    toast.info(`💡 Hint: Look for "${randomWord}"`, {
-      duration: 5000,
-    });
-    setHintsUsed(prev => prev + 1);
   };
 
   const handleWordFound = (word: string) => {
@@ -306,11 +288,12 @@ const AttendeeGames = () => {
                     </div>
                   )}
 
-                  {isGameActive && hintsUsed < 3 && (
+                  {isGameActive && selectedGame?.hints_enabled && hintsUsed < 3 && (
                     <Button
                       onClick={handleHint}
                       variant="outline"
                       className="w-full"
+                      disabled={hintsUsed >= 3}
                     >
                       <Lightbulb className="w-4 h-4 mr-2" />
                       Get Hint ({3 - hintsUsed} remaining)

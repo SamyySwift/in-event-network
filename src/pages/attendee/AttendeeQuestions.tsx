@@ -10,8 +10,6 @@ import {
   Sparkles,
   Loader2,
 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import AuthPrompt from "@/components/auth/AuthPrompt";
 import AttendeeRouteGuard from "@/components/attendee/AttendeeRouteGuard";
 import {
   Card,
@@ -35,6 +33,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import FeedbackModal from "@/components/FeedbackModal";
+import { useAuth } from "@/contexts/AuthContext";
 import { useAttendeeQuestions } from "@/hooks/useAttendeeQuestions";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
@@ -42,12 +41,6 @@ import { supabase } from "@/integrations/supabase/client";
 
 const AttendeeQuestions = () => {
   const { currentUser } = useAuth();
-  
-  // Show auth prompt if not authenticated
-  if (!currentUser) {
-    return <AuthPrompt feature="questions and Q&A" />;
-  }
-  
   const { toast } = useToast();
   const [newQuestion, setNewQuestion] = useState("");
   const [selectedSessionId, setSelectedSessionId] = useState("");

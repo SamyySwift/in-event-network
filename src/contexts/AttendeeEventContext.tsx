@@ -111,16 +111,13 @@ export const AttendeeEventProvider: React.FC<{ children: ReactNode }> = ({
   console.log("AttendeeEventContext - isLoading:", isLoading);
   console.log("AttendeeEventContext - error:", error);
 
-  // Check for guest event info if no authenticated event
-  const guestEventId = !context?.currentEventId ? localStorage.getItem("guest_event_id") : null;
-  
   const value: AttendeeEventContextType = {
-    currentEventId: context?.currentEventId || guestEventId || null,
+    currentEventId: context?.currentEventId || null,
     hostId: context?.hostId || null,
     hostEvents: context?.hostEvents || [],
     isLoading,
     error,
-    hasJoinedEvent: !!(context?.currentEventId || guestEventId) && !!(context?.hostId || guestEventId),
+    hasJoinedEvent: !!context?.currentEventId && !!context?.hostId,
   };
 
   console.log("AttendeeEventContext - providing value:", value);

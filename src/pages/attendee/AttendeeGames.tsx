@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import AppLayout from '@/components/layouts/AppLayout';
+import { useAuth } from '@/contexts/AuthContext';
+import AuthPrompt from '@/components/auth/AuthPrompt';
 import { useAttendeeContext } from '@/hooks/useAttendeeContext';
 import { useWordSearchGames, useWordSearchScores } from '@/hooks/useWordSearchGames';
 import { useWordSearchLeaderboard } from '@/hooks/useWordSearchLeaderboard';
 import { useQuizGames, useQuizQuestions, useQuizScores } from '@/hooks/useQuizGames';
-import { useAuth } from '@/contexts/AuthContext';
 import { useQuizSession } from '@/hooks/useQuizSession';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,8 +21,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useQuizLeaderboard } from '@/hooks/useQuizLeaderboard';
 
 const AttendeeGames = () => {
-  const { context } = useAttendeeContext();
   const { currentUser } = useAuth();
+  
+  // Show auth prompt if not authenticated
+  if (!currentUser) {
+    return <AuthPrompt feature="games and competitions" />;
+  }
+  
+  const { context } = useAttendeeContext();
   const { games, isLoading: gamesLoading } = useWordSearchGames(context?.currentEventId || null);
   const { quizGames, isLoading: quizGamesLoading } = useQuizGames(context?.currentEventId || null);
   

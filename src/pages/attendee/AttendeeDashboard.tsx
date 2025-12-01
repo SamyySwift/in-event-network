@@ -59,6 +59,8 @@ import {
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { FloatingAIAssistant } from "@/components/attendee/FloatingAIAssistant";
+import { useGuestEventContext } from "@/contexts/GuestEventContext";
+import GuestDashboard from "@/components/attendee/GuestDashboard";
 
 // Advertisement Carousel Component
 const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) => {
@@ -1130,6 +1132,15 @@ const SuggestedConnectionsCards = ({
 };
 
 const AttendeeDashboard = () => {
+  const { currentUser } = useAuth();
+  const { isGuestMode } = useGuestEventContext();
+
+  // Guest mode - show simplified dashboard without authentication
+  if (isGuestMode && !currentUser) {
+    return <GuestDashboard />;
+  }
+
+  // Authenticated user - show full dashboard
   return (
     <AttendeeEventProvider>
       <AttendeeRouteGuard requireEvent={false}>

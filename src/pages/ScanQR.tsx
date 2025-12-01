@@ -141,21 +141,7 @@ const ScanQR = () => {
           onError: (error: any) => {
             console.error("Join event error:", error);
 
-            // Check if the error is due to authentication or user not found
-            if (
-              error?.message?.includes("not authenticated") ||
-              error?.message?.includes("login") ||
-              error?.code === "PGRST301" ||
-              !currentUser
-            ) {
-              // Store the access code in both storages and redirect to register with the code
-              sessionStorage.setItem("pendingEventCode", accessCode);
-              localStorage.setItem("pendingEventCode", accessCode);
-              navigate(`/register?eventCode=${accessCode}&role=attendee`, {
-                replace: true,
-              });
-              return;
-            }
+            // Allow guest access - no redirect to register
 
             toast({
               title: "Failed to Join Event",
@@ -242,19 +228,7 @@ const ScanQR = () => {
         }, 1000);
       },
       onError: (error: any) => {
-        if (
-          error?.message?.includes("not authenticated") ||
-          error?.message?.includes("login") ||
-          error?.code === "PGRST301" ||
-          !currentUser
-        ) {
-          sessionStorage.setItem("pendingEventCode", trimmed);
-          localStorage.setItem("pendingEventCode", trimmed);
-          navigate(`/register?eventCode=${trimmed}&role=attendee`, {
-            replace: true,
-          });
-          return;
-        }
+        // Allow guest access - just show error
         toast({
           title: "Invalid event code",
           description:

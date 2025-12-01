@@ -115,13 +115,9 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-// Attendee Guard Component
+// Attendee Guard Component - No longer requires authentication
 const AttendeeRoute = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <ProtectedRoute allowedRoles={["attendee"]}>
-      <AppLayout>{children}</AppLayout>
-    </ProtectedRoute>
-  );
+  return <AppLayout>{children}</AppLayout>;
 };
 
 // Import the missing components at the top of the file

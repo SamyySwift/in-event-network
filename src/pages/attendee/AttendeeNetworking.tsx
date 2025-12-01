@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import AuthPrompt from "@/components/auth/AuthPrompt";
 import {
   Send,
   UserPlus,
@@ -51,7 +53,6 @@ import PaymentGuard from "@/components/payment/PaymentGuard";
 import { usePayment } from "@/hooks/usePayment";
 import { useUserPresence } from "@/hooks/useUserPresence";
 import { useConnectionRequests } from "@/hooks/useConnectionRequests";
-import { useAuth } from "@/contexts/AuthContext";
 import { useLocation } from "react-router-dom";
 import { useAINetworking } from "@/hooks/useAINetworking";
 import { supabase } from "@/integrations/supabase/client";
@@ -60,6 +61,13 @@ import { useToast } from "@/hooks/use-toast";
 // import TopicsBoard from "@/components/topics/TopicsBoard";
 
 const AttendeeNetworking = () => {
+  const { currentUser } = useAuth();
+  
+  // Show auth prompt if not authenticated
+  if (!currentUser) {
+    return <AuthPrompt feature="networking and connections" />;
+  }
+  
   const navigate = useNavigate();
   const { currentEventId } = useAttendeeEventContext();
   const { isEventPaid } = usePayment();
@@ -190,7 +198,6 @@ const AttendeeNetworking = () => {
   } = useNetworking();
 
   const { getUserStatus, getStatusColor } = useUserPresence();
-  const { currentUser } = useAuth();
 
   // Get connected users
   const connectedUsers = profiles.filter((profile) => {

@@ -37,17 +37,19 @@ export const useEventByAccessCode = (accessCode: string | null) => {
 
         if (eventByKey) {
           console.log('Found event by event_key:', eventByKey);
+          console.log('Event banner_url:', eventByKey.banner_url);
           let hostName: string | null = null;
           if (eventByKey.host_id) {
-          const { data: hostProfile } = await supabase
-            .from('public_profiles')
-            .select('name')
-            .eq('id', eventByKey.host_id)
-            .maybeSingle();
+            const { data: hostProfile, error: hostError } = await supabase
+              .from('public_profiles')
+              .select('name')
+              .eq('id', eventByKey.host_id)
+              .maybeSingle();
+            console.log('Host profile query result:', { hostProfile, hostError });
             hostName = hostProfile?.name ?? null;
           }
 
-          return {
+          const result = {
             id: eventByKey.id,
             name: eventByKey.name,
             banner_url: eventByKey.banner_url,
@@ -58,75 +60,17 @@ export const useEventByAccessCode = (accessCode: string | null) => {
             location: eventByKey.location,
             host_name: hostName,
           };
+          console.log('Returning event data:', result);
+          return result;
         }
 
-        console.log('No event found by event_key, trying host access_key...');
-
-        // Fall back to host access_key lookup
-        const { data: hostProfile, error: hostError } = await supabase
-          .from('public_profiles')
-          .select('id, name')
-          .eq('access_key', trimmed)
-          .eq('role', 'host')
-          .maybeSingle();
-
-        if (hostProfile) {
-          console.log('Found host by access_key:', hostProfile);
-          const { data: eventData, error: eventError } = await supabase
-            .from('events')
-            .select('id, name, banner_url, logo_url, description, start_time, end_time, location')
-            .eq('host_id', hostProfile.id)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-          if (eventData) {
-            console.log('Found event for host:', eventData);
-            return {
-              ...eventData,
-              host_name: hostProfile.name,
-            };
-          }
-        }
-
-        console.error('No event found for 6-digit code:', trimmed);
+        console.log('No event found by event_key for 6-digit code:', trimmed);
         return null;
       }
 
-      // Otherwise, treat it as a host access_key and fetch the latest event for that host
-      const { data: hostProfile, error: hostError } = await supabase
-        .from('public_profiles')
-        .select('id, name')
-        .eq('access_key', trimmed)
-        .eq('role', 'host')
-        .maybeSingle();
-
-      if (hostError || !hostProfile) {
-        console.error('Host not found for access code:', trimmed, hostError);
-        return null;
-      }
-
-      console.log('Found host profile:', hostProfile);
-
-      const { data: eventData, error: eventError } = await supabase
-        .from('events')
-        .select('id, name, banner_url, logo_url, description, start_time, end_time, location')
-        .eq('host_id', hostProfile.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (eventError || !eventData) {
-        console.error('Event not found for host:', hostProfile.id, eventError);
-        return null;
-      }
-
-      console.log('Found event data:', eventData);
-
-      return {
-        ...eventData,
-        host_name: hostProfile.name,
-      };
+      // Non-6-digit codes are not supported for unauthenticated users
+      console.log('Non-6-digit access codes not supported for unauthenticated lookup:', trimmed);
+      return null;
     },
     enabled: !!accessCode,
     staleTime: Infinity, // Never mark as stale during registration flow

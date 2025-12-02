@@ -912,43 +912,43 @@ const AttendeeNetworking = () => {
       {/* Main Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
-          <TabsList className="grid w-full grid-cols-4 gap-0.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/70 p-0.5 shadow-sm h-8 sm:h-10 overflow-visible">
+          <TabsList className="grid w-full grid-cols-4 gap-0.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/70 p-0.5 shadow-sm h-auto sm:h-10 overflow-visible">
             {/* People */}
             <TabsTrigger
               value="people"
-              className="px-1 sm:px-2.5 py-1 h-7 sm:h-9 rounded-lg text-[10px] sm:text-sm font-medium truncate transition-colors
+              className="px-1.5 sm:px-2.5 py-1.5 sm:py-1 h-auto sm:h-9 rounded-lg text-[10px] sm:text-sm font-medium transition-colors
                 data-[state=active]:text-white
                 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:via-purple-500 data-[state=active]:to-indigo-500"
             >
-              <div className="flex items-center gap-0.5 sm:gap-1.5">
-                <Users className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                <span className="truncate hidden xs:inline sm:inline">People</span>
+              <div className="flex items-center gap-1 sm:gap-1.5">
+                <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="truncate">People</span>
               </div>
             </TabsTrigger>
 
             {/* Connections */}
             <TabsTrigger
               value="connections"
-              className="px-1 sm:px-2.5 py-1 h-7 sm:h-9 rounded-lg text-[10px] sm:text-sm font-medium truncate transition-colors
+              className="px-1.5 sm:px-2.5 py-1.5 sm:py-1 h-auto sm:h-9 rounded-lg text-[10px] sm:text-sm font-medium transition-colors
                 data-[state=active]:text-white
                 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:via-purple-500 data-[state=active]:to-indigo-500"
             >
-              <div className="flex items-center gap-0.5 sm:gap-1.5">
-                <Heart className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                <span className="truncate hidden xs:inline sm:inline">Connects</span>
+              <div className="flex items-center gap-1 sm:gap-1.5">
+                <Heart className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="truncate">Connections</span>
               </div>
             </TabsTrigger>
 
             {/* Chat Room */}
             <TabsTrigger
               value="chats"
-              className="relative px-1 sm:px-2.5 py-1 h-7 sm:h-9 rounded-lg text-[10px] sm:text-sm font-medium truncate transition-colors
+              className="relative px-1.5 sm:px-2.5 py-1.5 sm:py-1 h-auto sm:h-9 rounded-lg text-[10px] sm:text-sm font-medium transition-colors
                 data-[state=active]:text-white
                 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:via-purple-500 data-[state=active]:to-indigo-500"
             >
-              <div className="flex items-center gap-0.5 sm:gap-1.5">
-                <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                <span className="truncate hidden xs:inline sm:inline">Chat</span>
+              <div className="flex items-center gap-1 sm:gap-1.5">
+                <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="truncate">Chat Room</span>
                 {unreadChats > 0 && (
                   <Badge className="h-4 min-w-[16px] rounded-full bg-destructive text-destructive-foreground text-[9px] px-1 font-bold flex-shrink-0">
                     {unreadChats > 99 ? '99+' : unreadChats}
@@ -960,13 +960,13 @@ const AttendeeNetworking = () => {
             {/* Messages */}
             <TabsTrigger
               value="messages"
-              className="relative px-1 sm:px-2.5 py-1 h-7 sm:h-9 rounded-lg text-[10px] sm:text-sm font-medium truncate transition-colors
+              className="relative px-1.5 sm:px-2.5 py-1.5 sm:py-1 h-auto sm:h-9 rounded-lg text-[10px] sm:text-sm font-medium transition-colors
                 data-[state=active]:text-white
                 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:via-purple-500 data-[state=active]:to-indigo-500"
             >
-              <div className="flex items-center gap-0.5 sm:gap-1.5">
-                <Send className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                <span className="truncate hidden xs:inline sm:inline">DMs</span>
+              <div className="flex items-center gap-1 sm:gap-1.5">
+                <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                <span className="truncate">Messages</span>
                 {unreadMessages > 0 && (
                   <Badge className="h-4 min-w-[16px] rounded-full bg-destructive text-destructive-foreground text-[9px] px-1 font-bold flex-shrink-0">
                     {unreadMessages > 99 ? '99+' : unreadMessages}

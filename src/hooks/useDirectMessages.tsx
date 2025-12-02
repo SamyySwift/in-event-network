@@ -340,8 +340,37 @@ export const useDirectMessages = (recipientId?: string) => {
     if (!trimmed) return;
 
     try {
-      console.log('Sending direct message (with connection flow):', { content: trimmed, recipientId, senderId: currentUser.id });
+      console.log('Sending direct message:', { content: trimmed, recipientId, senderId: currentUser.id });
 
+      // Check if sender is an admin - admins can message anyone freely
+      const { data: senderProfile } = await supabase
+        .from('public_profiles')
+        .select('role')
+        .eq('id', currentUser.id)
+        .single();
+
+      const senderIsAdmin = isAdminRole(senderProfile?.role);
+
+      if (senderIsAdmin) {
+        // Admins bypass all connection restrictions
+        console.log('Admin user detected - bypassing connection checks');
+        const { error: dmError } = await supabase
+          .from('direct_messages')
+          .insert({
+            sender_id: currentUser.id,
+            recipient_id: recipientId,
+            content: trimmed,
+          });
+
+        if (dmError) {
+          console.error('Error sending direct message:', dmError);
+          throw dmError;
+        }
+        console.log('Admin direct message sent successfully');
+        return;
+      }
+
+      // Non-admin users: enforce connection-based rules
       // 1) Get the most recent connection (if any) between the two users
       const { data: connectionRows, error: connectionError } = await supabase
         .from('connections')

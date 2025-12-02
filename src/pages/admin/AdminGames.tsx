@@ -54,6 +54,7 @@ const AdminGames = () => {
     title: '',
     description: '',
     total_questions: 10,
+    play_mode: 'admin_directed' as 'admin_directed' | 'self_paced',
   });
 
   const [newQuestion, setNewQuestion] = useState({
@@ -236,12 +237,13 @@ const AdminGames = () => {
       title: newQuiz.title,
       description: newQuiz.description,
       total_questions: newQuiz.total_questions,
+      play_mode: newQuiz.play_mode,
       is_active: false,
       created_by: currentUser.id,
     });
 
     setCreateQuizDialogOpen(false);
-    setNewQuiz({ title: '', description: '', total_questions: 10 });
+    setNewQuiz({ title: '', description: '', total_questions: 10, play_mode: 'admin_directed' });
   };
 
   const handleToggleQuizActive = async (quiz: any) => {
@@ -638,6 +640,55 @@ const AdminGames = () => {
                       placeholder="Brief description of the quiz"
                     />
                   </div>
+                  <div>
+                    <Label className="mb-2 block">Quiz Mode</Label>
+                    <div className="space-y-3">
+                      <div
+                        onClick={() => setNewQuiz({ ...newQuiz, play_mode: 'admin_directed' })}
+                        className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                          newQuiz.play_mode === 'admin_directed'
+                            ? 'border-primary bg-primary/10'
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                            newQuiz.play_mode === 'admin_directed' ? 'border-primary' : 'border-muted-foreground'
+                          }`}>
+                            {newQuiz.play_mode === 'admin_directed' && (
+                              <div className="w-2 h-2 rounded-full bg-primary" />
+                            )}
+                          </div>
+                          <span className="font-medium">Admin-Directed (Kahoot-style)</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1 ml-6">
+                          You control question progression. All attendees see the same question.
+                        </p>
+                      </div>
+                      <div
+                        onClick={() => setNewQuiz({ ...newQuiz, play_mode: 'self_paced' })}
+                        className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                          newQuiz.play_mode === 'self_paced'
+                            ? 'border-primary bg-primary/10'
+                            : 'border-border hover:border-primary/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                            newQuiz.play_mode === 'self_paced' ? 'border-primary' : 'border-muted-foreground'
+                          }`}>
+                            {newQuiz.play_mode === 'self_paced' && (
+                              <div className="w-2 h-2 rounded-full bg-primary" />
+                            )}
+                          </div>
+                          <span className="font-medium">Self-Paced</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1 ml-6">
+                          Attendees play independently at their own pace.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                   <Button onClick={handleCreateQuiz} className="w-full">
                     Create Quiz
                   </Button>
@@ -661,11 +712,20 @@ const AdminGames = () => {
                   <CardHeader>
                     <CardTitle className="flex items-center justify-between">
                       <span>{quiz.title}</span>
-                      {quiz.is_active && (
-                        <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full">
-                          Active
+                      <div className="flex items-center gap-2">
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          quiz.play_mode === 'self_paced'
+                            ? 'bg-blue-500/20 text-blue-700 dark:text-blue-300'
+                            : 'bg-purple-500/20 text-purple-700 dark:text-purple-300'
+                        }`}>
+                          {quiz.play_mode === 'self_paced' ? 'Self-Paced' : 'Admin-Directed'}
                         </span>
-                      )}
+                        {quiz.is_active && (
+                          <span className="text-xs bg-green-500 text-white px-2 py-1 rounded-full">
+                            Active
+                          </span>
+                        )}
+                      </div>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">

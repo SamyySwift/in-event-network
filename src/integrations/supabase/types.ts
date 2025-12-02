@@ -1593,6 +1593,7 @@ export type Database = {
           event_id: string
           id: string
           is_active: boolean
+          play_mode: string
           title: string
           total_questions: number
           updated_at: string
@@ -1604,6 +1605,7 @@ export type Database = {
           event_id: string
           id?: string
           is_active?: boolean
+          play_mode?: string
           title: string
           total_questions?: number
           updated_at?: string
@@ -1615,6 +1617,7 @@ export type Database = {
           event_id?: string
           id?: string
           is_active?: boolean
+          play_mode?: string
           title?: string
           total_questions?: number
           updated_at?: string

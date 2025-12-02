@@ -99,10 +99,16 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     onImportComplete?.();
   };
 
-  const generateUniqueQRData = (attendee: AttendeeData): string => {
+  const generateUniqueQRData = (attendee: AttendeeData, index: number): string => {
     const timestamp = Date.now();
     const random = Math.random().toString(36).substring(2, 15);
-    return `${attendee.name}|${attendee.email}|${timestamp}|${random}`;
+    return `${attendee.name}|${attendee.email}|${timestamp}|${random}|${index}`;
+  };
+
+  const generateTicketNumber = (): string => {
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const random = Math.random().toString(36).substring(2, 9).toUpperCase();
+    return `TKT-${timestamp}-${random}`;
   };
 
   // Convert scientific notation phone numbers back to proper strings
@@ -573,7 +579,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     for (let start = 0; start < newAttendees.length; start += BATCH_SIZE) {
       const batch = newAttendees.slice(start, start + BATCH_SIZE);
 
-      const ticketRows = batch.map(attendee => ({
+      const ticketRows = batch.map((attendee, idx) => ({
         event_id: selectedEventId,
         ticket_type_id: ticketType.id,
         guest_name: attendee.name,
@@ -581,8 +587,8 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         guest_phone: attendee.phone || null,
         price: ticketType.price,
         payment_status: 'completed',
-        qr_code_data: generateUniqueQRData(attendee),
-        ticket_number: ''
+        qr_code_data: generateUniqueQRData(attendee, start + idx),
+        ticket_number: generateTicketNumber()
       }));
 
       try {

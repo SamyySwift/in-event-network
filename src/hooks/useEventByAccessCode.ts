@@ -39,11 +39,11 @@ export const useEventByAccessCode = (accessCode: string | null) => {
           console.log('Found event by event_key:', eventByKey);
           let hostName: string | null = null;
           if (eventByKey.host_id) {
-            const { data: hostProfile } = await supabase
-              .from('profiles')
-              .select('name')
-              .eq('id', eventByKey.host_id)
-              .maybeSingle();
+          const { data: hostProfile } = await supabase
+            .from('public_profiles')
+            .select('name')
+            .eq('id', eventByKey.host_id)
+            .maybeSingle();
             hostName = hostProfile?.name ?? null;
           }
 
@@ -64,7 +64,7 @@ export const useEventByAccessCode = (accessCode: string | null) => {
 
         // Fall back to host access_key lookup
         const { data: hostProfile, error: hostError } = await supabase
-          .from('profiles')
+          .from('public_profiles')
           .select('id, name')
           .eq('access_key', trimmed)
           .eq('role', 'host')
@@ -95,7 +95,7 @@ export const useEventByAccessCode = (accessCode: string | null) => {
 
       // Otherwise, treat it as a host access_key and fetch the latest event for that host
       const { data: hostProfile, error: hostError } = await supabase
-        .from('profiles')
+        .from('public_profiles')
         .select('id, name')
         .eq('access_key', trimmed)
         .eq('role', 'host')

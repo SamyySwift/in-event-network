@@ -34,19 +34,15 @@ export const useJoinEvent = () => {
     },
     onSuccess: (data) => {
       if (data?.success) {
-        console.log('Successfully joined event, invalidating caches...');
+        console.log('Successfully joined event, navigating immediately...');
         
-        // Invalidate all networking-related queries to refresh data
+        // Navigate immediately - don't wait for cache invalidation
+        navigate('/attendee');
+        
+        // Invalidate caches in background (will refetch on next access)
         queryClient.invalidateQueries({ queryKey: ['attendee-networking'] });
         queryClient.invalidateQueries({ queryKey: ['attendee-context'] });
         queryClient.invalidateQueries({ queryKey: ['user-profile'] });
-        
-        // Force a refetch of networking data
-        queryClient.refetchQueries({ queryKey: ['attendee-networking'] });
-        
-        
-        // Navigate to attendee dashboard
-        navigate('/attendee');
       } else {
         console.error('Join event failed:', data?.message);
         toast({

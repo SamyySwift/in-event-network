@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useJoinEvent } from '@/hooks/useJoinEvent';
@@ -18,11 +18,40 @@ const JoinEvent = () => {
   const [joinStatus, setJoinStatus] = useState<'loading' | 'success' | 'error' | 'unauthorized'>('loading');
   const [eventName, setEventName] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const hasAttemptedJoin = useRef(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const accessCode = code || codeFromParam;
 
+  // Timeout fallback - if joining takes too long, show error
+  useEffect(() => {
+    if (isJoining && !timeoutRef.current) {
+      timeoutRef.current = setTimeout(() => {
+        setJoinStatus('error');
+        setErrorMessage('Request timed out. Please try again.');
+        toast({
+          title: "Request Timed Out",
+          description: "The server took too long to respond. Please try again.",
+          variant: "destructive"
+        });
+      }, 15000); // 15 second timeout
+    }
+    
+    if (!isJoining && timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [isJoining, toast]);
+
   useEffect(() => {
     if (authLoading) return;
+    if (hasAttemptedJoin.current) return;
 
     if (!currentUser) {
       // User not authenticated, redirect to register with the code or event id
@@ -32,15 +61,12 @@ const JoinEvent = () => {
         const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(trimmedCode);
         
         if (isSixDigit) {
-          // 6-digit event key
           sessionStorage.setItem('pendingEventCode', trimmedCode);
           navigate(`/register?eventCode=${trimmedCode}&role=attendee`, { replace: true });
         } else if (isUuid) {
-          // UUID event ID
           sessionStorage.setItem('pendingEventId', trimmedCode);
           navigate(`/register?eventId=${trimmedCode}&role=attendee`, { replace: true });
         } else {
-          // Host access key
           sessionStorage.setItem('pendingEventCode', trimmedCode);
           navigate(`/register?eventCode=${trimmedCode}&role=attendee`, { replace: true });
         }
@@ -53,14 +79,23 @@ const JoinEvent = () => {
 
     // User is authenticated, try to join the event
     if (accessCode && /^\d{6}$/.test(accessCode)) {
+      hasAttemptedJoin.current = true;
       joinEvent(accessCode, {
         onSuccess: (data: any) => {
           console.log('Join event success:', data);
-          // Navigate immediately - no delay needed
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+          }
+          // Navigate immediately
           navigate('/attendee', { replace: true });
         },
         onError: (error: any) => {
           console.error('Join event error:', error);
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+          }
           setJoinStatus('error');
           setErrorMessage(error?.message || "Failed to join the event. Please try again.");
           

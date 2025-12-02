@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Loader2, CheckCircle2, FileSpreadsheet, Sparkles, Search, CheckCircle } from 'lucide-react';
+import { Upload, Loader2, CheckCircle2, FileSpreadsheet, Sparkles, Search, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -10,6 +10,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdminEventContext } from '@/hooks/useAdminEventContext';
@@ -22,6 +23,14 @@ interface AttendeeData {
   [key: string]: string | undefined;
 }
 
+interface ImportResult {
+  successCount: number;
+  errorCount: number;
+  duplicateCount: number;
+  errors: { email: string; reason: string }[];
+  totalProcessed: number;
+}
+
 interface CSVImportDialogProps {
   onImportComplete?: () => void;
 }
@@ -29,8 +38,10 @@ interface CSVImportDialogProps {
 export default function CSVImportDialog({ onImportComplete }: CSVImportDialogProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0, percentage: 0 });
-  const [showSuccess, setShowSuccess] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
+  const [showResultsModal, setShowResultsModal] = useState(false);
+  const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [analysisStage, setAnalysisStage] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { selectedEventId } = useAdminEventContext();
 
@@ -44,8 +55,14 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
 
   const handleProceedToUpload = () => {
     setShowInfoModal(false);
-    // Trigger the hidden file input
     fileInputRef.current?.click();
+  };
+
+  const handleCloseResults = () => {
+    setShowResultsModal(false);
+    setImportResult(null);
+    setProgress({ current: 0, total: 0, percentage: 0 });
+    onImportComplete?.();
   };
 
   const generateUniqueQRData = (attendee: AttendeeData): string => {
@@ -173,8 +190,18 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
   };
 
 
-  const createTicketsFromAttendees = async (attendees: AttendeeData[]) => {
+  const createTicketsFromAttendees = async (attendees: AttendeeData[]): Promise<ImportResult> => {
     if (!selectedEventId) throw new Error('No event selected');
+
+    const result: ImportResult = {
+      successCount: 0,
+      errorCount: 0,
+      duplicateCount: 0,
+      errors: [],
+      totalProcessed: attendees.length
+    };
+
+    setAnalysisStage('Fetching ticket types...');
 
     // Get or create free ticket type
     let { data: ticketTypes } = await supabase
@@ -199,7 +226,8 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
 
     const ticketType = ticketTypes[0];
 
-    // Check for existing tickets to avoid duplicates
+    setAnalysisStage('Checking for duplicates...');
+
     const emails = attendees.map(a => a.email).filter(Boolean);
     const { data: existingTickets } = await supabase
       .from('event_tickets')
@@ -209,15 +237,19 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
 
     const existingEmails = new Set((existingTickets || []).map(t => t.guest_email?.toLowerCase()));
     const newAttendees = attendees.filter(a => !existingEmails.has(a.email.toLowerCase()));
-    const duplicateCount = attendees.length - newAttendees.length;
+    result.duplicateCount = attendees.length - newAttendees.length;
 
-    if (duplicateCount > 0) {
-      toast.info(`Skipping ${duplicateCount} duplicate${duplicateCount !== 1 ? 's' : ''}`);
-    }
+    attendees.forEach(a => {
+      if (existingEmails.has(a.email.toLowerCase())) {
+        result.errors.push({ email: a.email, reason: 'Already exists in event' });
+      }
+    });
 
     if (newAttendees.length === 0) {
-      return { successCount: 0, errorCount: 0, errors: [] };
+      return result;
     }
+
+    setAnalysisStage('Setting up form fields...');
     
     // Collect extra fields across all attendees
     const extraFieldsSet = new Set<string>();
@@ -266,9 +298,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       });
     }
 
-    let successCount = 0;
-    let errorCount = 0;
-    const errors: string[] = [];
+    setAnalysisStage('Creating tickets...');
 
     const BATCH_SIZE = 200;
     setProgress({ current: 0, total: newAttendees.length, percentage: 0 });
@@ -295,12 +325,12 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
           .select('id, guest_email');
 
         if (insertError) {
-          errorCount += batch.length;
-          errors.push(`Batch error: ${insertError.message}`);
-          console.error('Batch insert error:', insertError);
+          result.errorCount += batch.length;
+          batch.forEach(a => {
+            result.errors.push({ email: a.email, reason: insertError.message });
+          });
         } else {
-          // Bulk inserted OK
-          successCount += inserted?.length || 0;
+          result.successCount += inserted?.length || 0;
           setProgress({ 
             current: Math.min(start + BATCH_SIZE, newAttendees.length), 
             total: newAttendees.length,
@@ -329,13 +359,14 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
           }
         }
       } catch (e) {
-        errorCount += batch.length;
-        errors.push(`Unexpected error: ${e instanceof Error ? e.message : 'Unknown error'}`);
-        console.error('Batch processing error:', e);
+        result.errorCount += batch.length;
+        batch.forEach(a => {
+          result.errors.push({ email: a.email, reason: e instanceof Error ? e.message : 'Unknown error' });
+        });
       }
     }
 
-    return { successCount, errorCount, errors };
+    return result;
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -348,21 +379,25 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     }
 
     setIsProcessing(true);
+    setShowResultsModal(true);
+    setAnalysisStage('Reading file...');
     
     try {
-      const isCSV = selectedFile.name.toLowerCase().endsWith('.csv');
-      
-      if (!isCSV) {
-        toast.error('Only CSV files are supported');
-        setIsProcessing(false);
-        return;
-      }
-
-      toast.loading('Analyzing document with AI...', { id: 'processing' });
-
       const nameLower = selectedFile.name.toLowerCase();
       const isExcel = nameLower.endsWith('.xlsx') || nameLower.endsWith('.xls');
       const isTextLike = nameLower.endsWith('.csv') || nameLower.endsWith('.tsv') || nameLower.endsWith('.txt');
+
+      if (!isExcel && !isTextLike) {
+        setImportResult({
+          successCount: 0,
+          errorCount: 1,
+          duplicateCount: 0,
+          errors: [{ email: 'N/A', reason: 'Unsupported file type. Please upload CSV, TSV, TXT, or Excel files' }],
+          totalProcessed: 0
+        });
+        setIsProcessing(false);
+        return;
+      }
 
       let rows: string[][] = [];
       if (isExcel) {
@@ -371,61 +406,39 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false }) as string[][];
-      } else if (isTextLike) {
+      } else {
         const content = await selectedFile.text();
         rows = parseCSVContent(content);
-      } else {
-        toast.error('Unsupported file type. Please upload CSV, TSV, TXT, or Excel files');
-        setIsProcessing(false);
-        return;
       }
 
       const attendees = await extractAttendeesFromCSV(rows);
 
       if (attendees.length === 0) {
-        throw new Error('No attendees found in file');
-      }
-
-      toast.loading(`Creating ${attendees.length} tickets...`, { id: 'processing' });
-
-      const { successCount, errorCount, errors } = await createTicketsFromAttendees(attendees);
-
-      toast.dismiss('processing');
-      setProgress({ current: attendees.length, total: attendees.length, percentage: 100 });
-
-      if (successCount > 0) {
-        setShowSuccess(true);
-        setTimeout(() => setShowSuccess(false), 3000);
-        toast.success(
-          `Successfully created ${successCount} ticket${successCount !== 1 ? 's' : ''}`,
-          {
-            description: errorCount > 0 
-              ? `${errorCount} failed or skipped` 
-              : 'All attendees imported successfully'
-          }
-        );
-      }
-
-      if (errors.length > 0 && errors.length <= 5) {
-        errors.forEach(err => toast.error(err, { duration: 5000 }));
-      } else if (errors.length > 5) {
-        toast.error(`${errorCount} imports failed`, {
-          description: 'Check console for details'
+        setImportResult({
+          successCount: 0,
+          errorCount: 1,
+          duplicateCount: 0,
+          errors: [{ email: 'N/A', reason: 'No attendees found in file. Ensure at least an email column exists.' }],
+          totalProcessed: 0
         });
-        console.error('Import errors:', errors);
+        setIsProcessing(false);
+        return;
       }
 
-      onImportComplete?.();
+      const result = await createTicketsFromAttendees(attendees);
+      setImportResult(result);
+      setAnalysisStage('Complete');
       
     } catch (error) {
-      toast.dismiss('processing');
-      toast.error(error instanceof Error ? error.message : 'Import failed');
-      console.error('Import error:', error);
+      setImportResult({
+        successCount: 0,
+        errorCount: 1,
+        duplicateCount: 0,
+        errors: [{ email: 'N/A', reason: error instanceof Error ? error.message : 'Import failed' }],
+        totalProcessed: 0
+      });
     } finally {
-      setTimeout(() => {
-        setIsProcessing(false);
-        setProgress({ current: 0, total: 0, percentage: 0 });
-      }, 3000);
+      setIsProcessing(false);
       event.target.value = '';
     }
   };
@@ -543,31 +556,114 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         </DialogContent>
       </Dialog>
 
-      {isProcessing && progress.total > 0 && (
-        <div className="space-y-2 p-4 rounded-lg border bg-card">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">
-              Importing attendees...
-            </span>
-            <span className="font-medium">
-              {progress.current} / {progress.total}
-            </span>
-          </div>
-          <Progress value={progress.percentage} className="h-2" />
-          <p className="text-xs text-muted-foreground text-center">
-            {progress.percentage}% complete
-          </p>
-        </div>
-      )}
+      {/* Results Modal */}
+      <Dialog open={showResultsModal} onOpenChange={() => {}}>
+        <DialogContent className="sm:max-w-lg [&>button]:hidden">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {isProcessing ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  Import in Progress
+                </>
+              ) : importResult?.successCount ? (
+                <>
+                  <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  Import Complete
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="h-5 w-5 text-amber-500" />
+                  Import Results
+                </>
+              )}
+            </DialogTitle>
+            <DialogDescription>
+              {isProcessing ? analysisStage : 'Review the import results below'}
+            </DialogDescription>
+          </DialogHeader>
 
-      {showSuccess && (
-        <div className="flex items-center gap-2 p-4 rounded-lg border bg-success/10 border-success/20">
-          <CheckCircle2 className="h-5 w-5 text-success" />
-          <span className="text-sm font-medium text-success">
-            Import completed successfully!
-          </span>
-        </div>
-      )}
+          <div className="space-y-4 py-4">
+            {isProcessing && progress.total > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Creating tickets...</span>
+                  <span className="font-medium">{progress.current} / {progress.total}</span>
+                </div>
+                <Progress value={progress.percentage} className="h-2" />
+                <p className="text-xs text-muted-foreground text-center">{progress.percentage}% complete</p>
+              </div>
+            )}
+
+            {!isProcessing && importResult && (
+              <>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-center">
+                    <CheckCircle2 className="h-5 w-5 text-green-500 mx-auto mb-1" />
+                    <p className="text-lg font-bold text-green-600">{importResult.successCount}</p>
+                    <p className="text-xs text-muted-foreground">Successful</p>
+                  </div>
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-center">
+                    <AlertTriangle className="h-5 w-5 text-amber-500 mx-auto mb-1" />
+                    <p className="text-lg font-bold text-amber-600">{importResult.duplicateCount}</p>
+                    <p className="text-xs text-muted-foreground">Duplicates</p>
+                  </div>
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-center">
+                    <XCircle className="h-5 w-5 text-red-500 mx-auto mb-1" />
+                    <p className="text-lg font-bold text-red-600">{importResult.errorCount}</p>
+                    <p className="text-xs text-muted-foreground">Failed</p>
+                  </div>
+                </div>
+
+                <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-1">
+                  <p><strong>Total processed:</strong> {importResult.totalProcessed} records</p>
+                  {importResult.successCount > 0 && (
+                    <p className="text-green-600">✓ {importResult.successCount} imported successfully</p>
+                  )}
+                  {importResult.duplicateCount > 0 && (
+                    <p className="text-amber-600">⚠ {importResult.duplicateCount} skipped (already exist)</p>
+                  )}
+                  {importResult.errorCount > 0 && (
+                    <p className="text-red-600">✗ {importResult.errorCount} failed to import</p>
+                  )}
+                </div>
+
+                {importResult.errors.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium flex items-center gap-2">
+                      <XCircle className="h-4 w-4 text-red-500" />
+                      Issues ({importResult.errors.length})
+                    </p>
+                    <ScrollArea className="h-[150px] rounded-md border">
+                      <div className="p-3 space-y-2">
+                        {importResult.errors.map((error, idx) => (
+                          <div key={idx} className="text-xs bg-red-500/5 rounded p-2 border border-red-500/10">
+                            <p className="font-medium text-foreground">{error.email}</p>
+                            <p className="text-muted-foreground">{error.reason}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                )}
+              </>
+            )}
+
+            {isProcessing && progress.total === 0 && (
+              <div className="flex flex-col items-center justify-center py-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+                <p className="text-sm text-muted-foreground">{analysisStage}</p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button onClick={handleCloseResults} disabled={isProcessing} className="w-full">
+              {isProcessing ? 'Please wait...' : 'Done'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

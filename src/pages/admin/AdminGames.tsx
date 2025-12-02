@@ -19,7 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Trash2, Gamepad2, Lightbulb, Link2, ExternalLink, Edit, Play, Pause, Eye } from "lucide-react";
+import { Plus, Trash2, Gamepad2, Lightbulb, Link2, ExternalLink, Edit, Play, Pause, Eye, Sparkles, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { generateWordSearchGrid } from "@/utils/wordSearchGenerator";
 import { toast } from "sonner";
 import { useToast } from "@/hooks/use-toast";
@@ -62,7 +63,47 @@ const AdminGames = () => {
     time_limit: 20,
   });
 
+  // AI Auto-generation state
+  const [aiEnabled, setAiEnabled] = useState(true);
+  const [isGeneratingOptions, setIsGeneratingOptions] = useState(false);
+
   const { questions, addQuestion, deleteQuestion } = useQuizQuestions(selectedQuiz?.id);
+
+  // Auto-generate options when question text changes
+  const generateOptionsWithAI = async (questionText: string) => {
+    if (!aiEnabled || !questionText || questionText.trim().length < 10) return;
+    
+    setIsGeneratingOptions(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-quiz-options', {
+        body: { question: questionText }
+      });
+
+      if (error) throw error;
+
+      if (data?.options && data?.correct_answer) {
+        // Pad options to 4 if needed
+        const paddedOptions = [...data.options];
+        while (paddedOptions.length < 4) paddedOptions.push('');
+        
+        setNewQuestion(prev => ({
+          ...prev,
+          options: paddedOptions.slice(0, 4),
+          correct_answer: data.correct_answer
+        }));
+        toast.success('AI generated options successfully!');
+      }
+    } catch (error: any) {
+      console.error('Error generating options:', error);
+      if (error.message?.includes('Rate limit')) {
+        toast.error('Rate limit reached. Please wait a moment.');
+      } else {
+        toast.error('Failed to generate options');
+      }
+    } finally {
+      setIsGeneratingOptions(false);
+    }
+  };
 
   const THEMED_WORDS = {
     tech: [
@@ -690,16 +731,52 @@ const AdminGames = () => {
                 {/* Add New Question */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Add New Question</CardTitle>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg">Add New Question</CardTitle>
+                      <div className="flex items-center gap-2">
+                        <Sparkles className={`w-4 h-4 ${aiEnabled ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <Label htmlFor="ai-toggle" className="text-sm">AI Auto-fill</Label>
+                        <Switch
+                          id="ai-toggle"
+                          checked={aiEnabled}
+                          onCheckedChange={setAiEnabled}
+                        />
+                      </div>
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
                       <Label>Question Text</Label>
-                      <Textarea
-                        value={newQuestion.question_text}
-                        onChange={(e) => setNewQuestion({ ...newQuestion, question_text: e.target.value })}
-                        placeholder="Enter your question"
-                      />
+                      <div className="flex gap-2">
+                        <Textarea
+                          value={newQuestion.question_text}
+                          onChange={(e) => setNewQuestion({ ...newQuestion, question_text: e.target.value })}
+                          placeholder="Enter your question"
+                          className="flex-1"
+                        />
+                        {aiEnabled && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="icon"
+                            onClick={() => generateOptionsWithAI(newQuestion.question_text)}
+                            disabled={isGeneratingOptions || newQuestion.question_text.trim().length < 10}
+                            className="shrink-0"
+                            title="Generate options with AI"
+                          >
+                            {isGeneratingOptions ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Sparkles className="w-4 h-4" />
+                            )}
+                          </Button>
+                        )}
+                      </div>
+                      {aiEnabled && newQuestion.question_text.trim().length < 10 && newQuestion.question_text.length > 0 && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Type at least 10 characters to enable AI generation
+                        </p>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

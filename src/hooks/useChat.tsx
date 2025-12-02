@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -16,6 +16,8 @@ export interface ChatMessage {
   updated_at: string;
   // NEW: room_id for room-bound messages
   room_id?: string | null;
+  // Track if message is new (for conditional animation)
+  isNew?: boolean;
   user_profile?: {
     id?: string;
     name: string;
@@ -48,17 +50,38 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
   // Profile cache to reduce redundant queries
   const profileCache = useRef(new Map<string, any>());
   const quotedMessageCache = useRef(new Map<string, ChatMessage>());
+  
+  // Batch update queue for performance
+  const pendingMessagesRef = useRef<ChatMessage[]>([]);
+  const batchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isInitialLoadRef = useRef(true);
 
   const effectiveEventId = overrideEventId ?? currentEventId;
   const effectiveRoomId = overrideRoomId ?? null;
 
+  // Batched state update function to reduce re-renders
+  const flushPendingMessages = useCallback(() => {
+    if (pendingMessagesRef.current.length === 0) return;
+    
+    const newMessages = [...pendingMessagesRef.current];
+    pendingMessagesRef.current = [];
+    
+    setMessages(prev => {
+      const existingIds = new Set(prev.map(m => m.id));
+      const uniqueNew = newMessages.filter(m => !existingIds.has(m.id));
+      return [...prev, ...uniqueNew];
+    });
+  }, []);
+
   // Re-run fetch + subscription setup when room changes
   useEffect(() => {
     if (currentUser && effectiveEventId) {
+      isInitialLoadRef.current = true;
       fetchMessages();
       const cleanup = setupRealtimeSubscription();
       return () => {
         if (typeof cleanup === 'function') cleanup();
+        if (batchTimeoutRef.current) clearTimeout(batchTimeoutRef.current);
       };
     } else {
       setMessages([]);
@@ -244,9 +267,9 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
 
     console.log('Setting up realtime subscription for event:', effectiveEventId, 'room:', effectiveRoomId);
 
-    // Simplified filter - let server handle the filtering
+    // Single consolidated channel for messages and points
     const channel = supabase
-      .channel(`chat-messages-${effectiveEventId}-${effectiveRoomId ?? 'global'}`)
+      .channel(`chat-${effectiveEventId}-${effectiveRoomId ?? 'global'}`)
       .on(
         'postgres_changes',
         {
@@ -257,28 +280,28 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
         },
         async (payload) => {
           const newMsg: any = payload.new;
-          console.log('New message received:', payload);
           
           // Client-side room filtering
           const newRoomId = newMsg.room_id ?? null;
           const expectedRoomId = effectiveRoomId ?? null;
           
           if (newRoomId !== expectedRoomId) {
-            console.log('Message filtered out - wrong room:', { newRoomId, expectedRoomId });
             return;
           }
 
-          // Create optimistic message first (fast display)
-          const optimisticMessage = {
-            ...newMsg,
-            user_profile: { name: 'Loading...' },
-            quoted_message: null,
-          } as ChatMessage;
-
-          // Add optimistic message immediately
+          // Skip if we already have this message (from optimistic update)
           setMessages(prev => {
-            const exists = prev.some(msg => msg.id === optimisticMessage.id);
-            return exists ? prev : [...prev, optimisticMessage];
+            if (prev.some(msg => msg.id === newMsg.id)) return prev;
+            
+            // Create optimistic message with isNew flag for animation
+            const optimisticMessage = {
+              ...newMsg,
+              isNew: true,
+              user_profile: { name: 'Loading...' },
+              quoted_message: null,
+            } as ChatMessage;
+            
+            return [...prev, optimisticMessage];
           });
 
           // Then fetch profile data in background and update
@@ -390,9 +413,9 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
 
           } catch (error) {
             console.error('Error updating message with profile data:', error);
-            // Keep optimistic message with default profile
+            // Keep message with default profile using newMsg.id
             setMessages(prev => prev.map(msg => 
-              msg.id === optimisticMessage.id 
+              msg.id === newMsg.id 
                 ? { ...msg, user_profile: { name: 'Unknown User' } }
                 : msg
             ));
@@ -407,42 +430,26 @@ export const useChat = (overrideEventId?: string, overrideRoomId?: string) => {
           setMessages((prev) => prev.filter((m) => m.id !== deleted.id));
         }
       )
-      .subscribe();
-
-    // Points subscription
-    const pointsChannel = supabase
-      .channel(`chat-points-${effectiveEventId}`)
+      // Consolidated points subscription in same channel
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'chat_participation_points',
           filter: `event_id=eq.${effectiveEventId}`,
         },
         (payload) => {
-          const row = payload.new as any;
-          setParticipantPoints(prev => ({ ...prev, [row.user_id]: row.points }));
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'chat_participation_points',
-          filter: `event_id=eq.${effectiveEventId}`,
-        },
-        (payload) => {
-          const row = payload.new as any;
-          setParticipantPoints(prev => ({ ...prev, [row.user_id]: row.points }));
+          const row = (payload.new || payload.old) as any;
+          if (row?.user_id && row?.points !== undefined) {
+            setParticipantPoints(prev => ({ ...prev, [row.user_id]: row.points }));
+          }
         }
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
-      supabase.removeChannel(pointsChannel);
     };
   };
 

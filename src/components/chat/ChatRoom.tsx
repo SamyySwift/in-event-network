@@ -52,6 +52,10 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
 
   const [uploadingImage, setUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Track initial load for conditional animations
+  const isInitialLoadRef = useRef(true);
+  const scrollThrottleRef = useRef<number | null>(null);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -60,19 +64,29 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
   useEffect(() => {
     const hasNewMessages = messages.length > previousMessageCount.current;
     previousMessageCount.current = messages.length;
+    
+    // Mark initial load complete after first render with messages
+    if (isInitialLoadRef.current && messages.length > 0) {
+      // Delay to allow initial render without animations
+      setTimeout(() => {
+        isInitialLoadRef.current = false;
+      }, 500);
+    }
+    
     if (hasNewMessages && !isUserScrolling) {
       setTimeout(scrollToBottom, 100);
     }
   }, [messages, isUserScrolling, scrollToBottom]);
 
-  // Debounced scroll handler for better performance
+  // Throttled scroll handler for better performance (60fps max)
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
-    const isAtBottom = scrollHeight - scrollTop - clientHeight < 10;
-
-    // Use requestAnimationFrame to debounce scroll updates
-    requestAnimationFrame(() => {
+    if (scrollThrottleRef.current) return;
+    
+    scrollThrottleRef.current = requestAnimationFrame(() => {
+      const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
       setIsUserScrolling(!isAtBottom);
+      scrollThrottleRef.current = null;
     });
   }, []);
 
@@ -301,7 +315,10 @@ const ChatRoom = ({ eventId }: { eventId?: string }) => {
                   ) : (
                     <>
                       {messages.map((message) => (
-                        <div key={message.id} className="animate-fade-in">
+                        <div 
+                          key={message.id} 
+                          className={message.isNew && !isInitialLoadRef.current ? "animate-fade-in" : ""}
+                        >
                           <ChatMessage
                             message={message}
                             isOwn={message.user_id === currentUser?.id}

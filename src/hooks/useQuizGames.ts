@@ -19,6 +19,7 @@ export interface QuizGame {
   description?: string;
   is_active: boolean;
   total_questions: number;
+  play_mode: 'admin_directed' | 'self_paced';
   created_at: string;
   created_by?: string;
 }

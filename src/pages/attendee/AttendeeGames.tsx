@@ -197,6 +197,12 @@ const AttendeeGames = () => {
       toast.error("You've already completed this quiz!");
       return;
     }
+    // Self-paced mode: start immediately without session
+    if (selectedQuiz?.play_mode === 'self_paced') {
+      setIsPlayingQuiz(true);
+      return;
+    }
+    // Admin-directed mode: require session
     if (!quizSession) {
       toast.error("Quiz hasn't started yet. Please wait for the host.");
       return;
@@ -385,12 +391,12 @@ const AttendeeGames = () => {
                 No active quiz games at the moment. Check back later!
               </CardContent>
             </Card>
-          ) : isPlayingQuiz && quizSession ? (
+          ) : isPlayingQuiz ? (
             <QuizPlayer
               questions={quizQuestions}
               onComplete={handleQuizComplete}
-              currentQuestionIndex={quizSession.current_question_index}
-              isLiveMode={true}
+              currentQuestionIndex={selectedQuiz?.play_mode === 'self_paced' ? 0 : (quizSession?.current_question_index ?? 0)}
+              isLiveMode={selectedQuiz?.play_mode !== 'self_paced'}
               quizGameId={selectedQuiz.id}
             />
           ) : (
@@ -417,9 +423,18 @@ const AttendeeGames = () => {
                             </p>
                           )}
                           <div className="flex items-center justify-between text-sm">
-                            <span>{quiz.total_questions} Questions</span>
+                                    <div className="flex items-center gap-2">
+                              <span>{quiz.total_questions} Questions</span>
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                quiz.play_mode === 'self_paced'
+                                  ? 'bg-blue-500/20 text-blue-700 dark:text-blue-300'
+                                  : 'bg-purple-500/20 text-purple-700 dark:text-purple-300'
+                              }`}>
+                                {quiz.play_mode === 'self_paced' ? 'Self-Paced' : 'Live'}
+                              </span>
+                            </div>
                             <Button size="sm">
-                              Start Quiz
+                              {quiz.play_mode === 'self_paced' ? 'Play Now' : 'Join Quiz'}
                             </Button>
                           </div>
                         </CardContent>
@@ -446,6 +461,15 @@ const AttendeeGames = () => {
                         <div className="p-4 bg-muted rounded-lg text-center">
                           ✓ Quiz Completed
                         </div>
+                      ) : selectedQuiz.play_mode === 'self_paced' ? (
+                        <Button
+                          onClick={handleStartQuiz}
+                          className="w-full"
+                          size="lg"
+                          disabled={quizScoresLoading || !!userHasCompletedQuiz}
+                        >
+                          Start Quiz
+                        </Button>
                       ) : !quizSession ? (
                         <div className="p-4 bg-muted rounded-lg text-center text-muted-foreground">
                           ⏳ Waiting for quiz to start...

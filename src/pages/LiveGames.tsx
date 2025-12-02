@@ -24,6 +24,7 @@ interface Game {
   id: string;
   title: string;
   is_active: boolean;
+  play_mode?: 'admin_directed' | 'self_paced';
 }
 
 const MEDAL_COLORS = {
@@ -126,24 +127,44 @@ const LiveGames = () => {
     if (!eventId) return;
 
     const fetchActiveGame = async () => {
-      const table = isQuiz ? 'quiz_games' : 'word_search_games';
-      const { data, error } = await supabase
-        .from(table)
-        .select('id, title, is_active')
-        .eq('event_id', eventId)
-        .eq('is_active', true)
-        .single();
+      if (isQuiz) {
+        const { data, error } = await supabase
+          .from('quiz_games')
+          .select('id, title, is_active, play_mode')
+          .eq('event_id', eventId)
+          .eq('is_active', true)
+          .single();
 
-      if (error) {
-        console.error('Error fetching active game:', error);
-        setIsLoading(false);
-        return;
-      }
+        if (error) {
+          console.error('Error fetching active game:', error);
+          setIsLoading(false);
+          return;
+        }
 
-      setActiveGame(data);
-      if (data) {
-        await fetchScores();
-        setIsLoading(false);
+        setActiveGame(data as Game);
+        if (data) {
+          await fetchScores();
+          setIsLoading(false);
+        }
+      } else {
+        const { data, error } = await supabase
+          .from('word_search_games')
+          .select('id, title, is_active')
+          .eq('event_id', eventId)
+          .eq('is_active', true)
+          .single();
+
+        if (error) {
+          console.error('Error fetching active game:', error);
+          setIsLoading(false);
+          return;
+        }
+
+        setActiveGame(data as Game);
+        if (data) {
+          await fetchScores();
+          setIsLoading(false);
+        }
       }
     };
 
@@ -295,7 +316,7 @@ const LiveGames = () => {
           <p className="text-xl text-muted-foreground">{activeGame.title}</p>
         </div>
 
-        {isQuiz && (
+        {isQuiz && activeGame?.play_mode !== 'self_paced' && (
           <Card className="shadow-xl mb-6">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">

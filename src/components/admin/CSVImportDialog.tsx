@@ -1,7 +1,15 @@
-import React, { useState } from 'react';
-import { Upload, Loader2, CheckCircle2 } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { Upload, Loader2, CheckCircle2, FileSpreadsheet, Sparkles, Search, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAdminEventContext } from '@/hooks/useAdminEventContext';
@@ -22,7 +30,23 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0, percentage: 0 });
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { selectedEventId } = useAdminEventContext();
+
+  const handleOpenInfoModal = () => {
+    if (!selectedEventId) {
+      toast.error('Please select an event first');
+      return;
+    }
+    setShowInfoModal(true);
+  };
+
+  const handleProceedToUpload = () => {
+    setShowInfoModal(false);
+    // Trigger the hidden file input
+    fileInputRef.current?.click();
+  };
 
   const generateUniqueQRData = (attendee: AttendeeData): string => {
     const timestamp = Date.now();
@@ -411,33 +435,113 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       <input
         type="file"
         id="ai-document-import"
+        ref={fileInputRef}
         accept=".csv,.xlsx,.xls,.tsv,.txt"
         onChange={handleFileChange}
         className="hidden"
         disabled={isProcessing}
       />
-      <label htmlFor="ai-document-import">
-        <Button
-          variant="outline"
-          className="rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
-          disabled={isProcessing}
-          asChild
-        >
-          <span>
-            {isProcessing ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Processing...
-              </>
-            ) : (
-              <>
-                <Upload className="h-4 w-4 mr-2" />
-                AI Import CSV
-              </>
-            )}
-          </span>
-        </Button>
-      </label>
+      
+      {/* Button that opens info modal */}
+      <Button
+        variant="outline"
+        className="rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
+        disabled={isProcessing}
+        onClick={handleOpenInfoModal}
+      >
+        {isProcessing ? (
+          <>
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            Processing...
+          </>
+        ) : (
+          <>
+            <Upload className="h-4 w-4 mr-2" />
+            AI Import CSV
+          </>
+        )}
+      </Button>
+
+      {/* Info Modal explaining the process */}
+      <Dialog open={showInfoModal} onOpenChange={setShowInfoModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              AI-Powered CSV Import
+            </DialogTitle>
+            <DialogDescription>
+              Import attendees from any CSV file - our AI will automatically detect columns.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                  <FileSpreadsheet className="h-3.5 w-3.5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Prepare your file</p>
+                  <p className="text-xs text-muted-foreground">
+                    CSV, Excel (.xlsx, .xls), TSV, or TXT files are supported. Make sure your file has at least an email column.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Sparkles className="h-3.5 w-3.5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">AI analyzes your data</p>
+                  <p className="text-xs text-muted-foreground">
+                    Our AI automatically identifies name, email, and phone columns regardless of column names or order.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                  <Search className="h-3.5 w-3.5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">All data is searchable</p>
+                  <p className="text-xs text-muted-foreground">
+                    Extra columns (amount, company, etc.) are saved as form data and fully searchable in check-in.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                  <CheckCircle className="h-3.5 w-3.5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Duplicates filtered</p>
+                  <p className="text-xs text-muted-foreground">
+                    Existing attendees (by email) are automatically skipped to prevent duplicates.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground">
+              <strong>Tip:</strong> Your CSV can have any column structure. The AI will figure out what's what!
+            </div>
+          </div>
+          
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setShowInfoModal(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleProceedToUpload}>
+              <Upload className="h-4 w-4 mr-2" />
+              Choose File
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {isProcessing && progress.total > 0 && (
         <div className="space-y-2 p-4 rounded-lg border bg-card">

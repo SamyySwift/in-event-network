@@ -40,7 +40,7 @@ export const useEventById = (eventId: string | null) => {
       let hostName: string | null = null;
       if (eventData.host_id) {
         const { data: hostProfile, error: hostError } = await supabase
-          .from('profiles')
+          .from('public_profiles')
           .select('name')
           .eq('id', eventData.host_id)
           .maybeSingle();

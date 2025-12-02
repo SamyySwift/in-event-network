@@ -112,10 +112,44 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
   };
 
   const parseCSVContent = (content: string): string[][] => {
-    const workbook = XLSX.read(content, { type: 'string', raw: true });
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    return XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false }) as string[][];
+    // Try to detect delimiter (comma, tab, semicolon)
+    const firstLine = content.split('\n')[0] || '';
+    let delimiter = ',';
+    if (firstLine.includes('\t') && !firstLine.includes(',')) delimiter = '\t';
+    else if (firstLine.includes(';') && !firstLine.includes(',')) delimiter = ';';
+    
+    // Parse manually for better CSV support
+    const lines = content.split(/\r?\n/).filter(line => line.trim());
+    const rows: string[][] = [];
+    
+    for (const line of lines) {
+      // Handle quoted fields properly
+      const row: string[] = [];
+      let current = '';
+      let inQuotes = false;
+      
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        if (char === '"') {
+          if (inQuotes && line[i + 1] === '"') {
+            current += '"';
+            i++; // Skip next quote
+          } else {
+            inQuotes = !inQuotes;
+          }
+        } else if (char === delimiter && !inQuotes) {
+          row.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      row.push(current.trim());
+      rows.push(row);
+    }
+    
+    console.log('[CSV Import] Parsed rows:', rows.length, 'First row:', rows[0]);
+    return rows;
   };
 
   // Detect columns using pattern matching
@@ -525,7 +559,12 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      console.log('[CSV Import] No file selected');
+      return;
+    }
+
+    console.log('[CSV Import] File selected:', selectedFile.name, 'Size:', selectedFile.size);
 
     if (!selectedEventId) {
       toast.error('Please select an event first');
@@ -540,6 +579,8 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       const isExcel = nameLower.endsWith('.xlsx') || nameLower.endsWith('.xls');
       const isTextLike = nameLower.endsWith('.csv') || nameLower.endsWith('.tsv') || nameLower.endsWith('.txt');
 
+      console.log('[CSV Import] File type:', isExcel ? 'Excel' : isTextLike ? 'CSV/Text' : 'Unknown');
+
       if (!isExcel && !isTextLike) {
         toast.error('Unsupported file type. Please upload CSV, TSV, TXT, or Excel files');
         setIsProcessing(false);
@@ -548,15 +589,22 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
 
       let rows: string[][] = [];
       if (isExcel) {
+        console.log('[CSV Import] Reading as Excel...');
         const buffer = await selectedFile.arrayBuffer();
-        const workbook = XLSX.read(buffer, { type: 'array', raw: true });
+        const workbook = XLSX.read(buffer, { type: 'array', raw: false });
         const sheetName = workbook.SheetNames[0];
+        console.log('[CSV Import] Sheet name:', sheetName);
         const worksheet = workbook.Sheets[sheetName];
-        rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false }) as string[][];
+        rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, defval: '' }) as string[][];
+        console.log('[CSV Import] Excel parsed rows:', rows.length);
       } else {
+        console.log('[CSV Import] Reading as CSV...');
         const content = await selectedFile.text();
+        console.log('[CSV Import] File content length:', content.length);
         rows = parseCSVContent(content);
       }
+
+      console.log('[CSV Import] Total rows:', rows.length, 'Headers:', rows[0]);
 
       if (!rows || rows.length < 2) {
         toast.error('File is empty or has no data rows');
@@ -574,15 +622,18 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         if (count > 1) normalizedHeaders[i] = `${normalizedHeaders[i]} (${count})`;
       }
 
+      console.log('[CSV Import] Normalized headers:', normalizedHeaders);
       setHeaders(normalizedHeaders);
       setRawRows(rows);
 
       setAnalysisStage('Detecting columns...');
       const detected = detectColumns(normalizedHeaders);
+      console.log('[CSV Import] Detected mapping:', detected);
       setColumnMapping(detected);
 
       // Generate initial preview
       const preview = generatePreview(normalizedHeaders, rows, detected, false);
+      console.log('[CSV Import] Preview rows:', preview.length, 'Importable:', preview.filter(r => r.willImport).length);
       setPreviewRows(preview);
 
       setModalStage('preview');

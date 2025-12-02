@@ -11,7 +11,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { CheckCircle, Clock, User, Mail, Phone, Search, Users, FormInput } from 'lucide-react';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { CheckCircle, Clock, User, Mail, Phone, Search, Users, FormInput, ChevronDown } from 'lucide-react';
 import { useAdminCheckIns } from '@/hooks/useAdminCheckIns';
 import { EditTicketTypeFormDialog } from './EditTicketTypeFormDialog';
 
@@ -47,24 +53,54 @@ interface TicketsTableProps {
   tickets: Ticket[];
 }
 
+// Helper function to format form values
+const formatFormValue = (value: any): string => {
+  if (value === null || value === undefined) return 'N/A';
+  if (typeof value === 'string') {
+    if (value.startsWith('"') && value.endsWith('"')) {
+      try { return JSON.parse(value); } catch { return value; }
+    }
+    return value;
+  }
+  if (Array.isArray(value)) return value.join(', ');
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+};
+
 export function TicketsTable({ tickets }: TicketsTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTicketType, setSelectedTicketType] = useState<{id: string, name: string} | null>(null);
   const { bulkCheckInAll, isBulkCheckingIn } = useAdminCheckIns();
 
-  // Filter tickets based on search term
+  // Filter tickets based on search term - now searches ALL fields including form responses
   const filteredTickets = useMemo(() => {
     if (!searchTerm.trim()) return tickets;
     
     const searchLower = searchTerm.toLowerCase();
     return tickets.filter(ticket => {
+      // Search standard fields
       const name = (ticket.guest_name || ticket.profiles?.name || '').toLowerCase();
       const email = (ticket.guest_email || ticket.profiles?.email || '').toLowerCase();
       const phone = (ticket.guest_phone || '').toLowerCase();
+      const ticketNumber = ticket.ticket_number.toLowerCase();
       
-      return name.includes(searchLower) || 
-             email.includes(searchLower) || 
-             phone.includes(searchLower);
+      if (name.includes(searchLower) || 
+          email.includes(searchLower) || 
+          phone.includes(searchLower) ||
+          ticketNumber.includes(searchLower)) {
+        return true;
+      }
+      
+      // Search in ALL form response values (custom CSV fields)
+      if (ticket.form_responses && ticket.form_responses.length > 0) {
+        return ticket.form_responses.some(response => {
+          const value = formatFormValue(response.response_value).toLowerCase();
+          const label = (response.ticket_form_fields?.label || '').toLowerCase();
+          return value.includes(searchLower) || label.includes(searchLower);
+        });
+      }
+      
+      return false;
     });
   }, [tickets, searchTerm]);
 
@@ -85,7 +121,7 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
-            placeholder="Search by name, email, or phone..."
+            placeholder="Search by name, email, phone, ticket #, or any field..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10"
@@ -164,61 +200,30 @@ export function TicketsTable({ tickets }: TicketsTableProps) {
                 </TableCell>
                 <TableCell>
                   {ticket.form_responses && ticket.form_responses.length > 0 ? (
-                    <div className="space-y-1 max-w-xs">
-                      {ticket.form_responses.slice(0, 3).map((response) => {
-                        // Parse the JSONB response value with better handling
-                        let displayValue;
-                        try {
-                          const rawValue = response.response_value;
-                          
-                          if (rawValue === null || rawValue === undefined) {
-                            displayValue = 'No value';
-                          } else if (typeof rawValue === 'string') {
-                            // Handle string values that might be JSON
-                            if (rawValue.startsWith('"') && rawValue.endsWith('"')) {
-                              // It's a JSON string, parse it
-                              try {
-                                displayValue = JSON.parse(rawValue);
-                              } catch {
-                                displayValue = rawValue;
-                              }
-                            } else {
-                              displayValue = rawValue;
-                            }
-                          } else if (Array.isArray(rawValue)) {
-                            displayValue = rawValue.join(', ');
-                          } else if (typeof rawValue === 'object') {
-                            displayValue = JSON.stringify(rawValue);
-                          } else {
-                            displayValue = String(rawValue);
-                          }
-                          
-                          // Truncate long values
-                          if (String(displayValue).length > 50) {
-                            displayValue = String(displayValue).substring(0, 47) + '...';
-                          }
-                        } catch (error) {
-                          console.error('Error parsing form response value:', error, { response });
-                          displayValue = 'Error parsing value';
-                        }
-                        
-                        return (
-                          <div key={response.id} className="text-xs border-b border-muted/20 pb-1 last:border-b-0">
-                            <div className="font-medium text-muted-foreground text-[10px] uppercase tracking-wide mb-1">
-                              {response.ticket_form_fields?.label || 'Unknown Field'}
-                            </div>
-                            <div className="text-foreground font-medium">
-                              {displayValue || 'No response'}
-                            </div>
+                    <Accordion type="single" collapsible className="w-full max-w-xs">
+                      <AccordionItem value="form-data" className="border-0">
+                        <AccordionTrigger className="py-1 text-xs hover:no-underline">
+                          <div className="flex items-center gap-1">
+                            <FormInput className="h-3 w-3 text-muted-foreground" />
+                            <span className="font-medium">{ticket.form_responses.length} fields</span>
                           </div>
-                        );
-                      })}
-                      {ticket.form_responses.length > 3 && (
-                        <div className="text-xs text-muted-foreground font-medium">
-                          +{ticket.form_responses.length - 3} more fields
-                        </div>
-                      )}
-                    </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="pb-0">
+                          <div className="space-y-2 pt-1">
+                            {ticket.form_responses.map((response) => (
+                              <div key={response.id} className="text-xs border-b border-muted/20 pb-1 last:border-b-0">
+                                <div className="font-medium text-muted-foreground text-[10px] uppercase tracking-wide mb-0.5">
+                                  {response.ticket_form_fields?.label || 'Unknown Field'}
+                                </div>
+                                <div className="text-foreground font-medium break-words">
+                                  {formatFormValue(response.response_value) || 'No response'}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
                   ) : (
                     <div className="flex items-center text-muted-foreground text-sm">
                       <FormInput className="h-3 w-3 mr-1" />

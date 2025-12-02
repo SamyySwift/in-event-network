@@ -30,104 +30,108 @@ function AdminCheckInContent() {
   const { eventTickets, isLoadingTickets, stats } = useAdminTickets();
   const queryClient = useQueryClient();
 
-  // Search for ticket by name or ticket number
+  // Helper function to format form values
+  const formatFormValue = (value: any): string => {
+    if (value === null || value === undefined) return 'N/A';
+    if (typeof value === 'string') {
+      if (value.startsWith('"') && value.endsWith('"')) {
+        try { return JSON.parse(value); } catch { return value; }
+      }
+      return value;
+    }
+    if (Array.isArray(value)) return value.join(', ');
+    if (typeof value === 'object') return JSON.stringify(value);
+    return String(value);
+  };
+
+  // Search for ticket by name, ticket number, or any form field value
   const { data: searchResults, isLoading: isSearching, refetch: searchTicket } = useQuery({
     queryKey: ['search-ticket', searchQuery, selectedEventId],
     queryFn: async () => {
       if (!searchQuery.trim() || !selectedEventId) return null;
       
-      // Check if searchQuery looks like a ticket number (starts with TKT-)
+      const searchLower = searchQuery.toLowerCase();
+      
+      // Fetch all tickets with their form responses for comprehensive search
+      const { data: allTickets, error } = await supabase
+        .from('event_tickets')
+        .select(`
+          *,
+          ticket_types (
+            name,
+            description
+          ),
+          events (
+            name,
+            start_time,
+            location
+          ),
+          profiles!event_tickets_user_id_fkey (
+            name,
+            email
+          )
+        `)
+        .eq('event_id', selectedEventId)
+        .limit(10000);
+      
+      if (error) throw error;
+      if (!allTickets || allTickets.length === 0) return [];
+
+      // Fetch all form responses for these tickets
+      const ticketIds = allTickets.map(t => t.id);
+      const { data: formResponses } = await supabase
+        .from('ticket_form_responses')
+        .select(`
+          *,
+          ticket_form_fields (
+            label,
+            field_type,
+            field_order
+          )
+        `)
+        .in('ticket_id', ticketIds);
+
+      // Attach form responses to tickets
+      const ticketsWithForms = allTickets.map(ticket => ({
+        ...ticket,
+        form_responses: (formResponses || [])
+          .filter(f => f.ticket_id === ticket.id)
+          .sort((a, b) => (a.ticket_form_fields?.field_order || 0) - (b.ticket_form_fields?.field_order || 0))
+      }));
+
+      // Check if searchQuery is a ticket number
       if (searchQuery.startsWith('TKT-')) {
-        const { data, error } = await supabase
-          .from('event_tickets')
-          .select(`
-            *,
-            ticket_types (
-              name,
-              description
-            ),
-            events (
-              name,
-              start_time,
-              location
-            ),
-            profiles!event_tickets_user_id_fkey (
-              name,
-              email
-            )
-          `)
-          .eq('event_id', selectedEventId)
-          .eq('ticket_number', searchQuery);
-        
-        if (error) throw error;
-        return data;
-      } else {
-        // Search by guest name or profile name - do separate queries and combine
-        const searchTerm = `%${searchQuery}%`;
-        
-        // Search by guest name
-        const { data: guestResults, error: guestError } = await supabase
-          .from('event_tickets')
-          .select(`
-            *,
-            ticket_types (
-              name,
-              description
-            ),
-            events (
-              name,
-              start_time,
-              location
-            ),
-            profiles!event_tickets_user_id_fkey (
-              name,
-              email
-            )
-          `)
-          .eq('event_id', selectedEventId)
-          .ilike('guest_name', searchTerm)
-          .limit(10000);
-
-        // Search by profile name
-        const { data: profileResults, error: profileError } = await supabase
-          .from('event_tickets')
-          .select(`
-            *,
-            ticket_types (
-              name,
-              description
-            ),
-            events (
-              name,
-              start_time,
-              location
-            ),
-            profiles!event_tickets_user_id_fkey (
-              name,
-              email
-            )
-          `)
-          .eq('event_id', selectedEventId)
-          .not('profiles', 'is', null)
-          .limit(10000);
-
-        if (guestError && profileError) {
-          throw guestError || profileError;
-        }
-
-        // Filter profile results by name match
-        const filteredProfileResults = (profileResults || []).filter(ticket => 
-          ticket.profiles?.name?.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-
-        // Combine and deduplicate results
-        const allResults = [...(guestResults || []), ...filteredProfileResults];
-        const uniqueResults = allResults.filter((ticket, index, self) => 
-          index === self.findIndex(t => t.id === ticket.id)
-        );
-
-        return uniqueResults;
+        return ticketsWithForms.filter(t => t.ticket_number === searchQuery);
       }
+
+      // Search across all fields: name, email, phone, ticket number, and ALL form response values
+      const results = ticketsWithForms.filter(ticket => {
+        // Search in standard fields
+        const name = (ticket.guest_name || ticket.profiles?.name || '').toLowerCase();
+        const email = (ticket.guest_email || ticket.profiles?.email || '').toLowerCase();
+        const phone = (ticket.guest_phone || '').toLowerCase();
+        const ticketNumber = ticket.ticket_number.toLowerCase();
+        
+        if (name.includes(searchLower) || 
+            email.includes(searchLower) || 
+            phone.includes(searchLower) ||
+            ticketNumber.includes(searchLower)) {
+          return true;
+        }
+        
+        // Search in form response values (any custom field from CSV)
+        if (ticket.form_responses && ticket.form_responses.length > 0) {
+          return ticket.form_responses.some(response => {
+            const value = formatFormValue(response.response_value).toLowerCase();
+            const label = (response.ticket_form_fields?.label || '').toLowerCase();
+            return value.includes(searchLower) || label.includes(searchLower);
+          });
+        }
+        
+        return false;
+      });
+
+      return results;
     },
     enabled: false, // We'll trigger this manually
   });
@@ -329,12 +333,12 @@ function AdminCheckInContent() {
               <div className="space-y-4">
                 <h3 className="text-base font-semibold text-foreground">Manual Check-In</h3>
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="searchQuery" className="text-sm font-medium">Ticket Number or Attendee Name</Label>
+                <div className="space-y-2">
+                    <Label htmlFor="searchQuery" className="text-sm font-medium">Search by Any Field</Label>
                     <div className="flex gap-2">
                       <Input
                         id="searchQuery"
-                        placeholder="Enter ticket number (TKT-xxx) or attendee name"
+                        placeholder="Search by name, email, phone, ticket #, or any form field..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -418,6 +422,21 @@ function AdminCheckInContent() {
                                     </div>
                                   )}
                                 </div>
+                                
+                                {/* Display ALL form responses (custom CSV fields) */}
+                                {ticket.form_responses && ticket.form_responses.length > 0 && (
+                                  <div className="border-t pt-3 mt-3">
+                                    <h6 className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Additional Information</h6>
+                                    <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                                      {ticket.form_responses.map((response: any) => (
+                                        <div key={response.id} className="text-xs">
+                                          <span className="text-muted-foreground">{response.ticket_form_fields?.label}:</span>
+                                          <span className="ml-1 font-medium text-foreground">{formatFormValue(response.response_value)}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>

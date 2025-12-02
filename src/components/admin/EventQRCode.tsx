@@ -52,24 +52,23 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({
     }
   }, [storageKey]);
 
-  // Get the current user's profile data including access_key
+  // Get the event's event_key for QR code generation
   const {
-    data: userProfile
+    data: eventData
   } = useQuery({
-    queryKey: ['user-profile', currentUser?.id],
+    queryKey: ['event-key', eventId],
     queryFn: async () => {
-      if (!currentUser?.id) return null;
       const {
         data,
         error
-      } = await supabase.from('profiles').select('access_key').eq('id', currentUser.id).single();
+      } = await supabase.from('events').select('event_key').eq('id', eventId).single();
       if (error) {
-        console.error('Error fetching user profile:', error);
+        console.error('Error fetching event key:', error);
         return null;
       }
       return data;
     },
-    enabled: !!currentUser?.id
+    enabled: !!eventId
   });
   const handleDownloadQR = () => {
     const canvas = document.querySelector('#qr-canvas canvas') as HTMLCanvasElement;
@@ -178,10 +177,10 @@ const EventQRCode: React.FC<EventQRCodeProps> = ({
           </DialogHeader>
 
           <div className="flex flex-col items-center space-y-4">
-            {userProfile?.access_key ? <div id="qr-canvas" className="w-full flex justify-center">
-                <QRCodeGenerator eventName={eventName} eventUrl={`${window.location.origin}/join/${userProfile.access_key}`} />
+            {eventData?.event_key ? <div id="qr-canvas" className="w-full flex justify-center">
+                <QRCodeGenerator eventName={eventName} eventUrl={`${window.location.origin}/join/${eventData.event_key}`} />
               </div> : <div className="text-muted-foreground text-center p-4">
-                Access key not available. Please contact support.
+                Event key not available. Please contact support.
               </div>}
 
             {/* Usage Instructions */}

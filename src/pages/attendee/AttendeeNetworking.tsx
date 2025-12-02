@@ -56,6 +56,7 @@ import { useLocation } from "react-router-dom";
 import { useAINetworking } from "@/hooks/useAINetworking";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useUnreadMessageCounts } from "@/hooks/useUnreadMessageCounts";
 // Remove this import because Topics now renders inside ChatRoom
 // import TopicsBoard from "@/components/topics/TopicsBoard";
 
@@ -65,6 +66,16 @@ const AttendeeNetworking = () => {
   const { isEventPaid } = usePayment();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("people");
+  
+  // Unread message counts with real-time updates
+  const { unreadMessages, unreadChats, markChatAsSeen } = useUnreadMessageCounts(currentEventId || undefined);
+  
+  // Mark chat as seen when switching to chats tab
+  React.useEffect(() => {
+    if (activeTab === 'chats') {
+      markChatAsSeen();
+    }
+  }, [activeTab, markChatAsSeen]);
   const [selectedConversation, setSelectedConversation] = useState<{
     userId: string;
     userName: string;
@@ -931,26 +942,36 @@ const AttendeeNetworking = () => {
             {/* Chat Room */}
             <TabsTrigger
               value="chats"
-              className="px-2.5 py-1.5 h-9 rounded-lg text-xs sm:text-sm font-medium truncate transition-colors
+              className="relative px-2.5 py-1.5 h-9 rounded-lg text-xs sm:text-sm font-medium truncate transition-colors
                 data-[state=active]:text-white
                 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:via-purple-500 data-[state=active]:to-indigo-500"
             >
               <div className="flex items-center gap-1.5">
                 <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span className="truncate">Chat Room</span>
+                {unreadChats > 0 && (
+                  <Badge className="ml-0.5 h-5 min-w-[20px] rounded-full bg-destructive text-destructive-foreground text-[10px] px-1.5 font-bold">
+                    {unreadChats > 99 ? '99+' : unreadChats}
+                  </Badge>
+                )}
               </div>
             </TabsTrigger>
 
             {/* Messages */}
             <TabsTrigger
               value="messages"
-              className="px-2.5 py-1.5 h-9 rounded-lg text-xs sm:text-sm font-medium truncate transition-colors
+              className="relative px-2.5 py-1.5 h-9 rounded-lg text-xs sm:text-sm font-medium truncate transition-colors
                 data-[state=active]:text-white
                 data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:via-purple-500 data-[state=active]:to-indigo-500"
             >
               <div className="flex items-center gap-1.5">
                 <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                 <span className="truncate">Messages</span>
+                {unreadMessages > 0 && (
+                  <Badge className="ml-0.5 h-5 min-w-[20px] rounded-full bg-destructive text-destructive-foreground text-[10px] px-1.5 font-bold">
+                    {unreadMessages > 99 ? '99+' : unreadMessages}
+                  </Badge>
+                )}
               </div>
             </TabsTrigger>
           </TabsList>

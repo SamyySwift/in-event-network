@@ -39,6 +39,7 @@ import {
 import XLogo from "@/components/icons/XLogo";
 import { DirectMessageThread } from "@/components/messaging/DirectMessageThread";
 import { ConversationsList } from "@/components/messaging/ConversationsList";
+import { useUnreadMessageCounts } from "@/hooks/useUnreadMessageCounts";
 
 const AdminNetworking = () => {
   const { toast } = useToast();
@@ -217,6 +218,16 @@ const AdminNetworking = () => {
       userPhoto?: string;
     } | null>(null);
 
+    // Unread message counts with real-time updates
+    const { unreadMessages, unreadChats, markChatAsSeen } = useUnreadMessageCounts(eventId);
+    
+    // Mark chat as seen when switching to chat tab
+    useEffect(() => {
+      if (activeTab === 'chat') {
+        markChatAsSeen();
+      }
+    }, [activeTab, markChatAsSeen]);
+
     // Pagination calculations
     const totalPages = Math.ceil(filteredProfiles.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -301,10 +312,20 @@ const AdminNetworking = () => {
                 <TabsTrigger value="chat" className="flex items-center gap-2">
                   <MessageSquare size={16} />
                   <span className="text-xs sm:text-sm">Chat Room</span>
+                  {unreadChats > 0 && (
+                    <Badge className="ml-0.5 h-5 min-w-[20px] rounded-full bg-destructive text-destructive-foreground text-[10px] px-1.5 font-bold">
+                      {unreadChats > 99 ? '99+' : unreadChats}
+                    </Badge>
+                  )}
                 </TabsTrigger>
                 <TabsTrigger value="messages" className="flex items-center gap-2">
                   <Send size={16} />
                   <span className="text-xs sm:text-sm">Messages</span>
+                  {unreadMessages > 0 && (
+                    <Badge className="ml-0.5 h-5 min-w-[20px] rounded-full bg-destructive text-destructive-foreground text-[10px] px-1.5 font-bold">
+                      {unreadMessages > 99 ? '99+' : unreadMessages}
+                    </Badge>
+                  )}
                 </TabsTrigger>
               </TabsList>
 

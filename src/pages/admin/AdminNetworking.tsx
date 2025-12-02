@@ -34,9 +34,11 @@ import {
   Plus,
   ChevronLeft,
   ChevronRight,
+  Send,
 } from "lucide-react";
 import XLogo from "@/components/icons/XLogo";
 import { DirectMessageThread } from "@/components/messaging/DirectMessageThread";
+import { ConversationsList } from "@/components/messaging/ConversationsList";
 
 const AdminNetworking = () => {
   const { toast } = useToast();
@@ -208,9 +210,12 @@ const AdminNetworking = () => {
       calculateProfileCompletion,
     } = useNetworkingFilters(profiles);
 
-    // Add DM dialog state
-    const [dmOpen, setDmOpen] = useState(false);
-    const [dmRecipient, setDmRecipient] = useState<{ id: string; name: string; photo_url?: string } | null>(null);
+    // Add state for messages tab
+    const [selectedConversation, setSelectedConversation] = useState<{
+      userId: string;
+      userName: string;
+      userPhoto?: string;
+    } | null>(null);
 
     // Pagination calculations
     const totalPages = Math.ceil(filteredProfiles.length / itemsPerPage);
@@ -288,7 +293,7 @@ const AdminNetworking = () => {
               </p>
             </div>
             <div className="flex gap-2">
-              <TabsList className="grid w-full grid-cols-2">
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="attendees" className="flex items-center gap-2">
                   <Users size={16} />
                   <span className="text-xs sm:text-sm">Attendees</span>
@@ -296,6 +301,10 @@ const AdminNetworking = () => {
                 <TabsTrigger value="chat" className="flex items-center gap-2">
                   <MessageSquare size={16} />
                   <span className="text-xs sm:text-sm">Chat Room</span>
+                </TabsTrigger>
+                <TabsTrigger value="messages" className="flex items-center gap-2">
+                  <Send size={16} />
+                  <span className="text-xs sm:text-sm">Messages</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -491,8 +500,12 @@ const AdminNetworking = () => {
                       size="sm"
                       className="w-full mt-2"
                       onClick={() => {
-                        setDmRecipient({ id: profile.id, name: profile.name, photo_url: profile.photo_url });
-                        setDmOpen(true);
+                        setSelectedConversation({ 
+                          userId: profile.id, 
+                          userName: profile.name, 
+                          userPhoto: profile.photo_url 
+                        });
+                        setActiveTab("messages");
                       }}
                     >
                       <MessageSquare className="h-4 w-4 mr-2" />
@@ -544,24 +557,26 @@ const AdminNetworking = () => {
               <AdminChatRoom eventId={eventId} />
             </div>
           </TabsContent>
-        </Tabs>
 
-        {/* DM Dialog */}
-        <Dialog open={dmOpen} onOpenChange={setDmOpen}>
-          <DialogContent className="max-w-3xl w-[95vw]">
-            <DialogHeader>
-              <DialogTitle>Direct Message</DialogTitle>
-            </DialogHeader>
-            {dmRecipient && (
-              <DirectMessageThread
-                recipientId={dmRecipient.id}
-                recipientName={dmRecipient.name}
-                recipientPhoto={dmRecipient.photo_url}
-                onBack={() => setDmOpen(false)}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
+          <TabsContent value="messages" className="mt-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 h-[600px] flex flex-col overflow-hidden">
+              {selectedConversation ? (
+                <DirectMessageThread
+                  recipientId={selectedConversation.userId}
+                  recipientName={selectedConversation.userName}
+                  recipientPhoto={selectedConversation.userPhoto}
+                  onBack={() => setSelectedConversation(null)}
+                />
+              ) : (
+                <ConversationsList 
+                  onSelect={(userId, userName, userPhoto) => 
+                    setSelectedConversation({ userId, userName, userPhoto })
+                  } 
+                />
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
 
         {error && (
           <div className="bg-destructive/10 text-destructive p-3 rounded-lg text-sm">

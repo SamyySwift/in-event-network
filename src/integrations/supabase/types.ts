@@ -3051,29 +3051,53 @@ export type Database = {
         Row: {
           bio: string | null
           company: string | null
+          created_at: string | null
+          github_link: string | null
           id: string | null
+          instagram_link: string | null
+          linkedin_link: string | null
           name: string | null
+          networking_preferences: string[] | null
           niche: string | null
           photo_url: string | null
           role: string | null
+          tags: string[] | null
+          twitter_link: string | null
+          website_link: string | null
         }
         Insert: {
           bio?: string | null
           company?: string | null
+          created_at?: string | null
+          github_link?: string | null
           id?: string | null
+          instagram_link?: string | null
+          linkedin_link?: string | null
           name?: string | null
+          networking_preferences?: string[] | null
           niche?: string | null
           photo_url?: string | null
           role?: string | null
+          tags?: string[] | null
+          twitter_link?: string | null
+          website_link?: string | null
         }
         Update: {
           bio?: string | null
           company?: string | null
+          created_at?: string | null
+          github_link?: string | null
           id?: string | null
+          instagram_link?: string | null
+          linkedin_link?: string | null
           name?: string | null
+          networking_preferences?: string[] | null
           niche?: string | null
           photo_url?: string | null
           role?: string | null
+          tags?: string[] | null
+          twitter_link?: string | null
+          website_link?: string | null
         }
         Relationships: []
       }

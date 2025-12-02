@@ -79,6 +79,12 @@ export const DirectMessageThread: React.FC<DirectMessageThreadProps> = ({
   const { getConnectionStatus, acceptConnectionRequest, declineConnectionRequest } = useNetworking();
   const { currentUser } = useAuth();
 
+  // Check if current user is an admin (admin can message anyone freely)
+  const currentUserIsAdmin = (() => {
+    const role = currentUser?.role?.toLowerCase();
+    return !!role && ['admin', 'host', 'organizer', 'owner', 'moderator', 'staff'].includes(role);
+  })();
+
   const connectionStatus = actualRecipientId ? getConnectionStatus(actualRecipientId) : undefined;
   const isPending = connectionStatus?.status === 'pending';
   const isRejected = connectionStatus?.status === 'rejected';
@@ -88,10 +94,12 @@ export const DirectMessageThread: React.FC<DirectMessageThreadProps> = ({
   const hasUsedIntroMessage = mySentCount > 0;
 
   // Can send if:
+  // - Current user is admin (bypass all restrictions)
   // - No connection yet (first message allowed)
   // - Accepted connection
   // - Pending AND I am requester AND I haven't used my one introductory message
   const canSendNow =
+    currentUserIsAdmin ||
     !connectionStatus ||
     connectionStatus?.status === 'accepted' ||
     (isPending && isRequester && !hasUsedIntroMessage);

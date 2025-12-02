@@ -202,15 +202,25 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     mapping: ColumnMapping, 
     allowNameOnly: boolean
   ): PreviewRow[] => {
-    const lowerHeaders = headers.map(h => h.toLowerCase());
-    const nameIdx = mapping.nameColumn ? lowerHeaders.indexOf(mapping.nameColumn.toLowerCase()) : -1;
-    const emailIdx = mapping.emailColumn ? lowerHeaders.indexOf(mapping.emailColumn.toLowerCase()) : -1;
-    const phoneIdx = mapping.phoneColumn ? lowerHeaders.indexOf(mapping.phoneColumn.toLowerCase()) : -1;
+    console.log('[CSV Import] generatePreview called with headers:', headers, 'mapping:', mapping);
+    
+    // Create a map of lowercase header to index for easier lookup
+    const headerIndexMap = new Map<string, number>();
+    headers.forEach((h, idx) => {
+      headerIndexMap.set(h.toLowerCase().trim(), idx);
+    });
+    
+    const nameIdx = mapping.nameColumn ? headerIndexMap.get(mapping.nameColumn.toLowerCase().trim()) ?? -1 : -1;
+    const emailIdx = mapping.emailColumn ? headerIndexMap.get(mapping.emailColumn.toLowerCase().trim()) ?? -1 : -1;
+    const phoneIdx = mapping.phoneColumn ? headerIndexMap.get(mapping.phoneColumn.toLowerCase().trim()) ?? -1 : -1;
+
+    console.log('[CSV Import] Column indices - name:', nameIdx, 'email:', emailIdx, 'phone:', phoneIdx);
 
     const emailRe = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
     const phoneRe = /(\+?\d{1,3}[\s-]?)?(\(?\d{2,4}\)?[\s-]?)?[\d\s-]{6,}/;
 
     // Check for first/last name columns
+    const lowerHeaders = headers.map(h => h.toLowerCase().trim());
     const firstIdx = lowerHeaders.findIndex(h => /first.*name|given.*name/i.test(h));
     const lastIdx = lowerHeaders.findIndex(h => /last.*name|surname|family.*name/i.test(h));
 
@@ -218,31 +228,35 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
 
     for (let i = 1; i < Math.min(rows.length, 100); i++) {
       const row = rows[i];
-      if (!row || row.length === 0 || row.every(c => !(c ?? '').toString().trim())) continue;
+      if (!row || row.length === 0) continue;
       
       const cells = row.map(v => (v ?? '').toString().trim());
       
-      let name = nameIdx >= 0 ? cells[nameIdx] : '';
-      let email = emailIdx >= 0 ? cells[emailIdx] : '';
-      let phone = phoneIdx >= 0 ? cells[phoneIdx] : '';
+      // Skip completely empty rows
+      if (cells.every(c => !c)) continue;
+      
+      let name = nameIdx >= 0 && nameIdx < cells.length ? cells[nameIdx] : '';
+      let email = emailIdx >= 0 && emailIdx < cells.length ? cells[emailIdx] : '';
+      let phone = phoneIdx >= 0 && phoneIdx < cells.length ? cells[phoneIdx] : '';
 
-      // Fallback: detect from cell patterns
+      // Fallback: detect email from cell patterns
       if (!email) {
         const eIdx = cells.findIndex(c => emailRe.test(c));
         if (eIdx !== -1) email = cells[eIdx];
       }
 
+      // Fallback: detect phone from cell patterns
       if (!phone) {
         const pIdx = cells.findIndex(c => phoneRe.test(c) && !emailRe.test(c));
         if (pIdx !== -1) {
           phone = cells[pIdx];
-          // Handle scientific notation (e.g., 2.34091E+13)
           if (/^\d+\.?\d*[eE][+-]?\d+$/.test(phone)) {
             phone = Number(phone).toFixed(0);
           }
         }
       }
 
+      // Fallback: detect name
       if (!name) {
         if (firstIdx !== -1 && lastIdx !== -1) {
           const first = cells[firstIdx] || '';
@@ -253,7 +267,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         } else {
           // Find first cell with text that's not email/phone
           const usedIdxs = [emailIdx, phoneIdx].filter(i => i >= 0);
-          const nIdx = cells.findIndex((c, idx) => !usedIdxs.includes(idx) && /[A-Za-z]/.test(c) && !emailRe.test(c));
+          const nIdx = cells.findIndex((c, idx) => !usedIdxs.includes(idx) && /[A-Za-z]/.test(c) && !emailRe.test(c) && c.length > 1);
           if (nIdx !== -1) name = cells[nIdx];
         }
       }
@@ -262,7 +276,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       let willImport = false;
       let skipReason: string | undefined;
 
-      if (email) {
+      if (email && emailRe.test(email)) {
         willImport = true;
         if (!name) {
           const local = email.split('@')[0];
@@ -287,6 +301,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       });
     }
 
+    console.log('[CSV Import] Generated preview:', preview.length, 'rows, importable:', preview.filter(r => r.willImport).length);
     return preview;
   };
 
@@ -297,14 +312,24 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     mapping: ColumnMapping, 
     allowNameOnly: boolean
   ): AttendeeData[] => {
-    const lowerHeaders = headers.map(h => h.toLowerCase());
-    const nameIdx = mapping.nameColumn ? lowerHeaders.indexOf(mapping.nameColumn.toLowerCase()) : -1;
-    const emailIdx = mapping.emailColumn ? lowerHeaders.indexOf(mapping.emailColumn.toLowerCase()) : -1;
-    const phoneIdx = mapping.phoneColumn ? lowerHeaders.indexOf(mapping.phoneColumn.toLowerCase()) : -1;
+    console.log('[CSV Import] extractAttendeesFromCSV called with', rows.length, 'rows');
+    
+    // Create a map of lowercase header to index for easier lookup
+    const headerIndexMap = new Map<string, number>();
+    headers.forEach((h, idx) => {
+      headerIndexMap.set(h.toLowerCase().trim(), idx);
+    });
+    
+    const nameIdx = mapping.nameColumn ? headerIndexMap.get(mapping.nameColumn.toLowerCase().trim()) ?? -1 : -1;
+    const emailIdx = mapping.emailColumn ? headerIndexMap.get(mapping.emailColumn.toLowerCase().trim()) ?? -1 : -1;
+    const phoneIdx = mapping.phoneColumn ? headerIndexMap.get(mapping.phoneColumn.toLowerCase().trim()) ?? -1 : -1;
+
+    console.log('[CSV Import] Extract indices - name:', nameIdx, 'email:', emailIdx, 'phone:', phoneIdx);
 
     const emailRe = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
     const phoneRe = /(\+?\d{1,3}[\s-]?)?(\(?\d{2,4}\)?[\s-]?)?[\d\s-]{6,}/;
 
+    const lowerHeaders = headers.map(h => h.toLowerCase().trim());
     const firstIdx = lowerHeaders.findIndex(h => /first.*name|given.*name/i.test(h));
     const lastIdx = lowerHeaders.findIndex(h => /last.*name|surname|family.*name/i.test(h));
 
@@ -314,13 +339,16 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       const row = rows[i];
       if (!row || row.length === 0) continue;
       const cells = row.map(v => (v ?? '').toString().trim());
+      
+      // Skip empty rows
+      if (cells.every(c => !c)) continue;
 
-      let name = nameIdx >= 0 ? cells[nameIdx] : '';
-      let email = emailIdx >= 0 ? cells[emailIdx] : '';
-      let phone = phoneIdx >= 0 ? cells[phoneIdx] : '';
+      let name = nameIdx >= 0 && nameIdx < cells.length ? cells[nameIdx] : '';
+      let email = emailIdx >= 0 && emailIdx < cells.length ? cells[emailIdx] : '';
+      let phone = phoneIdx >= 0 && phoneIdx < cells.length ? cells[phoneIdx] : '';
 
       // Fallbacks
-      if (!email) {
+      if (!email || !emailRe.test(email)) {
         const eIdx = cells.findIndex(c => emailRe.test(c));
         if (eIdx !== -1) email = cells[eIdx];
       }
@@ -344,20 +372,21 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
           name = cells[firstIdx] || '';
         } else {
           const usedIdxs = [emailIdx, phoneIdx].filter(idx => idx >= 0);
-          const nIdx = cells.findIndex((c, idx) => !usedIdxs.includes(idx) && /[A-Za-z]/.test(c) && !emailRe.test(c));
+          const nIdx = cells.findIndex((c, idx) => !usedIdxs.includes(idx) && /[A-Za-z]/.test(c) && !emailRe.test(c) && c.length > 1);
           if (nIdx !== -1) name = cells[nIdx];
         }
       }
 
       // Decide if we can import
-      if (!email && !allowNameOnly) continue;
-      if (!email && !name) continue;
+      const hasValidEmail = email && emailRe.test(email);
+      if (!hasValidEmail && !allowNameOnly) continue;
+      if (!hasValidEmail && !name) continue;
 
-      if (!email && allowNameOnly && name) {
+      if (!hasValidEmail && allowNameOnly && name) {
         email = generatePlaceholderEmail(name, i);
       }
 
-      if (!name && email) {
+      if (!name && hasValidEmail) {
         const local = email.split('@')[0];
         name = local.replace(/[._-]+/g, ' ').replace(/\b\w/g, s => s.toUpperCase());
       }
@@ -378,6 +407,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       attendees.push(attendee);
     }
 
+    console.log('[CSV Import] Extracted', attendees.length, 'attendees');
     return attendees;
   };
 

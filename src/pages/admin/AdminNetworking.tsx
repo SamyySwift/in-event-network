@@ -49,6 +49,13 @@ const AdminNetworking = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
   const [shareChatOpen, setShareChatOpen] = useState(false);
+  
+  // Moved to parent to persist across tab changes
+  const [selectedConversation, setSelectedConversation] = useState<{
+    userId: string;
+    userName: string;
+    userPhoto?: string;
+  } | null>(null);
 
   // Create a wrapper component for attendee networking context
   const AttendeeNetworkingContent = () => {
@@ -185,7 +192,15 @@ const AdminNetworking = () => {
     return { attendees, isLoading, error };
   };
 
-  function AdminNetworkingContent({ eventId }: { eventId: string }) {
+  function AdminNetworkingContent({ 
+    eventId,
+    selectedConversation,
+    setSelectedConversation 
+  }: { 
+    eventId: string;
+    selectedConversation: { userId: string; userName: string; userPhoto?: string } | null;
+    setSelectedConversation: React.Dispatch<React.SetStateAction<{ userId: string; userName: string; userPhoto?: string } | null>>;
+  }) {
     const {
       attendees: profiles,
       isLoading: loading,
@@ -210,13 +225,6 @@ const AdminNetworking = () => {
       clearAllFilters,
       calculateProfileCompletion,
     } = useNetworkingFilters(profiles);
-
-    // Add state for messages tab
-    const [selectedConversation, setSelectedConversation] = useState<{
-      userId: string;
-      userName: string;
-      userPhoto?: string;
-    } | null>(null);
 
     // Unread message counts with real-time updates
     const { unreadMessages, unreadChats, markChatAsSeen } = useUnreadMessageCounts(eventId);
@@ -633,7 +641,11 @@ const AdminNetworking = () => {
           eventName={selectedEvent?.name || 'this event'}
           feature="Attendee Networking Management"
         >
-          <AdminNetworkingContent eventId={selectedEventId} />
+          <AdminNetworkingContent 
+            eventId={selectedEventId} 
+            selectedConversation={selectedConversation}
+            setSelectedConversation={setSelectedConversation}
+          />
         </PaymentGuard>
       )}
     </div>

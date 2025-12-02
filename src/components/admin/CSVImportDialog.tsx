@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Loader2, CheckCircle2, FileSpreadsheet, Sparkles, Search, CheckCircle, XCircle, AlertTriangle, Settings2 } from 'lucide-react';
+import { Upload, Loader2, CheckCircle2, FileSpreadsheet, Search, CheckCircle, XCircle, AlertTriangle, Settings2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Switch } from '@/components/ui/switch';
@@ -118,35 +118,10 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     return XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false }) as string[][];
   };
 
-  // Detect columns using AI or fallback patterns
-  const detectColumns = async (headers: string[], rows: string[][]): Promise<ColumnMapping> => {
+  // Detect columns using pattern matching
+  const detectColumns = (headers: string[]): ColumnMapping => {
     console.log('[CSV Import] Detecting columns from headers:', headers);
     
-    try {
-      const { data: aiData, error } = await supabase.functions.invoke('analyze-csv-import', {
-        body: {
-          headers,
-          sampleData: rows
-            .slice(0, 20)
-            .map(r => (r || []).map(c => (c ?? '').toString()).join('|'))
-            .join('\n')
-        }
-      });
-
-      if (!error && aiData?.analysis) {
-        console.log('[CSV Import] AI detection result:', aiData.analysis);
-        const { nameColumn, emailColumn, phoneColumn } = aiData.analysis;
-        return {
-          nameColumn: nameColumn || null,
-          emailColumn: emailColumn || null,
-          phoneColumn: phoneColumn || null
-        };
-      }
-    } catch (e) {
-      console.log('[CSV Import] AI detection failed, using fallback:', e);
-    }
-
-    // Fallback: pattern-based detection
     const lowerHeaders = headers.map(h => h.toLowerCase());
     let nameCol: string | null = null;
     let emailCol: string | null = null;
@@ -159,21 +134,30 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       if (idx !== -1) { emailCol = headers[idx]; break; }
     }
 
-    // Name patterns
-    const namePatterns = ['name', 'full name', 'fullname', 'guest', 'attendee', 'customer', 'participant'];
-    for (const pattern of namePatterns) {
-      const idx = lowerHeaders.findIndex(h => h.includes(pattern) && !h.includes('first') && !h.includes('last'));
+    // Name patterns (check for full name first, then generic name)
+    const fullNamePatterns = ['full name', 'fullname', 'guest name', 'attendee name', 'customer name', 'participant name'];
+    for (const pattern of fullNamePatterns) {
+      const idx = lowerHeaders.findIndex(h => h.includes(pattern));
       if (idx !== -1) { nameCol = headers[idx]; break; }
+    }
+    
+    if (!nameCol) {
+      // Try generic name patterns (but not first/last)
+      const namePatterns = ['name', 'guest', 'attendee', 'customer', 'participant'];
+      for (const pattern of namePatterns) {
+        const idx = lowerHeaders.findIndex(h => h === pattern || (h.includes(pattern) && !h.includes('first') && !h.includes('last')));
+        if (idx !== -1) { nameCol = headers[idx]; break; }
+      }
     }
 
     // Phone patterns
-    const phonePatterns = ['phone', 'mobile', 'cell', 'telephone', 'tel', 'contact'];
+    const phonePatterns = ['phone', 'mobile', 'cell', 'telephone', 'tel', 'contact number', 'phone number'];
     for (const pattern of phonePatterns) {
       const idx = lowerHeaders.findIndex(h => h.includes(pattern));
       if (idx !== -1) { phoneCol = headers[idx]; break; }
     }
 
-    console.log('[CSV Import] Fallback detection result:', { nameCol, emailCol, phoneCol });
+    console.log('[CSV Import] Detection result:', { nameCol, emailCol, phoneCol });
     return { nameColumn: nameCol, emailColumn: emailCol, phoneColumn: phoneCol };
   };
 
@@ -230,6 +214,8 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
           const first = cells[firstIdx] || '';
           const last = cells[lastIdx] || '';
           name = `${first} ${last}`.trim();
+        } else if (firstIdx !== -1) {
+          name = cells[firstIdx] || '';
         } else {
           // Find first cell with text that's not email/phone
           const usedIdxs = [emailIdx, phoneIdx].filter(i => i >= 0);
@@ -320,6 +306,8 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
           const first = cells[firstIdx] || '';
           const last = cells[lastIdx] || '';
           name = `${first} ${last}`.trim();
+        } else if (firstIdx !== -1) {
+          name = cells[firstIdx] || '';
         } else {
           const usedIdxs = [emailIdx, phoneIdx].filter(idx => idx >= 0);
           const nIdx = cells.findIndex((c, idx) => !usedIdxs.includes(idx) && /[A-Za-z]/.test(c) && !emailRe.test(c));
@@ -589,8 +577,8 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       setHeaders(normalizedHeaders);
       setRawRows(rows);
 
-      setAnalysisStage('Analyzing with AI...');
-      const detected = await detectColumns(normalizedHeaders, rows);
+      setAnalysisStage('Detecting columns...');
+      const detected = detectColumns(normalizedHeaders);
       setColumnMapping(detected);
 
       // Generate initial preview
@@ -668,7 +656,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     <div className="space-y-4">
       <input
         type="file"
-        id="ai-document-import"
+        id="csv-import"
         ref={fileInputRef}
         accept=".csv,.xlsx,.xls,.tsv,.txt"
         onChange={handleFileChange}
@@ -683,7 +671,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         onClick={handleOpenModal}
       >
         <Upload className="h-4 w-4 mr-2" />
-        AI Import CSV
+        Import CSV
       </Button>
 
       <Dialog open={showModal} onOpenChange={(open) => !isProcessing && setShowModal(open)}>
@@ -693,11 +681,11 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
             <>
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                  AI-Powered CSV Import
+                  <FileSpreadsheet className="h-5 w-5 text-primary" />
+                  CSV Import
                 </DialogTitle>
                 <DialogDescription>
-                  Import attendees from any CSV file - our AI will automatically detect columns.
+                  Import attendees from CSV or Excel files.
                 </DialogDescription>
               </DialogHeader>
               
@@ -717,12 +705,12 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
                   
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Sparkles className="h-3.5 w-3.5 text-primary" />
+                      <Settings2 className="h-3.5 w-3.5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">AI analyzes your data</p>
+                      <p className="text-sm font-medium">Column detection</p>
                       <p className="text-xs text-muted-foreground">
-                        Our AI automatically identifies name, email, and phone columns. You can override if needed.
+                        Automatically detects name, email, and phone columns. You can override if needed.
                       </p>
                     </div>
                   </div>
@@ -734,7 +722,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
                     <div>
                       <p className="text-sm font-medium">All data is searchable</p>
                       <p className="text-xs text-muted-foreground">
-                        Extra columns are saved as form data and fully searchable in check-in.
+                        Extra columns are saved as additional information and fully searchable in check-in.
                       </p>
                     </div>
                   </div>
@@ -750,10 +738,6 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
                       </p>
                     </div>
                   </div>
-                </div>
-                
-                <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground">
-                  <strong>Tip:</strong> Your CSV can have any column structure. The AI will figure out what's what!
                 </div>
               </div>
               
@@ -914,21 +898,17 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
                       <span className="font-medium">{progress.current} / {progress.total}</span>
                     </div>
                     <Progress value={progress.percentage} className="h-2" />
-                    <p className="text-xs text-muted-foreground text-center">{progress.percentage}% complete</p>
+                    <p className="text-xs text-muted-foreground text-center">
+                      {progress.percentage}% complete
+                    </p>
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
                     <p className="text-sm text-muted-foreground">{analysisStage}</p>
                   </div>
                 )}
               </div>
-
-              <DialogFooter>
-                <Button disabled className="w-full">
-                  Please wait...
-                </Button>
-              </DialogFooter>
             </>
           )}
 
@@ -938,68 +918,51 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   {importResult.successCount > 0 ? (
-                    <>
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
-                      Import Complete
-                    </>
+                    <CheckCircle2 className="h-5 w-5 text-green-500" />
                   ) : (
-                    <>
-                      <AlertTriangle className="h-5 w-5 text-amber-500" />
-                      Import Results
-                    </>
+                    <XCircle className="h-5 w-5 text-destructive" />
                   )}
+                  Import Complete
                 </DialogTitle>
                 <DialogDescription>
-                  Review the import results below
+                  {importResult.successCount > 0 
+                    ? `Successfully imported ${importResult.successCount} attendees`
+                    : 'No attendees were imported'}
                 </DialogDescription>
               </DialogHeader>
 
               <div className="space-y-4 py-4">
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-center">
-                    <CheckCircle2 className="h-5 w-5 text-green-500 mx-auto mb-1" />
-                    <p className="text-lg font-bold text-green-600">{importResult.successCount}</p>
-                    <p className="text-xs text-muted-foreground">Successful</p>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="text-center p-3 bg-green-500/10 rounded-lg">
+                    <p className="text-2xl font-bold text-green-600">{importResult.successCount}</p>
+                    <p className="text-xs text-muted-foreground">Imported</p>
                   </div>
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-center">
-                    <AlertTriangle className="h-5 w-5 text-amber-500 mx-auto mb-1" />
-                    <p className="text-lg font-bold text-amber-600">{importResult.duplicateCount}</p>
+                  <div className="text-center p-3 bg-amber-500/10 rounded-lg">
+                    <p className="text-2xl font-bold text-amber-600">{importResult.duplicateCount}</p>
                     <p className="text-xs text-muted-foreground">Duplicates</p>
                   </div>
-                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-center">
-                    <XCircle className="h-5 w-5 text-red-500 mx-auto mb-1" />
-                    <p className="text-lg font-bold text-red-600">{importResult.errorCount}</p>
-                    <p className="text-xs text-muted-foreground">Failed</p>
+                  <div className="text-center p-3 bg-destructive/10 rounded-lg">
+                    <p className="text-2xl font-bold text-destructive">{importResult.errorCount}</p>
+                    <p className="text-xs text-muted-foreground">Errors</p>
                   </div>
-                </div>
-
-                <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-1">
-                  <p><strong>Total processed:</strong> {importResult.totalProcessed} records</p>
-                  {importResult.successCount > 0 && (
-                    <p className="text-green-600">✓ {importResult.successCount} imported successfully</p>
-                  )}
-                  {importResult.duplicateCount > 0 && (
-                    <p className="text-amber-600">⚠ {importResult.duplicateCount} skipped (already exist)</p>
-                  )}
-                  {importResult.errorCount > 0 && (
-                    <p className="text-red-600">✗ {importResult.errorCount} failed to import</p>
-                  )}
                 </div>
 
                 {importResult.errors.length > 0 && (
                   <div className="space-y-2">
-                    <p className="text-sm font-medium flex items-center gap-2">
-                      <XCircle className="h-4 w-4 text-red-500" />
-                      Issues ({importResult.errors.length})
-                    </p>
-                    <ScrollArea className="h-[150px] rounded-md border">
-                      <div className="p-3 space-y-2">
-                        {importResult.errors.map((error, idx) => (
-                          <div key={idx} className="text-xs bg-red-500/5 rounded p-2 border border-red-500/10">
-                            <p className="font-medium text-foreground">{error.email}</p>
-                            <p className="text-muted-foreground">{error.reason}</p>
+                    <p className="text-sm font-medium">Issues:</p>
+                    <ScrollArea className="h-[150px] rounded-md border p-2">
+                      <div className="space-y-1">
+                        {importResult.errors.slice(0, 50).map((error, idx) => (
+                          <div key={idx} className="text-xs flex justify-between items-start gap-2 py-1 border-b last:border-0">
+                            <span className="text-muted-foreground truncate max-w-[150px]">{error.email}</span>
+                            <span className="text-destructive text-right">{error.reason}</span>
                           </div>
                         ))}
+                        {importResult.errors.length > 50 && (
+                          <p className="text-xs text-muted-foreground pt-2">
+                            ...and {importResult.errors.length - 50} more
+                          </p>
+                        )}
                       </div>
                     </ScrollArea>
                   </div>
@@ -1007,7 +970,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
               </div>
 
               <DialogFooter>
-                <Button onClick={handleCloseModal} className="w-full">
+                <Button onClick={handleCloseModal}>
                   Done
                 </Button>
               </DialogFooter>

@@ -75,6 +75,19 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     return `${attendee.name}|${attendee.email}|${timestamp}|${random}`;
   };
 
+  // Convert scientific notation phone numbers back to proper strings
+  const formatPhoneNumber = (value: string): string => {
+    if (!value) return '';
+    // Check for scientific notation (e.g., "2.34091E+13")
+    if (/[Ee][+-]?\d+/.test(value)) {
+      const num = parseFloat(value);
+      if (Number.isFinite(num) && num > 1000000) {
+        return num.toFixed(0);
+      }
+    }
+    return value;
+  };
+
   const parseCSVContent = (content: string): string[][] => {
     const workbook = XLSX.read(content, { type: 'string', raw: true });
     const sheetName = workbook.SheetNames[0];
@@ -116,8 +129,23 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     let emailIdx = emailColumn ? lowerHeaders.indexOf(String(emailColumn).toLowerCase()) : -1;
     let phoneIdx = phoneColumn ? lowerHeaders.indexOf(String(phoneColumn).toLowerCase()) : -1;
 
+    // Improved detection patterns
     const emailRe = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i;
     const phoneRe = /(\+?\d{1,3}[\s-]?)?(\(?\d{2,4}\)?[\s-]?)?[\d\s-]{6,}/;
+    const namePatterns = /name|fullname|full.*name|customer|attendee|buyer|participant/i;
+    const emailPatterns = /email|e-mail|mail|e_mail/i;
+    const phonePatterns = /phone|mobile|contact|number|tel|cell|gsm/i;
+
+    // Fallback: try to find columns by header patterns if AI didn't find them
+    if (nameIdx === -1) {
+      nameIdx = lowerHeaders.findIndex(h => namePatterns.test(h));
+    }
+    if (emailIdx === -1) {
+      emailIdx = lowerHeaders.findIndex(h => emailPatterns.test(h));
+    }
+    if (phoneIdx === -1) {
+      phoneIdx = lowerHeaders.findIndex(h => phonePatterns.test(h));
+    }
 
     const findFirstLastNameIdx = () => {
       const f = lowerHeaders.findIndex(h => /first.*name|given.*name/i.test(h));
@@ -136,7 +164,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
 
       let name = nameIdx >= 0 ? cells[nameIdx] : '';
       let email = emailIdx >= 0 ? cells[emailIdx] : '';
-      let phone = phoneIdx >= 0 ? cells[phoneIdx] : '';
+      let phone = phoneIdx >= 0 ? formatPhoneNumber(cells[phoneIdx]) : '';
 
       // Fallbacks: detect from cell patterns
       if (!email) {
@@ -150,7 +178,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       if (!phone) {
         const pIdx = cells.findIndex(c => phoneRe.test(c));
         if (pIdx !== -1) {
-          phone = cells[pIdx];
+          phone = formatPhoneNumber(cells[pIdx]);
           phoneIdx = phoneIdx === -1 ? pIdx : phoneIdx;
         }
       }
@@ -166,10 +194,26 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         }
       }
 
-      if (!email) continue; // require at least an email
+      // CHANGED: Allow import if we have name AND (email OR phone)
+      // Previously required email, now phone is sufficient
+      if (!name && !email && !phone) continue; // Skip completely empty rows
+      
+      // If we have phone but no email, generate a placeholder email using phone
+      if (!email && phone) {
+        email = `${phone.replace(/\D/g, '')}@import.local`;
+      }
+      
+      // If still no email and no phone, skip
+      if (!email) continue;
+      
+      // Generate name from email if missing
       if (!name) {
-        const local = email.split('@')[0];
-        name = local.replace(/[._-]+/g, ' ').replace(/\b\w/g, (s) => s.toUpperCase());
+        if (email.includes('@import.local')) {
+          name = `Attendee ${phone}`;
+        } else {
+          const local = email.split('@')[0];
+          name = local.replace(/[._-]+/g, ' ').replace(/\b\w/g, (s) => s.toUpperCase());
+        }
       }
 
       const attendee: AttendeeData = { name, email };
@@ -187,7 +231,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     }
 
     if (attendees.length === 0) {
-      throw new Error('No attendees found in file');
+      throw new Error('No attendees found in file. Ensure rows have at least a name with email or phone number.');
     }
 
     return attendees;
@@ -232,20 +276,39 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
 
     setAnalysisStage('Checking for duplicates...');
 
-    const emails = attendees.map(a => a.email).filter(Boolean);
-    const { data: existingTickets } = await supabase
+    // Check for duplicates by email
+    const emails = attendees.map(a => a.email).filter(e => e && !e.endsWith('@import.local'));
+    const { data: existingByEmail } = await supabase
       .from('event_tickets')
       .select('guest_email')
       .eq('event_id', selectedEventId)
       .in('guest_email', emails);
 
-    const existingEmails = new Set((existingTickets || []).map(t => t.guest_email?.toLowerCase()));
-    const newAttendees = attendees.filter(a => !existingEmails.has(a.email.toLowerCase()));
+    const existingEmails = new Set((existingByEmail || []).map(t => t.guest_email?.toLowerCase()));
+
+    // Also check for duplicates by phone number
+    const phones = attendees.map(a => a.phone).filter(Boolean);
+    const { data: existingByPhone } = await supabase
+      .from('event_tickets')
+      .select('guest_phone')
+      .eq('event_id', selectedEventId)
+      .in('guest_phone', phones);
+
+    const existingPhones = new Set((existingByPhone || []).map(t => t.guest_phone));
+
+    const newAttendees = attendees.filter(a => {
+      const emailExists = a.email && !a.email.endsWith('@import.local') && existingEmails.has(a.email.toLowerCase());
+      const phoneExists = a.phone && existingPhones.has(a.phone);
+      return !emailExists && !phoneExists;
+    });
+
     result.duplicateCount = attendees.length - newAttendees.length;
 
     attendees.forEach(a => {
-      if (existingEmails.has(a.email.toLowerCase())) {
-        result.errors.push({ email: a.email, reason: 'Already exists in event' });
+      const emailExists = a.email && !a.email.endsWith('@import.local') && existingEmails.has(a.email.toLowerCase());
+      const phoneExists = a.phone && existingPhones.has(a.phone);
+      if (emailExists || phoneExists) {
+        result.errors.push({ email: a.email || a.phone || 'N/A', reason: 'Already exists in event' });
       }
     });
 
@@ -424,7 +487,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
           successCount: 0,
           errorCount: 1,
           duplicateCount: 0,
-          errors: [{ email: 'N/A', reason: 'No attendees found in file. Ensure at least an email column exists.' }],
+          errors: [{ email: 'N/A', reason: 'No attendees found in file. Ensure rows have at least a name with email or phone number.' }],
           totalProcessed: 0
         });
         setModalStage('results');

@@ -56,14 +56,8 @@ const JoinEvent = () => {
       joinEvent(accessCode, {
         onSuccess: (data: any) => {
           console.log('Join event success:', data);
-          setJoinStatus('success');
-          setEventName(data?.event_name || 'Event');
-          
-
-          // Navigate to attendee dashboard after a short delay
-          setTimeout(() => {
-            navigate('/attendee', { replace: true });
-          }, 2000);
+          // Navigate immediately - no delay needed
+          navigate('/attendee', { replace: true });
         },
         onError: (error: any) => {
           console.error('Join event error:', error);

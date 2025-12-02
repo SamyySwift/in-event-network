@@ -304,25 +304,25 @@ const AdminNetworking = () => {
               </p>
             </div>
             <div className="flex gap-2">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="attendees" className="flex items-center gap-2">
-                  <Users size={16} />
-                  <span className="text-xs sm:text-sm">Attendees</span>
+              <TabsList className="grid w-full grid-cols-3 h-8 sm:h-10 p-0.5 gap-0.5">
+                <TabsTrigger value="attendees" className="flex items-center gap-0.5 sm:gap-2 px-1 sm:px-3 h-7 sm:h-9 text-[10px] sm:text-sm">
+                  <Users className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                  <span className="hidden xs:inline sm:inline">Attendees</span>
                 </TabsTrigger>
-                <TabsTrigger value="chat" className="flex items-center gap-2">
-                  <MessageSquare size={16} />
-                  <span className="text-xs sm:text-sm">Chat Room</span>
+                <TabsTrigger value="chat" className="flex items-center gap-0.5 sm:gap-2 px-1 sm:px-3 h-7 sm:h-9 text-[10px] sm:text-sm">
+                  <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                  <span className="hidden xs:inline sm:inline">Chat</span>
                   {unreadChats > 0 && (
-                    <Badge className="ml-0.5 h-5 min-w-[20px] rounded-full bg-destructive text-destructive-foreground text-[10px] px-1.5 font-bold">
+                    <Badge className="h-4 min-w-[16px] rounded-full bg-destructive text-destructive-foreground text-[9px] px-1 font-bold flex-shrink-0">
                       {unreadChats > 99 ? '99+' : unreadChats}
                     </Badge>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="messages" className="flex items-center gap-2">
-                  <Send size={16} />
-                  <span className="text-xs sm:text-sm">Messages</span>
+                <TabsTrigger value="messages" className="flex items-center gap-0.5 sm:gap-2 px-1 sm:px-3 h-7 sm:h-9 text-[10px] sm:text-sm">
+                  <Send className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+                  <span className="hidden xs:inline sm:inline">DMs</span>
                   {unreadMessages > 0 && (
-                    <Badge className="ml-0.5 h-5 min-w-[20px] rounded-full bg-destructive text-destructive-foreground text-[10px] px-1.5 font-bold">
+                    <Badge className="h-4 min-w-[16px] rounded-full bg-destructive text-destructive-foreground text-[9px] px-1 font-bold flex-shrink-0">
                       {unreadMessages > 99 ? '99+' : unreadMessages}
                     </Badge>
                   )}

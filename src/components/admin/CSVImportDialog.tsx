@@ -38,28 +38,32 @@ interface CSVImportDialogProps {
 export default function CSVImportDialog({ onImportComplete }: CSVImportDialogProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0, percentage: 0 });
-  const [showInfoModal, setShowInfoModal] = useState(false);
-  const [showResultsModal, setShowResultsModal] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [modalStage, setModalStage] = useState<'info' | 'processing' | 'results'>('info');
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [analysisStage, setAnalysisStage] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { selectedEventId } = useAdminEventContext();
 
-  const handleOpenInfoModal = () => {
+  const handleOpenModal = () => {
     if (!selectedEventId) {
       toast.error('Please select an event first');
       return;
     }
-    setShowInfoModal(true);
+    setModalStage('info');
+    setImportResult(null);
+    setProgress({ current: 0, total: 0, percentage: 0 });
+    setShowModal(true);
   };
 
-  const handleProceedToUpload = () => {
-    setShowInfoModal(false);
+  const handleSelectFile = () => {
     fileInputRef.current?.click();
   };
 
-  const handleCloseResults = () => {
-    setShowResultsModal(false);
+  const handleCloseModal = () => {
+    if (isProcessing) return;
+    setShowModal(false);
+    setModalStage('info');
     setImportResult(null);
     setProgress({ current: 0, total: 0, percentage: 0 });
     onImportComplete?.();
@@ -379,7 +383,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     }
 
     setIsProcessing(true);
-    setShowResultsModal(true);
+    setModalStage('processing');
     setAnalysisStage('Reading file...');
     
     try {
@@ -395,6 +399,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
           errors: [{ email: 'N/A', reason: 'Unsupported file type. Please upload CSV, TSV, TXT, or Excel files' }],
           totalProcessed: 0
         });
+        setModalStage('results');
         setIsProcessing(false);
         return;
       }
@@ -411,6 +416,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         rows = parseCSVContent(content);
       }
 
+      setAnalysisStage('Analyzing with AI...');
       const attendees = await extractAttendeesFromCSV(rows);
 
       if (attendees.length === 0) {
@@ -421,12 +427,14 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
           errors: [{ email: 'N/A', reason: 'No attendees found in file. Ensure at least an email column exists.' }],
           totalProcessed: 0
         });
+        setModalStage('results');
         setIsProcessing(false);
         return;
       }
 
       const result = await createTicketsFromAttendees(attendees);
       setImportResult(result);
+      setModalStage('results');
       setAnalysisStage('Complete');
       
     } catch (error) {
@@ -437,6 +445,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         errors: [{ email: 'N/A', reason: error instanceof Error ? error.message : 'Import failed' }],
         totalProcessed: 0
       });
+      setModalStage('results');
     } finally {
       setIsProcessing(false);
       event.target.value = '';
@@ -455,148 +464,163 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         disabled={isProcessing}
       />
       
-      {/* Button that opens info modal */}
+      {/* Button that opens modal */}
       <Button
         variant="outline"
         className="rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
         disabled={isProcessing}
-        onClick={handleOpenInfoModal}
+        onClick={handleOpenModal}
       >
-        {isProcessing ? (
-          <>
-            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            Processing...
-          </>
-        ) : (
-          <>
-            <Upload className="h-4 w-4 mr-2" />
-            AI Import CSV
-          </>
-        )}
+        <Upload className="h-4 w-4 mr-2" />
+        AI Import CSV
       </Button>
 
-      {/* Info Modal explaining the process */}
-      <Dialog open={showInfoModal} onOpenChange={setShowInfoModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
-              AI-Powered CSV Import
-            </DialogTitle>
-            <DialogDescription>
-              Import attendees from any CSV file - our AI will automatically detect columns.
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="space-y-3">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                  <FileSpreadsheet className="h-3.5 w-3.5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Prepare your file</p>
-                  <p className="text-xs text-muted-foreground">
-                    CSV, Excel (.xlsx, .xls), TSV, or TXT files are supported. Make sure your file has at least an email column.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Sparkles className="h-3.5 w-3.5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">AI analyzes your data</p>
-                  <p className="text-xs text-muted-foreground">
-                    Our AI automatically identifies name, email, and phone columns regardless of column names or order.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Search className="h-3.5 w-3.5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">All data is searchable</p>
-                  <p className="text-xs text-muted-foreground">
-                    Extra columns (amount, company, etc.) are saved as form data and fully searchable in check-in.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                  <CheckCircle className="h-3.5 w-3.5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium">Duplicates filtered</p>
-                  <p className="text-xs text-muted-foreground">
-                    Existing attendees (by email) are automatically skipped to prevent duplicates.
-                  </p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground">
-              <strong>Tip:</strong> Your CSV can have any column structure. The AI will figure out what's what!
-            </div>
-          </div>
-          
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setShowInfoModal(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleProceedToUpload}>
-              <Upload className="h-4 w-4 mr-2" />
-              Choose File
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Results Modal */}
-      <Dialog open={showResultsModal} onOpenChange={() => {}}>
+      {/* Single unified modal for all stages */}
+      <Dialog open={showModal} onOpenChange={(open) => !isProcessing && setShowModal(open)}>
         <DialogContent className="sm:max-w-lg [&>button]:hidden">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              {isProcessing ? (
-                <>
+          {/* Info Stage */}
+          {modalStage === 'info' && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-primary" />
+                  AI-Powered CSV Import
+                </DialogTitle>
+                <DialogDescription>
+                  Import attendees from any CSV file - our AI will automatically detect columns.
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4 py-4">
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                      <FileSpreadsheet className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Prepare your file</p>
+                      <p className="text-xs text-muted-foreground">
+                        CSV, Excel (.xlsx, .xls), TSV, or TXT files are supported. Make sure your file has at least an email column.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Sparkles className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">AI analyzes your data</p>
+                      <p className="text-xs text-muted-foreground">
+                        Our AI automatically identifies name, email, and phone columns regardless of column names or order.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                      <Search className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">All data is searchable</p>
+                      <p className="text-xs text-muted-foreground">
+                        Extra columns (amount, company, etc.) are saved as form data and fully searchable in check-in.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
+                      <CheckCircle className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Duplicates filtered</p>
+                      <p className="text-xs text-muted-foreground">
+                        Existing attendees (by email) are automatically skipped to prevent duplicates.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground">
+                  <strong>Tip:</strong> Your CSV can have any column structure. The AI will figure out what's what!
+                </div>
+              </div>
+              
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button variant="outline" onClick={() => setShowModal(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSelectFile}>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Choose File
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {/* Processing Stage */}
+          {modalStage === 'processing' && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
                   <Loader2 className="h-5 w-5 animate-spin text-primary" />
                   Import in Progress
-                </>
-              ) : importResult?.successCount ? (
-                <>
-                  <CheckCircle2 className="h-5 w-5 text-green-500" />
-                  Import Complete
-                </>
-              ) : (
-                <>
-                  <AlertTriangle className="h-5 w-5 text-amber-500" />
-                  Import Results
-                </>
-              )}
-            </DialogTitle>
-            <DialogDescription>
-              {isProcessing ? analysisStage : 'Review the import results below'}
-            </DialogDescription>
-          </DialogHeader>
+                </DialogTitle>
+                <DialogDescription>
+                  {analysisStage}
+                </DialogDescription>
+              </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            {isProcessing && progress.total > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Creating tickets...</span>
-                  <span className="font-medium">{progress.current} / {progress.total}</span>
-                </div>
-                <Progress value={progress.percentage} className="h-2" />
-                <p className="text-xs text-muted-foreground text-center">{progress.percentage}% complete</p>
+              <div className="space-y-4 py-4">
+                {progress.total > 0 ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Creating tickets...</span>
+                      <span className="font-medium">{progress.current} / {progress.total}</span>
+                    </div>
+                    <Progress value={progress.percentage} className="h-2" />
+                    <p className="text-xs text-muted-foreground text-center">{progress.percentage}% complete</p>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+                    <p className="text-sm text-muted-foreground">{analysisStage}</p>
+                  </div>
+                )}
               </div>
-            )}
 
-            {!isProcessing && importResult && (
-              <>
+              <DialogFooter>
+                <Button disabled className="w-full">
+                  Please wait...
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {/* Results Stage */}
+          {modalStage === 'results' && importResult && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  {importResult.successCount > 0 ? (
+                    <>
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      Import Complete
+                    </>
+                  ) : (
+                    <>
+                      <AlertTriangle className="h-5 w-5 text-amber-500" />
+                      Import Results
+                    </>
+                  )}
+                </DialogTitle>
+                <DialogDescription>
+                  Review the import results below
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4 py-4">
                 <div className="grid grid-cols-3 gap-3">
                   <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-center">
                     <CheckCircle2 className="h-5 w-5 text-green-500 mx-auto mb-1" />
@@ -646,22 +670,15 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
                     </ScrollArea>
                   </div>
                 )}
-              </>
-            )}
-
-            {isProcessing && progress.total === 0 && (
-              <div className="flex flex-col items-center justify-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
-                <p className="text-sm text-muted-foreground">{analysisStage}</p>
               </div>
-            )}
-          </div>
 
-          <DialogFooter>
-            <Button onClick={handleCloseResults} disabled={isProcessing} className="w-full">
-              {isProcessing ? 'Please wait...' : 'Done'}
-            </Button>
-          </DialogFooter>
+              <DialogFooter>
+                <Button onClick={handleCloseModal} className="w-full">
+                  Done
+                </Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>

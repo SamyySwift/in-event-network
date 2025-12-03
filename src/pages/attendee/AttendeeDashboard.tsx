@@ -62,7 +62,6 @@ import {
   CarouselItem,
   type CarouselApi,
 } from "@/components/ui/carousel";
-import Autoplay from "embla-carousel-autoplay";
 import { FloatingAIAssistant } from "@/components/attendee/FloatingAIAssistant";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
@@ -71,13 +70,40 @@ const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) =>
   const [api, setApi] = React.useState<CarouselApi>();
   const [current, setCurrent] = React.useState(0);
   const [selectedAd, setSelectedAd] = React.useState<any | null>(null);
-  const autoplayPlugin = React.useRef(
-    Autoplay({ 
-      delay: 5000, 
-      stopOnInteraction: true,
-      stopOnMouseEnter: true,
-    })
+  const [isPaused, setIsPaused] = React.useState(false);
+  const timerRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  // Sort advertisements by display_order
+  const sortedAds = React.useMemo(() => 
+    [...advertisements].sort((a, b) => (a.display_order || 0) - (b.display_order || 0)),
+    [advertisements]
   );
+
+  // Custom autoplay with per-slide duration
+  React.useEffect(() => {
+    if (!api || isPaused || sortedAds.length <= 1) return;
+
+    const startTimer = () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      
+      const currentAd = sortedAds[current];
+      const duration = (currentAd?.duration_seconds || 5) * 1000;
+      
+      timerRef.current = setTimeout(() => {
+        if (api.canScrollNext()) {
+          api.scrollNext();
+        } else {
+          api.scrollTo(0);
+        }
+      }, duration);
+    };
+
+    startTimer();
+
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [api, current, isPaused, sortedAds]);
 
   React.useEffect(() => {
     if (!api) return;
@@ -86,13 +112,6 @@ const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) =>
 
     api.on("select", () => {
       setCurrent(api.selectedScrollSnap());
-    });
-
-    // Resume autoplay after 3 seconds of no interaction
-    api.on("pointerUp", () => {
-      setTimeout(() => {
-        autoplayPlugin.current.play();
-      }, 3000);
     });
   }, [api]);
 
@@ -112,18 +131,21 @@ const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) =>
   };
 
   return (
-    <div className="relative">
+    <div 
+      className="relative"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+    >
       <Carousel
         setApi={setApi}
         opts={{
           align: "start",
           loop: true,
         }}
-        plugins={[autoplayPlugin.current]}
         className="w-full"
       >
         <CarouselContent>
-          {advertisements.map((ad, index) => {
+          {sortedAds.map((ad, index) => {
             const { isVideo, mediaUrl } = getMediaInfo(ad);
             return (
               <CarouselItem key={index}>
@@ -197,9 +219,9 @@ const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) =>
       </Carousel>
 
       {/* Carousel Indicators */}
-      {advertisements.length > 1 && (
+      {sortedAds.length > 1 && (
         <div className="flex justify-center gap-2 mt-4">
-          {advertisements.map((_, index) => (
+          {sortedAds.map((_, index) => (
             <button
               key={index}
               onClick={() => scrollTo(index)}

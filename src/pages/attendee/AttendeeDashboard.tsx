@@ -15,6 +15,11 @@ import {
   TrendingUp,
   Eye,
   MessageCircle,
+  ExternalLink,
+  Twitter,
+  Instagram,
+  Linkedin,
+  Facebook,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,11 +64,13 @@ import {
 } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 import { FloatingAIAssistant } from "@/components/attendee/FloatingAIAssistant";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 // Advertisement Carousel Component
 const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) => {
   const [api, setApi] = React.useState<CarouselApi>();
   const [current, setCurrent] = React.useState(0);
+  const [selectedAd, setSelectedAd] = React.useState<any | null>(null);
   const autoplayPlugin = React.useRef(
     Autoplay({ 
       delay: 5000, 
@@ -96,6 +103,14 @@ const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) =>
     [api]
   );
 
+  // Helper to determine media type and URL
+  const getMediaInfo = (ad: any) => {
+    const isVideo = ad.media_type === 'video' || 
+      (ad.media_url && (ad.media_url.includes('.mp4') || ad.media_url.includes('.webm') || ad.media_url.includes('.mov')));
+    const mediaUrl = ad.media_url || ad.image_url;
+    return { isVideo, mediaUrl };
+  };
+
   return (
     <div className="relative">
       <Carousel
@@ -108,64 +123,76 @@ const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) =>
         className="w-full"
       >
         <CarouselContent>
-          {advertisements.map((ad, index) => (
-            <CarouselItem key={index}>
-              <Card 
-                className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden relative z-10 group cursor-pointer h-[400px]"
-                onClick={() => ad.link_url && window.open(ad.link_url, '_blank')}
-              >
-                {ad.image_url && (
-                  <div className="relative h-full overflow-hidden">
-                    {/* Image */}
-                    <img
-                      src={ad.image_url}
-                      alt={ad.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
-                    
-                    {/* Dark Gradient Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20"></div>
-                    
-                    {/* Content Overlay */}
-                    <div className="absolute inset-0 flex flex-col justify-end p-6">
-                      {/* Bottom Content */}
-                      <div className="space-y-3">
-                        <div>
-                          <h3 className="text-2xl sm:text-3xl font-bold text-white leading-tight mb-2">
-                            {ad.title}
-                          </h3>
-                          {ad.description && (
-                            <p className="text-white/90 text-sm line-clamp-2">
-                              {ad.description}
+          {advertisements.map((ad, index) => {
+            const { isVideo, mediaUrl } = getMediaInfo(ad);
+            return (
+              <CarouselItem key={index}>
+                <Card 
+                  className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 overflow-hidden relative z-10 group cursor-pointer h-[400px]"
+                  onClick={() => setSelectedAd(ad)}
+                >
+                  {mediaUrl && (
+                    <div className="relative h-full overflow-hidden">
+                      {/* Media - Video or Image */}
+                      {isVideo ? (
+                        <video
+                          src={mediaUrl}
+                          className="w-full h-full object-cover"
+                          muted
+                          loop
+                          autoPlay
+                          playsInline
+                        />
+                      ) : (
+                        <img
+                          src={mediaUrl}
+                          alt={ad.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      )}
+                      
+                      {/* Dark Gradient Overlay */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/20"></div>
+                      
+                      {/* Content Overlay */}
+                      <div className="absolute inset-0 flex flex-col justify-end p-6">
+                        {/* Bottom Content */}
+                        <div className="space-y-3">
+                          <div>
+                            <h3 className="text-2xl sm:text-3xl font-bold text-white leading-tight mb-2">
+                              {ad.title}
+                            </h3>
+                            {ad.description && (
+                              <p className="text-white/90 text-sm line-clamp-2">
+                                {ad.description}
+                              </p>
+                            )}
+                          </div>
+                          {ad.sponsor_name && (
+                            <p className="text-white/80 text-sm font-medium">
+                              By {ad.sponsor_name}
                             </p>
                           )}
-                        </div>
-                        {ad.sponsor_name && (
-                          <p className="text-white/80 text-sm font-medium">
-                            By {ad.sponsor_name}
-                          </p>
-                        )}
-                        {ad.link_url && (
                           <Button
                             variant="secondary"
                             size="sm"
                             className="bg-white/90 text-gray-900 hover:bg-white font-semibold"
                             onClick={(e) => {
                               e.stopPropagation();
-                              window.open(ad.link_url, '_blank');
+                              setSelectedAd(ad);
                             }}
                           >
-                            Learn More
+                            View Details
                             <ChevronRight className="ml-1 h-4 w-4" />
                           </Button>
-                        )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </Card>
-            </CarouselItem>
-          ))}
+                  )}
+                </Card>
+              </CarouselItem>
+            );
+          })}
         </CarouselContent>
       </Carousel>
 
@@ -186,6 +213,90 @@ const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) =>
           ))}
         </div>
       )}
+
+      {/* Advertisement Preview Modal */}
+      <Dialog open={!!selectedAd} onOpenChange={(open) => !open && setSelectedAd(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0">
+          {selectedAd && (() => {
+            const { isVideo, mediaUrl } = getMediaInfo(selectedAd);
+            return (
+              <>
+                {/* Media Section */}
+                {mediaUrl && (
+                  <div className="relative w-full aspect-video bg-black">
+                    {isVideo ? (
+                      <video
+                        src={mediaUrl}
+                        className="w-full h-full object-contain"
+                        controls
+                        autoPlay
+                        playsInline
+                      />
+                    ) : (
+                      <img
+                        src={mediaUrl}
+                        alt={selectedAd.title}
+                        className="w-full h-full object-contain"
+                      />
+                    )}
+                  </div>
+                )}
+                
+                {/* Content Section */}
+                <div className="p-6 space-y-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-foreground">{selectedAd.title}</h2>
+                    {selectedAd.sponsor_name && (
+                      <p className="text-muted-foreground text-sm mt-1">By {selectedAd.sponsor_name}</p>
+                    )}
+                  </div>
+                  
+                  {selectedAd.description && (
+                    <p className="text-foreground/80">{selectedAd.description}</p>
+                  )}
+                  
+                  {/* Social Links */}
+                  {(selectedAd.twitter_link || selectedAd.instagram_link || selectedAd.linkedin_link || selectedAd.facebook_link || selectedAd.tiktok_link) && (
+                    <div className="flex flex-wrap gap-3 pt-2">
+                      {selectedAd.twitter_link && (
+                        <a href={selectedAd.twitter_link} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
+                          <Twitter className="h-5 w-5" />
+                        </a>
+                      )}
+                      {selectedAd.instagram_link && (
+                        <a href={selectedAd.instagram_link} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
+                          <Instagram className="h-5 w-5" />
+                        </a>
+                      )}
+                      {selectedAd.linkedin_link && (
+                        <a href={selectedAd.linkedin_link} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
+                          <Linkedin className="h-5 w-5" />
+                        </a>
+                      )}
+                      {selectedAd.facebook_link && (
+                        <a href={selectedAd.facebook_link} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
+                          <Facebook className="h-5 w-5" />
+                        </a>
+                      )}
+                    </div>
+                  )}
+                  
+                  {/* Action Button */}
+                  {selectedAd.link_url && (
+                    <Button
+                      className="w-full"
+                      onClick={() => window.open(selectedAd.link_url, '_blank')}
+                    >
+                      Visit Website
+                      <ExternalLink className="ml-2 h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { getCache, setCache, slowNetworkQueryOptions } from '@/utils/queryCache';
 
 export interface Speaker {
   id: string;
@@ -28,73 +29,57 @@ export interface Speaker {
   updated_at: string;
 }
 
+const CACHE_KEY = 'admin-speakers';
+
 export const useAdminSpeakers = (eventId?: string) => {
   const queryClient = useQueryClient();
 
   const {
-    data: speakers = [], // Provide default empty array
+    data: speakers = [],
     isLoading,
     error,
     refetch
   } = useQuery({
     queryKey: ['admin-speakers', eventId],
     queryFn: async (): Promise<Speaker[]> => {
-      try {
-        console.log('Fetching speakers for eventId:', eventId);
-        
-        // First, get events owned by current user
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          throw new Error('User not authenticated');
-        }
-
-        const { data: events, error: eventsError } = await supabase
-          .from('events')
-          .select('id')
-          .eq('host_id', user.id);
-
-        if (eventsError) {
-          console.error('Error fetching events:', eventsError);
-          throw eventsError;
-        }
-
-        if (!events || events.length === 0) {
-          console.log('No events found for user');
-          return [];
-        }
-
-        const eventIds = events.map(event => event.id);
-        console.log('Found event IDs:', eventIds);
-
-        // Build the speakers query
-        let query = supabase
-          .from('speakers')
-          .select('*')
-          .in('event_id', eventIds)
-          .order('created_at', { ascending: false });
-
-        // Filter by specific event if provided
-        if (eventId) {
-          query = query.eq('event_id', eventId);
-        }
-
-        const { data: speakers, error: speakersError } = await query;
-
-        if (speakersError) {
-          console.error('Error fetching speakers:', speakersError);
-          throw speakersError;
-        }
-
-        console.log('Fetched speakers:', speakers);
-        return speakers || []; // Ensure we always return an array
-      } catch (error) {
-        console.error('Error in useAdminSpeakers:', error);
-        toast.error('Failed to load speakers. Please try again.');
-        throw error;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('User not authenticated');
       }
+
+      const { data: events, error: eventsError } = await supabase
+        .from('events')
+        .select('id')
+        .eq('host_id', user.id);
+
+      if (eventsError) throw eventsError;
+
+      if (!events || events.length === 0) {
+        return [];
+      }
+
+      const eventIds = events.map(event => event.id);
+
+      let query = supabase
+        .from('speakers')
+        .select('*')
+        .in('event_id', eventIds)
+        .order('created_at', { ascending: false });
+
+      if (eventId) {
+        query = query.eq('event_id', eventId);
+      }
+
+      const { data: speakers, error: speakersError } = await query;
+
+      if (speakersError) throw speakersError;
+
+      const result = speakers || [];
+      setCache(`${CACHE_KEY}-${eventId || 'all'}`, result);
+      return result;
     },
-    retry: 1
-    // Removed onError - it's deprecated in React Query v4+
+    placeholderData: () => getCache<Speaker[]>(`${CACHE_KEY}-${eventId || 'all'}`) || [],
+    ...slowNetworkQueryOptions,
   });
 
   const createSpeakerMutation = useMutation({

@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect } from 'react';
+import { getCache, setCache, slowNetworkQueryOptions } from '@/utils/queryCache';
 
 interface DashboardData {
   eventsCount: number;
@@ -16,6 +17,8 @@ interface DashboardData {
   connectionsRate: number;
 }
 
+const CACHE_KEY = 'admin-dashboard';
+
 export const useAdminDashboard = () => {
   const { currentUser } = useAuth();
   const queryClient = useQueryClient();
@@ -27,7 +30,6 @@ export const useAdminDashboard = () => {
         throw new Error('User not authenticated');
       }
 
-      console.log('Fetching dashboard data for admin:', currentUser.id);
       const now = new Date().toISOString();
 
       // Get only events hosted by the current admin
@@ -36,10 +38,7 @@ export const useAdminDashboard = () => {
         .select('*', { count: 'exact', head: true })
         .eq('host_id', currentUser.id);
 
-      if (eventsError) {
-        console.error('Error fetching events count:', eventsError);
-        throw eventsError;
-      }
+      if (eventsError) throw eventsError;
 
       // Get admin's events for other calculations
       const { data: events, error: eventsDataError } = await supabase
@@ -47,10 +46,7 @@ export const useAdminDashboard = () => {
         .select('id, start_time, end_time')
         .eq('host_id', currentUser.id);
 
-      if (eventsDataError) {
-        console.error('Error fetching events data:', eventsDataError);
-        throw eventsDataError;
-      }
+      if (eventsDataError) throw eventsDataError;
 
       const eventIds = events?.map(e => e.id) || [];
 
@@ -87,7 +83,6 @@ export const useAdminDashboard = () => {
       // Get networking connections between event attendees
       let connectionsCount = 0;
       if (eventIds.length > 0) {
-        // Get participants for the admin's events
         const { data: participantsData } = await supabase
           .from('event_participants')
           .select('user_id')
@@ -107,16 +102,15 @@ export const useAdminDashboard = () => {
         }
       }
 
-      // New: Get polls, poll votes, suggestions & average ratings
+      // Get polls, poll votes, suggestions & average ratings
       let pollsCount = 0, pollVotesCount = 0, suggestionsCount = 0, avgRating = 0;
       if (eventIds.length > 0) {
-        // Polls count & poll votes
         const { count: _pollsCount } = await supabase
           .from('polls')
           .select('*', { count: 'exact', head: true })
           .in('event_id', eventIds);
         pollsCount = _pollsCount || 0;
-        // Sum up total poll votes
+
         if (pollsCount > 0) {
           const { data: pollIdsResult } = await supabase
             .from('polls')
@@ -131,7 +125,7 @@ export const useAdminDashboard = () => {
             pollVotesCount = _pollVotesCount || 0;
           }
         }
-        // Suggestions and average rating
+
         const { data: suggestionsData } = await supabase
           .from('suggestions')
           .select('rating')
@@ -143,35 +137,23 @@ export const useAdminDashboard = () => {
         }
       }
 
-      // Compute sub-scores (each out of 100)
-      const attendeesCount = attendeesResult.count || 1; // prevent divide by zero
+      // Compute performance score
+      const attendeesCount = attendeesResult.count || 1;
       const questionsCount = questionsResult.count || 0;
 
-      // 1. Questions Score (maxes at 3+ per attendee)
       const questionsPerAttendee = questionsCount / attendeesCount;
       const questionsScore = Math.min((questionsPerAttendee / 3) * 100, 100);
-
-      // 2. Poll Engagement Score (maxes at 2 votes per attendee across all polls)
-      const pollEngagementScore =
-        attendeesCount > 0
-          ? Math.min(((pollVotesCount / attendeesCount) / 2) * 100, 100)
-          : 0;
-
-      // 3. Suggestions Score (maxes at 1 suggestion per 4 attendees)
+      const pollEngagementScore = attendeesCount > 0 ? Math.min(((pollVotesCount / attendeesCount) / 2) * 100, 100) : 0;
       const suggestionsScore = Math.min((suggestionsCount / (attendeesCount / 4)) * 100, 100);
-
-      // 4. Ratings Score (5 is max rating)
       const ratingsScore = Math.min((avgRating / 5) * 100, 100);
 
-      // Weighted (equal weights) event performance
       const perfComponents = [questionsScore, pollEngagementScore, suggestionsScore, ratingsScore];
       const performanceScore = Math.round(perfComponents.reduce((a, b) => a + b, 0) / perfComponents.length);
 
-      // Calculate connection rate
       const totalAttendees = attendeesResult.count || 0;
       const connectionsRate = totalAttendees > 0 ? Math.round((connectionsCount / totalAttendees) * 100) : 0;
 
-      return {
+      const result = {
         eventsCount: eventsCount || 0,
         attendeesCount: attendeesResult.count || 0,
         speakersCount: speakersResult.count || 0,
@@ -182,14 +164,19 @@ export const useAdminDashboard = () => {
         connectionsCount,
         connectionsRate,
       };
+
+      // Cache the result
+      setCache(`${CACHE_KEY}-${currentUser.id}`, result);
+      return result;
     },
     enabled: !!currentUser?.id,
-    // Remove refetchInterval, realtime makes it redundant
+    placeholderData: () => getCache<DashboardData>(`${CACHE_KEY}-${currentUser?.id}`),
+    ...slowNetworkQueryOptions,
   });
 
   useEffect(() => {
     if (!currentUser?.id) return;
-    // These are the tables that affect the admin dashboard metrics
+    
     const tables = [
       { table: 'events', filter: `host_id=eq.${currentUser.id}` },
       { table: 'event_participants', filter: '' },
@@ -201,28 +188,31 @@ export const useAdminDashboard = () => {
       { table: 'connections', filter: '' },
     ];
 
-    // We'll subscribe to INSERT/UPDATE/DELETE for each table
+    let debounceTimer: NodeJS.Timeout;
+    const debouncedInvalidate = () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ['admin-dashboard', currentUser.id] });
+      }, 2000);
+    };
+
     const channels = tables.map(({ table, filter }) =>
       supabase.channel(`realtime:${table}`)
         .on(
           'postgres_changes',
           {
-            event: '*', // all events
+            event: '*',
             schema: 'public',
             table,
             ...(filter ? { filter } : {}),
           },
-          (payload) => {
-            // To be efficient, only refetch when relevant admin's events are affected
-            // We do a broad refetch for simplicity (can be filtered further)
-            queryClient.invalidateQueries({ queryKey: ['admin-dashboard', currentUser.id] });
-          }
+          debouncedInvalidate
         )
         .subscribe()
     );
 
     return () => {
-      // Clean up: unsubscribe all channels on unmount/user change
+      clearTimeout(debounceTimer);
       channels.forEach((channel) => {
         try { supabase.removeChannel(channel); } catch {}
       });

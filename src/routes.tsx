@@ -1,72 +1,85 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+
+// Eager load critical path components
 import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
-import AuthCallback from "@/pages/AuthCallback";
-import Guide from "@/pages/Guide";
-import Index from "@/pages/Index";
-import NotFound from "@/pages/NotFound";
-import ScanQR from "@/pages/ScanQR";
-import VendorForm from "./pages/VendorForm";
-import BuyTickets from "@/pages/BuyTickets";
-import JoinEvent from "@/pages/JoinEvent";
-import Discovery from "@/pages/Discovery";
-import DataPrivacy from "@/pages/DataPrivacy";
-import TermsOfService from "@/pages/TermsOfService";
 
-// Admin Pages
-import AdminLayout from "@/components/layouts/AdminLayout";
-import AdminDashboard from "@/pages/admin/AdminDashboard";
-import AdminEvents from "@/pages/admin/AdminEvents";
-import AdminAttendees from "@/pages/admin/AdminAttendees";
-import AdminNetworking from "@/pages/admin/AdminNetworking";
-import AdminSpeakers from "@/pages/admin/AdminSpeakers";
-import AdminAnnouncements from "@/pages/admin/AdminAnnouncements";
-import AdminSchedule from "@/pages/admin/AdminSchedule";
-import AdminPolls from "@/pages/admin/AdminPolls";
-import AdminFacilities from "@/pages/admin/AdminFacilities";
-import AdminRules from "@/pages/admin/AdminRules";
-import AdminQuestions from "@/pages/admin/AdminQuestions";
-import AdminSuggestions from "@/pages/admin/AdminSuggestions";
-import AdminNotifications from "@/pages/admin/AdminNotifications";
-import AdminProfile from "@/pages/admin/AdminProfile";
-import AdminSponsors from "@/pages/admin/AdminSponsors";
-import AdminVendorHub from "@/pages/admin/AdminVendorHub";
-import AdminHighlights from "@/pages/admin/AdminHighlights";
-import AdminEventPreview from "@/pages/admin/AdminEventPreview";
-import AdminGames from "@/pages/admin/AdminGames";
+// Lazy load all other pages for code splitting
+const AuthCallback = lazy(() => import("@/pages/AuthCallback"));
+const Guide = lazy(() => import("@/pages/Guide"));
+const Index = lazy(() => import("@/pages/Index"));
+const NotFound = lazy(() => import("@/pages/NotFound"));
+const ScanQR = lazy(() => import("@/pages/ScanQR"));
+const VendorForm = lazy(() => import("@/pages/VendorForm"));
+const BuyTickets = lazy(() => import("@/pages/BuyTickets"));
+const JoinEvent = lazy(() => import("@/pages/JoinEvent"));
+const Discovery = lazy(() => import("@/pages/Discovery"));
+const DataPrivacy = lazy(() => import("@/pages/DataPrivacy"));
+const TermsOfService = lazy(() => import("@/pages/TermsOfService"));
+const SponsorForm = lazy(() => import("@/pages/SponsorForm"));
+const LiveQuestions = lazy(() => import("@/pages/LiveQuestions"));
+const LivePolls = lazy(() => import("@/pages/LivePolls"));
+const LiveChat = lazy(() => import("@/pages/LiveChat"));
+const LiveGames = lazy(() => import("@/pages/LiveGames"));
+const CheckIn = lazy(() => import("@/pages/CheckIn"));
 
+// Admin Pages - Lazy loaded
+const AdminLayout = lazy(() => import("@/components/layouts/AdminLayout"));
+const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
+const AdminEvents = lazy(() => import("@/pages/admin/AdminEvents"));
+const AdminAttendees = lazy(() => import("@/pages/admin/AdminAttendees"));
+const AdminNetworking = lazy(() => import("@/pages/admin/AdminNetworking"));
+const AdminSpeakers = lazy(() => import("@/pages/admin/AdminSpeakers"));
+const AdminAnnouncements = lazy(() => import("@/pages/admin/AdminAnnouncements"));
+const AdminSchedule = lazy(() => import("@/pages/admin/AdminSchedule"));
+const AdminPolls = lazy(() => import("@/pages/admin/AdminPolls"));
+const AdminFacilities = lazy(() => import("@/pages/admin/AdminFacilities"));
+const AdminRules = lazy(() => import("@/pages/admin/AdminRules"));
+const AdminQuestions = lazy(() => import("@/pages/admin/AdminQuestions"));
+const AdminSuggestions = lazy(() => import("@/pages/admin/AdminSuggestions"));
+const AdminNotifications = lazy(() => import("@/pages/admin/AdminNotifications"));
+const AdminProfile = lazy(() => import("@/pages/admin/AdminProfile"));
+const AdminSponsors = lazy(() => import("@/pages/admin/AdminSponsors"));
+const AdminVendorHub = lazy(() => import("@/pages/admin/AdminVendorHub"));
+const AdminHighlights = lazy(() => import("@/pages/admin/AdminHighlights"));
+const AdminEventPreview = lazy(() => import("@/pages/admin/AdminEventPreview"));
+const AdminGames = lazy(() => import("@/pages/admin/AdminGames"));
+const AdminTickets = lazy(() => import("@/pages/admin/AdminTickets"));
+const AdminCheckIn = lazy(() => import("@/pages/admin/AdminCheckIn"));
+const AdminSettings = lazy(() => import("@/pages/admin/AdminSettings"));
+const AdminWallet = lazy(() => import("@/pages/admin/AdminWallet"));
+const AdminAdvertisements = lazy(() => import("@/pages/admin/AdminAdvertisements"));
 
-import SponsorForm from "@/pages/SponsorForm";
-import LiveQuestions from "@/pages/LiveQuestions";
-import LivePolls from "@/pages/LivePolls";
-import LiveChat from "@/pages/LiveChat";
-import LiveGames from "@/pages/LiveGames";
-
-
-// Attendee Pages
-import AppLayout from "@/components/layouts/AppLayout";
-import AttendeeDashboard from "@/pages/attendee/AttendeeDashboard";
-import AttendeeProfile from "@/pages/attendee/AttendeeProfile";
-import AttendeeNetworking from "@/pages/attendee/AttendeeNetworking";
-import AttendeeSchedule from "@/pages/attendee/AttendeeSchedule";
-import AttendeeQuestions from "@/pages/attendee/AttendeeQuestions";
-import AttendeeMap from "@/pages/attendee/AttendeeMap";
-import AttendeePolls from "@/pages/attendee/AttendeePolls";
-import AttendeeSuggestions from "@/pages/attendee/AttendeeSuggestions";
-import AttendeeAnnouncements from "@/pages/attendee/AttendeeAnnouncements";
-import AttendeeRules from "@/pages/attendee/AttendeeRules";
-import AttendeeNotifications from "@/pages/attendee/AttendeeNotifications";
-import AttendeeSearch from "@/pages/attendee/AttendeeSearch";
-import AttendeeOnboarding from "@/pages/attendee/AttendeeOnboarding";
-import AttendeeGames from "@/pages/attendee/AttendeeGames";
-
-import AttendeeMyTickets from "@/pages/attendee/AttendeeMyTickets";
+// Attendee Pages - Lazy loaded
+const AppLayout = lazy(() => import("@/components/layouts/AppLayout"));
+const AttendeeDashboard = lazy(() => import("@/pages/attendee/AttendeeDashboard"));
+const AttendeeProfile = lazy(() => import("@/pages/attendee/AttendeeProfile"));
+const AttendeeNetworking = lazy(() => import("@/pages/attendee/AttendeeNetworking"));
+const AttendeeSchedule = lazy(() => import("@/pages/attendee/AttendeeSchedule"));
+const AttendeeQuestions = lazy(() => import("@/pages/attendee/AttendeeQuestions"));
+const AttendeeMap = lazy(() => import("@/pages/attendee/AttendeeMap"));
+const AttendeePolls = lazy(() => import("@/pages/attendee/AttendeePolls"));
+const AttendeeSuggestions = lazy(() => import("@/pages/attendee/AttendeeSuggestions"));
+const AttendeeAnnouncements = lazy(() => import("@/pages/attendee/AttendeeAnnouncements"));
+const AttendeeRules = lazy(() => import("@/pages/attendee/AttendeeRules"));
+const AttendeeNotifications = lazy(() => import("@/pages/attendee/AttendeeNotifications"));
+const AttendeeSearch = lazy(() => import("@/pages/attendee/AttendeeSearch"));
+const AttendeeOnboarding = lazy(() => import("@/pages/attendee/AttendeeOnboarding"));
+const AttendeeGames = lazy(() => import("@/pages/attendee/AttendeeGames"));
+const AttendeeMyTickets = lazy(() => import("@/pages/attendee/AttendeeMyTickets"));
 
 // Host Pages
-import HostDashboard from "@/pages/host/HostDashboard";
+const HostDashboard = lazy(() => import("@/pages/host/HostDashboard"));
+
+// Simple loading spinner for lazy components
+const LazyLoader = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  </div>
+);
 
 // Auth Guard Component
 const ProtectedRoute = ({
@@ -79,14 +92,7 @@ const ProtectedRoute = ({
   const { currentUser, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
+    return <LazyLoader />;
   }
 
   if (!currentUser) {
@@ -94,7 +100,6 @@ const ProtectedRoute = ({
   }
 
   if (allowedRoles && !allowedRoles.includes(currentUser.role)) {
-    // Redirect based on user role
     if (currentUser.role === "host") {
       return <Navigate to="/admin" replace />;
     } else if (currentUser.role === "attendee") {
@@ -106,450 +111,107 @@ const ProtectedRoute = ({
   return <>{children}</>;
 };
 
-// Admin Guard Component
+// Admin Guard Component with lazy-loaded layout
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   return (
     <ProtectedRoute allowedRoles={["host"]}>
-      <AdminLayout>{children}</AdminLayout>
+      <Suspense fallback={<LazyLoader />}>
+        <AdminLayout>{children}</AdminLayout>
+      </Suspense>
     </ProtectedRoute>
   );
 };
 
-// Attendee Guard Component
+// Attendee Guard Component with lazy-loaded layout
 const AttendeeRoute = ({ children }: { children: React.ReactNode }) => {
   return (
     <ProtectedRoute allowedRoles={["attendee"]}>
-      <AppLayout>{children}</AppLayout>
+      <Suspense fallback={<LazyLoader />}>
+        <AppLayout>{children}</AppLayout>
+      </Suspense>
     </ProtectedRoute>
   );
 };
 
-// Import the missing components at the top of the file
-import AdminTickets from "@/pages/admin/AdminTickets";
-import AdminCheckIn from "@/pages/admin/AdminCheckIn";
-import AdminSettings from "@/pages/admin/AdminSettings";
-import AdminWallet from "@/pages/admin/AdminWallet";
-import CheckIn from "@/pages/CheckIn";
+// Wrapper for lazy components
+const LazyComponent = ({ Component }: { Component: React.LazyExoticComponent<any> }) => (
+  <Suspense fallback={<LazyLoader />}>
+    <Component />
+  </Suspense>
+);
 
-// Remove the markdown comments and add the missing route:
 export const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <Landing />,
-  },
-  {
-    path: "/guide",
-    element: <Guide />,
-  },
-  {
-    path: "/discovery",
-    element: <Discovery />,
-  },
-  {
-    path: "/privacy",
-    element: <DataPrivacy />,
-  },
-  {
-    path: "/terms",
-    element: <TermsOfService />,
-  },
-  {
-    path: "/login",
-    element: <Login />,
-  },
-  {
-    path: "/register",
-    element: <Register />,
-  },
-  {
-    path: "/auth/callback",
-    element: <AuthCallback />,
-  },
-  {
-    path: "/scan",
-    element: <ScanQR />,
-  },
-  {
-    path: "/index",
-    element: <Index />,
-  },
-  {
-    path: "/buy-tickets/:eventKey",
-    element: <BuyTickets />,
-  },
-  {
-    path: "/buy",
-    element: <BuyTickets />,
-  },
-  {
-    path: "/join/:code",
-    element: <JoinEvent />,
-  },
-  {
-    path: "/join",
-    element: <JoinEvent />,
-  },
+  // Public routes - Landing, Login, Register are eager loaded
+  { path: "/", element: <Landing /> },
+  { path: "/login", element: <Login /> },
+  { path: "/register", element: <Register /> },
+  
+  // Public routes - lazy loaded
+  { path: "/guide", element: <LazyComponent Component={Guide} /> },
+  { path: "/discovery", element: <LazyComponent Component={Discovery} /> },
+  { path: "/privacy", element: <LazyComponent Component={DataPrivacy} /> },
+  { path: "/terms", element: <LazyComponent Component={TermsOfService} /> },
+  { path: "/auth/callback", element: <LazyComponent Component={AuthCallback} /> },
+  { path: "/scan", element: <LazyComponent Component={ScanQR} /> },
+  { path: "/index", element: <LazyComponent Component={Index} /> },
+  { path: "/buy-tickets/:eventKey", element: <LazyComponent Component={BuyTickets} /> },
+  { path: "/buy", element: <LazyComponent Component={BuyTickets} /> },
+  { path: "/join/:code", element: <LazyComponent Component={JoinEvent} /> },
+  { path: "/join", element: <LazyComponent Component={JoinEvent} /> },
+  { path: "/sponsor-form/:formId", element: <LazyComponent Component={SponsorForm} /> },
+  { path: "/vendor-form/:formId", element: <LazyComponent Component={VendorForm} /> },
+  { path: "/live-questions/:eventId", element: <LazyComponent Component={LiveQuestions} /> },
+  { path: "/live-polls/:eventId", element: <LazyComponent Component={LivePolls} /> },
+  { path: "/live-chat/:eventId", element: <LazyComponent Component={LiveChat} /> },
+  { path: "/live-games/:eventId", element: <LazyComponent Component={LiveGames} /> },
+  { path: "/check-in/:eventId", element: <LazyComponent Component={CheckIn} /> },
 
   // Admin Routes
-  {
-    path: "/admin",
-    element: (
-      <AdminRoute>
-        <AdminDashboard />
-      </AdminRoute>
-    ),
-  },
-  {
-    path: "/admin/profile",
-    element: (
-      <AdminRoute>
-        <AdminProfile />
-      </AdminRoute>
-    ),
-  },
-  {
-    path: "/admin/events",
-    element: (
-      <AdminRoute>
-        <AdminEvents />
-      </AdminRoute>
-    ),
-  },
-  {
-    path: "/admin/attendees",
-    element: (
-      <AdminRoute>
-        <AdminAttendees />
-      </AdminRoute>
-    ),
-  },
-  {
-    path: "/admin/networking",
-    element: (
-      <AdminRoute>
-        <AdminNetworking />
-      </AdminRoute>
-    ),
-  },
-  {
-    path: "/admin/speakers",
-    element: (
-      <AdminRoute>
-        <AdminSpeakers />
-      </AdminRoute>
-    ),
-  },
-  {
-    path: "/admin/announcements",
-    element: (
-      <AdminRoute>
-        <AdminAnnouncements />
-      </AdminRoute>
-    ),
-  },
-  {
-    path: "/admin/schedule",
-    element: (
-      <AdminRoute>
-        <AdminSchedule />
-      </AdminRoute>
-    ),
-  },
-  {
-    path: "/admin/polls",
-    element: (
-      <AdminRoute>
-        <AdminPolls />
-      </AdminRoute>
-    ),
-  },
-  {
-    path: "/admin/facilities",
-    element: (
-      <AdminRoute>
-        <AdminFacilities />
-      </AdminRoute>
-    ),
-  },
-  {
-    path: "/admin/highlights",
-    element: (
-      <AdminRoute>
-        <AdminHighlights />
-      </AdminRoute>
-    ),
-  },
-  {
-    path: "/admin/event-preview",
-    element: (
-      <AdminRoute>
-        <AdminEventPreview />
-      </AdminRoute>
-    ),
-  },
-  {
-    path: "/admin/rules",
-    element: (
-      <AdminRoute>
-        <AdminRules />
-      </AdminRoute>
-    ),
-  },
-  {
-    path: "/admin/questions",
-    element: (
-      <AdminRoute>
-        <AdminQuestions />
-      </AdminRoute>
-    ),
-  },
-
-  {
-    path: "/admin/suggestions",
-    element: (
-      <AdminRoute>
-        <AdminSuggestions />
-      </AdminRoute>
-    ),
-  },
-
-  {
-    path: "/admin/notifications",
-    element: (
-      <AdminRoute>
-        <AdminNotifications />
-      </AdminRoute>
-    ),
-  },
-  {
-    path: "/admin/sponsors",
-    element: (
-      <AdminRoute>
-        <AdminSponsors />
-      </AdminRoute>
-    ),
-  },
-  {
-    path: "/admin/vendor-hub",
-    element: (
-      <AdminRoute>
-        <AdminVendorHub />
-      </AdminRoute>
-    ),
-  },
-
-  // Public sponsor form route
-  {
-    path: "/sponsor-form/:formId",
-    element: <SponsorForm />,
-  },
-
-  // Public live questions route
-  {
-    path: "/live-questions/:eventId",
-    element: <LiveQuestions />,
-  },
-
-  // Public live polls route
-  {
-    path: "/live-polls/:eventId",
-    element: <LivePolls />,
-  },
-
-  // Public live chat route
-  {
-    path: "/live-chat/:eventId",
-    element: <LiveChat />,
-  },
-
-  // Public live games route
-  {
-    path: "/live-games/:eventId",
-    element: <LiveGames />,
-  },
-
-  // Public check-in route
-  {
-    path: "/check-in/:eventId",
-    element: <CheckIn />,
-  },
+  { path: "/admin", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminDashboard /></Suspense></AdminRoute> },
+  { path: "/admin/profile", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminProfile /></Suspense></AdminRoute> },
+  { path: "/admin/events", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminEvents /></Suspense></AdminRoute> },
+  { path: "/admin/attendees", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminAttendees /></Suspense></AdminRoute> },
+  { path: "/admin/networking", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminNetworking /></Suspense></AdminRoute> },
+  { path: "/admin/speakers", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminSpeakers /></Suspense></AdminRoute> },
+  { path: "/admin/announcements", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminAnnouncements /></Suspense></AdminRoute> },
+  { path: "/admin/schedule", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminSchedule /></Suspense></AdminRoute> },
+  { path: "/admin/polls", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminPolls /></Suspense></AdminRoute> },
+  { path: "/admin/facilities", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminFacilities /></Suspense></AdminRoute> },
+  { path: "/admin/highlights", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminHighlights /></Suspense></AdminRoute> },
+  { path: "/admin/event-preview", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminEventPreview /></Suspense></AdminRoute> },
+  { path: "/admin/rules", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminRules /></Suspense></AdminRoute> },
+  { path: "/admin/questions", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminQuestions /></Suspense></AdminRoute> },
+  { path: "/admin/suggestions", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminSuggestions /></Suspense></AdminRoute> },
+  { path: "/admin/notifications", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminNotifications /></Suspense></AdminRoute> },
+  { path: "/admin/sponsors", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminSponsors /></Suspense></AdminRoute> },
+  { path: "/admin/vendor-hub", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminVendorHub /></Suspense></AdminRoute> },
+  { path: "/admin/games", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminGames /></Suspense></AdminRoute> },
+  { path: "/admin/tickets", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminTickets /></Suspense></AdminRoute> },
+  { path: "/admin/check-in", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminCheckIn /></Suspense></AdminRoute> },
+  { path: "/admin/settings", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminSettings /></Suspense></AdminRoute> },
+  { path: "/admin/wallet", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminWallet /></Suspense></AdminRoute> },
+  { path: "/admin/advertisements", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminAdvertisements /></Suspense></AdminRoute> },
 
   // Host Routes (redirect to admin)
-  {
-    path: "/host",
-    element: <Navigate to="/admin" replace />,
-  },
+  { path: "/host", element: <Navigate to="/admin" replace /> },
 
   // Attendee Routes
-  {
-    path: "/attendee",
-    element: (
-      <AttendeeRoute>
-        <AttendeeDashboard />
-      </AttendeeRoute>
-    ),
-  },
-  {
-    path: "/attendee/profile",
-    element: (
-      <AttendeeRoute>
-        <AttendeeProfile />
-      </AttendeeRoute>
-    ),
-  },
-  {
-    path: "/attendee/networking",
-    element: (
-      <AttendeeRoute>
-        <AttendeeNetworking />
-      </AttendeeRoute>
-    ),
-  },
-  {
-    path: "/attendee/schedule",
-    element: (
-      <AttendeeRoute>
-        <AttendeeSchedule />
-      </AttendeeRoute>
-    ),
-  },
-  {
-    path: "/attendee/questions",
-    element: (
-      <AttendeeRoute>
-        <AttendeeQuestions />
-      </AttendeeRoute>
-    ),
-  },
-  {
-    path: "/attendee/map",
-    element: (
-      <AttendeeRoute>
-        <AttendeeMap />
-      </AttendeeRoute>
-    ),
-  },
-  {
-    path: "/attendee/polls",
-    element: (
-      <AttendeeRoute>
-        <AttendeePolls />
-      </AttendeeRoute>
-    ),
-  },
-  {
-    path: "/attendee/suggestions",
-    element: (
-      <AttendeeRoute>
-        <AttendeeSuggestions />
-      </AttendeeRoute>
-    ),
-  },
-  {
-    path: "/attendee/announcements",
-    element: (
-      <AttendeeRoute>
-        <AttendeeAnnouncements />
-      </AttendeeRoute>
-    ),
-  },
-  {
-    path: "/attendee/rules",
-    element: (
-      <AttendeeRoute>
-        <AttendeeRules />
-      </AttendeeRoute>
-    ),
-  },
-  {
-    path: "/attendee/notifications",
-    element: (
-      <AttendeeRoute>
-        <AttendeeNotifications />
-      </AttendeeRoute>
-    ),
-  },
-  {
-    path: "/attendee/search",
-    element: (
-      <AttendeeRoute>
-        <AttendeeSearch />
-      </AttendeeRoute>
-    ),
-  },
-  {
-    path: "/attendee/onboarding",
-    element: (
-      <AttendeeRoute>
-        <AttendeeOnboarding />
-      </AttendeeRoute>
-    ),
-  },
-  {
-    path: "/attendee/my-tickets",
-    element: (
-      <AttendeeRoute>
-        <AttendeeMyTickets />
-      </AttendeeRoute>
-    ),
-  },
+  { path: "/attendee", element: <AttendeeRoute><Suspense fallback={<LazyLoader />}><AttendeeDashboard /></Suspense></AttendeeRoute> },
+  { path: "/attendee/profile", element: <AttendeeRoute><Suspense fallback={<LazyLoader />}><AttendeeProfile /></Suspense></AttendeeRoute> },
+  { path: "/attendee/networking", element: <AttendeeRoute><Suspense fallback={<LazyLoader />}><AttendeeNetworking /></Suspense></AttendeeRoute> },
+  { path: "/attendee/schedule", element: <AttendeeRoute><Suspense fallback={<LazyLoader />}><AttendeeSchedule /></Suspense></AttendeeRoute> },
+  { path: "/attendee/questions", element: <AttendeeRoute><Suspense fallback={<LazyLoader />}><AttendeeQuestions /></Suspense></AttendeeRoute> },
+  { path: "/attendee/map", element: <AttendeeRoute><Suspense fallback={<LazyLoader />}><AttendeeMap /></Suspense></AttendeeRoute> },
+  { path: "/attendee/polls", element: <AttendeeRoute><Suspense fallback={<LazyLoader />}><AttendeePolls /></Suspense></AttendeeRoute> },
+  { path: "/attendee/suggestions", element: <AttendeeRoute><Suspense fallback={<LazyLoader />}><AttendeeSuggestions /></Suspense></AttendeeRoute> },
+  { path: "/attendee/announcements", element: <AttendeeRoute><Suspense fallback={<LazyLoader />}><AttendeeAnnouncements /></Suspense></AttendeeRoute> },
+  { path: "/attendee/rules", element: <AttendeeRoute><Suspense fallback={<LazyLoader />}><AttendeeRules /></Suspense></AttendeeRoute> },
+  { path: "/attendee/notifications", element: <AttendeeRoute><Suspense fallback={<LazyLoader />}><AttendeeNotifications /></Suspense></AttendeeRoute> },
+  { path: "/attendee/search", element: <AttendeeRoute><Suspense fallback={<LazyLoader />}><AttendeeSearch /></Suspense></AttendeeRoute> },
+  { path: "/attendee/onboarding", element: <AttendeeRoute><Suspense fallback={<LazyLoader />}><AttendeeOnboarding /></Suspense></AttendeeRoute> },
+  { path: "/attendee/my-tickets", element: <AttendeeRoute><Suspense fallback={<LazyLoader />}><AttendeeMyTickets /></Suspense></AttendeeRoute> },
+  { path: "/attendee/games", element: <AttendeeRoute><Suspense fallback={<LazyLoader />}><AttendeeGames /></Suspense></AttendeeRoute> },
 
-  // Catch all route - redirect to landing instead of 404
-  {
-    path: "/admin/games",
-    element: (
-      <AdminRoute>
-        <AdminGames />
-      </AdminRoute>
-    ),
-  },
-  {
-    path: "/attendee/games",
-    element: (
-      <AttendeeRoute>
-        <AttendeeGames />
-      </AttendeeRoute>
-    ),
-  },
-  {
-    path: "*",
-    element: <Navigate to="/" replace />,
-  },
-  // Add these routes in the admin routes section
-  {
-    path: "/admin/tickets",
-    element: (
-      <AdminRoute>
-        <AdminTickets />
-      </AdminRoute>
-    ),
-  },
-  {
-    path: "/admin/checkin",
-    element: (
-      <AdminRoute>
-        <AdminCheckIn />
-      </AdminRoute>
-    ),
-  },
-  {
-    path: "/admin/settings",
-    element: (
-      <AdminRoute>
-        <AdminSettings />
-      </AdminRoute>
-    ),
-  },
-  {
-    path: "/admin/wallet",
-    element: (
-      <AdminRoute>
-        <AdminWallet />
-      </AdminRoute>
-    ),
-  },
-  {
-    path: "/vendor-form/:formId",
-    element: <VendorForm />,
-  },
+  // Catch all
+  { path: "*", element: <Navigate to="/" replace /> },
 ]);

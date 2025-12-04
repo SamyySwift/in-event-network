@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { getCache, setCache, slowNetworkQueryOptions } from '@/utils/queryCache';
 
 export interface Poll {
   id: string;
@@ -20,8 +21,8 @@ export interface Poll {
   updated_at?: string;
   vote_limit?: number | null;
   require_submission?: boolean | null;
-  start_time?: string;    // added
-  end_time?: string;      // added
+  start_time?: string;
+  end_time?: string;
 }
 
 export interface PollVote {
@@ -31,6 +32,8 @@ export interface PollVote {
   option_id: string;
   created_at: string;
 }
+
+const CACHE_KEY = 'admin-polls';
 
 export const useAdminPolls = (eventId?: string) => {
   const { currentUser } = useAuth();
@@ -44,15 +47,9 @@ export const useAdminPolls = (eventId?: string) => {
         throw new Error('User not authenticated');
       }
 
-      console.log('Fetching polls for admin:', currentUser.id, 'event:', eventId);
-
-      // Get polls for admin's events only
       let query = supabase
         .from('polls')
-        .select(`
-          *,
-          events!inner(host_id)
-        `)
+        .select(`*, events!inner(host_id)`)
         .eq('events.host_id', currentUser.id);
 
       if (eventId) {
@@ -61,10 +58,7 @@ export const useAdminPolls = (eventId?: string) => {
 
       const { data, error } = await query.order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching admin polls:', error);
-        throw error;
-      }
+      if (error) throw error;
 
       // Fetch vote counts for each poll
       const pollsWithVotes = await Promise.all(
@@ -85,17 +79,16 @@ export const useAdminPolls = (eventId?: string) => {
             votes: voteCounts[option.id] || 0
           }));
 
-          return {
-            ...poll,
-            options: optionsWithVotes
-          };
+          return { ...poll, options: optionsWithVotes };
         })
       );
 
-      console.log('Admin polls fetched:', pollsWithVotes.length);
+      setCache(`${CACHE_KEY}-${currentUser.id}-${eventId || 'all'}`, pollsWithVotes);
       return pollsWithVotes as Poll[];
     },
     enabled: !!currentUser?.id,
+    placeholderData: () => getCache<Poll[]>(`${CACHE_KEY}-${currentUser?.id}-${eventId || 'all'}`) || [],
+    ...slowNetworkQueryOptions,
   });
 
   const createPollMutation = useMutation({

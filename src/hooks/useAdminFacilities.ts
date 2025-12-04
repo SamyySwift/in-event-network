@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { getCache, setCache, slowNetworkQueryOptions } from '@/utils/queryCache';
 
 export interface Facility {
   id: string;
@@ -21,6 +22,8 @@ export interface Facility {
   category?: 'facility' | 'exhibitor';
 }
 
+const CACHE_KEY = 'admin-facilities';
+
 export const useAdminFacilities = (eventId?: string) => {
   const { currentUser } = useAuth();
   const { toast } = useToast();
@@ -34,11 +37,8 @@ export const useAdminFacilities = (eventId?: string) => {
       }
 
       if (!eventId) {
-        console.log('No event ID provided, returning empty array');
         return [];
       }
-
-      console.log('Fetching facilities for admin:', currentUser.id, 'event:', eventId);
 
       const { data, error } = await supabase
         .from('facilities')
@@ -46,15 +46,14 @@ export const useAdminFacilities = (eventId?: string) => {
         .eq('event_id', eventId)
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching admin facilities:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      console.log('Admin facilities fetched:', data?.length || 0);
+      setCache(`${CACHE_KEY}-${eventId}`, data);
       return data as Facility[];
     },
     enabled: !!currentUser?.id && !!eventId,
+    placeholderData: () => getCache<Facility[]>(`${CACHE_KEY}-${eventId}`) || [],
+    ...slowNetworkQueryOptions,
   });
 
   const createFacilityMutation = useMutation({

@@ -156,6 +156,64 @@ export type Database = {
           },
         ]
       }
+      advertisement_analytics: {
+        Row: {
+          advertisement_id: string
+          created_at: string
+          event_id: string | null
+          id: string
+          interaction_type: string
+          ip_address: string | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          advertisement_id: string
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          interaction_type: string
+          ip_address?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          advertisement_id?: string
+          created_at?: string
+          event_id?: string | null
+          id?: string
+          interaction_type?: string
+          ip_address?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "advertisement_analytics_advertisement_id_fkey"
+            columns: ["advertisement_id"]
+            isOneToOne: false
+            referencedRelation: "advertisement_analytics_summary"
+            referencedColumns: ["advertisement_id"]
+          },
+          {
+            foreignKeyName: "advertisement_analytics_advertisement_id_fkey"
+            columns: ["advertisement_id"]
+            isOneToOne: false
+            referencedRelation: "advertisements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "advertisement_analytics_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       advertisements: {
         Row: {
           created_at: string
@@ -3036,6 +3094,22 @@ export type Database = {
       }
     }
     Views: {
+      advertisement_analytics_summary: {
+        Row: {
+          advertisement_id: string | null
+          event_names: string[] | null
+          events_displayed_count: number | null
+          is_active: boolean | null
+          sponsor_name: string | null
+          title: string | null
+          total_clicks: number | null
+          total_redirects: number | null
+          total_views: number | null
+          unique_sessions: number | null
+          unique_users: number | null
+        }
+        Relationships: []
+      }
       conversations: {
         Row: {
           conversation_id: string | null

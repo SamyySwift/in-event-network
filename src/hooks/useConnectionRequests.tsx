@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -31,20 +32,21 @@ export const useConnectionRequests = () => {
   const [notifications, setNotifications] = useState<ConnectionNotification[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchConnectionRequests = useCallback(async () => {
-    if (!currentUser?.id) {
-      setLoading(false);
-      return;
+  useEffect(() => {
+    if (currentUser) {
+      fetchConnectionRequests();
     }
-    
+  }, [currentUser]);
+
+  const fetchConnectionRequests = async () => {
     try {
-      console.log('Fetching connection requests for user:', currentUser.id);
+      console.log('Fetching connection requests for user:', currentUser?.id);
       
       // First get notifications
       const { data: notificationsData, error: notificationsError } = await supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', currentUser.id)
+        .eq('user_id', currentUser?.id)
         .eq('type', 'connection')
         .order('created_at', { ascending: false });
 
@@ -144,57 +146,7 @@ export const useConnectionRequests = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentUser?.id, toast]);
-
-  // Initial fetch and real-time subscription
-  useEffect(() => {
-    if (!currentUser?.id) return;
-
-    fetchConnectionRequests();
-
-    // Set up real-time subscription for new notifications
-    const channel = supabase
-      .channel('connection-notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${currentUser.id}`,
-        },
-        (payload) => {
-          console.log('Notification change detected:', payload);
-          // Refetch when any notification changes
-          fetchConnectionRequests();
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'connections',
-          filter: `recipient_id=eq.${currentUser.id}`,
-        },
-        (payload) => {
-          console.log('Connection change detected:', payload);
-          // Refetch when connection status changes
-          fetchConnectionRequests();
-        }
-      )
-      .subscribe();
-
-    // Also refetch periodically as a fallback (every 30 seconds)
-    const intervalId = setInterval(() => {
-      fetchConnectionRequests();
-    }, 30000);
-
-    return () => {
-      supabase.removeChannel(channel);
-      clearInterval(intervalId);
-    };
-  }, [currentUser?.id, fetchConnectionRequests]);
+  };
 
   const acceptConnectionRequest = async (connectionId: string, notificationId: string) => {
     try {

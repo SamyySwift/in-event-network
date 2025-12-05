@@ -120,10 +120,10 @@ export const useDirectMessages = (recipientId?: string) => {
 
       const conversationsArray = Array.from(conversationMap.values());
       
-      // Get user profiles for all other users
+      // Get user profiles for all other users (query profiles directly, not public_profiles view which only shows hosts)
       const otherUserIds = conversationsArray.map(conv => conv.other_user_id);
       const { data: profilesData, error: profilesError } = await supabase
-        .from('public_profiles')
+        .from('profiles')
         .select('id, name, photo_url, role')
         .in('id', otherUserIds);
 
@@ -207,7 +207,7 @@ export const useDirectMessages = (recipientId?: string) => {
       ])];
 
       const { data: profilesData, error: profilesError } = await supabase
-        .from('public_profiles')
+        .from('profiles')
         .select('id, name, photo_url, role')
         .in('id', userIds);
 
@@ -283,7 +283,7 @@ export const useDirectMessages = (recipientId?: string) => {
             
             // Get profiles for the new message
             const { data: profilesData } = await supabase
-              .from('public_profiles')
+              .from('profiles')
               .select('id, name, photo_url, role')
               .in('id', [newMessage.sender_id, newMessage.recipient_id]);
 

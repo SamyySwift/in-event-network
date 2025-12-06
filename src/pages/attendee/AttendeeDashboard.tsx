@@ -63,8 +63,8 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import { FloatingAIAssistant } from "@/components/attendee/FloatingAIAssistant";
+import { FloatingGameBanner } from "@/components/attendee/FloatingGameBanner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-
 // Advertisement Carousel Component
 const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) => {
   const [api, setApi] = React.useState<CarouselApi>();
@@ -652,6 +652,9 @@ function AttendeeDashboardContent() {
           <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-white/10 rounded-full z-0"></div>
           <div className="absolute -top-8 -left-8 w-24 h-24 bg-white/5 rounded-full z-0"></div>
         </div>
+
+        {/* Floating Game Banner */}
+        <FloatingGameBanner eventId={currentEventId} />
 
         {/* Advertisements Section with Auto-Swipe Carousel */}
         {advertisements && advertisements.length > 0 && (

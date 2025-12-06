@@ -14,7 +14,7 @@ import { WordSearchLeaderboard } from '@/components/games/WordSearchLeaderboard'
 import { QuizPlayer } from '@/components/games/QuizPlayer';
 import { QuizResults } from '@/components/games/QuizResults';
 import { GameCelebration } from '@/components/games/GameCelebration';
-import { Gamepad2, Trophy, Clock, Sparkles, Lightbulb, Brain } from 'lucide-react';
+import { Gamepad2, Trophy, Clock, Sparkles, Lightbulb, Brain, Star, Zap, PartyPopper } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuizLeaderboard } from '@/hooks/useQuizLeaderboard';
@@ -87,7 +87,7 @@ const AttendeeGames = () => {
     
     if (remainingWords.length > 0) {
       const randomWord = remainingWords[Math.floor(Math.random() * remainingWords.length)];
-      toast.info(`Hint: Look for "${randomWord}"`, {
+      toast.info(`🔍 Hint: Look for "${randomWord}"`, {
         duration: 5000,
       });
       setHintsUsed(prev => prev + 1);
@@ -96,8 +96,8 @@ const AttendeeGames = () => {
 
   const handleWordFound = (word: string) => {
     setFoundWords((prev) => new Set([...prev, word]));
-    toast.success(`✨ Found: ${word}!`, {
-      icon: '🎯',
+    toast.success(`🎯 Found: ${word}!`, {
+      icon: '✨',
     });
 
     // Check if all words are found
@@ -212,183 +212,293 @@ const AttendeeGames = () => {
 
   return (
     <div className="space-y-4 md:space-y-6">
+      {/* Playful Header */}
+      <div className="relative overflow-hidden rounded-2xl bg-cyan-400 border-4 border-blue-500 p-4 sm:p-6">
+        {/* Decorative elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.div
+            animate={{ y: [0, -10, 0], rotate: [0, 10, 0] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="absolute top-2 left-4 w-8 h-8 bg-yellow-400 rounded-full"
+          />
+          <motion.div
+            animate={{ y: [0, -8, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, delay: 0.3 }}
+            className="absolute top-4 right-8 w-6 h-6 bg-pink-500 rounded-full"
+          />
+          <motion.div
+            animate={{ y: [0, -12, 0] }}
+            transition={{ duration: 1.8, repeat: Infinity, delay: 0.5 }}
+            className="absolute bottom-2 left-20 w-5 h-5 bg-green-500 rounded-full"
+          />
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+            className="absolute top-3 left-1/2"
+          >
+            <Star className="w-6 h-6 text-orange-500 fill-orange-500" />
+          </motion.div>
+        </div>
+        
+        <div className="relative flex items-center gap-4">
+          <motion.div
+            animate={{ rotate: [0, -10, 10, 0], scale: [1, 1.1, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+            className="w-14 h-14 bg-red-500 rounded-xl border-4 border-red-700 flex items-center justify-center shadow-lg"
+          >
+            <Gamepad2 className="w-8 h-8 text-white" />
+          </motion.div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-blue-800 drop-shadow-sm">
+              🎮 Game Zone!
+            </h1>
+            <p className="text-blue-700 font-bold text-sm sm:text-base">
+              Play games & win awesome prizes! ⭐
+            </p>
+          </div>
+        </div>
+      </div>
+
       <Tabs defaultValue="word-search" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="word-search">
-            <Gamepad2 className="w-4 h-4 mr-2" />
-            Word Search
+        <TabsList className="grid w-full grid-cols-2 bg-yellow-400 border-4 border-orange-500 p-1 rounded-xl h-auto">
+          <TabsTrigger 
+            value="word-search"
+            className="data-[state=active]:bg-green-500 data-[state=active]:text-white data-[state=active]:border-green-700 data-[state=active]:border-2 rounded-lg font-bold text-orange-700 py-3"
+          >
+            <Gamepad2 className="w-5 h-5 mr-2" />
+            🔍 Word Search
           </TabsTrigger>
-          <TabsTrigger value="quiz">
-            <Brain className="w-4 h-4 mr-2" />
-            Quiz Games
+          <TabsTrigger 
+            value="quiz"
+            className="data-[state=active]:bg-purple-500 data-[state=active]:text-white data-[state=active]:border-purple-700 data-[state=active]:border-2 rounded-lg font-bold text-orange-700 py-3"
+          >
+            <Brain className="w-5 h-5 mr-2" />
+            🧠 Quiz Time
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="word-search" className="space-y-4 mt-6">
-      {gamesLoading ? (
-        <p>Loading games...</p>
-      ) : activeGames.length === 0 ? (
-        <Card>
-          <CardContent className="py-8 text-center text-muted-foreground">
-            No active word search games at the moment. Check back later!
-          </CardContent>
-        </Card>
-      ) : (
-        <>
-          <div className="grid lg:grid-cols-2 gap-4 md:gap-6">
-            <div className="space-y-4">
-              <Card className="relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 pointer-events-none" />
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 text-primary" />
-                        {selectedGame?.title || 'Word Search'}
-                      </CardTitle>
-                      {selectedGame && (
-                        <div className="flex gap-2 mt-2">
-                          <span className="text-xs px-2 py-1 bg-primary/10 text-primary rounded-full">
-                            {selectedGame.difficulty || 'medium'}
-                          </span>
-                          {selectedGame.theme && selectedGame.theme !== 'general' && (
-                        <span className="text-xs px-2 py-1 bg-secondary/10 text-secondary-foreground rounded-full capitalize">
-                          {selectedGame.theme}
-                        </span>
+          {gamesLoading ? (
+            <div className="text-center py-8">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                className="inline-block"
+              >
+                <Sparkles className="w-12 h-12 text-yellow-500" />
+              </motion.div>
+              <p className="font-bold text-lg mt-4">Loading games...</p>
+            </div>
+          ) : activeGames.length === 0 ? (
+            <Card className="border-4 border-pink-400 bg-pink-100">
+              <CardContent className="py-8 text-center">
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <Gamepad2 className="w-16 h-16 text-pink-500 mx-auto mb-4" />
+                </motion.div>
+                <p className="font-bold text-pink-700 text-lg">
+                  No games right now! 🎮
+                </p>
+                <p className="text-pink-600">Check back soon for fun games!</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              <div className="grid lg:grid-cols-2 gap-4 md:gap-6">
+                <div className="space-y-4">
+                  {/* Game Card */}
+                  <Card className="relative overflow-hidden border-4 border-green-500 bg-green-100">
+                    {/* Decorative elements */}
+                    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                      <motion.div
+                        animate={{ y: [0, -6, 0] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                        className="absolute top-4 right-4 w-4 h-4 bg-yellow-400 rounded-full"
+                      />
+                      <motion.div
+                        animate={{ y: [0, -8, 0] }}
+                        transition={{ duration: 1.8, repeat: Infinity, delay: 0.3 }}
+                        className="absolute top-6 right-12 w-3 h-3 bg-pink-500 rounded-full"
+                      />
+                    </div>
+                    
+                    <CardHeader className="relative">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="flex items-center gap-2 text-green-800">
+                            <motion.div
+                              animate={{ rotate: [0, 10, -10, 0] }}
+                              transition={{ duration: 1, repeat: Infinity }}
+                            >
+                              <Sparkles className="w-6 h-6 text-yellow-500" />
+                            </motion.div>
+                            <span className="font-black text-lg sm:text-xl">
+                              {selectedGame?.title || '🔍 Word Search'}
+                            </span>
+                          </CardTitle>
+                          {selectedGame && (
+                            <div className="flex gap-2 mt-2">
+                              <span className="text-xs px-3 py-1 bg-blue-500 text-white rounded-full font-bold border-2 border-blue-700">
+                                {selectedGame.difficulty || 'medium'}
+                              </span>
+                              {selectedGame.theme && selectedGame.theme !== 'general' && (
+                                <span className="text-xs px-3 py-1 bg-purple-500 text-white rounded-full font-bold border-2 border-purple-700 capitalize">
+                                  {selectedGame.theme}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        {isGameActive && (
+                          <motion.div
+                            animate={{ scale: [1, 1.1, 1] }}
+                            transition={{ repeat: Infinity, duration: 0.8 }}
+                            className="flex items-center gap-2 bg-red-500 text-white px-4 py-2 rounded-xl font-black text-xl border-4 border-red-700"
+                          >
+                            <Clock className="w-5 h-5" />
+                            <span className="font-mono">{elapsedTime}s</span>
+                          </motion.div>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4 relative">
+                      {!isGameActive && !userHasCompleted && (
+                        <motion.div
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <Button 
+                            onClick={handleStartGame} 
+                            className="w-full h-14 text-lg font-black bg-orange-500 hover:bg-orange-600 border-4 border-orange-700 text-white shadow-lg"
+                          >
+                            🎮 Start Game!
+                          </Button>
+                        </motion.div>
                       )}
+
+                      {!isGameActive && userHasCompleted && (
+                        <div className="w-full h-14 flex items-center justify-center bg-green-500 rounded-xl text-white font-black text-lg border-4 border-green-700">
+                          ✅ Game Completed!
                         </div>
                       )}
-                    </div>
-                    {isGameActive && (
-                      <motion.div
-                        animate={{ scale: [1, 1.05, 1] }}
-                        transition={{ repeat: Infinity, duration: 1 }}
-                        className="flex items-center gap-2 text-primary font-bold text-xl"
-                      >
-                        <Clock className="w-5 h-5" />
-                        <span className="font-mono">{elapsedTime}s</span>
-                        {selectedGame?.time_limit && (
-                          <span className="text-sm text-muted-foreground">
-                            / {selectedGame.time_limit}s
-                          </span>
-                        )}
-                      </motion.div>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {!isGameActive && !userHasCompleted && (
-                    <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                    >
-                      <Button onClick={handleStartGame} className="w-full h-12 text-base md:text-lg font-semibold bg-gradient-to-r from-primary to-secondary">
-                        ▶️ Start Game
-                      </Button>
-                    </motion.div>
-                  )}
 
-                  {!isGameActive && userHasCompleted && (
-                    <div className="w-full h-12 flex items-center justify-center bg-muted rounded-lg text-muted-foreground font-medium">
-                      ✓ Game Completed
-                    </div>
-                  )}
+                      {isGameActive && selectedGame?.hints_enabled && hintsUsed < 3 && (
+                        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
+                          <Button
+                            onClick={handleHint}
+                            variant="outline"
+                            className="w-full bg-yellow-400 hover:bg-yellow-500 border-4 border-yellow-600 text-yellow-800 font-bold"
+                            disabled={hintsUsed >= 3}
+                          >
+                            <Lightbulb className="w-5 h-5 mr-2" />
+                            💡 Get Hint ({3 - hintsUsed} left)
+                          </Button>
+                        </motion.div>
+                      )}
 
-                  {isGameActive && selectedGame?.hints_enabled && hintsUsed < 3 && (
-                    <Button
-                      onClick={handleHint}
-                      variant="outline"
-                      className="w-full"
-                      disabled={hintsUsed >= 3}
-                    >
-                      <Lightbulb className="w-4 h-4 mr-2" />
-                      Get Hint ({3 - hintsUsed} remaining)
-                    </Button>
-                  )}
+                      {selectedGame && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="flex flex-col items-center"
+                        >
+                          <WordSearchGrid
+                            grid={selectedGame.grid_data.grid}
+                            words={selectedGame.words}
+                            onWordFound={handleWordFound}
+                            foundWords={foundWords}
+                            isGameActive={isGameActive}
+                          />
+                        </motion.div>
+                      )}
 
-                  {selectedGame && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="flex flex-col items-center"
-                    >
-                      <WordSearchGrid
-                        grid={selectedGame.grid_data.grid}
-                        words={selectedGame.words}
-                        onWordFound={handleWordFound}
-                        foundWords={foundWords}
-                        isGameActive={isGameActive}
-                      />
-                    </motion.div>
-                  )}
-
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h3 className="font-semibold flex items-center gap-2">
-                        <Trophy className="w-5 h-5 text-yellow-500" />
-                        Words to Find
-                      </h3>
-                      <div className="text-2xl font-bold text-primary">
-                        {foundWords.size}/{selectedGame?.words.length || 0}
+                      {/* Words to Find Section */}
+                      <div className="space-y-3 bg-blue-100 p-4 rounded-xl border-4 border-blue-400">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-black text-blue-800 flex items-center gap-2 text-lg">
+                            <Trophy className="w-6 h-6 text-yellow-500" />
+                            🎯 Find These Words!
+                          </h3>
+                          <div className="bg-purple-500 text-white px-4 py-2 rounded-xl font-black text-xl border-4 border-purple-700">
+                            {foundWords.size}/{selectedGame?.words.length || 0}
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <AnimatePresence>
+                            {selectedGame?.words.map((word: string) => {
+                              const isFound = foundWords.has(word.toUpperCase());
+                              return (
+                                <motion.div
+                                  key={word}
+                                  initial={{ opacity: 0, scale: 0.8 }}
+                                  animate={{ 
+                                    opacity: 1, 
+                                    scale: 1,
+                                  }}
+                                  transition={{ duration: 0.3 }}
+                                  className={`px-3 py-2 rounded-xl text-sm font-bold text-center border-3 ${
+                                    isFound
+                                      ? 'bg-green-500 text-white line-through border-4 border-green-700 shadow-lg'
+                                      : 'bg-white border-4 border-gray-300 text-gray-700'
+                                  }`}
+                                >
+                                  {isFound && '✅ '}{word}
+                                </motion.div>
+                              );
+                            })}
+                          </AnimatePresence>
+                        </div>
                       </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <AnimatePresence>
-                        {selectedGame?.words.map((word: string) => {
-                          const isFound = foundWords.has(word.toUpperCase());
-                          return (
-                            <motion.div
-                              key={word}
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              animate={{ 
-                                opacity: 1, 
-                                scale: 1,
-                                backgroundColor: isFound ? 'rgb(34, 197, 94)' : undefined
-                              }}
-                              transition={{ duration: 0.3 }}
-                              className={`px-3 py-2 rounded-lg text-sm font-medium text-center ${
-                                isFound
-                                  ? 'bg-green-500 text-white line-through shadow-md'
-                                  : 'bg-muted hover:bg-muted/80'
-                              }`}
-                            >
-                              {isFound && '✓ '}{word}
-                            </motion.div>
-                          );
-                        })}
-                      </AnimatePresence>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+                    </CardContent>
+                  </Card>
+                </div>
 
-            <div>
-              {scoresLoading ? (
-                <p>Loading leaderboard...</p>
-              ) : (
-                <WordSearchLeaderboard scores={adaptedScores as any} />
-              )}
-            </div>
-          </div>
+                <div>
+                  {scoresLoading ? (
+                    <p className="text-center font-bold">Loading leaderboard...</p>
+                  ) : (
+                    <WordSearchLeaderboard scores={adaptedScores as any} />
+                  )}
+                </div>
+              </div>
 
-          <GameCelebration
-            show={showCelebration}
-            points={gameScore.points}
-            timeSeconds={gameScore.time}
-            onClose={() => setShowCelebration(false)}
-          />
-        </>
-      )}
+              <GameCelebration
+                show={showCelebration}
+                points={gameScore.points}
+                timeSeconds={gameScore.time}
+                onClose={() => setShowCelebration(false)}
+              />
+            </>
+          )}
         </TabsContent>
 
         <TabsContent value="quiz" className="space-y-4 mt-6">
           {quizGamesLoading ? (
-            <p>Loading quiz games...</p>
+            <div className="text-center py-8">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                className="inline-block"
+              >
+                <Brain className="w-12 h-12 text-purple-500" />
+              </motion.div>
+              <p className="font-bold text-lg mt-4">Loading quizzes...</p>
+            </div>
           ) : activeQuizzes.length === 0 ? (
-            <Card>
-              <CardContent className="py-8 text-center text-muted-foreground">
-                No active quiz games at the moment. Check back later!
+            <Card className="border-4 border-purple-400 bg-purple-100">
+              <CardContent className="py-8 text-center">
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <Brain className="w-16 h-16 text-purple-500 mx-auto mb-4" />
+                </motion.div>
+                <p className="font-bold text-purple-700 text-lg">
+                  No quizzes right now! 🧠
+                </p>
+                <p className="text-purple-600">Check back soon for brain games!</p>
               </CardContent>
             </Card>
           ) : isPlayingQuiz ? (
@@ -405,93 +515,119 @@ const AttendeeGames = () => {
                 {!selectedQuiz ? (
                   <div className="grid gap-4">
                     {activeQuizzes.map((quiz) => (
-                      <Card
+                      <motion.div
                         key={quiz.id}
-                        className="cursor-pointer hover:shadow-lg transition-shadow"
-                        onClick={() => setSelectedQuiz(quiz)}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
                       >
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            <Brain className="w-5 h-5 text-primary" />
-                            {quiz.title}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          {quiz.description && (
-                            <p className="text-sm text-muted-foreground mb-4">
-                              {quiz.description}
-                            </p>
-                          )}
-                          <div className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2">
-                              <span>{quiz.total_questions} Questions</span>
-                              <span className={`text-xs px-2 py-0.5 rounded-full ${
-                                quiz.play_mode === 'self_paced'
-                                  ? 'bg-blue-500/20 text-blue-700 dark:text-blue-300'
-                                  : 'bg-purple-500/20 text-purple-700 dark:text-purple-300'
-                              }`}>
-                                {quiz.play_mode === 'self_paced' ? 'Self-Paced' : 'Live'}
-                              </span>
+                        <Card
+                          className="cursor-pointer border-4 border-purple-500 bg-purple-100 hover:bg-purple-200 transition-colors"
+                          onClick={() => setSelectedQuiz(quiz)}
+                        >
+                          <CardHeader>
+                            <CardTitle className="flex items-center gap-2 text-purple-800">
+                              <motion.div
+                                animate={{ rotate: [0, 10, -10, 0] }}
+                                transition={{ duration: 1.5, repeat: Infinity }}
+                              >
+                                <Brain className="w-6 h-6 text-purple-600" />
+                              </motion.div>
+                              <span className="font-black">{quiz.title}</span>
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            {quiz.description && (
+                              <p className="text-sm text-purple-700 font-medium mb-4">
+                                {quiz.description}
+                              </p>
+                            )}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-bold border-2 border-blue-700">
+                                  {quiz.total_questions} Questions
+                                </span>
+                                <span className={`text-xs px-3 py-1 rounded-full font-bold border-2 ${
+                                  quiz.play_mode === 'self_paced'
+                                    ? 'bg-cyan-500 text-white border-cyan-700'
+                                    : 'bg-pink-500 text-white border-pink-700'
+                                }`}>
+                                  {quiz.play_mode === 'self_paced' ? '🎯 Self-Paced' : '🔴 Live'}
+                                </span>
+                              </div>
+                              <Button 
+                                size="sm"
+                                className="bg-green-500 hover:bg-green-600 border-2 border-green-700 font-bold"
+                              >
+                                {quiz.play_mode === 'self_paced' ? '🎮 Play!' : '🚀 Join!'}
+                              </Button>
                             </div>
-                            <Button size="sm">
-                              {quiz.play_mode === 'self_paced' ? 'Play Now' : 'Join Quiz'}
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
                     ))}
                   </div>
                 ) : (
-                  <Card>
+                  <Card className="border-4 border-purple-500 bg-purple-100">
                     <CardHeader>
-                      <CardTitle>{selectedQuiz.title}</CardTitle>
+                      <CardTitle className="text-purple-800 font-black flex items-center gap-2">
+                        <Brain className="w-6 h-6" />
+                        {selectedQuiz.title}
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       {selectedQuiz.description && (
-                        <p className="text-muted-foreground">{selectedQuiz.description}</p>
+                        <p className="text-purple-700 font-medium">{selectedQuiz.description}</p>
                       )}
-                      <div className="space-y-2">
+                      <div className="bg-white p-4 rounded-xl border-4 border-purple-300">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-muted-foreground">Total Questions:</span>
-                          <span className="font-semibold">{quizQuestions.length}</span>
+                          <span className="text-purple-700 font-bold">Total Questions:</span>
+                          <span className="bg-blue-500 text-white px-3 py-1 rounded-full font-black border-2 border-blue-700">
+                            {quizQuestions.length}
+                          </span>
                         </div>
                       </div>
 
                       {userHasCompletedQuiz ? (
-                        <div className="p-4 bg-muted rounded-lg text-center">
-                          ✓ Quiz Completed
+                        <div className="p-4 bg-green-500 rounded-xl text-center text-white font-black text-lg border-4 border-green-700">
+                          ✅ Quiz Completed!
                         </div>
                       ) : selectedQuiz.play_mode === 'self_paced' ? (
-                        <Button
-                          onClick={handleStartQuiz}
-                          className="w-full"
-                          size="lg"
-                          disabled={quizScoresLoading || !!userHasCompletedQuiz}
-                        >
-                          Start Quiz
-                        </Button>
+                        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
+                          <Button
+                            onClick={handleStartQuiz}
+                            className="w-full h-14 bg-orange-500 hover:bg-orange-600 border-4 border-orange-700 font-black text-lg"
+                            size="lg"
+                            disabled={quizScoresLoading || !!userHasCompletedQuiz}
+                          >
+                            🧠 Start Quiz!
+                          </Button>
+                        </motion.div>
                       ) : !quizSession ? (
-                        <div className="p-4 bg-muted rounded-lg text-center text-muted-foreground">
+                        <div className="p-4 bg-yellow-400 rounded-xl text-center font-bold text-yellow-800 border-4 border-yellow-600">
                           ⏳ Waiting for quiz to start...
                         </div>
                       ) : (
-                        <Button
-                          onClick={handleStartQuiz}
-                          className="w-full"
-                          size="lg"
-                          disabled={quizScoresLoading || !!userHasCompletedQuiz}
-                        >
-                          Join Quiz
-                        </Button>
+                        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
+                          <Button
+                            onClick={handleStartQuiz}
+                            className="w-full h-14 bg-green-500 hover:bg-green-600 border-4 border-green-700 font-black text-lg"
+                            size="lg"
+                            disabled={quizScoresLoading || !!userHasCompletedQuiz}
+                          >
+                            🚀 Join Quiz!
+                          </Button>
+                        </motion.div>
                       )}
 
-                      <Button
-                        variant="outline"
-                        onClick={() => setSelectedQuiz(null)}
-                        className="w-full"
-                      >
-                        Back to Quiz List
-                      </Button>
+                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.95 }}>
+                        <Button
+                          variant="outline"
+                          onClick={() => setSelectedQuiz(null)}
+                          className="w-full bg-gray-200 hover:bg-gray-300 border-4 border-gray-400 font-bold text-gray-700"
+                        >
+                          ← Back to Quiz List
+                        </Button>
+                      </motion.div>
                     </CardContent>
                   </Card>
                 )}
@@ -499,7 +635,7 @@ const AttendeeGames = () => {
 
               <div>
                 {quizLeaderboardLoading ? (
-                  <p>Loading leaderboard...</p>
+                  <p className="text-center font-bold">Loading leaderboard...</p>
                 ) : (
                   <WordSearchLeaderboard scores={quizAdaptedScores as any} />
                 )}

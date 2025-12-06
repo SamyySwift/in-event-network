@@ -10,6 +10,17 @@ interface WordSearchGridProps {
   isGameActive: boolean;
 }
 
+// Fun colors for the grid cells
+const CELL_COLORS = [
+  'bg-pink-200 border-pink-400',
+  'bg-blue-200 border-blue-400',
+  'bg-green-200 border-green-400',
+  'bg-yellow-200 border-yellow-400',
+  'bg-purple-200 border-purple-400',
+  'bg-cyan-200 border-cyan-400',
+  'bg-orange-200 border-orange-400',
+];
+
 export const WordSearchGrid = ({
   grid,
   words,
@@ -23,6 +34,12 @@ export const WordSearchGrid = ({
   const gridRef = useRef<HTMLDivElement>(null);
 
   const getCellKey = (row: number, col: number) => `${row}-${col}`;
+  
+  // Get a consistent color for each cell based on position
+  const getCellColor = (row: number, col: number) => {
+    const index = (row + col) % CELL_COLORS.length;
+    return CELL_COLORS[index];
+  };
 
   const checkWord = useCallback(() => {
     if (currentSelection.length === 0) return;
@@ -120,14 +137,14 @@ export const WordSearchGrid = ({
     if (gridLength > 15) {
       return 'w-5 h-5 text-[10px] sm:w-6 sm:h-6 sm:text-xs md:w-7 md:h-7 md:text-sm';
     }
-    return 'w-6 h-6 text-xs sm:w-7 sm:h-7 sm:text-sm md:w-8 md:h-8 md:text-base';
+    return 'w-7 h-7 text-xs sm:w-8 sm:h-8 sm:text-sm md:w-9 md:h-9 md:text-base';
   };
 
   return (
     <div className="inline-block select-none w-full overflow-x-auto touch-none">
       <div
         ref={gridRef}
-        className="grid gap-0.5 sm:gap-1 p-2 sm:p-4 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 rounded-lg border-2 border-primary/20 shadow-lg mx-auto select-none"
+        className="grid gap-1 sm:gap-1.5 p-3 sm:p-4 bg-blue-400 rounded-2xl border-4 border-blue-600 shadow-xl mx-auto select-none"
         style={{
           gridTemplateColumns: `repeat(${grid[0].length}, minmax(0, 1fr))`,
           maxWidth: 'min(100%, 600px)',
@@ -139,7 +156,7 @@ export const WordSearchGrid = ({
             const key = getCellKey(rowIndex, colIndex);
             const isSelected = selectedCells.has(key);
             const isCurrentlySelecting = currentSelection.includes(key);
-            const selectionIndex = currentSelection.indexOf(key);
+            const cellColor = getCellColor(rowIndex, colIndex);
 
             return (
               <motion.div
@@ -149,10 +166,10 @@ export const WordSearchGrid = ({
                 data-col={colIndex}
                 className={cn(
                   getCellClasses(),
-                  'flex items-center justify-center font-bold rounded cursor-pointer select-none touch-none',
-                  isSelected && 'bg-gradient-to-br from-green-400 to-green-600 text-white shadow-lg scale-105 ring-2 ring-green-300',
-                  isCurrentlySelecting && !isSelected && 'bg-gradient-to-br from-primary to-secondary text-white shadow-md scale-105 ring-2 ring-primary/50',
-                  !isSelected && !isCurrentlySelecting && 'bg-white dark:bg-gray-800 hover:bg-primary/10 shadow-sm'
+                  'flex items-center justify-center font-black rounded-lg cursor-pointer select-none touch-none border-3 shadow-sm',
+                  isSelected && 'bg-green-500 text-white border-green-700 scale-110 shadow-lg',
+                  isCurrentlySelecting && !isSelected && 'bg-orange-500 text-white border-orange-700 scale-110 shadow-md',
+                  !isSelected && !isCurrentlySelecting && `${cellColor} text-gray-800`
                 )}
                 style={{
                   userSelect: 'none',
@@ -164,13 +181,13 @@ export const WordSearchGrid = ({
                 animate={
                   isCurrentlySelecting && !isSelected
                     ? {
-                        scale: [1, 1.1, 1.05],
+                        scale: [1, 1.15, 1.1],
                         transition: { duration: 0.2 }
                       }
                     : isSelected
                     ? {
                         rotate: [0, -5, 5, 0],
-                        scale: 1.05,
+                        scale: 1.1,
                         transition: { duration: 0.3 }
                       }
                     : { scale: 1, rotate: 0 }

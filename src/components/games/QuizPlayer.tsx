@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Clock, Trophy, CheckCircle2, XCircle } from 'lucide-react';
+import { Clock, Trophy, CheckCircle2, XCircle, Star, Sparkles, Zap } from 'lucide-react';
 import { QuizQuestion } from '@/hooks/useQuizGames';
 import { useQuizAnswers } from '@/hooks/useQuizAnswers';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,6 +15,13 @@ interface QuizPlayerProps {
   isLiveMode?: boolean;
   quizGameId?: string;
 }
+
+const OPTION_COLORS = [
+  { bg: 'bg-pink-400', border: 'border-pink-600', hover: 'hover:bg-pink-500' },
+  { bg: 'bg-blue-400', border: 'border-blue-600', hover: 'hover:bg-blue-500' },
+  { bg: 'bg-green-400', border: 'border-green-600', hover: 'hover:bg-green-500' },
+  { bg: 'bg-orange-400', border: 'border-orange-600', hover: 'hover:bg-orange-500' },
+];
 
 export const QuizPlayer = ({ 
   questions, 
@@ -127,60 +133,112 @@ export const QuizPlayer = ({
   }, [externalQuestionIndex, isLiveMode]);
 
   if (!currentQuestion) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center p-8">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
+        >
+          <Star className="w-12 h-12 text-yellow-400" />
+        </motion.div>
+      </div>
+    );
   }
 
   const isCorrect = selectedAnswer === currentQuestion.correct_answer;
 
   return (
-    <Card className="relative overflow-hidden">
-      <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-primary via-secondary to-accent">
+    <Card className="relative overflow-hidden bg-cyan-400 border-4 border-blue-500 shadow-[8px_8px_0px_0px_rgba(59,130,246,0.5)]">
+      {/* Decorative animated elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          className="h-full bg-white/30"
+          animate={{ y: [0, -10, 0], rotate: [0, 10, 0] }}
+          transition={{ repeat: Infinity, duration: 3 }}
+          className="absolute top-4 right-4 w-8 h-8 bg-yellow-400 rounded-full"
+        />
+        <motion.div
+          animate={{ y: [0, 10, 0], rotate: [0, -10, 0] }}
+          transition={{ repeat: Infinity, duration: 2.5 }}
+          className="absolute top-12 left-4 w-6 h-6 bg-pink-400 rounded-full"
+        />
+        <motion.div
+          animate={{ scale: [1, 1.2, 1], rotate: [0, 180, 360] }}
+          transition={{ repeat: Infinity, duration: 4 }}
+          className="absolute bottom-4 right-8"
+        >
+          <Star className="w-6 h-6 text-yellow-300 fill-yellow-300" />
+        </motion.div>
+        <motion.div
+          animate={{ scale: [1, 1.3, 1] }}
+          transition={{ repeat: Infinity, duration: 2 }}
+          className="absolute bottom-8 left-6"
+        >
+          <Sparkles className="w-5 h-5 text-white" />
+        </motion.div>
+      </div>
+
+      {/* Progress bar at top */}
+      <div className="absolute top-0 left-0 right-0 h-3 bg-yellow-300 border-b-2 border-yellow-500">
+        <motion.div
+          className="h-full bg-green-400"
           initial={{ width: 0 }}
           animate={{ width: `${progress}%` }}
           transition={{ duration: 0.5 }}
         />
       </div>
 
-      <CardHeader className="space-y-4">
+      <CardHeader className="space-y-4 pt-6">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span>Question {currentQuestionIndex + 1} of {questions.length}</span>
+          <div className="flex items-center gap-2 bg-white/90 px-4 py-2 rounded-full border-2 border-purple-400 shadow-md">
+            <Zap className="w-5 h-5 text-purple-500" />
+            <span className="font-bold text-purple-600">
+              Question {currentQuestionIndex + 1} of {questions.length}
+            </span>
           </div>
           <motion.div
-            animate={{ scale: timeLeft <= 5 ? [1, 1.1, 1] : 1 }}
+            animate={{ scale: timeLeft <= 5 ? [1, 1.2, 1] : 1 }}
             transition={{ repeat: timeLeft <= 5 ? Infinity : 0, duration: 0.5 }}
-            className={`flex items-center gap-2 font-bold text-lg ${
-              timeLeft <= 5 ? 'text-destructive' : 'text-primary'
+            className={`flex items-center gap-2 px-4 py-2 rounded-full border-3 shadow-md font-black text-xl ${
+              timeLeft <= 5 
+                ? 'bg-red-400 border-red-600 text-white' 
+                : 'bg-orange-400 border-orange-600 text-white'
             }`}
           >
-            <Clock className="w-5 h-5" />
+            <Clock className="w-6 h-6" />
             {timeLeft}s
           </motion.div>
         </div>
 
-        <Progress value={progress} className="h-2" />
+        {/* Custom playful progress bar */}
+        <div className="h-4 bg-white/50 rounded-full border-2 border-blue-400 overflow-hidden">
+          <motion.div
+            className="h-full bg-purple-500"
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.5 }}
+          />
+        </div>
 
-        <CardTitle className="text-xl md:text-2xl">
+        <CardTitle className="text-xl md:text-2xl bg-white/90 p-4 rounded-2xl border-3 border-purple-400 shadow-lg text-purple-700 font-black">
           {currentQuestion.question_text}
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-4 pb-6">
         <AnimatePresence mode="wait">
           <motion.div
             key={currentQuestionIndex}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-3"
+            className="grid grid-cols-1 gap-3"
           >
             {currentQuestion.options.map((option, index) => {
               const isSelected = selectedAnswer === option;
               const isCorrectAnswer = option === currentQuestion.correct_answer;
               const showCorrect = showFeedback && isCorrectAnswer;
               const showIncorrect = showFeedback && isSelected && !isCorrect;
+              const colors = OPTION_COLORS[index % OPTION_COLORS.length];
 
               return (
                 <motion.div
@@ -189,28 +247,46 @@ export const QuizPlayer = ({
                   whileTap={{ scale: showFeedback ? 1 : 0.98 }}
                 >
                   <Button
-                    variant={
-                      showCorrect
-                        ? 'default'
-                        : showIncorrect
-                        ? 'destructive'
+                    variant="outline"
+                    className={`w-full h-auto min-h-[70px] text-left justify-start p-4 transition-all border-3 shadow-[4px_4px_0px_0px_rgba(0,0,0,0.2)] font-bold text-lg ${
+                      showCorrect 
+                        ? 'bg-green-400 border-green-600 text-white' 
+                        : showIncorrect 
+                        ? 'bg-red-400 border-red-600 text-white' 
                         : isSelected
-                        ? 'secondary'
-                        : 'outline'
-                    }
-                    className={`w-full h-auto min-h-[60px] text-left justify-start p-4 transition-all ${
-                      showCorrect ? 'bg-green-500 hover:bg-green-600' : ''
+                        ? `${colors.bg} ${colors.border} text-white`
+                        : `bg-white ${colors.border} text-gray-800 ${colors.hover}`
                     }`}
                     onClick={() => handleAnswerSelect(option)}
                     disabled={showFeedback}
                   >
-                    <div className="flex items-center gap-3 w-full">
-                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-background/20 flex items-center justify-center font-bold">
+                    <div className="flex items-center gap-4 w-full">
+                      <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-black text-lg border-2 ${
+                        showCorrect || showIncorrect || isSelected
+                          ? 'bg-white/30 border-white/50 text-white'
+                          : `${colors.bg} border-white text-white`
+                      }`}>
                         {String.fromCharCode(65 + index)}
                       </div>
-                      <span className="flex-1">{option}</span>
-                      {showCorrect && <CheckCircle2 className="w-5 h-5" />}
-                      {showIncorrect && <XCircle className="w-5 h-5" />}
+                      <span className="flex-1 text-base">{option}</span>
+                      {showCorrect && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring" }}
+                        >
+                          <CheckCircle2 className="w-8 h-8" />
+                        </motion.div>
+                      )}
+                      {showIncorrect && (
+                        <motion.div
+                          initial={{ scale: 0 }}
+                          animate={{ scale: 1 }}
+                          transition={{ type: "spring" }}
+                        >
+                          <XCircle className="w-8 h-8" />
+                        </motion.div>
+                      )}
                     </div>
                   </Button>
                 </motion.div>
@@ -221,25 +297,44 @@ export const QuizPlayer = ({
 
         {showFeedback && (
           <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className={`p-4 rounded-lg text-center font-semibold ${
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className={`p-4 rounded-2xl text-center font-black text-xl border-3 shadow-lg ${
               isCorrect
-                ? 'bg-green-500/10 text-green-700 dark:text-green-400'
-                : 'bg-red-500/10 text-red-700 dark:text-red-400'
+                ? 'bg-green-300 border-green-500 text-green-800'
+                : 'bg-red-300 border-red-500 text-red-800'
             }`}
           >
-            {isCorrect ? '✨ Correct! Well done!' : '❌ Incorrect. The correct answer was highlighted.'}
+            <div className="flex items-center justify-center gap-2">
+              {isCorrect ? (
+                <>
+                  <motion.div animate={{ rotate: [0, 20, -20, 0] }} transition={{ repeat: Infinity, duration: 0.5 }}>
+                    <Star className="w-8 h-8 text-yellow-500 fill-yellow-500" />
+                  </motion.div>
+                  <span>Correct! Amazing!</span>
+                  <motion.div animate={{ rotate: [0, -20, 20, 0] }} transition={{ repeat: Infinity, duration: 0.5 }}>
+                    <Star className="w-8 h-8 text-yellow-500 fill-yellow-500" />
+                  </motion.div>
+                </>
+              ) : (
+                <span>Oops! Try again next time!</span>
+              )}
+            </div>
           </motion.div>
         )}
 
-        <div className="flex items-center justify-between text-sm text-muted-foreground pt-4 border-t">
-          <div className="flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-primary" />
-            <span>Score: {score}</span>
+        <div className="flex items-center justify-between bg-white/90 p-4 rounded-2xl border-3 border-yellow-400 shadow-md">
+          <div className="flex items-center gap-3">
+            <motion.div
+              animate={{ rotate: [0, 10, -10, 0] }}
+              transition={{ repeat: Infinity, duration: 2 }}
+            >
+              <Trophy className="w-8 h-8 text-yellow-500" />
+            </motion.div>
+            <span className="font-black text-xl text-yellow-600">Score: {score}</span>
           </div>
-          <div>
-            Correct: {correctCount}/{questions.length}
+          <div className="flex items-center gap-2 bg-purple-400 px-4 py-2 rounded-full border-2 border-purple-600">
+            <span className="font-bold text-white">Correct: {correctCount}/{questions.length}</span>
           </div>
         </div>
       </CardContent>

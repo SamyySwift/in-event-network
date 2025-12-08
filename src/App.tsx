@@ -1,65 +1,98 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { AttendeeEventProvider } from '@/contexts/AttendeeEventContext';
 import { Toaster } from '@/components/ui/toaster';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
+import LazyLoadErrorBoundary from '@/components/LazyLoadErrorBoundary';
 
-// Public pages
+// Eager load critical path components
 import Landing from '@/pages/Landing';
 import Login from '@/pages/Login';
 import Register from '@/pages/Register';
-import AuthCallback from '@/pages/AuthCallback';
-import Guide from '@/pages/Guide';
 import NotFound from '@/pages/NotFound';
-import ScanQR from '@/pages/ScanQR';
-import BuyTickets from '@/pages/BuyTickets';
+
+// Lazy load with retry wrapper for network resilience
+const lazyWithRetry = (importFn: () => Promise<any>) => {
+  return lazy(() => 
+    importFn().catch((error) => {
+      // Retry once after a short delay
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(importFn());
+        }, 1500);
+      });
+    })
+  );
+};
+
+// Public pages - lazy loaded with retry
+const AuthCallback = lazyWithRetry(() => import('@/pages/AuthCallback'));
+const Guide = lazyWithRetry(() => import('@/pages/Guide'));
+const ScanQR = lazyWithRetry(() => import('@/pages/ScanQR'));
+const BuyTickets = lazyWithRetry(() => import('@/pages/BuyTickets'));
+const Index = lazyWithRetry(() => import('@/pages/Index'));
+const DataPrivacy = lazyWithRetry(() => import('@/pages/DataPrivacy'));
+const TermsOfService = lazyWithRetry(() => import('@/pages/TermsOfService'));
 
 // Host pages
-import HostDashboard from '@/pages/host/HostDashboard';
+const HostDashboard = lazyWithRetry(() => import('@/pages/host/HostDashboard'));
 
 // Admin pages
-import AdminDashboard from '@/pages/admin/AdminDashboard';
-import AdminEvents from '@/pages/admin/AdminEvents';
-import AdminAttendees from '@/pages/admin/AdminAttendees';
-import AdminSpeakers from '@/pages/admin/AdminSpeakers';
-import AdminAnnouncements from '@/pages/admin/AdminAnnouncements';
-import AdminSchedule from '@/pages/admin/AdminSchedule';
-import AdminPolls from '@/pages/admin/AdminPolls';
-import AdminFacilities from '@/pages/admin/AdminFacilities';
-import AdminRules from '@/pages/admin/AdminRules';
-import AdminQuestions from '@/pages/admin/AdminQuestions';
-import AdminSuggestions from '@/pages/admin/AdminSuggestions';
-import AdminNotifications from '@/pages/admin/AdminNotifications';
-import AdminSettings from '@/pages/admin/AdminSettings';
-import AdminTickets from '@/pages/admin/AdminTickets';
-import AdminCheckIn from '@/pages/admin/AdminCheckIn';
-import AdminGames from '@/pages/admin/AdminGames';
+const AdminDashboard = lazyWithRetry(() => import('@/pages/admin/AdminDashboard'));
+const AdminEvents = lazyWithRetry(() => import('@/pages/admin/AdminEvents'));
+const AdminAttendees = lazyWithRetry(() => import('@/pages/admin/AdminAttendees'));
+const AdminSpeakers = lazyWithRetry(() => import('@/pages/admin/AdminSpeakers'));
+const AdminAnnouncements = lazyWithRetry(() => import('@/pages/admin/AdminAnnouncements'));
+const AdminSchedule = lazyWithRetry(() => import('@/pages/admin/AdminSchedule'));
+const AdminPolls = lazyWithRetry(() => import('@/pages/admin/AdminPolls'));
+const AdminFacilities = lazyWithRetry(() => import('@/pages/admin/AdminFacilities'));
+const AdminRules = lazyWithRetry(() => import('@/pages/admin/AdminRules'));
+const AdminQuestions = lazyWithRetry(() => import('@/pages/admin/AdminQuestions'));
+const AdminSuggestions = lazyWithRetry(() => import('@/pages/admin/AdminSuggestions'));
+const AdminNotifications = lazyWithRetry(() => import('@/pages/admin/AdminNotifications'));
+const AdminSettings = lazyWithRetry(() => import('@/pages/admin/AdminSettings'));
+const AdminTickets = lazyWithRetry(() => import('@/pages/admin/AdminTickets'));
+const AdminCheckIn = lazyWithRetry(() => import('@/pages/admin/AdminCheckIn'));
+const AdminGames = lazyWithRetry(() => import('@/pages/admin/AdminGames'));
 
 // Attendee pages
-import AttendeeDashboard from '@/pages/attendee/AttendeeDashboard';
-import AttendeeProfile from '@/pages/attendee/AttendeeProfile';
-import AttendeeNetworking from '@/pages/attendee/AttendeeNetworking';
-import AttendeeAnnouncements from '@/pages/attendee/AttendeeAnnouncements';
-import AttendeeSchedule from '@/pages/attendee/AttendeeSchedule';
-import AttendeePolls from '@/pages/attendee/AttendeePolls';
-import AttendeeQuestions from '@/pages/attendee/AttendeeQuestions';
-import AttendeeSuggestions from '@/pages/attendee/AttendeeSuggestions';
-import AttendeeRules from '@/pages/attendee/AttendeeRules';
-import AttendeeNotifications from '@/pages/attendee/AttendeeNotifications';
-import AttendeeOnboarding from '@/pages/attendee/AttendeeOnboarding';
-import AttendeeMap from '@/pages/attendee/AttendeeMap';
-import AttendeeSearch from '@/pages/attendee/AttendeeSearch';
-import AttendeeGames from '@/pages/attendee/AttendeeGames';
+const AttendeeDashboard = lazyWithRetry(() => import('@/pages/attendee/AttendeeDashboard'));
+const AttendeeProfile = lazyWithRetry(() => import('@/pages/attendee/AttendeeProfile'));
+const AttendeeNetworking = lazyWithRetry(() => import('@/pages/attendee/AttendeeNetworking'));
+const AttendeeAnnouncements = lazyWithRetry(() => import('@/pages/attendee/AttendeeAnnouncements'));
+const AttendeeSchedule = lazyWithRetry(() => import('@/pages/attendee/AttendeeSchedule'));
+const AttendeePolls = lazyWithRetry(() => import('@/pages/attendee/AttendeePolls'));
+const AttendeeQuestions = lazyWithRetry(() => import('@/pages/attendee/AttendeeQuestions'));
+const AttendeeSuggestions = lazyWithRetry(() => import('@/pages/attendee/AttendeeSuggestions'));
+const AttendeeRules = lazyWithRetry(() => import('@/pages/attendee/AttendeeRules'));
+const AttendeeNotifications = lazyWithRetry(() => import('@/pages/attendee/AttendeeNotifications'));
+const AttendeeOnboarding = lazyWithRetry(() => import('@/pages/attendee/AttendeeOnboarding'));
+const AttendeeMap = lazyWithRetry(() => import('@/pages/attendee/AttendeeMap'));
+const AttendeeSearch = lazyWithRetry(() => import('@/pages/attendee/AttendeeSearch'));
+const AttendeeGames = lazyWithRetry(() => import('@/pages/attendee/AttendeeGames'));
+const AttendeeMyTickets = lazyWithRetry(() => import('@/pages/attendee/AttendeeMyTickets'));
 
-import Index from '@/pages/Index';
 import { AdminEventProvider } from '@/hooks/useAdminEventContext';
-import DataPrivacy from '@/pages/DataPrivacy';
-import TermsOfService from '@/pages/TermsOfService';
-import AttendeeMyTickets from '@/pages/attendee/AttendeeMyTickets';
 
 const queryClient = new QueryClient();
+
+// Loading fallback
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  </div>
+);
+
+// Wrapped lazy component with error boundary
+const LazyPage = ({ children }: { children: React.ReactNode }) => (
+  <LazyLoadErrorBoundary>
+    <Suspense fallback={<PageLoader />}>
+      {children}
+    </Suspense>
+  </LazyLoadErrorBoundary>
+);
 
 function App() {
   return (
@@ -68,43 +101,47 @@ function App() {
         <Router>
           <div className="App">
             <Routes>
-              {/* Public routes */}
+              {/* Public routes - eager loaded */}
               <Route path="/" element={<Landing />} />
-              <Route path="/guide" element={<Guide />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
-              <Route path="/auth/callback" element={<AuthCallback />} />
-              <Route path="/scan" element={<ScanQR />} />
-              <Route path="/join/:eventKey" element={<Index />} />
-              <Route path="/buy-tickets/:eventKey" element={<BuyTickets />} />
-              <Route path="/buy" element={<BuyTickets />} />
-              <Route path="/privacy" element={<DataPrivacy />} />
-              <Route path="/terms" element={<TermsOfService />} />
+              
+              {/* Public routes - lazy loaded */}
+              <Route path="/guide" element={<LazyPage><Guide /></LazyPage>} />
+              <Route path="/auth/callback" element={<LazyPage><AuthCallback /></LazyPage>} />
+              <Route path="/scan" element={<LazyPage><ScanQR /></LazyPage>} />
+              <Route path="/join/:eventKey" element={<LazyPage><Index /></LazyPage>} />
+              <Route path="/buy-tickets/:eventKey" element={<LazyPage><BuyTickets /></LazyPage>} />
+              <Route path="/buy" element={<LazyPage><BuyTickets /></LazyPage>} />
+              <Route path="/privacy" element={<LazyPage><DataPrivacy /></LazyPage>} />
+              <Route path="/terms" element={<LazyPage><TermsOfService /></LazyPage>} />
 
-              {/* Admin routes - now wrapped in AdminEventProvider */}
+              {/* Admin routes - wrapped in AdminEventProvider */}
               <Route
                 path="/admin/*"
                 element={
                   <ProtectedRoute requiredRole="host">
                     <AdminEventProvider>
-                      <Routes>
-                        <Route path="" element={<AdminDashboard />} />
-                        <Route path="events" element={<AdminEvents />} />
-                        <Route path="attendees" element={<AdminAttendees />} />
-                        <Route path="speakers" element={<AdminSpeakers />} />
-                        <Route path="announcements" element={<AdminAnnouncements />} />
-                        <Route path="schedule" element={<AdminSchedule />} />
-                        <Route path="polls" element={<AdminPolls />} />
-                        <Route path="facilities" element={<AdminFacilities />} />
-                        <Route path="rules" element={<AdminRules />} />
-                        <Route path="questions" element={<AdminQuestions />} />
-                        <Route path="suggestions" element={<AdminSuggestions />} />
-                        <Route path="notifications" element={<AdminNotifications />} />
-                        <Route path="settings" element={<AdminSettings />} />
-                        <Route path="tickets" element={<AdminTickets />} />
-                        <Route path="checkin" element={<AdminCheckIn />} />
-                        <Route path="games" element={<AdminGames />} />
-                      </Routes>
+                      <LazyPage>
+                        <Routes>
+                          <Route path="" element={<AdminDashboard />} />
+                          <Route path="events" element={<AdminEvents />} />
+                          <Route path="attendees" element={<AdminAttendees />} />
+                          <Route path="speakers" element={<AdminSpeakers />} />
+                          <Route path="announcements" element={<AdminAnnouncements />} />
+                          <Route path="schedule" element={<AdminSchedule />} />
+                          <Route path="polls" element={<AdminPolls />} />
+                          <Route path="facilities" element={<AdminFacilities />} />
+                          <Route path="rules" element={<AdminRules />} />
+                          <Route path="questions" element={<AdminQuestions />} />
+                          <Route path="suggestions" element={<AdminSuggestions />} />
+                          <Route path="notifications" element={<AdminNotifications />} />
+                          <Route path="settings" element={<AdminSettings />} />
+                          <Route path="tickets" element={<AdminTickets />} />
+                          <Route path="checkin" element={<AdminCheckIn />} />
+                          <Route path="games" element={<AdminGames />} />
+                        </Routes>
+                      </LazyPage>
                     </AdminEventProvider>
                   </ProtectedRoute>
                 }
@@ -115,7 +152,7 @@ function App() {
                 path="/host"
                 element={
                   <ProtectedRoute requiredRole="host">
-                    <HostDashboard />
+                    <LazyPage><HostDashboard /></LazyPage>
                   </ProtectedRoute>
                 }
               />
@@ -126,7 +163,7 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeDashboard />
+                      <LazyPage><AttendeeDashboard /></LazyPage>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -136,7 +173,7 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeDashboard />
+                      <LazyPage><AttendeeDashboard /></LazyPage>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -144,17 +181,17 @@ function App() {
               <Route
                 path="/attendee/my-tickets"
                 element={
-                <ProtectedRoute requiredRole="attendee">
-                  <AttendeeMyTickets />
-                </ProtectedRoute>
-              }
-            />
+                  <ProtectedRoute requiredRole="attendee">
+                    <LazyPage><AttendeeMyTickets /></LazyPage>
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path="/attendee/profile"
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeProfile />
+                      <LazyPage><AttendeeProfile /></LazyPage>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -164,7 +201,7 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeNetworking />
+                      <LazyPage><AttendeeNetworking /></LazyPage>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -174,7 +211,7 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeAnnouncements />
+                      <LazyPage><AttendeeAnnouncements /></LazyPage>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -184,7 +221,7 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeSchedule />
+                      <LazyPage><AttendeeSchedule /></LazyPage>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -194,7 +231,7 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeePolls />
+                      <LazyPage><AttendeePolls /></LazyPage>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -204,7 +241,7 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeQuestions />
+                      <LazyPage><AttendeeQuestions /></LazyPage>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -214,7 +251,7 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeSuggestions />
+                      <LazyPage><AttendeeSuggestions /></LazyPage>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -224,7 +261,7 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeRules />
+                      <LazyPage><AttendeeRules /></LazyPage>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -234,7 +271,7 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeGames />
+                      <LazyPage><AttendeeGames /></LazyPage>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -244,7 +281,7 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeNotifications />
+                      <LazyPage><AttendeeNotifications /></LazyPage>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -254,7 +291,7 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeOnboarding />
+                      <LazyPage><AttendeeOnboarding /></LazyPage>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -264,7 +301,7 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeMap />
+                      <LazyPage><AttendeeMap /></LazyPage>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }
@@ -274,7 +311,7 @@ function App() {
                 element={
                   <AttendeeEventProvider>
                     <ProtectedRoute requiredRole="attendee">
-                      <AttendeeSearch />
+                      <LazyPage><AttendeeSearch /></LazyPage>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
                 }

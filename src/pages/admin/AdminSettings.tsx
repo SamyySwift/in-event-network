@@ -35,6 +35,7 @@ import {
 } from "lucide-react";
 import { DeleteAccountDialog } from "@/components/profile/DeleteAccountDialog";
 import { BrandingSettings } from "@/components/admin/BrandingSettings";
+import { LiveBroadcastSettings } from "@/components/admin/LiveBroadcastSettings";
 import { toast } from "sonner";
 function AdminSettingsContent() {
   const { currentUser } = useAuth();
@@ -111,6 +112,7 @@ function AdminSettingsContent() {
         {/* Branding Settings */}
         <TabsContent value="branding" className="space-y-6">
           <BrandingSettings />
+          <LiveBroadcastSettings />
         </TabsContent>
 
         {/* General Settings */}

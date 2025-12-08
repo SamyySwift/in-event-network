@@ -968,6 +968,8 @@ export type Database = {
           font_family: string | null
           host_id: string | null
           id: string
+          is_live: boolean | null
+          live_stream_url: string | null
           location: string | null
           logo_url: string | null
           name: string
@@ -990,6 +992,8 @@ export type Database = {
           font_family?: string | null
           host_id?: string | null
           id?: string
+          is_live?: boolean | null
+          live_stream_url?: string | null
           location?: string | null
           logo_url?: string | null
           name: string
@@ -1012,6 +1016,8 @@ export type Database = {
           font_family?: string | null
           host_id?: string | null
           id?: string
+          is_live?: boolean | null
+          live_stream_url?: string | null
           location?: string | null
           logo_url?: string | null
           name?: string

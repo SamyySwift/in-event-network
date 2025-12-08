@@ -64,6 +64,7 @@ import {
 } from "@/components/ui/carousel";
 import { FloatingAIAssistant } from "@/components/attendee/FloatingAIAssistant";
 import { FloatingGameBanner } from "@/components/attendee/FloatingGameBanner";
+import { FloatingLiveBanner } from "@/components/attendee/FloatingLiveBanner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 // Advertisement Carousel Component
 const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) => {
@@ -652,6 +653,9 @@ function AttendeeDashboardContent() {
           <div className="absolute -bottom-4 -right-4 w-32 h-32 bg-white/10 rounded-full z-0"></div>
           <div className="absolute -top-8 -left-8 w-24 h-24 bg-white/5 rounded-full z-0"></div>
         </div>
+
+        {/* Floating Live Banner */}
+        <FloatingLiveBanner eventId={currentEventId} />
 
         {/* Floating Game Banner */}
         <FloatingGameBanner eventId={currentEventId} />

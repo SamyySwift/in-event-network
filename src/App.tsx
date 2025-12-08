@@ -73,6 +73,7 @@ const AttendeeMap = lazyWithRetry(() => import('@/pages/attendee/AttendeeMap'));
 const AttendeeSearch = lazyWithRetry(() => import('@/pages/attendee/AttendeeSearch'));
 const AttendeeGames = lazyWithRetry(() => import('@/pages/attendee/AttendeeGames'));
 const AttendeeMyTickets = lazyWithRetry(() => import('@/pages/attendee/AttendeeMyTickets'));
+const AttendeeLive = lazyWithRetry(() => import('@/pages/attendee/AttendeeLive'));
 
 import { AdminEventProvider } from '@/hooks/useAdminEventContext';
 
@@ -274,6 +275,12 @@ function App() {
                       <LazyPage><AttendeeGames /></LazyPage>
                     </ProtectedRoute>
                   </AttendeeEventProvider>
+                }
+              />
+              <Route
+                path="/attendee/live"
+                element={
+                  <LazyPage><AttendeeLive /></LazyPage>
                 }
               />
               <Route

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useRef } from 'react';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { X, Maximize2, Minimize2, Move } from 'lucide-react';
 import { useLiveStream, extractYouTubeVideoId } from '@/hooks/useLiveStream';
 
@@ -11,7 +11,7 @@ interface FloatingPiPPlayerProps {
 export const FloatingPiPPlayer = ({ eventId, onClose }: FloatingPiPPlayerProps) => {
   const { liveStreamUrl } = useLiveStream(eventId);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [position, setPosition] = useState({ x: 16, y: 16 });
+  const constraintsRef = useRef(null);
 
   const videoId = liveStreamUrl ? extractYouTubeVideoId(liveStreamUrl) : null;
 
@@ -22,25 +22,21 @@ export const FloatingPiPPlayer = ({ eventId, onClose }: FloatingPiPPlayerProps) 
   const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&mute=0&playsinline=1`;
 
   return (
-    <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8, y: 100 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.8, y: 100 }}
-        drag
-        dragMomentum={false}
-        onDragEnd={(_, info) => {
-          setPosition(prev => ({
-            x: prev.x + info.offset.x,
-            y: prev.y + info.offset.y
-          }));
-        }}
-        className="fixed z-50 cursor-move"
-        style={{
-          right: position.x,
-          bottom: position.y,
-        }}
-      >
+    <>
+      {/* Invisible constraint boundary */}
+      <div ref={constraintsRef} className="fixed inset-0 pointer-events-none z-40" />
+      
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          drag
+          dragMomentum={false}
+          dragConstraints={constraintsRef}
+          dragElastic={0}
+          className="fixed right-4 bottom-4 z-50 cursor-move touch-none"
+        >
         <div 
           className={`relative overflow-hidden rounded-2xl shadow-2xl border-4 border-red-500 bg-black transition-all duration-300 ${
             isExpanded ? 'w-80 h-48 sm:w-96 sm:h-56' : 'w-48 h-28 sm:w-56 sm:h-32'
@@ -92,7 +88,8 @@ export const FloatingPiPPlayer = ({ eventId, onClose }: FloatingPiPPlayerProps) 
             allowFullScreen
           />
         </div>
-      </motion.div>
-    </AnimatePresence>
+        </motion.div>
+      </AnimatePresence>
+    </>
   );
 };

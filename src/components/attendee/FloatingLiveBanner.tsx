@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Radio, X, ChevronRight, Sparkles, Star, Circle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLiveStream } from '@/hooks/useLiveStream';
-import { FloatingPiPPlayer } from './FloatingPiPPlayer';
+import { usePiP } from '@/contexts/PiPContext';
 
 interface FloatingLiveBannerProps {
   eventId: string | null;
@@ -11,8 +11,8 @@ interface FloatingLiveBannerProps {
 
 export const FloatingLiveBanner = ({ eventId }: FloatingLiveBannerProps) => {
   const { isLive, isLoading } = useLiveStream(eventId);
+  const { isVisible: isPiPVisible, showPiP } = usePiP();
   const [isDismissed, setIsDismissed] = React.useState(false);
-  const [showPiP, setShowPiP] = React.useState(false);
 
   // Check if banner was dismissed in this session
   React.useEffect(() => {
@@ -46,24 +46,24 @@ export const FloatingLiveBanner = ({ eventId }: FloatingLiveBannerProps) => {
   };
 
   const handleWatchNow = () => {
-    setShowPiP(true);
-    setIsDismissed(true);
+    if (eventId) {
+      showPiP(eventId);
+      setIsDismissed(true);
+    }
   };
 
-  const handleClosePiP = () => {
-    setShowPiP(false);
-    setIsDismissed(false);
-    sessionStorage.removeItem(`live_banner_dismissed_${eventId}`);
-  };
-
+  // Don't show banner if stream not live (unless PiP is showing)
   if (isLoading || !isLive) {
-    return showPiP ? <FloatingPiPPlayer eventId={eventId} onClose={handleClosePiP} /> : null;
+    return null;
+  }
+  
+  // Don't show banner if PiP is already visible
+  if (isPiPVisible) {
+    return null;
   }
 
   return (
     <>
-      {showPiP && <FloatingPiPPlayer eventId={eventId} onClose={handleClosePiP} />}
-      
       {!isDismissed && (
         <AnimatePresence>
           <motion.div

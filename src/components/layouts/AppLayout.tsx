@@ -43,6 +43,8 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { NotificationBadge } from "@/components/notifications/NotificationBadge";
 import { ExpandableTabs } from "@/components/ui/expandable-tabs";
 import { FloatingDidYouKnow } from "@/components/attendee/FloatingDidYouKnow";
+import { FloatingPiPPlayer } from "@/components/attendee/FloatingPiPPlayer";
+import { PiPProvider } from "@/contexts/PiPContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -219,7 +221,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
     // "/attendee/notifications",
   ];
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col md:flex-row">
+    <PiPProvider>
+      {/* Global PiP Player */}
+      <FloatingPiPPlayer />
+      
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col md:flex-row">
       {/* Mobile Header */}
       <header className="md:hidden bg-white dark:bg-gray-800 border-b dark:border-gray-700 py-4 px-4 flex items-center justify-between sticky top-0 z-50 shadow-sm">
         <div className="flex items-center">
@@ -489,9 +495,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               </Badge>
             )}
           </button>
-        </nav>
+      </nav>
       )}
     </div>
+    </PiPProvider>
   );
 };
 export default AppLayout;

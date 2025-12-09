@@ -34,6 +34,7 @@ const AttendeeGames = () => {
   const [showCelebration, setShowCelebration] = useState(false);
   const [gameScore, setGameScore] = useState({ points: 0, time: 0 });
   const [hintsUsed, setHintsUsed] = useState(0);
+  const [hintCells, setHintCells] = useState<Set<string>>(new Set());
   const [isPlayingQuiz, setIsPlayingQuiz] = useState(false);
   const [showQuizResults, setShowQuizResults] = useState(false);
   const [quizResults, setQuizResults] = useState({ score: 0, correct: 0, time: 0 });
@@ -75,6 +76,7 @@ const AttendeeGames = () => {
     setIsGameActive(true);
     setElapsedTime(0);
     setHintsUsed(0);
+    setHintCells(new Set());
     setShowCelebration(false);
   };
 
@@ -86,7 +88,35 @@ const AttendeeGames = () => {
     );
     
     if (remainingWords.length > 0) {
-      const randomWord = remainingWords[Math.floor(Math.random() * remainingWords.length)];
+      const randomWord = remainingWords[Math.floor(Math.random() * remainingWords.length)].toUpperCase();
+      
+      // Find the word position from grid_data.positions
+      const positions = selectedGame.grid_data?.positions || [];
+      const wordPosition = positions.find((p: any) => p.word === randomWord);
+      
+      if (wordPosition) {
+        // Calculate all cells for this word
+        const newHintCells = new Set<string>();
+        const { startRow, startCol, direction } = wordPosition;
+        
+        let dx = 0, dy = 0;
+        if (direction === 'horizontal') { dx = 1; dy = 0; }
+        else if (direction === 'vertical') { dx = 0; dy = 1; }
+        else if (direction === 'diagonal') { dx = 1; dy = 1; }
+        
+        for (let i = 0; i < randomWord.length; i++) {
+          const cellKey = `${startRow + i * dy}-${startCol + i * dx}`;
+          newHintCells.add(cellKey);
+        }
+        
+        setHintCells(newHintCells);
+        
+        // Clear hint glow after 5 seconds
+        setTimeout(() => {
+          setHintCells(new Set());
+        }, 5000);
+      }
+      
       toast.info(`🔍 Hint: Look for "${randomWord}"`, {
         duration: 5000,
       });
@@ -410,6 +440,7 @@ const AttendeeGames = () => {
                             onWordFound={handleWordFound}
                             foundWords={foundWords}
                             isGameActive={isGameActive}
+                            hintCells={hintCells}
                           />
                         </motion.div>
                       )}

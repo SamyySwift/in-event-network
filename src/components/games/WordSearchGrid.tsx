@@ -8,6 +8,7 @@ interface WordSearchGridProps {
   onWordFound: (word: string) => void;
   foundWords: Set<string>;
   isGameActive: boolean;
+  hintCells?: Set<string>;
 }
 
 // Fun colors for the grid cells
@@ -27,6 +28,7 @@ export const WordSearchGrid = ({
   onWordFound,
   foundWords,
   isGameActive,
+  hintCells = new Set(),
 }: WordSearchGridProps) => {
   const [selectedCells, setSelectedCells] = useState<Set<string>>(new Set());
   const [isDragging, setIsDragging] = useState(false);
@@ -40,6 +42,9 @@ export const WordSearchGrid = ({
     const index = (row + col) % CELL_COLORS.length;
     return CELL_COLORS[index];
   };
+
+  // Check if cell is a hint cell
+  const isHintCell = (row: number, col: number) => hintCells.has(getCellKey(row, col));
 
   const checkWord = useCallback(() => {
     if (currentSelection.length === 0) return;
@@ -169,7 +174,8 @@ export const WordSearchGrid = ({
                   'flex items-center justify-center font-black rounded-lg cursor-pointer select-none touch-none border-3 shadow-sm',
                   isSelected && 'bg-green-500 text-white border-green-700 scale-110 shadow-lg',
                   isCurrentlySelecting && !isSelected && 'bg-orange-500 text-white border-orange-700 scale-110 shadow-md',
-                  !isSelected && !isCurrentlySelecting && `${cellColor} text-gray-800`
+                  !isSelected && !isCurrentlySelecting && isHintCell(rowIndex, colIndex) && 'bg-yellow-300 border-yellow-500 text-gray-800 shadow-[0_0_15px_rgba(250,204,21,0.8)]',
+                  !isSelected && !isCurrentlySelecting && !isHintCell(rowIndex, colIndex) && `${cellColor} text-gray-800`
                 )}
                 style={{
                   userSelect: 'none',

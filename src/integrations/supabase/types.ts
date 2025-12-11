@@ -1046,6 +1046,7 @@ export type Database = {
           name: string
           rules: string | null
           updated_at: string | null
+          voice_note_url: string | null
         }
         Insert: {
           category?: string
@@ -1062,6 +1063,7 @@ export type Database = {
           name: string
           rules?: string | null
           updated_at?: string | null
+          voice_note_url?: string | null
         }
         Update: {
           category?: string
@@ -1078,6 +1080,7 @@ export type Database = {
           name?: string
           rules?: string | null
           updated_at?: string | null
+          voice_note_url?: string | null
         }
         Relationships: [
           {

@@ -19,6 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Facility } from "@/hooks/useAdminFacilities";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { useToast } from "@/hooks/use-toast";
+import { VoiceNoteRecorder } from "./VoiceNoteRecorder";
 import {
   Ambulance,
   Hospital,
@@ -101,7 +102,7 @@ type EditFacilityDialogProps = {
   facility: Facility | null;
   events: { id: string; name: string }[];
   isUpdating: boolean;
-  onSubmit: (form: FormData & { imageFile?: File }) => void;
+  onSubmit: (form: FormData & { imageFile?: File; voiceNoteFile?: Blob }) => void;
   onClose: () => void;
   open: boolean;
 };
@@ -115,6 +116,7 @@ const EditFacilityDialog: React.FC<EditFacilityDialogProps> = ({
   open
 }) => {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [voiceNoteBlob, setVoiceNoteBlob] = useState<Blob | null>(null);
   const { toast } = useToast();
   const {
     register, handleSubmit, setValue, watch, reset, formState: { errors }
@@ -147,6 +149,7 @@ const EditFacilityDialog: React.FC<EditFacilityDialogProps> = ({
         category: facility.category || "facility",
       });
       setSelectedImage(null);
+      setVoiceNoteBlob(null);
     }
   }, [facility, reset, events]);
 
@@ -170,7 +173,7 @@ const EditFacilityDialog: React.FC<EditFacilityDialogProps> = ({
   };
 
   const handleDialogSubmit = (data: FormData) => {
-    onSubmit({ ...data, imageFile: selectedImage || undefined });
+    onSubmit({ ...data, imageFile: selectedImage || undefined, voiceNoteFile: voiceNoteBlob || undefined });
   };
 
   return (
@@ -275,6 +278,13 @@ const EditFacilityDialog: React.FC<EditFacilityDialogProps> = ({
               accept="image/*"
             />
           </div>
+
+          <VoiceNoteRecorder
+            onVoiceNoteChange={(blob) => setVoiceNoteBlob(blob)}
+            currentVoiceNoteUrl={facility?.voice_note_url}
+            maxSizeMB={1}
+            disabled={isUpdating}
+          />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Label>Contact Type</Label>

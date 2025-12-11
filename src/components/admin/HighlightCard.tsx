@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -131,6 +132,27 @@ export const HighlightCard = ({ highlight }: HighlightCardProps) => {
               id={`publish-${highlight.id}`}
               checked={highlight.is_published}
               onCheckedChange={handlePublishToggle}
+            />
+          </div>
+
+          {/* Display Order */}
+          <div className="flex items-center justify-between">
+            <Label htmlFor={`order-${highlight.id}`} className="text-sm">
+              Display Order
+            </Label>
+            <Input
+              id={`order-${highlight.id}`}
+              type="number"
+              min={1}
+              value={highlight.display_order}
+              onChange={(e) => {
+                const newOrder = parseInt(e.target.value) || 1;
+                updateHighlight.mutate({
+                  id: highlight.id,
+                  updates: { display_order: newOrder }
+                });
+              }}
+              className="w-20 text-center"
             />
           </div>
         </CardContent>

@@ -14,6 +14,7 @@ export interface Facility {
   contact_type?: 'none' | 'phone' | 'whatsapp';
   contact_info?: string;
   image_url?: string;
+  voice_note_url?: string;
   icon_type?: string;
   event_id: string;
   created_by?: string;
@@ -57,7 +58,7 @@ export const useAdminFacilities = (eventId?: string) => {
   });
 
   const createFacilityMutation = useMutation({
-    mutationFn: async (facilityData: Omit<Facility, 'id' | 'created_at' | 'updated_at'> & { imageFile?: File }) => {
+    mutationFn: async (facilityData: Omit<Facility, 'id' | 'created_at' | 'updated_at'> & { imageFile?: File; voiceNoteFile?: Blob }) => {
       if (!currentUser?.id) {
         throw new Error('User not authenticated');
       }
@@ -94,6 +95,31 @@ export const useAdminFacilities = (eventId?: string) => {
         console.log('Image uploaded successfully:', imageUrl);
       }
 
+      let voiceNoteUrl: string | null = null;
+
+      // Handle voice note upload if provided
+      if (facilityData.voiceNoteFile) {
+        console.log('Uploading voice note...');
+        const fileName = `voice-${Date.now()}.webm`;
+        const filePath = `voice-notes/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('facility-images')
+          .upload(filePath, facilityData.voiceNoteFile);
+
+        if (uploadError) {
+          console.error('Error uploading voice note:', uploadError);
+          throw new Error('Failed to upload voice note');
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('facility-images')
+          .getPublicUrl(filePath);
+
+        voiceNoteUrl = publicUrl;
+        console.log('Voice note uploaded successfully:', voiceNoteUrl);
+      }
+
       // Clean the data - remove empty strings and undefined values
       const cleanData = {
         name: facilityData.name?.trim(),
@@ -109,6 +135,7 @@ export const useAdminFacilities = (eventId?: string) => {
         created_by: currentUser.id,
         image_url: imageUrl,
         category: facilityData.category || 'facility',
+        voice_note_url: voiceNoteUrl,
       };
 
       console.log('Cleaned facility data:', cleanData);
@@ -145,7 +172,7 @@ export const useAdminFacilities = (eventId?: string) => {
   });
 
   const updateFacilityMutation = useMutation({
-    mutationFn: async ({ id, imageFile, ...facilityData }: Partial<Facility> & { id: string; imageFile?: File }) => {
+    mutationFn: async ({ id, imageFile, voiceNoteFile, ...facilityData }: Partial<Facility> & { id: string; imageFile?: File; voiceNoteFile?: Blob }) => {
       console.log('Updating facility:', id, facilityData);
       
       if (!currentUser?.id) {
@@ -177,6 +204,31 @@ export const useAdminFacilities = (eventId?: string) => {
         imageUrl = publicUrl;
         console.log('Image uploaded successfully:', imageUrl);
       }
+
+      let voiceNoteUrl: string | undefined = undefined;
+
+      // Handle voice note upload if provided
+      if (voiceNoteFile) {
+        console.log('Uploading voice note...');
+        const fileName = `voice-${Date.now()}.webm`;
+        const filePath = `voice-notes/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('facility-images')
+          .upload(filePath, voiceNoteFile);
+
+        if (uploadError) {
+          console.error('Error uploading voice note:', uploadError);
+          throw new Error('Failed to upload voice note');
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('facility-images')
+          .getPublicUrl(filePath);
+
+        voiceNoteUrl = publicUrl;
+        console.log('Voice note uploaded successfully:', voiceNoteUrl);
+      }
       
       // Clean the data - remove empty strings and undefined values
       const cleanData: any = {};
@@ -193,6 +245,7 @@ export const useAdminFacilities = (eventId?: string) => {
       if (facilityData.icon_type) cleanData.icon_type = facilityData.icon_type;
       if (facilityData.event_id) cleanData.event_id = facilityData.event_id;
       if (imageUrl !== undefined) cleanData.image_url = imageUrl;
+      if (voiceNoteUrl !== undefined) cleanData.voice_note_url = voiceNoteUrl;
       if (facilityData.category) cleanData.category = facilityData.category;
 
       const { data, error } = await supabase

@@ -12,6 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { useToast } from "@/hooks/use-toast";
+import { VoiceNoteRecorder } from "./VoiceNoteRecorder";
 
 // EXPANDED ICON SELECTION (up to 25 entries)
 const ICON_OPTIONS = [{
@@ -149,7 +150,7 @@ const formSchema = z.object({
 });
 type FormData = z.infer<typeof formSchema>;
 type CreateFacilityDialogProps = {
-  onSubmit: (form: FormData & { imageFile?: File }) => void;
+  onSubmit: (form: FormData & { imageFile?: File; voiceNoteFile?: Blob }) => void;
   events: {
     id: string;
     name: string;
@@ -167,6 +168,7 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [voiceNoteBlob, setVoiceNoteBlob] = useState<Blob | null>(null);
   const { toast } = useToast();
   const {
     register,
@@ -211,6 +213,7 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
         eventId: defaultEventId || ""
       });
       setSelectedImage(null);
+      setVoiceNoteBlob(null);
     }
   }, [open, reset, defaultEventId]);
 
@@ -242,9 +245,10 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
       return;
     }
 
-    onSubmit({ ...data, imageFile: selectedImage || undefined });
+    onSubmit({ ...data, imageFile: selectedImage || undefined, voiceNoteFile: voiceNoteBlob || undefined });
     setOpen(false);
     setSelectedImage(null);
+    setVoiceNoteBlob(null);
   };
 
   return (
@@ -365,6 +369,12 @@ const CreateFacilityDialog: React.FC<CreateFacilityDialogProps> = ({
               accept="image/*"
             />
           </div>
+
+          <VoiceNoteRecorder
+            onVoiceNoteChange={(blob) => setVoiceNoteBlob(blob)}
+            maxSizeMB={1}
+            disabled={isCreating}
+          />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

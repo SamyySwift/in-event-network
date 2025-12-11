@@ -13,6 +13,7 @@ export interface Facility {
   contact_type?: 'none' | 'phone' | 'whatsapp';
   contact_info?: string;
   image_url?: string;
+  voice_note_url?: string;
   icon_type?: string;
   event_id?: string;
   created_at: string;
@@ -40,7 +41,7 @@ export const useAttendeeFacilities = () => {
       // Get facilities for user's current event only (optimized - single query)
       const { data: facilities, error } = await supabase
         .from('facilities')
-        .select('id, name, description, location, rules, contact_type, contact_info, image_url, icon_type, event_id, created_at, category')
+        .select('id, name, description, location, rules, contact_type, contact_info, image_url, voice_note_url, icon_type, event_id, created_at, category')
         .eq('event_id', userProfile.current_event_id)
         .order('created_at', { ascending: false });
 

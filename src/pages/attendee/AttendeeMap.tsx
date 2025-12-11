@@ -13,6 +13,7 @@ import {
   Clock,
   Users,
   Sparkles,
+  Volume2,
 } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import AttendeeRouteGuard from "@/components/attendee/AttendeeRouteGuard";
@@ -401,6 +402,23 @@ const AttendeeMap = () => {
                     <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
                       {selectedFacility.description}
                     </p>
+                  </div>
+                )}
+
+                {/* Voice Note */}
+                {selectedFacility.voice_note_url && (
+                  <div className="p-4 bg-primary/5 rounded-xl">
+                    <h4 className="font-semibold mb-3 flex items-center gap-2">
+                      <Volume2 className="h-4 w-4 text-primary" />
+                      Audio Description
+                    </h4>
+                    <audio 
+                      controls 
+                      className="w-full" 
+                      src={selectedFacility.voice_note_url}
+                    >
+                      Your browser does not support the audio element.
+                    </audio>
                   </div>
                 )}
 

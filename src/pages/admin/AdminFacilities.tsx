@@ -194,6 +194,7 @@ function AdminFacilitiesContent() {
                   event_id: form.eventId,
                   image_url: undefined,
                   imageFile: form.imageFile,
+                  voiceNoteFile: form.voiceNoteFile,
                   category: form.category || 'facility',
                 });
               }}
@@ -305,7 +306,8 @@ function AdminFacilitiesContent() {
                 contact_info: form.contactInfo || undefined,
                 icon_type: form.iconType,
                 event_id: form.eventId,
-                imageFile: form.imageFile, // Pass the image file for upload
+                imageFile: form.imageFile,
+                voiceNoteFile: form.voiceNoteFile,
               });
               setEditDialogOpen(false);
             }}

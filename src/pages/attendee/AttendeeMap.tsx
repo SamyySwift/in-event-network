@@ -14,6 +14,7 @@ import {
   Users,
   Sparkles,
   Volume2,
+  Mic,
 } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
 import AttendeeRouteGuard from "@/components/attendee/AttendeeRouteGuard";
@@ -159,7 +160,13 @@ const FacilityCard: React.FC<FacilityCardProps> = ({ facility, onClick, isSelect
 
           {/* Action Button */}
           <div className="flex items-center justify-between pt-2">
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              {facility.voice_note_url && (
+                <div className="flex items-center gap-1 text-primary">
+                  <Mic className="h-4 w-4" />
+                  <span className="font-medium">Audio</span>
+                </div>
+              )}
               {facility.contact_info && ContactIcon && (
                 <div className="flex items-center gap-1">
                   <ContactIcon className="h-3 w-3" />

@@ -946,66 +946,93 @@ function AttendeeDashboardContent() {
               </div>
             </div>
             <div className="grid gap-4">
-              {recentAnnouncements.map((announcement) => (
-                <Card
-                  key={announcement.id}
-                  className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 border-l-4 border-l-blue-500 bg-white backdrop-blur-sm relative z-10"
-                >
-                  <CardContent className="p-4 sm:p-6 bg-white/95 backdrop-blur-sm">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 sm:gap-6">
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-lg text-gray-900 mb-2 break-words">
-                          {announcement.title}
-                        </h3>
-                        <div className="text-gray-600 leading-relaxed break-words">
+              {recentAnnouncements.map((announcement, index) => {
+                const priorityColors = {
+                  high: {
+                    border: "border-l-red-500",
+                    bg: "bg-gradient-to-r from-red-50 via-white to-orange-50",
+                    badge: "bg-gradient-to-r from-red-500 to-pink-500 text-white border-0",
+                    icon: "from-red-500 to-pink-500",
+                    accent: "text-red-600",
+                  },
+                  normal: {
+                    border: "border-l-blue-500",
+                    bg: "bg-gradient-to-r from-blue-50 via-white to-indigo-50",
+                    badge: "bg-gradient-to-r from-blue-500 to-indigo-500 text-white border-0",
+                    icon: "from-blue-500 to-indigo-500",
+                    accent: "text-blue-600",
+                  },
+                  low: {
+                    border: "border-l-slate-400",
+                    bg: "bg-gradient-to-r from-slate-50 via-white to-gray-50",
+                    badge: "bg-gradient-to-r from-slate-400 to-gray-500 text-white border-0",
+                    icon: "from-slate-400 to-gray-500",
+                    accent: "text-slate-600",
+                  },
+                };
+                const colors = priorityColors[announcement.priority as keyof typeof priorityColors] || priorityColors.normal;
+
+                return (
+                  <Card
+                    key={announcement.id}
+                    className={`border-0 shadow-lg hover:shadow-2xl transition-all duration-300 border-l-4 ${colors.border} ${colors.bg} backdrop-blur-sm relative z-10 overflow-hidden group hover:-translate-y-1`}
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    {/* Decorative accent */}
+                    <div className={`absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${colors.icon} opacity-5 rounded-full -translate-y-1/2 translate-x-1/2`} />
+                    
+                    <CardContent className="p-5 sm:p-6 relative">
+                      <div className="flex flex-col gap-3">
+                        {/* Header row with title and badge */}
+                        <div className="flex items-start justify-between gap-3">
+                          <h3 className={`font-bold text-lg text-gray-900 group-hover:${colors.accent} transition-colors flex-1 min-w-0`}>
+                            {announcement.title}
+                          </h3>
+                          <Badge className={`${colors.badge} font-semibold text-xs px-2.5 py-1 rounded-full shadow-sm shrink-0`}>
+                            {announcement.priority}
+                          </Badge>
+                        </div>
+
+                        {/* Content */}
+                        <div className="text-gray-600 leading-relaxed">
                           {expandedAnnouncements.has(announcement.id) ? (
                             announcement.content
                               .split("\n")
-                              .map((paragraph, index) => (
-                                <p key={index} className="mb-2 last:mb-0">
+                              .map((paragraph, idx) => (
+                                <p key={idx} className="mb-2 last:mb-0">
                                   {paragraph}
                                 </p>
                               ))
                           ) : (
-                            <p>{truncateContent(announcement.content)}</p>
+                            <p className="line-clamp-2">{truncateContent(announcement.content)}</p>
                           )}
+                        </div>
 
-                          {announcement.content.length > 150 && (
+                        {/* Footer with see more and date */}
+                        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                          {announcement.content.length > 150 ? (
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() =>
-                                toggleAnnouncementExpanded(announcement.id)
-                              }
-                              className="mt-2 h-auto p-1 text-blue-600 hover:text-blue-800 font-medium"
+                              onClick={() => toggleAnnouncementExpanded(announcement.id)}
+                              className={`h-auto p-0 ${colors.accent} hover:opacity-80 font-medium text-sm`}
                             >
-                              <Eye className="h-3 w-3 mr-1" />
-                              {expandedAnnouncements.has(announcement.id)
-                                ? "See less"
-                                : "See more"}
+                              <Eye className="h-4 w-4 mr-1.5" />
+                              {expandedAnnouncements.has(announcement.id) ? "See less" : "See more"}
                             </Button>
+                          ) : (
+                            <div />
                           )}
+                          <span className="text-xs text-gray-400 flex items-center gap-1.5">
+                            <Clock className="h-3.5 w-3.5" />
+                            {formatDate(announcement.created_at)}
+                          </span>
                         </div>
                       </div>
-                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 flex-shrink-0">
-                        <Badge
-                          variant={
-                            announcement.priority === "high"
-                              ? "destructive"
-                              : "outline"
-                          }
-                          className="font-medium self-start"
-                        >
-                          {announcement.priority}
-                        </Badge>
-                        <span className="text-xs text-gray-500 whitespace-nowrap">
-                          {formatDate(announcement.created_at)}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         )}

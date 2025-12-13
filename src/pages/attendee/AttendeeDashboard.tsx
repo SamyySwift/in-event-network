@@ -837,86 +837,86 @@ function AttendeeDashboardContent() {
 
         {/* Event Facilities Card */}
         <div className="mb-8 relative z-10">
-          <Card className="border-0 shadow-xl bg-white backdrop-blur-sm overflow-hidden group hover:shadow-2xl transition-all duration-300 relative z-10">
-            <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/90 to-green-50/90 z-0"></div>
-            <CardHeader className="relative z-20 pb-4 bg-white/50 backdrop-blur-sm">
-              <div className="flex items-center gap-3">
-                <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center">
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-emerald-50 via-white to-teal-50 backdrop-blur-sm overflow-hidden group hover:shadow-2xl transition-all duration-300 relative z-10 border-l-4 border-l-emerald-500">
+            {/* Decorative elements */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500 to-teal-500 opacity-5 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-br from-green-400 to-emerald-500 opacity-5 rounded-full translate-y-1/2 -translate-x-1/2" />
+            
+            <CardHeader className="relative z-20 pb-4">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:scale-105 transition-transform duration-300">
                   <MapPin className="h-7 w-7 text-white" />
                 </div>
                 <div>
-                  <CardTitle className="text-2xl">Event Facilities</CardTitle>
-                  <CardDescription className="text-base">
+                  <CardTitle className="text-2xl font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">Event Facilities</CardTitle>
+                  <CardDescription className="text-base text-gray-500">
                     Explore venue amenities and services
                   </CardDescription>
                 </div>
               </div>
             </CardHeader>
 
-            <CardContent className="relative z-20 pb-6 bg-white/80 backdrop-blur-sm">
+            <CardContent className="relative z-20 pb-6">
               {facilities && facilities.length > 0 ? (
                 <>
-                  <p className="text-gray-600 mb-4">
-                    Discover {facilities.length} facilities available at the
+                  <p className="text-gray-600 mb-5 leading-relaxed">
+                    Discover <span className="font-semibold text-emerald-600">{facilities.length} facilities</span> available at the
                     venue, including dining, restrooms, meeting spaces, and
                     other essential services.
                   </p>
 
-                  {/* Show first 3 facilities */}
+                  {/* Facility cards with colorful styling */}
                   <div className="space-y-3">
-                    {facilities.slice(0, 3).map((facility) => (
-                      <div key={facility.id} className="flex items-center gap-3 p-3 bg-white/60 rounded-lg border">
-                        <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                          <FacilityIcon iconType={facility.icon_type} className="h-4 w-4 text-emerald-600" />
+                    {facilities.slice(0, 3).map((facility, index) => {
+                      const colors = [
+                        { bg: "bg-gradient-to-r from-emerald-50 to-teal-50", iconBg: "bg-gradient-to-br from-emerald-500 to-teal-500", border: "border-emerald-100 hover:border-emerald-200" },
+                        { bg: "bg-gradient-to-r from-cyan-50 to-blue-50", iconBg: "bg-gradient-to-br from-cyan-500 to-blue-500", border: "border-cyan-100 hover:border-cyan-200" },
+                        { bg: "bg-gradient-to-r from-violet-50 to-purple-50", iconBg: "bg-gradient-to-br from-violet-500 to-purple-500", border: "border-violet-100 hover:border-violet-200" },
+                      ];
+                      const color = colors[index % colors.length];
+
+                      return (
+                        <div 
+                          key={facility.id} 
+                          className={`flex items-center gap-4 p-4 ${color.bg} rounded-xl border ${color.border} shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer group/item`}
+                          onClick={() => navigate("/attendee/map")}
+                        >
+                          <div className={`w-10 h-10 ${color.iconBg} rounded-xl flex items-center justify-center shadow-sm group-hover/item:scale-110 transition-transform duration-200`}>
+                            <FacilityIcon iconType={facility.icon_type} className="h-5 w-5 text-white" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900">{facility.name}</p>
+                            {facility.location && (
+                              <p className="text-xs text-gray-500 truncate mt-0.5">{facility.location}</p>
+                            )}
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-gray-400 group-hover/item:text-gray-600 group-hover/item:translate-x-1 transition-all" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-900 truncate">{facility.name}</p>
-                          {facility.location && (
-                            <div className="flex items-center gap-1 text-xs text-gray-500 truncate">
-                              <MapPin
-                                className="h-3 w-3 text-emerald-600 cursor-pointer hover:text-emerald-700"
-                                onClick={() => {
-                                  const encoded = encodeURIComponent(facility.location);
-                                  window.open(`https://www.google.com/maps/search/?api=1&query=${encoded}`, "_blank");
-                                }}
-                                aria-label="Open in Google Maps"
-                              />
-                              <span
-                                className="cursor-pointer hover:text-emerald-700"
-                                onClick={() => {
-                                  const encoded = encodeURIComponent(facility.location);
-                                  window.open(`https://www.google.com/maps/search/?api=1&query=${encoded}`, "_blank");
-                                }}
-                              >
-                                {facility.location}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   {facilities.length > 3 && (
-                    <p className="text-xs text-gray-500 mt-3 text-center">
+                    <p className="text-sm text-emerald-600 font-medium mt-4 text-center">
                       +{facilities.length - 3} more facilities available
                     </p>
                   )}
                 </>
               ) : (
-                <div className="text-center py-4">
-                  <MapPin className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-gray-500">
+                <div className="text-center py-6">
+                  <div className="w-16 h-16 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <MapPin className="h-8 w-8 text-gray-400" />
+                  </div>
+                  <p className="text-gray-500">
                     No facilities information available
                   </p>
                 </div>
               )}
             </CardContent>
 
-            <CardFooter className="relative z-20 bg-white/90 backdrop-blur-sm">
+            <CardFooter className="relative z-20 pt-0">
               <Button
-                variant="outline"
-                className="w-full"
+                className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-lg shadow-emerald-500/25 border-0"
                 onClick={() => navigate("/attendee/map")}
               >
                 <MapPin className="mr-2 h-4 w-4" />

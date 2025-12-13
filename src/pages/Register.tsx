@@ -413,14 +413,14 @@ const Register = () => {
       </div>
       {/* Event Banner Section - Show when coming from QR code and we have event data */}
       {isFromQRCode && banner && (
-        <div className="sm:mx-auto sm:w-full sm:max-w-2xl mb-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-2xl mb-8 px-4">
           <Card className="overflow-hidden shadow-lg bg-black/40 border border-white/10 backdrop-blur-xl text-white">
             {banner.banner_url && (
-              <div className="h-48 w-full overflow-hidden">
+              <div className="w-full">
                 <img
                   src={banner.banner_url}
                   alt={banner.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-auto object-contain"
                 />
               </div>
             )}
@@ -440,7 +440,7 @@ const Register = () => {
                     {banner.description}
                   </p>
                 )}
-                <div className="flex flex-wrap justify-center gap-4 text-sm text-white/60">
+                <div className="flex flex-wrap justify-center gap-4 text-sm text-white/60 mb-6">
                   {banner.host_name && (
                     <div className="flex items-center gap-1">
                       <User className="h-4 w-4" />
@@ -458,6 +458,39 @@ const Register = () => {
                     <span>
                       {new Date(banner.start_time).toLocaleDateString()}
                     </span>
+                  </div>
+                </div>
+
+                {/* Event Features Description */}
+                <div className="bg-white/5 rounded-lg p-4 border border-white/10">
+                  <h3 className="text-sm font-semibold text-cyan-400 mb-3">
+                    Join to unlock these features:
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3 text-left text-sm">
+                    <div className="flex items-start gap-2">
+                      <Users className="h-4 w-4 text-purple-400 mt-0.5 shrink-0" />
+                      <span className="text-white/80">Network with other attendees</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="h-4 w-4 text-cyan-400 mt-0.5 shrink-0" />
+                      <span className="text-white/80">Ask speakers questions</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <MapPin className="h-4 w-4 text-green-400 mt-0.5 shrink-0" />
+                      <span className="text-white/80">Navigate facilities & restrooms</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Briefcase className="h-4 w-4 text-yellow-400 mt-0.5 shrink-0" />
+                      <span className="text-white/80">View sessions & connect with speakers</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Network className="h-4 w-4 text-pink-400 mt-0.5 shrink-0" />
+                      <span className="text-white/80">Play interactive games</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <Calendar className="h-4 w-4 text-orange-400 mt-0.5 shrink-0" />
+                      <span className="text-white/80">Get real-time announcements</span>
+                    </div>
                   </div>
                 </div>
               </div>

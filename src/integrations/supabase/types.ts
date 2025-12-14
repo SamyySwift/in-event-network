@@ -1510,6 +1510,7 @@ export type Database = {
           id: string
           instagram_link: string | null
           linkedin_link: string | null
+          messaging_preference: string | null
           name: string | null
           networking_preferences: string[] | null
           networking_visible: boolean | null
@@ -1536,6 +1537,7 @@ export type Database = {
           id: string
           instagram_link?: string | null
           linkedin_link?: string | null
+          messaging_preference?: string | null
           name?: string | null
           networking_preferences?: string[] | null
           networking_visible?: boolean | null
@@ -1562,6 +1564,7 @@ export type Database = {
           id?: string
           instagram_link?: string | null
           linkedin_link?: string | null
+          messaging_preference?: string | null
           name?: string | null
           networking_preferences?: string[] | null
           networking_visible?: boolean | null

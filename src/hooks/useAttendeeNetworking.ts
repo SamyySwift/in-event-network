@@ -21,6 +21,8 @@ interface AttendeeProfile {
   instagram_link?: string;
   website_link?: string;
   networking_visible?: boolean;
+  messaging_preference?: string;
+  whatsapp_number?: string;
   created_at?: string;
 }
 
@@ -62,6 +64,8 @@ export const useAttendeeNetworking = () => {
             github_link: row.github_link,
             instagram_link: row.instagram_link,
             website_link: row.website_link,
+            messaging_preference: row.messaging_preference,
+            whatsapp_number: row.whatsapp_number,
             created_at: row.created_at,
           })) as AttendeeProfile[];
 

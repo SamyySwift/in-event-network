@@ -1524,6 +1524,7 @@ export type Database = {
           twitter_link: string | null
           updated_at: string
           website_link: string | null
+          whatsapp_number: string | null
         }
         Insert: {
           access_key?: string | null
@@ -1551,6 +1552,7 @@ export type Database = {
           twitter_link?: string | null
           updated_at?: string
           website_link?: string | null
+          whatsapp_number?: string | null
         }
         Update: {
           access_key?: string | null
@@ -1578,6 +1580,7 @@ export type Database = {
           twitter_link?: string | null
           updated_at?: string
           website_link?: string | null
+          whatsapp_number?: string | null
         }
         Relationships: [
           {

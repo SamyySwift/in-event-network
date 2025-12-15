@@ -626,32 +626,30 @@ const AttendeeProfile = () => {
             isEditing={isEditing}
           >
             {isEditing ? (
-              <div className="space-y-2">
-                <div className="relative">
-                  <Textarea
-                    placeholder="Tell others about yourself..."
-                    value={profileData.bio}
-                    onChange={(e) =>
-                      setProfileData({ ...profileData, bio: e.target.value })
-                    }
-                    className="min-h-[100px] resize-none"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleGenerateBio}
-                    disabled={isGeneratingBio || (!profileData.name && !profileData.company && !selectedNiche)}
-                    className="absolute bottom-2 right-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-                  >
-                    {isGeneratingBio ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Sparkles className="h-4 w-4" />
-                    )}
-                    <span className="ml-2">Generate Bio</span>
-                  </Button>
-                </div>
+              <div className="space-y-3">
+                <Textarea
+                  placeholder="Tell others about yourself..."
+                  value={profileData.bio}
+                  onChange={(e) =>
+                    setProfileData({ ...profileData, bio: e.target.value })
+                  }
+                  className="min-h-[100px] resize-none"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleGenerateBio}
+                  disabled={isGeneratingBio || (!profileData.name && !profileData.company && !selectedNiche)}
+                  className="w-full text-purple-600 border-purple-200 hover:text-purple-700 hover:bg-purple-50 dark:border-purple-800 dark:hover:bg-purple-900/30"
+                >
+                  {isGeneratingBio ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Sparkles className="h-4 w-4 mr-2" />
+                  )}
+                  Generate Bio with AI
+                </Button>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   AI will use your name, company, and niche to generate a professional bio
                 </p>
@@ -801,7 +799,7 @@ const AttendeeProfile = () => {
             title="Messaging Preference"
             subtitle={
               profileData.messagingPreference === "whatsapp"
-                ? "Receive messages via WhatsApp"
+                ? "Receive messages via WhatsApp — Others will be able to send you direct WhatsApp messages, helping you connect faster"
                 : "Receive messages via K-Message (in-app)"
             }
             isEditing={isEditing}

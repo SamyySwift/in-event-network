@@ -112,3 +112,6 @@ verify_jwt = true
 
 [functions.generate-quiz-options]
 verify_jwt = false
+
+[functions.generate-quiz]
+verify_jwt = false

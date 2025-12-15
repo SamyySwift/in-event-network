@@ -3267,6 +3267,7 @@ export type Database = {
           instagram_link: string
           joined_at: string
           linkedin_link: string
+          messaging_preference: string
           name: string
           networking_preferences: string[]
           niche: string
@@ -3276,6 +3277,7 @@ export type Database = {
           twitter_link: string
           user_id: string
           website_link: string
+          whatsapp_number: string
         }[]
       }
       get_event_checkin_stats: {

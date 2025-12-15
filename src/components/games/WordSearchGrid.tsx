@@ -136,13 +136,19 @@ export const WordSearchGrid = ({
     };
   }, [handleEnd]);
 
-  // Responsive cell sizing based on grid size and screen
-  const gridLength = grid[0].length;
+  // Responsive cell sizing based on grid size - smaller tiles for larger grids
+  const gridLength = grid[0]?.length || 10;
   const getCellClasses = () => {
-    if (gridLength > 15) {
-      return 'w-5 h-5 text-[10px] sm:w-6 sm:h-6 sm:text-xs md:w-7 md:h-7 md:text-sm';
+    // 13x13 (hard) - smallest tiles
+    if (gridLength >= 13) {
+      return 'w-5 h-5 text-[9px] sm:w-6 sm:h-6 sm:text-[10px] md:w-7 md:h-7 md:text-xs';
     }
-    return 'w-7 h-7 text-xs sm:w-8 sm:h-8 sm:text-sm md:w-9 md:h-9 md:text-base';
+    // 12x12 (medium) - medium tiles
+    if (gridLength >= 12) {
+      return 'w-6 h-6 text-[10px] sm:w-7 sm:h-7 sm:text-xs md:w-8 md:h-8 md:text-sm';
+    }
+    // 10x10 (easy) - largest tiles
+    return 'w-7 h-7 text-xs sm:w-8 sm:h-8 sm:text-sm md:w-10 md:h-10 md:text-base';
   };
 
   return (

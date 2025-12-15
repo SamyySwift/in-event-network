@@ -37,7 +37,7 @@ const AdminGames = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [title, setTitle] = useState("");
   const [wordsInput, setWordsInput] = useState("");
-  const [gridSize, setGridSize] = useState(15);
+  const [gridSize, setGridSize] = useState(12);
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">(
     "medium"
   );
@@ -67,6 +67,17 @@ const AdminGames = () => {
   // AI Auto-generation state
   const [aiEnabled, setAiEnabled] = useState(true);
   const [isGeneratingOptions, setIsGeneratingOptions] = useState(false);
+  
+  // AI Auto-create quiz state
+  const [aiAutoCreateEnabled, setAiAutoCreateEnabled] = useState(false);
+  const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
+  const [aiQuizConfig, setAiQuizConfig] = useState({
+    region: 'Nigerian',
+    topic: '',
+    questionCount: 10,
+    difficulty: 'mixed' as 'easy' | 'medium' | 'hard' | 'mixed',
+    context: '',
+  });
 
   const { questions, addQuestion, deleteQuestion } = useQuizQuestions(selectedQuiz?.id);
 
@@ -229,6 +240,79 @@ const AdminGames = () => {
     window.open(link, '_blank');
   };
 
+  const handleGenerateQuizWithAI = async () => {
+    if (!aiQuizConfig.topic.trim()) {
+      toast.error('Please enter a topic for the quiz');
+      return;
+    }
+    
+    setIsGeneratingQuiz(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-quiz', {
+        body: {
+          topic: aiQuizConfig.topic,
+          questionCount: aiQuizConfig.questionCount,
+          difficulty: aiQuizConfig.difficulty,
+          region: aiQuizConfig.region,
+          context: aiQuizConfig.context,
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.questions && data.questions.length > 0) {
+        // Store generated questions temporarily
+        toast.success(`Generated ${data.questions.length} questions! Creating quiz...`);
+        
+        // Create the quiz first
+        if (!selectedEventId || !currentUser) return;
+        
+        const quizTitle = newQuiz.title || `${aiQuizConfig.topic} Quiz`;
+        const quizData = await createQuizGame.mutateAsync({
+          event_id: selectedEventId,
+          title: quizTitle,
+          description: newQuiz.description || `AI-generated ${aiQuizConfig.difficulty} quiz about ${aiQuizConfig.topic} (${aiQuizConfig.region})`,
+          total_questions: data.questions.length,
+          play_mode: newQuiz.play_mode,
+          is_active: false,
+          created_by: currentUser.id,
+        });
+
+        // Add all questions to the quiz
+        for (let i = 0; i < data.questions.length; i++) {
+          const q = data.questions[i];
+          await addQuestion.mutateAsync({
+            quiz_game_id: quizData.id,
+            question_text: q.question_text,
+            options: q.options,
+            correct_answer: q.correct_answer,
+            time_limit: q.time_limit || 20,
+            question_order: i,
+          });
+        }
+
+        toast.success(`Quiz created with ${data.questions.length} questions!`);
+        setCreateQuizDialogOpen(false);
+        setNewQuiz({ title: '', description: '', total_questions: 10, play_mode: 'admin_directed' });
+        setAiQuizConfig({ region: 'Nigerian', topic: '', questionCount: 10, difficulty: 'mixed', context: '' });
+        setAiAutoCreateEnabled(false);
+      } else {
+        toast.error('No questions generated. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Error generating quiz:', error);
+      if (error.message?.includes('Rate limit')) {
+        toast.error('Rate limit reached. Please wait a moment and try again.');
+      } else if (error.message?.includes('402')) {
+        toast.error('AI credits exhausted. Please add credits to continue.');
+      } else {
+        toast.error('Failed to generate quiz: ' + (error.message || 'Unknown error'));
+      }
+    } finally {
+      setIsGeneratingQuiz(false);
+    }
+  };
+
   const handleCreateQuiz = async () => {
     if (!selectedEventId || !currentUser) return;
 
@@ -359,17 +443,20 @@ const AdminGames = () => {
                   <Label htmlFor="difficulty">Difficulty Level</Label>
                   <Select
                     value={difficulty}
-                    onValueChange={(v: any) => setDifficulty(v)}
+                    onValueChange={(v: any) => {
+                      setDifficulty(v);
+                      // Auto-set grid size based on difficulty
+                      const newGridSize = v === "easy" ? 10 : v === "medium" ? 12 : 13;
+                      setGridSize(newGridSize);
+                    }}
                   >
                     <SelectTrigger id="difficulty">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="easy">Easy (10x10 grid)</SelectItem>
-                      <SelectItem value="medium">
-                        Medium (15x15 grid)
-                      </SelectItem>
-                      <SelectItem value="hard">Hard (20x20 grid)</SelectItem>
+                      <SelectItem value="easy">Easy (10×10 grid)</SelectItem>
+                      <SelectItem value="medium">Medium (12×12 grid)</SelectItem>
+                      <SelectItem value="hard">Hard (13×13 grid)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -403,8 +490,8 @@ const AdminGames = () => {
                       difficulty === "easy"
                         ? 10
                         : difficulty === "hard"
-                        ? 20
-                        : 15;
+                        ? 13
+                        : 12;
                     setGridSize(newGridSize);
                   }}
                   className="w-full"
@@ -431,16 +518,19 @@ const AdminGames = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="gridSize">
-                    Grid Size: {gridSize}x{gridSize}
+                    Grid Size: {gridSize}×{gridSize}
                   </Label>
                   <Input
                     id="gridSize"
                     type="range"
                     min="10"
-                    max="20"
+                    max="13"
                     value={gridSize}
                     onChange={(e) => setGridSize(Number(e.target.value))}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Easy: 10×10 | Medium: 12×12 | Hard: 13×13
+                  </p>
                 </div>
 
                 <div>
@@ -619,79 +709,250 @@ const AdminGames = () => {
                   Create Quiz
                 </Button>
               </DialogTrigger>
-              <DialogContent>
+              <DialogContent className="max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Create New Quiz Game</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
-                  <div>
-                    <Label>Quiz Title</Label>
-                    <Input
-                      value={newQuiz.title}
-                      onChange={(e) => setNewQuiz({ ...newQuiz, title: e.target.value })}
-                      placeholder="e.g., Event Trivia Challenge"
-                    />
-                  </div>
-                  <div>
-                    <Label>Description (Optional)</Label>
-                    <Textarea
-                      value={newQuiz.description}
-                      onChange={(e) => setNewQuiz({ ...newQuiz, description: e.target.value })}
-                      placeholder="Brief description of the quiz"
-                    />
-                  </div>
-                  <div>
-                    <Label className="mb-2 block">Quiz Mode</Label>
-                    <div className="space-y-3">
-                      <div
-                        onClick={() => setNewQuiz({ ...newQuiz, play_mode: 'admin_directed' })}
-                        className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                          newQuiz.play_mode === 'admin_directed'
-                            ? 'border-primary bg-primary/10'
-                            : 'border-border hover:border-primary/50'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                            newQuiz.play_mode === 'admin_directed' ? 'border-primary' : 'border-muted-foreground'
-                          }`}>
-                            {newQuiz.play_mode === 'admin_directed' && (
-                              <div className="w-2 h-2 rounded-full bg-primary" />
-                            )}
-                          </div>
-                          <span className="font-medium">Admin-Directed (Kahoot-style)</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1 ml-6">
-                          You control question progression. All attendees see the same question.
-                        </p>
-                      </div>
-                      <div
-                        onClick={() => setNewQuiz({ ...newQuiz, play_mode: 'self_paced' })}
-                        className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
-                          newQuiz.play_mode === 'self_paced'
-                            ? 'border-primary bg-primary/10'
-                            : 'border-border hover:border-primary/50'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
-                            newQuiz.play_mode === 'self_paced' ? 'border-primary' : 'border-muted-foreground'
-                          }`}>
-                            {newQuiz.play_mode === 'self_paced' && (
-                              <div className="w-2 h-2 rounded-full bg-primary" />
-                            )}
-                          </div>
-                          <span className="font-medium">Self-Paced</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1 ml-6">
-                          Attendees play independently at their own pace.
-                        </p>
+                  {/* AI Auto-Create Toggle */}
+                  <div className="flex items-center justify-between p-3 rounded-lg border bg-muted/50">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-purple-500" />
+                      <div>
+                        <p className="font-medium text-sm">AI Auto-Create Quiz</p>
+                        <p className="text-xs text-muted-foreground">Generate questions automatically with AI</p>
                       </div>
                     </div>
+                    <Switch
+                      checked={aiAutoCreateEnabled}
+                      onCheckedChange={setAiAutoCreateEnabled}
+                    />
                   </div>
-                  <Button onClick={handleCreateQuiz} className="w-full">
-                    Create Quiz
-                  </Button>
+
+                  {aiAutoCreateEnabled ? (
+                    <>
+                      {/* AI Configuration */}
+                      <div>
+                        <Label>Quiz Title (Optional)</Label>
+                        <Input
+                          value={newQuiz.title}
+                          onChange={(e) => setNewQuiz({ ...newQuiz, title: e.target.value })}
+                          placeholder="Leave blank to auto-generate from topic"
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label>Topic *</Label>
+                        <Input
+                          value={aiQuizConfig.topic}
+                          onChange={(e) => setAiQuizConfig({ ...aiQuizConfig, topic: e.target.value })}
+                          placeholder="e.g., Politics, Education, Sports, History"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label>Region/Context</Label>
+                          <Select
+                            value={aiQuizConfig.region}
+                            onValueChange={(v) => setAiQuizConfig({ ...aiQuizConfig, region: v })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Nigerian">Nigerian</SelectItem>
+                              <SelectItem value="African">African</SelectItem>
+                              <SelectItem value="American">American</SelectItem>
+                              <SelectItem value="European">European</SelectItem>
+                              <SelectItem value="Asian">Asian</SelectItem>
+                              <SelectItem value="Global">Global/General</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label>Number of Questions</Label>
+                          <Select
+                            value={aiQuizConfig.questionCount.toString()}
+                            onValueChange={(v) => setAiQuizConfig({ ...aiQuizConfig, questionCount: parseInt(v) })}
+                          >
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="5">5 Questions</SelectItem>
+                              <SelectItem value="10">10 Questions</SelectItem>
+                              <SelectItem value="15">15 Questions</SelectItem>
+                              <SelectItem value="20">20 Questions</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label>Difficulty Level</Label>
+                        <Select
+                          value={aiQuizConfig.difficulty}
+                          onValueChange={(v: any) => setAiQuizConfig({ ...aiQuizConfig, difficulty: v })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="easy">Easy</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="hard">Hard</SelectItem>
+                            <SelectItem value="mixed">Mixed (Recommended)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label>Additional Context (Optional)</Label>
+                        <Textarea
+                          value={aiQuizConfig.context}
+                          onChange={(e) => setAiQuizConfig({ ...aiQuizConfig, context: e.target.value })}
+                          placeholder="e.g., Focus on current events, include famous personalities, etc."
+                          rows={2}
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="mb-2 block">Quiz Mode</Label>
+                        <div className="space-y-2">
+                          <div
+                            onClick={() => setNewQuiz({ ...newQuiz, play_mode: 'admin_directed' })}
+                            className={`p-2 rounded-lg border cursor-pointer transition-all ${
+                              newQuiz.play_mode === 'admin_directed'
+                                ? 'border-primary bg-primary/10'
+                                : 'border-border hover:border-primary/50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${
+                                newQuiz.play_mode === 'admin_directed' ? 'border-primary' : 'border-muted-foreground'
+                              }`}>
+                                {newQuiz.play_mode === 'admin_directed' && (
+                                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                )}
+                              </div>
+                              <span className="text-sm font-medium">Admin-Directed (Kahoot-style)</span>
+                            </div>
+                          </div>
+                          <div
+                            onClick={() => setNewQuiz({ ...newQuiz, play_mode: 'self_paced' })}
+                            className={`p-2 rounded-lg border cursor-pointer transition-all ${
+                              newQuiz.play_mode === 'self_paced'
+                                ? 'border-primary bg-primary/10'
+                                : 'border-border hover:border-primary/50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${
+                                newQuiz.play_mode === 'self_paced' ? 'border-primary' : 'border-muted-foreground'
+                              }`}>
+                                {newQuiz.play_mode === 'self_paced' && (
+                                  <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                )}
+                              </div>
+                              <span className="text-sm font-medium">Self-Paced</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Button 
+                        onClick={handleGenerateQuizWithAI} 
+                        className="w-full"
+                        disabled={isGeneratingQuiz || !aiQuizConfig.topic.trim()}
+                      >
+                        {isGeneratingQuiz ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Generating Quiz...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Generate Quiz with AI
+                          </>
+                        )}
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      {/* Manual Creation */}
+                      <div>
+                        <Label>Quiz Title</Label>
+                        <Input
+                          value={newQuiz.title}
+                          onChange={(e) => setNewQuiz({ ...newQuiz, title: e.target.value })}
+                          placeholder="e.g., Event Trivia Challenge"
+                        />
+                      </div>
+                      <div>
+                        <Label>Description (Optional)</Label>
+                        <Textarea
+                          value={newQuiz.description}
+                          onChange={(e) => setNewQuiz({ ...newQuiz, description: e.target.value })}
+                          placeholder="Brief description of the quiz"
+                        />
+                      </div>
+                      <div>
+                        <Label className="mb-2 block">Quiz Mode</Label>
+                        <div className="space-y-3">
+                          <div
+                            onClick={() => setNewQuiz({ ...newQuiz, play_mode: 'admin_directed' })}
+                            className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                              newQuiz.play_mode === 'admin_directed'
+                                ? 'border-primary bg-primary/10'
+                                : 'border-border hover:border-primary/50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                newQuiz.play_mode === 'admin_directed' ? 'border-primary' : 'border-muted-foreground'
+                              }`}>
+                                {newQuiz.play_mode === 'admin_directed' && (
+                                  <div className="w-2 h-2 rounded-full bg-primary" />
+                                )}
+                              </div>
+                              <span className="font-medium">Admin-Directed (Kahoot-style)</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1 ml-6">
+                              You control question progression. All attendees see the same question.
+                            </p>
+                          </div>
+                          <div
+                            onClick={() => setNewQuiz({ ...newQuiz, play_mode: 'self_paced' })}
+                            className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${
+                              newQuiz.play_mode === 'self_paced'
+                                ? 'border-primary bg-primary/10'
+                                : 'border-border hover:border-primary/50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                newQuiz.play_mode === 'self_paced' ? 'border-primary' : 'border-muted-foreground'
+                              }`}>
+                                {newQuiz.play_mode === 'self_paced' && (
+                                  <div className="w-2 h-2 rounded-full bg-primary" />
+                                )}
+                              </div>
+                              <span className="font-medium">Self-Paced</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1 ml-6">
+                              Attendees play independently at their own pace.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <Button onClick={handleCreateQuiz} className="w-full">
+                        Create Quiz
+                      </Button>
+                    </>
+                  )}
                 </div>
               </DialogContent>
             </Dialog>

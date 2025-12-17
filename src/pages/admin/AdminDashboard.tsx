@@ -22,7 +22,7 @@ import { useAdminEventContext } from "@/hooks/useAdminEventContext";
 import DashboardMetrics from "./components/DashboardMetrics";
 import EventPerformanceCard from "./components/EventPerformanceCard";
 import EventFocusCard from "./components/EventFocusCard";
-import ReferralCodeInput from "@/components/admin/ReferralCodeInput";
+import AccessCodeInput from "@/components/admin/AccessCodeInput";
 
 const AdminDashboardContent = () => {
   const { currentUser } = useAuth();
@@ -145,9 +145,9 @@ const AdminDashboardContent = () => {
           {/* Event Selector */}
           <EventFocusCard />
           
-          {/* Referral Code Input */}
+          {/* Access Code Input */}
           {selectedEventId && selectedEvent && (
-            <ReferralCodeInput 
+            <AccessCodeInput 
               eventId={selectedEventId} 
               eventName={selectedEvent.name} 
             />

@@ -138,14 +138,14 @@ const AdminEvents = () => {
       return;
     }
 
-    // Check if user is trying to create a second event without payment or referral code unlock
+    // Check if user is trying to create a second event without access code unlock
     if (!editingEvent && events.length >= 1) {
-      // Check if any existing event has been paid for OR if admin has unlocked via referral code
+      // Check if any existing event has been paid for OR if admin has unlocked via access code
       const hasAnyPaidEvent = events.some(event => isEventPaid(event.id));
-      const hasReferralUnlock = unlockedEvents.length > 0; // Admin has used referral code
+      const hasAccessCodeUnlock = unlockedEvents.length > 0; // Admin has used access code
       
-      if (!hasAnyPaidEvent && !hasReferralUnlock) {
-        alert("You can only create one free event. Please enter the referral code or pay ₦300,000 to unlock unlimited event creation.");
+      if (!hasAnyPaidEvent && !hasAccessCodeUnlock) {
+        alert("You can only create one free event. Please enter an access code to unlock unlimited event creation.");
         return;
       }
     }
@@ -374,7 +374,7 @@ const AdminEvents = () => {
           </div>
         </div>
 
-        {/* Referral Code Unlock Card */}
+        {/* Access Code Unlock Card */}
         {!isUnlocked && showReferralCard && events.length >= 1 && (
           <Card className="mb-8 border-2 border-blue-200 dark:border-blue-800 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/50 dark:to-indigo-950/50">
             <CardHeader>
@@ -386,7 +386,7 @@ const AdminEvents = () => {
                   <div>
                     <CardTitle className="text-xl">Unlock Unlimited Events</CardTitle>
                     <CardDescription className="mt-1">
-                      Enter your referral code to unlock unlimited event creation
+                      Enter your access code to unlock unlimited event creation
                     </CardDescription>
                   </div>
                 </div>
@@ -405,7 +405,7 @@ const AdminEvents = () => {
                 <Input
                   value={referralCode}
                   onChange={(e) => setReferralCode(e.target.value)}
-                  placeholder="Enter referral code"
+                  placeholder="Enter access code"
                   className="flex-1 h-11"
                   onKeyDown={(e) => e.key === 'Enter' && handleReferralSubmit()}
                 />
@@ -428,7 +428,7 @@ const AdminEvents = () => {
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-3">
-                Have a referral code? Enter it here to create unlimited events without payment.
+                Have an access code? Enter it here to create unlimited events.
               </p>
             </CardContent>
           </Card>
@@ -809,9 +809,9 @@ const AdminEvents = () => {
                                     </Badge>
                                   )}
                                   {!isEventPaid(event.id) && (
-                                    <Badge variant="outline" className="border-amber-500 text-amber-600">
-                                      <Lock className="w-3 h-3 mr-1.5" />
-                                      Payment Required
+                                    <Badge variant="outline" className="border-blue-500 text-blue-600">
+                                      <Key className="w-3 h-3 mr-1.5" />
+                                      Access Code Required
                                     </Badge>
                                   )}
                                 </div>

@@ -7,12 +7,12 @@ import { Key, Unlock } from 'lucide-react';
 import { useReferralCode } from '@/hooks/useReferralCode';
 import { usePayment } from '@/hooks/usePayment';
 
-interface ReferralCodeInputProps {
+interface AccessCodeInputProps {
   eventId: string;
   eventName: string;
 }
 
-const ReferralCodeInput: React.FC<ReferralCodeInputProps> = ({
+const AccessCodeInput: React.FC<AccessCodeInputProps> = ({
   eventId,
   eventName
 }) => {
@@ -20,7 +20,7 @@ const ReferralCodeInput: React.FC<ReferralCodeInputProps> = ({
   const { submitReferralCode, isSubmittingCode, isEventUnlockedByCode } = useReferralCode();
   const { isEventPaid } = usePayment();
 
-  // Unified check for event access (payment OR referral code)
+  // Unified check for event access (payment OR access code)
   const isEventUnlocked = isEventPaid(eventId) || isEventUnlockedByCode(eventId);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -60,19 +60,19 @@ const ReferralCodeInput: React.FC<ReferralCodeInputProps> = ({
           <CardTitle className="text-sm">Unlock Premium Features</CardTitle>
         </div>
         <CardDescription className="text-xs">
-          Enter a referral code to unlock all premium features for this event
+          Enter an access code to unlock all premium features for this event
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="space-y-1">
             <Label htmlFor="accessCode" className="text-xs font-medium">
-              Referral Code
+              Access Code
             </Label>
             <Input
               id="accessCode"
               type="text"
-              placeholder="Enter referral code"
+              placeholder="Enter access code"
               value={accessCode}
               onChange={(e) => setAccessCode(e.target.value)}
               className="h-8 text-sm"
@@ -93,4 +93,4 @@ const ReferralCodeInput: React.FC<ReferralCodeInputProps> = ({
   );
 };
 
-export default ReferralCodeInput;
+export default AccessCodeInput;

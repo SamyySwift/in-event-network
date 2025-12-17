@@ -37,7 +37,9 @@ import {
   Eye,
   Network,
   Gamepad2,
+  QrCode,
 } from "lucide-react";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,7 +67,7 @@ interface AdminLayoutProps {
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const { currentUser, logout } = useAuth();
   const { unreadCount } = useNotificationCount();
-  const { selectedEvent } = useAdminEventContext();
+  const { selectedEvent, selectedEventId } = useAdminEventContext();
   const navigate = useNavigate();
   const location = useLocation();
   const isMobile = useIsMobile();
@@ -490,22 +492,52 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
                 <MobileSidebarContent />
               </SheetContent>
             </Sheet>
-            {/* Removed duplicate title from mobile header */}
+            
+            {/* Logo and Title */}
+            <div className="flex items-center">
+              <img
+                src={selectedEvent?.logo_url || "/logo.png"}
+                alt={selectedEvent?.custom_title || "Kconect Logo"}
+                className="h-6 w-6 mr-2 object-cover rounded-sm"
+              />
+              <span className="text-lg font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                {selectedEvent?.custom_title || "Kconect"}
+              </span>
+            </div>
           </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/admin/notifications")}
-            className="relative"
-          >
-            <Bell size={20} className="text-primary" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 h-5 w-5 bg-primary text-primary-foreground rounded-full text-xs flex items-center justify-center">
-                {unreadCount > 99 ? "99+" : unreadCount}
-              </span>
+          <div className="flex items-center space-x-2">
+            {/* QR Code Icon */}
+            {selectedEventId && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/admin/events")}
+                className="text-primary hover:bg-primary/10"
+                title="Event QR Code"
+              >
+                <QrCode size={20} />
+              </Button>
             )}
-          </Button>
+            
+            {/* Dark Mode Toggle */}
+            <ThemeToggle />
+            
+            {/* Notifications */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/admin/notifications")}
+              className="relative"
+            >
+              <Bell size={20} className="text-primary" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 h-5 w-5 bg-primary text-primary-foreground rounded-full text-xs flex items-center justify-center">
+                  {unreadCount > 99 ? "99+" : unreadCount}
+                </span>
+              )}
+            </Button>
+          </div>
         </header>
 
         {/* Sidebar Navigation for Desktop */}

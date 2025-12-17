@@ -56,7 +56,7 @@ const AccessCodeRequestDialog: React.FC<AccessCodeRequestDialogProps> = ({
       );
       
       // Open WhatsApp with pre-filled message (replace with your support number)
-      const whatsappUrl = `https://wa.me/2349099000000?text=${message}`;
+      const whatsappUrl = `https://wa.me/2349068982251?text=${message}`;
       window.open(whatsappUrl, '_blank');
 
       toast({

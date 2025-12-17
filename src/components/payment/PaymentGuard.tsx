@@ -6,7 +6,7 @@ import { Lock, CreditCard, Sparkles } from 'lucide-react';
 import PaymentModal from './PaymentModal';
 import { usePayment } from '@/hooks/usePayment';
 import { useReferralCode } from '@/hooks/useReferralCode';
-import ReferralCodeInput from '@/components/admin/ReferralCodeInput';
+import AccessCodeInput from '@/components/admin/AccessCodeInput';
 
 interface PaymentGuardProps {
   eventId: string;
@@ -81,8 +81,8 @@ const PaymentGuard: React.FC<PaymentGuardProps> = ({
           </CardContent>
         </Card>
 
-        {/* Add referral code input */}
-        <ReferralCodeInput 
+        {/* Add access code input */}
+        <AccessCodeInput 
           eventId={eventId}
           eventName={eventName}
         />

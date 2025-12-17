@@ -7,12 +7,12 @@ import { Key, Unlock } from 'lucide-react';
 import { useReferralCode } from '@/hooks/useReferralCode';
 import { usePayment } from '@/hooks/usePayment';
 
-interface AccessCodeInputProps {
+interface ReferralCodeInputProps {
   eventId: string;
   eventName: string;
 }
 
-const AccessCodeInput: React.FC<AccessCodeInputProps> = ({
+const ReferralCodeInput: React.FC<ReferralCodeInputProps> = ({
   eventId,
   eventName
 }) => {
@@ -20,7 +20,7 @@ const AccessCodeInput: React.FC<AccessCodeInputProps> = ({
   const { submitReferralCode, isSubmittingCode, isEventUnlockedByCode } = useReferralCode();
   const { isEventPaid } = usePayment();
 
-  // Unified check for event access (payment OR access code)
+  // Unified check for event access (payment OR referral code)
   const isEventUnlocked = isEventPaid(eventId) || isEventUnlockedByCode(eventId);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -60,19 +60,19 @@ const AccessCodeInput: React.FC<AccessCodeInputProps> = ({
           <CardTitle className="text-sm">Unlock Premium Features</CardTitle>
         </div>
         <CardDescription className="text-xs">
-          Enter an access code to unlock all premium features for this event
+          Enter a referral code to unlock all premium features for this event
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="space-y-1">
             <Label htmlFor="accessCode" className="text-xs font-medium">
-              Access Code
+              Referral Code
             </Label>
             <Input
               id="accessCode"
               type="text"
-              placeholder="Enter access code"
+              placeholder="Enter referral code"
               value={accessCode}
               onChange={(e) => setAccessCode(e.target.value)}
               className="h-8 text-sm"
@@ -93,4 +93,4 @@ const AccessCodeInput: React.FC<AccessCodeInputProps> = ({
   );
 };
 
-export default AccessCodeInput;
+export default ReferralCodeInput;

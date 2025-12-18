@@ -4,13 +4,15 @@ import { Radio, X, ChevronRight, Sparkles, Star, Circle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLiveStream } from '@/hooks/useLiveStream';
 import { usePiP } from '@/contexts/PiPContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useQuery } from '@tanstack/react-query';
 
 interface FloatingLiveBannerProps {
   eventId: string | null;
 }
 
 export const FloatingLiveBanner = ({ eventId }: FloatingLiveBannerProps) => {
-  const { isLive, isLoading } = useLiveStream(eventId);
+  const { isLive, liveStreamUrl, isLoading } = useLiveStream(eventId);
   const { isVisible: isPiPVisible, showPiP } = usePiP();
   const [isDismissed, setIsDismissed] = React.useState(false);
 
@@ -52,8 +54,11 @@ export const FloatingLiveBanner = ({ eventId }: FloatingLiveBannerProps) => {
     }
   };
 
-  // Don't show banner if stream not live (unless PiP is showing)
-  if (isLoading || !isLive) {
+  // Check if this is a Jitsi meeting (not YouTube) - Jitsi URLs don't contain 'youtube' or 'youtu.be'
+  const isJitsiMeeting = liveStreamUrl && !liveStreamUrl.includes('youtube') && !liveStreamUrl.includes('youtu.be');
+
+  // Don't show YouTube banner if Jitsi is live (FloatingBroadcastBanner handles Jitsi)
+  if (isLoading || !isLive || isJitsiMeeting) {
     return null;
   }
   

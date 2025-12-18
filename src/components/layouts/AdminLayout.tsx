@@ -167,7 +167,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     },
     {
       name: "Check-In",
-      href: "/admin/checkin",
+      href: "/admin/check-in",
       icon: (
         <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
           <Scan size={14} className="text-purple-600" />

@@ -65,6 +65,7 @@ import {
 import { FloatingAIAssistant } from "@/components/attendee/FloatingAIAssistant";
 import { FloatingGameBanner } from "@/components/attendee/FloatingGameBanner";
 import { FloatingLiveBanner } from "@/components/attendee/FloatingLiveBanner";
+import { FloatingBroadcastBanner } from "@/components/attendee/FloatingBroadcastBanner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 // Advertisement Carousel Component
 const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) => {
@@ -660,6 +661,8 @@ function AttendeeDashboardContent() {
         {/* Floating Game Banner */}
         <FloatingGameBanner eventId={currentEventId} />
 
+        {/* Floating Broadcast Banner (Jitsi Meet) */}
+        <FloatingBroadcastBanner />
         {/* Advertisements Section with Auto-Swipe Carousel */}
         {advertisements && advertisements.length > 0 && (
           <div className="mb-8 relative z-10">

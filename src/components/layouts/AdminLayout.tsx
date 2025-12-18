@@ -38,6 +38,7 @@ import {
   Network,
   Gamepad2,
   QrCode,
+  Radio,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -320,6 +321,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       icon: (
         <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
           <Gamepad2 size={14} className="text-purple-600" />
+        </div>
+      ),
+    },
+    {
+      name: "Live Broadcast",
+      href: "/admin/broadcast",
+      icon: (
+        <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
+          <Radio size={14} className="text-purple-600" />
         </div>
       ),
     },

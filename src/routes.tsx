@@ -52,7 +52,7 @@ const AdminCheckIn = lazy(() => import("@/pages/admin/AdminCheckIn"));
 const AdminSettings = lazy(() => import("@/pages/admin/AdminSettings"));
 const AdminWallet = lazy(() => import("@/pages/admin/AdminWallet"));
 const AdminAdvertisements = lazy(() => import("@/pages/admin/AdminAdvertisements"));
-
+const AdminLiveBroadcast = lazy(() => import("@/pages/admin/AdminLiveBroadcast"));
 // Attendee Pages - Lazy loaded
 const AppLayout = lazy(() => import("@/components/layouts/AppLayout"));
 const AttendeeDashboard = lazy(() => import("@/pages/attendee/AttendeeDashboard"));
@@ -70,7 +70,7 @@ const AttendeeSearch = lazy(() => import("@/pages/attendee/AttendeeSearch"));
 const AttendeeOnboarding = lazy(() => import("@/pages/attendee/AttendeeOnboarding"));
 const AttendeeGames = lazy(() => import("@/pages/attendee/AttendeeGames"));
 const AttendeeMyTickets = lazy(() => import("@/pages/attendee/AttendeeMyTickets"));
-
+const AttendeeBroadcast = lazy(() => import("@/pages/attendee/AttendeeBroadcast"));
 // Host Pages
 const HostDashboard = lazy(() => import("@/pages/host/HostDashboard"));
 
@@ -191,6 +191,7 @@ export const router = createBrowserRouter([
   { path: "/admin/settings", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminSettings /></Suspense></AdminRoute> },
   { path: "/admin/wallet", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminWallet /></Suspense></AdminRoute> },
   { path: "/admin/advertisements", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminAdvertisements /></Suspense></AdminRoute> },
+  { path: "/admin/broadcast", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminLiveBroadcast /></Suspense></AdminRoute> },
 
   // Host Routes (redirect to admin)
   { path: "/host", element: <Navigate to="/admin" replace /> },
@@ -211,6 +212,7 @@ export const router = createBrowserRouter([
   { path: "/attendee/onboarding", element: <AttendeeRoute><Suspense fallback={<LazyLoader />}><AttendeeOnboarding /></Suspense></AttendeeRoute> },
   { path: "/attendee/my-tickets", element: <AttendeeRoute><Suspense fallback={<LazyLoader />}><AttendeeMyTickets /></Suspense></AttendeeRoute> },
   { path: "/attendee/games", element: <AttendeeRoute><Suspense fallback={<LazyLoader />}><AttendeeGames /></Suspense></AttendeeRoute> },
+  { path: "/attendee/broadcast", element: <AttendeeRoute><Suspense fallback={<LazyLoader />}><AttendeeBroadcast /></Suspense></AttendeeRoute> },
 
   // Catch all
   { path: "*", element: <Navigate to="/" replace /> },

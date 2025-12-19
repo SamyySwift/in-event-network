@@ -8,7 +8,6 @@ import { useLiveStream } from '@/hooks/useLiveStream';
 import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
 import AttendeeRouteGuard from '@/components/attendee/AttendeeRouteGuard';
 import { AttendeeEventProvider } from '@/contexts/AttendeeEventContext';
-import AppLayout from '@/components/layouts/AppLayout';
 import { useAuth } from '@/contexts/AuthContext';
 
 function AttendeeBroadcastContent() {
@@ -182,9 +181,7 @@ export default function AttendeeBroadcast() {
   return (
     <AttendeeEventProvider>
       <AttendeeRouteGuard>
-        <AppLayout>
-          <AttendeeBroadcastContent />
-        </AppLayout>
+        <AttendeeBroadcastContent />
       </AttendeeRouteGuard>
     </AttendeeEventProvider>
   );

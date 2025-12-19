@@ -136,13 +136,14 @@ function AttendeeBroadcastContent() {
         </div>
       </div>
 
-      {/* Jitsi Meeting Embed */}
-      <Card className="overflow-hidden border-0 shadow-lg">
-        <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-1">
-          <div className="rounded-lg overflow-hidden bg-black">
+      {/* Jitsi Meeting Embed - Extended Size */}
+      <Card className="overflow-hidden border-0 shadow-xl">
+        <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-1.5">
+          <div className="rounded-xl overflow-hidden bg-black">
             <iframe
               src={jitsiUrl}
-              className="w-full aspect-video min-h-[300px] sm:min-h-[400px] md:min-h-[500px]"
+              className="w-full min-h-[400px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-[700px]"
+              style={{ aspectRatio: '16/10' }}
               allow="camera; microphone; fullscreen; display-capture; autoplay"
               allowFullScreen
             />
@@ -150,9 +151,9 @@ function AttendeeBroadcastContent() {
         </div>
       </Card>
 
-      {/* Connection Status */}
+      {/* Connection Status & Web Join Instructions */}
       <Card>
-        <CardContent className="py-3">
+        <CardContent className="py-4 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-full bg-green-500/10">
@@ -170,6 +171,28 @@ function AttendeeBroadcastContent() {
             >
               Leave Meeting
             </Button>
+          </div>
+
+          {/* Web Join Instructions */}
+          <div className="border-t pt-4">
+            <h4 className="font-medium text-foreground mb-2 flex items-center gap-2">
+              <Video className="w-4 h-4 text-primary" />
+              How to Join via Web Browser
+            </h4>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p className="leading-relaxed">
+                You're viewing the live broadcast directly in your web browser. To participate fully:
+              </p>
+              <ul className="list-disc list-inside space-y-1.5 ml-2">
+                <li><strong>Enable Camera/Microphone:</strong> Click the camera and microphone icons in the video player to turn them on. Your browser may ask for permission — click "Allow".</li>
+                <li><strong>Full Screen:</strong> Click the expand icon in the bottom-right corner of the video for a better viewing experience.</li>
+                <li><strong>Raise Hand:</strong> Use the raise hand feature in the meeting controls to get the host's attention.</li>
+                <li><strong>Chat:</strong> Use the chat panel within the video player to send messages to other participants.</li>
+              </ul>
+              <p className="text-xs text-muted-foreground/80 mt-3 italic">
+                Tip: For the best experience, use Chrome, Firefox, or Edge browser. Safari users may need to enable camera/microphone access in Safari Preferences → Websites.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -1,8 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Radio, ArrowLeft, Star, Sparkles, Circle, Users, Video } from 'lucide-react';
+import { Video, ArrowLeft, Circle, Users, Wifi, WifiOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { useLiveStream } from '@/hooks/useLiveStream';
 import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
 import AttendeeRouteGuard from '@/components/attendee/AttendeeRouteGuard';
@@ -18,12 +19,13 @@ function AttendeeBroadcastContent() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-100 to-purple-100 dark:from-blue-950 dark:to-purple-950">
+      <div className="flex items-center justify-center py-20">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+          className="p-4 rounded-full bg-primary/10"
         >
-          <Video className="w-16 h-16 text-blue-500" />
+          <Video className="w-12 h-12 text-primary" />
         </motion.div>
       </div>
     );
@@ -31,58 +33,71 @@ function AttendeeBroadcastContent() {
 
   if (!isLive || !liveStreamUrl) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 dark:from-blue-950 dark:via-purple-950 dark:to-pink-950">
-        {/* Decorative elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            animate={{ y: [0, -20, 0] }}
-            transition={{ duration: 3, repeat: Infinity }}
-            className="absolute top-20 left-10 w-12 h-12 bg-blue-400 rounded-full opacity-60"
-          />
-          <motion.div
-            animate={{ y: [0, -15, 0] }}
-            transition={{ duration: 2.5, repeat: Infinity, delay: 0.5 }}
-            className="absolute top-40 right-20 w-8 h-8 bg-purple-400 rounded-full opacity-60"
-          />
-          <motion.div
-            animate={{ y: [0, -25, 0] }}
-            transition={{ duration: 3.5, repeat: Infinity, delay: 1 }}
-            className="absolute bottom-40 left-20 w-10 h-10 bg-pink-400 rounded-full opacity-60"
-          />
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/attendee')}
+            className="rounded-full"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Live Broadcast</h1>
+            <p className="text-muted-foreground text-sm">Join live meetings and broadcasts</p>
+          </div>
         </div>
 
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="text-center z-10"
-        >
-          <motion.div
-            animate={{ 
-              rotate: [0, 10, -10, 0],
-              scale: [1, 1.1, 1]
-            }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="mb-6"
-          >
-            <div className="inline-flex items-center justify-center w-24 h-24 bg-blue-500 border-4 border-blue-700 rounded-full shadow-xl">
-              <Video className="w-12 h-12 text-white" />
+        {/* No Live Meeting State */}
+        <Card className="border-dashed border-2">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <motion.div
+              animate={{ 
+                scale: [1, 1.05, 1],
+                opacity: [0.5, 1, 0.5]
+              }}
+              transition={{ duration: 3, repeat: Infinity }}
+              className="mb-6 p-6 rounded-full bg-muted"
+            >
+              <WifiOff className="w-16 h-16 text-muted-foreground" />
+            </motion.div>
+            
+            <h2 className="text-xl font-semibold text-foreground mb-2">
+              No Live Broadcast
+            </h2>
+            <p className="text-muted-foreground max-w-sm mb-6">
+              There's no live meeting happening right now. Check back later or wait for the host to start a broadcast.
+            </p>
+
+            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted text-muted-foreground text-sm">
+              <Circle className="w-2 h-2 text-destructive fill-destructive" />
+              <span>Offline</span>
             </div>
-          </motion.div>
+          </CardContent>
+        </Card>
 
-          <h1 className="text-3xl font-black text-blue-600 dark:text-blue-400 mb-3">📺 No Live Meeting</h1>
-          <p className="text-lg font-bold text-blue-500 dark:text-blue-300 mb-6">
-            There's no live broadcast right now.<br />
-            Check back later! 🎬
-          </p>
-
-          <Button
-            onClick={() => navigate('/attendee')}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-black text-lg px-8 py-6 rounded-xl border-4 border-blue-700 shadow-lg"
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Dashboard
-          </Button>
-        </motion.div>
+        {/* Tips Card */}
+        <Card>
+          <CardContent className="py-4">
+            <h3 className="font-medium text-foreground mb-3">While you wait</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li className="flex items-start gap-2">
+                <span className="text-primary">•</span>
+                Check the event schedule for upcoming sessions
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary">•</span>
+                Connect with other attendees in the networking section
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-primary">•</span>
+                Browse announcements for updates
+              </li>
+            </ul>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -91,83 +106,74 @@ function AttendeeBroadcastContent() {
   const jitsiUrl = `https://meet.jit.si/${liveStreamUrl}#config.prejoinPageEnabled=false&config.startWithVideoMuted=true&config.startWithAudioMuted=true&userInfo.displayName=${encodeURIComponent(displayName)}`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 dark:from-blue-950 dark:via-purple-950 dark:to-pink-950 p-4">
-      {/* Decorative background elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 20, repeat: Infinity, ease: 'linear' }}
-          className="absolute -top-20 -right-20 w-40 h-40 bg-blue-300 dark:bg-blue-800 rounded-full opacity-30"
-        />
-        <motion.div
-          animate={{ rotate: -360 }}
-          transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
-          className="absolute -bottom-20 -left-20 w-48 h-48 bg-purple-300 dark:bg-purple-800 rounded-full opacity-30"
-        />
-      </div>
-
-      <div className="relative z-10 max-w-5xl mx-auto">
-        {/* Header */}
-        <motion.div
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="flex items-center justify-between mb-4"
-        >
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
           <Button
             variant="ghost"
+            size="icon"
             onClick={() => navigate('/attendee')}
-            className="bg-white/80 dark:bg-gray-800/80 hover:bg-white dark:hover:bg-gray-800 text-blue-600 dark:text-blue-400 font-bold rounded-xl border-2 border-blue-400"
+            className="rounded-full"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
+            <ArrowLeft className="w-5 h-5" />
           </Button>
-
-          <div className="flex items-center gap-2 bg-white/80 dark:bg-gray-800/80 px-4 py-2 rounded-xl border-2 border-green-400">
-            <motion.div
-              animate={{ opacity: [1, 0.5, 1] }}
-              transition={{ duration: 1, repeat: Infinity }}
-            >
-              <Circle className="w-3 h-3 text-green-500 fill-green-500" />
-            </motion.div>
-            <span className="font-black text-green-600 dark:text-green-400">LIVE MEETING</span>
-            <motion.div
-              animate={{ scale: [1, 1.2, 1] }}
-              transition={{ duration: 0.8, repeat: Infinity }}
-            >
-              <Users className="w-5 h-5 text-blue-500" />
-            </motion.div>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">Live Broadcast</h1>
+            <p className="text-muted-foreground text-sm">You're connected to the live meeting</p>
           </div>
-        </motion.div>
+        </div>
 
-        {/* Jitsi Meeting Embed */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2 }}
-          className="rounded-2xl overflow-hidden border-4 border-blue-400 shadow-2xl bg-black"
-        >
-          <iframe
-            src={jitsiUrl}
-            className="w-full aspect-video min-h-[400px] md:min-h-[500px] lg:min-h-[600px]"
-            allow="camera; microphone; fullscreen; display-capture; autoplay"
-            allowFullScreen
-          />
-        </motion.div>
-
-        {/* Fun bottom section */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="mt-4 text-center"
-        >
-          <div className="inline-flex items-center gap-2 bg-white/80 dark:bg-gray-800/80 px-6 py-3 rounded-xl border-2 border-purple-400">
-            <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-            <span className="font-bold text-gray-700 dark:text-gray-300">You're connected! 🎉</span>
-            <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-          </div>
-        </motion.div>
+        {/* Live Indicator */}
+        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20">
+          <motion.div
+            animate={{ opacity: [1, 0.4, 1] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          >
+            <Circle className="w-2.5 h-2.5 text-green-500 fill-green-500" />
+          </motion.div>
+          <span className="font-semibold text-green-600 dark:text-green-400 text-sm">LIVE</span>
+          <Users className="w-4 h-4 text-green-600 dark:text-green-400" />
+        </div>
       </div>
+
+      {/* Jitsi Meeting Embed */}
+      <Card className="overflow-hidden border-0 shadow-lg">
+        <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-1">
+          <div className="rounded-lg overflow-hidden bg-black">
+            <iframe
+              src={jitsiUrl}
+              className="w-full aspect-video min-h-[300px] sm:min-h-[400px] md:min-h-[500px]"
+              allow="camera; microphone; fullscreen; display-capture; autoplay"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      </Card>
+
+      {/* Connection Status */}
+      <Card>
+        <CardContent className="py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-full bg-green-500/10">
+                <Wifi className="w-4 h-4 text-green-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-foreground">Connected</p>
+                <p className="text-xs text-muted-foreground">Joined as {displayName}</p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate('/attendee')}
+            >
+              Leave Meeting
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

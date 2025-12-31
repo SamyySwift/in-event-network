@@ -53,6 +53,7 @@ const AdminSettings = lazy(() => import("@/pages/admin/AdminSettings"));
 const AdminWallet = lazy(() => import("@/pages/admin/AdminWallet"));
 const AdminAdvertisements = lazy(() => import("@/pages/admin/AdminAdvertisements"));
 const AdminLiveBroadcast = lazy(() => import("@/pages/admin/AdminLiveBroadcast"));
+const AdminGuide = lazy(() => import("@/pages/admin/AdminGuide"));
 // Attendee Pages - Lazy loaded
 const AppLayout = lazy(() => import("@/components/layouts/AppLayout"));
 const AttendeeDashboard = lazy(() => import("@/pages/attendee/AttendeeDashboard"));
@@ -192,6 +193,7 @@ export const router = createBrowserRouter([
   { path: "/admin/wallet", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminWallet /></Suspense></AdminRoute> },
   { path: "/admin/advertisements", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminAdvertisements /></Suspense></AdminRoute> },
   { path: "/admin/broadcast", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminLiveBroadcast /></Suspense></AdminRoute> },
+  { path: "/admin/guide", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminGuide /></Suspense></AdminRoute> },
 
   // Host Routes (redirect to admin)
   { path: "/host", element: <Navigate to="/admin" replace /> },

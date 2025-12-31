@@ -240,6 +240,15 @@ const AdminPollsContent = () => {
           </div>
         </PaymentGuard>
       )}
+
+      {/* Edit Poll Dialog */}
+      {editingPoll && (
+        <EditPollDialog
+          open={!!editingPoll}
+          onOpenChange={(open) => !open && setEditingPoll(null)}
+          poll={editingPoll}
+        />
+      )}
     </div>
   );
 };

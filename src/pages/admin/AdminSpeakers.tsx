@@ -47,6 +47,7 @@ const AdminSpeakersContent = () => {
   const [isGeneratingBio, setIsGeneratingBio] = useState(false);
   const [isIdentifyingImage, setIsIdentifyingImage] = useState(false);
   const [aiAutoAnalysis, setAiAutoAnalysis] = useState(true); // Toggle for AI auto-analysis
+  const formRef = React.useRef<HTMLDivElement>(null);
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
@@ -270,6 +271,11 @@ const AdminSpeakersContent = () => {
     setValue('website_link', speaker.website_link || '');
     setValue('instagram_link', speaker.instagram_link || '');
     setValue('tiktok_link', speaker.tiktok_link || '');
+    
+    // Scroll to the form after a brief delay to ensure state is updated
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   };
   const handleDelete = (speaker: any) => {
     if (confirm('Are you sure you want to delete this speaker?')) {

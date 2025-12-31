@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 // Remove this line:
 // import AdminLayout from "@/components/layouts/AdminLayout";
 import {
@@ -67,6 +67,7 @@ const AdminEvents = () => {
   const [referralCode, setReferralCode] = useState("");
   const [showReferralCard, setShowReferralCard] = useState(true);
   const [isAnalyzingBanner, setIsAnalyzingBanner] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
   const { currentUser } = useAuth();
   const { toast } = useToast();
   const {
@@ -198,6 +199,11 @@ const AdminEvents = () => {
     setValue("end_time", endDateTime.toTimeString().slice(0, 5));
     setValue("location", event.location || "");
     setSelectedImage(null);
+    
+    // Scroll to the form after a brief delay to ensure state is updated
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   };
 
   const handleDelete = (id: string) => {

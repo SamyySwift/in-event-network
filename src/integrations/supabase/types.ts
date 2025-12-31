@@ -318,6 +318,7 @@ export type Database = {
           twitter_link: string | null
           updated_at: string
           vendor_form_id: string | null
+          voice_note_url: string | null
           website_link: string | null
           whatsapp_link: string | null
         }
@@ -338,6 +339,7 @@ export type Database = {
           twitter_link?: string | null
           updated_at?: string
           vendor_form_id?: string | null
+          voice_note_url?: string | null
           website_link?: string | null
           whatsapp_link?: string | null
         }
@@ -358,6 +360,7 @@ export type Database = {
           twitter_link?: string | null
           updated_at?: string
           vendor_form_id?: string | null
+          voice_note_url?: string | null
           website_link?: string | null
           whatsapp_link?: string | null
         }
@@ -1440,6 +1443,7 @@ export type Database = {
       }
       polls: {
         Row: {
+          allow_multiple: boolean | null
           created_at: string
           created_by: string | null
           display_as_banner: boolean | null
@@ -1456,6 +1460,7 @@ export type Database = {
           vote_limit: number | null
         }
         Insert: {
+          allow_multiple?: boolean | null
           created_at?: string
           created_by?: string | null
           display_as_banner?: boolean | null
@@ -1472,6 +1477,7 @@ export type Database = {
           vote_limit?: number | null
         }
         Update: {
+          allow_multiple?: boolean | null
           created_at?: string
           created_by?: string | null
           display_as_banner?: boolean | null
@@ -1507,6 +1513,7 @@ export type Database = {
           email: string | null
           facebook_link: string | null
           github_link: string | null
+          has_seen_admin_guide: boolean | null
           id: string
           instagram_link: string | null
           linkedin_link: string | null
@@ -1535,6 +1542,7 @@ export type Database = {
           email?: string | null
           facebook_link?: string | null
           github_link?: string | null
+          has_seen_admin_guide?: boolean | null
           id: string
           instagram_link?: string | null
           linkedin_link?: string | null
@@ -1563,6 +1571,7 @@ export type Database = {
           email?: string | null
           facebook_link?: string | null
           github_link?: string | null
+          has_seen_admin_guide?: boolean | null
           id?: string
           instagram_link?: string | null
           linkedin_link?: string | null

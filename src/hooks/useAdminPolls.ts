@@ -23,6 +23,7 @@ export interface Poll {
   require_submission?: boolean | null;
   start_time?: string;
   end_time?: string;
+  allow_multiple?: boolean;
 }
 
 export interface PollVote {

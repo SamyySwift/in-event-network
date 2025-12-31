@@ -29,6 +29,7 @@ const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
   const [showResults, setShowResults] = useState(false);
   const [voteLimit, setVoteLimit] = useState<number | undefined>(undefined);
   const [requireSubmission, setRequireSubmission] = useState(false);
+  const [allowMultiple, setAllowMultiple] = useState(false);
   const [aiOptionCount, setAiOptionCount] = useState<number>(4);
   const [isGeneratingOptions, setIsGeneratingOptions] = useState(false);
   
@@ -144,6 +145,7 @@ const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
       event_id: selectedEventId,
       vote_limit: voteLimit || null,
       require_submission: requireSubmission,
+      allow_multiple: allowMultiple,
     };
 
     createPoll(pollData);
@@ -154,6 +156,7 @@ const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
     setIsActive(true);
     setShowResults(false);
     setVoteLimit(undefined);
+    setAllowMultiple(false);
     setOpen(false);
   };
 
@@ -277,6 +280,15 @@ const CreatePollDialog: React.FC<CreatePollDialogProps> = ({ children }) => {
                 onCheckedChange={setRequireSubmission}
               />
               <Label htmlFor="require-submission">Require Submission (make pop-up compulsory)</Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="allow-multiple"
+                checked={allowMultiple}
+                onCheckedChange={setAllowMultiple}
+              />
+              <Label htmlFor="allow-multiple">Allow multiple selections</Label>
             </div>
           </div>
 

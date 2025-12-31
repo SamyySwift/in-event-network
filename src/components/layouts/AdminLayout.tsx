@@ -517,6 +517,17 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           </div>
 
           <div className="flex items-center space-x-2">
+            {/* Guide Icon */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/admin/guide")}
+              className="text-primary hover:bg-primary/10"
+              title="Admin Guide"
+            >
+              <BookOpen size={20} />
+            </Button>
+
             {/* QR Code Icon */}
             {selectedEventId && (
               <Button

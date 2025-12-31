@@ -32,6 +32,7 @@ const EditPollDialog: React.FC<EditPollDialogProps> = ({ open, onOpenChange, pol
     typeof poll.vote_limit === "number" ? poll.vote_limit : undefined
   );
   const [requireSubmission, setRequireSubmission] = useState(!!poll.require_submission);
+  const [allowMultiple, setAllowMultiple] = useState(!!poll.allow_multiple);
 
   // Reset form when poll changes or dialog reopens
   useEffect(() => {
@@ -41,6 +42,7 @@ const EditPollDialog: React.FC<EditPollDialogProps> = ({ open, onOpenChange, pol
     setShowResults(poll.show_results);
     setVoteLimit(typeof poll.vote_limit === "number" ? poll.vote_limit : undefined);
     setRequireSubmission(!!poll.require_submission);
+    setAllowMultiple(!!poll.allow_multiple);
   }, [poll, open]);
 
   const nextOptionId = useMemo(() => {
@@ -117,11 +119,12 @@ const EditPollDialog: React.FC<EditPollDialogProps> = ({ open, onOpenChange, pol
       {
         id: poll.id,
         question: question.trim(),
-        options: normalizedOptions.map(({ id, text }) => ({ id, text })), // do not push votes back
+        options: normalizedOptions.map(({ id, text }) => ({ id, text })),
         is_active: isActive,
         show_results: showResults,
         vote_limit: typeof voteLimit === "number" ? voteLimit : null,
         require_submission: requireSubmission,
+        allow_multiple: allowMultiple,
       },
       {
         onSuccess: () => {
@@ -242,6 +245,15 @@ const EditPollDialog: React.FC<EditPollDialogProps> = ({ open, onOpenChange, pol
               <Label htmlFor="require-submission">
                 Require Submission (make pop-up compulsory)
               </Label>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="allow-multiple"
+                checked={allowMultiple}
+                onCheckedChange={setAllowMultiple}
+              />
+              <Label htmlFor="allow-multiple">Allow multiple selections</Label>
             </div>
           </div>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 // Remove this import:
 // import AdminLayout from "@/components/layouts/AdminLayout";
 import EventSelector from "@/components/admin/EventSelector";
@@ -62,6 +62,7 @@ const AdminScheduleContent = () => {
   const [editingItem, setEditingItem] = useState<ScheduleItem | null>(null);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const formRef = useRef<HTMLDivElement>(null);
   
   // Filter states
   const [searchTerm, setSearchTerm] = useState("");
@@ -385,6 +386,11 @@ const AdminScheduleContent = () => {
       type: item.type,
       priority: item.priority
     });
+    
+    // Scroll to the form after a brief delay to ensure state is updated
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   };
 
   const handleImageSelect = (file: File | null) => {

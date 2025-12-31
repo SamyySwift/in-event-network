@@ -21,6 +21,7 @@ export interface Poll {
   vote_limit?: number | null;
   totalVotes?: number;
   require_submission?: boolean | null;
+  allow_multiple?: boolean;
 }
 
 export interface PollVote {
@@ -48,7 +49,7 @@ export const useAttendeePolls = () => {
       const [pollsResponse, votesResponse] = await Promise.all([
         supabase
           .from('polls')
-          .select('id, question, options, is_active, show_results, event_id, created_at, vote_limit, require_submission')
+          .select('id, question, options, is_active, show_results, event_id, created_at, vote_limit, require_submission, allow_multiple')
           .eq('event_id', currentEventId)
           .order('created_at', { ascending: false }),
         supabase

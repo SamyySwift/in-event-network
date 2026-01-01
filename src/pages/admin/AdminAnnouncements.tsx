@@ -1,6 +1,6 @@
 // File: AdminAnnouncements.tsx
 // Component: AdminAnnouncementsContent
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 // Remove this import:
 // import AdminLayout from '@/components/layouts/AdminLayout';
 import EventSelector from "@/components/admin/EventSelector";
@@ -43,7 +43,8 @@ import { ImageUpload } from "@/components/ui/image-upload";
 import AnnouncementStatsCards from "./components/AnnouncementStatsCards";
 import AnnouncementCard from "./components/AnnouncementCard";
 import PaymentGuard from "@/components/payment/PaymentGuard";
-import { supabase } from "@/integrations/supabase/client"; // Add
+import { supabase } from "@/integrations/supabase/client";
+import { VoiceNoteRecorder } from "@/components/admin/VoiceNoteRecorder";
 import {
   Dialog,
   DialogContent,
@@ -73,6 +74,9 @@ function AdminAnnouncementsContent() {
     null
   );
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [voiceNoteBlob, setVoiceNoteBlob] = useState<Blob | null>(null);
+  const [currentVoiceNoteUrl, setCurrentVoiceNoteUrl] = useState<string | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
   const { currentUser } = useAuth();
   const { selectedEvent, selectedEventId } = useAdminEventContext();
   const {
@@ -243,6 +247,7 @@ function AdminAnnouncementsContent() {
       require_submission: !!data.require_submission,
       created_by: currentUser?.id,
       image: selectedImage,
+      voice_note: voiceNoteBlob,
     };
 
     if (editingAnnouncement) {
@@ -253,6 +258,8 @@ function AdminAnnouncementsContent() {
     }
     reset();
     setSelectedImage(null);
+    setVoiceNoteBlob(null);
+    setCurrentVoiceNoteUrl(null);
     // Clear saved form data after successful submission
     clearSavedData();
   };
@@ -274,6 +281,13 @@ function AdminAnnouncementsContent() {
     setValue("vendor_form_id", announcement.vendor_form_id || "");
     setValue("require_submission", !!announcement.require_submission);
     setSelectedImage(null);
+    setVoiceNoteBlob(null);
+    setCurrentVoiceNoteUrl(announcement.voice_note_url || null);
+    
+    // Scroll to the form after a brief delay
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   };
 
   const handleDelete = (id: string) => {
@@ -285,6 +299,8 @@ function AdminAnnouncementsContent() {
   const handleCancel = () => {
     setEditingAnnouncement(null);
     setSelectedImage(null);
+    setVoiceNoteBlob(null);
+    setCurrentVoiceNoteUrl(null);
     reset();
     // Clear saved form data when canceling
     if (!editingAnnouncement) {
@@ -404,7 +420,7 @@ function AdminAnnouncementsContent() {
             </div>
 
             {/* Add/Edit Announcement Form */}
-            <Card className="mb-6 glass-card bg-gradient-to-br from-white/90 via-primary-50/70 to-primary-100/60 transition-all animate-fade-in shadow-lg">
+            <Card ref={formRef} className="mb-6 glass-card bg-gradient-to-br from-white/90 via-primary-50/70 to-primary-100/60 transition-all animate-fade-in shadow-lg">
               <CardHeader>
                 <CardTitle>
                   {editingAnnouncement
@@ -460,6 +476,21 @@ function AdminAnnouncementsContent() {
                       onImageSelect={setSelectedImage}
                       label="Announcement Image (Optional)"
                     />
+
+                    {/* Voice Note Recorder */}
+                    <div className="border rounded-lg p-4 bg-muted/30">
+                      <Label className="text-sm font-medium mb-3 block">
+                        Voice Note (Optional)
+                      </Label>
+                      <VoiceNoteRecorder
+                        onVoiceNoteChange={setVoiceNoteBlob}
+                        currentVoiceNoteUrl={currentVoiceNoteUrl || undefined}
+                        maxSizeMB={1}
+                      />
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Record a voice message for attendees (max 1MB)
+                      </p>
+                    </div>
 
                     {/* Social Media Links Section */}
                     <div className="border rounded-lg p-4 bg-muted/30">

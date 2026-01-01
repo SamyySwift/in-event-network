@@ -11,6 +11,7 @@ interface Announcement {
   priority: 'high' | 'normal' | 'low';
   send_immediately: boolean;
   image_url?: string;
+  voice_note_url?: string;
   created_by?: string;
   event_id?: string;
   created_at: string;
@@ -102,8 +103,26 @@ export const useAnnouncements = (eventId?: string) => {
     return publicUrl;
   };
 
+  const uploadVoiceNote = async (blob: Blob): Promise<string> => {
+    const fileName = `voice_notes/${Math.random()}.webm`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('media')
+      .upload(fileName, blob, {
+        contentType: 'audio/webm',
+      });
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('media')
+      .getPublicUrl(fileName);
+
+    return publicUrl;
+  };
+
   const createAnnouncementMutation = useMutation({
-    mutationFn: async (announcementData: Omit<Announcement, 'id' | 'created_at' | 'updated_at'> & { image?: File }) => {
+    mutationFn: async (announcementData: Omit<Announcement, 'id' | 'created_at' | 'updated_at'> & { image?: File; voice_note?: Blob }) => {
       if (!currentUser?.id) {
         throw new Error('User not authenticated');
       }
@@ -131,10 +150,16 @@ export const useAnnouncements = (eventId?: string) => {
         imageUrl = await uploadImage(announcementData.image);
       }
 
-      const { image, ...dataWithoutImage } = announcementData;
+      let voiceNoteUrl;
+      if (announcementData.voice_note) {
+        voiceNoteUrl = await uploadVoiceNote(announcementData.voice_note);
+      }
+
+      const { image, voice_note, ...dataWithoutFiles } = announcementData;
       const finalData = {
-        ...dataWithoutImage,
+        ...dataWithoutFiles,
         image_url: imageUrl || announcementData.image_url,
+        voice_note_url: voiceNoteUrl || announcementData.voice_note_url,
         created_by: currentUser.id,
         event_id: targetEventId // Use the target event ID
       };
@@ -169,15 +194,21 @@ export const useAnnouncements = (eventId?: string) => {
   });
 
   const updateAnnouncementMutation = useMutation({
-    mutationFn: async ({ id, image, ...announcementData }: Partial<Announcement> & { id: string; image?: File }) => {
+    mutationFn: async ({ id, image, voice_note, ...announcementData }: Partial<Announcement> & { id: string; image?: File; voice_note?: Blob }) => {
       let imageUrl = announcementData.image_url;
       if (image) {
         imageUrl = await uploadImage(image);
       }
 
+      let voiceNoteUrl = announcementData.voice_note_url;
+      if (voice_note) {
+        voiceNoteUrl = await uploadVoiceNote(voice_note);
+      }
+
       const finalData = {
         ...announcementData,
         image_url: imageUrl,
+        voice_note_url: voiceNoteUrl,
       };
 
       const { data, error } = await supabase

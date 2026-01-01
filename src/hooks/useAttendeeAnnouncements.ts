@@ -11,6 +11,7 @@ interface Announcement {
   priority: 'high' | 'normal' | 'low';
   send_immediately: boolean;
   image_url?: string;
+  voice_note_url?: string;
   created_by?: string;
   created_at: string;
   updated_at: string;
@@ -45,7 +46,7 @@ export const useAttendeeAnnouncements = () => {
 
       const { data, error } = await supabase
         .from('announcements')
-        .select('id, title, content, priority, send_immediately, image_url, created_at, event_id, twitter_link, instagram_link, facebook_link, tiktok_link, website_link, whatsapp_link, vendor_form_id, require_submission')
+        .select('id, title, content, priority, send_immediately, image_url, voice_note_url, created_at, event_id, twitter_link, instagram_link, facebook_link, tiktok_link, website_link, whatsapp_link, vendor_form_id, require_submission')
         .eq('event_id', profile.current_event_id)
         .order('created_at', { ascending: false });
 

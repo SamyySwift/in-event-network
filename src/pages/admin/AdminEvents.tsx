@@ -542,7 +542,7 @@ const AdminEvents = () => {
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 lg:gap-8">
           {/* Event Creation Form - Left Side */}
           <div className="xl:col-span-2">
-            <Card className="border-0 shadow-lg bg-white dark:bg-slate-900">
+            <Card ref={formRef} className="border-0 shadow-lg bg-white dark:bg-slate-900">
               <CardHeader className="pb-6">
                 <div className="flex items-center gap-3">
                   <div className="p-2 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 shadow-md">

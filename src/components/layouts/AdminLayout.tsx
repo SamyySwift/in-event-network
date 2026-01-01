@@ -3,6 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotificationCount } from "@/hooks/useNotificationCount";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { supabase } from "@/integrations/supabase/client";
+import AdminOnboardingModal from "@/components/admin/AdminOnboardingModal";
 import { AdminFormPersistenceProvider } from "@/hooks/useAdminFormPersistence";
 import { useAdminEventContext } from "@/hooks/useAdminEventContext";
 import {
@@ -74,9 +76,29 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const isMobile = useIsMobile();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false); // Add this line
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [searchQuery, setSearchQuery] = useState("");
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Check if user has seen the admin guide
+  useEffect(() => {
+    const checkOnboardingStatus = async () => {
+      if (!currentUser?.id) return;
+      
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('has_seen_admin_guide')
+        .eq('id', currentUser.id)
+        .single();
+      
+      if (profile && !profile.has_seen_admin_guide) {
+        setShowOnboarding(true);
+      }
+    };
+    
+    checkOnboardingStatus();
+  }, [currentUser?.id]);
 
   // Toggle theme functionality
   const toggleTheme = () => {
@@ -768,6 +790,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               <Button
                 variant="outline"
                 size="icon"
+                onClick={() => navigate("/admin/guide")}
+                className="bg-card border-primary/20 hover:bg-accent"
+                title="Admin Guide"
+              >
+                <BookOpen size={18} />
+              </Button>
+
+              <Button
+                variant="outline"
+                size="icon"
                 onClick={toggleTheme}
                 className="bg-card border-primary/20 hover:bg-accent"
               >
@@ -814,6 +846,12 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
           <div className="p-6">{children}</div>
         </main>
+
+        {/* Admin Onboarding Modal */}
+        <AdminOnboardingModal 
+          open={showOnboarding} 
+          onOpenChange={setShowOnboarding} 
+        />
       </div>
     </AdminFormPersistenceProvider>
   );

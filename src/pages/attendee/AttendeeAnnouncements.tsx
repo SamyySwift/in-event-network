@@ -28,6 +28,8 @@ import {
   ExternalLink,
   Globe,
   Play,
+  Volume2,
+  Pause,
 } from "lucide-react";
 import { FaInstagram, FaTiktok, FaFacebook, FaWhatsapp } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
@@ -400,6 +402,26 @@ const AttendeeAnnouncementsContent = () => {
                           alt="Announcement"
                           className="w-full h-auto rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
                         />
+                      </div>
+                    )}
+
+                  {/* Voice Note - Show when expanded */}
+                  {announcement.voice_note_url &&
+                    expandedAnnouncement === announcement.id && (
+                      <div className="mt-4 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-100">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-indigo-100 rounded-full">
+                            <Volume2 className="h-5 w-5 text-indigo-600" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-indigo-900">Voice Message</p>
+                            <audio
+                              controls
+                              src={announcement.voice_note_url}
+                              className="w-full mt-2 h-10"
+                            />
+                          </div>
+                        </div>
                       </div>
                     )}
 

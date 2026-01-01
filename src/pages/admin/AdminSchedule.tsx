@@ -500,7 +500,7 @@ const AdminScheduleContent = () => {
           />
 
           {/* Schedule Form */}
-          <Card className="mb-6 glass-card bg-gradient-to-br from-white/90 via-primary-50/70 to-primary-100/60 transition-all animate-fade-in shadow-lg">
+          <Card ref={formRef} className="mb-6 glass-card bg-gradient-to-br from-white/90 via-primary-50/70 to-primary-100/60 transition-all animate-fade-in shadow-lg">
             <CardHeader>
               <CardTitle>{editingItem ? "Edit Schedule Item" : "Create Schedule Item"}</CardTitle>
               <CardDescription>

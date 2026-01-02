@@ -1,6 +1,6 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Maximize2, Minimize2, Move, Video } from 'lucide-react';
+import { X, Maximize2, Minimize2, Move, Video, VideoOff, Headphones } from 'lucide-react';
 import { usePiP } from '@/contexts/PiPContext';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -8,6 +8,7 @@ export const FloatingJitsiPlayer: React.FC = () => {
   const { isVisible, jitsiRoomName, isFullscreen, streamType, hidePiP, setFullscreen } = usePiP();
   const { currentUser } = useAuth();
   const constraintsRef = useRef(null);
+  const [audioOnly, setAudioOnly] = useState(false);
 
   // Only render for Jitsi streams
   if (!isVisible || streamType !== 'jitsi' || !jitsiRoomName) {
@@ -15,7 +16,7 @@ export const FloatingJitsiPlayer: React.FC = () => {
   }
 
   const displayName = currentUser?.name || 'Attendee';
-  const jitsiUrl = `https://meet.jit.si/${jitsiRoomName}#config.prejoinPageEnabled=false&config.startWithVideoMuted=true&config.startWithAudioMuted=true&userInfo.displayName=${encodeURIComponent(displayName)}`;
+  const jitsiUrl = `https://meet.jit.si/${jitsiRoomName}#config.prejoinPageEnabled=false&config.startWithVideoMuted=true&config.startWithAudioMuted=true${audioOnly ? '&config.startWithVideoMuted=true&config.disableVideo=true' : ''}&userInfo.displayName=${encodeURIComponent(displayName)}`;
 
   // Fullscreen mode - fixed overlay
   if (isFullscreen) {
@@ -34,6 +35,13 @@ export const FloatingJitsiPlayer: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
             <button
+              onClick={() => setAudioOnly(!audioOnly)}
+              className={`p-2 rounded-full transition-colors ${audioOnly ? 'bg-amber-500 hover:bg-amber-600' : 'bg-white/20 hover:bg-white/30'}`}
+              title={audioOnly ? "Enable video" : "Audio only (saves bandwidth)"}
+            >
+              {audioOnly ? <Headphones className="w-5 h-5 text-white" /> : <Video className="w-5 h-5 text-white" />}
+            </button>
+            <button
               onClick={() => setFullscreen(false)}
               className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
               title="Minimize to PiP"
@@ -50,9 +58,21 @@ export const FloatingJitsiPlayer: React.FC = () => {
           </div>
         </div>
 
+        {/* Audio only indicator */}
+        {audioOnly && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-[5]">
+            <div className="text-center">
+              <Headphones className="w-16 h-16 text-amber-400 mx-auto mb-4" />
+              <p className="text-white text-lg font-medium">Audio Only Mode</p>
+              <p className="text-white/60 text-sm">Video disabled to save bandwidth</p>
+            </div>
+          </div>
+        )}
+
         {/* Jitsi iframe - fullscreen */}
         <iframe
           src={jitsiUrl}
+          key={audioOnly ? 'audio-only' : 'with-video'}
           title="Live Meeting"
           className="w-full h-full"
           allow="camera; microphone; fullscreen; display-capture; autoplay"
@@ -96,6 +116,16 @@ export const FloatingJitsiPlayer: React.FC = () => {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
+                    setAudioOnly(!audioOnly);
+                  }}
+                  className={`p-1.5 rounded-full transition-colors ${audioOnly ? 'bg-amber-500 hover:bg-amber-600' : 'bg-white/20 hover:bg-white/30'}`}
+                  title={audioOnly ? "Enable video" : "Audio only"}
+                >
+                  {audioOnly ? <Headphones className="w-3.5 h-3.5 text-white" /> : <Video className="w-3.5 h-3.5 text-white" />}
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
                     setFullscreen(true);
                   }}
                   className="p-1.5 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
@@ -116,9 +146,20 @@ export const FloatingJitsiPlayer: React.FC = () => {
               </div>
             </div>
 
+            {/* Audio only overlay for PiP */}
+            {audioOnly && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-10 rounded-2xl">
+                <div className="text-center">
+                  <Headphones className="w-10 h-10 text-amber-400 mx-auto mb-2" />
+                  <p className="text-white text-sm font-medium">Audio Only</p>
+                </div>
+              </div>
+            )}
+
             {/* Jitsi iframe */}
             <iframe
               src={jitsiUrl}
+              key={audioOnly ? 'audio-only-pip' : 'with-video-pip'}
               title="Live Meeting"
               className="w-full h-full"
               allow="camera; microphone; fullscreen; display-capture; autoplay"

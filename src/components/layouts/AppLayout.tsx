@@ -44,6 +44,7 @@ import { NotificationBadge } from "@/components/notifications/NotificationBadge"
 import { ExpandableTabs } from "@/components/ui/expandable-tabs";
 import { FloatingDidYouKnow } from "@/components/attendee/FloatingDidYouKnow";
 import { FloatingPiPPlayer } from "@/components/attendee/FloatingPiPPlayer";
+import { FloatingJitsiPlayer } from "@/components/attendee/FloatingJitsiPlayer";
 import { PiPProvider } from "@/contexts/PiPContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -222,8 +223,9 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   ];
   return (
     <PiPProvider>
-      {/* Global PiP Player */}
+      {/* Global PiP Players */}
       <FloatingPiPPlayer />
+      <FloatingJitsiPlayer />
       
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col md:flex-row">
       {/* Mobile Header */}

@@ -112,3 +112,15 @@ export const extractYouTubeVideoId = (url: string): string | null => {
   
   return null;
 };
+
+// Helper to check if URL is a YouTube stream
+export const isYouTubeStream = (url: string | null): boolean => {
+  if (!url) return false;
+  return !!extractYouTubeVideoId(url);
+};
+
+// Helper to check if URL is a Jitsi stream (non-YouTube live stream URL)
+export const isJitsiStream = (url: string | null): boolean => {
+  if (!url) return false;
+  return !isYouTubeStream(url);
+};

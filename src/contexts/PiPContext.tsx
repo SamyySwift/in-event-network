@@ -8,10 +8,12 @@ interface PiPContextType {
   isFullscreen: boolean;
   streamType: StreamType;
   jitsiRoomName: string | null;
+  sessionId: number;
   showPiP: (eventId: string) => void;
   showJitsiPiP: (eventId: string, roomName: string) => void;
   hidePiP: () => void;
   setFullscreen: (fullscreen: boolean) => void;
+  reconnect: () => void;
 }
 
 const PiPContext = createContext<PiPContextType | undefined>(undefined);
@@ -22,6 +24,13 @@ export const PiPProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [streamType, setStreamType] = useState<StreamType>(null);
   const [jitsiRoomName, setJitsiRoomName] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState(1);
+
+  // Force iframe reconnect by incrementing session ID
+  const reconnect = useCallback(() => {
+    setSessionId(prev => prev + 1);
+    console.log('Jitsi reconnect triggered');
+  }, []);
 
   // Show YouTube PiP
   const showPiP = useCallback((id: string) => {
@@ -60,10 +69,12 @@ export const PiPProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       isFullscreen, 
       streamType,
       jitsiRoomName,
+      sessionId,
       showPiP, 
       showJitsiPiP,
       hidePiP, 
-      setFullscreen 
+      setFullscreen,
+      reconnect
     }}>
       {children}
     </PiPContext.Provider>

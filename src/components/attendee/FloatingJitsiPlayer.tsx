@@ -1,6 +1,6 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Maximize2, Minimize2, Move, Video, Headphones } from 'lucide-react';
+import { X, Maximize2, Minimize2, Move, Video, Headphones, Loader2 } from 'lucide-react';
 import { usePiP } from '@/contexts/PiPContext';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -9,14 +9,35 @@ export const FloatingJitsiPlayer: React.FC = () => {
   const { currentUser } = useAuth();
   const constraintsRef = useRef<HTMLDivElement | null>(null);
   const [audioOnly, setAudioOnly] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected'>('connecting');
 
   const shouldRender = isVisible && streamType === 'jitsi' && !!jitsiRoomName;
   const displayName = currentUser?.name || 'Attendee';
 
+  // Stable URL - does NOT include audioOnly to prevent iframe reload
   const jitsiUrl = useMemo(() => {
     if (!jitsiRoomName) return '';
-    return `https://meet.jit.si/${jitsiRoomName}#config.prejoinPageEnabled=false&config.startWithVideoMuted=true&config.startWithAudioMuted=true${audioOnly ? '&config.disableVideo=true&config.startWithVideoMuted=true' : ''}&userInfo.displayName=${encodeURIComponent(displayName)}`;
-  }, [audioOnly, displayName, jitsiRoomName]);
+    return `https://meet.jit.si/${jitsiRoomName}#config.prejoinPageEnabled=false&config.startWithVideoMuted=true&config.startWithAudioMuted=true&userInfo.displayName=${encodeURIComponent(displayName)}`;
+  }, [displayName, jitsiRoomName]);
+
+  // Reset connection status when room changes
+  useEffect(() => {
+    if (jitsiRoomName) {
+      setConnectionStatus('connecting');
+    }
+  }, [jitsiRoomName]);
+
+  // Handle browser visibility changes (mobile background handling)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && shouldRender) {
+        console.log('App visible again, Jitsi connection should persist');
+      }
+    };
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [shouldRender]);
 
   if (!shouldRender) return null;
 
@@ -36,23 +57,35 @@ export const FloatingJitsiPlayer: React.FC = () => {
 
   const leftBadge = isFullscreen ? (
     <div className="flex items-center gap-2 pointer-events-auto">
-      <Video className="w-4 h-4 text-white/70" />
-      <span className="text-sm text-white/70 font-medium">LIVE MEETING</span>
+      {connectionStatus === 'connecting' ? (
+        <Loader2 className="w-4 h-4 text-yellow-400 animate-spin" />
+      ) : (
+        <Video className="w-4 h-4 text-white/70" />
+      )}
+      <span className="text-sm text-white/70 font-medium">
+        {connectionStatus === 'connecting' ? 'CONNECTING...' : 'LIVE MEETING'}
+      </span>
       <motion.div
         animate={{ opacity: [1, 0.3, 1] }}
         transition={{ duration: 1.5, repeat: Infinity }}
-        className="w-2 h-2 bg-green-500 rounded-full"
+        className={`w-2 h-2 rounded-full ${connectionStatus === 'connecting' ? 'bg-yellow-500' : 'bg-green-500'}`}
       />
     </div>
   ) : (
     <div className="flex items-center gap-1.5">
       <Move className="w-3 h-3 text-white/70" />
-      <Video className="w-3 h-3 text-green-400" />
-      <span className="text-xs text-white/80 font-medium">LIVE</span>
+      {connectionStatus === 'connecting' ? (
+        <Loader2 className="w-3 h-3 text-yellow-400 animate-spin" />
+      ) : (
+        <Video className="w-3 h-3 text-green-400" />
+      )}
+      <span className="text-xs text-white/80 font-medium">
+        {connectionStatus === 'connecting' ? 'CONNECTING' : 'LIVE'}
+      </span>
       <motion.div
         animate={{ opacity: [1, 0.3, 1] }}
         transition={{ duration: 1.5, repeat: Infinity }}
-        className="w-2 h-2 bg-green-500 rounded-full"
+        className={`w-2 h-2 rounded-full ${connectionStatus === 'connecting' ? 'bg-yellow-500' : 'bg-green-500'}`}
       />
     </div>
   );
@@ -151,13 +184,15 @@ export const FloatingJitsiPlayer: React.FC = () => {
               </div>
             )}
 
-            {/* Jitsi iframe (single instance, never unmounts between PiP/fullscreen) */}
+            {/* Jitsi iframe - stable key prevents remounts when switching PiP/fullscreen */}
             <iframe
+              key={jitsiRoomName}
               src={jitsiUrl}
               title="Live Meeting"
               className="w-full h-full"
               allow="camera; microphone; fullscreen; display-capture; autoplay"
               allowFullScreen
+              onLoad={() => setConnectionStatus('connected')}
             />
 
             {/* Bottom info bar (PiP only) */}

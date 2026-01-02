@@ -31,11 +31,11 @@ export const FloatingJitsiPlayer: React.FC = () => {
     : 'relative overflow-hidden rounded-2xl shadow-2xl border-4 border-green-500 bg-black w-72 h-48 sm:w-80 sm:h-52';
 
   const headerClassName = isFullscreen
-    ? 'flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent absolute top-0 left-0 right-0 z-20'
+    ? 'flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent absolute top-0 left-0 right-0 z-20 pointer-events-none'
     : 'absolute top-0 left-0 right-0 z-20 flex items-center justify-between p-2 bg-gradient-to-b from-black/80 to-transparent';
 
   const leftBadge = isFullscreen ? (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 pointer-events-auto">
       <Video className="w-4 h-4 text-white/70" />
       <span className="text-sm text-white/70 font-medium">LIVE MEETING</span>
       <motion.div
@@ -85,7 +85,7 @@ export const FloatingJitsiPlayer: React.FC = () => {
             <div className={headerClassName}>
               {leftBadge}
 
-              <div className={`flex items-center gap-2 ${isFullscreen ? 'mr-16' : ''}`}>
+              <div className={`flex items-center gap-2 pointer-events-auto ${isFullscreen ? 'mr-16' : ''}`}>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

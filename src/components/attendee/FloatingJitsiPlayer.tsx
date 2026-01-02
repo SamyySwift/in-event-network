@@ -85,7 +85,7 @@ export const FloatingJitsiPlayer: React.FC = () => {
             <div className={headerClassName}>
               {leftBadge}
 
-              <div className="flex items-center gap-2">
+              <div className={`flex items-center gap-2 ${isFullscreen ? 'mr-16' : ''}`}>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();

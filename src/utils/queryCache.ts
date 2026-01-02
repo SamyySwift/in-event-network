@@ -74,20 +74,22 @@ export const clearAllCache = (prefix?: string): void => {
 
 // Default query options for slow network optimization
 export const slowNetworkQueryOptions = {
-  staleTime: 2 * 60 * 1000, // 2 minutes
-  gcTime: 15 * 60 * 1000, // 15 minutes cache (increased from 10)
+  staleTime: 3 * 60 * 1000, // 3 minutes - keeps data fresh longer
+  gcTime: 20 * 60 * 1000, // 20 minutes cache
   refetchOnWindowFocus: false,
   refetchOnReconnect: true,
   retry: 1,
-  retryDelay: 1000,
+  retryDelay: 800,
+  networkMode: 'offlineFirst' as const, // Show cached data immediately
 };
 
 // Even more aggressive caching for very slow connections
 export const ultraSlowNetworkQueryOptions = {
-  staleTime: 5 * 60 * 1000, // 5 minutes
-  gcTime: 30 * 60 * 1000, // 30 minutes cache
+  staleTime: 10 * 60 * 1000, // 10 minutes
+  gcTime: 60 * 60 * 1000, // 60 minutes cache
   refetchOnWindowFocus: false,
   refetchOnReconnect: true,
-  retry: 0, // No retries on ultra slow
+  retry: 0,
   retryDelay: 2000,
+  networkMode: 'offlineFirst' as const,
 };

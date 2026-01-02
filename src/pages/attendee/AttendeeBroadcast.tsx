@@ -16,7 +16,9 @@ function AttendeeBroadcastContent() {
   const { currentUser } = useAuth();
   const { currentEventId } = useAttendeeEventContext();
   const { liveStreamUrl, isLive, isLoading } = useLiveStream(currentEventId);
-  const { showJitsiPiP, isVisible, streamType } = usePiP();
+  const { showJitsiPiP, isVisible, streamType, setFullscreen } = usePiP();
+
+  const displayName = currentUser?.name || 'Attendee';
 
   // If Jitsi PiP is already active, just show a message
   const isJitsiPiPActive = isVisible && streamType === 'jitsi';
@@ -146,51 +148,61 @@ function AttendeeBroadcastContent() {
     );
   }
 
-  const displayName = currentUser?.name || 'Attendee';
-  const jitsiUrl = `https://meet.jit.si/${liveStreamUrl}#config.prejoinPageEnabled=false&config.startWithVideoMuted=true&config.startWithAudioMuted=true&userInfo.displayName=${encodeURIComponent(displayName)}`;
+  const handleOpenMeeting = () => {
+    if (!currentEventId || !liveStreamUrl || !isJitsiStream(liveStreamUrl)) return;
+
+    // Ensure player exists
+    if (!isVisible || streamType !== 'jitsi') {
+      showJitsiPiP(currentEventId, liveStreamUrl);
+    }
+
+    // Expand existing player (keeps the same meeting session)
+    setFullscreen(true);
+  };
 
   const handleMinimizeToPiP = () => {
-    if (currentEventId && liveStreamUrl && isJitsiStream(liveStreamUrl)) {
+    if (!currentEventId || !liveStreamUrl || !isJitsiStream(liveStreamUrl)) return;
+
+    // Ensure player exists then minimize
+    if (!isVisible || streamType !== 'jitsi') {
       showJitsiPiP(currentEventId, liveStreamUrl);
-      navigate('/attendee');
     }
+
+    setFullscreen(false);
+    navigate('/attendee');
   };
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+      {/* Header (mobile friendly) */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
             onClick={() => navigate('/attendee')}
-            className="rounded-full"
+            className="rounded-full shrink-0"
           >
             <ArrowLeft className="w-5 h-5" />
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Live Broadcast</h1>
-            <p className="text-muted-foreground text-sm">You're connected to the live meeting</p>
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">Live Broadcast</h1>
+            <p className="text-muted-foreground text-sm">Join the live meeting</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Minimize to PiP button */}
-          {isJitsiStream(liveStreamUrl) && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleMinimizeToPiP}
-              className="gap-2"
-            >
-              <Minimize2 className="w-4 h-4" />
-              <span className="hidden sm:inline">Minimize</span>
-            </Button>
-          )}
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="default" size="sm" onClick={handleOpenMeeting} className="gap-2">
+            <Video className="w-4 h-4" />
+            Open meeting
+          </Button>
 
-          {/* Live Indicator */}
-          <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20">
+          <Button variant="outline" size="sm" onClick={handleMinimizeToPiP} className="gap-2">
+            <Minimize2 className="w-4 h-4" />
+            PiP
+          </Button>
+
+          <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-green-500/10 border border-green-500/20">
             <motion.div
               animate={{ opacity: [1, 0.4, 1] }}
               transition={{ duration: 1.5, repeat: Infinity }}
@@ -203,77 +215,46 @@ function AttendeeBroadcastContent() {
         </div>
       </div>
 
-      {/* Jitsi Meeting Embed - Extended Size */}
-      <Card className="overflow-hidden border-0 shadow-xl">
-        <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-1.5">
-          <div className="rounded-xl overflow-hidden bg-black">
-            <iframe
-              src={jitsiUrl}
-              className="w-full min-h-[400px] sm:min-h-[500px] md:min-h-[600px] lg:min-h-[700px]"
-              style={{ aspectRatio: '16/10' }}
-              allow="camera; microphone; fullscreen; display-capture; autoplay"
-              allowFullScreen
-            />
-          </div>
-        </div>
-      </Card>
-
-      {/* Connection Status & Web Join Instructions */}
+      {/* Meeting status card (fits mobile) */}
       <Card>
-        <CardContent className="py-4 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+        <CardContent className="py-4 space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground">Ready to join</p>
+              <p className="text-xs text-muted-foreground truncate">You will join as {displayName}</p>
+            </div>
+            <div className="shrink-0 flex items-center gap-2">
               <div className="p-2 rounded-full bg-green-500/10">
                 <Wifi className="w-4 h-4 text-green-500" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-foreground">Connected</p>
-                <p className="text-xs text-muted-foreground">Joined as {displayName}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {isJitsiStream(liveStreamUrl) && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleMinimizeToPiP}
-                  className="gap-1.5"
-                >
-                  <Minimize2 className="w-3.5 h-3.5" />
-                  Minimize to PiP
-                </Button>
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/attendee')}
-              >
-                Leave Meeting
-              </Button>
             </div>
           </div>
 
-          {/* Web Join Instructions */}
-          <div className="border-t pt-4">
-            <h4 className="font-medium text-foreground mb-2 flex items-center gap-2">
-              <Video className="w-4 h-4 text-primary" />
-              How to Join via Web Browser
-            </h4>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p className="leading-relaxed">
-                You're viewing the live broadcast directly in your web browser. To participate fully:
-              </p>
-              <ul className="list-disc list-inside space-y-1.5 ml-2">
-                <li><strong>Enable Camera/Microphone:</strong> Click the camera and microphone icons in the video player to turn them on. Your browser may ask for permission — click "Allow".</li>
-                <li><strong>Full Screen:</strong> Click the expand icon in the bottom-right corner of the video for a better viewing experience.</li>
-                <li><strong>Raise Hand:</strong> Use the raise hand feature in the meeting controls to get the host's attention.</li>
-                <li><strong>Chat:</strong> Use the chat panel within the video player to send messages to other participants.</li>
-                <li><strong>Picture-in-Picture:</strong> Click "Minimize" to continue browsing while staying in the meeting.</li>
-              </ul>
-              <p className="text-xs text-muted-foreground/80 mt-3 italic">
-                Tip: For the best experience, use Chrome, Firefox, or Edge browser. Safari users may need to enable camera/microphone access in Safari Preferences → Websites.
-              </p>
-            </div>
+          <div className="text-sm text-muted-foreground">
+            Tap <strong>Open meeting</strong> to watch in full screen. Tap <strong>PiP</strong> to keep it floating while you navigate.
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Web Join Instructions */}
+      <Card>
+        <CardContent className="py-4">
+          <h4 className="font-medium text-foreground mb-2 flex items-center gap-2">
+            <Video className="w-4 h-4 text-primary" />
+            How to Join via Web Browser
+          </h4>
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p className="leading-relaxed">
+              For the best experience, allow camera/mic when prompted.
+            </p>
+            <ul className="list-disc list-inside space-y-1.5">
+              <li><strong>Enable Camera/Microphone:</strong> Click “Allow” when your browser prompts you.</li>
+              <li><strong>Full Screen:</strong> Use <strong>Open meeting</strong> for full screen viewing.</li>
+              <li><strong>Picture-in-Picture:</strong> Use <strong>PiP</strong> to keep the meeting while browsing.</li>
+            </ul>
+            <p className="text-xs text-muted-foreground/80 mt-3 italic">
+              Tip: Chrome, Firefox, or Edge works best.
+            </p>
           </div>
         </CardContent>
       </Card>

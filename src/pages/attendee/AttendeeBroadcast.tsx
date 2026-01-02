@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Video, ArrowLeft, Circle, Users, Wifi, WifiOff, Minimize2 } from 'lucide-react';
@@ -22,6 +22,18 @@ function AttendeeBroadcastContent() {
 
   // If Jitsi PiP is already active, just show a message
   const isJitsiPiPActive = isVisible && streamType === 'jitsi';
+
+  // Auto-join meeting on page load
+  useEffect(() => {
+    if (isLive && liveStreamUrl && isJitsiStream(liveStreamUrl) && currentEventId && !isLoading) {
+      // Only auto-join if not already in Jitsi PiP
+      if (!isVisible || streamType !== 'jitsi') {
+        showJitsiPiP(currentEventId, liveStreamUrl);
+      }
+      // Always go fullscreen when visiting broadcast page
+      setFullscreen(true);
+    }
+  }, [isLive, liveStreamUrl, currentEventId, isVisible, streamType, showJitsiPiP, setFullscreen, isLoading]);
 
   if (isLoading) {
     return (

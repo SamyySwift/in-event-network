@@ -3,8 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Video, X, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useLiveStream } from '@/hooks/useLiveStream';
+import { useLiveStream, isJitsiStream } from '@/hooks/useLiveStream';
 import { useAttendeeEventContext } from '@/contexts/AttendeeEventContext';
+import { usePiP } from '@/contexts/PiPContext';
 
 interface FloatingBroadcastBannerProps {
   onDismiss?: () => void;
@@ -17,12 +18,30 @@ export const FloatingBroadcastBanner: React.FC<FloatingBroadcastBannerProps> = (
 }) => {
   const navigate = useNavigate();
   const { currentEventId } = useAttendeeEventContext();
-  const { isLive, isLoading } = useLiveStream(currentEventId);
+  const { liveStreamUrl, isLive, isLoading } = useLiveStream(currentEventId);
+  const { isVisible, streamType, setFullscreen } = usePiP();
+
+  // Check if Jitsi PiP is already active
+  const isJitsiPiPActive = isVisible && streamType === 'jitsi';
 
   // Don't show if not live, loading, or dismissed
   if (isLoading || !isLive || isDismissed) {
     return null;
   }
+
+  // Don't show banner if Jitsi PiP is already active (user is in meeting)
+  if (isJitsiPiPActive) {
+    return null;
+  }
+
+  const handleJoinClick = () => {
+    // If Jitsi PiP is active, just maximize it instead of navigating
+    if (isJitsiPiPActive) {
+      setFullscreen(true);
+    } else {
+      navigate('/attendee/broadcast');
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -62,13 +81,13 @@ export const FloatingBroadcastBanner: React.FC<FloatingBroadcastBannerProps> = (
                 </motion.div>
               </div>
               <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                Join the live broadcast!
+                {isJitsiStream(liveStreamUrl) ? 'Join the live meeting!' : 'Join the live broadcast!'}
               </p>
             </div>
 
             {/* Join button */}
             <Button
-              onClick={() => navigate('/attendee/broadcast')}
+              onClick={handleJoinClick}
               size="sm"
               className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white font-bold rounded-full px-4"
             >

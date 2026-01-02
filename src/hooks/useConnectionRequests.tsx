@@ -1,8 +1,8 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { getCache, setCache } from '@/utils/queryCache';
 
 export interface ConnectionNotification {
   id: string;
@@ -26,131 +26,129 @@ export interface ConnectionNotification {
   };
 }
 
+const CACHE_KEY = 'connection-requests';
+
 export const useConnectionRequests = () => {
   const { currentUser } = useAuth();
   const { toast } = useToast();
-  const [notifications, setNotifications] = useState<ConnectionNotification[]>([]);
+  const [notifications, setNotifications] = useState<ConnectionNotification[]>(() => {
+    // Load from cache immediately for instant render
+    if (currentUser?.id) {
+      return getCache<ConnectionNotification[]>(`${CACHE_KEY}-${currentUser.id}`) ?? [];
+    }
+    return [];
+  });
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (currentUser) {
-      fetchConnectionRequests();
-    }
-  }, [currentUser]);
+  const fetchConnectionRequests = useCallback(async () => {
+    if (!currentUser?.id) return;
 
-  const fetchConnectionRequests = async () => {
     try {
-      console.log('Fetching connection requests for user:', currentUser?.id);
-      
       // First get notifications
       const { data: notificationsData, error: notificationsError } = await supabase
         .from('notifications')
         .select('*')
-        .eq('user_id', currentUser?.id)
+        .eq('user_id', currentUser.id)
         .eq('type', 'connection')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(50); // Limit to prevent large payloads
 
-      if (notificationsError) {
-        console.error('Error fetching notifications:', notificationsError);
-        throw notificationsError;
-      }
+      if (notificationsError) throw notificationsError;
 
-      console.log('Notifications data:', notificationsData);
-
-      // Remove duplicates based on related_id (connection_id)
-      const uniqueNotifications = notificationsData?.filter((notification, index, self) => 
+      // Remove duplicates based on related_id
+      const uniqueNotifications = notificationsData?.filter((notification, index, self) =>
         index === self.findIndex(n => n.related_id === notification.related_id)
       ) || [];
 
-      console.log('Unique notifications:', uniqueNotifications);
+      if (uniqueNotifications.length === 0) {
+        setNotifications([]);
+        setCache(`${CACHE_KEY}-${currentUser.id}`, []);
+        return;
+      }
 
-      // Then get connection details for each unique notification
-      const notificationsWithConnections = await Promise.all(
-        uniqueNotifications.map(async (notification) => {
-          if (notification.related_id) {
-            const { data: connectionData, error: connectionError } = await supabase
-              .from('connections')
-              .select(`
-                id,
-                requester_id,
-                recipient_id,
-                status,
-                requester_profile:profiles!connections_requester_id_fkey (
-                  name,
-                  photo_url,
-                  role,
-                  company
-                )
-              `)
-              .eq('id', notification.related_id)
-              .single();
+      // Get all connection IDs
+      const connectionIds = uniqueNotifications
+        .map(n => n.related_id)
+        .filter(Boolean) as string[];
 
-            if (connectionError) {
-              console.error('Error fetching connection:', connectionError);
-              return {
-                ...notification,
-                connection: undefined
-              };
-            }
+      if (connectionIds.length === 0) {
+        const result = uniqueNotifications.map(n => ({ ...n, connection: undefined }));
+        setNotifications(result);
+        setCache(`${CACHE_KEY}-${currentUser.id}`, result);
+        return;
+      }
 
-            // Normalize to object: Supabase returns arrays for joined relations
-            let requester_profile: {
-              name: string;
-              photo_url: string | null;
-              role: string | null;
-              company: string | null;
-            } | undefined = Array.isArray((connectionData as any)?.requester_profile)
-              ? (connectionData as any).requester_profile?.[0]
-              : (connectionData as any)?.requester_profile;
+      // BATCH FETCH: Get all connections in ONE query instead of N queries
+      const { data: connectionsData, error: connectionsError } = await supabase
+        .from('connections')
+        .select(`
+          id,
+          requester_id,
+          recipient_id,
+          status
+        `)
+        .in('id', connectionIds);
 
-            // Fallback: if RLS blocks profiles join, try public_profiles view
-            if (!requester_profile && connectionData?.requester_id) {
-              const { data: publicProfile, error: publicProfileError } = await supabase
-                .from('public_profiles')
-                .select('name, photo_url, role, company')
-                .eq('id', connectionData.requester_id)
-                .single();
+      if (connectionsError) {
+        console.error('Error fetching connections:', connectionsError);
+      }
 
-              if (!publicProfileError && publicProfile) {
-                requester_profile = publicProfile as typeof requester_profile;
-              } else {
-                console.warn('Requester profile not accessible due to RLS or missing:', publicProfileError);
-              }
-            }
+      // Get unique requester IDs
+      const requesterIds = [...new Set((connectionsData || []).map(c => c.requester_id).filter(Boolean))];
 
-            return {
-              ...notification,
-              connection: {
-                ...connectionData,
-                requester_profile
-              }
-            };
-          }
-          
-          return {
-            ...notification,
-            connection: undefined
-          };
-        })
-      );
+      // BATCH FETCH: Get all requester profiles in ONE query
+      let profilesMap: Record<string, any> = {};
+      if (requesterIds.length > 0) {
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('public_profiles')
+          .select('id, name, photo_url, role, company')
+          .in('id', requesterIds);
 
-      console.log('Final notifications with connections:', notificationsWithConnections);
+        if (!profilesError && profilesData) {
+          profilesMap = Object.fromEntries(profilesData.map(p => [p.id, p]));
+        }
+      }
+
+      // Build connections map
+      const connectionsMap: Record<string, any> = {};
+      (connectionsData || []).forEach(conn => {
+        connectionsMap[conn.id] = {
+          ...conn,
+          requester_profile: profilesMap[conn.requester_id] || undefined,
+        };
+      });
+
+      // Map notifications with connections
+      const notificationsWithConnections: ConnectionNotification[] = uniqueNotifications.map(notification => ({
+        ...notification,
+        connection: notification.related_id ? connectionsMap[notification.related_id] : undefined,
+      }));
+
       setNotifications(notificationsWithConnections);
+      setCache(`${CACHE_KEY}-${currentUser.id}`, notificationsWithConnections);
     } catch (error) {
       console.error('Error fetching connection requests:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch connection requests",
-        variant: "destructive",
-      });
+      // Don't show toast on every error - just log it
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentUser?.id]);
+
+  useEffect(() => {
+    if (currentUser?.id) {
+      // Load cache first for instant render
+      const cached = getCache<ConnectionNotification[]>(`${CACHE_KEY}-${currentUser.id}`);
+      if (cached && cached.length > 0) {
+        setNotifications(cached);
+        setLoading(false);
+      }
+      // Then fetch fresh data in background
+      fetchConnectionRequests();
+    }
+  }, [currentUser?.id, fetchConnectionRequests]);
 
   const acceptConnectionRequest = async (connectionId: string, notificationId: string) => {
     try {
-      // Update connection status
       const { error: connectionError } = await supabase
         .from('connections')
         .update({ status: 'accepted' })
@@ -158,20 +156,16 @@ export const useConnectionRequests = () => {
 
       if (connectionError) throw connectionError;
 
-      // Mark notification as read
-      const { error: notificationError } = await supabase
+      await supabase
         .from('notifications')
         .update({ is_read: true })
         .eq('id', notificationId);
-
-      if (notificationError) throw notificationError;
 
       toast({
         title: "Connection Accepted",
         description: "You are now connected!",
       });
 
-      // Refresh notifications
       fetchConnectionRequests();
     } catch (error) {
       console.error('Error accepting connection:', error);
@@ -185,7 +179,6 @@ export const useConnectionRequests = () => {
 
   const declineConnectionRequest = async (connectionId: string, notificationId: string) => {
     try {
-      // Update connection status
       const { error: connectionError } = await supabase
         .from('connections')
         .update({ status: 'rejected' })
@@ -193,20 +186,16 @@ export const useConnectionRequests = () => {
 
       if (connectionError) throw connectionError;
 
-      // Mark notification as read
-      const { error: notificationError } = await supabase
+      await supabase
         .from('notifications')
         .update({ is_read: true })
         .eq('id', notificationId);
-
-      if (notificationError) throw notificationError;
 
       toast({
         title: "Connection Declined",
         description: "Connection request has been declined",
       });
 
-      // Refresh notifications
       fetchConnectionRequests();
     } catch (error) {
       console.error('Error declining connection:', error);
@@ -227,10 +216,9 @@ export const useConnectionRequests = () => {
 
       if (error) throw error;
 
-      // Update local state
-      setNotifications(prev => 
-        prev.map(notification => 
-          notification.id === notificationId 
+      setNotifications(prev =>
+        prev.map(notification =>
+          notification.id === notificationId
             ? { ...notification, is_read: true }
             : notification
         )

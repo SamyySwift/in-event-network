@@ -77,7 +77,20 @@ const AttendeeLive = lazyWithRetry(() => import('@/pages/attendee/AttendeeLive')
 
 import { AdminEventProvider } from '@/hooks/useAdminEventContext';
 
-const queryClient = new QueryClient();
+// Optimized QueryClient for instant loads
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 3 * 60 * 1000, // 3 minutes - data stays fresh
+      gcTime: 15 * 60 * 1000, // 15 minutes cache retention
+      refetchOnWindowFocus: false, // Don't refetch when tab gains focus
+      refetchOnReconnect: true,
+      retry: 1,
+      retryDelay: 1000,
+      networkMode: 'offlineFirst', // Show cached data immediately
+    },
+  },
+});
 
 // Loading fallback
 const PageLoader = () => (

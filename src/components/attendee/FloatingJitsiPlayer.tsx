@@ -1,15 +1,22 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Maximize2, Minimize2, Move, Video, Headphones, Loader2 } from 'lucide-react';
+import { X, Maximize2, Minimize2, Move, Video, Headphones, Loader2, RefreshCw } from 'lucide-react';
 import { usePiP } from '@/contexts/PiPContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNetwork } from '@/contexts/NetworkContext';
+import { toast } from 'sonner';
+import '@/types/wakelock.d.ts';
 
 export const FloatingJitsiPlayer: React.FC = () => {
-  const { isVisible, jitsiRoomName, isFullscreen, streamType, hidePiP, setFullscreen } = usePiP();
+  const { isVisible, jitsiRoomName, isFullscreen, streamType, hidePiP, setFullscreen, sessionId, reconnect } = usePiP();
   const { currentUser } = useAuth();
+  const { isOnline } = useNetwork();
   const constraintsRef = useRef<HTMLDivElement | null>(null);
   const [audioOnly, setAudioOnly] = useState(false);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected'>('connecting');
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'reconnecting'>('connecting');
+  const [wakeLockSentinel, setWakeLockSentinel] = useState<WakeLockSentinel | null>(null);
+  const [hiddenSince, setHiddenSince] = useState<number | null>(null);
+  const [wasOffline, setWasOffline] = useState(false);
 
   const shouldRender = isVisible && streamType === 'jitsi' && !!jitsiRoomName;
   const displayName = currentUser?.name || 'Attendee';
@@ -20,24 +27,99 @@ export const FloatingJitsiPlayer: React.FC = () => {
     return `https://meet.jit.si/${jitsiRoomName}#config.prejoinPageEnabled=false&config.startWithVideoMuted=true&config.startWithAudioMuted=true&userInfo.displayName=${encodeURIComponent(displayName)}`;
   }, [displayName, jitsiRoomName]);
 
-  // Reset connection status when room changes
+  // Reset connection status when room or session changes
   useEffect(() => {
     if (jitsiRoomName) {
       setConnectionStatus('connecting');
     }
-  }, [jitsiRoomName]);
+  }, [jitsiRoomName, sessionId]);
 
-  // Handle browser visibility changes (mobile background handling)
+  // Wake Lock API - prevents screen sleep during meeting
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && shouldRender) {
-        console.log('App visible again, Jitsi connection should persist');
+    let wakeLock: WakeLockSentinel | null = null;
+
+    const requestWakeLock = async () => {
+      if ('wakeLock' in navigator && shouldRender) {
+        try {
+          wakeLock = await navigator.wakeLock.request('screen');
+          setWakeLockSentinel(wakeLock);
+          console.log('Wake Lock acquired - screen will stay on');
+
+          wakeLock.addEventListener('release', () => {
+            console.log('Wake Lock released');
+          });
+        } catch (err) {
+          console.log('Wake Lock not supported or denied:', err);
+        }
       }
     };
-    
+
+    requestWakeLock();
+
+    return () => {
+      if (wakeLock) {
+        wakeLock.release().catch(() => {});
+      }
+    };
+  }, [shouldRender]);
+
+  // Handle browser visibility changes with reconnection logic
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'hidden') {
+        setHiddenSince(Date.now());
+      } else if (document.visibilityState === 'visible' && shouldRender) {
+        // Re-acquire Wake Lock when returning from background
+        if ('wakeLock' in navigator) {
+          try {
+            const newWakeLock = await navigator.wakeLock.request('screen');
+            setWakeLockSentinel(newWakeLock);
+            console.log('Wake Lock re-acquired after visibility change');
+          } catch (err) {
+            // Ignore errors
+          }
+        }
+
+        // Check how long we were hidden
+        if (hiddenSince) {
+          const hiddenDuration = Date.now() - hiddenSince;
+          // If hidden for more than 5 minutes, force reconnect
+          if (hiddenDuration > 300000) {
+            console.log(`App was hidden for ${Math.round(hiddenDuration / 60000)} minutes, forcing reconnect`);
+            setConnectionStatus('reconnecting');
+            toast.info('Rejoining meeting after being in background...', { duration: 3000 });
+            reconnect();
+          }
+        }
+        setHiddenSince(null);
+      }
+    };
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [shouldRender]);
+  }, [shouldRender, hiddenSince, reconnect]);
+
+  // Network state monitoring - auto-reconnect on network recovery
+  useEffect(() => {
+    if (!isOnline) {
+      setWasOffline(true);
+      setConnectionStatus('connecting');
+    } else if (wasOffline && isOnline && shouldRender) {
+      // Network recovered - force reconnect
+      console.log('Network recovered, triggering reconnect');
+      setWasOffline(false);
+      setConnectionStatus('reconnecting');
+      toast.info('Reconnecting to meeting...', { duration: 3000 });
+      reconnect();
+    }
+  }, [isOnline, wasOffline, shouldRender, reconnect]);
+
+  // Manual reconnect handler
+  const handleManualReconnect = () => {
+    setConnectionStatus('reconnecting');
+    toast.info('Reconnecting...', { duration: 2000 });
+    reconnect();
+  };
 
   if (!shouldRender) return null;
 
@@ -157,6 +239,17 @@ export const FloatingJitsiPlayer: React.FC = () => {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
+                    handleManualReconnect();
+                  }}
+                  className={`${isFullscreen ? 'p-2' : 'p-1.5'} rounded-full bg-white/20 hover:bg-white/30 transition-colors`}
+                  title="Reconnect"
+                >
+                  <RefreshCw className={iconSize} style={{ color: 'white' }} />
+                </button>
+
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
                     hidePiP();
                   }}
                   className={`${isFullscreen ? 'p-2' : 'p-1.5'} rounded-full bg-white/20 hover:bg-red-500 transition-colors`}
@@ -184,9 +277,20 @@ export const FloatingJitsiPlayer: React.FC = () => {
               </div>
             )}
 
-            {/* Jitsi iframe - stable key prevents remounts when switching PiP/fullscreen */}
+            {/* Reconnecting overlay */}
+            {connectionStatus === 'reconnecting' && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/90 z-30">
+                <div className="text-center">
+                  <Loader2 className="w-10 h-10 text-amber-400 animate-spin mx-auto mb-2" />
+                  <p className="text-white font-medium">Reconnecting...</p>
+                  <p className="text-white/60 text-sm">Please wait</p>
+                </div>
+              </div>
+            )}
+
+            {/* Jitsi iframe - key includes sessionId to force reconnect when needed */}
             <iframe
-              key={jitsiRoomName}
+              key={`${jitsiRoomName}-${sessionId}`}
               src={jitsiUrl}
               title="Live Meeting"
               className="w-full h-full"

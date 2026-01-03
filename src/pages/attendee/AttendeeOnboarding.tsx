@@ -238,7 +238,7 @@ const AttendeeOnboarding = () => {
                   <div>
                     <h3 className="font-medium">Ask Questions</h3>
                     <p className="text-sm text-muted-foreground">
-                      Submit questions to speakers and participate in Q&A sessions.
+                      Submit questions to speakers and participate in live sessions.
                     </p>
                   </div>
                 </div>

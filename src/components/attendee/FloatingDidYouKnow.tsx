@@ -93,7 +93,7 @@ function useDidYouKnowConfig(pathname: string, currentEventId: string | null) {
           id: "qa",
           message:
             "❓ Did you know you can ask questions and upvote others in real time?",
-          ctaText: "Go to Q&A",
+          ctaText: "Ask a Question",
           getHref: () => "/attendee/questions",
         },
       ],
@@ -188,7 +188,7 @@ function useDidYouKnowConfig(pathname: string, currentEventId: string | null) {
       id: "qa",
       message:
         "❓ Did you know you can ask questions and upvote others in real time?",
-      ctaText: "Go to Q&A",
+      ctaText: "Ask a Question",
       getHref: () => "/attendee/questions",
     },
     {

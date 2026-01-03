@@ -260,7 +260,7 @@ const AdminNetworking = () => {
           <div className="absolute -top-12 -right-10 w-56 h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
           <div className="absolute -bottom-14 -left-14 w-36 h-36 bg-white/20 rounded-full opacity-30 pointer-events-none"></div>
           <div className="relative z-10">
-            <h1 className="text-4xl font-bold tracking-tight">Attendee Networking</h1>
+            <h1 className="text-4xl font-bold tracking-tight">Attendee Connections</h1>
             <p className="mt-2 max-w-2xl text-primary-700 dark:text-primary-100">
               Manage and monitor attendee networking for <span className="font-semibold">{selectedEvent?.name}</span>.
             </p>
@@ -281,7 +281,7 @@ const AdminNetworking = () => {
                   <div className="flex items-center space-x-2">
                     <Network className="h-5 w-5 text-primary" />
                     <div>
-                      <p className="text-sm font-medium">Networking Enabled</p>
+                      <p className="text-sm font-medium">Connections Enabled</p>
                       <p className="text-2xl font-bold">{profiles.filter(p => p.networking_visible !== false).length}</p>
                     </div>
                   </div>
@@ -306,7 +306,7 @@ const AdminNetworking = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
             <div>
-              <h2 className="text-2xl font-bold">Networking Management</h2>
+              <h2 className="text-2xl font-bold">Connections Management</h2>
               <p className="text-muted-foreground mt-1">
                 View attendee profiles and participate in event chat.
               </p>
@@ -352,10 +352,10 @@ const AdminNetworking = () => {
                       <div className="p-2 rounded-full bg-primary/10">
                         <Share2 className="h-5 w-5 text-primary" />
                       </div>
-                      Share Networking Page
+                      Share Connections Page
                     </DialogTitle>
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      Share this link to allow attendees to access the networking page directly.
+                      Share this link to allow attendees to access the connections page directly.
                     </p>
                   </DialogHeader>
                   
@@ -388,7 +388,7 @@ const AdminNetworking = () => {
                         className="flex-1 gap-2 h-11 border-primary/20 hover:border-primary/40 hover:bg-primary/5"
                       >
                         <ExternalLink className="h-4 w-4" />
-                        Preview Networking
+                        Preview Connections
                       </Button>
                       <Button 
                         onClick={() => setShareDialogOpen(false)} 

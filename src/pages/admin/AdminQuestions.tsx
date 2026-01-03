@@ -185,7 +185,7 @@ const QuestionsContent = () => {
             <Plus className="h-8 w-8 text-primary" />
           </div>
           <p className="text-muted-foreground text-lg mb-2">No event selected</p>
-          <p className="text-sm text-muted-foreground">Please select an event above to manage Q&amp;A</p>
+          <p className="text-sm text-muted-foreground">Please select an event above to manage questions</p>
         </div>
       )}
 
@@ -194,14 +194,14 @@ const QuestionsContent = () => {
         <PaymentGuard 
           eventId={selectedEventId} 
           eventName={selectedEvent?.name || 'this event'}
-          feature="Q&A Management"
+          feature="Questions Management"
         >
           {/* Gradient Hero Section */}
           <div className="p-8 rounded-2xl bg-gradient-to-br from-primary-100 via-blue-100 to-indigo-50 text-primary-900 dark:text-white shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
             <div className="absolute -top-12 -right-10 w-56 h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
             <div className="absolute -bottom-14 -left-14 w-36 h-36 bg-white/20 rounded-full opacity-30 pointer-events-none"></div>
             <div className="relative z-10">
-              <h1 className="text-4xl font-bold tracking-tight">Q&amp;A Management</h1>
+              <h1 className="text-4xl font-bold tracking-tight">Questions Management</h1>
               <p className="mt-2 max-w-2xl text-primary-700 dark:text-primary-100">
                 Manage attendee questions and answers for <span className="font-semibold">{selectedEvent?.name}</span>.
               </p>

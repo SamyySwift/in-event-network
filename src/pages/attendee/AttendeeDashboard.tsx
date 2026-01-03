@@ -1050,13 +1050,13 @@ function AttendeeDashboardContent() {
                 gradient: "from-emerald-500 to-teal-600",
               },
               {
-                name: "Network",
+                name: "Connect",
                 href: "/attendee/networking",
                 icon: Users,
                 gradient: "from-blue-500 to-indigo-600",
               },
               {
-                name: "Q&A",
+                name: "Ask a Question",
                 href: "/attendee/questions",
                 icon: MessageSquare,
                 gradient: "from-purple-500 to-violet-600",

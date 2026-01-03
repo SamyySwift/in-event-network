@@ -549,7 +549,7 @@ const Guide = () => {
                 <AccordionTrigger className="text-white hover:text-cyan-400">
                   <div className="flex items-center space-x-3">
                     <HelpCircle className="h-5 w-5 text-green-400" />
-                    <span>Q&A Participation</span>
+                    <span>Ask Questions</span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="text-white/70">
@@ -696,7 +696,7 @@ const Guide = () => {
                 <p>• Use QR codes for easy attendee registration</p>
                 <p>• Send regular announcements to keep attendees engaged</p>
                 <p>• Monitor analytics to understand attendee behavior</p>
-                <p>• Encourage networking through polls and Q&A sessions</p>
+                <p>• Encourage connections through polls and question sessions</p>
               </CardContent>
             </Card>
 
@@ -712,7 +712,7 @@ const Guide = () => {
                   • Complete your profile to maximize networking opportunities
                 </p>
                 <p>• Use smart matching to find relevant connections</p>
-                <p>• Participate actively in polls and Q&A sessions</p>
+                <p>• Participate actively in polls and question sessions</p>
                 <p>• Schedule meetings with interesting connections</p>
                 <p>• Follow up with new contacts after the event</p>
               </CardContent>

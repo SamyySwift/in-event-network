@@ -108,7 +108,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       icon: <User className="text-muted-foreground" />,
     },
     {
-      name: "Networking",
+      name: "Connect",
       href: "/attendee/networking",
       icon: <UserPlus className="text-muted-foreground" />,
     },
@@ -118,7 +118,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       icon: <Calendar className="text-muted-foreground" />,
     },
     {
-      name: "Q&A",
+      name: "Ask a Question",
       href: "/attendee/questions",
       icon: <MessageSquare className="text-muted-foreground" />,
     },
@@ -201,11 +201,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   // Define attendee tabs for mobile bottom nav using ExpandableTabs
   const attendeeTabItems = [
     { title: "Dashboard", icon: LayoutDashboard },
-    { title: "Networking", icon: UserPlus },
+    { title: "Connect", icon: UserPlus },
     { title: "Schedule", icon: Calendar },
     { title: "Tickets", icon: Tickets },
     { type: "separator" as const },
-    { title: "Q&A", icon: MessageSquare },
+    { title: "Questions", icon: MessageSquare },
     { title: "Polls", icon: BarChart },
     { title: "Announcements", icon: Megaphone },
     // { title: "Notifications", icon: Bell, badgeCount: unreadCount },

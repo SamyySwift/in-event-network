@@ -64,12 +64,12 @@ const PaymentGuard: React.FC<PaymentGuardProps> = ({
               <h3 className="text-xl font-semibold">Premium Feature Locked</h3>
             </CardTitle>
             <CardDescription className="text-sm text-muted-foreground">
-              Access all premium features including speakers management, Q&amp;A, facilities, announcements, polls, highlights, sponsors, vendors hub, rules, bulk check-in, networking and more for just ₦300,000
+              Access all premium features including speakers management, questions, facilities, announcements, polls, highlights, sponsors, vendors hub, rules, bulk check-in, connections and more for just ₦300,000
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center space-y-4">
             <p className="text-sm text-muted-foreground">
-              Access all premium features including speakers management, Q&amp;A, facilities, announcements, polls, highlights, sponsors, vendors hub, rules, bulk check-in, networking and more for just ₦300,000
+              Access all premium features including speakers management, questions, facilities, announcements, polls, highlights, sponsors, vendors hub, rules, bulk check-in, connections and more for just ₦300,000
             </p>
             <Button 
               onClick={() => setShowPaymentModal(true)}

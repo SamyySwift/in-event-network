@@ -895,7 +895,7 @@ const AttendeeNetworking = () => {
               No Event Selected
             </h3>
             <p className="text-gray-600 dark:text-gray-400 mb-4">
-              Please join an event to start networking with other attendees
+              Please join an event to start connecting with other attendees
             </p>
             <Button
               onClick={() => navigate("/scan")}
@@ -954,7 +954,7 @@ const AttendeeNetworking = () => {
                       </div>
                       <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5">
                         <span className="text-white text-xs sm:text-sm font-medium">
-                          Event Networking Hub
+                          Event Connections Hub
                         </span>
                       </div>
                     </div>

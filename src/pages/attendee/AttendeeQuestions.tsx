@@ -157,7 +157,7 @@ const AttendeeQuestions = () => {
         <div className="animate-fade-in max-w-4xl mx-auto">
           <div className="mb-6">
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Q&amp;A Session
+              Ask a Question
             </h1>
             <p className="text-gray-600 dark:text-gray-400">
               You need to join an event first to ask questions
@@ -283,7 +283,7 @@ const AttendeeQuestions = () => {
                   <MessageSquare className="h-8 w-8 text-yellow-300" />
                 </div>
                 <h1 className="text-3xl sm:text-4xl font-bold mb-2">
-                  Q&amp;A Session
+                  Ask a Question
                 </h1>
                 <p className="text-lg opacity-95 max-w-2xl">
                   Ask questions and engage with the event speakers!

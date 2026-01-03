@@ -238,7 +238,7 @@ export default function LiveQuestions() {
             )}
             <div>
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold">{event.name}</h1>
-              <p className="text-sm sm:text-base lg:text-xl text-muted-foreground">Live Q&A Session</p>
+              <p className="text-sm sm:text-base lg:text-xl text-muted-foreground">Live Questions</p>
             </div>
           </div>
           

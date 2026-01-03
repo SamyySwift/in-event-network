@@ -104,7 +104,7 @@ export const DeleteAccountDialog: React.FC<DeleteAccountDialogProps> = ({ userNa
               <li>Your profile and all personal information</li>
               <li>Your messages and conversations</li>
               <li>Your event participation history</li>
-              <li>Your connections and networking data</li>
+              <li>Your connections data</li>
               <li>All other account-related data</li>
             </ul>
             <div className="space-y-2">

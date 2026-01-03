@@ -220,7 +220,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       ),
     },
     {
-      name: "Networking",
+      name: "Connections",
       href: "/admin/networking",
       icon: (
         <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
@@ -302,7 +302,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
 
     // Engagement group
     {
-      name: "Event Rules",
+      name: "Guidelines",
       href: "/admin/rules",
       icon: (
         <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
@@ -320,7 +320,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       ),
     },
     {
-      name: "Suggestions",
+      name: "Feedback",
       href: "/admin/suggestions",
       icon: (
         <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">
@@ -347,7 +347,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       ),
     },
     {
-      name: "Live Broadcast",
+      name: "Live Session",
       href: "/admin/broadcast",
       icon: (
         <div className="flex items-center justify-center w-5 h-5 p-3 rounded-sm bg-white border-[0.2px] border-gray-300">

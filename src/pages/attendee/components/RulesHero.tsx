@@ -32,7 +32,7 @@ export default function RulesHero({
           <div className="flex-1">
             <span className="inline-flex items-center gap-2 bg-white/20 rounded-lg px-3 py-1 mb-2 shadow-inner backdrop-blur text-xs font-semibold text-zinc-100 tracking-wide">
               <ShieldCheck className="h-4 w-4 text-white/80" />
-              Event Rules
+              Guidelines
               <span className="ml-2 px-2 py-0.5 rounded-full bg-white/30 text-xs font-semibold tracking-tight text-white/90">
                 {total}
               </span>

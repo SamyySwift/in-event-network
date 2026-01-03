@@ -156,7 +156,7 @@ export const FloatingLiveBanner = ({ eventId }: FloatingLiveBannerProps) => {
                       </motion.div>
                     </div>
                     <p className="text-red-100 text-xs sm:text-sm font-bold truncate">
-                      📺 Watch the live broadcast now!
+                      📺 Watch the live session now!
                     </p>
                   </div>
                 </div>

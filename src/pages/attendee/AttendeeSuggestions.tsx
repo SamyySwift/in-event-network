@@ -334,7 +334,7 @@ const AttendeeSuggestions = () => {
                   <Lightbulb className="h-8 w-8 text-yellow-300" />
                 </div>
                 <h1 className="text-3xl sm:text-4xl font-bold mb-2">
-                  Suggestions & Feedback
+                  Share Feedback
                 </h1>
                 <p className="text-lg opacity-95 max-w-2xl">
                   Share your ideas and rate your event experience!

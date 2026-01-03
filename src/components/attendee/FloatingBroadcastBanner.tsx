@@ -81,7 +81,7 @@ export const FloatingBroadcastBanner: React.FC<FloatingBroadcastBannerProps> = (
                 </motion.div>
               </div>
               <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                {isJitsiStream(liveStreamUrl) ? 'Join the live meeting!' : 'Join the live broadcast!'}
+                {isJitsiStream(liveStreamUrl) ? 'Join the live session!' : 'Join the live session!'}
               </p>
             </div>
 

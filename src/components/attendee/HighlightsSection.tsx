@@ -5,7 +5,11 @@ import { useAttendeeHighlights } from '@/hooks/useAttendeeHighlights';
 import { HighlightViewer } from './HighlightViewer';
 import { Star, Play } from 'lucide-react';
 
-export const HighlightsSection = () => {
+interface HighlightsSectionProps {
+  hideHeader?: boolean;
+}
+
+export const HighlightsSection = ({ hideHeader = false }: HighlightsSectionProps) => {
   const [selectedHighlight, setSelectedHighlight] = useState<string | null>(null);
   const { highlights, isLoading } = useAttendeeHighlights();
 
@@ -40,12 +44,14 @@ export const HighlightsSection = () => {
   if (isLoading) {
     return (
       <Card className="glass-card">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-gradient">
-            <Star className="h-5 w-5" />
-            Event Highlights
-          </CardTitle>
-        </CardHeader>
+        {!hideHeader && (
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-gradient">
+              <Star className="h-5 w-5" />
+              Event Highlights
+            </CardTitle>
+          </CardHeader>
+        )}
         <CardContent>
           <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
             {Array.from({ length: 4 }).map((_, i) => (
@@ -68,14 +74,16 @@ export const HighlightsSection = () => {
   return (
     <>
       <Card className="glass-card overflow-hidden relative">
-        <CardHeader className="bg-gradient-to-r from-primary-50/50 to-primary-100/30 dark:from-primary-900/20 dark:to-primary-800/20 pb-3">
-          <CardTitle className="flex items-center gap-2 text-gradient text-lg">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
-              <Star className="h-4 w-4 text-white" />
-            </div>
-            Event Highlights
-          </CardTitle>
-        </CardHeader>
+        {!hideHeader && (
+          <CardHeader className="bg-gradient-to-r from-primary-50/50 to-primary-100/30 dark:from-primary-900/20 dark:to-primary-800/20 pb-3">
+            <CardTitle className="flex items-center gap-2 text-gradient text-lg">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
+                <Star className="h-4 w-4 text-white" />
+              </div>
+              Event Highlights
+            </CardTitle>
+          </CardHeader>
+        )}
         <CardContent className="p-4">
           <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
             {highlights.map((highlight) => {

@@ -8,11 +8,9 @@ import {
   Clock,
   Star,
   BookOpen,
-  Wifi,
   WifiOff,
   ChevronRight,
   Zap,
-  TrendingUp,
   Eye,
   MessageCircle,
   ExternalLink,
@@ -20,6 +18,7 @@ import {
   Instagram,
   Linkedin,
   Facebook,
+  Megaphone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -67,6 +66,7 @@ import { FloatingGameBanner } from "@/components/attendee/FloatingGameBanner";
 import { FloatingLiveBanner } from "@/components/attendee/FloatingLiveBanner";
 import { FloatingBroadcastBanner } from "@/components/attendee/FloatingBroadcastBanner";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { CollapsibleSection, useCollapsibleSections } from "@/components/attendee/CollapsibleSection";
 // Advertisement Carousel Component
 const AdvertisementCarousel = ({ advertisements }: { advertisements: any[] }) => {
   const [api, setApi] = React.useState<CarouselApi>();
@@ -698,9 +698,16 @@ function AttendeeDashboardContent() {
         )}
 
         {/* Event Highlights */}
-        <div className="mb-8">
-          <HighlightsSection />
-        </div>
+        <CollapsibleSection
+          id="highlights"
+          title="Event Highlights"
+          description="Photos and videos from the event"
+          icon={<Star className="w-6 h-6 text-white" />}
+          iconGradient="bg-gradient-to-br from-amber-500 to-orange-600"
+          className="mb-8"
+        >
+          <HighlightsSection hideHeader />
+        </CollapsibleSection>
 
         {/* Event Card - Enhanced single event display */}
         {(() => {
@@ -728,138 +735,130 @@ function AttendeeDashboardContent() {
           );
         })()}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Featured Session Card */}
-          <div className="lg:col-span-2">
-            <Card className="border-0 shadow-xl bg-white backdrop-blur-sm overflow-hidden group hover:shadow-2xl transition-all duration-300 relative z-10">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-50/90 to-yellow-50/90 z-0"></div>
-              <CardHeader className="relative z-20 pb-4 bg-white/50 backdrop-blur-sm">
-                <div className="flex items-center gap-3">
-                  <div className="w-14 h-14 bg-gradient-to-br from-amber-500 to-yellow-600 rounded-xl flex items-center justify-center">
-                    <Star className="h-7 w-7 text-white" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-2xl">Featured Session</CardTitle>
-                    <CardDescription className="text-base">
-                      What's happening next at the event
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-
-              <CardContent className="relative z-20 pb-6 bg-white/80 backdrop-blur-sm">
-                {nextSession || upcomingSessions?.[0] ? (
-                  <>
-                    <h3 className="text-lg font-bold mb-3 text-gray-900">
-                      {nextSession?.session_title ||
-                        upcomingSessions?.[0]?.title ||
-                        "Session"}
-                    </h3>
-                    <div className="space-y-3">
+        {/* Featured Session */}
+        <CollapsibleSection
+          id="featured-session"
+          title="Featured Session"
+          description="What's happening next at the event"
+          icon={<Star className="w-6 h-6 text-white" />}
+          iconGradient="bg-gradient-to-br from-amber-500 to-yellow-600"
+          itemCount={upcomingSessions?.length || 0}
+          className="mb-8"
+        >
+          <Card className="border-0 shadow-xl bg-white backdrop-blur-sm overflow-hidden group hover:shadow-2xl transition-all duration-300 relative z-10">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-50/90 to-yellow-50/90 z-0"></div>
+            <CardContent className="relative z-20 py-6 bg-white/80 backdrop-blur-sm">
+              {nextSession || upcomingSessions?.[0] ? (
+                <>
+                  <h3 className="text-lg font-bold mb-3 text-gray-900">
+                    {nextSession?.session_title ||
+                      upcomingSessions?.[0]?.title ||
+                      "Session"}
+                  </h3>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 text-gray-700">
+                      <Clock className="h-4 w-4 text-orange-500" />
+                      <span className="text-sm font-medium">
+                        {formatDate(
+                          nextSession?.session_time ||
+                            upcomingSessions?.[0]?.start_time
+                        )}
+                      </span>
+                    </div>
+                    {nextSession && (
                       <div className="flex items-center gap-3 text-gray-700">
-                        <Clock className="h-4 w-4 text-orange-500" />
+                        <Users className="h-4 w-4 text-orange-500" />
                         <span className="text-sm font-medium">
-                          {formatDate(
-                            nextSession?.session_time ||
-                              upcomingSessions?.[0]?.start_time
-                          )}
+                          by {nextSession.name}
                         </span>
                       </div>
-                      {nextSession && (
-                        <div className="flex items-center gap-3 text-gray-700">
-                          <Users className="h-4 w-4 text-orange-500" />
-                          <span className="text-sm font-medium">
-                            by {nextSession.name}
-                          </span>
-                        </div>
-                      )}
-                      {upcomingSessions?.[0]?.location && (
-                        <div className="flex items-center gap-3 text-gray-700">
-                          <MapPin className="h-4 w-4 text-orange-500" />
-                          <span className="text-sm font-medium">
-                            {upcomingSessions[0].location}
-                          </span>
-                        </div>
-                      )}
-                      {(nextSession?.title ||
-                        upcomingSessions?.[0]?.description) && (
-                        <p className="text-xs text-gray-600 mt-2">
-                          {nextSession?.title ||
-                            upcomingSessions?.[0]?.description}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Show additional upcoming sessions */}
-                    {upcomingSessions.length > 1 && (
-                      <div className="mt-4 pt-3 border-t border-gray-200">
-                        <h4 className="text-xs font-semibold text-gray-900 mb-2">
-                          More Sessions
-                        </h4>
-                        <div className="space-y-1">
-                          {upcomingSessions.slice(1, 3).map((session) => (
-                            <div
-                              key={session.id}
-                              className="flex items-center justify-between text-xs"
-                            >
-                              <span className="text-gray-700 truncate">
-                                {session.title}
-                              </span>
-                              <span className="text-gray-500 ml-2">
-                                {formatTime(session.start_time)}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
+                    )}
+                    {upcomingSessions?.[0]?.location && (
+                      <div className="flex items-center gap-3 text-gray-700">
+                        <MapPin className="h-4 w-4 text-orange-500" />
+                        <span className="text-sm font-medium">
+                          {upcomingSessions[0].location}
+                        </span>
                       </div>
                     )}
-                  </>
-                ) : (
-                  <div className="text-center py-4">
-                    <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-sm text-gray-500">
-                      No sessions scheduled
-                    </p>
+                    {(nextSession?.title ||
+                      upcomingSessions?.[0]?.description) && (
+                      <p className="text-xs text-gray-600 mt-2">
+                        {nextSession?.title ||
+                          upcomingSessions?.[0]?.description}
+                      </p>
+                    )}
                   </div>
-                )}
-              </CardContent>
 
-              <CardFooter className="relative z-20 bg-white/90 backdrop-blur-sm">
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => navigate("/attendee/questions")}
-                >
-                  <MessageSquare className="mr-2 h-4 w-4" />
-                  Ask a Question
-                </Button>
-              </CardFooter>
-            </Card>
-          </div>
-        </div>
+                  {/* Show additional upcoming sessions */}
+                  {upcomingSessions.length > 1 && (
+                    <div className="mt-4 pt-3 border-t border-gray-200">
+                      <h4 className="text-xs font-semibold text-gray-900 mb-2">
+                        More Sessions
+                      </h4>
+                      <div className="space-y-1">
+                        {upcomingSessions.slice(1, 3).map((session) => (
+                          <div
+                            key={session.id}
+                            className="flex items-center justify-between text-xs"
+                          >
+                            <span className="text-gray-700 truncate">
+                              {session.title}
+                            </span>
+                            <span className="text-gray-500 ml-2">
+                              {formatTime(session.start_time)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="text-center py-4">
+                  <MessageSquare className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-sm text-gray-500">
+                    No sessions scheduled
+                  </p>
+                </div>
+              )}
+            </CardContent>
+
+            <CardFooter className="relative z-20 bg-white/90 backdrop-blur-sm">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => navigate("/attendee/questions")}
+              >
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Ask a Question
+              </Button>
+            </CardFooter>
+          </Card>
+        </CollapsibleSection>
 
         {/* Event Facilities Card */}
-        <div className="mb-8 relative z-10">
-          <Card className="border-0 shadow-xl bg-gradient-to-br from-emerald-50 via-white to-teal-50 backdrop-blur-sm overflow-hidden group hover:shadow-2xl transition-all duration-300 relative z-10 border-l-4 border-l-emerald-500">
-            {/* Decorative elements */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500 to-teal-500 opacity-5 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-br from-green-400 to-emerald-500 opacity-5 rounded-full translate-y-1/2 -translate-x-1/2" />
-            
-            <CardHeader className="relative z-20 pb-4">
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/25 group-hover:scale-105 transition-transform duration-300">
-                  <MapPin className="h-7 w-7 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-2xl font-bold text-gray-900 group-hover:text-emerald-700 transition-colors">Event Facilities</CardTitle>
-                  <CardDescription className="text-base text-gray-500">
-                    Explore venue amenities and services
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-
-            <CardContent className="relative z-20 pb-6">
+        <CollapsibleSection
+          id="facilities"
+          title="Event Facilities"
+          description="Explore venue amenities and services"
+          icon={<MapPin className="w-6 h-6 text-white" />}
+          iconGradient="bg-gradient-to-br from-emerald-500 to-teal-600"
+          itemCount={facilities?.length || 0}
+          className="mb-8"
+          actionButton={
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/attendee/map")}
+            >
+              View All
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
+          }
+        >
+          <Card className="border-0 shadow-xl bg-gradient-to-br from-emerald-50 via-white to-teal-50 backdrop-blur-sm overflow-hidden relative z-10 border-l-4 border-l-emerald-500">
+            <CardContent className="relative z-20 py-6">
               {facilities && facilities.length > 0 ? (
                 <>
                   <p className="text-gray-600 mb-5 leading-relaxed">
@@ -927,27 +926,20 @@ function AttendeeDashboardContent() {
               </Button>
             </CardFooter>
           </Card>
-        </div>
+        </CollapsibleSection>
 
 
         {/* Recent Announcements - Improved Mobile Layout */}
         {recentAnnouncements && recentAnnouncements.length > 0 && (
-          <div className="mb-8 relative z-10">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="flex-shrink-0">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="w-6 h-6 text-white" />
-                </div>
-              </div>
-              <div>
-                <h2 className="text-2xl font-bold text-gray-900">
-                  Latest Updates
-                </h2>
-                <p className="text-gray-500">
-                  Stay informed with recent announcements
-                </p>
-              </div>
-            </div>
+          <CollapsibleSection
+            id="announcements"
+            title="Latest Updates"
+            description="Stay informed with recent announcements"
+            icon={<Megaphone className="w-6 h-6 text-white" />}
+            iconGradient="bg-gradient-to-br from-blue-500 to-indigo-600"
+            itemCount={recentAnnouncements.length}
+            className="mb-8"
+          >
             <div className="grid gap-4">
               {recentAnnouncements.map((announcement, index) => {
                 const priorityColors = {
@@ -1037,27 +1029,18 @@ function AttendeeDashboardContent() {
                 );
               })}
             </div>
-          </div>
+          </CollapsibleSection>
         )}
 
         {/* Quick Actions Grid */}
-        <div className="mb-8 relative z-10">
-          <div className="flex items-center gap-4 mb-6">
-            <div className="flex-shrink-0">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl flex items-center justify-center">
-                <Zap className="w-6 h-6 text-white" />
-              </div>
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                Quick Actions
-              </h2>
-              <p className="text-gray-500">
-                Everything you need at your fingertips
-              </p>
-            </div>
-          </div>
-
+        <CollapsibleSection
+          id="quick-actions"
+          title="Quick Actions"
+          description="Everything you need at your fingertips"
+          icon={<Zap className="w-6 h-6 text-white" />}
+          iconGradient="bg-gradient-to-br from-purple-500 to-violet-600"
+          className="mb-8"
+        >
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
               {
@@ -1121,67 +1104,69 @@ function AttendeeDashboardContent() {
               );
             })}
           </div>
-        </div>
+        </CollapsibleSection>
 
         {/* Suggested Connections */}
         {suggestedConnections && suggestedConnections.length > 0 && (
-          <div className="mb-8 relative z-10">
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center gap-4">
-                <div className="flex-shrink-0">
-                  <div className="w-12 h-12 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center">
-                    <Users className="w-6 h-6 text-white" />
-                  </div>
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    People to Meet
-                  </h2>
-                  <p className="text-gray-500">
-                    Expand your network with these connections
-                  </p>
-                </div>
-              </div>
+          <CollapsibleSection
+            id="connections"
+            title="People to Meet"
+            description="Expand your network with these connections"
+            icon={<Users className="w-6 h-6 text-white" />}
+            iconGradient="bg-gradient-to-br from-pink-500 to-rose-600"
+            itemCount={suggestedConnections.length}
+            className="mb-8"
+            actionButton={
               <Button
                 variant="outline"
+                size="sm"
                 onClick={() => navigate("/attendee/networking")}
-                className="hover:bg-gray-50"
               >
                 View All
-                <ChevronRight className="ml-2 h-4 w-4" />
+                <ChevronRight className="ml-1 h-4 w-4" />
               </Button>
-            </div>
-
+            }
+          >
             <SuggestedConnectionsCards
               suggestedConnections={suggestedConnections}
             />
-          </div>
+          </CollapsibleSection>
         )}
 
         {/* Event Feedback */}
         {currentEvent && (
-          <Card className="border-0 shadow-xl bg-white backdrop-blur-sm overflow-hidden relative z-10">
-            <CardContent className="p-8 bg-gradient-to-r from-gray-50/95 to-gray-100/95 backdrop-blur-sm">
-              <div className="flex flex-col sm:flex-row items-center justify-between">
-                <div className="text-center sm:text-left mb-6 sm:mb-0">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                    How's your experience?
-                  </h3>
-                  <p className="text-gray-600 text-lg">
-                    Your feedback helps us create even better events
-                  </p>
+          <CollapsibleSection
+            id="feedback"
+            title="Event Feedback"
+            description="Share your experience"
+            icon={<Star className="w-6 h-6 text-white" />}
+            iconGradient="bg-gradient-to-br from-yellow-500 to-orange-600"
+            defaultOpen={false}
+            className="mb-8"
+          >
+            <Card className="border-0 shadow-xl bg-white backdrop-blur-sm overflow-hidden relative z-10">
+              <CardContent className="p-8 bg-gradient-to-r from-gray-50/95 to-gray-100/95 backdrop-blur-sm">
+                <div className="flex flex-col sm:flex-row items-center justify-between">
+                  <div className="text-center sm:text-left mb-6 sm:mb-0">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                      How's your experience?
+                    </h3>
+                    <p className="text-gray-600 text-lg">
+                      Your feedback helps us create even better events
+                    </p>
+                  </div>
+                  <Button
+                    size="lg"
+                    className="bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white font-semibold px-8 py-4"
+                    onClick={() => navigate("/attendee/suggestions")}
+                  >
+                    <Star className="mr-2 h-5 w-5" />
+                    Rate This Event
+                  </Button>
                 </div>
-                <Button
-                  size="lg"
-                  className="bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white font-semibold px-8 py-4"
-                  onClick={() => navigate("/attendee/suggestions")}
-                >
-                  <Star className="mr-2 h-5 w-5" />
-                  Rate This Event
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </CollapsibleSection>
         )}
       </div>
 

@@ -89,9 +89,9 @@ const RulesContent = () => {
             <div className="absolute -top-12 -right-10 w-56 h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
             <div className="absolute -bottom-14 -left-14 w-36 h-36 bg-white/20 rounded-full opacity-30 pointer-events-none"></div>
             <div className="relative z-10">
-              <h1 className="text-4xl font-bold tracking-tight">Event Rules</h1>
+              <h1 className="text-4xl font-bold tracking-tight">Event Guidelines</h1>
               <p className="mt-2 max-w-2xl text-primary-700 dark:text-primary-100">
-                Manage rules and guidelines for <span className="font-semibold">{selectedEvent?.name}</span>.
+                Manage guidelines for <span className="font-semibold">{selectedEvent?.name}</span>.
               </p>
               <div className="mt-6">
                 <RuleStatsCards total={total} highPriority={highPriority} categories={categories} loading={isLoading} />

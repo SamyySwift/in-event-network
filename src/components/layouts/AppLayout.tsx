@@ -98,7 +98,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       icon: <LayoutDashboard className="text-muted-foreground" />,
     },
     {
-      name: "My Tickets",
+      name: "Tickets",
       href: "/attendee/my-tickets",
       icon: <Tickets className="text-muted-foreground" />,
     },
@@ -123,7 +123,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       icon: <MessageSquare className="text-muted-foreground" />,
     },
     {
-      name: "Event Facilities",
+      name: "Venue Guide",
       href: "/attendee/map",
       icon: <MapPin className="text-muted-foreground" />,
     },
@@ -133,7 +133,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       icon: <BarChart className="text-muted-foreground" />,
     },
     {
-      name: "Suggestions",
+      name: "Feedback",
       href: "/attendee/suggestions",
       icon: <Lightbulb className="text-muted-foreground" />,
     },
@@ -143,7 +143,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       icon: <Megaphone className="text-muted-foreground" />,
     },
     {
-      name: "Event Rules",
+      name: "Guidelines",
       href: "/attendee/rules",
       icon: <BookOpen className="text-muted-foreground" />,
     },

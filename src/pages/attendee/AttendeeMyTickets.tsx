@@ -470,7 +470,7 @@ export default function AttendeeMyTickets() {
             </div>
             <div>
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
-                My Tickets
+                Tickets
               </h1>
               <p className="text-muted-foreground">
                 Manage and view your event tickets

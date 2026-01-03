@@ -63,8 +63,8 @@ function AttendeeBroadcastContent() {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Live Broadcast</h1>
-            <p className="text-muted-foreground text-sm">Join live meetings and broadcasts</p>
+            <h1 className="text-2xl font-bold text-foreground">Live Session</h1>
+            <p className="text-muted-foreground text-sm">Join live sessions and interactive meetings</p>
           </div>
         </div>
 
@@ -135,7 +135,7 @@ function AttendeeBroadcastContent() {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Live Broadcast</h1>
+            <h1 className="text-2xl font-bold text-foreground">Live Session</h1>
             <p className="text-muted-foreground text-sm">You're in PiP mode</p>
           </div>
         </div>
@@ -198,8 +198,8 @@ function AttendeeBroadcastContent() {
             <ArrowLeft className="w-5 h-5" />
           </Button>
           <div className="min-w-0">
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">Live Broadcast</h1>
-            <p className="text-muted-foreground text-sm">Join the live meeting</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">Live Session</h1>
+            <p className="text-muted-foreground text-sm">Join the live session</p>
           </div>
         </div>
 

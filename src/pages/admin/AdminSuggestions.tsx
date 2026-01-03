@@ -296,9 +296,9 @@ const AdminSuggestionsContent = () => {
             <div className="absolute -top-12 -right-10 w-32 h-32 sm:w-56 sm:h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
             <div className="absolute -bottom-14 -left-14 w-24 h-24 sm:w-36 sm:h-36 bg-white/20 rounded-full opacity-30 pointer-events-none"></div>
             <div className="relative z-10">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">Suggestions & Feedback</h1>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight">Feedback Management</h1>
               <p className="mt-2 max-w-2xl text-sm sm:text-base text-primary-700 dark:text-primary-100">
-                Manage suggestions and feedback for{" "}
+                Manage feedback and suggestions for{" "}
                 <span className="font-semibold">{selectedEvent?.name}</span>.
               </p>
               <div className="mt-4 sm:mt-6">
@@ -310,7 +310,7 @@ const AdminSuggestionsContent = () => {
           {/* Quick Actions Section (title, tabs, search) */}
           <div className="flex flex-col gap-4">
             <div className="text-center sm:text-left">
-              <h2 className="text-xl sm:text-2xl font-bold">Suggestions</h2>
+              <h2 className="text-xl sm:text-2xl font-bold">Feedback</h2>
               <p className="text-muted-foreground mt-1 text-sm sm:text-base">
                 Review, filter, and manage suggestions and feedback.
               </p>

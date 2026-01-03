@@ -300,10 +300,10 @@ const AttendeeMap = () => {
 
               {/* Title and Description */}
               <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent mb-6">
-                Discover Facilities
+                Venue Guide
               </h1>
               <p className="text-xl md:text-2xl text-muted-foreground font-medium mb-8 max-w-2xl mx-auto">
-                Explore all venue amenities and services with our interactive facility guide
+                Explore all venue amenities and services
               </p>
 
               {/* Stats */}

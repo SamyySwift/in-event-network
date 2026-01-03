@@ -1,6 +1,6 @@
 import React, { Component, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, WifiOff } from 'lucide-react';
+import { RefreshCw, WifiOff, Download } from 'lucide-react';
 
 interface Props {
   children: ReactNode;
@@ -11,12 +11,15 @@ interface State {
   hasError: boolean;
   error: Error | null;
   retryCount: number;
+  countdown: number | null;
 }
 
 class LazyLoadErrorBoundary extends Component<Props, State> {
+  private countdownInterval: ReturnType<typeof setInterval> | null = null;
+
   constructor(props: Props) {
     super(props);
-    this.state = { hasError: false, error: null, retryCount: 0 };
+    this.state = { hasError: false, error: null, retryCount: 0, countdown: null };
   }
 
   static getDerivedStateFromError(error: Error): Partial<State> {
@@ -24,23 +27,67 @@ class LazyLoadErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error) {
-    // Check if it's a dynamic import error
-    const isChunkError = 
-      error.message.includes('dynamically imported module') ||
-      error.message.includes('Failed to fetch') ||
-      error.message.includes('Loading chunk') ||
-      error.message.includes('Loading CSS chunk');
+    const isChunkError = this.isChunkLoadError(error);
     
     if (isChunkError) {
-      console.warn('Dynamic import failed, will retry on user action:', error.message);
+      console.warn('Dynamic import failed:', error.message);
+      
+      // Start auto-reload countdown for stale chunks
+      if (this.isStaleChunkError(error)) {
+        this.startAutoReloadCountdown();
+      }
     }
   }
 
+  componentWillUnmount() {
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+    }
+  }
+
+  isChunkLoadError = (error: Error | null): boolean => {
+    if (!error) return false;
+    const message = error.message.toLowerCase();
+    return (
+      message.includes('dynamically imported module') ||
+      message.includes('failed to fetch') ||
+      message.includes('loading chunk') ||
+      message.includes('loading css chunk')
+    );
+  };
+
+  isStaleChunkError = (error: Error | null): boolean => {
+    if (!error) return false;
+    // Stale chunk errors typically mention module not found or failed to fetch dynamically imported module
+    return error.message.includes('dynamically imported module');
+  };
+
+  startAutoReloadCountdown = () => {
+    this.setState({ countdown: 5 });
+    
+    this.countdownInterval = setInterval(() => {
+      this.setState(prev => {
+        if (prev.countdown === null || prev.countdown <= 1) {
+          if (this.countdownInterval) {
+            clearInterval(this.countdownInterval);
+          }
+          window.location.reload();
+          return prev;
+        }
+        return { ...prev, countdown: prev.countdown - 1 };
+      });
+    }, 1000);
+  };
+
   handleRetry = () => {
+    if (this.countdownInterval) {
+      clearInterval(this.countdownInterval);
+    }
     this.setState(prev => ({ 
       hasError: false, 
       error: null, 
-      retryCount: prev.retryCount + 1 
+      retryCount: prev.retryCount + 1,
+      countdown: null
     }));
   };
 
@@ -50,25 +97,34 @@ class LazyLoadErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      const isNetworkError = 
-        this.state.error?.message.includes('dynamically imported module') ||
-        this.state.error?.message.includes('Failed to fetch') ||
-        this.state.error?.message.includes('Loading chunk');
+      const isStaleChunk = this.isStaleChunkError(this.state.error);
+      const isNetworkError = this.isChunkLoadError(this.state.error) && !isStaleChunk;
 
       return (
         <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-background">
           <div className="text-center space-y-4 max-w-md">
             <div className="w-16 h-16 mx-auto rounded-full bg-muted flex items-center justify-center">
-              <WifiOff className="w-8 h-8 text-muted-foreground" />
+              {isStaleChunk ? (
+                <Download className="w-8 h-8 text-muted-foreground" />
+              ) : (
+                <WifiOff className="w-8 h-8 text-muted-foreground" />
+              )}
             </div>
             <h2 className="text-xl font-semibold text-foreground">
-              {isNetworkError ? 'Connection Issue' : 'Something went wrong'}
+              {isStaleChunk ? 'App Updated' : isNetworkError ? 'Connection Issue' : 'Something went wrong'}
             </h2>
             <p className="text-muted-foreground text-sm">
-              {isNetworkError 
-                ? 'The page failed to load. Please check your internet connection and try again.'
-                : 'An unexpected error occurred while loading this page.'}
+              {isStaleChunk 
+                ? 'A new version is available. The page will reload automatically.'
+                : isNetworkError 
+                  ? 'The page failed to load. Please check your internet connection and try again.'
+                  : 'An unexpected error occurred while loading this page.'}
             </p>
+            {this.state.countdown !== null && (
+              <p className="text-sm text-primary font-medium">
+                Reloading in {this.state.countdown} seconds...
+              </p>
+            )}
             <div className="flex flex-col sm:flex-row gap-3 justify-center pt-4">
               <Button 
                 onClick={this.handleRetry}
@@ -83,7 +139,7 @@ class LazyLoadErrorBoundary extends Component<Props, State> {
                 className="gap-2"
               >
                 <RefreshCw className="w-4 h-4" />
-                Reload Page
+                Reload Now
               </Button>
             </div>
           </div>

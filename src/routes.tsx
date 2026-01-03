@@ -1,81 +1,85 @@
-import React, { lazy, Suspense } from "react";
+import React, { Suspense } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { lazyWithRetry } from "@/lib/lazyWithRetry";
+import LazyLoadErrorBoundary from "@/components/LazyLoadErrorBoundary";
 
 // Eager load critical path components
 import Landing from "@/pages/Landing";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 
-// Lazy load all other pages for code splitting
-const AuthCallback = lazy(() => import("@/pages/AuthCallback"));
-const Guide = lazy(() => import("@/pages/Guide"));
-const Index = lazy(() => import("@/pages/Index"));
-const NotFound = lazy(() => import("@/pages/NotFound"));
-const ScanQR = lazy(() => import("@/pages/ScanQR"));
-const VendorForm = lazy(() => import("@/pages/VendorForm"));
-const BuyTickets = lazy(() => import("@/pages/BuyTickets"));
-const JoinEvent = lazy(() => import("@/pages/JoinEvent"));
-const Discovery = lazy(() => import("@/pages/Discovery"));
-const DataPrivacy = lazy(() => import("@/pages/DataPrivacy"));
-const TermsOfService = lazy(() => import("@/pages/TermsOfService"));
-const SponsorForm = lazy(() => import("@/pages/SponsorForm"));
-const LiveQuestions = lazy(() => import("@/pages/LiveQuestions"));
-const LivePolls = lazy(() => import("@/pages/LivePolls"));
-const LiveChat = lazy(() => import("@/pages/LiveChat"));
-const LiveGames = lazy(() => import("@/pages/LiveGames"));
-const CheckIn = lazy(() => import("@/pages/CheckIn"));
+// Lazy load all other pages with retry mechanism
+const AuthCallback = lazyWithRetry(() => import("@/pages/AuthCallback"));
+const Guide = lazyWithRetry(() => import("@/pages/Guide"));
+const Index = lazyWithRetry(() => import("@/pages/Index"));
+const NotFound = lazyWithRetry(() => import("@/pages/NotFound"));
+const ScanQR = lazyWithRetry(() => import("@/pages/ScanQR"));
+const VendorForm = lazyWithRetry(() => import("@/pages/VendorForm"));
+const BuyTickets = lazyWithRetry(() => import("@/pages/BuyTickets"));
+const JoinEvent = lazyWithRetry(() => import("@/pages/JoinEvent"));
+const Discovery = lazyWithRetry(() => import("@/pages/Discovery"));
+const DataPrivacy = lazyWithRetry(() => import("@/pages/DataPrivacy"));
+const TermsOfService = lazyWithRetry(() => import("@/pages/TermsOfService"));
+const SponsorForm = lazyWithRetry(() => import("@/pages/SponsorForm"));
+const LiveQuestions = lazyWithRetry(() => import("@/pages/LiveQuestions"));
+const LivePolls = lazyWithRetry(() => import("@/pages/LivePolls"));
+const LiveChat = lazyWithRetry(() => import("@/pages/LiveChat"));
+const LiveGames = lazyWithRetry(() => import("@/pages/LiveGames"));
+const CheckIn = lazyWithRetry(() => import("@/pages/CheckIn"));
 
-// Admin Pages - Lazy loaded
-const AdminLayout = lazy(() => import("@/components/layouts/AdminLayout"));
-const AdminDashboard = lazy(() => import("@/pages/admin/AdminDashboard"));
-const AdminEvents = lazy(() => import("@/pages/admin/AdminEvents"));
-const AdminAttendees = lazy(() => import("@/pages/admin/AdminAttendees"));
-const AdminNetworking = lazy(() => import("@/pages/admin/AdminNetworking"));
-const AdminSpeakers = lazy(() => import("@/pages/admin/AdminSpeakers"));
-const AdminAnnouncements = lazy(() => import("@/pages/admin/AdminAnnouncements"));
-const AdminSchedule = lazy(() => import("@/pages/admin/AdminSchedule"));
-const AdminPolls = lazy(() => import("@/pages/admin/AdminPolls"));
-const AdminFacilities = lazy(() => import("@/pages/admin/AdminFacilities"));
-const AdminRules = lazy(() => import("@/pages/admin/AdminRules"));
-const AdminQuestions = lazy(() => import("@/pages/admin/AdminQuestions"));
-const AdminSuggestions = lazy(() => import("@/pages/admin/AdminSuggestions"));
-const AdminNotifications = lazy(() => import("@/pages/admin/AdminNotifications"));
-const AdminProfile = lazy(() => import("@/pages/admin/AdminProfile"));
-const AdminSponsors = lazy(() => import("@/pages/admin/AdminSponsors"));
-const AdminVendorHub = lazy(() => import("@/pages/admin/AdminVendorHub"));
-const AdminHighlights = lazy(() => import("@/pages/admin/AdminHighlights"));
-const AdminEventPreview = lazy(() => import("@/pages/admin/AdminEventPreview"));
-const AdminGames = lazy(() => import("@/pages/admin/AdminGames"));
-const AdminTickets = lazy(() => import("@/pages/admin/AdminTickets"));
-const AdminCheckIn = lazy(() => import("@/pages/admin/AdminCheckIn"));
-const AdminSettings = lazy(() => import("@/pages/admin/AdminSettings"));
-const AdminWallet = lazy(() => import("@/pages/admin/AdminWallet"));
-const AdminAdvertisements = lazy(() => import("@/pages/admin/AdminAdvertisements"));
-const AdminLiveBroadcast = lazy(() => import("@/pages/admin/AdminLiveBroadcast"));
-const AdminGuide = lazy(() => import("@/pages/admin/AdminGuide"));
-// Attendee Pages - Lazy loaded
-const AppLayout = lazy(() => import("@/components/layouts/AppLayout"));
-const AttendeeDashboard = lazy(() => import("@/pages/attendee/AttendeeDashboard"));
-const AttendeeProfile = lazy(() => import("@/pages/attendee/AttendeeProfile"));
-const AttendeeNetworking = lazy(() => import("@/pages/attendee/AttendeeNetworking"));
-const AttendeeSchedule = lazy(() => import("@/pages/attendee/AttendeeSchedule"));
-const AttendeeQuestions = lazy(() => import("@/pages/attendee/AttendeeQuestions"));
-const AttendeeMap = lazy(() => import("@/pages/attendee/AttendeeMap"));
-const AttendeePolls = lazy(() => import("@/pages/attendee/AttendeePolls"));
-const AttendeeSuggestions = lazy(() => import("@/pages/attendee/AttendeeSuggestions"));
-const AttendeeAnnouncements = lazy(() => import("@/pages/attendee/AttendeeAnnouncements"));
-const AttendeeRules = lazy(() => import("@/pages/attendee/AttendeeRules"));
-const AttendeeNotifications = lazy(() => import("@/pages/attendee/AttendeeNotifications"));
-const AttendeeSearch = lazy(() => import("@/pages/attendee/AttendeeSearch"));
-const AttendeeOnboarding = lazy(() => import("@/pages/attendee/AttendeeOnboarding"));
-const AttendeeGames = lazy(() => import("@/pages/attendee/AttendeeGames"));
-const AttendeeMyTickets = lazy(() => import("@/pages/attendee/AttendeeMyTickets"));
-const AttendeeBroadcast = lazy(() => import("@/pages/attendee/AttendeeBroadcast"));
+// Admin Pages - Lazy loaded with retry
+const AdminLayout = lazyWithRetry(() => import("@/components/layouts/AdminLayout"));
+const AdminDashboard = lazyWithRetry(() => import("@/pages/admin/AdminDashboard"));
+const AdminEvents = lazyWithRetry(() => import("@/pages/admin/AdminEvents"));
+const AdminAttendees = lazyWithRetry(() => import("@/pages/admin/AdminAttendees"));
+const AdminNetworking = lazyWithRetry(() => import("@/pages/admin/AdminNetworking"));
+const AdminSpeakers = lazyWithRetry(() => import("@/pages/admin/AdminSpeakers"));
+const AdminAnnouncements = lazyWithRetry(() => import("@/pages/admin/AdminAnnouncements"));
+const AdminSchedule = lazyWithRetry(() => import("@/pages/admin/AdminSchedule"));
+const AdminPolls = lazyWithRetry(() => import("@/pages/admin/AdminPolls"));
+const AdminFacilities = lazyWithRetry(() => import("@/pages/admin/AdminFacilities"));
+const AdminRules = lazyWithRetry(() => import("@/pages/admin/AdminRules"));
+const AdminQuestions = lazyWithRetry(() => import("@/pages/admin/AdminQuestions"));
+const AdminSuggestions = lazyWithRetry(() => import("@/pages/admin/AdminSuggestions"));
+const AdminNotifications = lazyWithRetry(() => import("@/pages/admin/AdminNotifications"));
+const AdminProfile = lazyWithRetry(() => import("@/pages/admin/AdminProfile"));
+const AdminSponsors = lazyWithRetry(() => import("@/pages/admin/AdminSponsors"));
+const AdminVendorHub = lazyWithRetry(() => import("@/pages/admin/AdminVendorHub"));
+const AdminHighlights = lazyWithRetry(() => import("@/pages/admin/AdminHighlights"));
+const AdminEventPreview = lazyWithRetry(() => import("@/pages/admin/AdminEventPreview"));
+const AdminGames = lazyWithRetry(() => import("@/pages/admin/AdminGames"));
+const AdminTickets = lazyWithRetry(() => import("@/pages/admin/AdminTickets"));
+const AdminCheckIn = lazyWithRetry(() => import("@/pages/admin/AdminCheckIn"));
+const AdminSettings = lazyWithRetry(() => import("@/pages/admin/AdminSettings"));
+const AdminWallet = lazyWithRetry(() => import("@/pages/admin/AdminWallet"));
+const AdminAdvertisements = lazyWithRetry(() => import("@/pages/admin/AdminAdvertisements"));
+const AdminLiveBroadcast = lazyWithRetry(() => import("@/pages/admin/AdminLiveBroadcast"));
+const AdminGuide = lazyWithRetry(() => import("@/pages/admin/AdminGuide"));
+
+// Attendee Pages - Lazy loaded with retry
+const AppLayout = lazyWithRetry(() => import("@/components/layouts/AppLayout"));
+const AttendeeDashboard = lazyWithRetry(() => import("@/pages/attendee/AttendeeDashboard"));
+const AttendeeProfile = lazyWithRetry(() => import("@/pages/attendee/AttendeeProfile"));
+const AttendeeNetworking = lazyWithRetry(() => import("@/pages/attendee/AttendeeNetworking"));
+const AttendeeSchedule = lazyWithRetry(() => import("@/pages/attendee/AttendeeSchedule"));
+const AttendeeQuestions = lazyWithRetry(() => import("@/pages/attendee/AttendeeQuestions"));
+const AttendeeMap = lazyWithRetry(() => import("@/pages/attendee/AttendeeMap"));
+const AttendeePolls = lazyWithRetry(() => import("@/pages/attendee/AttendeePolls"));
+const AttendeeSuggestions = lazyWithRetry(() => import("@/pages/attendee/AttendeeSuggestions"));
+const AttendeeAnnouncements = lazyWithRetry(() => import("@/pages/attendee/AttendeeAnnouncements"));
+const AttendeeRules = lazyWithRetry(() => import("@/pages/attendee/AttendeeRules"));
+const AttendeeNotifications = lazyWithRetry(() => import("@/pages/attendee/AttendeeNotifications"));
+const AttendeeSearch = lazyWithRetry(() => import("@/pages/attendee/AttendeeSearch"));
+const AttendeeOnboarding = lazyWithRetry(() => import("@/pages/attendee/AttendeeOnboarding"));
+const AttendeeGames = lazyWithRetry(() => import("@/pages/attendee/AttendeeGames"));
+const AttendeeMyTickets = lazyWithRetry(() => import("@/pages/attendee/AttendeeMyTickets"));
+const AttendeeBroadcast = lazyWithRetry(() => import("@/pages/attendee/AttendeeBroadcast"));
+
 // Host Pages
-const HostDashboard = lazy(() => import("@/pages/host/HostDashboard"));
+const HostDashboard = lazyWithRetry(() => import("@/pages/host/HostDashboard"));
 
-// Simple loading spinner for lazy components
+// Loading spinner for lazy components
 const LazyLoader = () => (
   <div className="min-h-screen flex items-center justify-center">
     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -112,33 +116,39 @@ const ProtectedRoute = ({
   return <>{children}</>;
 };
 
-// Admin Guard Component with lazy-loaded layout
+// Admin Guard Component with lazy-loaded layout and error boundary
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   return (
     <ProtectedRoute allowedRoles={["host"]}>
-      <Suspense fallback={<LazyLoader />}>
-        <AdminLayout>{children}</AdminLayout>
-      </Suspense>
+      <LazyLoadErrorBoundary>
+        <Suspense fallback={<LazyLoader />}>
+          <AdminLayout>{children}</AdminLayout>
+        </Suspense>
+      </LazyLoadErrorBoundary>
     </ProtectedRoute>
   );
 };
 
-// Attendee Guard Component with lazy-loaded layout
+// Attendee Guard Component with lazy-loaded layout and error boundary
 const AttendeeRoute = ({ children }: { children: React.ReactNode }) => {
   return (
     <ProtectedRoute allowedRoles={["attendee"]}>
-      <Suspense fallback={<LazyLoader />}>
-        <AppLayout>{children}</AppLayout>
-      </Suspense>
+      <LazyLoadErrorBoundary>
+        <Suspense fallback={<LazyLoader />}>
+          <AppLayout>{children}</AppLayout>
+        </Suspense>
+      </LazyLoadErrorBoundary>
     </ProtectedRoute>
   );
 };
 
-// Wrapper for lazy components
+// Wrapper for lazy components with error boundary
 const LazyComponent = ({ Component }: { Component: React.LazyExoticComponent<any> }) => (
-  <Suspense fallback={<LazyLoader />}>
-    <Component />
-  </Suspense>
+  <LazyLoadErrorBoundary>
+    <Suspense fallback={<LazyLoader />}>
+      <Component />
+    </Suspense>
+  </LazyLoadErrorBoundary>
 );
 
 export const router = createBrowserRouter([
@@ -147,7 +157,7 @@ export const router = createBrowserRouter([
   { path: "/login", element: <Login /> },
   { path: "/register", element: <Register /> },
   
-  // Public routes - lazy loaded
+  // Public routes - lazy loaded with error boundary
   { path: "/guide", element: <LazyComponent Component={Guide} /> },
   { path: "/discovery", element: <LazyComponent Component={Discovery} /> },
   { path: "/privacy", element: <LazyComponent Component={DataPrivacy} /> },
@@ -167,7 +177,7 @@ export const router = createBrowserRouter([
   { path: "/live-games/:eventId", element: <LazyComponent Component={LiveGames} /> },
   { path: "/check-in/:eventId", element: <LazyComponent Component={CheckIn} /> },
 
-  // Admin Routes
+  // Admin Routes with error boundary
   { path: "/admin", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminDashboard /></Suspense></AdminRoute> },
   { path: "/admin/profile", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminProfile /></Suspense></AdminRoute> },
   { path: "/admin/events", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminEvents /></Suspense></AdminRoute> },
@@ -198,7 +208,7 @@ export const router = createBrowserRouter([
   // Host Routes (redirect to admin)
   { path: "/host", element: <Navigate to="/admin" replace /> },
 
-  // Attendee Routes
+  // Attendee Routes with error boundary
   { path: "/attendee", element: <AttendeeRoute><Suspense fallback={<LazyLoader />}><AttendeeDashboard /></Suspense></AttendeeRoute> },
   { path: "/attendee/profile", element: <AttendeeRoute><Suspense fallback={<LazyLoader />}><AttendeeProfile /></Suspense></AttendeeRoute> },
   { path: "/attendee/networking", element: <AttendeeRoute><Suspense fallback={<LazyLoader />}><AttendeeNetworking /></Suspense></AttendeeRoute> },

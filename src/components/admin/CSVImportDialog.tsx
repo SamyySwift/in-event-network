@@ -1,9 +1,7 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Loader2, CheckCircle2, FileSpreadsheet, Sparkles, Search, CheckCircle, XCircle, AlertTriangle, Users } from 'lucide-react';
+import { Upload, Loader2, CheckCircle2, FileSpreadsheet, Sparkles, Search, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -22,30 +20,15 @@ interface AttendeeData {
   name: string;
   email: string;
   phone?: string;
-  hasPlaceholderEmail?: boolean;
-  [key: string]: string | boolean | undefined;
+  [key: string]: string | undefined;
 }
 
 interface ImportResult {
   successCount: number;
   errorCount: number;
   duplicateCount: number;
-  skippedCount: number;
   errors: { email: string; reason: string }[];
-  skippedRows: { row: number; reason: string }[];
   totalProcessed: number;
-  totalInFile: number;
-}
-
-interface PreviewData {
-  totalRows: number;
-  withEmail: number;
-  nameOnly: number;
-  skipped: number;
-  attendeesWithEmail: AttendeeData[];
-  attendeesNameOnly: AttendeeData[];
-  skippedRows: { row: number; reason: string }[];
-  rawRows: string[][];
 }
 
 interface CSVImportDialogProps {
@@ -54,15 +37,11 @@ interface CSVImportDialogProps {
 
 export default function CSVImportDialog({ onImportComplete }: CSVImportDialogProps) {
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isSelectingFile, setIsSelectingFile] = useState(false);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0, percentage: 0 });
   const [showModal, setShowModal] = useState(false);
-  const [modalStage, setModalStage] = useState<'info' | 'analyzing' | 'preview' | 'processing' | 'results'>('info');
+  const [modalStage, setModalStage] = useState<'info' | 'processing' | 'results'>('info');
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [analysisStage, setAnalysisStage] = useState<string>('');
-  const [previewData, setPreviewData] = useState<PreviewData | null>(null);
-  const [importNameOnly, setImportNameOnly] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { selectedEventId } = useAdminEventContext();
 
@@ -73,23 +52,19 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     }
     setModalStage('info');
     setImportResult(null);
-    setPreviewData(null);
     setProgress({ current: 0, total: 0, percentage: 0 });
-    setImportNameOnly(true);
     setShowModal(true);
   };
 
   const handleSelectFile = () => {
-    setIsSelectingFile(true);
     fileInputRef.current?.click();
   };
 
   const handleCloseModal = () => {
-    if (isProcessing || isAnalyzing) return;
+    if (isProcessing) return;
     setShowModal(false);
     setModalStage('info');
     setImportResult(null);
-    setPreviewData(null);
     setProgress({ current: 0, total: 0, percentage: 0 });
     onImportComplete?.();
   };
@@ -107,7 +82,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     return XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false }) as string[][];
   };
 
-  const analyzeFileForPreview = async (rows: string[][]): Promise<PreviewData> => {
+  const extractAttendeesFromCSV = async (rows: string[][]): Promise<AttendeeData[]> => {
     if (!rows || rows.length === 0) {
       throw new Error('Empty file');
     }
@@ -121,8 +96,6 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       const count = (headerCounts[base] = (headerCounts[base] || 0) + 1);
       if (count > 1) headers[i] = `${headers[i]} (${count})`;
     }
-
-    setAnalysisStage('AI analyzing columns...');
 
     // Use AI to identify primary columns
     const { data: aiData, error } = await supabase.functions.invoke('analyze-csv-import', {
@@ -154,19 +127,12 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
 
     const { f: firstIdx, l: lastIdx } = findFirstLastNameIdx();
 
-    const attendeesWithEmail: AttendeeData[] = [];
-    const attendeesNameOnly: AttendeeData[] = [];
-    const skippedRows: { row: number; reason: string }[] = [];
-
-    setAnalysisStage('Categorizing rows...');
+    const attendees: AttendeeData[] = [];
 
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
       if (!row || row.length === 0) continue;
       const cells = row.map(v => (v ?? '').toString().trim());
-      
-      // Skip completely empty rows
-      if (cells.every(c => !c)) continue;
 
       let name = nameIdx >= 0 ? cells[nameIdx] : '';
       let email = emailIdx >= 0 ? cells[emailIdx] : '';
@@ -200,24 +166,13 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         }
       }
 
-      // Categorize row
-      if (!email && !name) {
-        skippedRows.push({ row: i + 1, reason: 'No name or email found' });
-        continue;
-      }
-
-      // Derive name from email if missing
-      let derivedName = name;
-      if (!derivedName && email) {
+      if (!email) continue; // require at least an email
+      if (!name) {
         const local = email.split('@')[0];
-        derivedName = local.replace(/[._-]+/g, ' ').replace(/\b\w/g, (s) => s.toUpperCase());
+        name = local.replace(/[._-]+/g, ' ').replace(/\b\w/g, (s) => s.toUpperCase());
       }
 
-      const attendee: AttendeeData = { 
-        name: derivedName || name, 
-        email: email || '',
-        hasPlaceholderEmail: !email
-      };
+      const attendee: AttendeeData = { name, email };
       if (phone) attendee.phone = phone;
 
       // Add all other columns as form data
@@ -228,37 +183,26 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         attendee[header] = val;
       });
 
-      if (email) {
-        attendeesWithEmail.push(attendee);
-      } else {
-        attendeesNameOnly.push(attendee);
-      }
+      attendees.push(attendee);
     }
 
-    return {
-      totalRows: rows.length - 1,
-      withEmail: attendeesWithEmail.length,
-      nameOnly: attendeesNameOnly.length,
-      skipped: skippedRows.length,
-      attendeesWithEmail,
-      attendeesNameOnly,
-      skippedRows,
-      rawRows: rows
-    };
+    if (attendees.length === 0) {
+      throw new Error('No attendees found in file');
+    }
+
+    return attendees;
   };
 
-  const createTicketsFromAttendees = async (attendees: AttendeeData[], skippedRows: { row: number; reason: string }[], totalInFile: number): Promise<ImportResult> => {
+
+  const createTicketsFromAttendees = async (attendees: AttendeeData[]): Promise<ImportResult> => {
     if (!selectedEventId) throw new Error('No event selected');
 
     const result: ImportResult = {
       successCount: 0,
       errorCount: 0,
       duplicateCount: 0,
-      skippedCount: skippedRows.length,
       errors: [],
-      skippedRows,
-      totalProcessed: attendees.length,
-      totalInFile
+      totalProcessed: attendees.length
     };
 
     setAnalysisStage('Fetching ticket types...');
@@ -315,7 +259,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     const extraFieldsSet = new Set<string>();
     attendees.forEach(a => {
       Object.keys(a).forEach(k => {
-        if (k !== 'name' && k !== 'email' && k !== 'phone' && k !== 'hasPlaceholderEmail') extraFieldsSet.add(k);
+        if (k !== 'name' && k !== 'email' && k !== 'phone') extraFieldsSet.add(k);
       });
     });
     const extraFields = Array.from(extraFieldsSet);
@@ -404,7 +348,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
               const attendee = batch[i];
               for (const [field, fieldId] of Object.entries(fieldMapping)) {
                 const value = attendee[field];
-                if (value && typeof value === 'string') {
+                if (value) {
                   responses.push({
                     ticket_id: ticket.id,
                     form_field_id: fieldId,
@@ -431,20 +375,15 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = event.target.files?.[0];
-    if (!selectedFile) {
-      setIsSelectingFile(false);
-      return;
-    }
+    if (!selectedFile) return;
 
     if (!selectedEventId) {
       toast.error('Please select an event first');
-      setIsSelectingFile(false);
       return;
     }
 
-    setIsAnalyzing(true);
-    setIsSelectingFile(false);
-    setModalStage('analyzing');
+    setIsProcessing(true);
+    setModalStage('processing');
     setAnalysisStage('Reading file...');
     
     try {
@@ -457,14 +396,11 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
           successCount: 0,
           errorCount: 1,
           duplicateCount: 0,
-          skippedCount: 0,
           errors: [{ email: 'N/A', reason: 'Unsupported file type. Please upload CSV, TSV, TXT, or Excel files' }],
-          skippedRows: [],
-          totalProcessed: 0,
-          totalInFile: 0
+          totalProcessed: 0
         });
         setModalStage('results');
-        setIsAnalyzing(false);
+        setIsProcessing(false);
         return;
       }
 
@@ -480,69 +416,23 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         rows = parseCSVContent(content);
       }
 
-      // Pre-analyze for preview
-      const preview = await analyzeFileForPreview(rows);
-      setPreviewData(preview);
-      setModalStage('preview');
-      
-    } catch (error) {
-      setImportResult({
-        successCount: 0,
-        errorCount: 1,
-        duplicateCount: 0,
-        skippedCount: 0,
-        errors: [{ email: 'N/A', reason: error instanceof Error ? error.message : 'Analysis failed' }],
-        skippedRows: [],
-        totalProcessed: 0,
-        totalInFile: 0
-      });
-      setModalStage('results');
-    } finally {
-      setIsAnalyzing(false);
-      event.target.value = '';
-    }
-  };
+      setAnalysisStage('Analyzing with AI...');
+      const attendees = await extractAttendeesFromCSV(rows);
 
-  const handleStartImport = async () => {
-    if (!previewData) return;
-
-    setIsProcessing(true);
-    setModalStage('processing');
-    setAnalysisStage('Preparing import...');
-
-    try {
-      // Combine attendees based on toggle
-      let attendeesToImport = [...previewData.attendeesWithEmail];
-      
-      if (importNameOnly) {
-        // Generate placeholder emails for name-only entries
-        const nameOnlyWithEmails = previewData.attendeesNameOnly.map((a, idx) => {
-          const nameSlug = a.name.toLowerCase().replace(/\s+/g, '.').replace(/[^a-z.]/g, '');
-          return {
-            ...a,
-            email: `${nameSlug}_${Date.now()}_${idx}@import.local`
-          };
+      if (attendees.length === 0) {
+        setImportResult({
+          successCount: 0,
+          errorCount: 1,
+          duplicateCount: 0,
+          errors: [{ email: 'N/A', reason: 'No attendees found in file. Ensure at least an email column exists.' }],
+          totalProcessed: 0
         });
-        attendeesToImport = [...attendeesToImport, ...nameOnlyWithEmails];
+        setModalStage('results');
+        setIsProcessing(false);
+        return;
       }
 
-      // Add name-only to skipped if not importing them
-      const finalSkipped = importNameOnly 
-        ? previewData.skippedRows 
-        : [
-            ...previewData.skippedRows,
-            ...previewData.attendeesNameOnly.map((_, idx) => ({
-              row: idx + 1, // Approximate row number
-              reason: 'Name only - no email (toggle disabled)'
-            }))
-          ];
-
-      const result = await createTicketsFromAttendees(
-        attendeesToImport, 
-        finalSkipped, 
-        previewData.totalRows
-      );
-      
+      const result = await createTicketsFromAttendees(attendees);
       setImportResult(result);
       setModalStage('results');
       setAnalysisStage('Complete');
@@ -552,21 +442,14 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         successCount: 0,
         errorCount: 1,
         duplicateCount: 0,
-        skippedCount: 0,
         errors: [{ email: 'N/A', reason: error instanceof Error ? error.message : 'Import failed' }],
-        skippedRows: [],
-        totalProcessed: 0,
-        totalInFile: previewData.totalRows
+        totalProcessed: 0
       });
       setModalStage('results');
     } finally {
       setIsProcessing(false);
+      event.target.value = '';
     }
-  };
-
-  const getReadyToImportCount = () => {
-    if (!previewData) return 0;
-    return previewData.withEmail + (importNameOnly ? previewData.nameOnly : 0);
   };
 
   return (
@@ -578,14 +461,14 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         accept=".csv,.xlsx,.xls,.tsv,.txt"
         onChange={handleFileChange}
         className="hidden"
-        disabled={isProcessing || isAnalyzing}
+        disabled={isProcessing}
       />
       
       {/* Button that opens modal */}
       <Button
         variant="outline"
         className="rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
-        disabled={isProcessing || isAnalyzing}
+        disabled={isProcessing}
         onClick={handleOpenModal}
       >
         <Upload className="h-4 w-4 mr-2" />
@@ -593,7 +476,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       </Button>
 
       {/* Single unified modal for all stages */}
-      <Dialog open={showModal} onOpenChange={(open) => !isProcessing && !isAnalyzing && setShowModal(open)}>
+      <Dialog open={showModal} onOpenChange={(open) => !isProcessing && setShowModal(open)}>
         <DialogContent className="sm:max-w-lg [&>button]:hidden">
           {/* Info Stage */}
           {modalStage === 'info' && (
@@ -615,9 +498,9 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
                       <FileSpreadsheet className="h-3.5 w-3.5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">Flexible data format</p>
+                      <p className="text-sm font-medium">Prepare your file</p>
                       <p className="text-xs text-muted-foreground">
-                        Name, email, or both - we'll detect what you have. CSV, Excel, TSV, or TXT files supported.
+                        CSV, Excel (.xlsx, .xls), TSV, or TXT files are supported. Make sure your file has at least an email column.
                       </p>
                     </div>
                   </div>
@@ -636,12 +519,12 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
                   
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Users className="h-3.5 w-3.5 text-primary" />
+                      <Search className="h-3.5 w-3.5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">Name-only entries supported</p>
+                      <p className="text-sm font-medium">All data is searchable</p>
                       <p className="text-xs text-muted-foreground">
-                        Works even without emails - we'll generate placeholder addresses for check-in.
+                        Extra columns (amount, company, etc.) are saved as form data and fully searchable in check-in.
                       </p>
                     </div>
                   </div>
@@ -651,9 +534,9 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
                       <CheckCircle className="h-3.5 w-3.5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">Preview before importing</p>
+                      <p className="text-sm font-medium">Duplicates filtered</p>
                       <p className="text-xs text-muted-foreground">
-                        See exactly what will be imported before committing. Duplicates are automatically filtered.
+                        Existing attendees (by email) are automatically skipped to prevent duplicates.
                       </p>
                     </div>
                   </div>
@@ -665,148 +548,12 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
               </div>
               
               <DialogFooter className="gap-2 sm:gap-0">
-                <Button variant="outline" onClick={() => setShowModal(false)} disabled={isSelectingFile}>
+                <Button variant="outline" onClick={() => setShowModal(false)}>
                   Cancel
                 </Button>
-                <Button onClick={handleSelectFile} disabled={isSelectingFile}>
-                  {isSelectingFile ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Upload className="h-4 w-4 mr-2" />
-                  )}
-                  {isSelectingFile ? 'Opening...' : 'Choose File'}
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-
-          {/* Analyzing Stage */}
-          {modalStage === 'analyzing' && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
-                  Analyzing File
-                </DialogTitle>
-                <DialogDescription>
-                  {analysisStage}
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="flex flex-col items-center justify-center py-12">
-                <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
-                <p className="text-sm text-muted-foreground">{analysisStage}</p>
-                <p className="text-xs text-muted-foreground mt-2">This may take a moment...</p>
-              </div>
-
-              <DialogFooter>
-                <Button disabled className="w-full">
-                  Please wait...
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-
-          {/* Preview Stage */}
-          {modalStage === 'preview' && previewData && (
-            <>
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <FileSpreadsheet className="h-5 w-5 text-primary" />
-                  Import Preview
-                </DialogTitle>
-                <DialogDescription>
-                  Review what will be imported before proceeding
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-4 py-4">
-                <div className="bg-muted/50 rounded-lg p-4 space-y-3">
-                  <p className="text-sm font-medium">Found {previewData.totalRows} rows in your file</p>
-                  
-                  <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-500" />
-                        With email addresses
-                      </span>
-                      <span className="font-medium text-green-600">{previewData.withEmail}</span>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4 text-amber-500" />
-                        Name only (no email)
-                      </span>
-                      <span className="font-medium text-amber-600">{previewData.nameOnly}</span>
-                    </div>
-                    
-                    {previewData.skipped > 0 && (
-                      <div className="flex items-center justify-between">
-                        <span className="flex items-center gap-2">
-                          <XCircle className="h-4 w-4 text-red-500" />
-                          Will be skipped (no data)
-                        </span>
-                        <span className="font-medium text-red-600">{previewData.skipped}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {previewData.nameOnly > 0 && (
-                  <div className="flex items-center justify-between p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="import-name-only" className="text-sm font-medium cursor-pointer">
-                        Import name-only entries
-                      </Label>
-                      <p className="text-xs text-muted-foreground">
-                        Generates placeholder emails for check-in
-                      </p>
-                    </div>
-                    <Switch
-                      id="import-name-only"
-                      checked={importNameOnly}
-                      onCheckedChange={setImportNameOnly}
-                    />
-                  </div>
-                )}
-
-                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-center">
-                  <p className="text-sm text-muted-foreground">Ready to import</p>
-                  <p className="text-2xl font-bold text-primary">{getReadyToImportCount()} attendees</p>
-                </div>
-
-                {previewData.skippedRows.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 text-red-500" />
-                      Rows to skip ({previewData.skippedRows.length})
-                    </p>
-                    <ScrollArea className="h-[80px] rounded-md border">
-                      <div className="p-2 space-y-1">
-                        {previewData.skippedRows.slice(0, 10).map((skip, idx) => (
-                          <div key={idx} className="text-xs text-muted-foreground">
-                            Row {skip.row}: {skip.reason}
-                          </div>
-                        ))}
-                        {previewData.skippedRows.length > 10 && (
-                          <div className="text-xs text-muted-foreground italic">
-                            ...and {previewData.skippedRows.length - 10} more
-                          </div>
-                        )}
-                      </div>
-                    </ScrollArea>
-                  </div>
-                )}
-              </div>
-              
-              <DialogFooter className="gap-2 sm:gap-0">
-                <Button variant="outline" onClick={() => setModalStage('info')}>
-                  Back
-                </Button>
-                <Button onClick={handleStartImport} disabled={getReadyToImportCount() === 0}>
+                <Button onClick={handleSelectFile}>
                   <Upload className="h-4 w-4 mr-2" />
-                  Start Import
+                  Choose File
                 </Button>
               </DialogFooter>
             </>
@@ -874,71 +621,44 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
               </DialogHeader>
 
               <div className="space-y-4 py-4">
-                <div className="grid grid-cols-4 gap-2">
-                  <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-2 text-center">
-                    <CheckCircle2 className="h-4 w-4 text-green-500 mx-auto mb-1" />
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 text-center">
+                    <CheckCircle2 className="h-5 w-5 text-green-500 mx-auto mb-1" />
                     <p className="text-lg font-bold text-green-600">{importResult.successCount}</p>
-                    <p className="text-[10px] text-muted-foreground">Imported</p>
+                    <p className="text-xs text-muted-foreground">Successful</p>
                   </div>
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2 text-center">
-                    <AlertTriangle className="h-4 w-4 text-amber-500 mx-auto mb-1" />
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-center">
+                    <AlertTriangle className="h-5 w-5 text-amber-500 mx-auto mb-1" />
                     <p className="text-lg font-bold text-amber-600">{importResult.duplicateCount}</p>
-                    <p className="text-[10px] text-muted-foreground">Duplicates</p>
+                    <p className="text-xs text-muted-foreground">Duplicates</p>
                   </div>
-                  <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-2 text-center">
-                    <AlertTriangle className="h-4 w-4 text-orange-500 mx-auto mb-1" />
-                    <p className="text-lg font-bold text-orange-600">{importResult.skippedCount}</p>
-                    <p className="text-[10px] text-muted-foreground">Skipped</p>
-                  </div>
-                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2 text-center">
-                    <XCircle className="h-4 w-4 text-red-500 mx-auto mb-1" />
+                  <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-center">
+                    <XCircle className="h-5 w-5 text-red-500 mx-auto mb-1" />
                     <p className="text-lg font-bold text-red-600">{importResult.errorCount}</p>
-                    <p className="text-[10px] text-muted-foreground">Failed</p>
+                    <p className="text-xs text-muted-foreground">Failed</p>
                   </div>
                 </div>
 
                 <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-1">
-                  <p><strong>Total in file:</strong> {importResult.totalInFile} rows</p>
+                  <p><strong>Total processed:</strong> {importResult.totalProcessed} records</p>
                   {importResult.successCount > 0 && (
                     <p className="text-green-600">✓ {importResult.successCount} imported successfully</p>
                   )}
                   {importResult.duplicateCount > 0 && (
                     <p className="text-amber-600">⚠ {importResult.duplicateCount} skipped (already exist)</p>
                   )}
-                  {importResult.skippedCount > 0 && (
-                    <p className="text-orange-600">⚠ {importResult.skippedCount} skipped (no valid data)</p>
-                  )}
                   {importResult.errorCount > 0 && (
                     <p className="text-red-600">✗ {importResult.errorCount} failed to import</p>
                   )}
                 </div>
 
-                {importResult.skippedRows.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 text-orange-500" />
-                      Skipped Rows ({importResult.skippedRows.length})
-                    </p>
-                    <ScrollArea className="h-[100px] rounded-md border">
-                      <div className="p-3 space-y-2">
-                        {importResult.skippedRows.map((skip, idx) => (
-                          <div key={idx} className="text-xs bg-orange-500/5 rounded p-2 border border-orange-500/10">
-                            <p className="font-medium text-foreground">Row {skip.row}</p>
-                            <p className="text-muted-foreground">{skip.reason}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </ScrollArea>
-                  </div>
-                )}
-
                 {importResult.errors.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-sm font-medium flex items-center gap-2">
                       <XCircle className="h-4 w-4 text-red-500" />
-                      Errors ({importResult.errors.length})
+                      Issues ({importResult.errors.length})
                     </p>
-                    <ScrollArea className="h-[100px] rounded-md border">
+                    <ScrollArea className="h-[150px] rounded-md border">
                       <div className="p-3 space-y-2">
                         {importResult.errors.map((error, idx) => (
                           <div key={idx} className="text-xs bg-red-500/5 rounded p-2 border border-red-500/10">

@@ -1,7 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { Upload, Loader2, CheckCircle2, FileSpreadsheet, Sparkles, Search, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Upload, Loader2, CheckCircle2, FileSpreadsheet, Sparkles, Search, CheckCircle, XCircle, AlertTriangle, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
@@ -20,7 +22,8 @@ interface AttendeeData {
   name: string;
   email: string;
   phone?: string;
-  [key: string]: string | undefined;
+  hasPlaceholderEmail?: boolean;
+  [key: string]: string | boolean | undefined;
 }
 
 interface ImportResult {
@@ -34,6 +37,17 @@ interface ImportResult {
   totalInFile: number;
 }
 
+interface PreviewData {
+  totalRows: number;
+  withEmail: number;
+  nameOnly: number;
+  skipped: number;
+  attendeesWithEmail: AttendeeData[];
+  attendeesNameOnly: AttendeeData[];
+  skippedRows: { row: number; reason: string }[];
+  rawRows: string[][];
+}
+
 interface CSVImportDialogProps {
   onImportComplete?: () => void;
 }
@@ -41,11 +55,14 @@ interface CSVImportDialogProps {
 export default function CSVImportDialog({ onImportComplete }: CSVImportDialogProps) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSelectingFile, setIsSelectingFile] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0, percentage: 0 });
   const [showModal, setShowModal] = useState(false);
-  const [modalStage, setModalStage] = useState<'info' | 'processing' | 'results'>('info');
+  const [modalStage, setModalStage] = useState<'info' | 'analyzing' | 'preview' | 'processing' | 'results'>('info');
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [analysisStage, setAnalysisStage] = useState<string>('');
+  const [previewData, setPreviewData] = useState<PreviewData | null>(null);
+  const [importNameOnly, setImportNameOnly] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { selectedEventId } = useAdminEventContext();
 
@@ -56,7 +73,9 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     }
     setModalStage('info');
     setImportResult(null);
+    setPreviewData(null);
     setProgress({ current: 0, total: 0, percentage: 0 });
+    setImportNameOnly(true);
     setShowModal(true);
   };
 
@@ -66,10 +85,11 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
   };
 
   const handleCloseModal = () => {
-    if (isProcessing) return;
+    if (isProcessing || isAnalyzing) return;
     setShowModal(false);
     setModalStage('info');
     setImportResult(null);
+    setPreviewData(null);
     setProgress({ current: 0, total: 0, percentage: 0 });
     onImportComplete?.();
   };
@@ -87,7 +107,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     return XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false }) as string[][];
   };
 
-  const extractAttendeesFromCSV = async (rows: string[][]): Promise<{ attendees: AttendeeData[]; skippedRows: { row: number; reason: string }[] }> => {
+  const analyzeFileForPreview = async (rows: string[][]): Promise<PreviewData> => {
     if (!rows || rows.length === 0) {
       throw new Error('Empty file');
     }
@@ -101,6 +121,8 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       const count = (headerCounts[base] = (headerCounts[base] || 0) + 1);
       if (count > 1) headers[i] = `${headers[i]} (${count})`;
     }
+
+    setAnalysisStage('AI analyzing columns...');
 
     // Use AI to identify primary columns
     const { data: aiData, error } = await supabase.functions.invoke('analyze-csv-import', {
@@ -132,8 +154,11 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
 
     const { f: firstIdx, l: lastIdx } = findFirstLastNameIdx();
 
-    const attendees: AttendeeData[] = [];
+    const attendeesWithEmail: AttendeeData[] = [];
+    const attendeesNameOnly: AttendeeData[] = [];
     const skippedRows: { row: number; reason: string }[] = [];
+
+    setAnalysisStage('Categorizing rows...');
 
     for (let i = 1; i < rows.length; i++) {
       const row = rows[i];
@@ -175,24 +200,24 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         }
       }
 
-      // Allow name-only imports - generate placeholder email if missing
+      // Categorize row
       if (!email && !name) {
         skippedRows.push({ row: i + 1, reason: 'No name or email found' });
         continue;
       }
-      
-      // Generate placeholder email for name-only entries
-      if (!email) {
-        const nameSlug = name.toLowerCase().replace(/\s+/g, '.').replace(/[^a-z.]/g, '');
-        email = `${nameSlug}_${Date.now()}_${i}@import.local`;
-      }
-      
-      if (!name) {
+
+      // Derive name from email if missing
+      let derivedName = name;
+      if (!derivedName && email) {
         const local = email.split('@')[0];
-        name = local.replace(/[._-]+/g, ' ').replace(/\b\w/g, (s) => s.toUpperCase());
+        derivedName = local.replace(/[._-]+/g, ' ').replace(/\b\w/g, (s) => s.toUpperCase());
       }
 
-      const attendee: AttendeeData = { name, email };
+      const attendee: AttendeeData = { 
+        name: derivedName || name, 
+        email: email || '',
+        hasPlaceholderEmail: !email
+      };
       if (phone) attendee.phone = phone;
 
       // Add all other columns as form data
@@ -203,16 +228,24 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         attendee[header] = val;
       });
 
-      attendees.push(attendee);
+      if (email) {
+        attendeesWithEmail.push(attendee);
+      } else {
+        attendeesNameOnly.push(attendee);
+      }
     }
 
-    if (attendees.length === 0 && skippedRows.length === 0) {
-      throw new Error('No attendees found in file');
-    }
-
-    return { attendees, skippedRows };
+    return {
+      totalRows: rows.length - 1,
+      withEmail: attendeesWithEmail.length,
+      nameOnly: attendeesNameOnly.length,
+      skipped: skippedRows.length,
+      attendeesWithEmail,
+      attendeesNameOnly,
+      skippedRows,
+      rawRows: rows
+    };
   };
-
 
   const createTicketsFromAttendees = async (attendees: AttendeeData[], skippedRows: { row: number; reason: string }[], totalInFile: number): Promise<ImportResult> => {
     if (!selectedEventId) throw new Error('No event selected');
@@ -282,7 +315,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
     const extraFieldsSet = new Set<string>();
     attendees.forEach(a => {
       Object.keys(a).forEach(k => {
-        if (k !== 'name' && k !== 'email' && k !== 'phone') extraFieldsSet.add(k);
+        if (k !== 'name' && k !== 'email' && k !== 'phone' && k !== 'hasPlaceholderEmail') extraFieldsSet.add(k);
       });
     });
     const extraFields = Array.from(extraFieldsSet);
@@ -371,7 +404,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
               const attendee = batch[i];
               for (const [field, fieldId] of Object.entries(fieldMapping)) {
                 const value = attendee[field];
-                if (value) {
+                if (value && typeof value === 'string') {
                   responses.push({
                     ticket_id: ticket.id,
                     form_field_id: fieldId,
@@ -409,9 +442,9 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       return;
     }
 
-    setIsProcessing(true);
+    setIsAnalyzing(true);
     setIsSelectingFile(false);
-    setModalStage('processing');
+    setModalStage('analyzing');
     setAnalysisStage('Reading file...');
     
     try {
@@ -431,7 +464,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
           totalInFile: 0
         });
         setModalStage('results');
-        setIsProcessing(false);
+        setIsAnalyzing(false);
         return;
       }
 
@@ -447,29 +480,69 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         rows = parseCSVContent(content);
       }
 
-      // Count total data rows (excluding header)
-      const totalInFile = rows.length > 0 ? rows.length - 1 : 0;
+      // Pre-analyze for preview
+      const preview = await analyzeFileForPreview(rows);
+      setPreviewData(preview);
+      setModalStage('preview');
+      
+    } catch (error) {
+      setImportResult({
+        successCount: 0,
+        errorCount: 1,
+        duplicateCount: 0,
+        skippedCount: 0,
+        errors: [{ email: 'N/A', reason: error instanceof Error ? error.message : 'Analysis failed' }],
+        skippedRows: [],
+        totalProcessed: 0,
+        totalInFile: 0
+      });
+      setModalStage('results');
+    } finally {
+      setIsAnalyzing(false);
+      event.target.value = '';
+    }
+  };
 
-      setAnalysisStage('Analyzing with AI...');
-      const { attendees, skippedRows } = await extractAttendeesFromCSV(rows);
+  const handleStartImport = async () => {
+    if (!previewData) return;
 
-      if (attendees.length === 0 && skippedRows.length === 0) {
-        setImportResult({
-          successCount: 0,
-          errorCount: 1,
-          duplicateCount: 0,
-          skippedCount: 0,
-          errors: [{ email: 'N/A', reason: 'No attendees found in file. Ensure your file has name or email data.' }],
-          skippedRows: [],
-          totalProcessed: 0,
-          totalInFile
+    setIsProcessing(true);
+    setModalStage('processing');
+    setAnalysisStage('Preparing import...');
+
+    try {
+      // Combine attendees based on toggle
+      let attendeesToImport = [...previewData.attendeesWithEmail];
+      
+      if (importNameOnly) {
+        // Generate placeholder emails for name-only entries
+        const nameOnlyWithEmails = previewData.attendeesNameOnly.map((a, idx) => {
+          const nameSlug = a.name.toLowerCase().replace(/\s+/g, '.').replace(/[^a-z.]/g, '');
+          return {
+            ...a,
+            email: `${nameSlug}_${Date.now()}_${idx}@import.local`
+          };
         });
-        setModalStage('results');
-        setIsProcessing(false);
-        return;
+        attendeesToImport = [...attendeesToImport, ...nameOnlyWithEmails];
       }
 
-      const result = await createTicketsFromAttendees(attendees, skippedRows, totalInFile);
+      // Add name-only to skipped if not importing them
+      const finalSkipped = importNameOnly 
+        ? previewData.skippedRows 
+        : [
+            ...previewData.skippedRows,
+            ...previewData.attendeesNameOnly.map((_, idx) => ({
+              row: idx + 1, // Approximate row number
+              reason: 'Name only - no email (toggle disabled)'
+            }))
+          ];
+
+      const result = await createTicketsFromAttendees(
+        attendeesToImport, 
+        finalSkipped, 
+        previewData.totalRows
+      );
+      
       setImportResult(result);
       setModalStage('results');
       setAnalysisStage('Complete');
@@ -483,13 +556,17 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         errors: [{ email: 'N/A', reason: error instanceof Error ? error.message : 'Import failed' }],
         skippedRows: [],
         totalProcessed: 0,
-        totalInFile: 0
+        totalInFile: previewData.totalRows
       });
       setModalStage('results');
     } finally {
       setIsProcessing(false);
-      event.target.value = '';
     }
+  };
+
+  const getReadyToImportCount = () => {
+    if (!previewData) return 0;
+    return previewData.withEmail + (importNameOnly ? previewData.nameOnly : 0);
   };
 
   return (
@@ -501,14 +578,14 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
         accept=".csv,.xlsx,.xls,.tsv,.txt"
         onChange={handleFileChange}
         className="hidden"
-        disabled={isProcessing}
+        disabled={isProcessing || isAnalyzing}
       />
       
       {/* Button that opens modal */}
       <Button
         variant="outline"
         className="rounded-xl shadow-md hover:shadow-lg transition-all duration-200"
-        disabled={isProcessing}
+        disabled={isProcessing || isAnalyzing}
         onClick={handleOpenModal}
       >
         <Upload className="h-4 w-4 mr-2" />
@@ -516,7 +593,7 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
       </Button>
 
       {/* Single unified modal for all stages */}
-      <Dialog open={showModal} onOpenChange={(open) => !isProcessing && setShowModal(open)}>
+      <Dialog open={showModal} onOpenChange={(open) => !isProcessing && !isAnalyzing && setShowModal(open)}>
         <DialogContent className="sm:max-w-lg [&>button]:hidden">
           {/* Info Stage */}
           {modalStage === 'info' && (
@@ -538,9 +615,9 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
                       <FileSpreadsheet className="h-3.5 w-3.5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">Prepare your file</p>
+                      <p className="text-sm font-medium">Flexible data format</p>
                       <p className="text-xs text-muted-foreground">
-                        CSV, Excel (.xlsx, .xls), TSV, or TXT files are supported. Make sure your file has at least an email column.
+                        Name, email, or both - we'll detect what you have. CSV, Excel, TSV, or TXT files supported.
                       </p>
                     </div>
                   </div>
@@ -559,12 +636,12 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
                   
                   <div className="flex items-start gap-3">
                     <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-                      <Search className="h-3.5 w-3.5 text-primary" />
+                      <Users className="h-3.5 w-3.5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">All data is searchable</p>
+                      <p className="text-sm font-medium">Name-only entries supported</p>
                       <p className="text-xs text-muted-foreground">
-                        Extra columns (amount, company, etc.) are saved as form data and fully searchable in check-in.
+                        Works even without emails - we'll generate placeholder addresses for check-in.
                       </p>
                     </div>
                   </div>
@@ -574,9 +651,9 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
                       <CheckCircle className="h-3.5 w-3.5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm font-medium">Duplicates filtered</p>
+                      <p className="text-sm font-medium">Preview before importing</p>
                       <p className="text-xs text-muted-foreground">
-                        Existing attendees (by email) are automatically skipped to prevent duplicates.
+                        See exactly what will be imported before committing. Duplicates are automatically filtered.
                       </p>
                     </div>
                   </div>
@@ -598,6 +675,138 @@ export default function CSVImportDialog({ onImportComplete }: CSVImportDialogPro
                     <Upload className="h-4 w-4 mr-2" />
                   )}
                   {isSelectingFile ? 'Opening...' : 'Choose File'}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {/* Analyzing Stage */}
+          {modalStage === 'analyzing' && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  Analyzing File
+                </DialogTitle>
+                <DialogDescription>
+                  {analysisStage}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="flex flex-col items-center justify-center py-12">
+                <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
+                <p className="text-sm text-muted-foreground">{analysisStage}</p>
+                <p className="text-xs text-muted-foreground mt-2">This may take a moment...</p>
+              </div>
+
+              <DialogFooter>
+                <Button disabled className="w-full">
+                  Please wait...
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+
+          {/* Preview Stage */}
+          {modalStage === 'preview' && previewData && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <FileSpreadsheet className="h-5 w-5 text-primary" />
+                  Import Preview
+                </DialogTitle>
+                <DialogDescription>
+                  Review what will be imported before proceeding
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-4 py-4">
+                <div className="bg-muted/50 rounded-lg p-4 space-y-3">
+                  <p className="text-sm font-medium">Found {previewData.totalRows} rows in your file</p>
+                  
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-500" />
+                        With email addresses
+                      </span>
+                      <span className="font-medium text-green-600">{previewData.withEmail}</span>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <AlertTriangle className="h-4 w-4 text-amber-500" />
+                        Name only (no email)
+                      </span>
+                      <span className="font-medium text-amber-600">{previewData.nameOnly}</span>
+                    </div>
+                    
+                    {previewData.skipped > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="flex items-center gap-2">
+                          <XCircle className="h-4 w-4 text-red-500" />
+                          Will be skipped (no data)
+                        </span>
+                        <span className="font-medium text-red-600">{previewData.skipped}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {previewData.nameOnly > 0 && (
+                  <div className="flex items-center justify-between p-4 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="import-name-only" className="text-sm font-medium cursor-pointer">
+                        Import name-only entries
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Generates placeholder emails for check-in
+                      </p>
+                    </div>
+                    <Switch
+                      id="import-name-only"
+                      checked={importNameOnly}
+                      onCheckedChange={setImportNameOnly}
+                    />
+                  </div>
+                )}
+
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-center">
+                  <p className="text-sm text-muted-foreground">Ready to import</p>
+                  <p className="text-2xl font-bold text-primary">{getReadyToImportCount()} attendees</p>
+                </div>
+
+                {previewData.skippedRows.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-red-500" />
+                      Rows to skip ({previewData.skippedRows.length})
+                    </p>
+                    <ScrollArea className="h-[80px] rounded-md border">
+                      <div className="p-2 space-y-1">
+                        {previewData.skippedRows.slice(0, 10).map((skip, idx) => (
+                          <div key={idx} className="text-xs text-muted-foreground">
+                            Row {skip.row}: {skip.reason}
+                          </div>
+                        ))}
+                        {previewData.skippedRows.length > 10 && (
+                          <div className="text-xs text-muted-foreground italic">
+                            ...and {previewData.skippedRows.length - 10} more
+                          </div>
+                        )}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                )}
+              </div>
+              
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button variant="outline" onClick={() => setModalStage('info')}>
+                  Back
+                </Button>
+                <Button onClick={handleStartImport} disabled={getReadyToImportCount() === 0}>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Start Import
                 </Button>
               </DialogFooter>
             </>

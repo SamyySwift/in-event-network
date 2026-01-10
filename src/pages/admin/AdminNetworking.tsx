@@ -34,7 +34,12 @@ import {
   Plus,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   Send,
+  Heart,
+  MapPin,
+  Sparkles,
 } from "lucide-react";
 import XLogo from "@/components/icons/XLogo";
 import { DirectMessageThread } from "@/components/messaging/DirectMessageThread";
@@ -47,7 +52,9 @@ const AdminNetworking = () => {
   const [activeTab, setActiveTab] = useState("attendees");
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
+  const itemsPerPage = 10;
+  const [expandedBios, setExpandedBios] = useState<Set<string>>(new Set());
+  const [expandedPreferences, setExpandedPreferences] = useState<Set<string>>(new Set());
   const [shareChatOpen, setShareChatOpen] = useState(false);
   
   // Moved to parent to persist across tab changes
@@ -255,97 +262,125 @@ const AdminNetworking = () => {
 
     return (
       <>
-        {/* Gradient Hero Section */}
-        <div className="p-8 rounded-2xl bg-gradient-to-br from-primary-100 via-blue-100 to-indigo-50 text-primary-900 dark:text-white shadow-2xl shadow-primary/10 mb-2 relative overflow-hidden">
-          <div className="absolute -top-12 -right-10 w-56 h-56 bg-white/10 rounded-full opacity-40 blur-2xl pointer-events-none"></div>
-          <div className="absolute -bottom-14 -left-14 w-36 h-36 bg-white/20 rounded-full opacity-30 pointer-events-none"></div>
-          <div className="relative z-10">
-            <h1 className="text-4xl font-bold tracking-tight">Attendee Connections</h1>
-            <p className="mt-2 max-w-2xl text-primary-700 dark:text-primary-100">
-              Manage and monitor attendee networking for <span className="font-semibold">{selectedEvent?.name}</span>.
-            </p>
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Card className="bg-white/50 border-white/20">
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-2">
-                    <Users className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="text-sm font-medium">Total Attendees</p>
-                      <p className="text-2xl font-bold">{profiles.length}</p>
+        {/* Modern Header with Purple Gradient - Matching Attendee Style */}
+        <div className="mb-8 relative overflow-hidden">
+          <div className="relative bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800 rounded-2xl p-6 sm:p-8 shadow-2xl">
+            {/* Background Pattern */}
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/20 to-transparent"></div>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16"></div>
+            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
+
+            {/* Content */}
+            <div className="relative z-10">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  {/* Icon */}
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center mb-4">
+                    <Users className="h-6 w-6 text-white" />
+                  </div>
+
+                  {/* Title and Description */}
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">
+                    Attendee Connections
+                  </h1>
+                  <p className="text-purple-100 text-sm sm:text-base lg:text-lg font-medium mb-4">
+                    Manage and monitor attendee networking for <span className="font-semibold">{selectedEvent?.name}</span>
+                  </p>
+
+                  {/* Stats */}
+                  <div className="flex flex-wrap gap-2 sm:gap-3">
+                    <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                      <span className="text-white text-xs sm:text-sm font-medium">
+                        {profiles.length} Attendees
+                      </span>
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                      <span className="text-white text-xs sm:text-sm font-medium">
+                        {profiles.filter(p => p.networking_visible !== false).length} Connections Enabled
+                      </span>
+                    </div>
+                    <div className="bg-white/10 backdrop-blur-sm rounded-lg px-3 py-1.5">
+                      <span className="text-white text-xs sm:text-sm font-medium">
+                        {profiles.filter(p => calculateProfileCompletion(p) >= 70).length} Complete Profiles
+                      </span>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-              <Card className="bg-white/50 border-white/20">
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-2">
-                    <Network className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="text-sm font-medium">Connections Enabled</p>
-                      <p className="text-2xl font-bold">{profiles.filter(p => p.networking_visible !== false).length}</p>
-                    </div>
+                </div>
+
+                {/* Right side decorative element */}
+                <div className="hidden sm:block">
+                  <div className="w-16 h-16 lg:w-20 lg:h-20 bg-white/10 backdrop-blur-sm rounded-2xl flex items-center justify-center">
+                    <Network className="h-8 w-8 lg:h-10 lg:w-10 text-white/80" />
                   </div>
-                </CardContent>
-              </Card>
-              <Card className="bg-white/50 border-white/20">
-                <CardContent className="p-4">
-                  <div className="flex items-center space-x-2">
-                    <UserPlus className="h-5 w-5 text-primary" />
-                    <div>
-                      <p className="text-sm font-medium">Complete Profiles</p>
-                      <p className="text-2xl font-bold">{profiles.filter(p => calculateProfileCompletion(p) >= 70).length}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Tabs for different views */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-            <div>
-              <h2 className="text-2xl font-bold">Connections Management</h2>
-              <p className="text-muted-foreground mt-1">
-                View attendee profiles and participate in event chat.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <TabsList className="grid w-full grid-cols-3 h-8 sm:h-10 p-0.5 gap-0.5">
-                <TabsTrigger value="attendees" className="flex items-center gap-0.5 sm:gap-2 px-1 sm:px-3 h-7 sm:h-9 text-[10px] sm:text-sm">
-                  <Users className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                  <span className="hidden xs:inline sm:inline">Attendees</span>
-                </TabsTrigger>
-                <TabsTrigger value="chat" className="flex items-center gap-0.5 sm:gap-2 px-1 sm:px-3 h-7 sm:h-9 text-[10px] sm:text-sm">
-                  <MessageSquare className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                  <span className="hidden xs:inline sm:inline">Chat</span>
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+            <TabsList className="grid w-full grid-cols-3 gap-0.5 rounded-xl border border-gray-200 dark:border-gray-700 bg-white/80 dark:bg-gray-800/70 p-0.5 shadow-sm h-auto sm:h-10 overflow-visible">
+              {/* People */}
+              <TabsTrigger
+                value="attendees"
+                className="px-1.5 sm:px-2.5 py-1.5 sm:py-1 h-auto sm:h-9 rounded-lg text-[10px] sm:text-sm font-medium transition-colors
+                  data-[state=active]:text-white
+                  data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:via-purple-500 data-[state=active]:to-indigo-500"
+              >
+                <div className="flex items-center gap-1 sm:gap-1.5">
+                  <Users className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                  <span className="truncate">People</span>
+                </div>
+              </TabsTrigger>
+
+              {/* Chat Room */}
+              <TabsTrigger
+                value="chat"
+                className="relative px-1.5 sm:px-2.5 py-1.5 sm:py-1 h-auto sm:h-9 rounded-lg text-[10px] sm:text-sm font-medium transition-colors
+                  data-[state=active]:text-white
+                  data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:via-purple-500 data-[state=active]:to-indigo-500"
+              >
+                <div className="flex items-center gap-1 sm:gap-1.5">
+                  <MessageSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                  <span className="truncate">Chat Room</span>
                   {unreadChats > 0 && (
                     <Badge className="h-4 min-w-[16px] rounded-full bg-destructive text-destructive-foreground text-[9px] px-1 font-bold flex-shrink-0">
                       {unreadChats > 99 ? '99+' : unreadChats}
                     </Badge>
                   )}
-                </TabsTrigger>
-                <TabsTrigger value="messages" className="flex items-center gap-0.5 sm:gap-2 px-1 sm:px-3 h-7 sm:h-9 text-[10px] sm:text-sm">
-                  <Send className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
-                  <span className="hidden xs:inline sm:inline">DMs</span>
+                </div>
+              </TabsTrigger>
+
+              {/* Messages */}
+              <TabsTrigger
+                value="messages"
+                className="relative px-1.5 sm:px-2.5 py-1.5 sm:py-1 h-auto sm:h-9 rounded-lg text-[10px] sm:text-sm font-medium transition-colors
+                  data-[state=active]:text-white
+                  data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:via-purple-500 data-[state=active]:to-indigo-500"
+              >
+                <div className="flex items-center gap-1 sm:gap-1.5">
+                  <Send className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                  <span className="truncate">Messages</span>
                   {unreadMessages > 0 && (
                     <Badge className="h-4 min-w-[16px] rounded-full bg-destructive text-destructive-foreground text-[9px] px-1 font-bold flex-shrink-0">
                       {unreadMessages > 99 ? '99+' : unreadMessages}
                     </Badge>
                   )}
-                </TabsTrigger>
-              </TabsList>
+                </div>
+              </TabsTrigger>
+            </TabsList>
 
-              {/* Existing: Share Networking (protected) */}
-              <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="gap-2 hover-scale">
-                    <Share2 className="h-4 w-4" />
-                    <span className="hidden sm:inline">Share Networking</span>
-                    <span className="sm:hidden">Share</span>
-                  </Button>
-                </DialogTrigger>
+            {/* Share Button */}
+            <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="gap-2 hover-scale">
+                  <Share2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Share Networking</span>
+                  <span className="sm:hidden">Share</span>
+                </Button>
+              </DialogTrigger>
                 <DialogContent className="sm:max-w-lg max-w-[95vw] w-full mx-4 rounded-xl border-0 bg-gradient-to-br from-background via-background to-primary/5 shadow-2xl">
                   <DialogHeader className="space-y-3 pb-4">
                     <DialogTitle className="flex items-center gap-3 text-xl font-semibold">
@@ -400,7 +435,6 @@ const AdminNetworking = () => {
                   </div>
                 </DialogContent>
               </Dialog>
-            </div>
           </div>
 
           <TabsContent value="attendees" className="space-y-6">
@@ -426,123 +460,284 @@ const AdminNetworking = () => {
             </div>
 
             {/* Attendees Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {paginatedProfiles.map((profile) => (
-                <Card key={profile.id} className="group hover:shadow-lg transition-all duration-300 border-muted/40 hover:border-primary/20">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="h-12 w-12 ring-2 ring-background shadow-md">
-                        <AvatarImage src={profile.photo_url} alt={profile.name} />
-                        <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
-                          {profile.name?.charAt(0) || "A"}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-foreground truncate">
-                          {profile.name || "Anonymous"}
-                        </h3>
-                        {profile.role && (
-                          <p className="text-sm text-muted-foreground truncate">
-                            {profile.role}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  
-                  <CardContent className="pt-0 space-y-4">
-                    {profile.company && (
-                      <div className="flex items-center space-x-2 text-sm text-muted-foreground">
-                        <div className="w-2 h-2 bg-primary/40 rounded-full"></div>
-                        <span className="truncate">{profile.company}</span>
-                      </div>
-                    )}
-                    
-                    {profile.bio && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {profile.bio}
-                      </p>
-                    )}
-                    
-                    {profile.tags && profile.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {profile.tags.slice(0, 3).map((tag, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                        {profile.tags.length > 3 && (
-                          <Badge variant="outline" className="text-xs">
-                            +{profile.tags.length - 3}
-                          </Badge>
-                        )}
-                      </div>
-                    )}
-                    
-                    {/* Social Links */}
-                    <div className="flex space-x-2 pt-2">
-                      {profile.linkedin_link && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600"
-                          onClick={() => window.open(profile.linkedin_link, '_blank')}
-                        >
-                          <Linkedin className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {profile.twitter_link && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 hover:bg-slate-50 hover:text-slate-600"
-                          onClick={() => window.open(profile.twitter_link, '_blank')}
-                        >
-                          <XLogo className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {profile.github_link && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 hover:bg-gray-50 hover:text-gray-600"
-                          onClick={() => window.open(profile.github_link, '_blank')}
-                        >
-                          <Github className="h-4 w-4" />
-                        </Button>
-                      )}
-                      {profile.website_link && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0 hover:bg-green-50 hover:text-green-600"
-                          onClick={() => window.open(profile.website_link, '_blank')}
-                        >
-                          <Globe className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {paginatedProfiles.map((profile) => {
+                const isBioExpanded = expandedBios.has(profile.id);
+                const shouldShowReadMore = typeof profile.bio === "string" && profile.bio.length > 160;
+                
+                return (
+                  <Card
+                    key={profile.id}
+                    className="group relative overflow-hidden bg-gradient-to-br from-white to-gray-50/50 dark:from-gray-800 dark:to-gray-900/50 border-0 shadow-lg hover:shadow-2xl transition-all duration-500 rounded-2xl h-full flex flex-col"
+                  >
+                    {/* Decorative Background Elements */}
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-purple-100/20 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-700" />
+                    <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-purple-100/20 to-transparent rounded-full translate-y-12 -translate-x-12 group-hover:scale-125 transition-transform duration-700" />
 
-                    {/* Admin -> Attendee DM */}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full mt-2"
-                      onClick={() => {
-                        setSelectedConversation({ 
-                          userId: profile.id, 
-                          userName: profile.name, 
-                          userPhoto: profile.photo_url 
-                        });
-                        setActiveTab("messages");
-                      }}
-                    >
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Message
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
+                    <CardHeader className="relative z-10 pb-3">
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-center space-x-4">
+                          <div className="relative">
+                            <Avatar className="h-16 w-16 ring-4 ring-white dark:ring-gray-700 shadow-lg">
+                              {profile.photo_url ? (
+                                <AvatarImage
+                                  src={profile.photo_url}
+                                  alt={profile.name || ""}
+                                  className="object-cover"
+                                />
+                              ) : (
+                                <AvatarFallback className="bg-gradient-to-br from-purple-500 to-purple-600 text-white text-lg font-bold">
+                                  {profile.name
+                                    ?.split(" ")
+                                    .map((n: string) => n[0])
+                                    .join("") || "?"}
+                                </AvatarFallback>
+                              )}
+                            </Avatar>
+                            <div
+                              className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-400 rounded-full border-2 border-white dark:border-gray-800"
+                              title="Online"
+                            />
+                          </div>
+
+                          <div className="flex-1">
+                            <CardTitle className="text-xl text-gray-900 dark:text-white font-bold mb-1">
+                              {profile.name || "Unknown"}
+                            </CardTitle>
+                            <CardDescription className="text-sm flex flex-col space-y-1">
+                              <span className="text-gray-600 dark:text-gray-400 font-medium">
+                                {profile.role || "No role specified"}
+                              </span>
+                              {profile.company && (
+                                <span className="text-gray-500 dark:text-gray-500 text-xs flex items-center">
+                                  <MapPin size={12} className="mr-1" />
+                                  {profile.company}
+                                </span>
+                              )}
+                            </CardDescription>
+                          </div>
+                        </div>
+                      </div>
+                    </CardHeader>
+
+                    {/* Body: scrollable content + sticky bottom actions */}
+                    <CardContent className="relative z-10 flex-1 flex flex-col overflow-hidden p-5 gap-4">
+                      {/* Scrollable content area with consistent vertical spacing */}
+                      <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1">
+                        {/* About Section */}
+                        {profile.bio && (
+                          <>
+                            <div
+                              className={`relative bg-white/50 dark:bg-gray-800/50 rounded-xl p-4 backdrop-blur-sm ${
+                                isBioExpanded ? "max-h-48 overflow-y-auto pr-1" : ""
+                              }`}
+                            >
+                              <p
+                                className={`text-sm text-gray-700 dark:text-gray-300 leading-relaxed ${
+                                  isBioExpanded ? "" : "line-clamp-3"
+                                }`}
+                              >
+                                {profile.bio}
+                              </p>
+                              {!isBioExpanded && shouldShowReadMore && (
+                                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-white dark:from-gray-800 to-transparent" />
+                              )}
+                            </div>
+
+                            {shouldShowReadMore && (
+                              <button
+                                type="button"
+                                aria-expanded={isBioExpanded}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const next = new Set(expandedBios);
+                                  if (isBioExpanded) next.delete(profile.id);
+                                  else next.add(profile.id);
+                                  setExpandedBios(next);
+                                }}
+                                className="text-xs font-medium text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 hover:underline"
+                              >
+                                {isBioExpanded ? "Show less" : "Read more"}
+                              </button>
+                            )}
+                          </>
+                        )}
+
+                        {/* Professional Niche */}
+                        {profile.niche && (
+                          <div className="flex items-center gap-2">
+                            <Sparkles size={16} className="text-purple-500" />
+                            <Badge
+                              variant="outline"
+                              className="bg-gradient-to-r from-purple-100 to-pink-100 dark:from-purple-900/30 dark:to-pink-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700 font-medium"
+                            >
+                              {profile.niche}
+                            </Badge>
+                          </div>
+                        )}
+
+                        {/* Interests Tags */}
+                        {profile.tags && profile.tags.length > 0 && (
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Heart size={14} className="text-red-400" />
+                              <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                                Interests
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {profile.tags
+                                .slice(0, 3)
+                                .map((tag: string, index: number) => (
+                                  <Badge
+                                    key={index}
+                                    variant="outline"
+                                    className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700 text-xs"
+                                  >
+                                    {tag}
+                                  </Badge>
+                                ))}
+                              {profile.tags.length > 3 && (
+                                <Badge
+                                  variant="outline"
+                                  className="bg-gray-50 dark:bg-gray-800 text-gray-500 border-gray-200 dark:border-gray-600 text-xs"
+                                >
+                                  +{profile.tags.length - 3} more
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Networking Preferences */}
+                        {profile.networking_preferences &&
+                          profile.networking_preferences.length > 0 && (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <Network size={14} className="text-blue-400" />
+                                <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                                  Looking to connect with
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {(expandedPreferences.has(profile.id)
+                                  ? profile.networking_preferences
+                                  : profile.networking_preferences.slice(0, 2)
+                                ).map((pref: string, index: number) => (
+                                  <Badge
+                                    key={index}
+                                    variant="outline"
+                                    className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700 text-xs"
+                                  >
+                                    {pref}
+                                  </Badge>
+                                ))}
+                                {profile.networking_preferences.length > 2 && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      const newExpanded = new Set(expandedPreferences);
+                                      if (expandedPreferences.has(profile.id)) {
+                                        newExpanded.delete(profile.id);
+                                      } else {
+                                        newExpanded.add(profile.id);
+                                      }
+                                      setExpandedPreferences(newExpanded);
+                                    }}
+                                    className="h-auto px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md"
+                                  >
+                                    {expandedPreferences.has(profile.id) ? (
+                                      <>
+                                        <ChevronUp size={12} className="mr-1" />
+                                        Show less
+                                      </>
+                                    ) : (
+                                      <>
+                                        <ChevronDown size={12} className="mr-1" />+
+                                        {profile.networking_preferences.length - 2} more
+                                      </>
+                                    )}
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                        {/* Social Links */}
+                        <div className="flex gap-2">
+                          {profile.twitter_link && (
+                            <button
+                              onClick={() => window.open(profile.twitter_link, "_blank")}
+                              className="p-2 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 hover:from-purple-100 hover:to-purple-200 text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                              title="Follow on X"
+                            >
+                              <XLogo size={16} />
+                            </button>
+                          )}
+                          {profile.linkedin_link && (
+                            <button
+                              onClick={() => window.open(profile.linkedin_link, "_blank")}
+                              className="p-2 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 hover:from-purple-100 hover:to-purple-200 text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                              title="Follow on LinkedIn"
+                            >
+                              <Linkedin size={16} />
+                            </button>
+                          )}
+                          {profile.github_link && (
+                            <button
+                              onClick={() => window.open(profile.github_link, "_blank")}
+                              className="p-2 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 hover:from-purple-100 hover:to-purple-200 text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                              title="Follow on GitHub"
+                            >
+                              <Github size={16} />
+                            </button>
+                          )}
+                          {profile.instagram_link && (
+                            <button
+                              onClick={() => window.open(profile.instagram_link, "_blank")}
+                              className="p-2 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 hover:from-purple-100 hover:to-purple-200 text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                              title="Follow on Instagram"
+                            >
+                              <Instagram size={16} />
+                            </button>
+                          )}
+                          {profile.website_link && (
+                            <button
+                              onClick={() => window.open(profile.website_link, "_blank")}
+                              className="p-2 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-600 hover:from-purple-100 hover:to-purple-200 text-gray-600 dark:text-gray-300 hover:text-purple-600 dark:hover:text-purple-400 transition-colors"
+                              title="Visit website"
+                            >
+                              <Globe size={16} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Sticky bottom action bar */}
+                      <div className="-mx-5 px-5 pt-3 pb-4 sticky bottom-0 bg-white/85 dark:bg-gray-900/85 backdrop-blur border-t border-gray-200 dark:border-gray-700">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedConversation({
+                              userId: profile.id,
+                              userName: profile.name,
+                              userPhoto: profile.photo_url,
+                            });
+                            setActiveTab("messages");
+                          }}
+                          className="w-full h-10 border-gray-200 dark:border-gray-600 bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800"
+                        >
+                          <MessageSquare size={16} className="mr-2" />
+                          Message
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
 
             {/* Pagination */}

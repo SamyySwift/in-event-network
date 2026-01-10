@@ -27,6 +27,7 @@ import {
   LayoutDashboard,
   Book,
   Gamepad2,
+  Download,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -48,6 +49,7 @@ import { FloatingJitsiPlayer } from "@/components/attendee/FloatingJitsiPlayer";
 import { PiPProvider } from "@/contexts/PiPContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -59,6 +61,15 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
   const { unreadCount } = useNotificationCount();
+  const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
+
+  const handleInstallClick = async () => {
+    const success = await promptInstall();
+    if (!success) {
+      // If prompt didn't work, navigate to install page
+      navigate("/install");
+    }
+  };
 
   // Fetch current event branding for attendees
   const { data: eventBranding } = useQuery({
@@ -300,6 +311,21 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                     </Button>
                   ))}
 
+                  {/* Install App Button - Mobile Sidebar */}
+                  {isInstallable && !isInstalled && (
+                    <Button
+                      variant="ghost"
+                      className="justify-start mt-2 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/40"
+                      onClick={() => {
+                        handleInstallClick();
+                        setMobileSidebarOpen(false);
+                      }}
+                    >
+                      <Download className="mr-3 h-5 w-5" />
+                      Install App
+                    </Button>
+                  )}
+
                   {currentUser && (
                     <Button
                       variant="ghost"
@@ -420,6 +446,18 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               )}
             </Button>
           ))}
+
+          {/* Install App Button - Desktop Sidebar */}
+          {isInstallable && !isInstalled && (
+            <Button
+              variant="ghost"
+              className="w-full justify-start mt-4 text-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:hover:bg-purple-900/40"
+              onClick={handleInstallClick}
+            >
+              <Download className="mr-3 h-5 w-5" />
+              Install App
+            </Button>
+          )}
 
           {currentUser && (
             <Button

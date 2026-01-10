@@ -14,10 +14,11 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 // module imports
-import { AlertCircle, Network, Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { AlertCircle, Network, Eye, EyeOff, Mail, Lock, Download } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FcGoogle } from "react-icons/fc";
 import { motion } from "framer-motion";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -28,6 +29,14 @@ const Login = () => {
   const { login, signInWithGoogle, currentUser, isLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
+
+  const handleInstallClick = async () => {
+    const installed = await promptInstall();
+    if (!installed) {
+      navigate("/install");
+    }
+  };
 
   // Animation variants
   const containerVariants = {
@@ -345,6 +354,18 @@ const Login = () => {
                   Create one
                 </Link>
               </div>
+
+              {isInstallable && !isInstalled && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full bg-white/5 border-white/20 text-white hover:bg-white/10"
+                  onClick={handleInstallClick}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Install App for faster access
+                </Button>
+              )}
             </CardFooter>
           </form>
         </Card>

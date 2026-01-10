@@ -29,7 +29,9 @@ import {
   Lock,
   Briefcase,
   Users,
+  Download,
 } from "lucide-react";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { FcGoogle } from "react-icons/fc";
 import { Badge } from "@/components/ui/badge";
@@ -148,6 +150,14 @@ const Register = () => {
   } = useEventById(effectiveEventId);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
+
+  const handleInstallClick = async () => {
+    const installed = await promptInstall();
+    if (!installed) {
+      navigate("/install");
+    }
+  };
 
   const handleGoogleSignUp = async () => {
     setErrorMessage(null);
@@ -750,6 +760,18 @@ const Register = () => {
                   Sign in
                 </Link>
               </div>
+
+              {isInstallable && !isInstalled && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full bg-white/5 border-white/20 text-white hover:bg-white/10"
+                  onClick={handleInstallClick}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Install App for faster access
+                </Button>
+              )}
             </CardFooter>
           </form>
         </Card>

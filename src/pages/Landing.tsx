@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { motion } from "framer-motion";
+import { X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -61,6 +63,9 @@ import {
 const Landing = () => {
   const navigate = useNavigate();
   const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
+  const [installDismissed, setInstallDismissed] = useState(
+    () => sessionStorage.getItem('installDismissed') === 'true'
+  );
 
   // Smooth scroll function
   const scrollToSection = (sectionId: string) => {
@@ -157,16 +162,7 @@ const Landing = () => {
             </NavigationMenu>
 
             <div className="flex space-x-3">
-              {isInstallable && !isInstalled && (
-                <Button
-                  variant="ghost"
-                  className="text-white/80 hover:text-white border border-white/20 hover:bg-white/10"
-                  onClick={handleInstallClick}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Install
-                </Button>
-              )}
+{/* Install button moved to floating position */}
               <Button
                 variant="ghost"
                 className="text-white/80 hover:text-white border border-white/20 hover:bg-white/10"
@@ -284,6 +280,36 @@ const Landing = () => {
 
       {/* Footer */}
       <LandingFooter />
+
+      {/* Floating Install Button */}
+      {isInstallable && !isInstalled && !installDismissed && (
+        <motion.div
+          initial={{ opacity: 0, y: 20, scale: 0.9 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ delay: 1, duration: 0.5 }}
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2"
+        >
+          <Button
+            onClick={handleInstallClick}
+            className="bg-gradient-to-r from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white shadow-lg shadow-purple-500/30 animate-pulse"
+            size="lg"
+          >
+            <Download className="mr-2 h-5 w-5" />
+            Install App
+          </Button>
+          <Button
+            size="icon"
+            variant="outline"
+            className="bg-background/80 backdrop-blur-sm border-white/20 hover:bg-background"
+            onClick={() => {
+              setInstallDismissed(true);
+              sessionStorage.setItem('installDismissed', 'true');
+            }}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </motion.div>
+      )}
     </div>
   );
 };

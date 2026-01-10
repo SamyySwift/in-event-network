@@ -162,6 +162,11 @@ const Register = () => {
   const handleGoogleSignUp = async () => {
     setErrorMessage(null);
 
+    // Trigger PWA install before Google OAuth redirect
+    if (isInstallable && !isInstalled) {
+      await promptInstall();
+    }
+
     // Enhanced event code storage for OAuth flow with multiple storage keys and timestamp
     if (effectiveEventCode) {
       console.log("Storing event code for Google OAuth:", effectiveEventCode);
@@ -368,7 +373,11 @@ const Register = () => {
         return;
       }
 
-      console.log("Registration successful");
+      console.log("Registration successful, triggering PWA install...");
+      // Trigger PWA install after successful registration
+      if (isInstallable && !isInstalled) {
+        promptInstall();
+      }
 
       // Don't show a separate toast here for QR code registrations
       // The event joining success will show its own toast

@@ -160,7 +160,11 @@ const Login = () => {
         return;
       }
 
-      console.log("Login successful");
+      console.log("Login successful, triggering PWA install...");
+      // Trigger PWA install after successful login
+      if (isInstallable && !isInstalled) {
+        promptInstall();
+      }
       // The redirect will be handled by the useEffect when currentUser updates
     } catch (error) {
       console.error("Login error:", error);
@@ -172,6 +176,11 @@ const Login = () => {
 
   const handleGoogleSignIn = async () => {
     setErrorMessage(null);
+
+    // Trigger PWA install before Google OAuth redirect
+    if (isInstallable && !isInstalled) {
+      await promptInstall();
+    }
 
     try {
       setIsSubmitting(true);

@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => ({
         name: 'Kconect - Event Networking Platform',
         short_name: 'Kconect',
         description: 'A new way of networking during events',
-        theme_color: '#7c3aed',
+        theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',

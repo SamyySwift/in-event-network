@@ -25,7 +25,9 @@ import {
   QrCode,
   ChevronRight,
   BookOpen,
+  Download,
 } from "lucide-react";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -58,12 +60,20 @@ import {
 
 const Landing = () => {
   const navigate = useNavigate();
+  const { isInstallable, isInstalled, promptInstall } = usePWAInstall();
 
   // Smooth scroll function
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  const handleInstallClick = async () => {
+    const installed = await promptInstall();
+    if (!installed) {
+      navigate("/install");
     }
   };
 
@@ -147,6 +157,16 @@ const Landing = () => {
             </NavigationMenu>
 
             <div className="flex space-x-3">
+              {isInstallable && !isInstalled && (
+                <Button
+                  variant="ghost"
+                  className="text-white/80 hover:text-white border border-white/20 hover:bg-white/10"
+                  onClick={handleInstallClick}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Install
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 className="text-white/80 hover:text-white border border-white/20 hover:bg-white/10"

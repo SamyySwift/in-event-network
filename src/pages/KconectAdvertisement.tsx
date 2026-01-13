@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { lazy, Suspense } from "react";
 import { 
   Monitor, 
   MapPin, 
@@ -17,6 +18,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+
+// Lazy load the 3D component to avoid blocking initial render
+const DigitalSignage3D = lazy(() => import("@/components/advertisement/DigitalSignage3D"));
 
 const fadeUpVariants = {
   hidden: { opacity: 0, y: 30 },
@@ -214,6 +218,48 @@ export default function KconectAdvertisement() {
             />
           </div>
         </motion.div>
+      </section>
+
+      {/* 3D Display Showcase Section */}
+      <section className="py-24 px-4 relative">
+        <div className="max-w-6xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
+              See Your Ads in <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-cyan-400">Action</span>
+            </h2>
+            <p className="text-white/60 text-lg max-w-2xl mx-auto">
+              Interactive 3D preview of our digital signage displays
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            className="relative"
+          >
+            <Suspense fallback={
+              <div className="w-full h-[500px] md:h-[600px] rounded-3xl bg-slate-900/50 flex items-center justify-center">
+                <div className="text-white/60 flex flex-col items-center gap-4">
+                  <div className="w-10 h-10 border-2 border-purple-500/30 border-t-purple-500 rounded-full animate-spin" />
+                  <span className="text-sm">Loading 3D Display...</span>
+                </div>
+              </div>
+            }>
+              <DigitalSignage3D />
+            </Suspense>
+            
+            {/* Caption */}
+            <p className="text-center text-white/40 text-sm mt-4">
+              Drag to rotate • Scroll to zoom • Hover for details
+            </p>
+          </motion.div>
+        </div>
       </section>
 
       {/* Features Section */}

@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { Circle, Scan } from "lucide-react";
+import { Circle, Scan, Monitor } from "lucide-react";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
@@ -255,10 +255,10 @@ function HeroGeometric({
               event experience.
             </p>
 
-            <div className="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6 mt-20">
+            <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-20 flex-wrap">
               <Button
                 size="lg"
-                className="bg-gradient-to-r   rounded-full from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white shadow-2xl shadow-purple-500/30 border-0 px-8 py-8 text-lg  transform hover:scale-105 transition-all duration-600"
+                className="bg-gradient-to-r rounded-full from-cyan-500 to-purple-500 hover:from-cyan-600 hover:to-purple-600 text-white shadow-2xl shadow-purple-500/30 border-0 px-8 py-8 text-lg transform hover:scale-105 transition-all duration-600"
                 onClick={() => navigate("/discovery")}
               >
                 <Zap className="mr-2" />
@@ -272,6 +272,14 @@ function HeroGeometric({
               >
                 <Rocket className="mr-2 h-5 w-5" />
                 Create Event
+              </Button>
+              <Button
+                size="lg"
+                className="bg-gradient-to-r rounded-full from-amber-500 to-pink-500 hover:from-amber-600 hover:to-pink-600 text-white shadow-2xl shadow-amber-500/30 border-0 px-8 py-8 text-lg transform hover:scale-105 transition-all duration-600"
+                onClick={() => navigate("/kconect-advertisement")}
+              >
+                <Monitor className="mr-2 h-5 w-5" />
+                Digital Signage
               </Button>
             </div>
           </motion.div>

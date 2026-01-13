@@ -28,6 +28,7 @@ const LiveChat = lazyWithRetry(() => import("@/pages/LiveChat"));
 const LiveGames = lazyWithRetry(() => import("@/pages/LiveGames"));
 const CheckIn = lazyWithRetry(() => import("@/pages/CheckIn"));
 const Install = lazyWithRetry(() => import("@/pages/Install"));
+const KconectAdvertisement = lazyWithRetry(() => import("@/pages/KconectAdvertisement"));
 
 // Admin Pages - Lazy loaded with retry
 const AdminLayout = lazyWithRetry(() => import("@/components/layouts/AdminLayout"));
@@ -178,6 +179,7 @@ export const router = createBrowserRouter([
   { path: "/live-games/:eventId", element: <LazyComponent Component={LiveGames} /> },
   { path: "/check-in/:eventId", element: <LazyComponent Component={CheckIn} /> },
   { path: "/install", element: <LazyComponent Component={Install} /> },
+  { path: "/kconect-advertisement", element: <LazyComponent Component={KconectAdvertisement} /> },
 
   // Admin Routes with error boundary
   { path: "/admin", element: <AdminRoute><Suspense fallback={<LazyLoader />}><AdminDashboard /></Suspense></AdminRoute> },

@@ -78,10 +78,12 @@ const KconectAdvertisement = () => {
             <ArrowLeft className="w-5 h-5" />
             <span className="text-sm font-medium hidden sm:inline">Back</span>
           </a>
-          <span className="text-2xl font-bold tracking-tight">
-            <span className="text-cyan-500">K</span>
-            <span className="text-black">conect</span>
-          </span>
+          <div className="flex items-center space-x-2">
+            <img src="/logo.png" alt="Kconect Logo" className="h-8 w-auto" />
+            <span className="font-semibold text-2xl bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
+              Kconect
+            </span>
+          </div>
           <div className="w-16" /> {/* Spacer for centering */}
         </div>
       </header>

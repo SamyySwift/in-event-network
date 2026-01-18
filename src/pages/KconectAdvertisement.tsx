@@ -1,7 +1,7 @@
 import { Suspense, lazy } from 'react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { ArrowRight, MapPin, Clock, Zap, Building2, Plane, Train, Users, TreePine } from 'lucide-react';
+import { ArrowRight, ArrowLeft, MapPin, Clock, Zap, Building2, Plane, Train, Users, TreePine } from 'lucide-react';
 
 const DigitalSignage3D = lazy(() => import('@/components/advertisement/DigitalSignage3D'));
 
@@ -68,8 +68,27 @@ const KconectAdvertisement = () => {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Minimal Header */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+          <a 
+            href="/" 
+            className="flex items-center gap-2 text-gray-600 hover:text-black transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+            <span className="text-sm font-medium hidden sm:inline">Back</span>
+          </a>
+          <img 
+            src="/header-logo.png" 
+            alt="Kconect" 
+            className="h-8"
+          />
+          <div className="w-16" /> {/* Spacer for centering */}
+        </div>
+      </header>
+
       {/* Hero Section - Full Screen */}
-      <section className="min-h-screen flex flex-col justify-center items-center px-6 relative overflow-hidden">
+      <section className="min-h-[calc(100vh-65px)] flex flex-col justify-center items-center px-6 relative overflow-hidden">
         <motion.div 
           className="text-center max-w-5xl mx-auto z-10"
           initial={{ opacity: 0, y: 40 }}

@@ -87,11 +87,8 @@ const Landing = () => {
       {/* Futuristic Header */}
       <header className="relative z-50 bg-black/20 backdrop-blur-xl border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <img src="/event-connect-logo.png" alt="Event-connect Logo" className="h-8 w-auto" />
-            <span className="ml-2 font-semibold text-2xl bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
-              Event-connect
-            </span>
+          <div className="flex items-center">
+            <img src="/event-connect-logo.png" alt="Event-connect Logo" className="h-10 w-auto" />
           </div>
 
           <div className="hidden md:flex items-center space-x-8">

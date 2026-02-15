@@ -79,10 +79,7 @@ const KconectAdvertisement = () => {
             <span className="text-sm font-medium hidden sm:inline">Back</span>
           </a>
           <div className="flex items-center space-x-2">
-            <img src="/logo.png" alt="Kconect Logo" className="h-8 w-auto" />
-            <span className="font-semibold text-2xl bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
-              Kconect
-            </span>
+            <img src="/event-connect-logo.png" alt="Event-connect Logo" className="h-10 w-auto" />
           </div>
           <div className="w-16" /> {/* Spacer for centering */}
         </div>

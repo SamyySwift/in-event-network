@@ -90,8 +90,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   });
 
   // Use custom branding if available, otherwise defaults
-  const displayLogo = eventBranding?.logo_url || "/logo.png";
-  const displayTitle = eventBranding?.custom_title || "Kconect";
+  const displayLogo = eventBranding?.logo_url || "/event-connect-logo.png";
+  const displayTitle = eventBranding?.custom_title || "Event-connect";
   const isActive = (path: string) => {
     // For dashboard routes, check exact match
     if (path === "/" || path === "/attendee" || path === "/host") {

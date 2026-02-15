@@ -600,19 +600,19 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               {sidebarOpen && (
                 <>
                   <img
-                    src={selectedEvent?.logo_url || "/logo.png"}
-                    alt={selectedEvent?.custom_title || "Kconect Logo"}
+                    src={selectedEvent?.logo_url || "/event-connect-logo.png"}
+                    alt={selectedEvent?.custom_title || "Event-connect Logo"}
                     className="h-6 w-6 mr-2 object-cover rounded-sm"
                   />
                   <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                    {selectedEvent?.custom_title || "Kconect"}
+                    {selectedEvent?.custom_title || "Event-connect"}
                   </span>
                 </>
               )}
               {!sidebarOpen && (
                 <img 
-                  src={selectedEvent?.logo_url || "/logo.png"} 
-                  alt={selectedEvent?.custom_title || "Kconect Logo"} 
+                  src={selectedEvent?.logo_url || "/event-connect-logo.png"} 
+                  alt={selectedEvent?.custom_title || "Event-connect Logo"} 
                   className="h-6 w-6 object-cover rounded-sm" 
                 />
               )}

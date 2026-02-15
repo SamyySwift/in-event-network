@@ -88,9 +88,9 @@ const Landing = () => {
       <header className="relative z-50 bg-black/20 backdrop-blur-xl border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <img src="/logo.png" alt="Kconect Logo" className="h-8 w-auto" />
+            <img src="/event-connect-logo.png" alt="Event-connect Logo" className="h-8 w-auto" />
             <span className="ml-2 font-semibold text-2xl bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
-              Kconect
+              Event-connect
             </span>
           </div>
 
@@ -201,7 +201,7 @@ const Landing = () => {
 
       <HeroGeometric
         badge="The Future of Event Networking"
-        title1="Kconect"
+        title1="Event-connect"
         title2="Events Reimagined"
       />
 

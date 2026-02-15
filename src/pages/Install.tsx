@@ -99,9 +99,9 @@ const Install = () => {
         </Button>
 
         <div className="text-center mb-8">
-          <img src="/logo.png" alt="Kconect" className="w-20 h-20 mx-auto mb-4" />
+          <img src="/event-connect-logo.png" alt="Event-connect" className="w-20 h-20 mx-auto mb-4" />
           <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
-            Install Kconect
+            Install Event-connect
           </h1>
           <p className="text-muted-foreground mt-2">
             Add to your home screen for the best experience

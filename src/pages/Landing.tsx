@@ -88,7 +88,7 @@ const Landing = () => {
       <header className="relative z-50 bg-black/20 backdrop-blur-xl border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <div className="flex items-center">
-            <img src="/event-connect-logo.png" alt="Event-connect Logo" className="h-14 w-auto" />
+            <img src="/event-connect-logo.png" alt="Event-connect Logo" className="h-20 w-auto" />
           </div>
 
           <div className="hidden md:flex items-center space-x-8">

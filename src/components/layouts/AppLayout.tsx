@@ -257,11 +257,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   <img
                     src={displayLogo}
                     alt="Logo"
-                    className="h-6 w-6 mr-2 object-contain"
+                    className="h-20 w-auto object-contain"
                   />
-                  <span className="text-md font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                    {displayTitle}
-                  </span>
                 </SheetTitle>
               </SheetHeader>
               {currentUser && (
@@ -345,10 +342,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             </SheetContent>
           </Sheet>
 
-          <img src={displayLogo} alt="Logo" className="h-6 w-6 mr-2 object-contain" />
-          <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-            {displayTitle}
-          </span>
+          <img src={displayLogo} alt="Logo" className="h-20 w-auto object-contain" />
         </div>
 
         {currentUser && (
@@ -387,11 +381,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               <img
                 src={displayLogo}
                 alt="Logo"
-                className="h-6 w-6 mr-2 object-contain"
+                className="h-20 w-auto object-contain"
               />
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
-                {displayTitle}
-              </span>
             </div>
             <ThemeToggle />
           </div>

@@ -670,7 +670,7 @@ function AttendeeDashboardContent() {
               <div className="flex items-center gap-3">
                 <div className="flex-shrink-0">
                   <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center p-1.5">
-                    <img src="/event-connect-logo.png" alt="Event-connect Logo" className="w-full h-full object-contain" />
+                    <img src="/logo.png" alt="Kconect Logo" className="w-full h-full object-contain" />
                   </div>
                 </div>
                 <div>

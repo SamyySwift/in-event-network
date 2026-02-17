@@ -90,8 +90,8 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   });
 
   // Use custom branding if available, otherwise defaults
-  const displayLogo = eventBranding?.logo_url || "/event-connect-logo.png";
-  const displayTitle = eventBranding?.custom_title || "Event-connect";
+  const displayLogo = eventBranding?.logo_url || "/logo.png";
+  const displayTitle = eventBranding?.custom_title || "Kconect";
   const isActive = (path: string) => {
     // For dashboard routes, check exact match
     if (path === "/" || path === "/attendee" || path === "/host") {
@@ -257,8 +257,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
                   <img
                     src={displayLogo}
                     alt="Logo"
-                    className="h-20 w-auto object-contain"
+                    className="h-6 w-6 mr-2 object-contain"
                   />
+                  <span className="text-md font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                    {displayTitle}
+                  </span>
                 </SheetTitle>
               </SheetHeader>
               {currentUser && (
@@ -342,7 +345,10 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
             </SheetContent>
           </Sheet>
 
-          <img src={displayLogo} alt="Logo" className="h-20 w-auto object-contain" />
+          <img src={displayLogo} alt="Logo" className="h-6 w-6 mr-2 object-contain" />
+          <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+            {displayTitle}
+          </span>
         </div>
 
         {currentUser && (
@@ -381,8 +387,11 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
               <img
                 src={displayLogo}
                 alt="Logo"
-                className="h-20 w-auto object-contain"
+                className="h-6 w-6 mr-2 object-contain"
               />
+              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent">
+                {displayTitle}
+              </span>
             </div>
             <ThemeToggle />
           </div>

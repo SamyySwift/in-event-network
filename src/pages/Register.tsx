@@ -418,7 +418,16 @@ const Register = () => {
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-blue-950 text-white flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="flex justify-center mb-8">
         <Link to="/" className="flex items-center">
-          <img src="/event-connect-logo.png" alt="Event-connect Logo" className="h-14 w-auto" />
+          <div className=" flex items-center justify-center">
+            <img
+              src="/logo.png"
+              alt="Kconect Logo"
+              className="h-8 w-auto object-cover"
+            />
+          </div>
+          <span className="ml-2 font-semibold text-2xl bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent">
+            Kconect
+          </span>
         </Link>
       </div>
       {/* Event Banner Section - Show when coming from QR code and we have event data */}

@@ -56,7 +56,7 @@ const Guide = () => {
             </Button>
           </div>
           <div className="flex items-center space-x-3">
-            <img src="/event-connect-logo.png" alt="Event-connect Logo" className="h-10 w-auto" />
+            <img src="/logo.png" alt="Kconect Logo" className="h-8 w-auto" />
           </div>
           <div className="flex space-x-3">
             <Button

@@ -18,11 +18,11 @@ const LandingFooter: React.FC = () => {
           <div className="col-span-2 md:col-span-1">
             <div className="flex items-center space-x-3 mb-6">
               <img
-                src="/event-connect-logo.png"
-                alt="Event-connect Logo"
+                src="/logo.png"
+                alt="Kconect Logo"
                 className="h-8 w-auto object-cover"
               />
-              <span className="text-xl font-bold text-cyan-400">Event-connect</span>
+              <span className="text-xl font-bold text-cyan-400">kconect</span>
             </div>
             <p className="text-white/60 text-sm">
               Enhancing event networking through smart connections and intuitive
